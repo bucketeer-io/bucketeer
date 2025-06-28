@@ -97,19 +97,19 @@ All Docker Compose related files are organized in the `docker-compose/` director
 
 1. Start all services with default versions:
 ```shell
-make start-docker-compose
+make docker-compose-up
 ```
 
 2. Or start with specific versions:
 ```shell
 # Use a different Bucketeer version for all services
 export BUCKETEER_VERSION=v1.4.0
-make start-docker-compose
+make docker-compose-up
 
 # Or customize individual service versions
 export BUCKETEER_WEB_VERSION=v1.4.0
 export BUCKETEER_API_VERSION=v1.3.0
-make start-docker-compose
+make docker-compose-up
 ```
 
 The start command will:
@@ -224,6 +224,8 @@ When using Docker Compose instead of Minikube, you can run E2E tests with modifi
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-client" \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
@@ -235,6 +237,7 @@ make create-api-key
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-server" \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_server \
@@ -250,6 +253,8 @@ WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
