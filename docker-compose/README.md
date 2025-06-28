@@ -85,7 +85,7 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
 
 1. **Start all services**:
    ```shell
-   make start-docker-compose
+   make docker-compose-up
    ```
 
 2. **Check service status**:
@@ -112,37 +112,37 @@ You can customize the Docker image versions used by setting environment variable
 #### Using Default Versions
 ```shell
 # Use the default versions specified in docker-compose.yml
-make start-docker-compose
+make docker-compose-up
 ```
 
 #### Using Environment File
 ```shell
 # Option 1: Source the default environment file
 source env.default
-make start-docker-compose
+make docker-compose-up
 
 # Option 2: Copy and modify the default environment file
 cp env.default .env
 # Edit .env with your preferred versions
 # Then start services
-make start-docker-compose
+make docker-compose-up
 ```
 
 #### Using Environment Variables
 ```shell
 # Set versions for all Bucketeer services
 export BUCKETEER_VERSION=v1.4.0
-make start-docker-compose
+make docker-compose-up
 
 # Or set versions for specific services
 export BUCKETEER_WEB_VERSION=v1.4.0
 export BUCKETEER_API_VERSION=v1.3.0
-make start-docker-compose
+make docker-compose-up
 
 # Set infrastructure versions
 export MYSQL_VERSION=8.1
 export REDIS_VERSION=7.2-alpine
-make start-docker-compose
+make docker-compose-up
 ```
 
 #### Available Environment Variables
@@ -208,7 +208,7 @@ The Docker Compose setup uses nginx as a reverse proxy. Internal service archite
 **API Service:**
 - Main gRPC: 9090
 - gRPC Gateway: 9089 (used by nginx)
-- Health Check: 8000
+- Health Check: 9090 (same as main gRPC)
 
 **Web Service:**
 - gRPC Gateway: 9089 (used by nginx)
@@ -221,7 +221,7 @@ The Docker Compose setup uses nginx as a reverse proxy. Internal service archite
 
 **Communication Flow:**
 1. Client/Admin UI → nginx (80/443) via `web-gateway.bucketeer.io` or `api-gateway.bucketeer.io`
-2. nginx → API/Web services (gRPC Gateway, health check)
+2. nginx → API/Web services (gRPC Gateway: 9089, Web health: 8000, API health: 9090)
 3. Services communicate internally via gRPC.
 
 ### Direct Database Access
@@ -268,6 +268,7 @@ When using Docker Compose, you can run E2E tests against the local services:
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-client" \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
@@ -277,6 +278,7 @@ make create-api-key
 
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-server" \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_server \
@@ -291,6 +293,8 @@ WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
@@ -366,7 +370,7 @@ docker-compose/
 
 When making changes to the Docker Compose setup:
 
-1. Test with `make start-docker-compose`
+1. Test with `make docker-compose-up`
 2. Verify all services start correctly
 3. Run E2E tests to ensure functionality
 4. Update this README if adding new services or configuration options 
