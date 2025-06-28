@@ -196,7 +196,11 @@ build-migration-chart:
 
 .PHONY: delete-e2e-data-mysql
 delete-e2e-data-mysql:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-e2e-data-mysql clean build-darwin
+else
 	make -C hack/delete-e2e-data-mysql clean build
+endif
 	./hack/delete-e2e-data-mysql/delete-e2e-data-mysql delete \
 		--mysql-user=${MYSQL_USER} \
 		--mysql-pass=${MYSQL_PASS} \
@@ -489,3 +493,13 @@ docker-compose-clean:
 	@echo "Stopping and removing all containers, networks, and volumes..."
 	docker-compose -f docker-compose/docker-compose.yml down -v
 	docker system prune -f
+
+.PHONY: docker-compose-delete-data
+docker-compose-delete-data:
+	@echo "Deleting E2E test data from Docker Compose MySQL..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	make -C ./ delete-e2e-data-mysql
