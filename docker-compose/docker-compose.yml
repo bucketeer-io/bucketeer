@@ -49,6 +49,8 @@ services:
       - apply
       - -u
       - mysql://bucketeer:bucketeer@mysql:3306/bucketeer
+      - --baseline
+      - "20240626022133"
     networks:
       - bucketeer
     restart: "no"
