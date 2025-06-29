@@ -1,0 +1,56 @@
+# Bucketeer Batch Jobs Crontab
+# Format: minute hour day month weekday command
+
+# Experiment Status Updater - every minute (dev override)
+* * * * * /usr/local/bin/run-batch-job.sh ExperimentStatusUpdater
+
+# Experiment Running Watcher - daily at 1:00 AM
+0 1 * * * /usr/local/bin/run-batch-job.sh ExperimentRunningWatcher
+
+# Feature Stale Watcher - weekly on Monday at 1:00 AM
+0 1 * * MON /usr/local/bin/run-batch-job.sh FeatureStaleWatcher
+
+# MAU Count Watcher - monthly on 1st at 1:00 AM
+0 1 1 * * /usr/local/bin/run-batch-job.sh MauCountWatcher
+
+# Operations DateTime Watcher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh DatetimeWatcher
+
+# Operations Event Count Watcher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh EventCountWatcher
+
+# Operations Progressive Rollout Watcher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh ProgressiveRolloutWatcher
+
+# Redis Counter Deleter - daily at midnight
+0 0 * * * /usr/local/bin/run-batch-job.sh RedisCounterDeleter
+
+# Experiment Calculator - every minute (dev override)
+* * * * * /usr/local/bin/run-batch-job.sh ExperimentCalculator
+
+# MAU Summarizer - daily at 12:30 AM
+30 0 * * * /usr/local/bin/run-batch-job.sh MauSummarizer
+
+# MAU Partition Deleter - monthly on 1st at 2:00 AM
+0 2 1 * * /usr/local/bin/run-batch-job.sh MauPartitionDeleter
+
+# MAU Partition Creator - monthly on 2nd at 2:00 AM
+0 2 2 * * /usr/local/bin/run-batch-job.sh MauPartitionCreator
+
+# Feature Flag Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh FeatureFlagCacher
+
+# Segment User Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh SegmentUserCacher
+
+# API Key Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh ApiKeyCacher
+
+# Experiment Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh ExperimentCacher
+
+# Auto Ops Rules Cacher - every minute
+* * * * * /usr/local/bin/run-batch-job.sh AutoOpsRulesCacher
+
+# Tag Deleter - every minute (dev override)
+* * * * * /usr/local/bin/run-batch-job.sh TagDeleter 
