@@ -343,6 +343,34 @@ services:
       - bucketeer
     restart: unless-stopped
 
+  # Batch job scheduler
+  batch-cron:
+    image: alpine:latest
+    container_name: bucketeer-batch-cron
+    depends_on:
+      web:
+        condition: service_started
+    volumes:
+      - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
+      - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
+      - ./config/batch-jobs/crontab:/tmp/bucketeer-batch:ro
+      - ./config/batch-jobs/run-batch-job.sh:/tmp/run-batch-job.sh:ro
+    environment:
+      - BATCH_SERVICE_ADDRESS=https://batch:9089
+    command: |
+      sh -c "
+        apk add --no-cache curl dcron &&
+        cp /tmp/run-batch-job.sh /usr/local/bin/run-batch-job.sh &&
+        chmod +x /usr/local/bin/run-batch-job.sh &&
+        cp /tmp/bucketeer-batch /etc/cron.d/bucketeer-batch &&
+        chmod 0644 /etc/cron.d/bucketeer-batch &&
+        echo 'Starting batch job cron daemon...' &&
+        crond -f -l 2
+      "
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
   # Nginx reverse proxy for routing
   nginx:
     image: nginx:${NGINX_VERSION:-1.25-alpine}
