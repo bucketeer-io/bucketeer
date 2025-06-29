@@ -1,0 +1,542 @@
+--
+-- Create the Database
+--
+
+DROP DATABASE IF EXISTS bucketeer;
+CREATE DATABASE bucketeer;
+USE bucketeer;
+
+--
+-- Alter Databse character and collate to support the dev container
+--
+
+ALTER DATABASE bucketeer CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+--
+-- Table structure for table `organization`
+--
+
+DROP TABLE IF EXISTS `organization`;
+CREATE TABLE `organization` (
+  `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `description` text COLLATE utf8mb4_bin NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `archived` tinyint(1) NOT NULL DEFAULT '0',
+  `trial` tinyint(1) NOT NULL DEFAULT '0',
+  `system_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_url_code` (`url_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+LOCK TABLES `organization` WRITE;
+INSERT INTO `organization` VALUES ('default', 'Default organization', 'default', 'This organization is for local development', 0, 0, 0, 0, 1706092038, 1706092038);
+INSERT INTO `organization` VALUES ('e2e', 'E2E organization', 'e2e', 'This organization is for organization e2e tests', 0, 0, 0, 0, 1706092038, 1706092038);
+UNLOCK TABLES;
+
+--
+-- Table structure for table `project`
+--
+
+DROP TABLE IF EXISTS `project`;
+CREATE TABLE `project` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `trial` tinyint(1) NOT NULL DEFAULT '0',
+  `creator_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_url_code` (`url_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+LOCK TABLES `project` WRITE;
+INSERT INTO `project` VALUES ('default', 'Default project', 'default', 'This project is for local development', 0, 0, 'localenv@bucketeer.io', 'default', 1706092038, 1706092038);
+UNLOCK TABLES;
+
+--
+-- Table structure for table `feature`
+--
+
+DROP TABLE IF EXISTS `feature`;
+CREATE TABLE `feature` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `archived` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `evaluation_undelayable` tinyint(1) NOT NULL DEFAULT '0',
+  `ttl` int NOT NULL,
+  `version` int NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `variations` json NOT NULL,
+  `targets` json NOT NULL,
+  `rules` json NOT NULL,
+  `default_strategy` json NOT NULL,
+  `off_variation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `tags` json NOT NULL,
+  `maintainer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `variation_type` int NOT NULL,
+  `sampling_seed` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
+  `prerequisites` json DEFAULT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `account`
+--
+
+DROP TABLE IF EXISTS `account`;
+CREATE TABLE `account` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `role` int NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  UNIQUE KEY `unique_email_environment_namespace` (`email`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `account_v2`
+--
+
+DROP TABLE IF EXISTS `account_v2`;
+CREATE TABLE `account_v2` (
+  `email` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `avatar_image_url` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `organization_role` int NOT NULL,
+  `environment_roles` json NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  PRIMARY KEY (`email`,`organization_id`),
+  KEY `account_v2_foreign_organization_id` (`organization_id`),
+  CONSTRAINT `account_v2_foreign_organization_id` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `admin_account`
+--
+
+DROP TABLE IF EXISTS `admin_account`;
+CREATE TABLE `admin_account` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `role` int NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `admin_audit_log`
+--
+
+DROP TABLE IF EXISTS `admin_audit_log`;
+CREATE TABLE `admin_audit_log` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `timestamp` bigint NOT NULL,
+  `entity_type` int NOT NULL,
+  `entity_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `type` int NOT NULL,
+  `event` json NOT NULL,
+  `editor` json NOT NULL,
+  `options` json NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_timestamp_desc` (`timestamp` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `admin_subscription`
+--
+
+DROP TABLE IF EXISTS `admin_subscription`;
+CREATE TABLE `admin_subscription` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `source_types` json NOT NULL,
+  `recipient` json NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `api_key`
+--
+
+DROP TABLE IF EXISTS `api_key`;
+CREATE TABLE `api_key` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `role` int NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `audit_log`
+--
+
+DROP TABLE IF EXISTS `audit_log`;
+CREATE TABLE `audit_log` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `timestamp` bigint NOT NULL,
+  `entity_type` int NOT NULL,
+  `entity_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `type` int NOT NULL,
+  `event` json NOT NULL,
+  `editor` json NOT NULL,
+  `options` json NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `idx_entity_type_entity_id` (`entity_type`,`entity_id`),
+  KEY `idx_timestamp_desc` (`timestamp` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `auto_ops_rule`
+--
+
+DROP TABLE IF EXISTS `auto_ops_rule`;
+CREATE TABLE `auto_ops_rule` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `feature_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `ops_type` int NOT NULL,
+  `clauses` json NOT NULL,
+  `triggered_at` bigint NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `status` int NOT NULL DEFAULT '0',
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_auto_ops_rule_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+  CONSTRAINT `foreign_auto_ops_rule_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `environment_v2`
+--
+
+DROP TABLE IF EXISTS `environment_v2`;
+CREATE TABLE `environment_v2` (
+  `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `description` text COLLATE utf8mb4_bin NOT NULL,
+  `project_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `archived` tinyint(1) NOT NULL DEFAULT '0',
+  `require_comment` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_project_id_url_code` (`project_id`,`url_code`),
+  CONSTRAINT `environment_v2_foreign_project_id` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+LOCK TABLES `environment_v2` WRITE;
+INSERT INTO `environment_v2` VALUES ('e2e', 'E2E environment', 'e2e', 'This environment is for local development', 'default', 'default', 0, 0, 1706092038, 1706092038);
+UNLOCK TABLES;
+
+--
+-- Table structure for table `experiment`
+--
+
+DROP TABLE IF EXISTS `experiment`;
+CREATE TABLE `experiment` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `goal_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `feature_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `feature_version` int NOT NULL,
+  `variations` json NOT NULL,
+  `start_at` bigint NOT NULL,
+  `stop_at` bigint NOT NULL,
+  `stopped` tinyint(1) NOT NULL DEFAULT '0',
+  `stopped_at` bigint NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `archived` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `goal_ids` json NOT NULL,
+  `name` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `base_variation_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `status` int NOT NULL,
+  `maintainer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_experiment_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+  CONSTRAINT `foreign_experiment_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `experiment_result`
+--
+
+DROP TABLE IF EXISTS `experiment_result`;
+CREATE TABLE `experiment_result` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `experiment_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `data` json NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `feature_last_used_info`
+--
+
+DROP TABLE IF EXISTS `feature_last_used_info`;
+CREATE TABLE `feature_last_used_info` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `feature_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `version` bigint NOT NULL,
+  `last_used_at` bigint NOT NULL,
+  `client_oldest_version` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `client_latest_version` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `flag_trigger`
+--
+
+DROP TABLE IF EXISTS `flag_trigger`;
+CREATE TABLE `flag_trigger` (
+  `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `feature_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `type` int NOT NULL,
+  `action` tinyint(1) NOT NULL,
+  `description` text COLLATE utf8mb4_bin NOT NULL,
+  `trigger_count` int NOT NULL,
+  `last_triggered_at` bigint NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_flag_trigger_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+  CONSTRAINT `foreign_flag_trigger_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `goal`
+--
+
+DROP TABLE IF EXISTS `goal`;
+CREATE TABLE `goal` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `archived` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `mau`
+--
+
+DROP TABLE IF EXISTS `mau`;
+CREATE TABLE `mau` (
+  `user_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `yearmonth` varchar(6) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `source_id` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `event_count` int unsigned NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`environment_namespace`,`yearmonth`,`source_id`,`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `mau_summary`
+--
+
+DROP TABLE IF EXISTS `mau_summary`;
+CREATE TABLE `mau_summary` (
+  `yearmonth` varchar(6) COLLATE utf8mb4_bin NOT NULL,
+  `source_id` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+  `user_count` bigint NOT NULL,
+  `request_count` bigint NOT NULL,
+  `evaluation_count` bigint NOT NULL,
+  `goal_count` bigint NOT NULL,
+  `is_all` tinyint(1) NOT NULL DEFAULT '0',
+  `is_finished` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`yearmonth`, `source_id`, `is_all`, `environment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `ops_count`
+--
+
+DROP TABLE IF EXISTS `ops_count`;
+CREATE TABLE `ops_count` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `auto_ops_rule_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `clause_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `ops_event_count` bigint NOT NULL,
+  `evaluation_count` bigint NOT NULL,
+  `feature_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_ops_count_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+  KEY `foreign_ops_count_auto_ops_rule_id_environment_namespace` (`auto_ops_rule_id`,`environment_namespace`),
+  CONSTRAINT `foreign_ops_count_auto_ops_rule_id_environment_namespace` FOREIGN KEY (`auto_ops_rule_id`, `environment_namespace`) REFERENCES `auto_ops_rule` (`id`, `environment_namespace`),
+  CONSTRAINT `foreign_ops_count_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `ops_progressive_rollout`
+--
+
+DROP TABLE IF EXISTS `ops_progressive_rollout`;
+CREATE TABLE `ops_progressive_rollout` (
+  `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `feature_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `clause` json NOT NULL,
+  `status` int NOT NULL,
+  `stopped_by` int NOT NULL DEFAULT '0',
+  `type` int NOT NULL,
+  `stopped_at` bigint NOT NULL DEFAULT '0',
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_progressive_rollout_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+  CONSTRAINT `foreign_progressive_rollout_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `push`
+--
+
+DROP TABLE IF EXISTS `push`;
+CREATE TABLE `push` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `fcm_api_key` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `tags` json NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `schema_migrations`
+--
+
+DROP TABLE IF EXISTS `schema_migrations`;
+CREATE TABLE `schema_migrations` (
+  `version` bigint NOT NULL,
+  `dirty` tinyint(1) NOT NULL,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `segment`
+--
+
+DROP TABLE IF EXISTS `segment`;
+CREATE TABLE `segment` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `rules` json NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `version` bigint NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `included_user_count` bigint NOT NULL,
+  `excluded_user_count` bigint NOT NULL,
+  `status` int NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `segment_user`
+--
+
+DROP TABLE IF EXISTS `segment_user`;
+CREATE TABLE `segment_user` (
+  `id` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `segment_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `state` int NOT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`),
+  KEY `foreign_segment_user_segment_id_environment_namespace` (`segment_id`,`environment_namespace`),
+  CONSTRAINT `foreign_segment_user_segment_id_environment_namespace` FOREIGN KEY (`segment_id`, `environment_namespace`) REFERENCES `segment` (`id`, `environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `subscription`
+--
+
+DROP TABLE IF EXISTS `subscription`;
+CREATE TABLE `subscription` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0',
+  `source_types` json NOT NULL,
+  `recipient` json NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
+-- Table structure for table `tag`
+--
+
+DROP TABLE IF EXISTS `tag`;
+CREATE TABLE `tag` (
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `created_at` bigint NOT NULL,
+  `updated_at` bigint NOT NULL,
+  `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`,`environment_namespace`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin; 
