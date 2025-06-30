@@ -9,16 +9,16 @@ export interface NotificationFetcherPayload {
   id: string;
 }
 
-export interface NotificationFetcherResponse {
+export interface NotificationResponse {
   subscription: Notification;
 }
 
 export const notificationFetcher = async (
   payload?: NotificationFetcherPayload
-): Promise<NotificationFetcherResponse> => {
+): Promise<NotificationResponse> => {
   const params = stringifyParams(pickBy(payload, v => isNotEmpty(v)));
 
   return axiosClient
-    .get<NotificationFetcherResponse>(`/v1/subscription?${params}`)
+    .get<NotificationResponse>(`/v1/subscription?${params}`)
     .then(response => response.data);
 };

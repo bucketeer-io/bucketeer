@@ -1,16 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FormProvider,
   Resolver,
   SubmitHandler,
   useForm
 } from 'react-hook-form';
-import { notificationUpdater } from '@api/notification';
+import {
+  notificationCreator,
+  NotificationResponse,
+  notificationUpdater
+} from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
 import { languageList } from 'constants/notification';
+import { ID_NEW } from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -43,41 +48,50 @@ import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
-interface EditNotificationModalProps {
+interface NotificationCreateUpdateModalProps {
   disabled?: boolean;
+  notificationId?: string;
   isOpen: boolean;
   isLoadingNotification: boolean;
   notification?: Notification;
   onClose: () => void;
 }
 
-export interface EditNotificationForm {
+export interface NotificationCreateUpdateForm {
   name: string;
-  url?: string;
-  environment?: string;
+  url: string;
+  environment: string;
   language: NotificationLanguage;
   types: SourceType[];
   tags: string[];
 }
 
-export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+export const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   yup.object().shape({
     name: yup.string().required(requiredMessage),
-    url: yup.string(),
-    environment: yup.string(),
+    url: yup
+      .string()
+      .required(requiredMessage)
+      .url(
+        translation('message:validation.id-rule', {
+          name: translation('common:url')
+        })
+      ),
+    environment: yup.string().required(requiredMessage),
     language: yup.mixed<NotificationLanguage>().required(requiredMessage),
     types: yup.array().min(1).required(requiredMessage),
     tags: yup.array()
   });
 
-const EditNotificationModal = ({
+const NotificationCreateUpdateModal = ({
   disabled,
+  notificationId,
   isOpen,
   isLoadingNotification,
   notification,
   onClose
-}: EditNotificationModalProps) => {
-  const { notify } = useToast();
+}: NotificationCreateUpdateModalProps) => {
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
 
@@ -86,6 +100,12 @@ const EditNotificationModal = ({
   const [searchValue, setSearchValue] = useState('');
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
+
+  const isEditNotification = useMemo(
+    () =>
+      notificationId !== ID_NEW || !!notification || !!isLoadingNotification,
+    [notification, isLoadingNotification, notificationId]
+  );
 
   const editorEnvironments = useMemo(
     () =>
@@ -98,18 +118,21 @@ const EditNotificationModal = ({
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(editorEnvironments);
 
-  const form = useForm<EditNotificationForm>({
+  const form = useForm<NotificationCreateUpdateForm>({
     resolver: yupResolver(
       useFormSchema(formSchema)
-    ) as Resolver<EditNotificationForm>,
+    ) as Resolver<NotificationCreateUpdateForm>,
     values: {
       name: notification?.name || '',
-      url: notification?.recipient.slackChannelRecipient.webhookUrl,
-      environment: notification?.environmentId || emptyEnvironmentId,
+      url: notification?.recipient.slackChannelRecipient.webhookUrl || '',
+      environment: notification
+        ? notification?.environmentId || emptyEnvironmentId
+        : '',
       language: notification?.recipient.language || 'ENGLISH',
       types: notification?.sourceTypes.sort() || [],
       tags: notification?.featureFlagTags || []
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
@@ -147,31 +170,55 @@ const EditNotificationModal = ({
     }
   };
 
-  const onSubmit: SubmitHandler<EditNotificationForm> = values => {
-    return notificationUpdater({
-      id: notification!.id,
-      environmentId: checkEnvironmentEmptyId(values.environment as string),
-      name: values.name,
-      sourceTypes: values.types,
-      language: values.language,
-      featureFlagTags: values.types.includes('DOMAIN_EVENT_FEATURE')
-        ? values.tags
-        : []
-    }).then(() => {
-      notify({
-        message: t('message:collection-action-success', {
-          collection: t('notification'),
-          action: t('updated')
-        })
-      });
-      invalidateNotifications(queryClient);
-      onClose();
-    });
-  };
+  const onSubmit: SubmitHandler<NotificationCreateUpdateForm> = useCallback(
+    async values => {
+      try {
+        let resp: NotificationResponse | null = null;
+        const { name, environment, types, language, tags, url } = values;
+        const environmentId = checkEnvironmentEmptyId(environment as string);
+
+        if (isEditNotification) {
+          resp = await notificationUpdater({
+            id: notification!.id,
+            environmentId,
+            name,
+            sourceTypes: types,
+            language,
+            featureFlagTags: types.includes('DOMAIN_EVENT_FEATURE') ? tags : []
+          });
+        } else {
+          resp = await notificationCreator({
+            environmentId,
+            name,
+            sourceTypes: types,
+            recipient: {
+              type: 'SlackChannel',
+              slackChannelRecipient: { webhookUrl: url },
+              language
+            },
+            featureFlagTags: tags
+          });
+        }
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('notification'),
+              action: t(isEditNotification ? 'updated' : 'created')
+            })
+          });
+          invalidateNotifications(queryClient);
+          onClose();
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [notification, isEditNotification]
+  );
 
   return (
     <SlideModal
-      title={t('update-notification')}
+      title={t(isEditNotification ? 'update-notification' : 'new-notification')}
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -214,7 +261,7 @@ const EditNotificationModal = ({
                     </Form.Label>
                     <Form.Control>
                       <Input
-                        disabled
+                        disabled={disabled || isEditNotification}
                         placeholder={`${t('form:placeholder-url')}`}
                         {...field}
                       />
@@ -238,7 +285,7 @@ const EditNotificationModal = ({
                               item => item.id === getValues('environment')
                             )?.name
                           }
-                          disabled
+                          disabled={disabled || isEditNotification}
                           variant="secondary"
                           className="w-full"
                         />
@@ -280,7 +327,7 @@ const EditNotificationModal = ({
                               item => item.value === getValues('language')
                             )?.label
                           }
-                          disabled
+                          disabled={disabled || isEditNotification}
                           variant="secondary"
                           className="w-full"
                         />
@@ -522,4 +569,4 @@ const EditNotificationModal = ({
   );
 };
 
-export default EditNotificationModal;
+export default NotificationCreateUpdateModal;

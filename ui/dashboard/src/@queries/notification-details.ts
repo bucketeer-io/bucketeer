@@ -1,12 +1,12 @@
 import {
   notificationFetcher,
   NotificationFetcherPayload,
-  NotificationFetcherResponse
+  NotificationResponse
 } from '@api/notification';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { QueryOptionsRespond } from '@types';
 
-type QueryOptions = QueryOptionsRespond<NotificationFetcherResponse> & {
+type QueryOptions = QueryOptionsRespond<NotificationResponse> & {
   params?: NotificationFetcherPayload;
 };
 

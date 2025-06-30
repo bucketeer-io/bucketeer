@@ -254,21 +254,23 @@ const SegmentCreateUpdateModal = ({
                               {t('form:browse-files')}
                             </label>
                           </div>
-                          {userIdsType === 'upload' && (
-                            <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
-                              <Upload
-                                files={files}
-                                className="border-l border-primary-500 pl-4"
-                                uploadClassName="min-h-[200px] h-[200px]"
-                                onChange={files => {
-                                  setFiles(files);
-                                  field.onChange(
-                                    files?.length ? files[0] : null
-                                  );
-                                }}
-                              />
-                            </div>
-                          )}
+                          {userIdsType === 'upload' &&
+                            !isDisabledUserIds &&
+                            !isDisabled && (
+                              <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
+                                <Upload
+                                  files={files}
+                                  className="border-l border-primary-500 pl-4"
+                                  uploadClassName="min-h-[200px] h-[200px]"
+                                  onChange={files => {
+                                    setFiles(files);
+                                    field.onChange(
+                                      files?.length ? files[0] : null
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
                         </div>
                       </Form.Control>
                       <Form.Message />

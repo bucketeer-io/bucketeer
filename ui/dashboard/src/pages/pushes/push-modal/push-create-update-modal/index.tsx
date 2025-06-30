@@ -1,17 +1,20 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { pushUpdater, TagChange } from '@api/push';
+import { pushCreator, PushResponse, pushUpdater, TagChange } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
+import { ID_NEW } from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Push } from '@types';
+import { covertFileToUint8ToBase64 } from 'utils/converts';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { IconInfo } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
 import Button from 'components/button';
@@ -24,58 +27,58 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import UploadFiles from 'components/upload-files';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
-interface EditPushModalProps {
+interface PushCreateUpdateModalProps {
   disabled?: boolean;
   isOpen: boolean;
+  pushId?: string;
   isLoadingPush: boolean;
   push?: Push;
   onClose: () => void;
 }
 
-export interface EditPushForm {
+export interface PushCreateUpdateForm {
+  isEditPush?: boolean;
   name: string;
+  fcmServiceAccount?: Uint8Array | string;
   tags?: string[];
   environmentId: string;
 }
 
 const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
+    isEditPush: yup.boolean(),
     name: yup.string().required(requiredMessage),
+    fcmServiceAccount: yup.string().when('isEditPush', {
+      is: (isEditPush: boolean) => !isEditPush,
+      then: schema => schema.required(requiredMessage)
+    }),
     tags: yup.array(),
     environmentId: yup.string().required(requiredMessage)
   });
 
-const EditPushModal = ({
+const PushCreateUpdateModal = ({
   disabled,
   isOpen,
+  pushId,
   isLoadingPush,
   push,
   onClose
-}: EditPushModalProps) => {
+}: PushCreateUpdateModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
+  const [files, setFiles] = useState<File[]>([]);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    environmentId: push?.environmentId || '',
-    entityType: 'FEATURE_FLAG',
-    options: {
-      enabled: !!push
-    }
-  });
+  const isEditPush = useMemo(() => pushId !== ID_NEW || !!push, [push, pushId]);
 
-  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
-    tag => ({
-      label: tag.name,
-      value: tag.name
-    })
-  );
   const editorEnvironments = useMemo(
     () =>
       consoleAccount?.environmentRoles
@@ -90,11 +93,34 @@ const EditPushModal = ({
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
     values: {
+      isEditPush,
       name: push?.name || '',
       tags: push?.tags || [],
-      environmentId: push?.environmentId || emptyEnvironmentId
+      environmentId: isEditPush
+        ? push?.environmentId || emptyEnvironmentId
+        : '',
+      fcmServiceAccount: ''
     }
   });
+
+  const { watch } = form;
+
+  const isEnabledTags = !!watch('environmentId');
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    environmentId: checkEnvironmentEmptyId(watch('environmentId')),
+    entityType: 'FEATURE_FLAG',
+    options: {
+      enabled: isEnabledTags,
+      gcTime: 0
+    }
+  });
+
+  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
+    tag => ({
+      label: tag.name,
+      value: tag.name
+    })
+  );
 
   const {
     getValues,
@@ -103,57 +129,80 @@ const EditPushModal = ({
 
   const handleCheckTags = useCallback(
     (tagValues: string[]) => {
-      if (push?.tags) {
-        const tagChanges: TagChange[] = [];
-        const { tags } = push;
-        tags?.forEach(item => {
-          if (!tagValues.find(tag => tag === item)) {
-            tagChanges.push({
-              changeType: 'DELETE',
-              tag: item
-            });
-          }
-        });
-        tagValues.forEach(item => {
-          const currentTag = tags.find(tag => tag === item);
-          if (!currentTag) {
-            tagChanges.push({
-              changeType: 'CREATE',
-              tag: item
-            });
-          }
-        });
+      const tagChanges: TagChange[] = [];
+      const tags = push?.tags || [];
+      tags?.forEach(item => {
+        if (!tagValues.find(tag => tag === item)) {
+          tagChanges.push({
+            changeType: 'DELETE',
+            tag: item
+          });
+        }
+      });
+      tagValues.forEach(item => {
+        const currentTag = tags.find(tag => tag === item);
+        if (!currentTag) {
+          tagChanges.push({
+            changeType: 'CREATE',
+            tag: item
+          });
+        }
+      });
 
-        return tagChanges;
-      }
-      return [];
+      return tagChanges;
     },
     [push]
   );
 
-  const onSubmit: SubmitHandler<EditPushForm> = async values => {
-    const { name, tags, environmentId } = values;
-    await pushUpdater({
-      name,
-      tagChanges: handleCheckTags(tags || []),
-      id: push?.id || '',
-      environmentId: checkEnvironmentEmptyId(environmentId)
-    })
-      .then(() => {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('push-notification'),
-            action: t('updated')
-          })
-        });
-        invalidatePushes(queryClient);
-        onClose();
-      })
-      .catch(error => errorNotify(error));
-  };
+  const onSubmit: SubmitHandler<PushCreateUpdateForm> = useCallback(
+    async values => {
+      try {
+        let resp: PushResponse | null = null;
+        const { name, tags, environmentId } = values;
+
+        if (isEditPush) {
+          resp = await pushUpdater({
+            name,
+            tagChanges: handleCheckTags(tags || []),
+            id: push!.id,
+            environmentId: checkEnvironmentEmptyId(environmentId)
+          });
+        } else {
+          const base64String: string = await new Promise(rs =>
+            covertFileToUint8ToBase64(files[0], data => rs(data))
+          );
+
+          resp = await pushCreator({
+            name,
+            tags,
+            environmentId: checkEnvironmentEmptyId(environmentId),
+            fcmServiceAccount: base64String
+          });
+        }
+
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('push-notification'),
+              action: t('updated')
+            })
+          });
+          invalidatePushes(queryClient);
+          onClose();
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [isEditPush, push, files]
+  );
 
   return (
-    <SlideModal title={t('edit-push')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t(isEditPush ? 'edit-push' : 'new-push')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       {isLoadingPush ? (
         <FormLoading />
       ) : (
@@ -183,6 +232,41 @@ const EditPushModal = ({
                   </Form.Item>
                 )}
               />
+              {!isEditPush && (
+                <Form.Field
+                  control={form.control}
+                  name="fcmServiceAccount"
+                  render={({ field }) => (
+                    <Form.Item>
+                      <Form.Label required className="relative w-fit">
+                        {t('fcm-api-key')}
+                        <Icon
+                          icon={IconInfo}
+                          className="absolute -right-8"
+                          size={'sm'}
+                        />
+                      </Form.Label>
+                      <Form.Control>
+                        <UploadFiles
+                          files={files}
+                          accept={['.json']}
+                          acceptTypeText="JSON"
+                          onChange={files => {
+                            if (files?.length) {
+                              field.onChange(files[0]);
+                              setFiles(files);
+                            } else {
+                              field.onChange('');
+                              setFiles([]);
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              )}
               <Form.Field
                 control={form.control}
                 name={`environmentId`}
@@ -198,7 +282,7 @@ const EditPushModal = ({
                               item => item.id === getValues('environmentId')
                             )?.name
                           }
-                          disabled
+                          disabled={disabled || isEditPush}
                           variant="secondary"
                           className="w-full"
                         />
@@ -309,4 +393,4 @@ const EditPushModal = ({
   );
 };
 
-export default EditPushModal;
+export default PushCreateUpdateModal;

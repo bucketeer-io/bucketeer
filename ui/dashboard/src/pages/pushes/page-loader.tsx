@@ -15,8 +15,7 @@ import { Push } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
 import PageContent from './page-content';
-import AddPushModal from './push-modal/add-push-modal';
-import EditPushModal from './push-modal/edit-push-modal';
+import PushCreateUpdateModal from './push-modal/push-create-update-modal';
 import { PushActionsType } from './types';
 
 const PageLoader = () => {
@@ -81,6 +80,14 @@ const PageLoader = () => {
     [commonPath]
   );
 
+  const handleOnCloseModal = useCallback(() => {
+    onCloseActionModal();
+    setSelectedPush(undefined);
+    setIsDeletePush(false);
+    setIsDisabling(false);
+    onCloseConfirmModal();
+  }, []);
+
   const mutationState = useMutation({
     mutationFn: async (id: string) => {
       return isDeletePush
@@ -101,8 +108,7 @@ const PageLoader = () => {
           action: t(isDeletePush ? 'common:deleted' : 'common:updated')
         })
       });
-      onCloseConfirmModal();
-      setIsDeletePush(false);
+      handleOnCloseModal();
       invalidatePushes(queryClient);
       mutationState.reset();
     },
@@ -124,7 +130,7 @@ const PageLoader = () => {
   useEffect(() => {
     if (isError && error) {
       errorNotify(error);
-      onCloseActionModal();
+      handleOnCloseModal();
     }
   }, [isError, error]);
 
@@ -135,27 +141,20 @@ const PageLoader = () => {
         onAdd={onOpenAddModal}
         onHandleActions={onHandleActions}
       />
-
-      {isAdd && (
-        <AddPushModal
+      {(!!isAdd || !!isEdit) && (
+        <PushCreateUpdateModal
           disabled={!editable}
-          isOpen={isAdd}
-          onClose={onCloseActionModal}
-        />
-      )}
-      {isEdit && (
-        <EditPushModal
-          disabled={!editable}
-          isOpen={isEdit}
+          isOpen={!!isAdd || !!isEdit}
+          pushId={pushId}
           isLoadingPush={isLoadingPush}
           push={selectedPush}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
+          onClose={handleOnCloseModal}
           onSubmit={onHandleConfirmSubmit}
           title={t(
             `popover.${isDeletePush ? 'delete' : isDisabling ? 'disable' : 'enable'}-push`

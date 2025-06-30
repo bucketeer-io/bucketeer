@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import { Push } from '@types';
+import { PushResponse } from './push-fetcher';
 
 export interface PushCreatorPayload {
   tags?: string[];
@@ -8,14 +8,10 @@ export interface PushCreatorPayload {
   environmentId: string;
 }
 
-export interface PushCreatorResponse {
-  push: Push;
-}
-
 export const pushCreator = async (
   payload?: PushCreatorPayload
-): Promise<PushCreatorResponse> => {
+): Promise<PushResponse> => {
   return axiosClient
-    .post<PushCreatorResponse>('/v1/push', payload)
+    .post<PushResponse>('/v1/push', payload)
     .then(response => response.data);
 };
