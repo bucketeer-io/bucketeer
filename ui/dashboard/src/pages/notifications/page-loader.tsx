@@ -93,6 +93,13 @@ const PageLoader = () => {
     [commonPath]
   );
 
+  const handleOnCloseModal = useCallback(() => {
+    onCloseConfirmModal();
+    setIsDeleteNotification(false);
+    setSelectedNotification(undefined);
+    onCloseActionModal();
+  }, []);
+
   const mutationState = useMutation({
     mutationFn: async (notification: Notification) => {
       return isDeleteNotification
@@ -107,9 +114,8 @@ const PageLoader = () => {
           });
     },
     onSuccess: () => {
-      onCloseConfirmModal();
+      handleOnCloseModal();
       invalidateNotifications(queryClient);
-      setSelectedNotification(undefined);
       mutationState.reset();
       notify({
         message: t('message:collection-action-success', {
@@ -136,7 +142,7 @@ const PageLoader = () => {
   useEffect(() => {
     if (isError && error) {
       errorNotify(error);
-      onCloseActionModal();
+      handleOnCloseModal();
     }
   }, [isError, error]);
 
@@ -152,7 +158,7 @@ const PageLoader = () => {
         <AddNotificationModal
           disabled={!editable}
           isOpen={isAdd}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {isEdit && (
@@ -161,13 +167,13 @@ const PageLoader = () => {
           isOpen={isEdit}
           isLoadingNotification={isLoadingNotification}
           notification={selectedNotification}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
+          onClose={handleOnCloseModal}
           onSubmit={onHandleConfirmSubmit}
           title={t(`table:popover.${confirmTranslationKey}-notification`)}
           description={
