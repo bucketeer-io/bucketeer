@@ -161,6 +161,8 @@ spec:
           args:
             - "-c"
             - "/usr/local/conf/config.yaml"
+            - "--log-level"
+            - "warn"
           env:
             - name: POD_NAME
               valueFrom:
