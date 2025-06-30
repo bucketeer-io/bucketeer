@@ -376,7 +376,7 @@ service NotificationService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete",
-      description: "Delete subscription."
+      description: "Delete a subscription."
       tags: "subscription"
       operation_id: "web.v1.subscription.delete"
       responses: {

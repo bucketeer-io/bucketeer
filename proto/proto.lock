@@ -44376,7 +44376,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Delete subscription."
+                        "value": "Delete a subscription."
                       },
                       {
                         "name": "tags",

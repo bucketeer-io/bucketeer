@@ -7539,7 +7539,7 @@ paths:
         - subscription
     delete:
       summary: Delete
-      description: Delete subscription.
+      description: Delete a subscription.
       operationId: web.v1.subscription.delete
       responses:
         "200":
