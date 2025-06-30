@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePartialState, useToggleOpen } from 'hooks';
 import pickBy from 'lodash/pickBy';
@@ -6,8 +6,8 @@ import { Project } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import CollectionLoader from 'pages/projects/collection-loader';
-import EditProjectModal from 'pages/projects/project-modal/edit-project-modal';
 import FilterProjectModal from 'pages/projects/project-modal/filter-project-modal';
+import ProjectCreateUpdateModal from 'pages/projects/project-modal/project-create-update-modal/index.tsx';
 import { ProjectFilters } from 'pages/projects/types';
 import Filter from 'elements/filter';
 import TableListContainer from 'elements/table-list-container';
@@ -34,11 +34,26 @@ const OrganizationProjects = () => {
 
   const [filters, setFilters] = usePartialState<ProjectFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<ProjectFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<ProjectFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onActionHandler = useCallback((project: Project) => {
+    setSelectedProject(project);
+    onOpenEditModal();
+  }, []);
+
+  const onClearFilters = useCallback(() => {
+    setFilters({
+      searchQuery: '',
+      disabled: undefined
+    });
+  }, []);
 
   return (
     <div className="flex flex-col flex-1 size-full">
@@ -64,10 +79,10 @@ const OrganizationProjects = () => {
         />
       )}
       {isOpenEditModal && (
-        <EditProjectModal
+        <ProjectCreateUpdateModal
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
-          project={selectedProject!}
+          project={selectedProject}
         />
       )}
       <TableListContainer className="self-stretch">
@@ -75,16 +90,8 @@ const OrganizationProjects = () => {
           filters={filters}
           organizationId={organizationId}
           setFilters={onChangeFilters}
-          onActionHandler={value => {
-            setSelectedProject(value);
-            onOpenEditModal();
-          }}
-          onClearFilters={() =>
-            setFilters({
-              searchQuery: '',
-              disabled: undefined
-            })
-          }
+          onActionHandler={onActionHandler}
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </div>

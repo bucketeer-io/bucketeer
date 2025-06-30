@@ -1,4 +1,5 @@
 import axiosClient from '@api/axios-client';
+import { ProjectResponse } from './project-creator';
 
 export interface ProjectUpdaterPayload {
   id: string;
@@ -6,8 +7,10 @@ export interface ProjectUpdaterPayload {
   name: string;
 }
 
-export const projectUpdater = async (params?: ProjectUpdaterPayload) => {
+export const projectUpdater = async (
+  params?: ProjectUpdaterPayload
+): Promise<ProjectResponse> => {
   return axiosClient
-    .post('/v1/environment/update_project', params)
+    .post<ProjectResponse>('/v1/environment/update_project', params)
     .then(response => response.data);
 };

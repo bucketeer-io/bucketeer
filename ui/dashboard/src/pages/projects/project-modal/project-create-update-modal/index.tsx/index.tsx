@@ -1,31 +1,33 @@
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { organizationCreator } from '@api/organization';
+import { projectCreator, ProjectResponse, projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateOrganizations } from '@queries/organizations';
+import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { Project } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import Checkbox from 'components/checkbox';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
-interface AddOrganizationModalProps {
+interface ProjectCreateUpdateModalProps {
   isOpen: boolean;
+  project?: Project;
   onClose: () => void;
 }
 
-export interface AddOrganizationForm {
+export interface ProjectCreateUpdateForm {
   name: string;
   urlCode: string;
-  ownerEmail: string;
-  isTrial?: boolean;
   description?: string;
 }
 
@@ -41,50 +43,78 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
           name: translation('common:url-code')
         })
       ),
-    description: yup.string(),
-    ownerEmail: yup.string().email().required(requiredMessage),
-    isTrial: yup.bool()
+    description: yup.string()
   });
 
-const AddOrganizationModal = ({
+const ProjectCreateUpdateModal = ({
   isOpen,
-  onClose
-}: AddOrganizationModalProps) => {
+  onClose,
+  project
+}: ProjectCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
+  const { consoleAccount } = useAuth();
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
-    defaultValues: {
-      name: '',
-      urlCode: '',
-      description: '',
-      ownerEmail: '',
-      isTrial: true
-    }
+    values: {
+      name: project?.name || '',
+      urlCode: project?.urlCode || '',
+      description: project?.description || ''
+    },
+    mode: 'onChange'
   });
 
-  const onSubmit: SubmitHandler<AddOrganizationForm> = async values => {
-    return organizationCreator({
-      ...values,
-      isSystemAdmin: false
-    })
-      .then(() => {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('organization'),
-            action: t('created')
-          })
-        });
-        invalidateOrganizations(queryClient);
-        onClose();
-      })
-      .catch(error => errorNotify(error));
-  };
+  const onSubmit: SubmitHandler<ProjectCreateUpdateForm> = useCallback(
+    async values => {
+      try {
+        let resp: ProjectResponse | null = null;
+        if (project) {
+          resp = await projectUpdater({
+            id: project.id,
+            description: values.description,
+            name: values.name
+          });
+        } else {
+          resp = await projectCreator({
+            ...values,
+            organizationId: currentEnvironment.organizationId
+          });
+        }
+
+        if (resp) {
+          invalidateProjects(queryClient);
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('project'),
+              action: t(project ? 'updated' : 'created')
+            })
+          });
+          onClose();
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [project, currentEnvironment]
+  );
 
   return (
-    <SlideModal title={t('new-org')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t(project ? 'update-project' : 'new-project')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full p-5">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -99,17 +129,21 @@ const AddOrganizationModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
-                        const isUrlCodeDirty =
-                          form.getFieldState('urlCode').isDirty;
-                        const urlCode = form.getValues('urlCode');
                         field.onChange(value);
-                        form.setValue(
-                          'urlCode',
-                          isUrlCodeDirty ? urlCode : onGenerateSlug(value)
-                        );
+
+                        if (!project) {
+                          const isUrlCodeDirty =
+                            form.getFieldState('urlCode').isDirty;
+                          const urlCode = form.getValues('urlCode');
+                          form.setValue(
+                            'urlCode',
+                            isUrlCodeDirty ? urlCode : onGenerateSlug(value)
+                          );
+                        }
                       }}
                     />
                   </Form.Control>
@@ -125,8 +159,9 @@ const AddOrganizationModal = ({
                   <Form.Label required>{t('form:url-code')}</Form.Label>
                   <Form.Control>
                     <Input
+                      value={field.value}
                       placeholder={`${t('form:placeholder-code')}`}
-                      {...field}
+                      disabled={!!project || disabled}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -141,41 +176,10 @@ const AddOrganizationModal = ({
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={disabled}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="ownerEmail"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('form:owner-email')}</Form.Label>
-                  <Form.Control className="w-full">
-                    <Input
-                      placeholder={`${t('form:placeholder-email')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="isTrial"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <Checkbox
-                      onCheckedChange={checked => field.onChange(checked)}
-                      checked={field.value}
-                      title={`${t(`form:trial`)}`}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -187,17 +191,23 @@ const AddOrganizationModal = ({
               <ButtonBar
                 primaryButton={
                   <Button variant="secondary" onClick={onClose}>
-                    {t(`common:cancel`)}
+                    {t(`cancel`)}
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`create-org`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(project ? `update-project` : 'create-project')}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>
@@ -208,4 +218,4 @@ const AddOrganizationModal = ({
   );
 };
 
-export default AddOrganizationModal;
+export default ProjectCreateUpdateModal;

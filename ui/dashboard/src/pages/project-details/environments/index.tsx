@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
@@ -8,8 +8,7 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import AddEnvironmentModal from './environment-modal/add-environment-modal';
-import EditEnvironmentModal from './environment-modal/edit-environment-modal';
+import EnvironmentCreateUpdateModal from './environment-modal/environment-create-update-modal';
 import PageContent from './page-content';
 import { EnvironmentActionsType } from './types';
 
@@ -21,11 +20,11 @@ const ProjectEnvironments = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
+  const [
+    isOpenCreateUpdateModal,
+    onOpenCreateUpdateModal,
+    onCloseCreateUpdateModal
+  ] = useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -45,49 +44,47 @@ const ProjectEnvironments = () => {
     }
   });
 
-  const onHandleArchive = () => {
+  const onHandleArchive = useCallback(() => {
     if (selectedEnvironment?.id) {
       mutation.mutate(selectedEnvironment?.id);
     }
-  };
+  }, [selectedEnvironment]);
 
-  const onHandleActions = (
-    environment: Environment,
-    type: EnvironmentActionsType
-  ) => {
-    switch (type) {
-      case 'ARCHIVE':
-      case 'UNARCHIVE':
+  const onHandleActions = useCallback(
+    (environment: Environment, type: EnvironmentActionsType) => {
+      setSelectedEnvironment(environment);
+      if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
         setIsArchiving(type === 'ARCHIVE');
-        onOpenConfirmModal();
-        break;
-      default:
-        onOpenEditModal();
-        break;
-    }
-    setSelectedEnvironment(environment);
-  };
+        return onOpenConfirmModal();
+      }
+      return onOpenCreateUpdateModal();
+    },
+    []
+  );
+
+  const handleOnCloseModal = useCallback(() => {
+    onCloseCreateUpdateModal();
+    onCloseConfirmModal();
+    setSelectedEnvironment(undefined);
+  }, []);
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onActionHandler={onHandleActions} />
-      {isOpenAddModal && (
-        <AddEnvironmentModal
-          isOpen={isOpenAddModal}
-          onClose={onCloseAddModal}
-        />
-      )}
-      {isOpenEditModal && (
-        <EditEnvironmentModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          environment={selectedEnvironment!}
+      <PageContent
+        onAdd={onOpenCreateUpdateModal}
+        onActionHandler={onHandleActions}
+      />
+      {isOpenCreateUpdateModal && (
+        <EnvironmentCreateUpdateModal
+          isOpen={isOpenCreateUpdateModal}
+          environment={selectedEnvironment}
+          onClose={handleOnCloseModal}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
+          onClose={handleOnCloseModal}
           onSubmit={onHandleArchive}
           title={
             isArchiving

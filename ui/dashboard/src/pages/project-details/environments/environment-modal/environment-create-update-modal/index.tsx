@@ -1,7 +1,11 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { environmentUpdater } from '@api/environment';
+import {
+  environmentCreator,
+  EnvironmentResponse,
+  environmentUpdater
+} from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
@@ -12,40 +16,56 @@ import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Environment } from '@types';
+import { onGenerateSlug } from 'utils/converts';
+import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import Divider from 'components/divider';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
-interface EditEnvironmentModalProps {
+interface EnvironmentCreateUpdateModalProps {
   isOpen: boolean;
+  environment?: Environment;
   onClose: () => void;
-  environment: Environment;
 }
 
-export interface EditEnvironmentForm {
+export interface EnvironmentCreateUpdateForm {
+  projectId: string;
   name: string;
+  urlCode: string;
   description?: string;
   requireComment: boolean;
 }
 
-const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   yup.object().shape({
     name: yup.string().required(requiredMessage),
+    urlCode: yup
+      .string()
+      .required(requiredMessage)
+      .matches(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+        translation('message:validation.id-rule', {
+          name: translation('common:url-code')
+        })
+      ),
     description: yup.string(),
+    projectId: yup.string().required(requiredMessage),
     requireComment: yup.boolean().required(requiredMessage)
   });
 
-const EditEnvironmentModal = ({
+const EnvironmentCreateUpdateModal = ({
   isOpen,
   onClose,
   environment
-}: EditEnvironmentModalProps) => {
+}: EnvironmentCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
   const { t } = useTranslation(['common', 'form', 'message']);
@@ -75,38 +95,60 @@ const EditEnvironmentModal = ({
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
-    defaultValues: {
-      name: environment.name,
-      description: environment.description,
-      requireComment: environment.requireComment
-    }
+    values: {
+      name: environment?.name || '',
+      description: environment?.description,
+      requireComment: environment?.requireComment || false,
+      projectId: projectId || '',
+      urlCode: environment?.urlCode || ''
+    },
+    mode: 'onChange'
   });
 
-  const onSubmit: SubmitHandler<EditEnvironmentForm> = async values => {
-    try {
-      const resp = await environmentUpdater({
-        id: environment.id,
-        name: values.name,
-        description: values.description,
-        requireComment: values.requireComment
-      });
-      if (resp) {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('source-type:environment'),
-            action: t('updated')
-          })
-        });
-        invalidateEnvironments(queryClient);
-        onClose();
+  const {
+    formState: { isValid, isDirty, isSubmitting }
+  } = form;
+
+  const onSubmit: SubmitHandler<EnvironmentCreateUpdateForm> = useCallback(
+    async values => {
+      try {
+        let resp: EnvironmentResponse | null = null;
+        if (environment) {
+          resp = await environmentUpdater({
+            id: environment!.id,
+            name: values.name,
+            description: values.description,
+            requireComment: values.requireComment
+          });
+        } else {
+          resp = await environmentCreator({
+            ...values
+          });
+        }
+
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('source-type.environment'),
+              action: t(environment ? 'updated' : 'created')
+            })
+          });
+          invalidateEnvironments(queryClient);
+          onClose();
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
-    }
-  };
+    },
+    [environment]
+  );
 
   return (
-    <SlideModal title={t('update-env')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t(environment ? 'update-env' : 'new-env')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full p-5">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -124,6 +166,18 @@ const EditEnvironmentModal = ({
                       disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      onChange={value => {
+                        field.onChange(value);
+                        if (!environment) {
+                          const isUrlCodeDirty =
+                            form.getFieldState('urlCode').isDirty;
+                          const urlCode = form.getValues('urlCode');
+                          form.setValue(
+                            'urlCode',
+                            isUrlCodeDirty ? urlCode : onGenerateSlug(value)
+                          );
+                        }
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -131,17 +185,36 @@ const EditEnvironmentModal = ({
               )}
             />
 
-            <Form.Item>
-              <Form.Label required>{t('form:url-code')}</Form.Label>
-              <Form.Control>
-                <Input
-                  value={environment.urlCode}
-                  placeholder={`${t('form:placeholder-code')}`}
-                  disabled
-                />
-              </Form.Control>
-              <Form.Message />
-            </Form.Item>
+            <Form.Field
+              control={form.control}
+              name="urlCode"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>
+                    {t('form:url-code')}
+                    <Tooltip
+                      align="start"
+                      alignOffset={-76}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('form:env-url-tooltip')}
+                      className="!z-[100] max-w-[400px]"
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <Input
+                      value={field.value}
+                      placeholder={`${t('form:placeholder-code')}`}
+                      disabled={disabled || !!environment}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
 
             <Form.Item>
               <Form.Label required>{`${t(`project`)}`}</Form.Label>
@@ -200,7 +273,7 @@ const EditEnvironmentModal = ({
               <ButtonBar
                 primaryButton={
                   <Button variant="secondary" onClick={onClose}>
-                    {t(`common:cancel`)}
+                    {t(`cancel`)}
                   </Button>
                 }
                 secondaryButton={
@@ -210,10 +283,10 @@ const EditEnvironmentModal = ({
                     trigger={
                       <Button
                         type="submit"
-                        disabled={!form.formState.isDirty || disabled}
-                        loading={form.formState.isSubmitting}
+                        disabled={!isDirty || !isValid || disabled}
+                        loading={isSubmitting}
                       >
-                        {t(`update-env`)}
+                        {t(environment ? `update-env` : 'create-env')}
                       </Button>
                     }
                   />
@@ -227,4 +300,4 @@ const EditEnvironmentModal = ({
   );
 };
 
-export default EditEnvironmentModal;
+export default EnvironmentCreateUpdateModal;

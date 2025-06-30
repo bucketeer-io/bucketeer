@@ -1,7 +1,9 @@
 import axiosClient from '@api/axios-client';
+import { AnyObject } from 'yup';
 
 export interface OrganizationUnarchivePayload {
   id: string;
+  command?: AnyObject;
 }
 
 export const organizationUnarchive = async (

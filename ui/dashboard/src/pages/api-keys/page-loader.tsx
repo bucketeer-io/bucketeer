@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_APIKEYS } from 'constants/routing';
+import { ID_NEW, PAGE_PATH_APIKEYS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -14,8 +15,7 @@ import { APIKey } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import ConfirmModal from 'elements/confirm-modal';
-import AddAPIKeyModal from './api-key-modal/add-api-key-modal';
-import EditAPIKeyModal from './api-key-modal/edit-api-key-modal';
+import APIKeyCreateUpdateModal from './api-key-modal/api-key-create-update-modal';
 import PageContent from './page-content';
 import { APIKeyActionsType } from './types';
 
@@ -24,6 +24,7 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const navigate = useNavigate();
 
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
     consoleAccount!
@@ -43,7 +44,6 @@ const PageLoader = () => {
     isAdd,
     isEdit,
     onCloseActionModal,
-    onOpenAddModal,
     onOpenEditModal
   } = useActionWithURL({
     closeModalPath: commonPath
@@ -77,6 +77,17 @@ const PageLoader = () => {
     enabled: !!isEdit && !!apiKeyId && !selectedAPIKey
   });
 
+  const handleOpenAddModal = useCallback(
+    () => navigate(`${commonPath}/${ID_NEW}`),
+    [commonPath]
+  );
+
+  const handleOnCloseModal = useCallback(() => {
+    onCloseActionModal();
+    onCloseConfirmModal();
+    setSelectedAPIKey(undefined);
+  }, []);
+
   const onHandleActions = useCallback(
     (apiKey: APIKey, type: APIKeyActionsType) => {
       setSelectedAPIKey(apiKey);
@@ -100,10 +111,13 @@ const PageLoader = () => {
   );
 
   const mutationState = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (selectedAPIKey: APIKey) => {
+      const environmentId = environments.find(
+        item => item.name === selectedAPIKey.environmentName
+      )?.id;
       return apiKeyUpdater({
-        id,
-        environmentId: currentEnvironment.id,
+        id: selectedAPIKey.id,
+        environmentId,
         disabled: isDisabling
       });
     },
@@ -122,8 +136,8 @@ const PageLoader = () => {
   });
 
   const onHandleDisable = useCallback(() => {
-    if (selectedAPIKey?.id) {
-      mutationState.mutate(selectedAPIKey.id);
+    if (selectedAPIKey) {
+      mutationState.mutate(selectedAPIKey);
     }
   }, [selectedAPIKey]);
 
@@ -136,34 +150,31 @@ const PageLoader = () => {
   useEffect(() => {
     if (isError && error) {
       errorNotify(error);
-      onCloseActionModal();
+      handleOnCloseModal();
     }
   }, [isError, error]);
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      {isAdd && (
-        <AddAPIKeyModal
-          isOpen={isAdd}
-          isLoadingEnvs={isLoadingEnvs}
-          environments={environments}
-          onClose={onCloseActionModal}
-        />
-      )}
-      {isEdit && (
-        <EditAPIKeyModal
-          isOpen={isEdit}
+      <PageContent
+        onAdd={handleOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
+      {(!!isAdd || !!isEdit) && (
+        <APIKeyCreateUpdateModal
+          isOpen={!!isAdd || !!isEdit}
+          apiKeyEnvironmentId={apiKeyEnvironmentId as string}
           isLoadingApiKey={isLoadingApiKey}
+          isLoadingEnvs={isLoadingEnvs}
           apiKey={selectedAPIKey}
           environments={environments}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
+          onClose={handleOnCloseModal}
           onSubmit={onHandleDisable}
           title={
             isDisabling

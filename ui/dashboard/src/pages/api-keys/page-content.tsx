@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
@@ -41,11 +41,19 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
-  const onChangeFilters = (values: Partial<APIKeysFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<APIKeysFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onClearFilters = useCallback(
+    () => setFilters({ searchQuery: '', disabled: undefined }),
+    []
+  );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -94,13 +102,11 @@ const PageContent = ({
       )}
       <TableListContainer>
         <CollectionLoader
-          onAdd={onAdd}
           filters={filters}
+          onAdd={onAdd}
           setFilters={onChangeFilters}
           onActions={onHandleActions}
-          onClearFilters={() =>
-            setFilters({ searchQuery: '', disabled: undefined })
-          }
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </PageLayout.Content>
