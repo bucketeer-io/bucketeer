@@ -63,6 +63,7 @@ env:
   emailFilter:
   logLevel: info
   googleTagManagerId:
+  apiEndpoint:
 affinity: {}
 nodeSelector: {}
 pdb:

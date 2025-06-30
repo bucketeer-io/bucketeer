@@ -10,4 +10,4 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   env.js: |-
-    window.env = {"GOOGLE_TAG_MANAGER_ID":"{{ .Values.env.googleTagManagerId }}", "DEMO_SIGN_IN_ENABLED":{{ .Values.oauth.demoSignIn.enabled }}, "DEMO_SIGN_IN_EMAIL":"{{ .Values.oauth.demoSignIn.email }}", "DEMO_SIGN_IN_PASSWORD":"{{ .Values.oauth.demoSignIn.password }}"};
+    window.env = {"GOOGLE_TAG_MANAGER_ID":"{{ .Values.env.googleTagManagerId }}", "DEMO_SIGN_IN_ENABLED":{{ .Values.oauth.demoSignIn.enabled }}, "DEMO_SIGN_IN_EMAIL":"{{ .Values.oauth.demoSignIn.email }}", "API_ENDPOINT":"{{ .Values.env.apiEndpoint }}"};
