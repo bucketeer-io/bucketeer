@@ -8,7 +8,7 @@ export interface NotificationFilters {
   searchQuery: string;
 }
 
-export type NotificationActionsType = 'EDIT' | 'ENABLE' | 'DISABLE';
+export type NotificationActionsType = 'EDIT' | 'ENABLE' | 'DISABLE' | 'DELETE';
 
 export interface NotificationOption {
   value: SourceType;
