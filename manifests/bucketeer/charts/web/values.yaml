@@ -106,8 +106,8 @@ webhook:
   kmsResourceName:
 envoy:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-envoy
-    tag: v1.31.0
+    repository: envoyproxy/envoy
+    tag: v1.34.1
     pullPolicy: IfNotPresent
   lbPolicy: LEAST_REQUEST
   config:

@@ -60,8 +60,8 @@ hpa:
 
 envoy:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-envoy
-    tag: v1.31.0
+    repository: envoyproxy/envoy
+    tag: v1.34.1
     pullPolicy: IfNotPresent
   lbPolicy: LEAST_REQUEST
   config:
@@ -249,19 +249,19 @@ onDemandProcessors:
     # Data warehouse configuration will be injected from global settings by Helm template
     dataWarehouse:
       type: ""
-      batchSize: 0  
-      timezone: "" 
+      batchSize: 0
+      timezone: ""
       mysql:
-        useMainConnection: false  
-        host: ""  
-        port: 0  
-        user: ""  
-        password: ""  
-        database: ""  
+        useMainConnection: false
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
       bigquery:
-        project: ""  
-        dataset: ""  
-        location: ""  
+        project: ""
+        dataset: ""
+        location: ""
   goalCountEventOPSPersister:
     flushSize: 100
     flushInterval: 10
@@ -276,17 +276,17 @@ onDemandProcessors:
     flushTimeout: 10
     # Data warehouse configuration will be injected from global settings by Helm template
     dataWarehouse:
-      type: ""  
-      batchSize: 0  
-      timezone: ""  
+      type: ""
+      batchSize: 0
+      timezone: ""
       mysql:
-        useMainConnection: false  
-        host: ""  
-        port: 0  
-        user: ""  
-        password: ""  
-        database: ""  
+        useMainConnection: false
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
       bigquery:
-        project: ""  
-        dataset: ""  
-        location: ""  
+        project: ""
+        dataset: ""
+        location: ""
