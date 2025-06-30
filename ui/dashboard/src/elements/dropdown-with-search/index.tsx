@@ -8,6 +8,11 @@ import {
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  FixedSizeList,
+  ListChildComponentProps,
+  FixedSizeListProps
+} from 'react-window';
 import { cn } from 'utils/style';
 import {
   DropdownMenu,
@@ -18,6 +23,52 @@ import {
   DropdownOption,
   DropdownValue
 } from 'components/dropdown';
+
+interface RowWithDataProps {
+  items: DropdownOption[];
+  selectedFieldValue: string;
+  isMultiselect?: boolean;
+  selectedOptions?: string[];
+  additionalElement?: (item: DropdownOption) => ReactNode;
+  onSelectOption: (value: DropdownValue) => void;
+}
+
+const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
+
+const RowWithData = ({
+  index,
+  style,
+  data
+}: ListChildComponentProps<RowWithDataProps>) => {
+  const {
+    items,
+    isMultiselect,
+    selectedOptions,
+    selectedFieldValue,
+    additionalElement,
+    onSelectOption
+  } = data;
+  const currentItem = items[index];
+  return (
+    <DropdownMenuItem
+      key={index}
+      style={style}
+      isSelected={selectedOptions?.includes(
+        currentItem[selectedFieldValue] as string
+      )}
+      isMultiselect={isMultiselect}
+      value={currentItem.value}
+      label={currentItem.label}
+      icon={currentItem?.icon}
+      disabled={currentItem?.disabled}
+      additionalElement={additionalElement && additionalElement(currentItem)}
+      onSelectOption={() =>
+        onSelectOption(currentItem[selectedFieldValue] as string)
+      }
+      className="justify-between gap-x-4 [&>div:last-child]:mb-[2px]"
+    />
+  );
+};
 
 const DropdownMenuWithSearch = ({
   align,
@@ -93,13 +144,16 @@ const DropdownMenuWithSearch = ({
 
   const dropdownOptions = useMemo(
     () =>
-      options?.filter(item =>
-        !searchValue
+      options?.filter(item => {
+        return !searchValue
           ? item
-          : (item.label as string)
-              .toLowerCase()
-              .includes(searchValue.toLowerCase())
-      ),
+          : (typeof item?.label === 'object'
+              ? item?.labelText
+              : (item?.label as string)
+            )
+              ?.toLowerCase()
+              ?.includes(searchValue?.toLowerCase());
+      }),
     [options, searchValue]
   );
 
@@ -144,7 +198,11 @@ const DropdownMenuWithSearch = ({
       <DropdownMenuContent
         ref={contentRef}
         align={align}
-        className={cn('w-[500px] py-0', contentClassName)}
+        className={cn(
+          'w-[500px] py-0',
+          { 'hidden-scroll': dropdownOptions?.length > 15 },
+          contentClassName
+        )}
         style={
           isExpand
             ? {
@@ -176,24 +234,28 @@ const DropdownMenuWithSearch = ({
           }
         />
         {dropdownOptions?.length > 0 ? (
-          dropdownOptions.map((item, index) => (
-            <DropdownMenuItem
-              key={index}
-              isSelected={selectedOptions?.includes(
-                item[selectedFieldValue] as string
-              )}
-              isMultiselect={isMultiselect}
-              value={item.value}
-              label={item.label}
-              icon={item?.icon}
-              disabled={item?.disabled}
-              additionalElement={additionalElement && additionalElement(item)}
-              onSelectOption={() =>
-                onSelectOption(item[selectedFieldValue] as string)
-              }
-              className="justify-between gap-x-4 [&>div:last-child]:mb-[2px]"
-            />
-          ))
+          <List
+            height={
+              dropdownOptions.length > 15 ? 200 : dropdownOptions.length * 44
+            }
+            width={'100%'}
+            itemSize={44}
+            itemCount={dropdownOptions.length}
+            itemData={{
+              items: dropdownOptions,
+              className: 'justify-between gap-x-4 [&>div:last-child]:mb-[2px]',
+              isMultiselect: isMultiselect,
+              selectedOptions,
+              selectedFieldValue,
+              additionalElement,
+              onSelectOption
+            }}
+            className={
+              dropdownOptions?.length < 15 ? 'hidden-scroll' : 'small-scroll'
+            }
+          >
+            {RowWithData}
+          </List>
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
             setSearchValue(value);

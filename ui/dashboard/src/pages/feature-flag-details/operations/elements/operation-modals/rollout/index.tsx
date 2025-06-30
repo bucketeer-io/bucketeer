@@ -132,6 +132,7 @@ const ProgressiveRolloutModal = ({
             <p className="-mt-0.5">{item.name || item.value}</p>
           </div>
         ),
+        labelText: item.name || item.value,
         value: item.id
       })),
     [feature]

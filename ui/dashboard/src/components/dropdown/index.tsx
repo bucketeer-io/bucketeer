@@ -29,6 +29,7 @@ export type DropdownOption = {
   description?: boolean;
   haveCheckbox?: boolean;
   disabled?: boolean;
+  labelText?: string;
   [key: string]:
     | DropdownValue
     | boolean
