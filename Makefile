@@ -211,6 +211,18 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: create-mysql-event-tables
+create-mysql-event-tables:
+	@echo "Creating MySQL event tables for data warehouse..."
+	go run ./hack/create-mysql-event-tables create \
+		--mysql-host=${MYSQL_HOST} \
+		--mysql-port=${MYSQL_PORT} \
+		--mysql-user=${MYSQL_USER} \
+		--mysql-pass=${MYSQL_PASS} \
+		--mysql-db-name=${MYSQL_DB_NAME} \
+		--no-profile \
+		--no-gcp-trace-enabled
+
 .PHONY: generate-service-token
 generate-service-token:
 	go run ./hack/generate-service-token generate \
@@ -503,3 +515,13 @@ docker-compose-delete-data:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ delete-e2e-data-mysql
+
+.PHONY: docker-compose-create-mysql-event-tables
+docker-compose-create-mysql-event-tables:
+	@echo "Creating MySQL event tables for Docker Compose data warehouse..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	make -C ./ create-mysql-event-tables
