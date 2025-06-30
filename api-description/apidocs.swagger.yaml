@@ -867,6 +867,355 @@ paths:
           format: int32
       tags:
         - Audit Logs
+  /v1/auto_ops_rule:
+    get:
+      summary: Get Auto Ops Rule
+      description: Get an Auto Ops Rule by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetAutoOpsRuleResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Auto Ops Rules
+    delete:
+      summary: Delete Auto Ops Rule
+      description: Delete an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteAutoOpsRuleResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Auto Ops Rules
+    post:
+      summary: Create Auto Ops Rule
+      description: Create a new Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateAutoOpsRuleResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateAutoOpsRuleRequest'
+      tags:
+        - Auto Ops Rules
+    patch:
+      summary: Update Auto Ops Rule
+      description: Update an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateAutoOpsRuleResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateAutoOpsRuleRequest'
+      tags:
+        - Auto Ops Rules
+  /v1/auto_ops_rule/execute:
+    post:
+      summary: Execute Auto Ops Rule
+      description: Execute an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.execute
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayExecuteAutoOpsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayExecuteAutoOpsRequest'
+      tags:
+        - Auto Ops Rules
+  /v1/auto_ops_rule/stop:
+    post:
+      summary: Stop Auto Ops Rule
+      description: Stop an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.stop
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayStopAutoOpsRuleResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayStopAutoOpsRuleRequest'
+      tags:
+        - Auto Ops Rules
+  /v1/auto_ops_rules:
+    get:
+      summary: List Auto Ops Rules
+      description: List Auto Ops Rules. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.auto_ops_rules.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListAutoOpsRulesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: featureIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+      tags:
+        - Auto Ops Rules
   /v1/code_reference:
     get:
       summary: Get
@@ -2342,6 +2691,129 @@ definitions:
       - DESC
       - ASC
     default: DESC
+  autoopsActionType:
+    type: string
+    enum:
+      - UNKNOWN
+      - ENABLE
+      - DISABLE
+    default: UNKNOWN
+  autoopsAutoOpsRule:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      opsType:
+        $ref: '#/definitions/autoopsOpsType'
+      clauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerautoopsClause'
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      deleted:
+        type: boolean
+      autoOpsStatus:
+        $ref: '#/definitions/autoopsAutoOpsStatus'
+      featureName:
+        type: string
+  autoopsAutoOpsStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - FINISHED
+      - STOPPED
+    default: WAITING
+  autoopsDatetimeClause:
+    type: object
+    properties:
+      time:
+        type: string
+        format: int64
+      actionType:
+        $ref: '#/definitions/autoopsActionType'
+  autoopsDatetimeClauseChange:
+    type: object
+    properties:
+      id:
+        type: string
+      clause:
+        $ref: '#/definitions/autoopsDatetimeClause'
+        description: The clause value must be fully filled if the create or update clause action is requested.
+      changeType:
+        $ref: '#/definitions/bucketeerautoopsChangeType'
+    required:
+      - changeType
+  autoopsOpsEventRateClause:
+    type: object
+    properties:
+      variationId:
+        type: string
+      goalId:
+        type: string
+      minCount:
+        type: string
+        format: int64
+      threadsholdRate:
+        type: number
+        format: double
+      operator:
+        $ref: '#/definitions/autoopsOpsEventRateClauseOperator'
+      actionType:
+        $ref: '#/definitions/autoopsActionType'
+  autoopsOpsEventRateClauseChange:
+    type: object
+    properties:
+      id:
+        type: string
+      clause:
+        $ref: '#/definitions/autoopsOpsEventRateClause'
+        description: The clause value must be fully filled if the create or update clause action is requested.
+      changeType:
+        $ref: '#/definitions/bucketeerautoopsChangeType'
+    required:
+      - changeType
+  autoopsOpsEventRateClauseOperator:
+    type: string
+    enum:
+      - GREATER_OR_EQUAL
+      - LESS_OR_EQUAL
+    default: GREATER_OR_EQUAL
+  autoopsOpsType:
+    type: string
+    enum:
+      - TYPE_UNKNOWN
+      - SCHEDULE
+      - EVENT_RATE
+    default: TYPE_UNKNOWN
+  bucketeerautoopsChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
+  bucketeerautoopsClause:
+    type: object
+    properties:
+      id:
+        type: string
+      clause:
+        $ref: '#/definitions/protobufAny'
+      actionType:
+        $ref: '#/definitions/autoopsActionType'
+      executedAt:
+        type: string
+        format: int64
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -2465,6 +2937,31 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayCreateAutoOpsRuleRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      opsType:
+        $ref: '#/definitions/autoopsOpsType'
+      opsEventRateClauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsOpsEventRateClause'
+      datetimeClauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsDatetimeClause'
+    required:
+      - featureId
+      - opsType
+  bucketeergatewayCreateAutoOpsRuleResponse:
+    type: object
+    properties:
+      autoOpsRule:
+        $ref: '#/definitions/autoopsAutoOpsRule'
   bucketeergatewayCreateCodeReferenceRequest:
     type: object
     properties:
@@ -2591,10 +3088,27 @@ definitions:
         type: array
         items:
           type: string
+  bucketeergatewayDeleteAutoOpsRuleResponse:
+    type: object
   bucketeergatewayDeleteCodeReferenceResponse:
     type: object
   bucketeergatewayDeleteSegmentResponse:
     type: object
+  bucketeergatewayExecuteAutoOpsRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      clauseId:
+        type: string
+    required:
+      - id
+      - clauseId
+  bucketeergatewayExecuteAutoOpsResponse:
+    type: object
+    properties:
+      alreadyTriggered:
+        type: boolean
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
     type: object
     properties:
@@ -2610,6 +3124,11 @@ definitions:
     properties:
       auditLog:
         $ref: '#/definitions/auditlogAuditLog'
+  bucketeergatewayGetAutoOpsRuleResponse:
+    type: object
+    properties:
+      autoOpsRule:
+        $ref: '#/definitions/autoopsAutoOpsRule'
   bucketeergatewayGetCodeReferenceResponse:
     type: object
     properties:
@@ -2661,6 +3180,16 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayListAutoOpsRulesResponse:
+    type: object
+    properties:
+      autoOpsRules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsAutoOpsRule'
+      cursor:
+        type: string
   bucketeergatewayListCodeReferencesResponse:
     type: object
     properties:
@@ -2721,6 +3250,15 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayStopAutoOpsRuleRequest:
+    type: object
+    properties:
+      id:
+        type: string
+    required:
+      - id
+  bucketeergatewayStopAutoOpsRuleResponse:
+    type: object
   bucketeergatewayUpdateAccountV2Request:
     type: object
     properties:
@@ -2763,6 +3301,25 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayUpdateAutoOpsRuleRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      opsEventRateClauseChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsOpsEventRateClauseChange'
+      datetimeClauseChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsDatetimeClauseChange'
+    required:
+      - id
+  bucketeergatewayUpdateAutoOpsRuleResponse:
+    type: object
   bucketeergatewayUpdateCodeReferenceRequest:
     type: object
     properties:

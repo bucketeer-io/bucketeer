@@ -32,6 +32,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
@@ -149,6 +150,7 @@ type grpcGatewayService struct {
 	pushClient             pushclient.Client
 	codeRefClient          coderefclient.Client
 	auditLogClient         auditlogclient.Client
+	autoOpsClient          autoopsclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -166,6 +168,7 @@ func NewGrpcGatewayService(
 	pushClient pushclient.Client,
 	codeRefClient coderefclient.Client,
 	auditLogClient auditlogclient.Client,
+	autoOpsClient autoopsclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -185,6 +188,7 @@ func NewGrpcGatewayService(
 		pushClient:             pushClient,
 		codeRefClient:          codeRefClient,
 		auditLogClient:         auditLogClient,
+		autoOpsClient:          autoOpsClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,

@@ -39,6 +39,9 @@ import "proto/coderef/code_reference.proto";
 import "proto/coderef/service.proto";
 import "proto/auditlog/auditlog.proto";
 import "proto/auditlog/service.proto";
+import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/clause.proto";
+import "proto/autoops/service.proto";
 
 message PingRequest {}
 
@@ -519,6 +522,65 @@ message ListFeatureHistoryResponse {
   repeated auditlog.AuditLog audit_logs = 1;
   string cursor = 2;
   int64 total_count = 3;
+}
+
+message GetAutoOpsRuleRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetAutoOpsRuleResponse {
+  autoops.AutoOpsRule auto_ops_rule = 1;
+}
+
+message CreateAutoOpsRuleRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  autoops.OpsType ops_type = 2 [(google.api.field_behavior) = REQUIRED];
+  repeated autoops.OpsEventRateClause ops_event_rate_clauses = 3;
+  repeated autoops.DatetimeClause datetime_clauses = 4;
+}
+
+message CreateAutoOpsRuleResponse {
+  autoops.AutoOpsRule auto_ops_rule = 1;
+}
+
+message ListAutoOpsRulesRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  repeated string feature_ids = 3;
+}
+
+message ListAutoOpsRulesResponse {
+  repeated autoops.AutoOpsRule auto_ops_rules = 1;
+  string cursor = 2;
+}
+
+message StopAutoOpsRuleRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message StopAutoOpsRuleResponse {}
+
+message DeleteAutoOpsRuleRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteAutoOpsRuleResponse {}
+
+message UpdateAutoOpsRuleRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  repeated autoops.OpsEventRateClauseChange ops_event_rate_clause_changes = 2;
+  repeated autoops.DatetimeClauseChange datetime_clause_changes = 11;
+}
+
+message UpdateAutoOpsRuleResponse {}
+
+message ExecuteAutoOpsRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 6 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ExecuteAutoOpsResponse {
+  bool already_triggered = 1;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -1005,6 +1067,92 @@ service Gateway {
       description: "List Feature History. To call this API, you need a `READ` API Key role.",
       tags: "Audit Logs",
       operation_id: "api.gateway.v1.feature_history.list"
+    };
+  }
+  rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      get: "/v1/auto_ops_rule"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Auto Ops Rule",
+      description: "Get an Auto Ops Rule by ID. To call this API, you need a `READ` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.get"
+    };
+  }
+  rpc CreateAutoOpsRule(CreateAutoOpsRuleRequest)
+      returns (CreateAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Auto Ops Rule",
+      description: "Create a new Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.create"
+    };
+  }
+  rpc ListAutoOpsRules(ListAutoOpsRulesRequest)
+      returns (ListAutoOpsRulesResponse) {
+    option (google.api.http) = {
+      get: "/v1/auto_ops_rules"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Auto Ops Rules",
+      description: "List Auto Ops Rules. To call this API, you need a `READ` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.list"
+    };
+  }
+  rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
+      returns (StopAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop Auto Ops Rule",
+      description: "Stop an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.stop"
+    };
+  }
+  rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
+      returns (DeleteAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      delete: "/v1/auto_ops_rule"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Auto Ops Rule",
+      description: "Delete an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.delete"
+    };
+  }
+  rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
+      returns (UpdateAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/auto_ops_rule"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Auto Ops Rule",
+      description: "Update an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.update"
+    };
+  }
+  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute Auto Ops Rule",
+      description: "Execute an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Auto Ops Rules",
+      operation_id: "api.gateway.v1.auto_ops_rules.execute"
     };
   }
 }
