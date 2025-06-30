@@ -370,7 +370,50 @@ service NotificationService {
     };
   }
   rpc DeleteSubscription(DeleteSubscriptionRequest)
-      returns (DeleteSubscriptionResponse) {}
+      returns (DeleteSubscriptionResponse) {
+    option (google.api.http) = {
+      delete: "/v1/subscription"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete subscription."
+      tags: "subscription"
+      operation_id: "web.v1.subscription.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the subscription is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc EnableSubscription(EnableSubscriptionRequest)
       returns (EnableSubscriptionResponse) {}
   rpc DisableSubscription(DisableSubscriptionRequest)
