@@ -321,11 +321,6 @@ docker-compose -f docker-compose/docker-compose.yml ps
 # View detailed logs for a service
 docker-compose -f docker-compose/docker-compose.yml logs -f --tail=100 web
 
-# Execute commands in a running container
-docker-compose -f docker-compose/docker-compose.yml exec web sh
-
-# Check network connectivity
-docker-compose -f docker-compose/docker-compose.yml exec api ping bucketeer-mysql
 ```
 
 ### Reset Environment
