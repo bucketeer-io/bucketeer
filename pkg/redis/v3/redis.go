@@ -47,6 +47,7 @@ const (
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
+	saddCmdName         = "SADD"
 	xAddCmdName         = "XADD"
 	xGroupCreateCmdName = "XGROUP_CREATE"
 	xReadGroupCmdName   = "XREADGROUP"
@@ -92,6 +93,7 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
+	SAdd(key string, members ...interface{}) (int64, error)
 	Pipeline(tx bool) PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
@@ -133,6 +135,8 @@ type PipeClient interface {
 	PFAdd(key string, els ...string) *goredis.IntCmd
 	Incr(key string) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
+	SAdd(key string, members ...interface{}) *goredis.IntCmd
+	Expire(key string, expiration time.Duration) *goredis.BoolCmd
 	Exec() ([]goredis.Cmder, error)
 	PFCount(keys ...string) *goredis.IntCmd
 	Get(key string) *goredis.StringCmd
@@ -451,6 +455,21 @@ func (c *client) Set(key string, val interface{}, expiration time.Duration) erro
 	return err
 }
 
+func (c *client) SAdd(key string, members ...interface{}) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName).Inc()
+	result, err := c.rc.SAdd(context.TODO(), key, members...).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return result, err
+}
+
 func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfAddCmdName).Inc()
@@ -735,6 +754,16 @@ func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 	return c.pipe.TTL(c.ctx, key)
 }
 
+func (c *pipeClient) SAdd(key string, members ...interface{}) *goredis.IntCmd {
+	c.cmds = append(c.cmds, saddCmdName)
+	return c.pipe.SAdd(c.ctx, key, members...)
+}
+
+func (c *pipeClient) Expire(key string, expiration time.Duration) *goredis.BoolCmd {
+	c.cmds = append(c.cmds, expireCmdName)
+	return c.pipe.Expire(c.ctx, key, expiration)
+}
+
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	startTime := time.Now()
 	cmdName := pipelineExecCmdName
@@ -767,7 +796,7 @@ func (c *pipeClient) Get(key string) *goredis.StringCmd {
 }
 
 func (c *pipeClient) Del(key string) *goredis.IntCmd {
-	c.cmds = append(c.cmds, pfCountCmdName)
+	c.cmds = append(c.cmds, delCmdName)
 	return c.pipe.Del(c.ctx, key)
 }
 

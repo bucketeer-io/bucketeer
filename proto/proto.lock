@@ -47104,6 +47104,38 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "UserAttributes",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "userAttributes",
+                "type": "UserAttribute",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "UserAttribute",
+            "fields": [
+              {
+                "id": 1,
+                "name": "key",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "values",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "package": {

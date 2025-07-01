@@ -27,3 +27,13 @@ message User {
   int64 last_seen = 4;
   int64 created_at = 5;
 }
+
+message UserAttributes {
+  string environment_id = 1;
+  repeated UserAttribute userAttributes = 2;
+}
+
+message UserAttribute {
+  string key = 1;
+  repeated string values = 2;
+}
