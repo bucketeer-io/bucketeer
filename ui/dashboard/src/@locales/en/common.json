@@ -284,7 +284,7 @@
   "autoops-rule": "Auto Operation",
   "tag": "Tag",
   "segment": "Segment",
-  "pagination-count": "Showing {{count}} of {{total}} results",
+  "pagination-count": "Showing {{start}}-{{end}} of {{total}} results",
   "member-role-description": "Can only access specific environments and cannot create or update organization settings, projects, environments, API keys, or members.",
   "admin-role-description": "Has access to all environments and can do anything",
   "teams": "Teams",
