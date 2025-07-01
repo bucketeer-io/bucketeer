@@ -109,7 +109,7 @@ services:
       - BUCKETEER_WEB_UNIFIED_GATEWAY_PORT=9106
       - BUCKETEER_WEB_METRICS_PORT=9002
       - BUCKETEER_WEB_TIMEZONE=UTC
-      - BUCKETEER_WEB_LOG_LEVEL=debug
+      - BUCKETEER_WEB_LOG_LEVEL=info
       - BUCKETEER_WEB_PROFILE=false
       - BUCKETEER_WEB_GCP_TRACE_ENABLED=false
       - BUCKETEER_WEB_USE_MYSQL=true
@@ -186,7 +186,7 @@ services:
       - BUCKETEER_API_PUSH_SERVICE=web:9101
       - BUCKETEER_API_CODE_REF_SERVICE=web:9105
       - BUCKETEER_API_AUDIT_LOG_SERVICE=web:9093
-      - BUCKETEER_API_LOG_LEVEL=debug
+      - BUCKETEER_API_LOG_LEVEL=info
       - BUCKETEER_API_PROFILE=false
       - BUCKETEER_API_GCP_TRACE_ENABLED=false
       - BUCKETEER_API_TRACE_SAMPLING_PROBABILITY=0.0
@@ -253,7 +253,7 @@ services:
       - BUCKETEER_BATCH_EVENT_COUNTER_SERVICE=web:9096
       - BUCKETEER_BATCH_FEATURE_SERVICE=web:9098
       - BUCKETEER_BATCH_BATCH_SERVICE=nginx:443
-      - BUCKETEER_BATCH_LOG_LEVEL=debug
+      - BUCKETEER_BATCH_LOG_LEVEL=info
       - BUCKETEER_BATCH_PROFILE=false
       - BUCKETEER_BATCH_GCP_TRACE_ENABLED=false
       - BUCKETEER_BATCH_STAN_MODEL_ID=y3qsnd7m
@@ -274,6 +274,8 @@ services:
     container_name: bucketeer-subscriber
     depends_on:
       web:
+        condition: service_started
+      api:
         condition: service_started
     command: ["server"]
     environment:
@@ -350,7 +352,7 @@ services:
     image: alpine:latest
     container_name: bucketeer-batch-cron
     depends_on:
-      web:
+      batch:
         condition: service_started
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
