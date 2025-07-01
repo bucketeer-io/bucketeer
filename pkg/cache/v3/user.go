@@ -45,14 +45,13 @@ func NewUserAttributesCache(c cache.MultiGetDeleteCountCache) UserAttributesCach
 }
 
 func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]string, error) {
-	keyPrefix := u.key(environmentId)
-	key := keyPrefix + ":*"
+	scanKey := u.key(environmentId) + ":*"
 	var cursor uint64
 	var k []string
 	var err error
 	keys := []string{}
 	for {
-		cursor, k, err = u.cache.Scan(cursor, key, userAttributesMaxSize)
+		cursor, k, err = u.cache.Scan(cursor, scanKey, userAttributesMaxSize)
 		if err != nil {
 			break
 		}
@@ -93,7 +92,7 @@ func (u *userAttributesCache) Put(environmentId string, userAttributes *userprot
 	}
 	pipe := u.cache.Pipeline(true)
 	for _, attribute := range userAttributes.UserAttributes {
-		key := fmt.Sprintf("%s:%s:%s", environmentId, userAttributeKind, attribute.Key)
+		key := u.key(environmentId) + ":" + attribute.Key
 		for _, value := range attribute.Values {
 			pipe.SAdd(key, value)
 		}
