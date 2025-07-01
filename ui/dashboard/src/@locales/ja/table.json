@@ -22,6 +22,7 @@
     "enable-api-key": "APIキーを有効化",
     "disable-notification": "通知を無効化",
     "enable-notification": "通知を有効化",
+    "delete-notification": "通知をを削除",
     "edit-push": "プッシュを編集",
     "disable-push": "プッシュを無効化",
     "enable-push": "プッシュを有効化",
@@ -94,7 +95,8 @@
   },
   "notification": {
     "confirm-enable-desc": "通知「<bold>{{name}}</bold>」が有効化されます。続行してもよろしいですか？",
-    "confirm-disable-desc": "通知「<bold>{{name}}</bold>」が無効化されます。続行してもよろしいですか？"
+    "confirm-disable-desc": "通知「<bold>{{name}}</bold>」が無効化されます。続行してもよろしいですか？",
+    "confirm-delete-desc": "通知「<bold>{{name}}</bold>」は完全に削除されます。続行してもよろしいですか？"
   },
   "push": {
     "confirm-enable-desc": "プッシュ「<bold>{{name}}</bold>」が有効化されます。続行してもよろしいですか？",

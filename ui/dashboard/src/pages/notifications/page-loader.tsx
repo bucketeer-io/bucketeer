@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { notificationUpdater } from '@api/notification';
+import { notificationDelete, notificationUpdater } from '@api/notification';
 import { useQueryNotification } from '@queries/notification-details';
 import { invalidateNotifications } from '@queries/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -47,8 +47,16 @@ const PageLoader = () => {
     useState<Notification>();
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
+  const [isDeleteNotification, setIsDeleteNotification] =
+    useState<boolean>(false);
+
   const { searchOptions } = useSearchParams();
   const notificationEnvironmentId = searchOptions?.environmentId;
+  const confirmTranslationKey = useMemo(
+    () =>
+      isDeleteNotification ? 'delete' : isDisabling ? 'disable' : 'enable',
+    [isDeleteNotification, isDisabling]
+  );
 
   const {
     data: notificationCollection,
@@ -75,6 +83,9 @@ const PageLoader = () => {
         case 'DISABLE':
           setIsDisabling(type === 'DISABLE');
           return onOpenConfirmModal();
+        case 'DELETE':
+          setIsDeleteNotification(true);
+          return onOpenConfirmModal();
         default:
           break;
       }
@@ -82,30 +93,41 @@ const PageLoader = () => {
     [commonPath]
   );
 
+  const handleOnCloseModal = useCallback(() => {
+    onCloseConfirmModal();
+    setIsDeleteNotification(false);
+    setSelectedNotification(undefined);
+    onCloseActionModal();
+  }, []);
+
   const mutationState = useMutation({
     mutationFn: async (notification: Notification) => {
-      return notificationUpdater({
-        id: notification.id,
-        environmentId: notification.environmentId,
-        disabled: isDisabling
-      });
+      return isDeleteNotification
+        ? await notificationDelete({
+            id: notification.id,
+            environmentId: notification.environmentId
+          })
+        : await notificationUpdater({
+            id: notification.id,
+            environmentId: notification.environmentId,
+            disabled: isDisabling
+          });
     },
     onSuccess: () => {
-      onCloseConfirmModal();
+      handleOnCloseModal();
       invalidateNotifications(queryClient);
-      setSelectedNotification(undefined);
       mutationState.reset();
       notify({
         message: t('message:collection-action-success', {
           collection: t('common:notification'),
-          action: t('common:updated')
+          action: t(isDeleteNotification ? 'common:deleted' : 'common:updated')
         })
       });
     },
     onError: error => errorNotify(error)
   });
 
-  const onHandleDisable = useCallback(() => {
+  const onHandleConfirmSubmit = useCallback(() => {
     if (selectedNotification?.id) {
       mutationState.mutate(selectedNotification);
     }
@@ -120,7 +142,7 @@ const PageLoader = () => {
   useEffect(() => {
     if (isError && error) {
       errorNotify(error);
-      onCloseActionModal();
+      handleOnCloseModal();
     }
   }, [isError, error]);
 
@@ -136,7 +158,7 @@ const PageLoader = () => {
         <AddNotificationModal
           disabled={!editable}
           isOpen={isAdd}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {isEdit && (
@@ -145,26 +167,18 @@ const PageLoader = () => {
           isOpen={isEdit}
           isLoadingNotification={isLoadingNotification}
           notification={selectedNotification}
-          onClose={onCloseActionModal}
+          onClose={handleOnCloseModal}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
-          onSubmit={onHandleDisable}
-          title={
-            isDisabling
-              ? t(`table:popover.disable-notification`)
-              : t(`table:popover.enable-notification`)
-          }
+          onClose={handleOnCloseModal}
+          onSubmit={onHandleConfirmSubmit}
+          title={t(`table:popover.${confirmTranslationKey}-notification`)}
           description={
             <Trans
-              i18nKey={
-                isDisabling
-                  ? 'table:notification.confirm-disable-desc'
-                  : 'table:notification.confirm-enable-desc'
-              }
+              i18nKey={`table:notification.confirm-${confirmTranslationKey}-desc`}
               values={{ name: selectedNotification?.name }}
               components={{ bold: <strong /> }}
             />

@@ -5,6 +5,7 @@ import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Notification } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
+import { IconTrash } from '@icons';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -128,6 +129,11 @@ export const useColumns = ({
                 label: `${t('table:popover.edit-notification')}`,
                 icon: IconEditOutlined,
                 value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.delete-notification')}`,
+                icon: IconTrash,
+                value: 'DELETE'
               }
             ])}
             onClick={value =>

@@ -22,6 +22,7 @@
     "enable-api-key": "Enable API Key",
     "disable-notification": "Disable Notification",
     "enable-notification": "Enable Notification",
+    "delete-notification": "Delete Notification",
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
@@ -94,7 +95,8 @@
   },
   "notification": {
     "confirm-enable-desc": "The notification \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
-    "confirm-disable-desc": "The notification \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+    "confirm-disable-desc": "The notification \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?",
+    "confirm-delete-desc": "The notification \"<bold>{{name}}</bold>\" will be deleted permanently. Are you sure you want to proceed?"
   },
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
