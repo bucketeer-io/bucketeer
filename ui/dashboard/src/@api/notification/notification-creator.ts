@@ -1,5 +1,6 @@
 import axiosClient from '@api/axios-client';
-import { Notification, NotificationRecipient, SourceType } from '@types';
+import { NotificationRecipient, SourceType } from '@types';
+import { NotificationResponse } from './notification-fetcher';
 
 export interface NotificationCreatorPayload {
   environmentId: string;
@@ -9,14 +10,10 @@ export interface NotificationCreatorPayload {
   featureFlagTags: string[];
 }
 
-export interface NotificationCreatorResponse {
-  subscription: Notification;
-}
-
 export const notificationCreator = async (
   payload: NotificationCreatorPayload
-): Promise<NotificationCreatorResponse> => {
+): Promise<NotificationResponse> => {
   return axiosClient
-    .post<NotificationCreatorResponse>('/v1/subscription', payload)
+    .post<NotificationResponse>('/v1/subscription', payload)
     .then(response => response.data);
 };

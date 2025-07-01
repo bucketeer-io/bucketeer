@@ -1,4 +1,5 @@
 import axiosClient from '@api/axios-client';
+import { OrganizationResponse } from './organization-creator';
 
 export interface OrganizationUpdatePayload {
   id: string;
@@ -9,8 +10,8 @@ export interface OrganizationUpdatePayload {
 
 export const organizationUpdater = async (
   params?: OrganizationUpdatePayload
-) => {
+): Promise<OrganizationResponse> => {
   return axiosClient
-    .post('/v1/environment/update_organization', params)
+    .post<OrganizationResponse>('/v1/environment/update_organization', params)
     .then(response => response.data);
 };

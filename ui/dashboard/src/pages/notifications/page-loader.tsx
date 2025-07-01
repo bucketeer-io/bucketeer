@@ -13,8 +13,7 @@ import { useTranslation } from 'i18n';
 import { Notification } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
-import AddNotificationModal from './notification-modal/add-notification-modal';
-import EditNotificationModal from './notification-modal/edit-notification-modal';
+import NotificationCreateUpdateModal from './notification-modal/notification-create-update-modal';
 import PageContent from './page-content';
 import { NotificationActionsType } from './types';
 
@@ -154,22 +153,17 @@ const PageLoader = () => {
         onHandleActions={onHandleActions}
       />
 
-      {isAdd && (
-        <AddNotificationModal
+      {(!!isAdd || !!isEdit) && (
+        <NotificationCreateUpdateModal
           disabled={!editable}
-          isOpen={isAdd}
-          onClose={handleOnCloseModal}
-        />
-      )}
-      {isEdit && (
-        <EditNotificationModal
-          disabled={!editable}
-          isOpen={isEdit}
+          notificationId={notificationId}
+          isOpen={!!isAdd || !!isEdit}
           isLoadingNotification={isLoadingNotification}
           notification={selectedNotification}
           onClose={handleOnCloseModal}
         />
       )}
+
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}

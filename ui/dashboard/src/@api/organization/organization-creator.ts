@@ -11,7 +11,7 @@ export interface OrganizationCreatorPayload {
 }
 
 export interface OrganizationResponse {
-  organization: Array<Organization>;
+  organization: Organization;
 }
 
 export const organizationCreator = async (

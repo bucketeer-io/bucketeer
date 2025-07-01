@@ -1,35 +1,38 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Project } from '@types';
 import PageContent from './page-content';
-import AddProjectModal from './project-modal/add-project-modal';
-import EditProjectModal from './project-modal/edit-project-modal';
+import ProjectCreateUpdateModal from './project-modal/project-create-update-modal/index.tsx';
 
 const PageLoader = () => {
   const [selectedProject, setSelectedProject] = useState<Project>();
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
+  const [
+    isOpenCreateUpdateModal,
+    onOpenCreateUpdateModal,
+    onCloseCreateUpdateModal
+  ] = useToggleOpen(false);
+
+  const handleOnCloseCreateUpdateModal = useCallback(() => {
+    onCloseCreateUpdateModal();
+    setSelectedProject(undefined);
+  }, []);
 
   return (
     <>
       <PageContent
-        onAdd={onOpenAddModal}
+        onAdd={onOpenCreateUpdateModal}
         onEdit={value => {
           setSelectedProject(value);
-          onOpenEditModal();
+          onOpenCreateUpdateModal();
         }}
       />
-      {isOpenAddModal && (
-        <AddProjectModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
-      {isOpenEditModal && (
-        <EditProjectModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          project={selectedProject!}
+
+      {isOpenCreateUpdateModal && (
+        <ProjectCreateUpdateModal
+          isOpen={isOpenCreateUpdateModal}
+          project={selectedProject}
+          onClose={handleOnCloseCreateUpdateModal}
         />
       )}
     </>

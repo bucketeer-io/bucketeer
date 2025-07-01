@@ -176,7 +176,7 @@ const CreateFlagForm = ({
         notify({
           message: t('message:collection-action-success', {
             collection: t('source-type.feature-flag'),
-            action: t('updated')
+            action: t('create')
           })
         });
         invalidateFeatures(queryClient);

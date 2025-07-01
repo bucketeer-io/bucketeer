@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import { Push } from '@types';
+import { PushResponse } from './push-fetcher';
 
 export type TagChangeActionType =
   | 'UNSPECIFIED'
@@ -20,14 +20,10 @@ export interface PushUpdaterPayload {
   tagChanges?: TagChange[];
 }
 
-export interface PushUpdaterResponse {
-  push: Push;
-}
-
 export const pushUpdater = async (
   params?: PushUpdaterPayload
-): Promise<PushUpdaterResponse> => {
+): Promise<PushResponse> => {
   return axiosClient
-    .patch<PushUpdaterResponse>('/v1/push', params)
+    .patch<PushResponse>('/v1/push', params)
     .then(response => response.data);
 };

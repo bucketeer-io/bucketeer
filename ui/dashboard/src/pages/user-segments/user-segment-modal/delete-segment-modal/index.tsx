@@ -6,7 +6,7 @@ import { IconDelete } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
-import SegmentWarning from '../edit-segment-modal/segment-warning';
+import SegmentWarning from '../segment-create-update-form/segment-warning';
 
 export type DeleteUserSegmentProps = {
   isDisabled: boolean;

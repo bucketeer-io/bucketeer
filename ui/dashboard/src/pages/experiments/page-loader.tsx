@@ -12,8 +12,7 @@ import { Experiment } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
-import AddExperimentModal from './experiments-modal/add-experiment-modal';
-import EditExperimentModal from './experiments-modal/edit-experiment-modal';
+import ExperimentCreateUpdateModal from './experiments-modal/experiment-create-update';
 import GoalsConnectionModal from './experiments-modal/goals-connection-modal';
 import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
@@ -140,17 +139,10 @@ const PageLoader = () => {
           onHandleActions={onHandleActions}
         />
       )}
-      {isAdd && (
-        <AddExperimentModal
+      {(!!isAdd || !!isEdit) && (
+        <ExperimentCreateUpdateModal
           disabled={!editable}
-          isOpen={isAdd}
-          onClose={onCloseActionModal}
-        />
-      )}
-      {isEdit && (
-        <EditExperimentModal
-          disabled={!editable}
-          isOpen={isEdit}
+          isOpen={!!isAdd || !!isEdit}
           onClose={onCloseActionModal}
         />
       )}

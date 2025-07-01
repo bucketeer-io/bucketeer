@@ -1,5 +1,6 @@
 import axiosClient from '@api/axios-client';
-import { Notification, NotificationLanguage, SourceType } from '@types';
+import { NotificationLanguage, SourceType } from '@types';
+import { NotificationResponse } from './notification-fetcher';
 
 export interface NotificationUpdterPayload {
   id: string;
@@ -11,14 +12,10 @@ export interface NotificationUpdterPayload {
   featureFlagTags?: string[];
 }
 
-export interface NotificationUpdterResponse {
-  subscription: Notification;
-}
-
 export const notificationUpdater = async (
   payload: NotificationUpdterPayload
-): Promise<NotificationUpdterResponse> => {
+): Promise<NotificationResponse> => {
   return axiosClient
-    .patch<NotificationUpdterResponse>('/v1/subscription', payload)
+    .patch<NotificationResponse>('/v1/subscription', payload)
     .then(response => response.data);
 };

@@ -1,5 +1,6 @@
 import axiosClient from '@api/axios-client';
-import { APIKey, APIKeyRole } from '@types';
+import { APIKeyRole } from '@types';
+import { APIKeyResponse } from './api-key-fetcher';
 
 export interface APIKeyCreatorPayload {
   environmentId: string;
@@ -8,14 +9,10 @@ export interface APIKeyCreatorPayload {
   description?: string;
 }
 
-export interface APIKeyCreatorResponse {
-  apiKey: APIKey;
-}
-
 export const apiKeyCreator = async (
   params?: APIKeyCreatorPayload
-): Promise<APIKeyCreatorResponse> => {
+): Promise<APIKeyResponse> => {
   return axiosClient
-    .post<APIKeyCreatorResponse>('/v1/account/create_api_key', params)
+    .post<APIKeyResponse>('/v1/account/create_api_key', params)
     .then(response => response.data);
 };

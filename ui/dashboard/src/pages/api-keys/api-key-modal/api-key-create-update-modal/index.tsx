@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { apiKeyUpdater } from '@api/api-key';
+import { apiKeyCreator, APIKeyResponse, apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,8 +9,9 @@ import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { APIKey, Environment } from '@types';
+import { APIKey, APIKeyRole, Environment } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
@@ -30,34 +31,40 @@ import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
-interface EditAPIKeyModalProps {
+interface APIKeyCreateUpdateModalProps {
   isOpen: boolean;
   isLoadingApiKey: boolean;
+  apiKeyEnvironmentId: string;
   environments: Environment[];
+  isLoadingEnvs: boolean;
   apiKey?: APIKey;
   onClose: () => void;
 }
 
-export interface EditAPIKeyForm {
+export interface APIKeyCreateUpdateForm {
   name: string;
   environmentId: string;
   description?: string;
+  role: APIKeyRole;
 }
 
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
     name: yup.string().required(requiredMessage),
     environmentId: yup.string().required(requiredMessage),
-    description: yup.string()
+    description: yup.string(),
+    role: yup.mixed<APIKeyRole>().required(requiredMessage)
   });
 
-const EditAPIKeyModal = ({
+const APIKeyCreateUpdateModal = ({
   isOpen,
   isLoadingApiKey,
+  isLoadingEnvs,
+  apiKeyEnvironmentId,
   apiKey,
   environments,
   onClose
-}: EditAPIKeyModalProps) => {
+}: APIKeyCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
@@ -67,11 +74,9 @@ const EditAPIKeyModal = ({
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(environments);
 
-  const apiEnvironmentId = useMemo(
-    () =>
-      formattedEnvironments.find(item => item.name === apiKey?.environmentName)
-        ?.id,
-    [formattedEnvironments, apiKey]
+  const isEditApiKey = useMemo(
+    () => !!apiKey || !!isLoadingApiKey || !!apiKeyEnvironmentId,
+    [apiKey, isLoadingApiKey, apiKeyEnvironmentId]
   );
 
   const disabled = useMemo(
@@ -83,8 +88,9 @@ const EditAPIKeyModal = ({
     resolver: yupResolver(useFormSchema(formSchema)),
     values: {
       name: apiKey?.name || '',
-      environmentId: apiEnvironmentId || emptyEnvironmentId,
-      description: apiKey?.description
+      environmentId: apiKey ? apiKeyEnvironmentId || emptyEnvironmentId : '',
+      description: apiKey?.description,
+      role: apiKey?.role || 'SDK_CLIENT'
     }
   });
 
@@ -93,33 +99,53 @@ const EditAPIKeyModal = ({
     formState: { isValid, isSubmitting, isDirty }
   } = form;
 
-  const environmentId = watch('environmentId');
+  const environmentIdWatch = watch('environmentId');
 
   const currentEnv = useMemo(
-    () => formattedEnvironments.find(item => item.id === environmentId),
-    [formattedEnvironments, environmentId]
+    () => formattedEnvironments.find(item => item.id === environmentIdWatch),
+    [formattedEnvironments, environmentIdWatch]
   );
 
-  const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
-    return apiKeyUpdater({
-      id: apiKey!.id,
-      environmentId: checkEnvironmentEmptyId(values.environmentId),
-      description: values.description,
-      name: values.name
-    }).then(() => {
-      notify({
-        message: t('message:collection-action-success', {
-          collection: t('source-type.api-key'),
-          action: t('updated')
-        })
-      });
-      invalidateAPIKeys(queryClient);
-      onClose();
-    });
-  };
+  const onSubmit: SubmitHandler<APIKeyCreateUpdateForm> = useCallback(
+    async values => {
+      let resp: APIKeyResponse | null = null;
+      const { environmentId, name, description, role } = values;
+      const envId = checkEnvironmentEmptyId(environmentId);
+      if (isEditApiKey) {
+        resp = await apiKeyUpdater({
+          id: apiKey!.id,
+          environmentId: envId,
+          description,
+          name
+        });
+      } else {
+        resp = await apiKeyCreator({
+          environmentId: envId,
+          name,
+          role,
+          description
+        });
+      }
+      if (resp) {
+        notify({
+          message: t('message:collection-action-success', {
+            collection: t('source-type.api-key'),
+            action: t(apiKey ? 'updated' : 'created')
+          })
+        });
+        invalidateAPIKeys(queryClient);
+        onClose();
+      }
+    },
+    [apiKey, isEditApiKey]
+  );
 
   return (
-    <SlideModal title={t('update-api-key')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t(isEditApiKey ? 'update-api-key' : 'new-api-key')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       {isLoadingApiKey ? (
         <FormLoading />
       ) : (
@@ -179,8 +205,9 @@ const EditAPIKeyModal = ({
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={currentEnv?.name}
-                          disabled
+                          disabled={!!apiKey || disabled}
                           variant="secondary"
+                          loading={isLoadingEnvs}
                           className="w-full"
                         />
                         <DropdownMenuContent
@@ -218,24 +245,49 @@ const EditAPIKeyModal = ({
                   className="mt-0.5"
                 />
               </div>
-
-              <RadioGroup defaultValue={apiKey?.role} disabled={disabled}>
-                {apiKeyOptions.map(({ id, label, description, value }) => (
-                  <div
-                    key={id}
-                    className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                  >
-                    <label htmlFor={id} className="flex-1 opacity-50">
-                      <p className="typo-para-medium text-gray-700">{label}</p>
-                      <p className="typo-para-small text-gray-600">
-                        {description}
-                      </p>
-                    </label>
-                    <RadioGroupItem disabled value={value} id={id} />
-                  </div>
-                ))}
-              </RadioGroup>
-
+              <Form.Field
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Control>
+                      <RadioGroup
+                        defaultValue={field.value}
+                        disabled={!!apiKey || disabled}
+                        onValueChange={field.onChange}
+                      >
+                        {apiKeyOptions.map(
+                          ({ id, label, description, value }) => (
+                            <div
+                              key={id}
+                              className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
+                            >
+                              <label
+                                htmlFor={id}
+                                className={cn('flex-1', {
+                                  'opacity-50': !!apiKey || disabled
+                                })}
+                              >
+                                <p className="typo-para-medium text-gray-700">
+                                  {label}
+                                </p>
+                                <p className="typo-para-small text-gray-600">
+                                  {description}
+                                </p>
+                              </label>
+                              <RadioGroupItem
+                                disabled={!!apiKey || disabled}
+                                value={value}
+                                id={id}
+                              />
+                            </div>
+                          )
+                        )}
+                      </RadioGroup>
+                    </Form.Control>
+                  </Form.Item>
+                )}
+              />
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
@@ -268,4 +320,4 @@ const EditAPIKeyModal = ({
   );
 };
 
-export default EditAPIKeyModal;
+export default APIKeyCreateUpdateModal;

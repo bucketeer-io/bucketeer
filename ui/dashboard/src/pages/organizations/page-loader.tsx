@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { organizationArchive, organizationUnarchive } from '@api/organization';
 import { invalidateOrganizations } from '@queries/organizations';
@@ -7,8 +7,7 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import AddOrganizationModal from './organization-modal/add-organization-modal';
-import EditOrganizationModal from './organization-modal/edit-organization-modal';
+import OrganizationCreateUpdateModal from './organization-modal/organization-create-update-modal';
 import PageContent from './page-content';
 import { OrganizationActionsType } from './types';
 
@@ -21,11 +20,11 @@ const PageLoader = () => {
 
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
+  const [
+    isOpenCreateUpdateModal,
+    onOpenCreateUpdateModal,
+    onCloseCreateUpdateModal
+  ] = useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -36,7 +35,7 @@ const PageLoader = () => {
         ? organizationArchive
         : organizationUnarchive;
 
-      return archiveMutation({ id });
+      return archiveMutation({ id, command: {} });
     },
     onSuccess: () => {
       onCloseConfirmModal();
@@ -45,49 +44,48 @@ const PageLoader = () => {
     }
   });
 
-  const onHandleArchive = () => {
+  const onHandleArchive = useCallback(() => {
     if (selectedOrganization?.id) {
       mutation.mutate(selectedOrganization?.id);
     }
-  };
+  }, [selectedOrganization, isArchiving, mutation]);
 
-  const onHandleActions = (
-    organization: Organization,
-    type: OrganizationActionsType
-  ) => {
-    switch (type) {
-      case 'ARCHIVE':
-      case 'UNARCHIVE':
+  const onHandleActions = useCallback(
+    (organization: Organization, type: OrganizationActionsType) => {
+      setSelectedOrganization(organization);
+
+      if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
         setIsArchiving(type === 'ARCHIVE');
-        onOpenConfirmModal();
-        break;
-      default:
-        onOpenEditModal();
-        break;
-    }
-    setSelectedOrganization(organization);
-  };
+        return onOpenConfirmModal();
+      }
+      return onOpenCreateUpdateModal();
+    },
+    []
+  );
+
+  const handleOnCloseModal = useCallback(() => {
+    onCloseCreateUpdateModal();
+    onCloseConfirmModal();
+    setSelectedOrganization(undefined);
+  }, []);
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      {isOpenAddModal && (
-        <AddOrganizationModal
-          isOpen={isOpenAddModal}
-          onClose={onCloseAddModal}
-        />
-      )}
-      {isOpenEditModal && (
-        <EditOrganizationModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
+      <PageContent
+        onAdd={onOpenCreateUpdateModal}
+        onHandleActions={onHandleActions}
+      />
+      {isOpenCreateUpdateModal && (
+        <OrganizationCreateUpdateModal
+          isOpen={isOpenCreateUpdateModal}
+          onClose={handleOnCloseModal}
           organization={selectedOrganization!}
         />
       )}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
+          onClose={handleOnCloseModal}
           onSubmit={onHandleArchive}
           title={
             isArchiving

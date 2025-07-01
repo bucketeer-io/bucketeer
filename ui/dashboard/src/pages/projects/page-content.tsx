@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
@@ -46,15 +46,23 @@ const PageContent = ({
 
   const [filters, setFilters] = usePartialState<ProjectFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<ProjectFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<ProjectFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
 
-  const onActionHandler = (project: Project) => {
+  const onActionHandler = useCallback((project: Project) => {
     onEdit(project);
-  };
+  }, []);
+
+  const onClearFilters = useCallback(
+    () => setFilters({ searchQuery: '', disabled: undefined }),
+    []
+  );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -108,9 +116,7 @@ const PageContent = ({
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
           organizationId={currentEnvironment.organizationId}
-          onClearFilters={() =>
-            setFilters({ searchQuery: '', disabled: undefined })
-          }
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </PageLayout.Content>
