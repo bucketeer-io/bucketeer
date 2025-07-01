@@ -33,6 +33,7 @@ env:
   timezone: UTC
   logLevel: info
   googleTagManagerId:
+  apiEndpoint:
 tls:
   service:
     secret: bucketeer-service-cert
