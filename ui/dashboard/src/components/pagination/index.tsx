@@ -25,12 +25,17 @@ const Pagination = ({
     [totalCount, pageSize]
   );
 
+  // Calculate the range of items being displayed
+  const startItem = totalCount > 0 ? cursor + 1 : 0;
+  const endItem = Math.min(cursor + pageSize, totalCount);
+
   return (
     <div className={cn('flex items-center justify-between')}>
       {totalCount > 0 && (
         <PaginationCount
           totalItems={totalCount}
-          value={totalCount < pageSize ? totalCount : pageSize}
+          startItem={startItem}
+          endItem={endItem}
         />
       )}
       {isShowPaginationAction && (
