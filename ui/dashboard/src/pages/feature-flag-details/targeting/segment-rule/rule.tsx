@@ -246,7 +246,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                   onSelectOption={value => {
                                     field.onChange(value);
                                   }}
-                                  contentClassName="!w-fit !max-w-[500px]"
+                                  contentClassName="!w-[500px] !max-w-[500px]"
                                 />
                               ) : (
                                 <Input {...field} />

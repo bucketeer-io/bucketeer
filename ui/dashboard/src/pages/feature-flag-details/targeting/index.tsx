@@ -90,9 +90,10 @@ const TargetingPage = ({
   const { data: collection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      archived: false
     },
-    enabled: !!currentEnvironment?.id
+    enabled: !!currentEnvironment
   });
   const waitingRunningRollouts =
     rolloutCollection?.progressiveRollouts?.filter(item =>

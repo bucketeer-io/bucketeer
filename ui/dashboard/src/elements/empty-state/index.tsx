@@ -65,7 +65,7 @@ const EmptyStateIllustration = () => {
 
 const EmptyStateBody = ({ children }: PropsWithChildren) => {
   return (
-    <div className="max-w-[360px] flex flex-col gap-2 text-center mx-auto">
+    <div className="max-w-[380px] flex flex-col gap-2 text-center mx-auto">
       {children}
     </div>
   );
