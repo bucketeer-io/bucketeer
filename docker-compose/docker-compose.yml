@@ -385,6 +385,7 @@ services:
     depends_on:
       - web
       - api
+      - batch
     volumes:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/bucketeer.conf:/etc/nginx/conf.d/bucketeer.conf:ro
