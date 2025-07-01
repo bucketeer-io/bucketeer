@@ -132,6 +132,11 @@ make docker-compose-logs
 make docker-compose-down
 ```
 
+6. Create MySQL event tables for data warehouse functionality:
+```shell
+make docker-compose-create-mysql-event-tables
+```
+
 ### Services and Ports
 
 The Docker Compose setup includes:

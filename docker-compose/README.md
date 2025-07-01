@@ -246,6 +246,9 @@ make docker-compose-logs
 
 # Clean up everything (containers, networks, volumes)
 make docker-compose-clean
+
+# Create MySQL event tables for data warehouse functionality
+make docker-compose-create-mysql-event-tables
 ```
 
 ### Individual Service Management
