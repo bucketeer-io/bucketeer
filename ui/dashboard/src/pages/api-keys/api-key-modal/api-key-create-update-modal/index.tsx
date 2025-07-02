@@ -12,7 +12,6 @@ import * as yup from 'yup';
 import { APIKey, APIKeyRole, Environment } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
-import { IconInfo } from '@icons';
 import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -23,7 +22,6 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
-import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
@@ -238,12 +236,6 @@ const APIKeyCreateUpdateModal = ({
                 <p className="text-gray-800 typo-head-bold-small">
                   {t('key-role')}
                 </p>
-                <Icon
-                  icon={IconInfo}
-                  size="xs"
-                  color="gray-500"
-                  className="mt-0.5"
-                />
               </div>
               <Form.Field
                 control={form.control}

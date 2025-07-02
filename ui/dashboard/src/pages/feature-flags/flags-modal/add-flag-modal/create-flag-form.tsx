@@ -241,11 +241,16 @@ const CreateFlagForm = ({
               <Form.Item className="py-2.5">
                 <Form.Label required className="relative w-fit !mb-2">
                   {t('form:feature-flags.flag-id')}
-                  <Icon
-                    icon={IconInfo}
-                    size="xs"
-                    color="gray-500"
-                    className="absolute -right-6"
+                  <Tooltip
+                    align="start"
+                    alignOffset={-56}
+                    trigger={
+                      <div className="flex-center absolute top-0 -right-6">
+                        <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                      </div>
+                    }
+                    content={t('form:flag-id-tooltip')}
+                    className="!z-[100] max-w-[400px]"
                   />
                 </Form.Label>
                 <Form.Control>
@@ -310,6 +315,7 @@ const CreateFlagForm = ({
                   {t('form:feature-flags.flag-type')}
                   <Tooltip
                     align="start"
+                    alignOffset={-30}
                     trigger={
                       <div className="flex-center absolute top-0 -right-6">
                         <Icon icon={IconInfo} size={'sm'} color="gray-500" />
@@ -317,7 +323,7 @@ const CreateFlagForm = ({
                     }
                     content={
                       <Trans
-                        i18nKey={'table:feature-flags.variation-type'}
+                        i18nKey={'form:flag-type-tooltip'}
                         values={{
                           type:
                             variationType === 'JSON'
@@ -329,7 +335,7 @@ const CreateFlagForm = ({
                         }}
                       />
                     }
-                    className="!z-[100] max-w-[400px]"
+                    className="!z-[100] max-w-[300px]"
                   />
                 </Form.Label>
                 <Form.Control>

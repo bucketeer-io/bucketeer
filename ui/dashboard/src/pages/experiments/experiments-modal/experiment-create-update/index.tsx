@@ -549,15 +549,7 @@ const ExperimentCreateUpdateModal = ({
                 name={`featureId`}
                 render={({ field }) => (
                   <Form.Item className="flex flex-col w-full">
-                    <Form.Label required className="relative w-fit">
-                      {t('common:flag')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
-                      />
-                    </Form.Label>
+                    <Form.Label required>{t('common:flag')}</Form.Label>
                     <Form.Control>
                       <DropdownMenuWithSearch
                         disabled={!!isEdit || disabled}
