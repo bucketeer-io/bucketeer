@@ -207,6 +207,7 @@
   "release": "Release",
   "kill-switch": "Kill Switch",
   "flag-id-tooltip": "Feature flag ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
+  "goal-id-tooltip": "Goal ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
   "tags-tooltip": "Tags help optimize feature flag evaluations by limiting which flags are processed. Using specific tags improves response times and reduces network traffic. Tags are recommended for better performance as your system grows.",
   "flag-type-tooltip": "Select the data type for your feature flag's variations. This cannot be changed after creation.",
   "history-details": "History Details",

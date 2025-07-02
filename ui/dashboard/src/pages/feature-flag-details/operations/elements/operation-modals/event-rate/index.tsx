@@ -285,6 +285,8 @@ const EventRateOperationModal = ({
                       <Form.Label required className="relative w-fit">
                         {t('common:goal')}
                         <Tooltip
+                          align="start"
+                          alignOffset={-50}
                           content={t('event-rate-tooltip.goal')}
                           trigger={
                             <div className="flex-center absolute top-0 -right-6">

@@ -190,7 +190,7 @@ const EnvironmentCreateUpdateModal = ({
               name="urlCode"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>
+                  <Form.Label required className="relative w-fit">
                     {t('form:url-code')}
                     <Tooltip
                       align="start"

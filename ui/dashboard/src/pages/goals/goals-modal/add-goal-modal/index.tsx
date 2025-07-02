@@ -19,6 +19,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 
 interface AddGoalModalProps {
   isOpen: boolean;
@@ -136,11 +137,16 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                 <Form.Item>
                   <Form.Label required className="relative w-fit">
                     {t('form:goal-id')}
-                    <Icon
-                      icon={IconInfo}
-                      size="xs"
-                      color="gray-500"
-                      className="absolute -right-6"
+                    <Tooltip
+                      align="start"
+                      alignOffset={-62}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('form:goal-id-tooltip')}
+                      className="!z-[100] max-w-[400px]"
                     />
                   </Form.Label>
                   <Form.Control>

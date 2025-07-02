@@ -11,12 +11,15 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Project } from '@types';
 import { onGenerateSlug } from 'utils/converts';
+import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface ProjectCreateUpdateModalProps {
@@ -156,7 +159,20 @@ const ProjectCreateUpdateModal = ({
               name="urlCode"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{t('form:url-code')}</Form.Label>
+                  <Form.Label required className="relative w-fit">
+                    {t('form:url-code')}
+                    <Tooltip
+                      align="start"
+                      alignOffset={-76}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('form:project-url-tooltip')}
+                      className="!z-[100] max-w-[400px]"
+                    />
+                  </Form.Label>
                   <Form.Control>
                     <Input
                       value={field.value}
