@@ -113,10 +113,14 @@ export const checkEnvironmentEmptyId = (environmentId: string) =>
 
 export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
   const htmlElement = document.getElementsByTagName('html')[0];
-  if (htmlElement)
+  if (htmlElement) {
+    htmlElement.classList[isLanguageJapanese ? 'add' : 'remove'](
+      'japanese-language'
+    );
     htmlElement.style.setProperty(
       'font-family',
       isLanguageJapanese ? 'Noto Sans, sans-serif' : 'Sofia Pro, sans-serif',
       'important'
     );
+  }
 };

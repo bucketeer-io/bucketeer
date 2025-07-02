@@ -103,4 +103,48 @@
   html body[data-scroll-locked] {
     margin-right: 0 !important;
   }
+
+  .japanese-language .typo-head-bold-huge,
+  .japanese-language .typo-head-semi-huge,
+  .japanese-language .typo-head-light-huge {
+    font-size: 23px !important;
+  }
+
+  .japanese-language .typo-head-bold-big,
+  .japanese-language .typo-head-semi-big,
+  .japanese-language .typo-head-light-big {
+    font-size: 19px !important;
+  }
+
+  .japanese-language .typo-head-bold-medium,
+  .japanese-language .typo-head-semi-medium,
+  .japanese-language .typo-head-light-medium {
+    font-size: 17px !important;
+  }
+
+  .japanese-language .typo-head-bold-small,
+  .japanese-language .typo-head-semi-small,
+  .japanese-language .typo-head-light-small {
+    font-size: 15px !important;
+  }
+
+  .japanese-language .typo-head-bold-tiny {
+    font-size: 11px !important;
+  }
+
+  .japanese-language .typo-para-big {
+    font-size: 17px !important;
+  }
+
+  .japanese-language .typo-para-medium {
+    font-size: 15px !important;
+  }
+
+  .japanese-language .typo-para-small {
+    font-size: 13px !important;
+  }
+
+  .japanese-language .typo-para-tiny {
+    font-size: 11px !important;
+  }
 }

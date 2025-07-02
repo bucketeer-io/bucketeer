@@ -15,7 +15,7 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
           <SupportPopover />
         </div>
       </div>
-      <p className="text-gray-600 mt-3 text-sm">{description}</p>
+      <p className="text-gray-600 mt-3 typo-para-small">{description}</p>
     </PageLayout.Header>
   );
 };
