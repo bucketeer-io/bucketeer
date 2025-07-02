@@ -45,7 +45,7 @@ const AuditLogTitle = ({
         additionalText
       }}
       components={{
-        b: <span className="font-bold text-gray-700 -mt-0.5" />,
+        b: <span className="font-bold text-gray-700" />,
         highlight: (
           <Link
             to={getPathName(entityId, entityType) as string}
