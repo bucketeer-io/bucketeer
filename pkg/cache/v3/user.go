@@ -33,7 +33,7 @@ const (
 
 type UserAttributesCache interface {
 	GetUserAttributeKeyAll(environmentId string) ([]string, error)
-	Put(environmentId string, userAttributes *userproto.UserAttributes) error
+	Put(userAttributes *userproto.UserAttributes) error
 }
 
 type userAttributesCache struct {
@@ -86,13 +86,13 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]st
 	return attributeKeys, nil
 }
 
-func (u *userAttributesCache) Put(environmentId string, userAttributes *userproto.UserAttributes) error {
+func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) error {
 	if userAttributes == nil {
 		return errors.New("user attributes is nil")
 	}
 	pipe := u.cache.Pipeline(true)
 	for _, attribute := range userAttributes.UserAttributes {
-		key := u.key(environmentId) + ":" + attribute.Key
+		key := u.key(userAttributes.EnvironmentId) + ":" + attribute.Key
 		for _, value := range attribute.Values {
 			pipe.SAdd(key, value)
 		}

@@ -100,6 +100,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 	defer mockController.Finish()
 
 	userAttrs := &userproto.UserAttributes{
+		EnvironmentId: testEnvironmentId,
 		UserAttributes: []*userproto.UserAttribute{
 			{Key: "key1", Values: []string{"v1", "v2"}},
 			{Key: "key2", Values: []string{"v3"}},
@@ -153,7 +154,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			uac := newUserAttributesCache(t, mockController)
 			if p.input == nil {
-				err := uac.Put(testEnvironmentId, p.input)
+				err := uac.Put(p.input)
 				assert.Equal(t, p.expectedErr, err)
 				return
 			}
@@ -162,7 +163,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 			if p.setup != nil {
 				p.setup(uac, pipe)
 			}
-			err := uac.Put(testEnvironmentId, p.input)
+			err := uac.Put(p.input)
 			if p.expectedErr != nil {
 				assert.EqualError(t, err, p.expectedErr.Error())
 			} else {
