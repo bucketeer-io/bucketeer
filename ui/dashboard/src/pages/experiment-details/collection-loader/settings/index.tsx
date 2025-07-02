@@ -13,7 +13,6 @@ import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -78,7 +77,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
       environmentId: currentEnvironment.id
     }
   });
@@ -95,9 +93,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { data: featureCollection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      hasExperiment: true
+      environmentId: currentEnvironment.id
     }
   });
 
