@@ -121,8 +121,42 @@ func (s *TagService) CreateTag(
 		)
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
-	// Save in the DB
-	if err := s.tagStorage.UpsertTag(ctx, tag); err != nil {
+
+	var event *eventproto.Event
+	var actualTag *domain.Tag
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.tagStorage.UpsertTag(ctxWithTx, tag); err != nil {
+			return err
+		}
+		// Fetch the actual tag from DB to get correct final state after upsert
+		actualTag, err = s.tagStorage.GetTagByName(ctxWithTx, tag.Name, tag.EnvironmentId, tag.EntityType)
+		if err != nil {
+			return err
+		}
+		// Publish event with the correct tag data from database
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_TAG,
+			actualTag.Id,
+			eventproto.Event_TAG_CREATED,
+			&eventproto.TagCreatedEvent{
+				Id:            actualTag.Id,
+				Name:          actualTag.Name,
+				CreatedAt:     actualTag.CreatedAt,
+				UpdatedAt:     actualTag.UpdatedAt,
+				EntityType:    actualTag.EntityType,
+				EnvironmentId: actualTag.EnvironmentId,
+			},
+			actualTag.EnvironmentId,
+			actualTag,
+			actualTag,
+		)
+		if err != nil {
+			return err
+		}
+		return s.publisher.Publish(ctx, event)
+	})
+	if err != nil {
 		s.logger.Error(
 			"Failed to store the tag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -133,31 +167,7 @@ func (s *TagService) CreateTag(
 		)
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
-	// Publish event
-	event, err := domainevent.NewEvent(
-		editor,
-		eventproto.Event_TAG,
-		tag.Id,
-		eventproto.Event_TAG_CREATED,
-		&eventproto.TagCreatedEvent{
-			Id:            tag.Id,
-			Name:          tag.Name,
-			CreatedAt:     tag.CreatedAt,
-			UpdatedAt:     tag.UpdatedAt,
-			EntityType:    tag.EntityType,
-			EnvironmentId: tag.EnvironmentId,
-		},
-		tag.EnvironmentId,
-		tag,
-		tag,
-	)
-	if err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
-	}
-	if err = s.publisher.Publish(ctx, event); err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
-	}
-	return &proto.CreateTagResponse{Tag: tag.Tag}, nil
+	return &proto.CreateTagResponse{Tag: actualTag.Tag}, nil
 }
 
 func (s *TagService) validateCreateTagRquest(req *proto.CreateTagRequest, localizer locale.Localizer) error {

@@ -33,6 +33,8 @@ var (
 	insertTagSQL string
 	//go:embed sql/select_tag.sql
 	selectTagSQL string
+	//go:embed sql/select_tag_by_name.sql
+	selectTagByNameSQL string
 	//go:embed sql/select_tags.sql
 	selectTagsSQL string
 	//go:embed sql/select_all_environment_tags.sql
@@ -46,6 +48,11 @@ var (
 type TagStorage interface {
 	UpsertTag(ctx context.Context, tag *domain.Tag) error
 	GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error)
+	GetTagByName(
+		ctx context.Context,
+		name, environmentId string,
+		entityType proto.Tag_EntityType,
+	) (*domain.Tag, error)
 	ListTags(
 		ctx context.Context,
 		options *mysql.ListOptions,
@@ -103,6 +110,38 @@ func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*dom
 		return nil, err
 	}
 	tag.EntityType = proto.Tag_EntityType(entityType)
+	return &domain.Tag{Tag: &tag}, nil
+}
+
+func (s *tagStorage) GetTagByName(
+	ctx context.Context,
+	name, environmentId string,
+	entityType proto.Tag_EntityType,
+) (*domain.Tag, error) {
+	var entityTypeInt int32
+	tag := proto.Tag{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectTagByNameSQL,
+		name,
+		environmentId,
+		int32(entityType),
+	).Scan(
+		&tag.Id,
+		&tag.Name,
+		&tag.CreatedAt,
+		&tag.UpdatedAt,
+		&entityTypeInt,
+		&tag.EnvironmentId,
+		&tag.EnvironmentName,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrTagNotFound
+		}
+		return nil, err
+	}
+	tag.EntityType = proto.Tag_EntityType(entityTypeInt)
 	return &domain.Tag{Tag: &tag}, nil
 }
 
