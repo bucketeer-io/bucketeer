@@ -47115,7 +47115,7 @@
               },
               {
                 "id": 2,
-                "name": "userAttributes",
+                "name": "user_attributes",
                 "type": "UserAttribute",
                 "is_repeated": true
               }

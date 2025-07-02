@@ -30,7 +30,7 @@ message User {
 
 message UserAttributes {
   string environment_id = 1;
-  repeated UserAttribute userAttributes = 2;
+  repeated UserAttribute user_attributes = 2;
 }
 
 message UserAttribute {

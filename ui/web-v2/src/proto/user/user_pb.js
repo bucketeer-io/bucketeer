@@ -596,8 +596,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentId: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        userattributesList: jspb.Message.toObjectList(
-          msg.getUserattributesList(),
+        userAttributesList: jspb.Message.toObjectList(
+          msg.getUserAttributesList(),
           proto.bucketeer.user.UserAttribute.toObject,
           includeInstance
         )
@@ -651,7 +651,7 @@ proto.bucketeer.user.UserAttributes.deserializeBinaryFromReader = function (
           value,
           proto.bucketeer.user.UserAttribute.deserializeBinaryFromReader
         );
-        msg.addUserattributes(value);
+        msg.addUserAttributes(value);
         break;
       default:
         reader.skipField();
@@ -687,7 +687,7 @@ proto.bucketeer.user.UserAttributes.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = message.getUserattributesList();
+  f = message.getUserAttributesList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
       2,
@@ -716,10 +716,10 @@ proto.bucketeer.user.UserAttributes.prototype.setEnvironmentId = function (
 };
 
 /**
- * repeated UserAttribute userAttributes = 2;
+ * repeated UserAttribute user_attributes = 2;
  * @return {!Array<!proto.bucketeer.user.UserAttribute>}
  */
-proto.bucketeer.user.UserAttributes.prototype.getUserattributesList =
+proto.bucketeer.user.UserAttributes.prototype.getUserAttributesList =
   function () {
     return /** @type{!Array<!proto.bucketeer.user.UserAttribute>} */ (
       jspb.Message.getRepeatedWrapperField(
@@ -734,7 +734,7 @@ proto.bucketeer.user.UserAttributes.prototype.getUserattributesList =
  * @param {!Array<!proto.bucketeer.user.UserAttribute>} value
  * @return {!proto.bucketeer.user.UserAttributes} returns this
  */
-proto.bucketeer.user.UserAttributes.prototype.setUserattributesList = function (
+proto.bucketeer.user.UserAttributes.prototype.setUserAttributesList = function (
   value
 ) {
   return jspb.Message.setRepeatedWrapperField(this, 2, value);
@@ -745,7 +745,7 @@ proto.bucketeer.user.UserAttributes.prototype.setUserattributesList = function (
  * @param {number=} opt_index
  * @return {!proto.bucketeer.user.UserAttribute}
  */
-proto.bucketeer.user.UserAttributes.prototype.addUserattributes = function (
+proto.bucketeer.user.UserAttributes.prototype.addUserAttributes = function (
   opt_value,
   opt_index
 ) {
@@ -762,9 +762,9 @@ proto.bucketeer.user.UserAttributes.prototype.addUserattributes = function (
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.user.UserAttributes} returns this
  */
-proto.bucketeer.user.UserAttributes.prototype.clearUserattributesList =
+proto.bucketeer.user.UserAttributes.prototype.clearUserAttributesList =
   function () {
-    return this.setUserattributesList([]);
+    return this.setUserAttributesList([]);
   };
 
 /**

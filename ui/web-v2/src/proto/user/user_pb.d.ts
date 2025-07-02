@@ -76,10 +76,10 @@ export class UserAttributes extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
-  clearUserattributesList(): void;
-  getUserattributesList(): Array<UserAttribute>;
-  setUserattributesList(value: Array<UserAttribute>): void;
-  addUserattributes(value?: UserAttribute, index?: number): UserAttribute;
+  clearUserAttributesList(): void;
+  getUserAttributesList(): Array<UserAttribute>;
+  setUserAttributesList(value: Array<UserAttribute>): void;
+  addUserAttributes(value?: UserAttribute, index?: number): UserAttribute;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserAttributes.AsObject;
@@ -105,7 +105,7 @@ export class UserAttributes extends jspb.Message {
 export namespace UserAttributes {
   export type AsObject = {
     environmentId: string;
-    userattributesList: Array<UserAttribute.AsObject>;
+    userAttributesList: Array<UserAttribute.AsObject>;
   };
 }
 
