@@ -7,16 +7,12 @@ import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
-import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment, ExperimentStatus } from '@types';
-import { truncateTextCenter } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
-import { copyToClipBoard } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import {
-  IconCopy,
   IconExperiment,
   IconStartExperiment,
   IconStopExperiment,
@@ -87,14 +83,6 @@ export const useColumns = ({
 
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { notify } = useToast();
-
-  const handleCopyId = (id: string) => {
-    copyToClipBoard(id);
-    notify({
-      message: t('message:copied')
-    });
-  };
 
   return [
     {
@@ -122,16 +110,6 @@ export const useColumns = ({
                 </Link>
               }
             />
-            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(id)}
-              <div onClick={() => handleCopyId(id)}>
-                <Icon
-                  icon={IconCopy}
-                  size={'sm'}
-                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                />
-              </div>
-            </div>
           </div>
         );
       }
