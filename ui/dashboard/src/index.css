@@ -107,7 +107,7 @@
   .japanese-language .typo-head-bold-huge,
   .japanese-language .typo-head-semi-huge,
   .japanese-language .typo-head-light-huge {
-    font-size: 23px !important;
+    font-size: 20px !important;
   }
 
   .japanese-language .typo-head-bold-big,
@@ -142,9 +142,5 @@
 
   .japanese-language .typo-para-small {
     font-size: 13px !important;
-  }
-
-  .japanese-language .typo-para-tiny {
-    font-size: 11px !important;
   }
 }
