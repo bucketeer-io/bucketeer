@@ -43,6 +43,7 @@ const OrganizationMembers = () => {
   return (
     <>
       <Filter
+        isShowDocumentation={false}
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />

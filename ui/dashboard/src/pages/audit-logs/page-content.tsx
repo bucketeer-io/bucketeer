@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import dayjs from 'dayjs';
 import { usePartialState } from 'hooks';
 import { pickBy } from 'lodash';
@@ -134,6 +135,7 @@ const PageContent = () => {
   return (
     <PageLayout.Content className="gap-y-6">
       <Filter
+        link={DOCUMENTATION_LINKS.AUDIT_LOGS}
         action={
           <>
             <EntityTypeDropdown

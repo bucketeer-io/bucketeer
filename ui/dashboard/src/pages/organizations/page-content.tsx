@@ -58,6 +58,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
+        isShowDocumentation={false}
         onOpenFilter={onOpenFilterModal}
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>

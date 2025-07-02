@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import {
   PAGE_PATH_FEATURE_HISTORY,
   PAGE_PATH_FEATURES
@@ -145,6 +146,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
   return (
     <PageLayout.Content className="pt-0 gap-y-6">
       <Filter
+        link={DOCUMENTATION_LINKS.FLAG_HISTORY}
         action={
           <>
             <ReactDateRangePicker
