@@ -84,6 +84,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
+        isShowDocumentation={false}
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

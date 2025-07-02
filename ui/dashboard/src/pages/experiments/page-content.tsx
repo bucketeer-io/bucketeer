@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -147,6 +148,7 @@ const PageContent = ({
         onChangeFilters={onFilterBySummary}
       />
       <Filter
+        link={DOCUMENTATION_LINKS.EXPERIMENTS}
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

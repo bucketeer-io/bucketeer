@@ -58,6 +58,7 @@ const OrganizationProjects = () => {
   return (
     <div className="flex flex-col flex-1 size-full">
       <Filter
+        isShowDocumentation={false}
         onOpenFilter={onOpenFilterModal}
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -57,6 +58,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
+        link={DOCUMENTATION_LINKS.NOTIFICATIONS}
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useLocation } from 'react-router-dom';
 import { hasEditable, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -131,6 +132,7 @@ const PageContent = ({
         }
       />
       <Filter
+        link={DOCUMENTATION_LINKS.FEATURE_FLAGS}
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />

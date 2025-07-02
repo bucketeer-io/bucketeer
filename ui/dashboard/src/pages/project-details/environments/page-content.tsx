@@ -53,6 +53,7 @@ const PageContent = ({
   return (
     <>
       <Filter
+        isShowDocumentation={false}
         action={
           <DisabledButtonTooltip
             type={!isOrganizationAdmin ? 'admin' : 'editor'}
