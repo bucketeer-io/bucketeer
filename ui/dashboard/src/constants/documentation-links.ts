@@ -14,5 +14,6 @@ export const DOCUMENTATION_LINKS = {
   PUSHES: 'https://docs.bucketeer.io/integration/pushes',
   NOTIFICATIONS: 'https://docs.bucketeer.io/integration/notifications',
   FLAG_HISTORY:
-    'https://docs.bucketeer.io/feature-flags/creating-feature-flags/settings-and-history'
+    'https://docs.bucketeer.io/feature-flags/creating-feature-flags/settings-and-history',
+  MEMBERS: 'https://docs.bucketeer.io/getting-started/create-an-account'
 };
