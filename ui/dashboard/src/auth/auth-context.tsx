@@ -17,6 +17,7 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
+import { setIsLoginFirstTimeStorage } from 'storage/login';
 import {
   clearOrgIdStorage,
   getOrgIdStorage,
@@ -46,9 +47,6 @@ interface AuthContextType {
 
   isGoogleAuthError: boolean;
   setIsGoogleAuthError: (v: boolean) => void;
-
-  isFirstTimeLogin: boolean;
-  setIsFirstTimeLogin: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,7 +65,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     !!authToken?.accessToken
   );
   const [isLogin, setIsLogin] = useState<boolean>(false);
-  const [isFirstTimeLogin, setIsFirstTimeLogin] = useState<boolean>(false);
 
   const [consoleAccount, setConsoleAccount] =
     useState<Undefinable<ConsoleAccount>>();
@@ -92,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setConsoleAccount(response.account);
       setIsLogin(true);
       if (response.account.lastSeen === '0' || !response.account.lastSeen)
-        return setIsFirstTimeLogin(true);
+        return setIsLoginFirstTimeStorage(true);
       const isJapanese = response.account.language === Language.JAPANESE;
       onChangeFontWithLocalized(isJapanese);
 
@@ -181,10 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsInitialLoading,
 
         isGoogleAuthError,
-        setIsGoogleAuthError,
-
-        isFirstTimeLogin,
-        setIsFirstTimeLogin
+        setIsGoogleAuthError
       }}
     >
       {children}

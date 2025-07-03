@@ -41,6 +41,7 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
+import { getIsLoginFirstTimeStorage } from 'storage/login';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
@@ -114,13 +115,8 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
-  const {
-    isInitialLoading,
-    isLogin,
-    consoleAccount,
-    myOrganizations,
-    isFirstTimeLogin
-  } = useAuth();
+  const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
+    useAuth();
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
@@ -131,7 +127,9 @@ export const Root = memo(() => {
   }
 
   if (isLogin && consoleAccount) {
-    if (isFirstTimeLogin) {
+    const isLoginFirstTime = getIsLoginFirstTimeStorage();
+    console.log({ isLoginFirstTime });
+    if (isLoginFirstTime) {
       return <UserInformation />;
     }
     return (

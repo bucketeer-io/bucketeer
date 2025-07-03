@@ -10,6 +10,7 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { Language, useTranslation } from 'i18n';
+import { clearIsLoginFirstTimeStorage } from 'storage/login';
 import * as yup from 'yup';
 import { isNotEmptyObject } from 'utils/data-type';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
@@ -63,7 +64,7 @@ interface UserInfoForm {
 
 const UserInformation = () => {
   const { t } = useTranslation(['auth', 'form', 'common', 'message']);
-  const { consoleAccount, onMeFetcher, setIsFirstTimeLogin } = useAuth();
+  const { consoleAccount, onMeFetcher } = useAuth();
   const [isOpenEditAvatarModal, onOpenEditAvatarModal, onCloseEditAvatarModal] =
     useToggleOpen(false);
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -164,7 +165,7 @@ const UserInformation = () => {
             });
             onMeFetcher({ organizationId: currentEnvironment.organizationId });
             setSelectedAvatar(null);
-            setIsFirstTimeLogin(false);
+            clearIsLoginFirstTimeStorage();
             navigate(PAGE_PATH_ROOT);
           }
         }
