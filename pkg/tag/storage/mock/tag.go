@@ -72,6 +72,21 @@ func (mr *MockTagStorageMockRecorder) GetTag(ctx, id, environmentId any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTag", reflect.TypeOf((*MockTagStorage)(nil).GetTag), ctx, id, environmentId)
 }
 
+// GetTagByName mocks base method.
+func (m *MockTagStorage) GetTagByName(ctx context.Context, name, environmentId string, entityType tag.Tag_EntityType) (*domain.Tag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTagByName", ctx, name, environmentId, entityType)
+	ret0, _ := ret[0].(*domain.Tag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTagByName indicates an expected call of GetTagByName.
+func (mr *MockTagStorageMockRecorder) GetTagByName(ctx, name, environmentId, entityType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTagByName", reflect.TypeOf((*MockTagStorage)(nil).GetTagByName), ctx, name, environmentId, entityType)
+}
+
 // ListAllEnvironmentTags mocks base method.
 func (m *MockTagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*tag.EnvironmentTag, error) {
 	m.ctrl.T.Helper()

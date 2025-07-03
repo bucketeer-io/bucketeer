@@ -32,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
@@ -81,6 +82,7 @@ func TestCreateTagMySQL(t *testing.T) {
 		setup       func(*TagService)
 		req         *proto.CreateTagRequest
 		expectedErr error
+		expectedTag *proto.Tag
 	}{
 		{
 			desc: "err: ErrNameRequired",
@@ -89,6 +91,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedTag: nil,
 		},
 		{
 			desc: "err: ErrEntityTypeRequired",
@@ -97,13 +100,109 @@ func TestCreateTagMySQL(t *testing.T) {
 				Name:          "test-tag",
 			},
 			expectedErr: createError(statusEntityTypeRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "entity_type")),
+			expectedTag: nil,
 		},
 		{
-			desc: "success",
+			desc: "err: UpsertTag fails",
 			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("storage error"))
+			},
+			req: &proto.CreateTagRequest{
+				EnvironmentId: "ns0",
+				Name:          "test-tag",
+				EntityType:    proto.Tag_FEATURE_FLAG,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedTag: nil,
+		},
+		{
+			desc: "err: GetTagByName fails",
+			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
+					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
+				).Return(nil, errors.New("get error"))
+			},
+			req: &proto.CreateTagRequest{
+				EnvironmentId: "ns0",
+				Name:          "test-tag",
+				EntityType:    proto.Tag_FEATURE_FLAG,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedTag: nil,
+		},
+		{
+			desc: "err: Publish fails",
+			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
+					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
+				).Return(&domain.Tag{
+					Tag: &proto.Tag{
+						Id:            "actual-tag-id",
+						Name:          "test-tag",
+						CreatedAt:     1000,
+						UpdatedAt:     2000,
+						EntityType:    proto.Tag_FEATURE_FLAG,
+						EnvironmentId: "ns0",
+					},
+				}, nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("publish error"))
+			},
+			req: &proto.CreateTagRequest{
+				EnvironmentId: "ns0",
+				Name:          "test-tag",
+				EntityType:    proto.Tag_FEATURE_FLAG,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedTag: nil,
+		},
+		{
+			desc: "success: new tag creation",
+			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
+					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
+				).Return(&domain.Tag{
+					Tag: &proto.Tag{
+						Id:            "actual-tag-id",
+						Name:          "test-tag",
+						CreatedAt:     1000,
+						UpdatedAt:     1000,
+						EntityType:    proto.Tag_FEATURE_FLAG,
+						EnvironmentId: "ns0",
+					},
+				}, nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -114,6 +213,57 @@ func TestCreateTagMySQL(t *testing.T) {
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
 			expectedErr: nil,
+			expectedTag: &proto.Tag{
+				Id:            "actual-tag-id",
+				Name:          "test-tag",
+				CreatedAt:     1000,
+				UpdatedAt:     1000,
+				EntityType:    proto.Tag_FEATURE_FLAG,
+				EnvironmentId: "ns0",
+			},
+		},
+		{
+			desc: "success: tag upsert (existing tag)",
+			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Simulate upsert of existing tag - same ID and created_at, but updated updated_at
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
+					gomock.Any(), "existing-tag", "ns0", proto.Tag_FEATURE_FLAG,
+				).Return(&domain.Tag{
+					Tag: &proto.Tag{
+						Id:            "original-tag-id",
+						Name:          "existing-tag",
+						CreatedAt:     1000, // Original creation time
+						UpdatedAt:     2000, // Updated time
+						EntityType:    proto.Tag_FEATURE_FLAG,
+						EnvironmentId: "ns0",
+					},
+				}, nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateTagRequest{
+				EnvironmentId: "ns0",
+				Name:          "existing-tag",
+				EntityType:    proto.Tag_FEATURE_FLAG,
+			},
+			expectedErr: nil,
+			expectedTag: &proto.Tag{
+				Id:            "original-tag-id",
+				Name:          "existing-tag",
+				CreatedAt:     1000, // Original creation time
+				UpdatedAt:     2000, // Updated time
+				EntityType:    proto.Tag_FEATURE_FLAG,
+				EnvironmentId: "ns0",
+			},
 		},
 	}
 	for _, p := range patterns {
@@ -122,8 +272,12 @@ func TestCreateTagMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			_, err := s.CreateTag(ctx, p.req)
+			resp, err := s.CreateTag(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				require.NotNil(t, resp)
+				assert.Equal(t, p.expectedTag, resp.Tag)
+			}
 		})
 	}
 }

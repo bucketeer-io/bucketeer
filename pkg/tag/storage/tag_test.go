@@ -500,6 +500,112 @@ func TestDeleteTag(t *testing.T) {
 	}
 }
 
+func TestGetTagByName(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc          string
+		setup         func(*tagStorage)
+		name          string
+		environmentId string
+		entityType    proto.Tag_EntityType
+		expectedTag   *domain.Tag
+		expectedErr   error
+	}{
+		{
+			desc: "ErrTagNotFound",
+			setup: func(s *tagStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			name:          "test-tag",
+			environmentId: "env-0",
+			entityType:    proto.Tag_FEATURE_FLAG,
+			expectedTag:   nil,
+			expectedErr:   ErrTagNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *tagStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			name:          "test-tag",
+			environmentId: "env-0",
+			entityType:    proto.Tag_FEATURE_FLAG,
+			expectedTag:   nil,
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *tagStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(
+					gomock.Any(), // id
+					gomock.Any(), // name
+					gomock.Any(), // created_at
+					gomock.Any(), // updated_at
+					gomock.Any(), // entity_type
+					gomock.Any(), // environment_id
+					gomock.Any(), // environment_name
+				).Do(func(args ...interface{}) {
+					*args[0].(*string) = "tag-id-0"
+					*args[1].(*string) = "test-tag"
+					*args[2].(*int64) = int64(1)
+					*args[3].(*int64) = int64(2)
+					*args[4].(*int32) = int32(proto.Tag_FEATURE_FLAG)
+					*args[5].(*string) = "env-0"
+					*args[6].(*string) = "test-env"
+				}).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					selectTagByNameSQL,
+					"test-tag",
+					"env-0",
+					int32(proto.Tag_FEATURE_FLAG),
+				).Return(row)
+			},
+			name:          "test-tag",
+			environmentId: "env-0",
+			entityType:    proto.Tag_FEATURE_FLAG,
+			expectedTag: &domain.Tag{
+				Tag: &proto.Tag{
+					Id:              "tag-id-0",
+					Name:            "test-tag",
+					CreatedAt:       1,
+					UpdatedAt:       2,
+					EntityType:      proto.Tag_FEATURE_FLAG,
+					EnvironmentId:   "env-0",
+					EnvironmentName: "test-env",
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			storage := newTagStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			tag, err := storage.GetTagByName(context.Background(), p.name, p.environmentId, p.entityType)
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				assert.Equal(t, p.expectedTag, tag)
+			}
+		})
+	}
+}
+
 func newTagStorageWithMock(t *testing.T, mockController *gomock.Controller) *tagStorage {
 	t.Helper()
 	return &tagStorage{mock.NewMockQueryExecer(mockController)}
