@@ -3,9 +3,11 @@ import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { EvaluationCounter, Feature } from '@types';
 import { getVariationColor } from 'utils/style';
+import { IconInfo } from '@icons';
 import { DatasetReduceType } from 'pages/experiment-details/collection-loader/results/goal-results/timeseries-area-line-chart';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
+import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 
 const EvaluationTable = ({
@@ -83,9 +85,12 @@ const EvaluationTable = ({
                   side="top"
                   content={t('default-value-tooltip')}
                   trigger={
-                    <p className="typo-para-small text-gray-700">
-                      {getVariationLabel(item)}
-                    </p>
+                    <div className="flex items-center gap-x-2">
+                      <p className="typo-para-small text-gray-700">
+                        {getVariationLabel(item)}
+                      </p>
+                      <Icon icon={IconInfo} size={'xs'} color="gray-500" />
+                    </div>
                   }
                   className="max-w-[300px]"
                 />
