@@ -312,7 +312,7 @@ const FilterFlagModal = ({
                   variant="secondary"
                   className="w-full max-w-[250px] truncate"
                 />
-                <DropdownMenuContent className="w-[250px]" align="start">
+                <DropdownMenuContent className="w-[270px]" align="start">
                   {remainingFilterOptions.map((item, index) => (
                     <DropdownMenuItem
                       key={index}
