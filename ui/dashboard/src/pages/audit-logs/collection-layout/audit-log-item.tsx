@@ -1,4 +1,12 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { urls } from 'configs';
@@ -137,6 +145,15 @@ const AuditLogItem = memo(
       [currentEnvironment, params]
     );
 
+    const handleOnExpandAuditLog = useCallback(
+      (e: MouseEvent) => {
+        if (e.target === e.currentTarget) {
+          onClick();
+        }
+      },
+      [onClick]
+    );
+
     useEffect(() => {
       return () => {
         lineNumberRef.current = 0;
@@ -148,17 +165,20 @@ const AuditLogItem = memo(
         className={cn(
           'flex flex-col w-full p-3 bg-white shadow-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
           {
-            'h-fit gap-y-3 min-h-[179px]': isExpanded && isHaveEntityData,
-            'h-fit gap-y-3': !!options.comment
+            'h-fit min-h-[179px]': isExpanded && isHaveEntityData,
+            'h-fit': !!options.comment
           }
         )}
       >
-        <div className="flex items-center w-full gap-x-3">
+        <div className="flex items-center w-full">
           <AuditLogAvatar editor={editor} />
-          <div className="flex flex-col flex-1 gap-y-1 truncate">
+          <div
+            className="flex flex-col flex-1 gap-y-1 truncate px-3 cursor-pointer"
+            onClick={handleOnExpandAuditLog}
+          >
             <div
               className={cn(
-                'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate',
+                'flex items-center gap-x-1.5 w-fit max-w-full typo-para-medium font-normal text-gray-700 truncate cursor-default',
                 {
                   'gap-x-0': isLanguageJapanese
                 }
@@ -183,7 +203,7 @@ const AuditLogItem = memo(
               align="start"
               alignOffset={5}
               trigger={
-                <div className="flex items-center gap-x-1 w-fit">
+                <div className="flex items-center gap-x-1 w-fit cursor-default">
                   <Icon icon={IconWatch} size={'sm'} />
                   <p className="typo-para-small text-gray-500">{time}</p>
                 </div>
@@ -227,57 +247,69 @@ const AuditLogItem = memo(
           )}
         </div>
         {options.comment && (
-          <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
-            {options.comment}
+          <div className="pt-3 cursor-pointer" onClick={onClick}>
+            <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
+              {options.comment}
+            </div>
           </div>
         )}
         {isHaveEntityData && (
           <>
             <div
-              className={cn(
-                'flex items-center w-full justify-between h-0 opacity-0 z-[-1]',
-                {
-                  'opacity-100 z-[0] h-10': isExpanded
-                }
-              )}
+              className={cn('', {
+                'py-3 cursor-pointer': isExpanded
+              })}
+              onClick={handleOnExpandAuditLog}
             >
-              <p className="typo-para-small text-gray-500 uppercase">
-                {t(
-                  isSameData ||
-                    isOldDataIssue ||
-                    currentTab === AuditLogTab.SNAPSHOT
-                    ? 'current-version'
-                    : 'updates'
+              <div
+                className={cn(
+                  'flex items-center w-full justify-between h-0 opacity-0 z-[-1]',
+                  {
+                    'opacity-100 z-[0] h-10': isExpanded
+                  }
                 )}
-              </p>
-              {!isSameData && !isOldDataIssue && (
-                <div className="flex items-center">
-                  <Button
-                    variant={'secondary-2'}
-                    size={'sm'}
-                    className={cn(
-                      'rounded-r-none',
-                      buttonCls,
-                      currentTab === AuditLogTab.CHANGES && buttonActiveCls
-                    )}
-                    onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
-                  >
-                    {t(`changes`)}
-                  </Button>
-                  <Button
-                    variant={'secondary-2'}
-                    size={'sm'}
-                    className={cn(
-                      'rounded-l-none',
-                      buttonCls,
-                      currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
-                    )}
-                    onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
-                  >
-                    {t(`snapshot`)}
-                  </Button>
-                </div>
-              )}
+                onClick={handleOnExpandAuditLog}
+              >
+                <p className="typo-para-small text-gray-500 uppercase cursor-default">
+                  {t(
+                    isSameData ||
+                      isOldDataIssue ||
+                      currentTab === AuditLogTab.SNAPSHOT
+                      ? 'current-version'
+                      : 'updates'
+                  )}
+                </p>
+                {!isSameData && !isOldDataIssue && (
+                  <div className="flex items-center">
+                    <Button
+                      variant={'secondary-2'}
+                      size={'sm'}
+                      className={cn(
+                        'rounded-r-none',
+                        buttonCls,
+                        currentTab === AuditLogTab.CHANGES && buttonActiveCls,
+                        { 'pointer-events-none': !isExpanded }
+                      )}
+                      onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
+                    >
+                      {t(`changes`)}
+                    </Button>
+                    <Button
+                      variant={'secondary-2'}
+                      size={'sm'}
+                      className={cn(
+                        'rounded-l-none',
+                        buttonCls,
+                        currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls,
+                        { 'pointer-events-none': !isExpanded }
+                      )}
+                      onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
+                    >
+                      {t(`snapshot`)}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             {isExpanded && (
               <div

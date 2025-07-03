@@ -51,6 +51,7 @@ const AuditLogTitle = ({
             to={getPathName(entityId, entityType) as string}
             onClick={e => {
               e.preventDefault();
+              e.stopPropagation();
               const pathName = getPathName(entityId, entityType);
               if (pathName) navigate(`/${urlCode}${pathName}`);
             }}
