@@ -117,7 +117,7 @@ const UserInformation = () => {
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isValid, isSubmitting },
     setValue
   } = form;
 
@@ -311,7 +311,7 @@ const UserInformation = () => {
             <Button
               type="submit"
               loading={isSubmitting}
-              disabled={!isValid || !isDirty}
+              disabled={!isValid}
               className="mt-5 w-full"
             >
               {t('common:continue')}
