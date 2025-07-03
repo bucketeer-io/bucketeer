@@ -105,8 +105,8 @@ const UserInformation = () => {
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      firstName: consoleAccount?.firstName || '',
+      lastName: consoleAccount?.lastName || '',
       avatar: avatarSrc,
       language: Language.ENGLISH
     },
