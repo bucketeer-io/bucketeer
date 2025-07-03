@@ -98,6 +98,7 @@ const EditPhotoProfileModal = ({
           <ButtonBar
             secondaryButton={
               <Button
+                type="button"
                 onClick={() => photoResizeRef?.current?.crop()}
                 loading={form.formState.isSubmitting}
               >
@@ -105,7 +106,7 @@ const EditPhotoProfileModal = ({
               </Button>
             }
             primaryButton={
-              <Button onClick={onClose} variant="secondary">
+              <Button type="button" onClick={onClose} variant="secondary">
                 {t(`cancel`)}
               </Button>
             }

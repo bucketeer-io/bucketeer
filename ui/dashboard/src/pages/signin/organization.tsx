@@ -47,7 +47,7 @@ const SelectOrganization = () => {
         setOrgIdStorage(organizationId);
         const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
 
-        const fetchUserData = () => {
+        const fetchUserData = async () => {
           return onMeFetcher({ organizationId }).then(() => {
             navigate(PAGE_PATH_ROOT);
           });

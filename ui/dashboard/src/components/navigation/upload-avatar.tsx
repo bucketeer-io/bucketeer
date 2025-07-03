@@ -139,7 +139,7 @@ const UploadAvatarModal = ({
           ))}
         </div>
 
-        <Button onClick={onUploadPhoto} variant="text" size="sm">
+        <Button type="button" onClick={onUploadPhoto} variant="text" size="sm">
           <Icon icon={IconAddOutlined} size="sm" />
           {t(`upload-photo`)}
         </Button>
@@ -147,12 +147,16 @@ const UploadAvatarModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button disabled={!currentAvatar} onClick={handleSelectAvatar}>
+          <Button
+            type="button"
+            disabled={!currentAvatar}
+            onClick={handleSelectAvatar}
+          >
             {t(`select`)}
           </Button>
         }
         primaryButton={
-          <Button onClick={onClose} variant="secondary">
+          <Button type="button" onClick={onClose} variant="secondary">
             {t(`cancel`)}
           </Button>
         }

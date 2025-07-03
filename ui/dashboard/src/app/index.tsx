@@ -57,6 +57,7 @@ import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
+import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
@@ -113,8 +114,13 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
-  const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
-    useAuth();
+  const {
+    isInitialLoading,
+    isLogin,
+    consoleAccount,
+    myOrganizations,
+    isFirstTimeLogin
+  } = useAuth();
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
@@ -125,6 +131,9 @@ export const Root = memo(() => {
   }
 
   if (isLogin && consoleAccount) {
+    if (isFirstTimeLogin) {
+      return <UserInformation />;
+    }
     return (
       <div className="flex flex-row w-full h-full">
         <Navigation onClickNavLink={handleChangePageKey} />

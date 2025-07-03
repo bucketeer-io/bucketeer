@@ -287,6 +287,7 @@ const DropdownMenuItem = forwardRef<
                   name={label as string}
                   haveAction={false}
                   maxLines={1}
+                  className="cursor-pointer"
                 />
               }
               maxLines={1}
