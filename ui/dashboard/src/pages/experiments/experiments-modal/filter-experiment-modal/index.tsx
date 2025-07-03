@@ -219,7 +219,7 @@ const FilterExperimentModal = ({
 
   return (
     <DialogModal
-      className="w-[665px]"
+      className="w-[750px]"
       title={t('filters')}
       isOpen={isOpen}
       onClose={onClose}
