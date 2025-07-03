@@ -40,7 +40,7 @@
     "start-experiment": "エクスペリメントを開始",
     "archive-flag": "フィーチャーフラグをアーカイブ",
     "unarchive-flag": "フィーチャーフラグのアーカイブを解除",
-    "clone-flag": "フィーチャーフラグをクローン",
+    "clone-flag": "フィーチャーフラグを複製",
     "delete-rollout": "ロールアウトを削除",
     "delete-operation": "オペレーションを削除",
     "delete-kill-switch": "キルスイッチを削除"
@@ -201,7 +201,7 @@
     "no-recent-traffic-flags": "休止中",
     "specific-variation-type": "<text>{{type}}</text>バリエーションタイプ",
     "receiving-traffic-description": "過去7日間に1回以上リクエストを受信しているフラグです",
-    "no-recent-traffic-description": "過去7日間にリクエストを受信していないフラグです",
+    "no-recent-traffic-description": "過去7日間にリクエストを受信していないフラグです。ユーザー評価時のレイテンシ改善のため、アーカイブをお勧めします",
     "never-used-description": "作成以来、一度もリクエストを受信していないフラグです",
     "progressive-description": "このフラグには段階的ロールアウトがあります。",
     "scheduled-description": "このフラグにはスケジュールされたオペレーションがあります。",
@@ -240,7 +240,7 @@
     "last-7-days": "過去7日間",
     "last-14-days": "過去14日間",
     "last-30-days": "過去30日間",
-    "tooltip-content": "評価イベントのリアルタイムカウントとこのフラグを受け取ったユニークユーザーを表示します。"
+    "tooltip-content": "評価イベントのリアルタイムカウントごとのフラグを受け取ったユニークユーザーを表示します。"
   },
   "code-refs": {
     "title": "コードリファレンス",

@@ -201,7 +201,7 @@
     "no-recent-traffic-flags": "No Recent Traffic",
     "specific-variation-type": "<text>{{type}}</text> variation type",
     "receiving-traffic-description": "This flag is receiving one or more requests in the last 7 days",
-    "no-recent-traffic-description": "This flag has not received any requests in the last 7 days",
+    "no-recent-traffic-description": "This flag has not received any requests in the last 7 days. Archiving is recommended to improve latency when evaluating users",
     "never-used-description": "This flag has never received any requests since creation",
     "progressive-description": "This flag has a progressive rollout.",
     "scheduled-description": "This flag has a scheduled operation.",
