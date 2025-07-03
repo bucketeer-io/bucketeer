@@ -1,7 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
+import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
-import { useTranslation } from 'i18n';
+import { getLanguage, Language, useTranslation } from 'i18n';
 import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
@@ -43,6 +47,10 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
     situationOptions
   } = useOptions();
 
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const isLanguageJapanese = getLanguage() === Language.JAPANESE;
+
   const methods = useFormContext<TargetingSchema>();
   const { control, watch, setValue } = methods;
 
@@ -78,7 +86,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
   }, [features, [...clausesWatch], feature]);
 
   const segmentOptions = userSegments?.map(item => ({
-    label: item.name,
+    label: `${item.name} (${item.includedUserCount} ${t(`common:${item.includedUserCount === '1' ? 'user' : 'users'}`).toLowerCase()})`,
     value: item.id
   }));
 
@@ -132,6 +140,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
               label: <VariationLabel label={v.name || v.value} index={index} />,
               value: v.id
             }));
+          const isEmptySegment = isUserSegment && segmentOptions?.length === 0;
 
           return (
             <div
@@ -156,7 +165,14 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                     name={getFieldName('type', clauseIndex)}
                     render={({ field }) => {
                       return (
-                        <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-1">
+                        <Form.Item
+                          className={cn(
+                            'flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-1',
+                            {
+                              'max-w-[250px]': isEmptySegment
+                            }
+                          )}
+                        >
                           <Form.Label required>
                             {t('feature-flags.context-kind')}
                           </Form.Label>
@@ -263,9 +279,11 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                     name={getFieldName('operator', clauseIndex)}
                     render={({ field }) => (
                       <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                        <Form.Label required>
-                          {t('feature-flags.operator')}
-                        </Form.Label>
+                        {!isEmptySegment && (
+                          <Form.Label required>
+                            {t('feature-flags.operator')}
+                          </Form.Label>
+                        )}
                         <Form.Control>
                           {isDate || isCompare ? (
                             <DropdownMenu>
@@ -298,6 +316,26 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                 ))}
                               </DropdownMenuContent>
                             </DropdownMenu>
+                          ) : isEmptySegment ? (
+                            <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
+                              <Trans
+                                i18nKey={'message:empty-segment'}
+                                components={{
+                                  comp: (
+                                    <Link
+                                      target="_blank"
+                                      to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`}
+                                      className={cn(
+                                        'text-primary-500 underline',
+                                        {
+                                          'mx-1': !isLanguageJapanese
+                                        }
+                                      )}
+                                    />
+                                  )
+                                }}
+                              />
+                            </div>
                           ) : (
                             <Input
                               {...field}
@@ -310,113 +348,120 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                       </Form.Item>
                     )}
                   />
-                  <Form.Field
-                    control={control}
-                    name={getFieldName('values', clauseIndex)}
-                    render={({ field }) => {
-                      const { value, ...rest } = field;
-                      const fieldValue = isDate
-                        ? value[0]
-                          ? Number(value[0]) * 1000
-                          : null
-                        : value;
-                      return (
-                        <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                          <Form.Label required className="relative w-fit">
-                            {isFlag
-                              ? t('table:feature-flags.variation')
-                              : isDate
-                                ? t('feature-flags.value')
-                                : t('feature-flags.values')}
-                            {!isFlag && !isDate && (
-                              <Tooltip
-                                content={t('targeting.tooltip.value')}
-                                trigger={
-                                  <div className="flex-center size-fit absolute top-0.5 -right-5">
-                                    <Icon icon={IconInfo} size="xxs" />
-                                  </div>
-                                }
-                                className="max-w-[310px]"
-                              />
-                            )}
-                          </Form.Label>
-                          <Form.Control>
-                            {isDate ? (
-                              <ReactDatePicker
-                                {...omit(rest, 'ref')}
-                                timeFormat="HH:mm"
-                                selected={
-                                  fieldValue ? new Date(fieldValue) : null
-                                }
-                                onChange={date => {
-                                  if (date) {
-                                    const value =
-                                      (date.getTime() / 1000)?.toString() || '';
-                                    field.onChange([value]);
+                  {!isEmptySegment && (
+                    <Form.Field
+                      control={control}
+                      name={getFieldName('values', clauseIndex)}
+                      render={({ field }) => {
+                        const { value, ...rest } = field;
+                        const fieldValue = isDate
+                          ? value[0]
+                            ? Number(value[0]) * 1000
+                            : null
+                          : value;
+                        return (
+                          <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                            <Form.Label required className="relative w-fit">
+                              {isFlag
+                                ? t('table:feature-flags.variation')
+                                : isDate
+                                  ? t('feature-flags.value')
+                                  : t('feature-flags.values')}
+                              {!isFlag && !isDate && (
+                                <Tooltip
+                                  content={t('targeting.tooltip.value')}
+                                  trigger={
+                                    <div className="flex-center size-fit absolute top-0.5 -right-5">
+                                      <Icon icon={IconInfo} size="xxs" />
+                                    </div>
                                   }
-                                }}
-                              />
-                            ) : isFlag || isUserSegment ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  disabled={
-                                    isFlag
-                                      ? !variationOptions?.length
-                                      : !segmentOptions?.length
+                                  className="max-w-[310px]"
+                                />
+                              )}
+                            </Form.Label>
+                            <Form.Control>
+                              {isDate ? (
+                                <ReactDatePicker
+                                  {...omit(rest, 'ref')}
+                                  timeFormat="HH:mm"
+                                  selected={
+                                    fieldValue ? new Date(fieldValue) : null
                                   }
-                                  label={
-                                    (isFlag
+                                  onChange={date => {
+                                    if (date) {
+                                      const value =
+                                        (date.getTime() / 1000)?.toString() ||
+                                        '';
+                                      field.onChange([value]);
+                                    }
+                                  }}
+                                />
+                              ) : isFlag || isUserSegment ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    disabled={
+                                      isFlag
+                                        ? !variationOptions?.length
+                                        : !segmentOptions?.length
+                                    }
+                                    label={
+                                      (isFlag
+                                        ? variationOptions
+                                        : segmentOptions
+                                      )?.find(item => item.value === value[0])
+                                        ?.label || ''
+                                    }
+                                    placeholder={t('common:select-value')}
+                                    className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                                  />
+                                  <DropdownMenuContent align="start" {...field}>
+                                    {(isFlag
                                       ? variationOptions
                                       : segmentOptions
-                                    )?.find(item => item.value === value[0])
-                                      ?.label || ''
-                                  }
-                                  placeholder={t('common:select-value')}
-                                  className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                                />
-                                <DropdownMenuContent align="start" {...field}>
-                                  {(isFlag
-                                    ? variationOptions
-                                    : segmentOptions
-                                  )?.map((item, index) => (
-                                    <DropdownMenuItem
-                                      key={index}
-                                      label={item.label}
-                                      value={item.value}
-                                      onSelectOption={value =>
-                                        field.onChange([value])
-                                      }
+                                    )?.map((item, index) => (
+                                      <DropdownMenuItem
+                                        key={index}
+                                        label={item.label}
+                                        value={item.value}
+                                        onSelectOption={value =>
+                                          field.onChange([value])
+                                        }
+                                      />
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <CreatableSelect
+                                  value={value?.map((item: string) => ({
+                                    label: item,
+                                    value: item
+                                  }))}
+                                  onChange={options => {
+                                    const values = options.map(
+                                      item => item.value
+                                    );
+                                    field.onChange(values);
+                                  }}
+                                  noOptionsMessage={() => (
+                                    <UserMessage
+                                      message={t('no-opts-type-to-create')}
                                     />
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : (
-                              <CreatableSelect
-                                value={value?.map((item: string) => ({
-                                  label: item,
-                                  value: item
-                                }))}
-                                onChange={options => {
-                                  const values = options.map(
-                                    item => item.value
-                                  );
-                                  field.onChange(values);
-                                }}
-                                noOptionsMessage={() => (
-                                  <UserMessage
-                                    message={t('no-opts-type-to-create')}
-                                  />
-                                )}
-                              />
-                            )}
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      );
-                    }}
-                  />
+                                  )}
+                                />
+                              )}
+                            </Form.Control>
+                            <Form.Message />
+                          </Form.Item>
+                        );
+                      }}
+                    />
+                  )}
 
-                  <div className="flex items-center self-stretch order-5">
+                  <div
+                    className={cn('flex items-center self-stretch order-5', {
+                      'items-end mb-0.5': isEmptySegment
+                    })}
+                  >
                     <Button
                       type="button"
                       disabled={formatClauses.length <= 1}

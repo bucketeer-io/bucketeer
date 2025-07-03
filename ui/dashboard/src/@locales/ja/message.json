@@ -50,5 +50,6 @@
   "data-appear": "データはここに表示されます！",
   "env-are-empty": "環境が空です。",
   "org-not-found": "組織が見つかりません。",
-  "auth-context-error": "useAuthはAuthProvider内で使用する必要があります"
+  "auth-context-error": "useAuthはAuthProvider内で使用する必要があります",
+  "empty-segment": "セグメントがありません。先に<comp>作成</comp>してください。"
 }
