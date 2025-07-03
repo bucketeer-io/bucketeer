@@ -40,7 +40,7 @@
     "start-experiment": "エクスペリメントを開始",
     "archive-flag": "フィーチャーフラグをアーカイブ",
     "unarchive-flag": "フィーチャーフラグのアーカイブを解除",
-    "clone-flag": "フィーチャーフラグをクローン",
+    "clone-flag": "フィーチャーフラグを複製",
     "delete-rollout": "ロールアウトを削除",
     "delete-operation": "オペレーションを削除",
     "delete-kill-switch": "キルスイッチを削除"
@@ -240,7 +240,7 @@
     "last-7-days": "過去7日間",
     "last-14-days": "過去14日間",
     "last-30-days": "過去30日間",
-    "tooltip-content": "評価イベントのリアルタイムカウントとこのフラグを受け取ったユニークユーザーを表示します。"
+    "tooltip-content": "評価イベントのリアルカウントごとのフラグを受け取ったユニークユーザーを表示します。"
   },
   "code-refs": {
     "title": "コードリファレンス",
