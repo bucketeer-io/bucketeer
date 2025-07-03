@@ -158,7 +158,8 @@ const PageLoader = () => {
           isLoading={mutation.isPending}
           isShowWarning={
             isArchiving &&
-            getFlagStatus(selectedFlag) === FeatureActivityStatus.ACTIVE
+            getFlagStatus(selectedFlag) ===
+              FeatureActivityStatus.RECEIVING_TRAFFIC
           }
           onClose={onCloseConfirmModal}
           className="py-5"

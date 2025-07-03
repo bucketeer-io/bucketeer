@@ -55,7 +55,7 @@ const PageLoader = () => {
               align="start"
               trigger={<FlagStatus status={flagStatus} />}
               content={t(
-                `feature-flags.${flagStatus === 'active' ? 'active-description' : flagStatus === 'in-active' ? 'inactive-description' : 'new-description'}`
+                `feature-flags.${flagStatus === 'receiving-traffic' ? 'receiving-traffic-description' : flagStatus === 'no-recent-traffic' ? 'no-recent-traffic-description' : 'never-used-description'}`
               )}
             />
           </>

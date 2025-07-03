@@ -9,9 +9,9 @@ export type FlagActionType =
   | 'INACTIVE';
 
 export enum StatusFilterType {
-  NEW = 'NEW',
-  ACTIVE = 'ACTIVE',
-  NO_ACTIVITY = 'NO_ACTIVITY',
+  NEVER_USED = 'NEW',
+  RECEIVING_TRAFFIC = 'ACTIVE', // The backend uses ACTIVE for receiving traffic
+  NO_RECENT_TRAFFIC = 'NO_ACTIVITY', // The backend uses NO_ACTIVITY for no recent traffic
   UNKNOWN = 'UNKNOWN'
 }
 
@@ -34,9 +34,9 @@ export interface FlagFilters {
 }
 
 export enum FeatureActivityStatus {
-  ACTIVE = 'active',
-  NEW = 'new',
-  INACTIVE = 'in-active'
+  NEVER_USED = 'never-used',
+  RECEIVING_TRAFFIC = 'receiving-traffic',
+  NO_RECENT_TRAFFIC = 'no-recent-traffic'
 }
 
 export enum FlagOperationType {

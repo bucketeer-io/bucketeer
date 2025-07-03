@@ -23,18 +23,18 @@ const overviewOptions: OverviewOption[] = [
     filterValue: undefined
   },
   {
-    titleKey: 'feature-flags.active-flags',
+    titleKey: 'feature-flags.receiving-traffic-flags',
     countKey: 'active',
     color: 'green',
     icon: IconActiveFlags,
-    filterValue: StatusFilterType.ACTIVE
+    filterValue: StatusFilterType.RECEIVING_TRAFFIC
   },
   {
-    titleKey: 'feature-flags.inactive-flags',
+    titleKey: 'feature-flags.no-recent-traffic-flags',
     countKey: 'inactive',
     color: 'yellow',
     icon: IconInactiveFlags,
-    filterValue: StatusFilterType.NO_ACTIVITY
+    filterValue: StatusFilterType.NO_RECENT_TRAFFIC
   }
 ];
 
