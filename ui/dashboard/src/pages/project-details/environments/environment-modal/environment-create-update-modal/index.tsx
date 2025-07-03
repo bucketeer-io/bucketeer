@@ -8,7 +8,8 @@ import {
 } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
-import { useQueryProjects } from '@queries/projects';
+import { invalidateOrganizations } from '@queries/organizations';
+import { invalidateProjects, useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -133,6 +134,8 @@ const EnvironmentCreateUpdateModal = ({
               action: t(environment ? 'updated' : 'created')
             })
           });
+          invalidateOrganizations(queryClient);
+          invalidateProjects(queryClient);
           invalidateEnvironments(queryClient);
           onClose();
         }
