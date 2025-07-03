@@ -96,18 +96,18 @@ const useOptions = () => {
   const flagFilterOptions: FilterOption[] = useMemo(
     () => [
       {
-        value: FilterTypes.HAS_EXPERIMENT,
-        label: translation('has-experiment'),
-        filterValue: ''
-      },
-      {
         value: FilterTypes.HAS_PREREQUISITES,
         label: translation('has-prerequisites'),
         filterValue: ''
       },
       {
-        value: FilterTypes.MAINTAINER,
-        label: translation('maintainer'),
+        value: FilterTypes.HAS_RULE,
+        label: translation('has-flag-as-rule'),
+        filterValue: ''
+      },
+      {
+        value: FilterTypes.HAS_EXPERIMENT,
+        label: translation('has-experiment'),
         filterValue: ''
       },
       {
@@ -126,8 +126,8 @@ const useOptions = () => {
         filterValue: ''
       },
       {
-        value: FilterTypes.HAS_RULE,
-        label: translation('has-flag-as-rule'),
+        value: FilterTypes.MAINTAINER,
+        label: translation('maintainer'),
         filterValue: ''
       }
     ],

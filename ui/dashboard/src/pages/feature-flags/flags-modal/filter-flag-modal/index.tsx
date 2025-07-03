@@ -173,13 +173,13 @@ const FilterFlagModal = ({
           });
         }
       };
-      addFilterOption(0, hasExperiment);
-      addFilterOption(1, hasPrerequisites);
-      addFilterOption(2, maintainer);
+      addFilterOption(0, hasPrerequisites);
+      addFilterOption(1, hasFeatureFlagAsRule);
+      addFilterOption(2, hasExperiment);
       addFilterOption(3, enabled);
       addFilterOption(4, tags);
       addFilterOption(5, status);
-      addFilterOption(6, hasFeatureFlagAsRule);
+      addFilterOption(6, maintainer);
 
       setSelectedFilters(
         filterTypeArr.length ? filterTypeArr : [flagFilterOptions[0]]
