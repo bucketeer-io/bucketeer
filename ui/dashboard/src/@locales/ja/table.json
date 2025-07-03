@@ -201,7 +201,7 @@
     "no-recent-traffic-flags": "休止中",
     "specific-variation-type": "<text>{{type}}</text>バリエーションタイプ",
     "receiving-traffic-description": "過去7日間に1回以上リクエストを受信しているフラグです",
-    "no-recent-traffic-description": "過去7日間にリクエストを受信していないフラグです",
+    "no-recent-traffic-description": "過去7日間にリクエストを受信していないフラグです。ユーザー評価時のレイテンシ改善のため、アーカイブをお勧めします",
     "never-used-description": "作成以来、一度もリクエストを受信していないフラグです",
     "progressive-description": "このフラグには段階的ロールアウトがあります。",
     "scheduled-description": "このフラグにはスケジュールされたオペレーションがあります。",
