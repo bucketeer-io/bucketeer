@@ -6,6 +6,7 @@ import { getVariationColor } from 'utils/style';
 import { DatasetReduceType } from 'pages/experiment-details/collection-loader/results/goal-results/timeseries-area-line-chart';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
+import { Tooltip } from 'components/tooltip';
 
 const EvaluationTable = ({
   feature,
@@ -76,9 +77,23 @@ const EvaluationTable = ({
                   zIndex: index
                 }}
               />
-              <p className="typo-para-small text-gray-700">
-                {getVariationLabel(item)}
-              </p>
+              {item.variationId === 'default' ? (
+                <Tooltip
+                  align="start"
+                  side="top"
+                  content={t('default-value-tooltip')}
+                  trigger={
+                    <p className="typo-para-small text-gray-700">
+                      {getVariationLabel(item)}
+                    </p>
+                  }
+                  className="max-w-[300px]"
+                />
+              ) : (
+                <p className="typo-para-small text-gray-700">
+                  {getVariationLabel(item)}
+                </p>
+              )}
             </div>
             <div className="w-[60%] typo-para-medium text-gray-700">
               {Number(item.timeseries?.totalCounts || 0)?.toLocaleString()}

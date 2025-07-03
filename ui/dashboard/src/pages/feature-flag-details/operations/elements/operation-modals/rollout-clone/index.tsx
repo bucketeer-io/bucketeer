@@ -5,7 +5,6 @@ import { Rollout } from '@types';
 import { RolloutTypeMap } from 'pages/feature-flag-details/operations/types';
 import {
   getDateTimeDisplay,
-  numberToJapaneseOrdinal,
   numberToOrdinalWord
 } from 'pages/feature-flag-details/operations/utils';
 import Button from 'components/button';
@@ -91,7 +90,7 @@ const RolloutCloneModal = ({
                       i18nKey={'form:ordinal-increment'}
                       values={{
                         ordinal: isLanguageJapanese
-                          ? numberToJapaneseOrdinal(index + 1)
+                          ? index + 1
                           : numberToOrdinalWord(index + 1)
                       }}
                     />

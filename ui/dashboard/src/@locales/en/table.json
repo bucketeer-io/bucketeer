@@ -294,5 +294,6 @@
   "created-at-time": "Created {{time}}",
   "pending-invite": "Pending invite",
   "retry": "Retry",
-  "baseline": "Baseline"
+  "baseline": "Baseline",
+  "default-value-tooltip": "Count of evaluations where the SDK returned the default value set by the developer because the flag was not found in the SDK cache."
 }

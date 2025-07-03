@@ -2,7 +2,7 @@ import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
 import { FeatureCountByStatus } from '@types';
 import { cn } from 'utils/style';
-import { IconActiveFlags, IconInactiveFlags, IconTotalFlags } from '@icons';
+import { IconActiveFlags, IconFlagNoTraffic, IconTotalFlags } from '@icons';
 import OverviewCard, { OverviewIconColor } from 'elements/overview-card';
 import { StatusFilterType } from '../types';
 
@@ -33,7 +33,7 @@ const overviewOptions: OverviewOption[] = [
     titleKey: 'feature-flags.no-recent-traffic-flags',
     countKey: 'inactive',
     color: 'yellow',
-    icon: IconInactiveFlags,
+    icon: IconFlagNoTraffic,
     filterValue: StatusFilterType.NO_RECENT_TRAFFIC
   }
 ];

@@ -294,5 +294,6 @@
   "created-at-time": "{{time}}作成されました",
   "pending-invite": "招待保留中",
   "retry": "リトライ",
-  "baseline": "ベースライン"
+  "baseline": "ベースライン",
+  "default-value-tooltip": "SDKのキャッシュにフラグが見つからず、アプリ側で設定されたデフォルト値が返された評価の回数です。"
 }

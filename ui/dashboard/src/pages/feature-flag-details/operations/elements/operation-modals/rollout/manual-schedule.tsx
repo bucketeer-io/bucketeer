@@ -8,7 +8,6 @@ import { IconInfo, IconPlus, IconTrash } from '@icons';
 import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
 import {
   handleCreateIncrement,
-  numberToJapaneseOrdinal,
   numberToOrdinalWord
 } from 'pages/feature-flag-details/operations/utils';
 import { ScheduleItem } from 'pages/feature-flag-details/types';
@@ -135,21 +134,23 @@ const ManualSchedule = ({
                     i18nKey={'form:ordinal-increment'}
                     values={{
                       ordinal: isLanguageJapanese
-                        ? numberToJapaneseOrdinal(index + 1)
+                        ? index + 1
                         : numberToOrdinalWord(index + 1)
                     }}
                   />
-                  <Tooltip
-                    align="start"
-                    alignOffset={-73}
-                    content={t('rollout-tooltips.manual.weight')}
-                    trigger={
-                      <div className="flex-center size-fit absolute top-0 -right-6">
-                        <Icon icon={IconInfo} size="xs" color="gray-500" />
-                      </div>
-                    }
-                    className="max-w-[300px]"
-                  />
+                  {index === 0 && (
+                    <Tooltip
+                      align="start"
+                      alignOffset={-73}
+                      content={t('rollout-tooltips.manual.weight')}
+                      trigger={
+                        <div className="flex-center size-fit absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size="xs" color="gray-500" />
+                        </div>
+                      }
+                      className="max-w-[300px]"
+                    />
+                  )}
                 </Form.Label>
                 <Form.Control>
                   <InputGroup
@@ -184,17 +185,19 @@ const ManualSchedule = ({
               <Form.Item className="flex flex-col flex-1 py-0 size-full">
                 <Form.Label required className="relative w-fit">
                   {t('feature-flags.start-date')}
-                  <Tooltip
-                    align="start"
-                    alignOffset={-120}
-                    content={t('rollout-tooltips.manual.execute-at')}
-                    trigger={
-                      <div className="flex-center size-fit absolute top-0 -right-6">
-                        <Icon icon={IconInfo} size="xs" color="gray-500" />
-                      </div>
-                    }
-                    className="max-w-[300px]"
-                  />
+                  {index === 0 && (
+                    <Tooltip
+                      align="start"
+                      alignOffset={-120}
+                      content={t('rollout-tooltips.manual.execute-at')}
+                      trigger={
+                        <div className="flex-center size-fit absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size="xs" color="gray-500" />
+                        </div>
+                      }
+                      className="max-w-[300px]"
+                    />
+                  )}
                 </Form.Label>
                 <Form.Control>
                   <ReactDatePicker
