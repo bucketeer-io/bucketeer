@@ -50,5 +50,6 @@
   "data-appear": "Your data will appear here!",
   "env-are-empty": "The environments are empty.",
   "org-not-found": "The organization is not found.",
-  "auth-context-error": "useAuth must be used within an AuthProvider"
+  "auth-context-error": "useAuth must be used within an AuthProvider",
+  "empty-segment": "No segments found. Please <comp>create</comp> a segment first."
 }

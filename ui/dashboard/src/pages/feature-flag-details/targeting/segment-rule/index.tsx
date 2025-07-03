@@ -96,24 +96,8 @@ const TargetSegmentRule = ({
               </>
             )}
             <Card>
-              <div className="flex items-center gap-x-2">
-                <p className="typo-para-medium leading-4 text-gray-700">
-                  {t('feature-flags.rules')}
-                </p>
-                <Tooltip
-                  align="start"
-                  alignOffset={-68}
-                  content={t('form:targeting.tooltip.custom-rules')}
-                  trigger={
-                    <div className="flex-center size-fit">
-                      <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
-                    </div>
-                  }
-                  className="max-w-[400px]"
-                />
-              </div>
-              <Card className="shadow-none border border-gray-400">
-                <div className="flex items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-x-2">
                   <p className="typo-para-medium leading-5 text-gray-700">
                     <Trans
                       i18nKey={'table:feature-flags.rule-index'}
@@ -122,66 +106,78 @@ const TargetSegmentRule = ({
                       }}
                     />
                   </p>
-                  <div className="flex items-center gap-x-2">
-                    <div
-                      className="flex-center cursor-pointer group"
-                      onClick={() => segmentRulesRemove(segmentIndex)}
-                    >
-                      <Icon
-                        icon={IconClose}
-                        size={'sm'}
-                        className="flex-center text-gray-500 group-hover:text-gray-700"
-                      />
-                    </div>
-                    {segmentRules.length > 1 && (
-                      <div className="flex items-center gap-x-1">
-                        {segmentIndex !== segmentRules.length - 1 && (
-                          <div
-                            className="flex-center group cursor-pointer"
-                            onClick={() =>
-                              handleChangeIndexRule('increase', segmentIndex)
-                            }
-                          >
-                            <Icon
-                              icon={IconArrowDownwardFilled}
-                              size={'sm'}
-                              className="text-gray-500 group-hover:text-gray-700"
-                            />
-                          </div>
-                        )}
-                        {segmentIndex !== 0 && (
-                          <div
-                            className="flex-center group cursor-pointer"
-                            onClick={() =>
-                              handleChangeIndexRule('decrease', segmentIndex)
-                            }
-                          >
-                            <Icon
-                              icon={IconArrowUpwardFilled}
-                              size={'sm'}
-                              className="text-gray-500 group-hover:text-gray-700"
-                            />
-                          </div>
-                        )}
+                  <Tooltip
+                    align="start"
+                    alignOffset={-68}
+                    content={t('form:targeting.tooltip.custom-rules')}
+                    trigger={
+                      <div className="flex-center size-fit">
+                        <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
                       </div>
-                    )}
-                  </div>
+                    }
+                    className="max-w-[400px]"
+                  />
                 </div>
-                <Fragment>
-                  <RuleForm
-                    feature={feature}
-                    features={features}
-                    segmentIndex={segmentIndex}
-                    userSegments={userSegments}
-                  />
-                  <SegmentVariation
-                    feature={feature}
-                    defaultRolloutStrategy={getDefaultRolloutStrategy(feature)}
-                    segmentIndex={segmentIndex}
-                    segmentRules={segmentRules}
-                  />
-                </Fragment>
-              </Card>
+
+                <div className="flex items-center gap-x-2">
+                  <div
+                    className="flex-center cursor-pointer group"
+                    onClick={() => segmentRulesRemove(segmentIndex)}
+                  >
+                    <Icon
+                      icon={IconClose}
+                      size={'sm'}
+                      className="flex-center text-gray-500 group-hover:text-gray-700"
+                    />
+                  </div>
+                  {segmentRules.length > 1 && (
+                    <div className="flex items-center gap-x-1">
+                      {segmentIndex !== segmentRules.length - 1 && (
+                        <div
+                          className="flex-center group cursor-pointer"
+                          onClick={() =>
+                            handleChangeIndexRule('increase', segmentIndex)
+                          }
+                        >
+                          <Icon
+                            icon={IconArrowDownwardFilled}
+                            size={'sm'}
+                            className="text-gray-500 group-hover:text-gray-700"
+                          />
+                        </div>
+                      )}
+                      {segmentIndex !== 0 && (
+                        <div
+                          className="flex-center group cursor-pointer"
+                          onClick={() =>
+                            handleChangeIndexRule('decrease', segmentIndex)
+                          }
+                        >
+                          <Icon
+                            icon={IconArrowUpwardFilled}
+                            size={'sm'}
+                            className="text-gray-500 group-hover:text-gray-700"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Fragment>
+                <RuleForm
+                  feature={feature}
+                  features={features}
+                  segmentIndex={segmentIndex}
+                  userSegments={userSegments}
+                />
+                <SegmentVariation
+                  feature={feature}
+                  defaultRolloutStrategy={getDefaultRolloutStrategy(feature)}
+                  segmentIndex={segmentIndex}
+                  segmentRules={segmentRules}
+                />
+              </Fragment>
             </Card>
           </div>
         ))}
