@@ -98,8 +98,10 @@ const UserInformation = () => {
 
   const avatarSrc = useMemo(
     () =>
-      isUserAvatar ? `data:${avatarType};base64,${avatarImage}` : defaultAvatar,
-    [avatarImage, avatarType, defaultAvatar, isUserAvatar]
+      isUserAvatar
+        ? `data:${avatarType};base64,${avatarImage}`
+        : consoleAccount?.avatarUrl || defaultAvatar,
+    [avatarImage, avatarType, defaultAvatar, isUserAvatar, consoleAccount]
   );
 
   const form = useForm({
