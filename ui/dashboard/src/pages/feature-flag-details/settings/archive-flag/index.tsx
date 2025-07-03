@@ -98,7 +98,7 @@ const ArchiveFlag = ({
           isLoading={mutation.isPending}
           isShowWarning={
             !feature.archived &&
-            getFlagStatus(feature) === FeatureActivityStatus.ACTIVE
+            getFlagStatus(feature) === FeatureActivityStatus.RECEIVING_TRAFFIC
           }
           title={
             !feature.archived

@@ -206,16 +206,16 @@ const useOptions = () => {
   const flagStatusOptions = useMemo(
     () => [
       {
-        value: StatusFilterType.NEW,
-        label: translation('new')
+        value: StatusFilterType.NEVER_USED,
+        label: translation('never-used')
       },
       {
-        value: StatusFilterType.ACTIVE,
-        label: translation('active')
+        value: StatusFilterType.RECEIVING_TRAFFIC,
+        label: translation('receiving-traffic')
       },
       {
-        value: StatusFilterType.NO_ACTIVITY,
-        label: translation('no-activity')
+        value: StatusFilterType.NO_RECENT_TRAFFIC,
+        label: translation('no-recent-traffic')
       }
     ],
     [language]

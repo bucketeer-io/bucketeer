@@ -18,15 +18,16 @@ export const getDataTypeIcon = (type: FeatureVariationType) => {
 
 export function getFlagStatus(feature: Feature): FeatureActivityStatus {
   if (!feature.lastUsedInfo) {
-    return FeatureActivityStatus.NEW;
+    return FeatureActivityStatus.NEVER_USED;
   }
+
   const { lastUsedAt } = feature?.lastUsedInfo || {};
 
   if (lastUsedAt && isNumber(+lastUsedAt)) {
     const _lastUsedAt = new Date(+lastUsedAt * 1000);
     const daysDifference = dayjs(_lastUsedAt).diff(dayjs(), 'day');
 
-    if (daysDifference > -7) return FeatureActivityStatus.ACTIVE;
+    if (daysDifference > -7) return FeatureActivityStatus.RECEIVING_TRAFFIC;
   }
-  return FeatureActivityStatus.INACTIVE;
+  return FeatureActivityStatus.NO_RECENT_TRAFFIC;
 }

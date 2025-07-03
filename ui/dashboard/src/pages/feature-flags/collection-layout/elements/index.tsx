@@ -89,10 +89,14 @@ export const FlagIconWrapper = ({
 export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
   const { t } = useTranslation(['common']);
 
-  const isActive = status === FeatureActivityStatus.ACTIVE;
-  const isNew = status === FeatureActivityStatus.NEW;
-  const isInActive = !isActive && !isNew;
-  const statusKey = isActive ? 'active' : isNew ? 'new' : 'no-activity';
+  const isActive = status === FeatureActivityStatus.RECEIVING_TRAFFIC;
+  const isNeverUsed = status === FeatureActivityStatus.NEVER_USED;
+  const isInActive = !isActive && !isNeverUsed;
+  const statusKey = isActive
+    ? 'receiving-traffic'
+    : isNeverUsed
+      ? 'never-used'
+      : 'no-recent-traffic';
 
   return (
     <div
@@ -101,7 +105,7 @@ export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
         {
           'bg-accent-green-50 text-accent-green-500': isActive,
           'bg-accent-yellow-50 text-accent-yellow-500': isInActive,
-          'bg-accent-blue-50 text-accent-blue-500': isNew
+          'bg-accent-blue-50 text-accent-blue-500': isNeverUsed
         }
       )}
     >
@@ -268,7 +272,7 @@ export const FlagNameElement = ({
               align="start"
               trigger={<FlagStatus status={status} />}
               content={t(
-                `feature-flags.${status === 'active' ? 'active-description' : status === 'in-active' ? 'inactive-description' : 'new-description'}`
+                `feature-flags.${status === 'receiving-traffic' ? 'receiving-traffic-description' : status === 'no-recent-traffic' ? 'no-recent-traffic-description' : 'never-used-description'}`
               )}
             />
           )}
