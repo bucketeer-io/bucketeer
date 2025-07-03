@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { projectCreator, ProjectResponse, projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateOrganizations } from '@queries/organizations';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
@@ -97,6 +98,7 @@ const ProjectCreateUpdateModal = ({
 
         if (resp) {
           invalidateProjects(queryClient);
+          invalidateOrganizations(queryClient);
           notify({
             message: t('message:collection-action-success', {
               collection: t('project'),
