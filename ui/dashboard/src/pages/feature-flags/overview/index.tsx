@@ -3,6 +3,7 @@ import { useTranslation } from 'i18n';
 import { FeatureCountByStatus } from '@types';
 import { cn } from 'utils/style';
 import { IconActiveFlags, IconFlagNoTraffic, IconTotalFlags } from '@icons';
+import { Tooltip } from 'components/tooltip';
 import OverviewCard, { OverviewIconColor } from 'elements/overview-card';
 import { StatusFilterType } from '../types';
 
@@ -12,6 +13,7 @@ interface OverviewOption {
   color: OverviewIconColor;
   icon: FunctionComponent;
   filterValue: StatusFilterType | undefined;
+  tooltipKey: string;
 }
 
 const overviewOptions: OverviewOption[] = [
@@ -20,21 +22,24 @@ const overviewOptions: OverviewOption[] = [
     countKey: 'total',
     color: 'brand',
     icon: IconTotalFlags,
-    filterValue: undefined
+    filterValue: undefined,
+    tooltipKey: 'feature-flags.total-flags-description'
   },
   {
     titleKey: 'feature-flags.receiving-traffic-flags',
     countKey: 'active',
     color: 'green',
     icon: IconActiveFlags,
-    filterValue: StatusFilterType.RECEIVING_TRAFFIC
+    filterValue: StatusFilterType.RECEIVING_TRAFFIC,
+    tooltipKey: 'feature-flags.receiving-traffic-description'
   },
   {
     titleKey: 'feature-flags.no-recent-traffic-flags',
     countKey: 'inactive',
     color: 'yellow',
     icon: IconFlagNoTraffic,
-    filterValue: StatusFilterType.NO_RECENT_TRAFFIC
+    filterValue: StatusFilterType.NO_RECENT_TRAFFIC,
+    tooltipKey: 'feature-flags.no-recent-traffic-description'
   }
 ];
 
@@ -53,18 +58,28 @@ const Overview = ({
     <div className="w-full px-6">
       <div className="flex flex-wrap items-center w-full gap-6 pb-8">
         {overviewOptions.map((item, index) => (
-          <OverviewCard
+          <Tooltip
             key={index}
-            title={t(item.titleKey)}
-            count={
-              summary && item.countKey ? Number(summary[item.countKey]) : 0
+            content={t(item.tooltipKey)}
+            trigger={
+              <div className="flex flex-1 w-full min-w-[268px]">
+                <OverviewCard
+                  title={t(item.titleKey)}
+                  count={
+                    summary && item.countKey
+                      ? Number(summary[item.countKey])
+                      : 0
+                  }
+                  color={item.color}
+                  icon={item.icon}
+                  className={cn('border border-transparent', {
+                    'border-gray-300': item.filterValue === statusFilter
+                  })}
+                  onClick={() => onChangeFilters(item.filterValue)}
+                />
+              </div>
             }
-            color={item.color}
-            icon={item.icon}
-            className={cn('border border-transparent', {
-              'border-gray-300': item.filterValue === statusFilter
-            })}
-            onClick={() => onChangeFilters(item.filterValue)}
+            className="max-w-[300px]"
           />
         ))}
       </div>
