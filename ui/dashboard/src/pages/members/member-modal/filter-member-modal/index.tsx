@@ -236,7 +236,7 @@ const FilterMemberModal = ({
 
   return (
     <DialogModal
-      className="w-[665px]"
+      className="w-[750px]"
       title={t('filters')}
       isOpen={isOpen}
       onClose={onClose}
@@ -297,7 +297,7 @@ const FilterMemberModal = ({
                   disabled={(isTeamsFilter && isLoadingTeams) || !filterType}
                   loading={isTeamsFilter && isLoadingTeams}
                   variant="secondary"
-                  className="w-full max-w-[235px] truncate"
+                  className="w-full truncate"
                 />
                 <DropdownMenuContent
                   className={cn('w-[235px]', {
