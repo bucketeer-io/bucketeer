@@ -10,6 +10,7 @@ import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
 import { truncateBySide } from 'utils/converts';
+import { isNotEmptyObject } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
@@ -52,7 +53,12 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
   const isLanguageJapanese = getLanguage() === Language.JAPANESE;
 
   const methods = useFormContext<TargetingSchema>();
-  const { control, watch, setValue } = methods;
+  const {
+    control,
+    formState: { errors },
+    watch,
+    setValue
+  } = methods;
 
   const clausesWatch = watch(`segmentRules.${segmentIndex}.clauses`);
 
@@ -141,6 +147,9 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
               value: v.id
             }));
           const isEmptySegment = isUserSegment && segmentOptions?.length === 0;
+          const isHaveError = isNotEmptyObject(
+            errors?.segmentRules?.[segmentIndex]?.clauses?.[clauseIndex] || {}
+          );
 
           return (
             <div
@@ -458,15 +467,19 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                   )}
 
                   <div
-                    className={cn('flex items-center self-stretch order-5', {
-                      'items-end mb-0.5': isEmptySegment
-                    })}
+                    className={cn(
+                      'flex items-center mt-[22px] self-stretch order-5',
+                      {
+                        'items-end mb-4 mt-0': isEmptySegment,
+                        'mt-0': isHaveError
+                      }
+                    )}
                   >
                     <Button
                       type="button"
                       disabled={formatClauses.length <= 1}
                       variant={'grey'}
-                      className="flex-center text-gray-500 hover:text-gray-600"
+                      className="flex-center text-gray-500 hover:text-gray-600 size-fit p-0"
                       onClick={() => remove(clauseIndex)}
                     >
                       <Icon icon={IconTrash} size={'sm'} />

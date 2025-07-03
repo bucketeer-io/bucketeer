@@ -107,7 +107,8 @@ const TargetingPage = ({
 
   const form = useForm<TargetingSchema>({
     resolver: yupResolver(formSchema),
-    defaultValues: handleCreateDefaultValues(feature)
+    defaultValues: handleCreateDefaultValues(feature),
+    mode: 'onChange'
   });
 
   const {
