@@ -40638,6 +40638,173 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "name": "CreateProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "progressive_rollout_manual_schedule_clause",
+                "type": "autoops.ProgressiveRolloutManualScheduleClause"
+              },
+              {
+                "id": 3,
+                "name": "progressive_rollout_template_schedule_clause",
+                "type": "autoops.ProgressiveRolloutTemplateScheduleClause"
+              }
+            ]
+          },
+          {
+            "name": "CreateProgressiveRolloutResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "progressive_rollout",
+                "type": "autoops.ProgressiveRollout"
+              }
+            ]
+          },
+          {
+            "name": "GetProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetProgressiveRolloutResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "progressive_rollout",
+                "type": "autoops.ProgressiveRollout"
+              }
+            ]
+          },
+          {
+            "name": "StopProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "stopped_by",
+                "type": "autoops.ProgressiveRollout.StoppedBy"
+              }
+            ]
+          },
+          {
+            "name": "StopProgressiveRolloutResponse"
+          },
+          {
+            "name": "DeleteProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteProgressiveRolloutResponse"
+          },
+          {
+            "name": "ListProgressiveRolloutsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "autoops.ListProgressiveRolloutsRequest.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "autoops.ListProgressiveRolloutsRequest.OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "status",
+                "type": "autoops.ProgressiveRollout.Status"
+              },
+              {
+                "id": 7,
+                "name": "type",
+                "type": "autoops.ProgressiveRollout.Type"
+              }
+            ]
+          },
+          {
+            "name": "ListProgressiveRolloutsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "progressive_rollouts",
+                "type": "autoops.ProgressiveRollout",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "schedule_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteProgressiveRolloutResponse"
           }
         ],
         "services": [
@@ -42321,6 +42488,240 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateProgressiveRollout",
+                "in_type": "CreateProgressiveRolloutRequest",
+                "out_type": "CreateProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/progressive_rollout"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Progressive Rollout"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetProgressiveRollout",
+                "in_type": "GetProgressiveRolloutRequest",
+                "out_type": "GetProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/progressive_rollout"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Progressive Rollout"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Progressive Rollout by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "StopProgressiveRollout",
+                "in_type": "StopProgressiveRolloutRequest",
+                "out_type": "StopProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/progressive_rollout/stop"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Stop Progressive Rollout"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Stop a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.stop"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteProgressiveRollout",
+                "in_type": "DeleteProgressiveRolloutRequest",
+                "out_type": "DeleteProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/progressive_rollout"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Progressive Rollout"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListProgressiveRollouts",
+                "in_type": "ListProgressiveRolloutsRequest",
+                "out_type": "ListProgressiveRolloutsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/progressive_rollouts"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Progressive Rollouts"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Progressive Rollouts. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExecuteProgressiveRollout",
+                "in_type": "ExecuteProgressiveRolloutRequest",
+                "out_type": "ExecuteProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/progressive_rollout/execute"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Execute Progressive Rollout"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Execute a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Progressive Rollouts"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.progressive_rollouts.execute"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -42391,6 +42792,9 @@
           },
           {
             "path": "proto/autoops/auto_ops_rule.proto"
+          },
+          {
+            "path": "proto/autoops/progressive_rollout.proto"
           },
           {
             "path": "proto/autoops/clause.proto"

@@ -40,6 +40,7 @@ import "proto/coderef/service.proto";
 import "proto/auditlog/auditlog.proto";
 import "proto/auditlog/service.proto";
 import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/progressive_rollout.proto";
 import "proto/autoops/clause.proto";
 import "proto/autoops/service.proto";
 
@@ -582,6 +583,62 @@ message ExecuteAutoOpsRequest {
 message ExecuteAutoOpsResponse {
   bool already_triggered = 1;
 }
+
+message CreateProgressiveRolloutRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  optional autoops.ProgressiveRolloutManualScheduleClause
+      progressive_rollout_manual_schedule_clause = 2;
+  optional autoops.ProgressiveRolloutTemplateScheduleClause
+      progressive_rollout_template_schedule_clause = 3;
+}
+
+message CreateProgressiveRolloutResponse {
+  autoops.ProgressiveRollout progressive_rollout = 1;
+}
+
+message GetProgressiveRolloutRequest {
+  string id = 1;
+}
+
+message GetProgressiveRolloutResponse {
+  autoops.ProgressiveRollout progressive_rollout = 1;
+}
+
+message StopProgressiveRolloutRequest {
+  string id = 1;
+  autoops.ProgressiveRollout.StoppedBy stopped_by = 2;
+}
+
+message StopProgressiveRolloutResponse {}
+
+message DeleteProgressiveRolloutRequest {
+  string id = 1;
+}
+
+message DeleteProgressiveRolloutResponse {}
+
+message ListProgressiveRolloutsRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  repeated string feature_ids = 3;
+  autoops.ListProgressiveRolloutsRequest.OrderBy order_by = 4;
+  autoops.ListProgressiveRolloutsRequest.OrderDirection order_direction = 5;
+  optional autoops.ProgressiveRollout.Status status = 6;
+  optional autoops.ProgressiveRollout.Type type = 7;
+}
+
+message ListProgressiveRolloutsResponse {
+  repeated autoops.ProgressiveRollout progressive_rollouts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ExecuteProgressiveRolloutRequest {
+  string id = 1;
+  string schedule_id = 2;
+}
+
+message ExecuteProgressiveRolloutResponse {}
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: { title: "Bucketeer Gateway Service" version: "1.0" }
@@ -1153,6 +1210,81 @@ service Gateway {
       description: "Execute an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Auto Ops Rules",
       operation_id: "api.gateway.v1.auto_ops_rules.execute"
+    };
+  }
+  rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
+      returns (CreateProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      post: "/v1/progressive_rollout"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Progressive Rollout",
+      description: "Create a new Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.create"
+    };
+  }
+  rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
+      returns (GetProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollout"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Progressive Rollout",
+      description: "Get a Progressive Rollout by ID. To call this API, you need a `READ` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.get"
+    };
+  }
+  rpc StopProgressiveRollout(StopProgressiveRolloutRequest)
+      returns (StopProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      patch: "/v1/progressive_rollout/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop Progressive Rollout",
+      description: "Stop a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.stop"
+    };
+  }
+  rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
+      returns (DeleteProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      delete: "/v1/progressive_rollout"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Progressive Rollout",
+      description: "Delete a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.delete"
+    };
+  }
+  rpc ListProgressiveRollouts(ListProgressiveRolloutsRequest)
+      returns (ListProgressiveRolloutsResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollouts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Progressive Rollouts",
+      description: "List Progressive Rollouts. To call this API, you need a `READ` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.list"
+    };
+  }
+  rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
+      returns (ExecuteProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      post: "/v1/progressive_rollout/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute Progressive Rollout",
+      description: "Execute a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Progressive Rollouts",
+      operation_id: "api.gateway.v1.progressive_rollouts.execute"
     };
   }
 }
