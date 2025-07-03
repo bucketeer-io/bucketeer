@@ -128,7 +128,6 @@ export const Root = memo(() => {
 
   if (isLogin && consoleAccount) {
     const isLoginFirstTime = getIsLoginFirstTimeStorage();
-    console.log({ isLoginFirstTime });
     if (isLoginFirstTime) {
       return <UserInformation />;
     }
