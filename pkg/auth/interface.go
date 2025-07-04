@@ -30,10 +30,12 @@ type Authenticator interface {
 }
 
 type UserInfo struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Avatar    string `json:"avatar"`
-	Email     string `json:"email"`
+	Name          string `json:"name"`
+	FirstName     string `json:"first_name"`
+	LastName      string `json:"last_name"`
+	Avatar        string `json:"avatar"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
 }
 
 type GoogleConfig struct {

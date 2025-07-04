@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -575,12 +576,51 @@ func (s *authService) updateUserInfoForOrganizations(
 				}
 			}
 
+			// Handle empty first/last names from Google by providing fallbacks
+			firstName := userInfo.FirstName
+			lastName := userInfo.LastName
+
+			// If first name is empty, try to extract from full name or use email prefix
+			if firstName == "" {
+				if userInfo.Name != "" {
+					parts := strings.Fields(userInfo.Name)
+					if len(parts) > 0 {
+						firstName = parts[0]
+					}
+				}
+				if firstName == "" {
+					// Use email prefix as fallback
+					emailParts := strings.Split(userInfo.Email, "@")
+					if len(emailParts) > 0 {
+						firstName = emailParts[0]
+					}
+				}
+			}
+
+			// If last name is empty, try to extract from full name or use default
+			if lastName == "" {
+				if userInfo.Name != "" {
+					parts := strings.Fields(userInfo.Name)
+					if len(parts) > 1 {
+						lastName = strings.Join(parts[1:], " ")
+					}
+				}
+				if lastName == "" {
+					s.logger.Warn("Last name is empty. Using default fallback",
+						zap.String("name", userInfo.Name),
+						zap.String("last_name", lastName),
+					)
+					lastName = "User" // Default fallback
+				}
+			}
+
 			updateReq := &acproto.UpdateAccountV2Request{
 				Email:          userInfo.Email,
 				OrganizationId: org.Id,
-				FirstName:      wrapperspb.String(userInfo.FirstName),
-				LastName:       wrapperspb.String(userInfo.LastName),
+				FirstName:      wrapperspb.String(firstName),
+				LastName:       wrapperspb.String(lastName),
 				AvatarImageUrl: wrapperspb.String(userInfo.Avatar),
+				Language:       wrapperspb.String("en"), // Default language
 			}
 
 			if len(avatarBytes) > 0 {
