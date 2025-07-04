@@ -1856,6 +1856,342 @@ paths:
           default: ASC
       tags:
         - Feature Flags
+  /v1/progressive_rollout:
+    get:
+      summary: Get Progressive Rollout
+      description: Get a Progressive Rollout by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Progressive Rollouts
+    delete:
+      summary: Delete Progressive Rollout
+      description: Delete a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Progressive Rollouts
+    post:
+      summary: Create Progressive Rollout
+      description: Create a new Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateProgressiveRolloutRequest'
+      tags:
+        - Progressive Rollouts
+  /v1/progressive_rollout/execute:
+    post:
+      summary: Execute Progressive Rollout
+      description: Execute a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.execute
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayExecuteProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayExecuteProgressiveRolloutRequest'
+      tags:
+        - Progressive Rollouts
+  /v1/progressive_rollout/stop:
+    patch:
+      summary: Stop Progressive Rollout
+      description: Stop a Progressive Rollout. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.stop
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayStopProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayStopProgressiveRolloutRequest'
+      tags:
+        - Progressive Rollouts
+  /v1/progressive_rollouts:
+    get:
+      summary: List Progressive Rollouts
+      description: List Progressive Rollouts. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.progressive_rollouts.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListProgressiveRolloutsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: featureIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: status
+          in: query
+          required: false
+          type: string
+          enum:
+            - WAITING
+            - RUNNING
+            - FINISHED
+            - STOPPED
+          default: WAITING
+        - name: type
+          in: query
+          required: false
+          type: string
+          enum:
+            - MANUAL_SCHEDULE
+            - TEMPLATE_SCHEDULE
+          default: MANUAL_SCHEDULE
+      tags:
+        - Progressive Rollouts
   /v1/push:
     get:
       summary: Get
@@ -2453,6 +2789,22 @@ definitions:
         format: int64
       userAttributesUpdated:
         type: boolean
+  ProgressiveRolloutStoppedBy:
+    type: string
+    enum:
+      - UNKNOWN
+      - USER
+      - OPS_SCHEDULE
+      - OPS_KILL_SWITCH
+    default: UNKNOWN
+  ProgressiveRolloutTemplateScheduleClauseInterval:
+    type: string
+    enum:
+      - UNKNOWN
+      - HOURLY
+      - DAILY
+      - WEEKLY
+    default: UNKNOWN
   RegisterEventsResponseError:
     type: object
     properties:
@@ -2752,6 +3104,19 @@ definitions:
         $ref: '#/definitions/bucketeerautoopsChangeType'
     required:
       - changeType
+  autoopsListProgressiveRolloutsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  autoopsListProgressiveRolloutsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   autoopsOpsEventRateClause:
     type: object
     properties:
@@ -2794,6 +3159,86 @@ definitions:
       - SCHEDULE
       - EVENT_RATE
     default: TYPE_UNKNOWN
+  autoopsProgressiveRollout:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      clause:
+        $ref: '#/definitions/protobufAny'
+      status:
+        $ref: '#/definitions/autoopsProgressiveRolloutStatus'
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      type:
+        $ref: '#/definitions/autoopsProgressiveRolloutType'
+      stoppedBy:
+        $ref: '#/definitions/ProgressiveRolloutStoppedBy'
+      stoppedAt:
+        type: string
+        format: int64
+  autoopsProgressiveRolloutManualScheduleClause:
+    type: object
+    properties:
+      schedules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsProgressiveRolloutSchedule'
+      variationId:
+        type: string
+  autoopsProgressiveRolloutSchedule:
+    type: object
+    properties:
+      scheduleId:
+        type: string
+      executeAt:
+        type: string
+        format: int64
+      weight:
+        type: integer
+        format: int32
+      triggeredAt:
+        type: string
+        format: int64
+  autoopsProgressiveRolloutStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - FINISHED
+      - STOPPED
+    default: WAITING
+  autoopsProgressiveRolloutTemplateScheduleClause:
+    type: object
+    properties:
+      schedules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsProgressiveRolloutSchedule'
+        description: |-
+          The reason of setting `schedules` is to save `triggered_at` in each
+          schedule.
+      interval:
+        $ref: '#/definitions/ProgressiveRolloutTemplateScheduleClauseInterval'
+      increments:
+        type: string
+        format: int64
+      variationId:
+        type: string
+  autoopsProgressiveRolloutType:
+    type: string
+    enum:
+      - MANUAL_SCHEDULE
+      - TEMPLATE_SCHEDULE
+    default: MANUAL_SCHEDULE
   bucketeerautoopsChangeType:
     type: string
     enum:
@@ -3030,6 +3475,22 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayCreateProgressiveRolloutRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      progressiveRolloutManualScheduleClause:
+        $ref: '#/definitions/autoopsProgressiveRolloutManualScheduleClause'
+      progressiveRolloutTemplateScheduleClause:
+        $ref: '#/definitions/autoopsProgressiveRolloutTemplateScheduleClause'
+    required:
+      - featureId
+  bucketeergatewayCreateProgressiveRolloutResponse:
+    type: object
+    properties:
+      progressiveRollout:
+        $ref: '#/definitions/autoopsProgressiveRollout'
   bucketeergatewayCreatePushRequest:
     type: object
     properties:
@@ -3092,6 +3553,8 @@ definitions:
     type: object
   bucketeergatewayDeleteCodeReferenceResponse:
     type: object
+  bucketeergatewayDeleteProgressiveRolloutResponse:
+    type: object
   bucketeergatewayDeleteSegmentResponse:
     type: object
   bucketeergatewayExecuteAutoOpsRequest:
@@ -3109,6 +3572,15 @@ definitions:
     properties:
       alreadyTriggered:
         type: boolean
+  bucketeergatewayExecuteProgressiveRolloutRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      scheduleId:
+        type: string
+  bucketeergatewayExecuteProgressiveRolloutResponse:
+    type: object
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
     type: object
     properties:
@@ -3144,6 +3616,11 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountConsoleAccount'
+  bucketeergatewayGetProgressiveRolloutResponse:
+    type: object
+    properties:
+      progressiveRollout:
+        $ref: '#/definitions/autoopsProgressiveRollout'
   bucketeergatewayGetPushResponse:
     type: object
     properties:
@@ -3224,6 +3701,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureFeature'
+  bucketeergatewayListProgressiveRolloutsResponse:
+    type: object
+    properties:
+      progressiveRollouts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsProgressiveRollout'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeergatewayListPushesResponse:
     type: object
     properties:
@@ -3258,6 +3748,15 @@ definitions:
     required:
       - id
   bucketeergatewayStopAutoOpsRuleResponse:
+    type: object
+  bucketeergatewayStopProgressiveRolloutRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      stoppedBy:
+        $ref: '#/definitions/ProgressiveRolloutStoppedBy'
+  bucketeergatewayStopProgressiveRolloutResponse:
     type: object
   bucketeergatewayUpdateAccountV2Request:
     type: object
