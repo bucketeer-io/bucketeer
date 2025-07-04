@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -43,11 +43,19 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<OrganizationFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<OrganizationFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<OrganizationFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onClearFilters = useCallback(
+    () => setFilters({ searchQuery: '', disabled: undefined }),
+    []
+  );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -101,13 +109,11 @@ const PageContent = ({
         <TabsContent value={filters.status} className="w-full mt-0">
           <TableListContainer>
             <CollectionLoader
-              onAdd={onAdd}
               filters={filters}
+              onAdd={onAdd}
               setFilters={onChangeFilters}
               onActions={onHandleActions}
-              onClearFilters={() =>
-                setFilters({ searchQuery: '', disabled: undefined })
-              }
+              onClearFilters={onClearFilters}
             />
           </TableListContainer>
         </TabsContent>

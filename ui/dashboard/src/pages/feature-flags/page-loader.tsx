@@ -55,22 +55,25 @@ const PageLoader = () => {
     onCloseConfirmRequiredModal
   ] = useToggleOpen(false);
 
-  const onHandleActions = (flag: Feature, type: FlagActionType) => {
-    if (type === 'CLONE') {
-      return navigate(
-        `${location.pathname}${PAGE_PATH_FEATURE_CLONE}/${flag.id}`
-      );
-    }
-    setSelectedFlag(flag);
-    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
-      setIsArchiving(type === 'ARCHIVE');
-      return onOpenConfirmModal();
-    }
-    if (['ACTIVE', 'INACTIVE'].includes(type)) {
-      setIsEnabling(type === 'ACTIVE');
-      onOpenConfirmRequiredModal();
-    }
-  };
+  const onHandleActions = useCallback(
+    (flag: Feature, type: FlagActionType) => {
+      if (type === 'CLONE') {
+        return navigate(
+          `${location.pathname}${PAGE_PATH_FEATURE_CLONE}/${flag.id}`
+        );
+      }
+      setSelectedFlag(flag);
+      if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
+        setIsArchiving(type === 'ARCHIVE');
+        return onOpenConfirmModal();
+      }
+      if (['ACTIVE', 'INACTIVE'].includes(type)) {
+        setIsEnabling(type === 'ACTIVE');
+        onOpenConfirmRequiredModal();
+      }
+    },
+    [location]
+  );
 
   const mutation = useMutation({
     mutationFn: async (params: Partial<FeatureUpdaterParams>) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { userSegmentBulkDownload } from '@api/user-segment';
 import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
 import { useQueryUserSegment } from '@queries/user-segment-details';
@@ -87,47 +87,50 @@ const PageLoader = () => {
     }
   };
 
-  const onActionHandler = (
-    segment: UserSegment,
-    type: UserSegmentsActionsType
-  ) => {
-    if (type !== 'DOWNLOAD') setSelectedSegment(segment);
-    switch (type) {
-      case 'EDIT':
-        return onOpenEditModal(
-          `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${segment.id}`
-        );
-      case 'FLAG':
-        return onOpenFlagModal();
-      case 'DELETE':
-        return onOpenDeleteModal();
-      default:
-        return onBulkDownloadSegment(segment);
-    }
-  };
-
-  const onBulkDownloadSegment = async (segment: UserSegment) => {
-    const resp = await userSegmentBulkDownload({
-      segmentId: segment.id,
-      environmentId: currentEnvironment.id
-    });
-    if (resp.data) {
-      const url = window.URL.createObjectURL(
-        new Blob([atob(String(resp.data))])
-      );
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download',
-        `${currentEnvironment.name}-${segment.name}.csv`
-      );
-      window.document.body.appendChild(link);
-      link.click();
-      if (link.parentNode) {
-        link.parentNode.removeChild(link);
+  const onActionHandler = useCallback(
+    (segment: UserSegment, type: UserSegmentsActionsType) => {
+      if (type !== 'DOWNLOAD') setSelectedSegment(segment);
+      switch (type) {
+        case 'EDIT':
+          return onOpenEditModal(
+            `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${segment.id}`
+          );
+        case 'FLAG':
+          return onOpenFlagModal();
+        case 'DELETE':
+          return onOpenDeleteModal();
+        default:
+          return onBulkDownloadSegment(segment);
       }
-    }
-  };
+    },
+    [currentEnvironment]
+  );
+
+  const onBulkDownloadSegment = useCallback(
+    async (segment: UserSegment) => {
+      const resp = await userSegmentBulkDownload({
+        segmentId: segment.id,
+        environmentId: currentEnvironment.id
+      });
+      if (resp.data) {
+        const url = window.URL.createObjectURL(
+          new Blob([atob(String(resp.data))])
+        );
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.setAttribute(
+          'download',
+          `${currentEnvironment.name}-${segment.name}.csv`
+        );
+        window.document.body.appendChild(link);
+        link.click();
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      }
+    },
+    [currentEnvironment]
+  );
 
   useEffect(() => {
     if (segmentCollection) {

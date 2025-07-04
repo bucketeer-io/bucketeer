@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
@@ -35,6 +35,10 @@ const PageContent = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const organizationIds = useMemo(
+    () => [currentEnvironment.organizationId],
+    [currentEnvironment]
+  );
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<UserSegmentsFilters> = searchOptions;
@@ -52,11 +56,18 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<UserSegmentsFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<UserSegmentsFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<UserSegmentsFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onClearFilters = useCallback(() => {
+    setFilters({ searchQuery: '', isInUseStatus: undefined });
+  }, []);
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -109,14 +120,12 @@ const PageContent = ({
       <TableListContainer>
         <CollectionLoader
           segmentUploading={segmentUploading}
-          onAdd={onAdd}
+          organizationIds={organizationIds}
           filters={filters}
+          onAdd={onAdd}
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
-          organizationIds={[currentEnvironment.organizationId]}
-          onClearFilters={() =>
-            setFilters({ searchQuery: '', isInUseStatus: undefined })
-          }
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </PageLayout.Content>

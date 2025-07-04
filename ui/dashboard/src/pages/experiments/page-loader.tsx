@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperiments } from '@queries/experiments';
@@ -51,7 +51,7 @@ const PageLoader = () => {
     isError
   } = useFetchExperiments({ environmentId: currentEnvironment.id });
 
-  const summary = collection?.summary;
+  const summary = useMemo(() => collection?.summary, [collection]);
 
   const mutation = useMutation({
     mutationFn: async (params: ExperimentUpdaterParams) => {

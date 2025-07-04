@@ -75,11 +75,14 @@ const PageContent = ({
     [filterCount, filters]
   );
 
-  const onChangeFilters = (values: Partial<FlagFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<FlagFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
 
   const onClearFilters = useCallback(() => {
     onChangeFilters({

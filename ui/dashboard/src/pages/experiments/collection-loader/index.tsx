@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
@@ -14,95 +15,97 @@ import { EmptyCollection } from '../collection-layout/empty-collection';
 import { ExperimentActionsType, ExperimentFilters } from '../types';
 import { useFetchExperiments } from './use-fetch-experiment';
 
-const CollectionLoader = ({
-  filters,
-  setFilters,
-  onAdd,
-  onActions
-}: {
-  filters: ExperimentFilters;
-  setFilters: (
-    values: Partial<ExperimentFilters>,
-    isChangeParams?: boolean
-  ) => void;
-  onAdd: () => void;
-  onActions: (item: Experiment, type: ExperimentActionsType) => void;
-}) => {
-  const { t } = useTranslation(['message']);
-  const columns = useColumns({ onActions });
-  const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { searchOptions, onChangSearchParams } = useSearchParams();
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchExperiments({
-    ...filters,
-    environmentId: currenEnvironment.id
-  });
-
-  const onSortingChangeHandler = (sorting: SortingState) => {
-    const updateOrderBy =
-      sorting.length > 0
-        ? sortingListFields[sorting[0].id]
-        : sortingListFields.default;
-
-    setFilters({
-      orderBy: updateOrderBy,
-      orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
+const CollectionLoader = memo(
+  ({
+    filters,
+    setFilters,
+    onAdd,
+    onActions
+  }: {
+    filters: ExperimentFilters;
+    setFilters: (
+      values: Partial<ExperimentFilters>,
+      isChangeParams?: boolean
+    ) => void;
+    onAdd: () => void;
+    onActions: (item: Experiment, type: ExperimentActionsType) => void;
+  }) => {
+    const { t } = useTranslation(['message']);
+    const columns = useColumns({ onActions });
+    const { consoleAccount } = useAuth();
+    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const { searchOptions, onChangSearchParams } = useSearchParams();
+    const {
+      data: collection,
+      isLoading,
+      refetch,
+      isError
+    } = useFetchExperiments({
+      ...filters,
+      environmentId: currenEnvironment.id
     });
-  };
 
-  const experiments = collection?.experiments || [];
-  const totalCount = Number(collection?.totalCount) || 0;
+    const onSortingChangeHandler = (sorting: SortingState) => {
+      const updateOrderBy =
+        sorting.length > 0
+          ? sortingListFields[sorting[0].id]
+          : sortingListFields.default;
 
-  const emptyState = (
-    <CollectionEmpty
-      data={experiments}
-      searchQuery={filters.searchQuery}
-      isFilter={
-        filters.isFilter ||
-        (!!searchOptions?.statuses?.length && !filters?.filterByTab)
-      }
-      description={t('message:empty:experiment-match')}
-      onClear={() => {
-        setFilters(
-          {
-            searchQuery: '',
-            isFilter: undefined,
-            status: 'ACTIVE',
-            statuses: ['WAITING', 'RUNNING']
-          },
-          false
-        );
-        onChangSearchParams({});
-      }}
-      empty={<EmptyCollection onAdd={onAdd} />}
-    />
-  );
+      setFilters({
+        orderBy: updateOrderBy,
+        orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
+      });
+    };
 
-  return isError ? (
-    <PageLayout.ErrorState onRetry={refetch} />
-  ) : (
-    <TableListContent>
-      <DataTable
-        isLoading={isLoading}
+    const experiments = collection?.experiments || [];
+    const totalCount = Number(collection?.totalCount) || 0;
+
+    const emptyState = (
+      <CollectionEmpty
         data={experiments}
-        columns={columns}
-        onSortingChange={onSortingChangeHandler}
-        emptyCollection={emptyState}
+        searchQuery={filters.searchQuery}
+        isFilter={
+          filters.isFilter ||
+          (!!searchOptions?.statuses?.length && !filters?.filterByTab)
+        }
+        description={t('message:empty:experiment-match')}
+        onClear={() => {
+          setFilters(
+            {
+              searchQuery: '',
+              isFilter: undefined,
+              status: 'ACTIVE',
+              statuses: ['WAITING', 'RUNNING']
+            },
+            false
+          );
+          onChangSearchParams({});
+        }}
+        empty={<EmptyCollection onAdd={onAdd} />}
       />
-      {!isLoading && (
-        <Pagination
-          page={filters.page}
-          totalCount={totalCount}
-          onChange={page => setFilters({ page })}
+    );
+
+    return isError ? (
+      <PageLayout.ErrorState onRetry={refetch} />
+    ) : (
+      <TableListContent>
+        <DataTable
+          isLoading={isLoading}
+          data={experiments}
+          columns={columns}
+          onSortingChange={onSortingChangeHandler}
+          emptyCollection={emptyState}
         />
-      )}
-    </TableListContent>
-  );
-};
+        {!isLoading && (
+          <Pagination
+            page={filters.page}
+            totalCount={totalCount}
+            onChange={page => setFilters({ page })}
+          />
+        )}
+      </TableListContent>
+    );
+  }
+);
 
 export default CollectionLoader;

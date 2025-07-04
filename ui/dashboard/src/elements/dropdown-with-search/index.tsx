@@ -8,67 +8,16 @@ import {
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FixedSizeList,
-  ListChildComponentProps,
-  FixedSizeListProps
-} from 'react-window';
 import { cn } from 'utils/style';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuSearch,
   DropdownMenuTrigger,
   DropdownOption,
   DropdownValue
 } from 'components/dropdown';
-
-interface RowWithDataProps {
-  items: DropdownOption[];
-  selectedFieldValue: string;
-  isMultiselect?: boolean;
-  selectedOptions?: string[];
-  additionalElement?: (item: DropdownOption) => ReactNode;
-  onSelectOption: (value: DropdownValue) => void;
-}
-
-const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
-
-const RowWithData = ({
-  index,
-  style,
-  data
-}: ListChildComponentProps<RowWithDataProps>) => {
-  const {
-    items,
-    isMultiselect,
-    selectedOptions,
-    selectedFieldValue,
-    additionalElement,
-    onSelectOption
-  } = data;
-  const currentItem = items[index];
-  return (
-    <DropdownMenuItem
-      key={index}
-      style={style}
-      isSelected={selectedOptions?.includes(
-        currentItem[selectedFieldValue] as string
-      )}
-      isMultiselect={isMultiselect}
-      value={currentItem.value}
-      label={currentItem.label}
-      icon={currentItem?.icon}
-      disabled={currentItem?.disabled}
-      additionalElement={additionalElement && additionalElement(currentItem)}
-      onSelectOption={() =>
-        onSelectOption(currentItem[selectedFieldValue] as string)
-      }
-      className="justify-between gap-x-4 [&>div:last-child]:mb-[2px]"
-    />
-  );
-};
+import DropdownList from 'elements/dropdown-list';
 
 const DropdownMenuWithSearch = ({
   align,
@@ -234,28 +183,15 @@ const DropdownMenuWithSearch = ({
           }
         />
         {dropdownOptions?.length > 0 ? (
-          <List
-            height={
-              dropdownOptions.length > 15 ? 200 : dropdownOptions.length * 44
-            }
-            width={'100%'}
+          <DropdownList
+            options={dropdownOptions}
             itemSize={44}
-            itemCount={dropdownOptions.length}
-            itemData={{
-              items: dropdownOptions,
-              className: 'justify-between gap-x-4 [&>div:last-child]:mb-[2px]',
-              isMultiselect: isMultiselect,
-              selectedOptions,
-              selectedFieldValue,
-              additionalElement,
-              onSelectOption
-            }}
-            className={
-              dropdownOptions?.length < 15 ? 'hidden-scroll' : 'small-scroll'
-            }
-          >
-            {RowWithData}
-          </List>
+            isMultiselect={isMultiselect}
+            selectedOptions={selectedOptions}
+            selectedFieldValue={selectedFieldValue}
+            additionalElement={additionalElement}
+            onSelectOption={onSelectOption}
+          />
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
             setSearchValue(value);

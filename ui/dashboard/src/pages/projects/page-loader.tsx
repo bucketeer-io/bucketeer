@@ -18,14 +18,16 @@ const PageLoader = () => {
     setSelectedProject(undefined);
   }, []);
 
+  const handleOnEditProject = useCallback((value: Project) => {
+    setSelectedProject(value);
+    onOpenCreateUpdateModal();
+  }, []);
+
   return (
     <>
       <PageContent
         onAdd={onOpenCreateUpdateModal}
-        onEdit={value => {
-          setSelectedProject(value);
-          onOpenCreateUpdateModal();
-        }}
+        onEdit={handleOnEditProject}
       />
 
       {isOpenCreateUpdateModal && (

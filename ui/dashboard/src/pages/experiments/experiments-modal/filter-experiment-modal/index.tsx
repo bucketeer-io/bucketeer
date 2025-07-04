@@ -16,10 +16,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSearch,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<ExperimentFilters>) => void;
@@ -289,7 +291,8 @@ const FilterExperimentModal = ({
                 />
                 <DropdownMenuContent
                   className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isMaintainerFilter
+                    'pt-0 w-[300px]': isMaintainerFilter,
+                    'hidden-scroll': valueOptions?.length > 15
                   })}
                   align="start"
                 >
@@ -305,24 +308,19 @@ const FilterExperimentModal = ({
                     />
                   )}
                   {valueOptions?.length > 0 ? (
-                    valueOptions.map((item, index) => (
-                      <DropdownMenuItem
-                        isSelected={
-                          isStatusFilter &&
-                          Array.isArray(filterOption?.filterValue) &&
-                          filterOption.filterValue?.includes(
-                            item.value as string
-                          )
-                        }
-                        isMultiselect={isStatusFilter}
-                        key={index}
-                        value={item.value as string}
-                        label={item.label}
-                        onSelectOption={value => {
-                          handleChangeFilterValue(value, filterIndex);
-                        }}
-                      />
-                    ))
+                    <DropdownList
+                      isMultiselect={isStatusFilter}
+                      selectedOptions={
+                        isStatusFilter &&
+                        Array.isArray(filterOption?.filterValue)
+                          ? filterOption.filterValue
+                          : undefined
+                      }
+                      options={valueOptions as DropdownOption[]}
+                      onSelectOption={value =>
+                        handleChangeFilterValue(value, filterIndex)
+                      }
+                    />
                   ) : (
                     <div className="flex-center py-2.5 typo-para-medium text-gray-600">
                       {t('no-options-found')}
