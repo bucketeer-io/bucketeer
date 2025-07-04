@@ -32,7 +32,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
 
   const defaultFilters = {
     tab: EvaluationTab.EVENT_COUNT,
-    period: EvaluationTimeRange.THIRTY_DAYS,
+    period: EvaluationTimeRange.FOURTEEN_DAYS,
     ...searchFilters
   } as EvaluationFilters;
 

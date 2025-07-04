@@ -352,7 +352,7 @@ const typography = plugin(({ addComponents }) => {
     },
     '.typo-para-tiny': {
       fontWeight: '400',
-      fontSize: '12px',
+      fontSize: '13px',
       lineHeight: '16px',
       letterSpacing: '0.01em'
     }
