@@ -567,6 +567,7 @@
   "show": "表示",
   "sideMenu.accounts": "アカウント",
   "sideMenu.adminSettings": "管理者設定",
+  "sideMenu.newConsole": "新コンソール",
   "sideMenu.apiKeys": "APIキー",
   "sideMenu.auditLog": "監視ログ",
   "sideMenu.debugger": "デバッガー",
