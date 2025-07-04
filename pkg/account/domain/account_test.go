@@ -1201,6 +1201,15 @@ func TestAccountV2_GetAccountFullName(t *testing.T) {
 			},
 			expectedName: "newFirstName newLastName",
 		},
+		{
+			desc: "no first name and no last name",
+			account: &proto.AccountV2{
+				Name:      "displayName",
+				FirstName: "",
+				LastName:  "",
+			},
+			expectedName: "displayName",
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -1218,6 +1227,186 @@ func TestAccountV2_GetAccountFullName(t *testing.T) {
 				p.account.EnvironmentRoles,
 			)
 			assert.Equal(t, p.expectedName, account.GetAccountFullName())
+		})
+	}
+}
+
+func TestAccountV2_Validate(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		account     *proto.AccountV2
+		expectedErr error
+	}{
+		{
+			desc: "success: both first and last name provided",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: only first name provided",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: only last name provided",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: neither first nor last name provided but name is filled",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "",
+				LastName:         "",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "error: neither first nor last name provided and name is empty",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "",
+				FirstName:        "",
+				LastName:         "",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusFullNameIsEmpty.Err(),
+		},
+		{
+			desc: "error: missing organization id",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusMissingOrganizationID.Err(),
+		},
+		{
+			desc: "error: empty email",
+			account: &proto.AccountV2{
+				Email:            "",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusEmailIsEmpty.Err(),
+		},
+		{
+			desc: "error: invalid email format",
+			account: &proto.AccountV2{
+				Email:            "invalid-email",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusInvalidEmail.Err(),
+		},
+		{
+			desc: "error: empty language",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusLanguageIsEmpty.Err(),
+		},
+		{
+			desc: "error: invalid organization role",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_UNASSIGNED,
+			},
+			expectedErr: statusInvalidOrganizationRole.Err(),
+		},
+		{
+			desc: "error: first name too long",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        string(make([]byte, 251)), // 251 characters, exceeds maxAccountNameLength (250)
+				LastName:         "User",
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusInvalidFirstName.Err(),
+		},
+		{
+			desc: "error: last name too long",
+			account: &proto.AccountV2{
+				Email:            "test@example.com",
+				Name:             "Test User",
+				FirstName:        "Test",
+				LastName:         string(make([]byte, 251)), // 251 characters, exceeds maxAccountNameLength (250)
+				Language:         "en",
+				OrganizationId:   "org123",
+				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			},
+			expectedErr: statusInvalidLastName.Err(),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			account := &AccountV2{p.account}
+			err := validate(account)
+			if p.expectedErr != nil {
+				assert.NotNil(t, err)
+				assert.Equal(t, p.expectedErr.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
+			}
 		})
 	}
 }

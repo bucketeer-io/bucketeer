@@ -170,7 +170,7 @@
     "kill-switch-operation": "キルスイッチオペレーション",
     "enable-operation": "オペレーションを有効化",
     "schedule-operation": "スケジュールオペレーション",
-    "progress-information": "進行状況情報",
+    "progress-information": "進行状況",
     "stopped-at": "{{stoppedAt}}に停止",
     "user": "ユーザー",
     "progress-goal-value": "ゴール: <b>{{value}}</b>",
