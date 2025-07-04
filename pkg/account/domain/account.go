@@ -387,6 +387,7 @@ func validate(a *AccountV2) error {
 	}
 	// If both first name and last name are empty, the name field must not be empty
 	if a.FirstName == "" && a.LastName == "" {
+		// TODO: This should be removed after the new console is released and the migration is completed
 		if a.Name == "" {
 			return statusFullNameIsEmpty.Err()
 		}
