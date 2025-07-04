@@ -94,10 +94,12 @@ func (a Authenticator) Exchange(
 		return nil, err
 	}
 	return &auth.UserInfo{
-		FirstName: userInfo.GivenName,
-		LastName:  userInfo.FamilyName,
-		Avatar:    userInfo.Picture,
-		Email:     userInfo.Email,
+		Name:          userInfo.Name,
+		FirstName:     userInfo.GivenName,
+		LastName:      userInfo.FamilyName,
+		Avatar:        userInfo.Picture,
+		Email:         userInfo.Email,
+		VerifiedEmail: userInfo.EmailVerified,
 	}, nil
 }
 
@@ -113,18 +115,17 @@ func (a Authenticator) getGoogleUserInfo(
 		a.logger.Error("auth/google: failed to get user info", zap.Error(err))
 		return userInfo, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			a.logger.Error("auth/google: failed to close response body", zap.Error(err))
-		}
-	}(resp.Body)
-	err = json.NewDecoder(resp.Body).Decode(&userInfo)
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		a.logger.Error("auth/google: failed to read response body", zap.Error(err))
+		return userInfo, err
+	}
+	a.logger.Debug("auth/google: user info response", zap.String("response", string(bodyBytes)))
+	if err := json.Unmarshal(bodyBytes, &userInfo); err != nil {
 		a.logger.Error("auth/google: failed to decode user info", zap.Error(err))
 		return userInfo, err
 	}
-	a.logger.Debug("auth/google: user info", zap.Any("user_info", userInfo))
 	return userInfo, nil
 }
 
