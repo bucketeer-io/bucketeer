@@ -6,7 +6,11 @@ export const urls = {
   AUTH_REDIRECT:
     process.env.RELEASE_CHANNEL !== 'prod'
       ? `${process.env.DEV_AUTH_REDIRECT_ENDPOINT}/auth/callback`
-      : `${window.location.origin}/auth/callback`
+      : `${window.location.origin}/legacy/auth/callback`,
+  NEW_CONSOLE_ENDPOINT:
+    process.env.RELEASE_CHANNEL !== 'prod'
+      ? `${process.env.NEW_CONSOLE_ENDPOINT}?fromOldConsole=true`
+      : `${window.location.origin}?fromOldConsole=true`
 };
 
 export const ENABLE_SETTINGS = true;

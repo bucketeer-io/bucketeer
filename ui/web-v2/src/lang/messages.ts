@@ -2787,6 +2787,10 @@ export const messages = {
     }
   },
   sideMenu: {
+    newConsole: defineMessage({
+      id: 'sideMenu.newConsole',
+      defaultMessage: 'New Console'
+    }),
     adminSettings: defineMessage({
       id: 'sideMenu.adminSettings',
       defaultMessage: 'Admin Settings'

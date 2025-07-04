@@ -4,6 +4,7 @@ import IconArrowLeft from './customized-icons/arrow-left.svg?react';
 import IconArrowRight from './customized-icons/arrow-right.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconBitbucket from './customized-icons/bitbucket.svg?react';
+import IconBucketWhite from './customized-icons/bucket-white.svg?react';
 import IconCalendarXL from './customized-icons/calendar-xl.svg?react';
 import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
@@ -177,6 +178,7 @@ export {
   IconJapanFlag,
   IconEnglishFlag,
   IconFlagNoTraffic,
+  IconBucketWhite,
   // Special icons
   IconGoal,
   IconGoogle,
