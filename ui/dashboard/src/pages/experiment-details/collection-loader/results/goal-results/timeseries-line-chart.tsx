@@ -78,7 +78,7 @@ const TimeseriesLineChart = memo(
       }: TimeseriesLineChartProps,
       ref: Ref<ChartToggleLegendRef>
     ) => {
-      const labels = timeseries.map(t => new Date(Number(t) * 1000));
+      const labels = timeseries?.map(t => new Date(Number(t) * 1000));
 
       const chartRef = useRef<ChartJS<
         'line',
@@ -97,8 +97,9 @@ const TimeseriesLineChart = memo(
       const toggleDataset = (variationId: string) => {
         const chart = chartRef.current;
         if (chart) {
-          const datasets: DatasetType[] = chart.data.datasets as DatasetType[];
-          const toggleIndex = datasets.findIndex(
+          const datasets: DatasetType[] = chart?.data
+            ?.datasets as DatasetType[];
+          const toggleIndex = datasets?.findIndex(
             dataset => dataset?.value === variationId
           );
           if (toggleIndex === -1) return;
@@ -141,7 +142,7 @@ const TimeseriesLineChart = memo(
               enabled: true,
               callbacks: {
                 title: tooltipItems => {
-                  const dateString = tooltipItems[0].label;
+                  const dateString = tooltipItems[0]?.label;
                   const date = new Date(dateString);
                   if (date instanceof Date) {
                     return formatLongDateTime({

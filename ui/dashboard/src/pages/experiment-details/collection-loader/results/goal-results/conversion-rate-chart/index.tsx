@@ -40,7 +40,6 @@ const ConversionRateChart = forwardRef(
       goalResultState?.chartType,
       goalResultState?.tab
     );
-    console.log({ goalResult, timeseries });
     const upperBoundaries = useMemo(
       () =>
         goalResult?.variationResults?.map(item =>
@@ -87,8 +86,8 @@ const ConversionRateChart = forwardRef(
       [goalResult, bins]
     );
 
-    bins = bins?.map(b => Math.round(b * 10000) / 100);
-    console.log({ bins, hist });
+    bins = useMemo(() => bins?.map(b => Math.round(b * 10000) / 100), [bins]);
+
     return isConversionRateChart &&
       !goalResult.variationResults[0]?.cvrMedianTimeseries ? (
       <HistogramChart

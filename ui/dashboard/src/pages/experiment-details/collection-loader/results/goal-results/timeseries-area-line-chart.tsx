@@ -80,16 +80,16 @@ export const TimeseriesAreaLineChart = memo(
       }: TimeseriesAreaLineChartProps,
       ref: Ref<ChartToggleLegendRef>
     ) => {
-      const labels = timeseries.map(t => new Date(Number(t) * 1000));
+      const labels = timeseries?.map(t => new Date(Number(t) * 1000));
       const datasets: DatasetType[] = [];
 
-      dataLabels.forEach((l, i) => {
+      dataLabels?.forEach((l, i) => {
         const color = getVariationColor(i);
         const hexColor = hexToRgba(color, 0.2);
 
         datasets.push({
           label: undefined,
-          data: upperBoundaries[i],
+          data: upperBoundaries[i] || [],
           backgroundColor: hexColor,
           borderWidth: 0,
           pointRadius: 0,
@@ -102,7 +102,7 @@ export const TimeseriesAreaLineChart = memo(
         });
         datasets.push({
           label: undefined,
-          data: lowerBoundaries[i],
+          data: lowerBoundaries[i] || [],
           backgroundColor: hexColor,
           borderWidth: 0,
           pointRadius: 0,
@@ -115,7 +115,7 @@ export const TimeseriesAreaLineChart = memo(
         });
         datasets.push({
           label: l.label,
-          data: representatives[i],
+          data: representatives[i] || [],
           borderColor: color,
           fill: false,
           value: l.value,
@@ -145,7 +145,7 @@ export const TimeseriesAreaLineChart = memo(
 
           chart.update();
           setDataSets(
-            datasets.map(dataset => ({
+            datasets?.map(dataset => ({
               label: dataset.label,
               hidden: dataset.hidden || false
             }))
@@ -172,12 +172,12 @@ export const TimeseriesAreaLineChart = memo(
             enabled: true,
             callbacks: {
               title: tooltipItems => {
-                const dateString = tooltipItems[0].label;
+                const dateString = tooltipItems[0]?.label;
 
                 const date = new Date(dateString);
                 if (date instanceof Date) {
                   return formatLongDateTime({
-                    value: String(date.getTime() / 1000)
+                    value: String(date?.getTime() / 1000)
                   });
                 }
                 return tooltipItems[0].label;
