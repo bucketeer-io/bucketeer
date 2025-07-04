@@ -43,7 +43,8 @@ export const userFormSchema = ({
           count: 2,
           name: translation('common:last-name').toLowerCase()
         })
-      )
+      ),
+    avatar: yup.string()
   });
 export type FilterProps = {
   selectedAvatar: AccountAvatar | null;

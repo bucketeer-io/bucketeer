@@ -41,6 +41,7 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
+import { getIsLoginFirstTimeStorage } from 'storage/login';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
@@ -57,6 +58,7 @@ import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
+import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
@@ -125,6 +127,10 @@ export const Root = memo(() => {
   }
 
   if (isLogin && consoleAccount) {
+    const isLoginFirstTime = getIsLoginFirstTimeStorage();
+    if (isLoginFirstTime) {
+      return <UserInformation />;
+    }
     return (
       <div className="flex flex-row w-full h-full">
         <Navigation onClickNavLink={handleChangePageKey} />

@@ -17,6 +17,7 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
+import { setIsLoginFirstTimeStorage } from 'storage/login';
 import {
   clearOrgIdStorage,
   getOrgIdStorage,
@@ -64,6 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     !!authToken?.accessToken
   );
   const [isLogin, setIsLogin] = useState<boolean>(false);
+
   const [consoleAccount, setConsoleAccount] =
     useState<Undefinable<ConsoleAccount>>();
 
@@ -84,10 +86,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         errorNotify(null, t('message:env-are-empty'));
         return logout();
       }
-      const isJapanese = response.account.language === Language.JAPANESE;
-      onChangeFontWithLocalized(isJapanese);
       setConsoleAccount(response.account);
       setIsLogin(true);
+      if (response.account.lastSeen === '0' || !response.account.lastSeen)
+        return setIsLoginFirstTimeStorage(true);
+      const isJapanese = response.account.language === Language.JAPANESE;
+      onChangeFontWithLocalized(isJapanese);
 
       if (response.account.language !== getLanguage()) {
         await setLanguage(response.account.language as Language);
