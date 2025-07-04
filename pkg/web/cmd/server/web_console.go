@@ -51,7 +51,7 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 
 // webConsoleHandler returns a http.Handler for the old web console UI.
 func webConsoleHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS)})
+	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
 // dashboardHandler returns a http.Handler for the new dashboard UI.
@@ -72,18 +72,7 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 }
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
-	// Handle /legacy (without trailing slash) - redirect to /legacy/
-	mux.HandleFunc("/legacy", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/legacy" {
-			http.Redirect(w, r, "/legacy/", http.StatusMovedPermanently)
-			return
-		}
-	})
-
-	// Handle /legacy/ paths - serve old console
-	mux.HandleFunc("/legacy/", http.StripPrefix("/legacy", webConsoleHandler()).ServeHTTP)
-
-	// Handle static files
+	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
 	mux.HandleFunc("/legacy/static/js/",
 		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
 }
