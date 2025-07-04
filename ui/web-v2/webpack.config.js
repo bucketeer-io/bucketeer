@@ -6,6 +6,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = merge(common, {
   mode: 'production',
+  output: {
+    publicPath: '/legacy/'
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html',

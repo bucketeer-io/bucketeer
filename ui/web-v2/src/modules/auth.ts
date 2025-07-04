@@ -17,6 +17,7 @@ import {
   setToken
 } from '../storage/token';
 import { PAGE_PATH_ROOT } from '../constants/routing';
+import { history } from '../history';
 
 const MODULE_NAME = 'auth';
 
@@ -136,8 +137,8 @@ export const authSlice = createSlice({
     builder
       .addCase(getAuthenticationURL.rejected, (state) => {
         state.loading = false;
-        // retry
-        location.reload();
+        clearTokenFromStorage();
+        history.push(PAGE_PATH_ROOT);
       })
       .addCase(getAuthenticationURL.pending, (state) => {
         state.loading = true;
@@ -149,7 +150,7 @@ export const authSlice = createSlice({
       .addCase(refreshToken.rejected, (state) => {
         state.loading = false;
         clearTokenFromStorage();
-        window.location.href = PAGE_PATH_ROOT;
+        history.push(PAGE_PATH_ROOT);
       })
       .addCase(refreshToken.pending, (state) => {
         state.loading = true;
@@ -161,7 +162,7 @@ export const authSlice = createSlice({
       .addCase(exchangeTokenFromUrl.rejected, (state) => {
         state.loading = false;
         clearTokenFromStorage();
-        window.location.href = PAGE_PATH_ROOT;
+        history.push(PAGE_PATH_ROOT);
       })
       .addCase(exchangeTokenFromUrl.pending, (state) => {
         state.loading = true;
