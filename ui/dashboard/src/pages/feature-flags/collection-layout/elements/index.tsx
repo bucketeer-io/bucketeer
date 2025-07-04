@@ -271,9 +271,8 @@ export const FlagNameElement = ({
               asChild={false}
               align="start"
               trigger={<FlagStatus status={status} />}
-              content={t(
-                `feature-flags.${status === 'receiving-traffic' ? 'receiving-traffic-description' : status === 'no-recent-traffic' ? 'no-recent-traffic-description' : 'never-used-description'}`
-              )}
+              content={t(`feature-flags.${status}-description`)}
+              className="max-w-[300px]"
             />
           )}
         </div>

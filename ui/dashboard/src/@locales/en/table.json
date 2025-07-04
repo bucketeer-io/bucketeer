@@ -218,7 +218,8 @@
     "operations-rollout-desc": "Automate to release a feature progressively",
     "rollout-create-desc": "Gradually roll out a variation of a feature flag to users in controlled phases. You can choose between a manual rollout schedule or an automated template that handles increments and timing for you.",
     "kill-switch": "Kill Switch",
-    "event-rate-create-desc": "Automatically disables a feature flag when a specified goal event rate is reached for a particular variation. Useful for stopping flags causing high error rates or collecting data up to a defined threshold."
+    "event-rate-create-desc": "Automatically disables a feature flag when a specified goal event rate is reached for a particular variation. Useful for stopping flags causing high error rates or collecting data up to a defined threshold.",
+    "total-flags-description": "Total number of flags excluding archived ones. Includes flags with statuses: Never Used, Receiving Traffic, and No Recent Traffic."
   },
   "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
   "no-data-change": "No data change",
@@ -294,5 +295,6 @@
   "created-at-time": "Created {{time}}",
   "pending-invite": "Pending invite",
   "retry": "Retry",
-  "baseline": "Baseline"
+  "baseline": "Baseline",
+  "default-value-tooltip": "Count of evaluations where the SDK returned the default value set by the developer because the flag was not found in the SDK cache."
 }

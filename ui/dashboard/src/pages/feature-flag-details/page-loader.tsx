@@ -52,11 +52,10 @@ const PageLoader = () => {
           <>
             <Tooltip
               asChild={false}
-              align="start"
+              align="end"
               trigger={<FlagStatus status={flagStatus} />}
-              content={t(
-                `feature-flags.${flagStatus === 'receiving-traffic' ? 'receiving-traffic-description' : flagStatus === 'no-recent-traffic' ? 'no-recent-traffic-description' : 'never-used-description'}`
-              )}
+              content={t(`feature-flags.${flagStatus}-description`)}
+              className="max-w-[300px]"
             />
           </>
         }

@@ -20,7 +20,7 @@ import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
 import SortBy from './sort-by';
-import { FlagActionType, FlagFilters } from './types';
+import { FlagActionType, FlagFilters, StatusFilterType } from './types';
 
 const PageContent = ({
   onAdd,
@@ -98,6 +98,15 @@ const PageContent = ({
     onCloseFilterModal();
   }, [filters]);
 
+  const handleChangeFiltersByCard = useCallback(
+    (status: StatusFilterType | undefined) => {
+      onChangeFilters({
+        status: status === filters.status ? undefined : status
+      });
+    },
+    [filters]
+  );
+
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -125,11 +134,7 @@ const PageContent = ({
       <Overview
         summary={summary}
         statusFilter={filters?.status}
-        onChangeFilters={status =>
-          onChangeFilters({
-            status
-          })
-        }
+        onChangeFilters={handleChangeFiltersByCard}
       />
       <Filter
         link={DOCUMENTATION_LINKS.FEATURE_FLAGS}

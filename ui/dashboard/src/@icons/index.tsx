@@ -18,6 +18,7 @@ import IconDocument from './customized-icons/document.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconEnglishFlag from './customized-icons/english-flag.svg?react';
 import IconExpand from './customized-icons/expand.svg?react';
+import IconFlagNoTraffic from './customized-icons/flag-no-traffic.svg?react';
 import IconGitHub from './customized-icons/github.svg?react';
 import IconGitLab from './customized-icons/gitlab.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
@@ -175,6 +176,7 @@ export {
   IconCircleDashed,
   IconJapanFlag,
   IconEnglishFlag,
+  IconFlagNoTraffic,
   // Special icons
   IconGoal,
   IconGoogle,

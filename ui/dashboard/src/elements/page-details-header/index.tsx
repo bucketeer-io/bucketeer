@@ -24,7 +24,7 @@ const PageDetailsHeader = ({
 }: PageDetailsHeaderProps) => {
   return (
     <header className="grid pt-7 px-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-x-2">
         <div className="flex items-center gap-4">
           <button
             className={cn(
