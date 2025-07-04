@@ -567,6 +567,7 @@
   "show": "Show",
   "sideMenu.accounts": "Accounts",
   "sideMenu.adminSettings": "Admin Settings",
+  "sideMenu.newConsole": "New Console",
   "sideMenu.apiKeys": "API Keys",
   "sideMenu.auditLog": "Audit Logs",
   "sideMenu.debugger": "Debugger",

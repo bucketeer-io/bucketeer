@@ -960,9 +960,9 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
-                                prefix: /v3
+                                prefix: /legacy
                               route:
-                                cluster: dashboard
+                                cluster: web_console
                                 timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx
@@ -978,7 +978,7 @@ data:
                             - match:
                                 prefix: /
                               route:
-                                cluster: web_console
+                                cluster: dashboard
                                 timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx

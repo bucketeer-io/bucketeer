@@ -8,6 +8,7 @@ import { clearOrganizationId } from '../storage/organizationId';
 import { clearMe } from '../modules/me';
 import { PAGE_PATH_ROOT } from '../constants/routing';
 import { clearCurrentEnvironmentId } from '../storage/environment';
+import { history } from '../history';
 
 export const UNAUTHENTICATED_ERROR = 'UNAUTHENTICATED_ERROR';
 
@@ -37,7 +38,7 @@ export const thunkErrorHandler: Middleware =
     if (isPlainAction(action)) {
       if (action.type.includes('rejected')) {
         if (action.error.message === UNAUTHENTICATED_ERROR) {
-          window.location.href = PAGE_PATH_ROOT;
+          history.push(PAGE_PATH_ROOT);
           dispatch(clearToken());
           dispatch(clearMe());
           clearOrganizationId();

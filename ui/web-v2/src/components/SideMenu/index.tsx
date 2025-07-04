@@ -1,6 +1,7 @@
 import logo from '../../assets/logo.png';
 import { clearOrganizationId } from '../../storage/organizationId';
 import DebuggerIcon from '../../assets/svg/debugger.svg';
+import BucketWhiteIcon from '../../assets/svg/bucket-white.svg';
 import MUAccountCircleIcon from '@material-ui/icons/AccountCircle';
 import MUBarChart from '@material-ui/icons/BarChart';
 import MUFlagIcon from '@material-ui/icons/Flag';
@@ -39,6 +40,7 @@ import { clearMe, useCurrentEnvironment, useMe } from '../../modules/me';
 import { AppDispatch } from '../../store';
 import { EnvironmentSelect } from '../EnvironmentSelect';
 import { clearCurrentEnvironmentId } from '../../storage/environment';
+import { urls } from '../../config';
 
 export interface MenuItem {
   readonly messageComponent?: ReactNode;
@@ -169,6 +171,15 @@ const createMenuItems = (
       iconElement: <MUSettingsApplications />
     });
   }
+  items.push({
+    messageComponent: (
+      <span>{intl.formatMessage(messages.sideMenu.newConsole)}</span>
+    ),
+    path: urls.NEW_CONSOLE_ENDPOINT,
+    external: true,
+    target: null,
+    iconElement: <BucketWhiteIcon className="mt-1" />
+  });
   return items;
 };
 

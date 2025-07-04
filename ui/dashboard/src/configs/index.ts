@@ -13,24 +13,30 @@ declare global {
       DEMO_SIGN_IN_PASSWORD?: string;
       GOOGLE_TAG_MANAGER_ID?: string;
       API_ENDPOINT?: string;
+      OLD_CONSOLE_ENDPOINT?: string;
     };
   }
 }
 
 export const urls = {
-  GRPC: releaseMode !== 'prod' ? import.meta.env.VITE_WEB_API_ENDPOINT : '',
+  WEB_API_ENDPOINT:
+    releaseMode !== 'prod' ? import.meta.env.VITE_WEB_API_ENDPOINT : '',
   AUTH_REDIRECT:
     releaseMode !== 'prod'
       ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}/auth/callback`
-      : `${window.location.origin}/v3/auth/callback`, // TODO: Remove the `/v3` when the new console is released,
+      : `${window.location.origin}/auth/callback`,
   ORIGIN_URL:
     releaseMode !== 'prod'
-      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}/`
-      : `${window.location.origin}/v3/`, // TODO: Remove the `/v3` when the new console is released
+      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}`
+      : `${window.location.origin}`,
   API_ENDPOINT:
     releaseMode !== 'prod'
       ? import.meta.env.VITE_API_ENDPOINT
-      : window.env?.API_ENDPOINT
+      : window.env?.API_ENDPOINT,
+  OLD_CONSOLE_ENDPOINT:
+    releaseMode !== 'prod'
+      ? import.meta.env.VITE_OLD_CONSOLE_ENDPOINT
+      : `${window.location.origin}/legacy` // TODO: Remove the `/legacy` when the new console is released
 };
 
 export const GOOGLE_TAG_MANAGER_ID = window.env?.GOOGLE_TAG_MANAGER_ID || '';

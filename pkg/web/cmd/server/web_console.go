@@ -51,12 +51,12 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 
 // webConsoleHandler returns a http.Handler for the old web console UI.
 func webConsoleHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS)})
+	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
 // dashboardHandler returns a http.Handler for the new dashboard UI.
 func dashboardHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS), prefix: "/v3/"})
+	return http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS)})
 }
 
 func webConsoleEnvJSHandler(path string) http.Handler {
@@ -73,17 +73,20 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
-	mux.HandleFunc("/static/js/",
-		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+	mux.HandleFunc("/legacy/static/js/",
+		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
 }
 
 type DashboardService struct {
+	consoleEnvJSPath string
 }
 
-func NewDashboardService() DashboardService {
-	return DashboardService{}
+func NewDashboardService(consoleEnvJSPath string) DashboardService {
+	return DashboardService{consoleEnvJSPath: consoleEnvJSPath}
 }
 
 func (d DashboardService) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/", dashboardHandler().ServeHTTP)
+	mux.HandleFunc("/static/js/",
+		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(d.consoleEnvJSPath)).ServeHTTP)
 }
