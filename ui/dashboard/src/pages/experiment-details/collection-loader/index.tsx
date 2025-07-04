@@ -2,9 +2,8 @@ import { useParams } from 'react-router-dom';
 import { useQueryExperimentResultDetails } from '@queries/experiment-result';
 import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { Experiment, ExperimentResult } from '@types';
+import { Experiment } from '@types';
 import { ExperimentDetailsTab } from '../page-content';
-import experimentResultResponse from './response.json';
 import Results from './results';
 import ExperimentSettings from './settings';
 import ExperimentState from './settings/experiment-state';
@@ -31,9 +30,8 @@ const CollectionLoader = ({
     },
     retry: experiment.status !== 'WAITING'
   });
-  console.log({ experimentResultCollection });
-  const experimentResult =
-    experimentResultResponse.experimentResult as unknown as ExperimentResult;
+
+  const experimentResult = experimentResultCollection?.experimentResult;
 
   const { data: featureResultCollection, isError: featureError } =
     useQueryFeature({
