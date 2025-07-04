@@ -102,12 +102,13 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       label: t('old-console'),
       icon: IconBucketWhite,
       actIcon: IconLaunchOutlined,
-      href: urls.OLD_CONSOLE_ENDPOINT,
-      onClick: () =>
+      onClick: () => {
         setConsoleVersion({
           version: 'old',
           email: consoleAccount!.email
-        })
+        });
+        window.location.href = urls.OLD_CONSOLE_ENDPOINT;
+      }
     },
     !isHiddenProfileMenu && {
       label: t(`navigation.user-profile`),
