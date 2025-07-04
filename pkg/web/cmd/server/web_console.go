@@ -51,7 +51,7 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 
 // webConsoleHandler returns a http.Handler for the old web console UI.
 func webConsoleHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy"})
+	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
 // dashboardHandler returns a http.Handler for the new dashboard UI.
