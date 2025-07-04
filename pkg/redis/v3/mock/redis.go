@@ -297,6 +297,26 @@ func (mr *MockClientMockRecorder) Restore(key, ttl, value any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockClient)(nil).Restore), key, ttl, value)
 }
 
+// SAdd mocks base method.
+func (m *MockClient) SAdd(key string, members ...any) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{key}
+	for _, a := range members {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SAdd", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SAdd indicates an expected call of SAdd.
+func (mr *MockClientMockRecorder) SAdd(key any, members ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{key}, members...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SAdd", reflect.TypeOf((*MockClient)(nil).SAdd), varargs...)
+}
+
 // Scan mocks base method.
 func (m *MockClient) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
 	m.ctrl.T.Helper()
@@ -511,6 +531,20 @@ func (mr *MockPipeClientMockRecorder) Exec() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockPipeClient)(nil).Exec))
 }
 
+// Expire mocks base method.
+func (m *MockPipeClient) Expire(key string, expiration time.Duration) *redis0.BoolCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Expire", key, expiration)
+	ret0, _ := ret[0].(*redis0.BoolCmd)
+	return ret0
+}
+
+// Expire indicates an expected call of Expire.
+func (mr *MockPipeClientMockRecorder) Expire(key, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Expire", reflect.TypeOf((*MockPipeClient)(nil).Expire), key, expiration)
+}
+
 // Get mocks base method.
 func (m *MockPipeClient) Get(key string) *redis0.StringCmd {
 	m.ctrl.T.Helper()
@@ -574,6 +608,25 @@ func (m *MockPipeClient) PFCount(keys ...string) *redis0.IntCmd {
 func (mr *MockPipeClientMockRecorder) PFCount(keys ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockPipeClient)(nil).PFCount), keys...)
+}
+
+// SAdd mocks base method.
+func (m *MockPipeClient) SAdd(key string, members ...any) *redis0.IntCmd {
+	m.ctrl.T.Helper()
+	varargs := []any{key}
+	for _, a := range members {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SAdd", varargs...)
+	ret0, _ := ret[0].(*redis0.IntCmd)
+	return ret0
+}
+
+// SAdd indicates an expected call of SAdd.
+func (mr *MockPipeClientMockRecorder) SAdd(key any, members ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{key}, members...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SAdd", reflect.TypeOf((*MockPipeClient)(nil).SAdd), varargs...)
 }
 
 // TTL mocks base method.

@@ -46,6 +46,10 @@ func (r *redisCache) Put(key interface{}, value interface{}, expiration time.Dur
 	return r.client.Set(key.(string), value, expiration)
 }
 
+func (r *redisCache) SAdd(key string, members ...interface{}) (int64, error) {
+	return r.client.SAdd(key, members...)
+}
+
 func (r *redisCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
 	value, err := r.client.GetMulti(keys.([]string), ignoreNotFound)
 	switch err {
