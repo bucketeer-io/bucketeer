@@ -17,10 +17,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSearch,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   isOpen: boolean;
@@ -69,8 +71,8 @@ const FilterFlagModal = ({
     enabled: !!selectedFilters?.find(item => item.value === FilterTypes.TAGS)
   });
 
-  const accounts = collection?.accounts || [];
-  const tags = tagCollection?.tags || [];
+  const accounts = useMemo(() => collection?.accounts || [], [collection]);
+  const tags = useMemo(() => tagCollection?.tags || [], [tagCollection]);
 
   const remainingFilterOptions = useMemo(
     () =>
@@ -353,7 +355,8 @@ const FilterFlagModal = ({
                 />
                 <DropdownMenuContent
                   className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isHaveSearchingDropdown
+                    'pt-0 w-[300px]': isHaveSearchingDropdown,
+                    'hidden-scroll': valueOptions?.length > 15
                   })}
                   align="start"
                 >
@@ -369,24 +372,18 @@ const FilterFlagModal = ({
                     />
                   )}
                   {valueOptions?.length > 0 ? (
-                    valueOptions.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        isSelected={
-                          isTagFilter &&
-                          Array.isArray(filterOption?.filterValue) &&
-                          filterOption.filterValue?.includes(
-                            item.value as string
-                          )
-                        }
-                        isMultiselect={isTagFilter}
-                        value={item.value as string}
-                        label={item.label}
-                        onSelectOption={value =>
-                          handleChangeFilterValue(value, filterIndex)
-                        }
-                      />
-                    ))
+                    <DropdownList
+                      isMultiselect={isTagFilter}
+                      selectedOptions={
+                        isTagFilter && Array.isArray(filterOption?.filterValue)
+                          ? filterOption.filterValue
+                          : undefined
+                      }
+                      options={valueOptions as DropdownOption[]}
+                      onSelectOption={value =>
+                        handleChangeFilterValue(value, filterIndex)
+                      }
+                    />
                   ) : (
                     <div className="flex-center py-2.5 typo-para-medium text-gray-600">
                       {t('no-options-found')}

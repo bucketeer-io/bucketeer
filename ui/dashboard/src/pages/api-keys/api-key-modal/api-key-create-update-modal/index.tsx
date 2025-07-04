@@ -18,8 +18,8 @@ import { ButtonBar } from 'components/button-bar';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
@@ -27,6 +27,7 @@ import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DropdownList from 'elements/dropdown-list';
 import FormLoading from 'elements/form-loading';
 
 interface APIKeyCreateUpdateModalProps {
@@ -102,6 +103,15 @@ const APIKeyCreateUpdateModal = ({
   const currentEnv = useMemo(
     () => formattedEnvironments.find(item => item.id === environmentIdWatch),
     [formattedEnvironments, environmentIdWatch]
+  );
+
+  const environmentOptions = useMemo(
+    () =>
+      formattedEnvironments.map(item => ({
+        label: item.name,
+        value: item.id
+      })),
+    [formattedEnvironments]
   );
 
   const onSubmit: SubmitHandler<APIKeyCreateUpdateForm> = useCallback(
@@ -209,21 +219,16 @@ const APIKeyCreateUpdateModal = ({
                           className="w-full"
                         />
                         <DropdownMenuContent
-                          className="w-[502px]"
+                          className={cn('w-[502px]', {
+                            'hidden-scroll': environmentOptions?.length > 15
+                          })}
                           align="start"
                           {...field}
                         >
-                          {formattedEnvironments.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={item.name}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
+                          <DropdownList
+                            options={environmentOptions as DropdownOption[]}
+                            onSelectOption={field.onChange}
+                          />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </Form.Control>

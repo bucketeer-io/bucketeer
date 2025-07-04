@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   organizationCreator,
@@ -16,19 +16,21 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
 import { onGenerateSlug } from 'utils/converts';
+import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DropdownList from 'elements/dropdown-list';
 
 interface OrganizationCreateUpdateModalProps {
   isOpen: boolean;
@@ -90,6 +92,15 @@ const OrganizationCreateUpdateModal = ({
     },
     enabled: !!organization
   });
+
+  const accountOptions = useMemo(
+    () =>
+      accounts?.accounts.map(item => ({
+        label: item.email,
+        value: item.email
+      })),
+    [accounts]
+  );
 
   const onSubmit: SubmitHandler<OrganizationCreateUpdateForm> = useCallback(
     async values => {
@@ -209,29 +220,25 @@ const OrganizationCreateUpdateModal = ({
                         <DropdownMenuTrigger
                           placeholder={t('form:owner-email')}
                           label={
-                            accounts?.accounts.find(
-                              item => item.email === field.value
-                            )?.email
+                            accountOptions?.find(
+                              item => item.value === field.value
+                            )?.label
                           }
                           variant="secondary"
                           className="w-full"
                         />
                         <DropdownMenuContent
-                          className="w-[500px]"
+                          className={cn('w-[500px]', {
+                            'hidden-scroll':
+                              accountOptions && accountOptions?.length > 15
+                          })}
                           align="start"
                           {...field}
                         >
-                          {accounts?.accounts?.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.email}
-                              label={item.email}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
+                          <DropdownList
+                            options={accountOptions as DropdownOption[]}
+                            onSelectOption={field.onChange}
+                          />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (

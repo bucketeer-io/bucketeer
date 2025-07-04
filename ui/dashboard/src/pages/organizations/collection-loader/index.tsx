@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
 import { Organization } from '@types';
@@ -12,72 +13,74 @@ import { EmptyCollection } from '../collection-layout/empty-collection';
 import { OrganizationActionsType, OrganizationFilters } from '../types';
 import { useFetchOrganizations } from './use-fetch-organizations';
 
-const CollectionLoader = ({
-  onAdd,
-  filters,
-  setFilters,
-  onActions,
-  onClearFilters
-}: {
-  onAdd: () => void;
-  filters: OrganizationFilters;
-  setFilters: (values: Partial<OrganizationFilters>) => void;
-  onActions: (item: Organization, type: OrganizationActionsType) => void;
-  onClearFilters: () => void;
-}) => {
-  const columns = useColumns({ onActions });
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchOrganizations({ ...filters });
+const CollectionLoader = memo(
+  ({
+    onAdd,
+    filters,
+    setFilters,
+    onActions,
+    onClearFilters
+  }: {
+    onAdd: () => void;
+    filters: OrganizationFilters;
+    setFilters: (values: Partial<OrganizationFilters>) => void;
+    onActions: (item: Organization, type: OrganizationActionsType) => void;
+    onClearFilters: () => void;
+  }) => {
+    const columns = useColumns({ onActions });
+    const {
+      data: collection,
+      isLoading,
+      refetch,
+      isError
+    } = useFetchOrganizations({ ...filters });
 
-  const onSortingChangeHandler = (sorting: SortingState) => {
-    const updateOrderBy =
-      sorting.length > 0
-        ? sortingListFields[sorting[0].id]
-        : sortingListFields.default;
+    const onSortingChangeHandler = (sorting: SortingState) => {
+      const updateOrderBy =
+        sorting.length > 0
+          ? sortingListFields[sorting[0].id]
+          : sortingListFields.default;
 
-    setFilters({
-      orderBy: updateOrderBy,
-      orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
-    });
-  };
+      setFilters({
+        orderBy: updateOrderBy,
+        orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
+      });
+    };
 
-  const organizations = collection?.Organizations || [];
-  const totalCount = Number(collection?.totalCount) || 0;
+    const organizations = collection?.Organizations || [];
+    const totalCount = Number(collection?.totalCount) || 0;
 
-  const emptyState = (
-    <CollectionEmpty
-      data={organizations}
-      isFilter={isNotEmpty(filters.disabled)}
-      searchQuery={filters.searchQuery}
-      onClear={onClearFilters}
-      empty={<EmptyCollection onAdd={onAdd} />}
-    />
-  );
-
-  return isError ? (
-    <PageLayout.ErrorState onRetry={refetch} />
-  ) : (
-    <TableListContent>
-      <DataTable
-        isLoading={isLoading}
+    const emptyState = (
+      <CollectionEmpty
         data={organizations}
-        columns={columns}
-        onSortingChange={onSortingChangeHandler}
-        emptyCollection={emptyState}
+        isFilter={isNotEmpty(filters.disabled)}
+        searchQuery={filters.searchQuery}
+        onClear={onClearFilters}
+        empty={<EmptyCollection onAdd={onAdd} />}
       />
-      {!isLoading && (
-        <Pagination
-          page={filters.page}
-          totalCount={totalCount}
-          onChange={page => setFilters({ page })}
+    );
+
+    return isError ? (
+      <PageLayout.ErrorState onRetry={refetch} />
+    ) : (
+      <TableListContent>
+        <DataTable
+          isLoading={isLoading}
+          data={organizations}
+          columns={columns}
+          onSortingChange={onSortingChangeHandler}
+          emptyCollection={emptyState}
         />
-      )}
-    </TableListContent>
-  );
-};
+        {!isLoading && (
+          <Pagination
+            page={filters.page}
+            totalCount={totalCount}
+            onChange={page => setFilters({ page })}
+          />
+        )}
+      </TableListContent>
+    );
+  }
+);
 
 export default CollectionLoader;

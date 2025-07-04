@@ -14,6 +14,7 @@ import * as yup from 'yup';
 import { Push } from '@types';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -23,8 +24,8 @@ import { CreatableSelect } from 'components/creatable-select';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -32,6 +33,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DropdownList from 'elements/dropdown-list';
 import FormLoading from 'elements/form-loading';
 
 interface PushCreateUpdateModalProps {
@@ -89,6 +91,15 @@ const PushCreateUpdateModal = ({
 
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(editorEnvironments);
+
+  const environmentOptions = useMemo(
+    () =>
+      formattedEnvironments.map(item => ({
+        label: item.name,
+        value: item.id
+      })),
+    [formattedEnvironments]
+  );
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -278,30 +289,25 @@ const PushCreateUpdateModal = ({
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            formattedEnvironments.find(
-                              item => item.id === getValues('environmentId')
-                            )?.name
+                            environmentOptions.find(
+                              item => item.value === getValues('environmentId')
+                            )?.label
                           }
                           disabled={disabled || isEditPush}
                           variant="secondary"
                           className="w-full"
                         />
                         <DropdownMenuContent
-                          className="w-[502px]"
+                          className={cn('w-[502px]', {
+                            'hidden-scroll': environmentOptions?.length > 15
+                          })}
                           align="start"
                           {...field}
                         >
-                          {formattedEnvironments.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={item.name}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
+                          <DropdownList
+                            options={environmentOptions as DropdownOption[]}
+                            onSelectOption={field.onChange}
+                          />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </Form.Control>

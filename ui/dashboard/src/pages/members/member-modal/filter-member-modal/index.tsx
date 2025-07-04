@@ -16,10 +16,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSearch,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<MembersFilters>) => void;
@@ -301,7 +303,8 @@ const FilterMemberModal = ({
                 />
                 <DropdownMenuContent
                   className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isTeamsFilter
+                    'pt-0 w-[300px]': isTeamsFilter,
+                    'hidden-scroll': valueOptions?.length > 15
                   })}
                   align="start"
                 >
@@ -317,25 +320,19 @@ const FilterMemberModal = ({
                     />
                   )}
                   {valueOptions.length > 0 ? (
-                    valueOptions.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        value={item.value as string}
-                        label={item.label}
-                        isSelected={
-                          isTeamsFilter &&
-                          Array.isArray(filterOption?.filterValue) &&
-                          filterOption.filterValue?.includes(
-                            item.value as string
-                          )
-                        }
-                        isMultiselect={isTeamsFilter}
-                        onSelectOption={value =>
-                          handleChangeFilterValue(value, filterIndex)
-                        }
-                        className="flex items-center w-full max-w-full"
-                      />
-                    ))
+                    <DropdownList
+                      isMultiselect={isTeamsFilter}
+                      selectedOptions={
+                        isTeamsFilter &&
+                        Array.isArray(filterOption?.filterValue)
+                          ? filterOption.filterValue
+                          : undefined
+                      }
+                      options={valueOptions as DropdownOption[]}
+                      onSelectOption={value =>
+                        handleChangeFilterValue(value, filterIndex)
+                      }
+                    />
                   ) : (
                     <div className="flex-center py-2.5 typo-para-medium text-gray-600">
                       {t('no-options-found')}

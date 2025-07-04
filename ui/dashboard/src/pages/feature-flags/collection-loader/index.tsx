@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
@@ -14,134 +14,136 @@ import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagFilters } from '../types';
 import { useFetchFlags } from './use-fetch-flags';
 
-const CollectionLoader = ({
-  filters,
-  onAdd,
-  setFilters,
-  setSummary,
-  onHandleActions,
-  onClearFilters
-}: {
-  filters: FlagFilters;
-  onAdd: () => void;
-  setFilters: (filters: Partial<FlagFilters>) => void;
-  setSummary: (summary: FeatureCountByStatus) => void;
-  onHandleActions: (item: Feature, type: FlagActionType) => void;
-  onClearFilters: () => void;
-}) => {
-  const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+const CollectionLoader = memo(
+  ({
+    filters,
+    onAdd,
+    setFilters,
+    setSummary,
+    onHandleActions,
+    onClearFilters
+  }: {
+    filters: FlagFilters;
+    onAdd: () => void;
+    setFilters: (filters: Partial<FlagFilters>) => void;
+    setSummary: (summary: FeatureCountByStatus) => void;
+    onHandleActions: (item: Feature, type: FlagActionType) => void;
+    onClearFilters: () => void;
+  }) => {
+    const { consoleAccount } = useAuth();
+    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchFlags({
-    ...filters,
-    environmentId: currenEnvironment?.id
-  });
+    const {
+      data: collection,
+      isLoading,
+      refetch,
+      isError
+    } = useFetchFlags({
+      ...filters,
+      environmentId: currenEnvironment?.id
+    });
 
-  const { data: accountCollection } = useQueryAccounts({
-    params: {
-      organizationId: currenEnvironment?.organizationId,
-      cursor: String(0)
-    }
-  });
-
-  const { data: autoOpsCollection } = useQueryAutoOpsRules({
-    params: {
-      environmentId: currenEnvironment?.id,
-      cursor: String(0)
-    }
-  });
-
-  const { data: rolloutCollection } = useQueryRollouts({
-    params: {
-      environmentId: currenEnvironment?.id,
-      cursor: String(0)
-    }
-  });
-
-  const autoOpsRules = autoOpsCollection?.autoOpsRules || [];
-  const rollouts = rolloutCollection?.progressiveRollouts || [];
-  const accounts = accountCollection?.accounts || [];
-  const features = collection?.features || [];
-  const totalCount = Number(collection?.totalCount) || 0;
-
-  const handleTagFilters = useCallback(
-    (tag: string) => {
-      const tags = filters?.tags as string[];
-      const isNotEmptyTag = isNotEmpty(tags);
-      if (isNotEmptyTag) {
-        const isExistedTag = tags.includes(tag);
-        const _tags = isExistedTag
-          ? tags.filter(item => item !== tag)
-          : [...tags, tag];
-        return setFilters({
-          ...filters,
-          tags: _tags.length ? _tags : undefined
-        });
+    const { data: accountCollection } = useQueryAccounts({
+      params: {
+        organizationId: currenEnvironment?.organizationId,
+        cursor: String(0)
       }
+    });
 
-      setFilters({
-        ...filters,
-        tags: [tag]
-      });
-    },
-    [filters]
-  );
+    const { data: autoOpsCollection } = useQueryAutoOpsRules({
+      params: {
+        environmentId: currenEnvironment?.id,
+        cursor: String(0)
+      }
+    });
 
-  const emptyState = (
-    <CollectionEmpty
-      data={features}
-      isFilter={isNotEmpty(
-        filters?.enabled ??
-          filters?.hasExperiment ??
-          filters?.hasPrerequisites ??
-          filters?.maintainer ??
-          filters?.tags ??
-          filters?.status ??
-          filters?.hasFeatureFlagAsRule
-      )}
-      searchQuery={filters?.searchQuery}
-      onClear={onClearFilters}
-      empty={<EmptyCollection onAdd={onAdd} />}
-    />
-  );
+    const { data: rolloutCollection } = useQueryRollouts({
+      params: {
+        environmentId: currenEnvironment?.id,
+        cursor: String(0)
+      }
+    });
 
-  useEffect(() => {
-    if (collection) {
-      setSummary(collection.featureCountByStatus);
-    }
-  }, [collection]);
+    const autoOpsRules = autoOpsCollection?.autoOpsRules || [];
+    const rollouts = rolloutCollection?.progressiveRollouts || [];
+    const accounts = accountCollection?.accounts || [];
+    const features = collection?.features || [];
+    const totalCount = Number(collection?.totalCount) || 0;
 
-  return isLoading ? (
-    <PageLayout.LoadingState />
-  ) : isError ? (
-    <PageLayout.ErrorState onRetry={refetch} />
-  ) : (
-    <TableListContent className="gap-y-6 min-w-[904px]">
-      <GridViewCollection
-        filterTags={filters?.tags}
-        autoOpsRules={autoOpsRules}
-        rollouts={rollouts}
-        accounts={accounts}
+    const handleTagFilters = useCallback(
+      (tag: string) => {
+        const tags = filters?.tags as string[];
+        const isNotEmptyTag = isNotEmpty(tags);
+        if (isNotEmptyTag) {
+          const isExistedTag = tags.includes(tag);
+          const _tags = isExistedTag
+            ? tags.filter(item => item !== tag)
+            : [...tags, tag];
+          return setFilters({
+            ...filters,
+            tags: _tags.length ? _tags : undefined
+          });
+        }
+
+        setFilters({
+          ...filters,
+          tags: [tag]
+        });
+      },
+      [filters]
+    );
+
+    const emptyState = (
+      <CollectionEmpty
         data={features}
-        onActions={onHandleActions}
-        emptyState={emptyState}
-        handleTagFilters={handleTagFilters}
+        isFilter={isNotEmpty(
+          filters?.enabled ??
+            filters?.hasExperiment ??
+            filters?.hasPrerequisites ??
+            filters?.maintainer ??
+            filters?.tags ??
+            filters?.status ??
+            filters?.hasFeatureFlagAsRule
+        )}
+        searchQuery={filters?.searchQuery}
+        onClear={onClearFilters}
+        empty={<EmptyCollection onAdd={onAdd} />}
       />
+    );
 
-      {!isLoading && (
-        <Pagination
-          page={filters.page}
-          totalCount={totalCount}
-          onChange={page => setFilters({ page })}
+    useEffect(() => {
+      if (collection) {
+        setSummary(collection.featureCountByStatus);
+      }
+    }, [collection]);
+
+    return isLoading ? (
+      <PageLayout.LoadingState />
+    ) : isError ? (
+      <PageLayout.ErrorState onRetry={refetch} />
+    ) : (
+      <TableListContent className="gap-y-6 min-w-[904px]">
+        <GridViewCollection
+          filterTags={filters?.tags}
+          autoOpsRules={autoOpsRules}
+          rollouts={rollouts}
+          accounts={accounts}
+          data={features}
+          onActions={onHandleActions}
+          emptyState={emptyState}
+          handleTagFilters={handleTagFilters}
         />
-      )}
-    </TableListContent>
-  );
-};
+
+        {!isLoading && (
+          <Pagination
+            page={filters.page}
+            totalCount={totalCount}
+            onChange={page => setFilters({ page })}
+          />
+        )}
+      </TableListContent>
+    );
+  }
+);
 
 export default CollectionLoader;
