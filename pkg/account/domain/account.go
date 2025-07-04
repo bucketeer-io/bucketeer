@@ -43,9 +43,8 @@ var (
 	)
 	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
 	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
-	statusFirstNameIsEmpty        = gstatus.New(codes.InvalidArgument, "account: first name is empty")
+	statusFullNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: full name is empty")
 	statusInvalidFirstName        = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
-	statusLastNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: last name is empty")
 	statusInvalidLastName         = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
 	statusLanguageIsEmpty         = gstatus.New(codes.InvalidArgument, "account: language is empty")
 	statusInvalidOrganizationRole = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
@@ -364,6 +363,9 @@ func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, envi
 }
 
 func (a *AccountV2) GetAccountFullName() string {
+	if a.FirstName == "" && a.LastName == "" {
+		return a.Name
+	}
 	if a.FirstName == "" {
 		return a.LastName
 	}
@@ -383,16 +385,19 @@ func validate(a *AccountV2) error {
 	if !emailRegex.MatchString(a.Email) {
 		return statusInvalidEmail.Err()
 	}
-	if a.FirstName == "" {
-		return statusFirstNameIsEmpty.Err()
+	// If both first name and last name are empty, the name field must not be empty
+	if a.FirstName == "" && a.LastName == "" {
+		// TODO: This should be removed after the new console is released and the migration is completed
+		if a.Name == "" {
+			return statusFullNameIsEmpty.Err()
+		}
 	}
-	if len(a.FirstName) > maxAccountNameLength {
+	// Validate first name length if it's provided
+	if a.FirstName != "" && len(a.FirstName) > maxAccountNameLength {
 		return statusInvalidFirstName.Err()
 	}
-	if a.LastName == "" {
-		return statusLastNameIsEmpty.Err()
-	}
-	if len(a.LastName) > maxAccountNameLength {
+	// Validate last name length if it's provided
+	if a.LastName != "" && len(a.LastName) > maxAccountNameLength {
 		return statusInvalidLastName.Err()
 	}
 	if a.Language == "" {
