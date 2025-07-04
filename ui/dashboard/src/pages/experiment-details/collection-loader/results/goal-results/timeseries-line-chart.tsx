@@ -101,7 +101,7 @@ const TimeseriesLineChart = memo(
           const toggleIndex = datasets.findIndex(
             dataset => dataset?.value === variationId
           );
-
+          if (toggleIndex === -1) return;
           datasets[toggleIndex].hidden = !datasets[toggleIndex].hidden;
           chart.update();
           if (setDataSets)
@@ -116,11 +116,11 @@ const TimeseriesLineChart = memo(
 
       const chartData: ChartData<'line', (string | number)[], Date> = {
         labels,
-        datasets: dataLabels.map((e, i) => {
+        datasets: dataLabels?.map((e, i) => {
           const color = getVariationColor(i);
           return {
             label: e.label,
-            data: [...data[i]],
+            data: [...(data[i] || [])],
             borderColor: color,
             backgroundColor: color,
             fill: false,

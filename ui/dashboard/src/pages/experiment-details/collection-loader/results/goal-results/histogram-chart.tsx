@@ -11,7 +11,6 @@ import {
   Tooltip,
   Filler
 } from 'chart.js';
-import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
 import { DataLabel } from './timeseries-line-chart';
 
@@ -56,20 +55,7 @@ export const HistogramChart = memo(
           text: label
         },
         tooltip: {
-          enabled: true,
-          callbacks: {
-            title: (tooltipItems: { label: string }[]) => {
-              const dateString = tooltipItems[0].label;
-
-              const date = new Date(dateString);
-              if (date instanceof Date) {
-                return formatLongDateTime({
-                  value: String(date.getTime() / 1000)
-                });
-              }
-              return tooltipItems[0].label;
-            }
-          }
+          enabled: true
         }
       },
       scales: {
