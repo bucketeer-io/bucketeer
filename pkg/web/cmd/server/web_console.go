@@ -72,7 +72,7 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 }
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
-	mux.HandleFunc("/legacy/", http.StripPrefix("/legacy", webConsoleHandler()).ServeHTTP)
+	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
 	mux.HandleFunc("/legacy/static/js/",
 		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
 }

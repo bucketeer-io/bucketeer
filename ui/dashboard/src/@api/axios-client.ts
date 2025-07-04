@@ -1,12 +1,13 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
+import { urls } from 'configs';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
 
 let isRefreshing = false;
 
 const axiosClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_WEB_API_ENDPOINT
+  baseURL: urls.WEB_API_ENDPOINT
 });
 
 axiosClient.interceptors.request.use(

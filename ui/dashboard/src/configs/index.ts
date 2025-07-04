@@ -19,14 +19,15 @@ declare global {
 }
 
 export const urls = {
-  GRPC: releaseMode !== 'prod' ? import.meta.env.VITE_WEB_API_ENDPOINT : '',
+  WEB_API_ENDPOINT:
+    releaseMode !== 'prod' ? import.meta.env.VITE_WEB_API_ENDPOINT : '',
   AUTH_REDIRECT:
     releaseMode !== 'prod'
       ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}/auth/callback`
       : `${window.location.origin}/auth/callback`,
   ORIGIN_URL:
     releaseMode !== 'prod'
-      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}/`
+      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}`
       : `${window.location.origin}`,
   API_ENDPOINT:
     releaseMode !== 'prod'
