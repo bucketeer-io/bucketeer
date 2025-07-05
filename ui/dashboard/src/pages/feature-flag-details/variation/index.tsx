@@ -5,6 +5,8 @@ import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
 import { invalidateFeature } from '@queries/feature-details';
+import { invalidateFeatures } from '@queries/features';
+import { invalidateHistories } from '@queries/histories';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
@@ -126,6 +128,8 @@ const Variation = ({ feature, editable }: VariationProps) => {
             });
 
             invalidateFeature(queryClient);
+            invalidateFeatures(queryClient);
+            invalidateHistories(queryClient);
             onCloseConfirmDialog();
           }
         } catch (error) {

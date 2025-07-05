@@ -296,5 +296,18 @@
   "pending-invite": "Pending invite",
   "retry": "Retry",
   "baseline": "Baseline",
-  "default-value-tooltip": "Count of evaluations where the SDK returned the default value set by the developer because the flag was not found in the SDK cache."
+  "default-value-tooltip": "Count of evaluations where the SDK returned the default value set by the developer because the flag was not found in the SDK cache.",
+  "api-keys": {
+    "client-sdk": "Client SDKs",
+    "client-sdk-desc": "This role allows all SDKs to evaluate end users using the Bucketeer server.",
+    "server-sdk": "Server SDKs",
+    "server-sdk-desc": "This role allows the server SDK to evaluate end users locally. To evaluate users using the Bucketeer server, use a Client SDK key instead.",
+    "public-read-only": "Public API (Read Only)",
+    "public-read-only-desc": "This role allows reading data in Bucketeer.",
+    "public-read-write": "Public API (Read and Write)",
+    "public-read-write-desc": "This role allows reading and writing data in Bucketeer.",
+    "public-admin": "Public API (Admin)",
+    "public-admin-desc": "This role allows reading and writing all data in Bucketeer, including environment settings.",
+    "unknown": "Unknown"
+  }
 }

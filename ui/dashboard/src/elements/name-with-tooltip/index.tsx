@@ -22,6 +22,7 @@ interface DefaultTriggerProps {
 interface DefaultContentProps {
   id: string;
   content: ReactNode;
+  className?: string;
 }
 
 const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
@@ -63,7 +64,7 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
 );
 
 const DefaultContent = forwardRef<HTMLDivElement, DefaultContentProps>(
-  ({ id, content }, ref) => {
+  ({ id, content, className }, ref) => {
     return (
       <div
         ref={ref}
@@ -71,6 +72,7 @@ const DefaultContent = forwardRef<HTMLDivElement, DefaultContentProps>(
           maxWidth: document?.getElementById(`parent-${id}`)?.offsetWidth,
           wordBreak: 'break-all'
         }}
+        className={className}
       >
         {content}
       </div>

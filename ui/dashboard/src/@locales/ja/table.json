@@ -296,5 +296,18 @@
   "pending-invite": "招待保留中",
   "retry": "リトライ",
   "baseline": "ベースライン",
-  "default-value-tooltip": "SDKのキャッシュにフラグが見つからず、アプリ側で設定されたデフォルト値が返された評価の回数です。"
+  "default-value-tooltip": "SDKのキャッシュにフラグが見つからず、アプリ側で設定されたデフォルト値が返された評価の回数です。",
+  "api-keys": {
+    "client-sdk": "クライアントSDK",
+    "client-sdk-desc": "このロールは、すべてのSDKがエンドユーザーに対するBucketeerサーバーでの評価を許可します。",
+    "server-sdk": "サーバーSDK",
+    "server-sdk-desc": "このロールは、サーバーSDKがエンドユーザーに対するローカル評価を許可します。Bucketeerサーバーで評価したい場合は、クライアントSDKキーを利用してください。",
+    "public-read-only": "パブリックAPI（読み取り専用）",
+    "public-read-only-desc": "このロールでは、Bucketeerのデータを取得できます。",
+    "public-read-write": "パブリックAPI（読み取り／書き込み）",
+    "public-read-write-desc": "このロールでは、Bucketeerのデータを取得／作成／更新できます。",
+    "public-admin": "パブリックAPI（管理者）",
+    "public-admin-desc": "このロールでは、環境設定を含むBucketeerのデータを取得／作成／更新できます。",
+    "unknown": "未知"
+  }
 }

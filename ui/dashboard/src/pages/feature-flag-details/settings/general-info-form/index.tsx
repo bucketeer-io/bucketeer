@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
+import { invalidateHistories } from '@queries/histories';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -162,6 +163,7 @@ const GeneralInfoForm = ({
           invalidateFeature(queryClient);
           invalidateFeatures(queryClient);
           invalidateTags(queryClient);
+          invalidateHistories(queryClient);
           onCloseSaveModal();
         }
       } catch (error) {

@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
+import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
@@ -278,6 +279,7 @@ const TargetingPage = ({
             });
             invalidateFeature(queryClient);
             invalidateFeatures(queryClient);
+            invalidateUserSegments(queryClient);
             reset(
               handleCreateDefaultValues(
                 isScheduleUpdate ? feature : (resp as FeatureResponse)?.feature
