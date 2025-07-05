@@ -104,6 +104,8 @@ const MyProjects = () => {
 
   const onHandleChange = useCallback(
     (value: Environment) => {
+      if (selectedEnvironment?.id === value.id) return;
+
       setSelectedEnvironment(value);
       clearCurrentEnvIdStorage();
       setCurrentEnvIdStorage(value.id || value.urlCode);

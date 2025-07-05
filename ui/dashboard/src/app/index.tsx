@@ -175,16 +175,16 @@ export const EnvironmentRoot = memo(
       const isExistEnv = account.environmentRoles.find(
         item => item.environment.urlCode === envUrlCode
       );
-
+      const envIdStorage = getCurrentEnvIdStorage();
       if (!envUrlCode || !isExistEnv) {
-        return navigate(
-          `${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`
-        );
+        return navigate(`/${currentEnv.urlCode}${PAGE_PATH_FEATURES}`, {
+          replace: true
+        });
       }
 
-      const envIdStorage = getCurrentEnvIdStorage();
-      if (envIdStorage === envUrlCode) return;
-      const { environment } = isExistEnv;
+      const { environment } = isExistEnv || {};
+      if (environment.id === envIdStorage && environment.urlCode === envUrlCode)
+        return;
 
       const stringifyQueryParams = stringifyParams(
         pickBy(searchOptions, v => isNotEmpty(v as string))
@@ -195,12 +195,14 @@ export const EnvironmentRoot = memo(
       const path = params['*'] ? `/${params['*']}` : '';
 
       setCurrentEnvIdStorage(environment.id || environment.urlCode);
-      return navigate(
-        `${PAGE_PATH_ROOT}${environment.urlCode}${path}${queryParams}`
-      );
+      return navigate(`/${environment.urlCode}${path}${queryParams}`, {
+        replace: true
+      });
     }, [envUrlCode, currentEnv, params, searchOptions, account]);
 
-    useEffect(() => handleCheckEnvCodeOnInit(), [account, envUrlCode]);
+    useEffect(() => {
+      handleCheckEnvCodeOnInit();
+    }, [account, envUrlCode]);
 
     if (pathname === '/') return <AppLoading />;
 
