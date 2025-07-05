@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'i18n';
 import { RolloutClause } from '@types';
 import {
   OperationCombinedType,
@@ -14,6 +15,7 @@ const RolloutProgress = ({
 }: {
   operation: OperationCombinedType;
 }) => {
+  const { t } = useTranslation(['form']);
   const [page, setPage] = useState(0);
 
   const { clause, type, createdAt } = operation;
@@ -70,7 +72,11 @@ const RolloutProgress = ({
         {isTemplate && rolloutClause?.interval && (
           <OperationDescription
             titleKey={'form:frequency-value'}
-            value={rolloutClause.interval?.toLowerCase() || ''}
+            value={
+              rolloutClause.interval
+                ? t(`${rolloutClause.interval?.toLowerCase()}`)
+                : ''
+            }
             isLastItem
             className="[&>p>span]:capitalize"
           />

@@ -249,6 +249,7 @@
   "hourly": "毎時",
   "daily": "毎日",
   "weekly": "毎週",
+  "unknown": "未知",
   "ordinal-increment": "第{{ordinal}}段階",
   "add-increment": "段階を追加",
   "ops-count-tooltip": "ゴール数 / 評価数 * 100",

@@ -249,6 +249,7 @@
   "hourly": "Hourly",
   "daily": "Daily",
   "weekly": "Weekly",
+  "unknown": "Unknown",
   "ordinal-increment": "{{ordinal}} Increment",
   "add-increment": "Add Increment",
   "ops-count-tooltip": "Goal Count / Evaluation Count * 100",
