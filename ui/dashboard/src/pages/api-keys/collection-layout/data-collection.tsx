@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthAccess } from 'auth';
@@ -11,6 +12,7 @@ import { copyToClipBoard } from 'utils/function';
 import { IconCopy } from '@icons';
 import Icon from 'components/icon';
 import Switch from 'components/switch';
+import { Tooltip } from 'components/tooltip';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
@@ -28,31 +30,54 @@ export const useColumns = ({
 
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
-  const getAPIkeyRole = (role: APIKeyRole) => {
+  const getAPIKeyRole = useCallback((role: APIKeyRole) => {
+    let roleKey = '';
+    let roleTooltipKey = '';
     switch (role) {
       case 'SDK_CLIENT':
-        return t('client');
-
+        roleKey = 'client-sdk';
+        roleTooltipKey = 'client-sdk-desc';
+        break;
       case 'SDK_SERVER':
-        return t('server');
-
+        roleKey = 'server-sdk';
+        roleTooltipKey = 'server-sdk-desc';
+        break;
+      case 'PUBLIC_API_READ_ONLY':
+        roleKey = 'public-read-only';
+        roleTooltipKey = 'public-read-only-desc';
+        break;
+      case 'PUBLIC_API_WRITE':
+        roleKey = 'public-read-write';
+        roleTooltipKey = 'public-read-write-desc';
+        break;
+      case 'PUBLIC_API_ADMIN':
+        roleKey = 'public-admin';
+        roleTooltipKey = 'public-admin-desc';
+        break;
+      case 'UNKNOWN':
       default:
-        return t('public-api');
+        roleKey = 'unknown';
+        roleTooltipKey = 'unknown';
+        break;
     }
-  };
+    return {
+      role: t(`table:api-keys.${roleKey}`),
+      roleTooltipContent: t(`table:api-keys.${roleTooltipKey}`)
+    };
+  }, []);
 
-  const handleCopyId = (id: string) => {
+  const handleCopyId = useCallback((id: string) => {
     copyToClipBoard(id);
     notify({
       message: t('message:copied')
     });
-  };
+  }, []);
 
   return [
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 400,
       cell: ({ row }) => {
         const apiKey = row.original;
         const { id, name } = apiKey;
@@ -93,18 +118,24 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const apiKey = row.original;
+        const { role, roleTooltipContent } = getAPIKeyRole(apiKey.role);
         return (
-          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded whitespace-nowrap">
-            {getAPIkeyRole(apiKey.role)}
-          </div>
+          <Tooltip
+            content={roleTooltipContent}
+            trigger={
+              <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded whitespace-nowrap">
+                {role}
+              </div>
+            }
+            className="max-w-[300px]"
+          />
         );
       }
     },
     {
       accessorKey: 'environment',
       header: `${t('environment')}`,
-      size: 250,
-      maxSize: 250,
+      size: 350,
       cell: ({ row }) => {
         const apiKey = row.original;
         const id = `env-${apiKey.id}`;
@@ -116,6 +147,7 @@ export const useColumns = ({
               <NameWithTooltip.Content
                 content={apiKey.environmentName}
                 id={id}
+                className="!max-w-[300px]"
               />
             }
             trigger={

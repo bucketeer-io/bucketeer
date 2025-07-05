@@ -7,12 +7,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, APIKeyRole, Environment } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
-import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -67,7 +67,7 @@ const APIKeyCreateUpdateModal = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
-
+  const { apiKeyOptions } = useOptions();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const { emptyEnvironmentId, formattedEnvironments } =

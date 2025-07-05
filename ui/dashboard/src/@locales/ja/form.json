@@ -344,5 +344,6 @@
   "sdk-configuration": "SDK設定",
   "type-to-create-user-id": "user IDを入力してください。",
   "upload-files-error": "一部のファイルは非対応の形式のためアップロードできませんでした。許可されたファイル形式をご確認のうえ、再度お試しください。",
-  "create-option": "「{{option}}」作成する"
+  "create-option": "「{{option}}」作成する",
+  "max": "最大"
 }

@@ -353,55 +353,97 @@ const useOptions = () => {
     [language]
   );
 
-  const conditionerCompareOptions = [
-    {
-      label: '=',
-      value: FeatureRuleClauseOperator.EQUALS
-    },
-    {
-      label: '>=',
-      value: FeatureRuleClauseOperator.GREATER_OR_EQUAL
-    },
-    {
-      label: '>',
-      value: FeatureRuleClauseOperator.GREATER
-    },
-    {
-      label: '<=',
-      value: FeatureRuleClauseOperator.LESS_OR_EQUAL
-    },
-    {
-      label: '<',
-      value: FeatureRuleClauseOperator.LESS
-    },
-    {
-      label: translation('contains', 'form'),
-      value: FeatureRuleClauseOperator.IN
-    },
-    {
-      label: translation('partially-matches', 'form'),
-      value: FeatureRuleClauseOperator.PARTIALLY_MATCH
-    },
-    {
-      label: translation('starts-with', 'form'),
-      value: FeatureRuleClauseOperator.STARTS_WITH
-    },
-    {
-      label: translation('ends-with', 'form'),
-      value: FeatureRuleClauseOperator.ENDS_WITH
-    }
-  ];
+  const conditionerCompareOptions = useMemo(
+    () => [
+      {
+        label: '=',
+        value: FeatureRuleClauseOperator.EQUALS
+      },
+      {
+        label: '>=',
+        value: FeatureRuleClauseOperator.GREATER_OR_EQUAL
+      },
+      {
+        label: '>',
+        value: FeatureRuleClauseOperator.GREATER
+      },
+      {
+        label: '<=',
+        value: FeatureRuleClauseOperator.LESS_OR_EQUAL
+      },
+      {
+        label: '<',
+        value: FeatureRuleClauseOperator.LESS
+      },
+      {
+        label: translation('contains', 'form'),
+        value: FeatureRuleClauseOperator.IN
+      },
+      {
+        label: translation('partially-matches', 'form'),
+        value: FeatureRuleClauseOperator.PARTIALLY_MATCH
+      },
+      {
+        label: translation('starts-with', 'form'),
+        value: FeatureRuleClauseOperator.STARTS_WITH
+      },
+      {
+        label: translation('ends-with', 'form'),
+        value: FeatureRuleClauseOperator.ENDS_WITH
+      }
+    ],
+    [language]
+  );
 
-  const conditionerDateOptions = [
-    {
-      label: translation('before', 'form'),
-      value: FeatureRuleClauseOperator.BEFORE
-    },
-    {
-      label: translation('after', 'form'),
-      value: FeatureRuleClauseOperator.AFTER
-    }
-  ];
+  const conditionerDateOptions = useMemo(
+    () => [
+      {
+        label: translation('before', 'form'),
+        value: FeatureRuleClauseOperator.BEFORE
+      },
+      {
+        label: translation('after', 'form'),
+        value: FeatureRuleClauseOperator.AFTER
+      }
+    ],
+    [language]
+  );
+
+  const apiKeyOptions = useMemo(
+    () => [
+      {
+        id: 'client-sdk',
+        label: translation('api-keys.client-sdk', 'table'),
+        description: translation('api-keys.client-sdk-desc', 'table'),
+        value: 'SDK_CLIENT'
+      },
+      {
+        id: 'server-sdk',
+        label: translation('api-keys.server-sdk', 'table'),
+        description: translation('api-keys.server-sdk-desc', 'table'),
+        value: 'SDK_SERVER'
+      },
+      {
+        id: 'public-api-read-only',
+        label: translation('api-keys.public-read-only', 'table'),
+        description: translation('api-keys.public-read-only-desc', 'table'),
+        value: 'PUBLIC_API_READ_ONLY'
+      },
+      {
+        id: 'public-api-write',
+        label: translation('api-keys.public-read-write', 'table'),
+        description: translation('api-keys.public-read-write-desc', 'table'),
+        value: 'PUBLIC_API_WRITE'
+      },
+      {
+        id: 'public-api-admin',
+        label: translation('api-keys.public-admin', 'table'),
+        description: translation('api-keys.public-admin-desc', 'table'),
+        value: 'PUBLIC_API_ADMIN'
+      }
+    ],
+    [language]
+  );
 
   return {
     filterEnabledOptions,
@@ -422,7 +464,8 @@ const useOptions = () => {
     environmentRoleOptions,
     situationOptions,
     conditionerCompareOptions,
-    conditionerDateOptions
+    conditionerDateOptions,
+    apiKeyOptions
   };
 };
 
