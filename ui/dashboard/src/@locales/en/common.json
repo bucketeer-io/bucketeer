@@ -97,7 +97,6 @@
   "notification": "Notification",
   "client": "Client",
   "server": "Server",
-  "public-api": "Public API",
   "source-type": {
     "account": "Account",
     "account-description": "Get notified when someone adds or updates an account",

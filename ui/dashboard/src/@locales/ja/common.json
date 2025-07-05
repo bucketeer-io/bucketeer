@@ -97,7 +97,6 @@
   "notification": "通知",
   "client": "クライアント",
   "server": "サーバー",
-  "public-api": "パブリックAPI",
   "source-type": {
     "account": "アカウント",
     "account-description": "アカウントが追加または更新されたときに通知されます",

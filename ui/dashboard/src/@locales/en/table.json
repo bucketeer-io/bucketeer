@@ -308,6 +308,7 @@
     "public-read-write-desc": "This role allows reading and writing data in Bucketeer.",
     "public-admin": "Public API (Admin)",
     "public-admin-desc": "This role allows reading and writing all data in Bucketeer, including environment settings.",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "public-api": "Public API"
   }
 }

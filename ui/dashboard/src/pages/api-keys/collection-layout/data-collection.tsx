@@ -35,11 +35,11 @@ export const useColumns = ({
     let roleTooltipKey = '';
     switch (role) {
       case 'SDK_CLIENT':
-        roleKey = 'table:api-keys.client-sdk';
+        roleKey = 'client-sdk';
         roleTooltipKey = 'client-sdk-desc';
         break;
       case 'SDK_SERVER':
-        roleKey = 'table:api-keys.server-sdk';
+        roleKey = 'server-sdk';
         roleTooltipKey = 'server-sdk-desc';
         break;
       case 'PUBLIC_API_READ_ONLY':
@@ -61,8 +61,12 @@ export const useColumns = ({
         break;
     }
     return {
-      role: t(roleKey),
-      roleTooltipContent: t(`table:api-keys.${roleTooltipKey}`)
+      role: t(
+        role === 'UNKNOWN' ? 'form:unknown' : `table:api-keys.${roleKey}`
+      ),
+      roleTooltipContent: t(
+        role === 'UNKNOWN' ? 'form:unknown' : `table:api-keys.${roleTooltipKey}`
+      )
     };
   }, []);
 

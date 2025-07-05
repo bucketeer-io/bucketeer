@@ -22,18 +22,6 @@
   "env-access": "環境アクセス",
   "env-settings": "環境設定",
   "trial": "トライアル",
-  "api-key": {
-    "client-sdk": "クライアントSDK",
-    "client-sdk-desc": "このロールは、すべてのSDKがBucketeerサーバーを使用してエンドユーザーを評価することを許可します。",
-    "server-sdk": "サーバーSDK",
-    "server-sdk-desc": "このロールは、サーバーSDKがローカル環境でエンドユーザーを評価することを許可します。Bucketeerサーバーを使用して評価する場合は、クライアントSDKキーを使用してください。",
-    "public-api-read-only": "パブリックAPI（読み取り専用）",
-    "public-api-read-only-desc": "このロールは、Bucketeer内のデータを読み取ることを許可します。",
-    "public-api-write": "パブリックAPI（読み取り・書き込み）",
-    "public-api-write-desc": "このロールは、Bucketeer内のデータを読み取りおよび書き込むことを許可します。",
-    "public-api-admin": "パブリックAPI（管理者）",
-    "public-api-admin-desc": "このロールは、Bucketeer内の管理設定を含むデータを読み取りおよび書き込むことを許可します。"
-  },
   "enter-first-name": "名を入力",
   "enter-last-name": "姓を入力",
   "select-language": "言語を選択",
