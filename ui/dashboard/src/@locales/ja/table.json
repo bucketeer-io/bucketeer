@@ -308,7 +308,7 @@
     "public-read-write-desc": "このロールでは、Bucketeerのデータを取得／作成／更新できます。",
     "public-admin": "パブリックAPI（管理者）",
     "public-admin-desc": "このロールでは、環境設定を含むBucketeerのデータを取得／作成／更新できます。",
-    "unknown": "未知",
+    "unknown": "不明",
     "public-api": "パブリックAPI"
   }
 }
