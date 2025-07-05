@@ -124,7 +124,7 @@ const MyProjects = () => {
       if (value && selectedEnvironment) {
         setTimeout(() => {
           const selectedElement = document.getElementById(
-            selectedEnvironment.id
+            selectedEnvironment.id || selectedEnvironment.urlCode
           );
           if (selectedElement) {
             selectedElement.scrollIntoView({
@@ -162,7 +162,7 @@ const MyProjects = () => {
       const timerId = setTimeout(() => handleInitLoadData(), 50);
       return () => clearTimeout(timerId);
     }
-  }, [consoleAccount]);
+  }, [consoleAccount, navigate]);
 
   return (
     <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
@@ -210,6 +210,7 @@ const MyProjects = () => {
                           environments?.map(item => ({
                             label: item.name,
                             value: item.id,
+                            urlCode: item.urlCode,
                             selected: item.id === selectedEnvironment?.id,
                             icon: IconChecked,
                             onSelect: () => onHandleChange(item)
