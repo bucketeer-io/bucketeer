@@ -106,6 +106,7 @@ message UpdateEnvironmentV2Request {
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
   google.protobuf.BoolValue require_comment = 7;
+  google.protobuf.BoolValue archived = 8;
 }
 
 message UpdateEnvironmentV2Response {}

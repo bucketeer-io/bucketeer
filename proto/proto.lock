@@ -13832,6 +13832,11 @@
                 "id": 7,
                 "name": "require_comment",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },

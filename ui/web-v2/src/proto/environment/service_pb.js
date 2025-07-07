@@ -3039,6 +3039,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         requireComment:
           (f = msg.getRequireComment()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        archived:
+          (f = msg.getArchived()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
@@ -3137,6 +3140,14 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.deserializeBinaryFromRead
           );
           msg.setRequireComment(value);
           break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setArchived(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3220,6 +3231,14 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.serializeBinaryToWriter =
     if (f != null) {
       writer.writeMessage(
         7,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getArchived();
+    if (f != null) {
+      writer.writeMessage(
+        8,
         f,
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
@@ -3496,6 +3515,48 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.clearRequireCom
 proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.hasRequireComment =
   function () {
     return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue archived = 8;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.getArchived =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Request} returns this
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.setArchived =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 8, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Request} returns this
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.clearArchived =
+  function () {
+    return this.setArchived(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.hasArchived =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

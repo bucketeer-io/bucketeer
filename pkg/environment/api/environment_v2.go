@@ -592,7 +592,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		if err != nil {
 			return err
 		}
-		updated, err := environment.Update(req.Name, req.Description, req.RequireComment)
+		updated, err := environment.Update(req.Name, req.Description, req.RequireComment, req.Archived)
 		if err != nil {
 			return err
 		}

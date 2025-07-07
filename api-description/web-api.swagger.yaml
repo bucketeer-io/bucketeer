@@ -11063,6 +11063,8 @@ definitions:
         type: string
       requireComment:
         type: boolean
+      archived:
+        type: boolean
     required:
       - id
   environmentUpdateEnvironmentV2Response:
