@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -1412,11 +1413,15 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc     string
+		setup    func(*EnvironmentService)
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
 		{
 			desc: "CreateTrialProject",
+			setup: func(s *EnvironmentService) {
+				// No setup needed - this fails at system admin check
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
 				return err
@@ -1425,16 +1430,153 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 		},
 		{
 			desc: "EnableProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{})
+				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{
+					Id:      "project-id",
+					Command: &proto.EnableProjectCommand{},
+				})
 				return err
 			},
 			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "DisableProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{})
+				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{
+					Id:      "project-id",
+					Command: &proto.DisableProjectCommand{},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "UpdateProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
+					Id:            "project-id",
+					RenameCommand: &proto.RenameProjectCommand{Name: "New Name"},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "UpdateProjectNoCommand",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				name := "Updated Name"
+				description := "Updated Description"
+				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
+					Id:          "project-id",
+					Name:        &wrapperspb.StringValue{Value: name},
+					Description: &wrapperspb.StringValue{Value: description},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "ConvertTrialProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				_, err := es.ConvertTrialProject(ctx, &proto.ConvertTrialProjectRequest{
+					Id:      "project-id",
+					Command: &proto.ConvertTrialProjectCommand{},
+				})
 				return err
 			},
 			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -1442,7 +1584,11 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
 			actual := p.action(ctx, service)
 			assert.Equal(t, p.expected, actual)
 		})
