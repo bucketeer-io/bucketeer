@@ -334,5 +334,7 @@
   "type-to-create-user-id": "Type to create a user ID.",
   "upload-files-error": "Some files could not be uploaded because they are in unsupported formats. Please check the allowed file types and try again.",
   "create-option": "Create \"{{option}}\"",
-  "max": "max"
+  "max": "max",
+  "firebase-service-account-tooltip": "This is the JSON key for your Firebase service account. Bucketeer uses it to authenticate with Firebase and send push notifications to your app via FCM.",
+  "feature-flag-tags-tooltip": "Used to match feature flags to this FCM integration. If a flag has a tag that matches this setting, a push notification will be sent. If no tag is set here, notifications will be sent for all flags that don't have tags."
 }

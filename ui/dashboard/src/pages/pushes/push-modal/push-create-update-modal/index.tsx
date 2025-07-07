@@ -31,6 +31,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import { Tooltip } from 'components/tooltip';
 import UploadFiles from 'components/upload-files';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownList from 'elements/dropdown-list';
@@ -251,10 +252,20 @@ const PushCreateUpdateModal = ({
                     <Form.Item>
                       <Form.Label required className="relative w-fit">
                         {t('fcm-api-key')}
-                        <Icon
-                          icon={IconInfo}
-                          className="absolute -right-8"
-                          size={'sm'}
+                        <Tooltip
+                          align="start"
+                          alignOffset={-76}
+                          trigger={
+                            <div className="flex-center absolute top-0 -right-6">
+                              <Icon
+                                icon={IconInfo}
+                                size={'sm'}
+                                color="gray-500"
+                              />
+                            </div>
+                          }
+                          content={t('form:firebase-service-account-tooltip')}
+                          className="!z-[100] max-w-[400px]"
                         />
                       </Form.Label>
                       <Form.Control>
@@ -320,7 +331,24 @@ const PushCreateUpdateModal = ({
                 name={`tags`}
                 render={({ field }) => (
                   <Form.Item className="py-2">
-                    <Form.Label>{t('form:feature-flag-tags')}</Form.Label>
+                    <Form.Label className="relative w-fit">
+                      {t('form:feature-flag-tags')}
+                      <Tooltip
+                        align="start"
+                        alignOffset={-76}
+                        trigger={
+                          <div className="flex-center absolute top-0 -right-6">
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </div>
+                        }
+                        content={t('form:feature-flag-tags-tooltip')}
+                        className="!z-[100] max-w-[400px]"
+                      />
+                    </Form.Label>
                     <Form.Control>
                       <CreatableSelect
                         value={field.value?.map(tag => {
