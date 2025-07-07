@@ -3,9 +3,10 @@ import { EnvironmentResponse } from './environment-creator';
 
 export interface EnvironmentUpdateParams {
   id: string;
-  name: string;
+  name?: string;
   description?: string;
-  requireComment: boolean;
+  requireComment?: boolean;
+  archived?: boolean;
 }
 
 export const environmentUpdater = async (

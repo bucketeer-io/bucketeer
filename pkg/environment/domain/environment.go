@@ -62,6 +62,7 @@ func (e *EnvironmentV2) Update(
 	name *wrapperspb.StringValue,
 	description *wrapperspb.StringValue,
 	requireComment *wrapperspb.BoolValue,
+	archived *wrapperspb.BoolValue,
 ) (*EnvironmentV2, error) {
 	updated := &EnvironmentV2{}
 	if err := copier.Copy(updated, e); err != nil {
@@ -76,6 +77,9 @@ func (e *EnvironmentV2) Update(
 	}
 	if requireComment != nil {
 		updated.RequireComment = requireComment.Value
+	}
+	if archived != nil {
+		updated.Archived = archived.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()

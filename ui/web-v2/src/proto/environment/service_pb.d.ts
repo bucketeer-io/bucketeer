@@ -341,6 +341,11 @@ export class UpdateEnvironmentV2Request extends jspb.Message {
   getRequireComment(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setRequireComment(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateEnvironmentV2Request.AsObject;
   static toObject(
@@ -371,6 +376,7 @@ export namespace UpdateEnvironmentV2Request {
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
     requireComment?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

@@ -58,12 +58,14 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	updated, err := env.Update(
 		wrapperspb.String("new-name"),
 		wrapperspb.String("new-desc"),
-		nil,
+		wrapperspb.Bool(false),
+		wrapperspb.Bool(true),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "new-name", updated.Name)
 	assert.Equal(t, "new-desc", updated.Description)
-	assert.Equal(t, true, updated.RequireComment)
+	assert.Equal(t, false, updated.RequireComment)
+	assert.Equal(t, true, updated.Archived)
 }
 
 func TestRenameEnvironmentV2(t *testing.T) {
