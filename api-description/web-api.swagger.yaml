@@ -11104,13 +11104,13 @@ definitions:
         description: deprecated
       organizationId:
         type: string
+        description: deprecated
       name:
         type: string
       description:
         type: string
     required:
       - id
-      - organizationId
   environmentUpdateProjectResponse:
     type: object
   eventcounterDistributionSummary:

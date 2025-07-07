@@ -202,7 +202,12 @@ message UpdateProjectRequest {
       description: "deprecated"
     }
   ];
-  string organization_id = 4 [(google.api.field_behavior) = REQUIRED];
+  string organization_id = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
 }

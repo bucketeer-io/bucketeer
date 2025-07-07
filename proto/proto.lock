@@ -14112,8 +14112,17 @@
                 "type": "string",
                 "options": [
                   {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
                   }
                 ]
               },
