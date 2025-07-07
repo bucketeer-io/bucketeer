@@ -92,8 +92,8 @@ func (s *grpcGatewayService) ListCodeReferences(
 	resp, err := s.codeRefClient.ListCodeReferences(ctx, &coderefproto.ListCodeReferencesRequest{
 		PageSize:       req.PageSize,
 		Cursor:         req.Cursor,
-		OrderBy:        coderefproto.ListCodeReferencesRequest_OrderBy(req.OrderBy),
-		OrderDirection: coderefproto.ListCodeReferencesRequest_OrderDirection(req.OrderDirection),
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
 		FeatureId:      req.FeatureId,
 		EnvironmentId:  envAPIKey.Environment.Id,
 	})

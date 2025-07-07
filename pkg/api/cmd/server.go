@@ -42,6 +42,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	tagclient "github.com/bucketeer-io/bucketeer/pkg/tag/client"
+	teamclient "github.com/bucketeer-io/bucketeer/pkg/team/client"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
@@ -65,6 +67,8 @@ type server struct {
 	codeRefService         *string
 	pushService            *string
 	auditLogService        *string
+	tagService             *string
+	teamService            *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -134,6 +138,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"audit-log-service",
 			"bucketeer-audit-log-service address.",
 		).Default("audit-log:9090").String(),
+		tagService: cmd.Flag(
+			"tag-service",
+			"bucketeer-tag-service address.",
+		).Default("tag:9090").String(),
+		teamService: cmd.Flag(
+			"team-service",
+			"bucketeer-team-service address.",
+		).Default("team:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -341,6 +353,30 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer auditLogClient.Close()
 
+	tagClient, err := tagclient.NewClient(*s.tagService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer tagClient.Close()
+
+	teamClient, err := teamclient.NewClient(*s.teamService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer teamClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -362,6 +398,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefClient,
 		auditLogClient,
 		autoOpsClient,
+		tagClient,
+		teamClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,

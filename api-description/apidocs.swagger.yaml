@@ -2739,6 +2739,363 @@ paths:
           type: boolean
       tags:
         - Segments
+  /v1/tag:
+    delete:
+      summary: Delete Tag
+      description: Delete a Tag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.tags.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteTagResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Tags
+    post:
+      summary: Create Tag
+      description: Create a new Tag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.tags.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateTagResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateTagRequest'
+      tags:
+        - Tags
+  /v1/tags:
+    get:
+      summary: List Tags
+      description: List Tags. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.tags.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListTagsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - ENTITY_TYPE
+            - ENVIRONMENT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Tags
+  /v1/team:
+    delete:
+      summary: Delete Team
+      description: Delete a Team. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.teams.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteTeamResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Teams
+    post:
+      summary: Create Team
+      description: Create a new Team. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.teams.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateTeamResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateTeamRequest'
+      tags:
+        - Teams
+  /v1/teams:
+    get:
+      summary: List Teams
+      description: List Teams. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.teams.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListTeamsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - ORGANIZATION
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+      tags:
+        - Teams
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -3522,6 +3879,35 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
+  bucketeergatewayCreateTagRequest:
+    type: object
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  bucketeergatewayCreateTagResponse:
+    type: object
+    properties:
+      tag:
+        $ref: '#/definitions/bucketeertagTag'
+  bucketeergatewayCreateTeamRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      organizationId:
+        type: string
+    required:
+      - name
+      - organizationId
+  bucketeergatewayCreateTeamResponse:
+    type: object
+    properties:
+      team:
+        $ref: '#/definitions/teamTeam'
   bucketeergatewayDebugEvaluateFeaturesRequest:
     type: object
     properties:
@@ -3556,6 +3942,10 @@ definitions:
   bucketeergatewayDeleteProgressiveRolloutResponse:
     type: object
   bucketeergatewayDeleteSegmentResponse:
+    type: object
+  bucketeergatewayDeleteTagResponse:
+    type: object
+  bucketeergatewayDeleteTeamResponse:
     type: object
   bucketeergatewayExecuteAutoOpsRequest:
     type: object
@@ -3735,6 +4125,32 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureSegment'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListTagsResponse:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeertagTag'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListTeamsResponse:
+    type: object
+    properties:
+      teams:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/teamTeam'
       cursor:
         type: string
       totalCount:
@@ -3937,6 +4353,41 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
+  bucketeertagListTagsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ENTITY_TYPE
+      - ENVIRONMENT
+    default: DEFAULT
+  bucketeertagListTagsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  bucketeertagTag:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      entityType:
+        $ref: '#/definitions/tagTagEntityType'
+      environmentId:
+        type: string
+      environmentName:
+        type: string
   clientSourceId:
     type: string
     enum:
@@ -5083,6 +5534,47 @@ definitions:
         type: string
       environmentName:
         type: string
+  tagTagEntityType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - FEATURE_FLAG
+      - ACCOUNT
+    default: UNSPECIFIED
+  teamListTeamsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ORGANIZATION
+    default: DEFAULT
+  teamListTeamsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  teamTeam:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      organizationId:
+        type: string
+      organizationName:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
   userUser:
     type: object
     properties:

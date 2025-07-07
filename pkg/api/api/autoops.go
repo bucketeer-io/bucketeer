@@ -179,6 +179,7 @@ func (s *grpcGatewayService) ListAutoOpsRules(
 	}
 	return &gwproto.ListAutoOpsRulesResponse{
 		AutoOpsRules: res.AutoOpsRules,
+		Cursor:       res.Cursor,
 	}, nil
 }
 

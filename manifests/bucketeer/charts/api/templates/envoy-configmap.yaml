@@ -371,6 +371,30 @@ data:
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
+                          - match:
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    exact: application/grpc
+                              prefix: /bucketeer.tag.TagService
+                            route:
+                              cluster: web
+                              timeout: 15s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    exact: application/grpc
+                              prefix: /bucketeer.team.TeamService
+                            route:
+                              cluster: web
+                              timeout: 15s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:

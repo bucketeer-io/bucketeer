@@ -40805,6 +40805,241 @@
           },
           {
             "name": "ExecuteProgressiveRolloutResponse"
+          },
+          {
+            "name": "CreateTagRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateTagResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tag",
+                "type": "tag.Tag"
+              }
+            ]
+          },
+          {
+            "name": "DeleteTagRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteTagResponse"
+          },
+          {
+            "name": "ListTagsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "tag.ListTagsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "tag.ListTagsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListTagsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tags",
+                "type": "tag.Tag",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateTeamRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateTeamResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "team",
+                "type": "team.Team"
+              }
+            ]
+          },
+          {
+            "name": "DeleteTeamRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteTeamResponse"
+          },
+          {
+            "name": "ListTeamsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "team.ListTeamsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "team.ListTeamsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListTeamsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "teams",
+                "type": "team.Team",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -42722,6 +42957,236 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateTag",
+                "in_type": "CreateTagRequest",
+                "out_type": "CreateTagResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/tag"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Tag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Tag. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Tags"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.tags.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteTag",
+                "in_type": "DeleteTagRequest",
+                "out_type": "DeleteTagResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/tag"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Tag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a Tag. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Tags"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.tags.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListTags",
+                "in_type": "ListTagsRequest",
+                "out_type": "ListTagsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/tags"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Tags"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Tags. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Tags"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.tags.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateTeam",
+                "in_type": "CreateTeamRequest",
+                "out_type": "CreateTeamResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/team"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Team"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Team. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Teams"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.teams.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteTeam",
+                "in_type": "DeleteTeamRequest",
+                "out_type": "DeleteTeamResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/team"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Team"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a Team. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Teams"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.teams.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListTeams",
+                "in_type": "ListTeamsRequest",
+                "out_type": "ListTeamsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/teams"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Teams"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Teams. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Teams"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.teams.list"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -42801,6 +43266,18 @@
           },
           {
             "path": "proto/autoops/service.proto"
+          },
+          {
+            "path": "proto/tag/service.proto"
+          },
+          {
+            "path": "proto/tag/tag.proto"
+          },
+          {
+            "path": "proto/team/service.proto"
+          },
+          {
+            "path": "proto/team/team.proto"
           }
         ],
         "package": {

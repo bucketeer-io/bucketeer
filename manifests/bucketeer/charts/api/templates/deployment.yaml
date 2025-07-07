@@ -91,6 +91,10 @@ spec:
               value: "{{ .Values.env.codeRefService }}"
             - name: BUCKETEER_API_AUDIT_LOG_SERVICE
               value: "{{ .Values.env.auditLogService }}"
+            - name: BUCKETEER_API_TAG_SERVICE
+              value: "{{ .Values.env.tagService }}"
+            - name: BUCKETEER_API_TEAM_SERVICE
+              value: "{{ .Values.env.teamService }}"
             - name: BUCKETEER_API_GRPC_GATEWAY_PORT
               value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_API_PORT
