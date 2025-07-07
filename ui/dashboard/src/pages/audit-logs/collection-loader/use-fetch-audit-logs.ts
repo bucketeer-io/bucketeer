@@ -40,6 +40,7 @@ export const useFetchAuditLogs = ({
       entityType,
       environmentId
     },
-    enabled: enabledFetching
+    enabled: enabledFetching,
+    gcTime: 0
   });
 };

@@ -1,4 +1,10 @@
-import { forwardRef, Ref, useImperativeHandle } from 'react';
+import {
+  forwardRef,
+  Ref,
+  useImperativeHandle,
+  useLayoutEffect,
+  useState
+} from 'react';
 import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog, Feature } from '@types';
@@ -35,6 +41,7 @@ const CollectionLoader = forwardRef(
     const { consoleAccount } = useAuth();
     const params = useParams();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const [isPending, setIsPending] = useState(true);
 
     const {
       data: auditLogCollection,
@@ -45,7 +52,8 @@ const CollectionLoader = forwardRef(
       ...filters,
       featureId: feature.id,
       environmentId: currentEnvironment?.id,
-      enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
+      enabledFetching:
+        params?.envUrlCode === currentEnvironment?.urlCode && !isPending
     });
 
     const auditLogs = auditLogCollection?.auditLogs || [];
@@ -61,11 +69,18 @@ const CollectionLoader = forwardRef(
       };
     }, [auditLogs, handleExpandOrCollapseAll]);
 
+    useLayoutEffect(() => {
+      const timerId = setTimeout(() => {
+        setIsPending(false);
+      }, 1000);
+      return () => clearTimeout(timerId);
+    }, []);
+
     return isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContainer className="px-6 gap-y-6">
-        {isLoading ? (
+        {isLoading || isPending ? (
           <FormLoading />
         ) : (
           <DataCollection
@@ -75,7 +90,7 @@ const CollectionLoader = forwardRef(
             onToggleExpandItem={id => onToggleExpandItem(id, auditLogs)}
           />
         )}
-        {!isLoading && (
+        {!isLoading && !isPending && (
           <Pagination
             page={filters.page as number}
             totalCount={totalCount}

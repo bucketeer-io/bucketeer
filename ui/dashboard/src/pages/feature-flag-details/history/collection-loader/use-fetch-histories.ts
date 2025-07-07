@@ -43,6 +43,7 @@ export const useFetchHistories = ({
       entityType,
       environmentId
     },
-    enabled: enabledFetching
+    enabled: enabledFetching,
+    gcTime: 0
   });
 };
