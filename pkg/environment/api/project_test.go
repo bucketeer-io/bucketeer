@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -79,7 +80,7 @@ func TestGetProjectMySQL(t *testing.T) {
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), "err-id-0",
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			id:          "err-id-0",
@@ -89,7 +90,7 @@ func TestGetProjectMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), "err-id-1",
 				).Return(nil, errors.New("error"))
 			},
 			id:          "err-id-1",
@@ -99,8 +100,10 @@ func TestGetProjectMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{}, nil)
+					gomock.Any(), "success-id-0",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "success-id-0", OrganizationId: "org-1"},
+				}, nil)
 			},
 			id:          "success-id-0",
 			expectedErr: nil,
@@ -785,6 +788,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 }
 
 func TestUpdateProjectNoCommand(t *testing.T) {
+	// This test focuses on internal logic (database operations, domain events)
+	// and assumes inputs are already validated by the API layer (UpdateProject).
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -810,6 +815,16 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 		Email: "test@bucketer.io",
 	}
 
+	// Create a test project for the internal method tests
+	testProject := &domain.Project{
+		Project: &environmentproto.Project{
+			Id:             "project-id",
+			Name:           "Test Project",
+			Description:    "Test Description",
+			OrganizationId: "org-1",
+		},
+	}
+
 	// Define test patterns.
 	patterns := []struct {
 		ctx         context.Context
@@ -819,34 +834,6 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 		expected    *environmentproto.UpdateProjectResponse
 		expectedErr error
 	}{
-		{
-			ctx:   ctx,
-			desc:  "err: empty name",
-			setup: nil,
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: "    "},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
-		},
-		{
-			ctx:   ctx,
-			desc:  "err: max name length exceeded",
-			setup: nil,
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: strings.Repeat("a", 51)},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
-		},
 		{
 			ctx:  ctx,
 			desc: "err: project not found",
@@ -935,7 +922,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			resp, err := service.updateProjectNoCommand(p.ctx, p.req, localizer, editor)
+			resp, err := service.updateProjectNoCommand(p.ctx, p.req, testProject, localizer, editor)
 			if resp != nil {
 				// For a successful update, compare the expected response.
 				assert.Equal(t, p.expected, resp)
@@ -947,6 +934,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 }
 
 func TestUpdateProjectMySQL(t *testing.T) {
+	// This test covers API-level validation and security checks for UpdateProject.
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -989,11 +977,31 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
+			desc:  "err: empty name (no-command path)",
+			setup: nil,
+			req: &proto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: "    "},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(statusEnvironmentNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc:  "err: max name length exceeded (no-command path)",
+			setup: nil,
+			req: &proto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: strings.Repeat("a", 51)},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(statusInvalidEnvironmentName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectNotFound)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-0",
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.UpdateProjectRequest{
 				Id:                       "id-0",
@@ -1004,6 +1012,11 @@ func TestUpdateProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -1018,9 +1031,9 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), "id-1",
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-1", Description: "old desc"},
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1", Description: "old desc"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -1097,9 +1110,9 @@ func TestEnableProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectNotFound)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-0",
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.EnableProjectRequest{
 				Id:      "id-0",
@@ -1110,6 +1123,11 @@ func TestEnableProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -1123,16 +1141,16 @@ func TestEnableProjectMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-1"},
-				}, nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
 					gomock.Any(), gomock.Any(),
@@ -1201,9 +1219,9 @@ func TestDisableProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectNotFound)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-0",
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.DisableProjectRequest{
 				Id:      "id-0",
@@ -1214,6 +1232,11 @@ func TestDisableProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -1227,16 +1250,16 @@ func TestDisableProjectMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-1"},
-				}, nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
 					gomock.Any(), gomock.Any(),
@@ -1305,9 +1328,9 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectNotFound)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-0",
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.ConvertTrialProjectRequest{
 				Id:      "id-0",
@@ -1318,6 +1341,11 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -1331,16 +1359,16 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "id-1",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-1"},
-				}, nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
 					gomock.Any(), gomock.Any(),
@@ -1385,11 +1413,15 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc     string
+		setup    func(*EnvironmentService)
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
 		{
 			desc: "CreateTrialProject",
+			setup: func(s *EnvironmentService) {
+				// No setup needed - this fails at system admin check
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
 				return err
@@ -1398,16 +1430,153 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 		},
 		{
 			desc: "EnableProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{})
+				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{
+					Id:      "project-id",
+					Command: &proto.EnableProjectCommand{},
+				})
 				return err
 			},
 			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "DisableProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{})
+				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{
+					Id:      "project-id",
+					Command: &proto.DisableProjectCommand{},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "UpdateProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
+					Id:            "project-id",
+					RenameCommand: &proto.RenameProjectCommand{Name: "New Name"},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "UpdateProjectNoCommand",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				name := "Updated Name"
+				description := "Updated Description"
+				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
+					Id:          "project-id",
+					Name:        &wrapperspb.StringValue{Value: name},
+					Description: &wrapperspb.StringValue{Value: description},
+				})
+				return err
+			},
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc: "ConvertTrialProject",
+			setup: func(s *EnvironmentService) {
+				// Mock project fetch to succeed so we can reach the permission check
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), "project-id",
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
+				}, nil)
+				// Mock account client call to return permission denied
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), &accountproto.GetAccountV2Request{
+						Email:          "email",
+						OrganizationId: "org-1",
+					},
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, es *EnvironmentService) error {
+				_, err := es.ConvertTrialProject(ctx, &proto.ConvertTrialProjectRequest{
+					Id:      "project-id",
+					Command: &proto.ConvertTrialProjectCommand{},
+				})
 				return err
 			},
 			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -1415,7 +1584,11 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
 			actual := p.action(ctx, service)
 			assert.Equal(t, p.expected, actual)
 		})

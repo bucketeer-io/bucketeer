@@ -53,19 +53,19 @@ func (s *EnvironmentService) GetProject(
 	req *environmentproto.GetProjectRequest,
 ) (*environmentproto.GetProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkOrganizationRole(
-		ctx,
-		req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		localizer,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	project, err := s.getProject(ctx, req.Id, localizer)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.checkOrganizationRole(
+		ctx,
+		project.OrganizationId,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (s *EnvironmentService) createProjectNoCommand(
 	var domainEvent *evdomain.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
-		domainEvent, err = s.newCreateDomainEvent(ctx, newProj.Project, req, editor, localizer)
+		domainEvent, err = s.newCreateDomainEvent(newProj.Project, editor)
 		if err != nil {
 			return err
 		}
@@ -431,11 +431,8 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 }
 
 func (s *EnvironmentService) newCreateDomainEvent(
-	ctx context.Context,
 	newProj *environmentproto.Project,
-	req *environmentproto.CreateProjectRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*evdomain.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
@@ -798,23 +795,43 @@ func (s *EnvironmentService) UpdateProject(
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
+	if isNoUpdatePushCommand(req) {
+		if err := validateUpdateProjectRequestNoCommand(req, localizer); err != nil {
+			return nil, err
+		}
+		project, err := s.getProject(ctx, req.Id, localizer)
+		if err != nil {
+			return nil, err
+		}
+		editor, err := s.checkOrganizationRole(
+			ctx,
+			project.OrganizationId,
+			accountproto.AccountV2_Role_Organization_ADMIN,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return s.updateProjectNoCommand(ctx, req, project, localizer, editor)
+	}
+	commands := getUpdateProjectCommands(req)
+	if err := validateUpdateProjectRequest(req.Id, commands, localizer); err != nil {
+		return nil, err
+	}
+	project, err := s.getProject(ctx, req.Id, localizer)
+	if err != nil {
+		return nil, err
+	}
 	editor, err := s.checkOrganizationRole(
 		ctx,
-		req.OrganizationId,
+		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if isNoUpdatePushCommand(req) {
-		return s.updateProjectNoCommand(ctx, req, localizer, editor)
-	}
-	commands := getUpdateProjectCommands(req)
-	if err := validateUpdateProjectRequest(req.Id, commands, localizer); err != nil {
-		return nil, err
-	}
-	if err := s.updateProject(ctx, req.Id, editor, localizer, commands...); err != nil {
+	if err := s.updateProject(ctx, project, editor, localizer, commands...); err != nil {
 		return nil, err
 	}
 	return &environmentproto.UpdateProjectResponse{}, nil
@@ -888,21 +905,14 @@ func validateUpdateProjectRequest(id string, commands []command.Command, localiz
 func (s *EnvironmentService) updateProjectNoCommand(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
+	project *domain.Project,
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateProjectResponse, error) {
-	if err := validateUpdateProjectRequestNoCommand(req, localizer); err != nil {
-		return nil, err
-	}
 	var domainEvent *evdomain.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
-		var err error
-		prev, err := storage.GetProject(ctx, req.Id)
-		if err != nil {
-			return err
-		}
-		updated, err := prev.Update(
+		updated, err := project.Update(
 			req.Name,
 			req.Description,
 		)
@@ -912,7 +922,7 @@ func (s *EnvironmentService) updateProjectNoCommand(
 		domainEvent, err = s.newUpdateDomainEvent(
 			ctx,
 			updated.Project,
-			prev.Project,
+			project.Project,
 			req,
 			editor,
 			localizer,
@@ -935,6 +945,16 @@ func validateUpdateProjectRequestNoCommand(
 	req *environmentproto.UpdateProjectRequest,
 	localizer locale.Localizer,
 ) error {
+	if req.Id == "" {
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	if req.Name != nil && strings.TrimSpace(req.Name.Value) == "" {
 		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1023,16 +1043,12 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 
 func (s *EnvironmentService) updateProject(
 	ctx context.Context,
-	id string,
+	project *domain.Project,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		project, err := s.projectStorage.GetProject(contextWithTx, id)
-		if err != nil {
-			return err
-		}
 		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
 		if err != nil {
 			return err
@@ -1076,14 +1092,23 @@ func (s *EnvironmentService) EnableProject(
 	req *environmentproto.EnableProjectRequest,
 ) (*environmentproto.EnableProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateEnableProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	project, err := s.getProject(ctx, req.Id, localizer)
+	if err != nil {
+		return nil, err
+	}
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		project.OrganizationId,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.EnableProjectResponse{}, nil
@@ -1118,14 +1143,23 @@ func (s *EnvironmentService) DisableProject(
 	req *environmentproto.DisableProjectRequest,
 ) (*environmentproto.DisableProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateDisableProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	project, err := s.getProject(ctx, req.Id, localizer)
+	if err != nil {
+		return nil, err
+	}
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		project.OrganizationId,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.DisableProjectResponse{}, nil
@@ -1160,14 +1194,23 @@ func (s *EnvironmentService) ConvertTrialProject(
 	req *environmentproto.ConvertTrialProjectRequest,
 ) (*environmentproto.ConvertTrialProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateConvertTrialProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	project, err := s.getProject(ctx, req.Id, localizer)
+	if err != nil {
+		return nil, err
+	}
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		project.OrganizationId,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.ConvertTrialProjectResponse{}, nil
