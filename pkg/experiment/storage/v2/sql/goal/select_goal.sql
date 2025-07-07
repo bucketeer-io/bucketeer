@@ -13,7 +13,7 @@ SELECT
             FROM experiment ex1
             WHERE
                 ex1.environment_id = ? AND
-                ex1.goal_ids LIKE concat("%%", goal.id, "%%")
+                JSON_CONTAINS(ex1.goal_ids, CONCAT('"', goal.id, '"'), '$')
         ) > 0 THEN TRUE ELSE FALSE
     END AS is_in_use_status,
     (
