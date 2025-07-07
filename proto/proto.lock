@@ -11252,9 +11252,6 @@
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
-            "path": "google/protobuf/wrappers.proto"
-          },
-          {
             "path": "proto/autoops/auto_ops_rule.proto"
           },
           {

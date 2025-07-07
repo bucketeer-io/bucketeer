@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -24,13 +25,15 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	v2 "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -140,14 +143,14 @@ func (s *EnvironmentService) checkSystemAdminRole(
 func (s *EnvironmentService) checkOrganizationRole(
 	ctx context.Context,
 	organizationID string,
-	requiredRole accountproto.AccountV2_Role_Organization,
+	requiredRole accproto.AccountV2_Role_Organization,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(
 		ctx,
 		requiredRole,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		func(email string) (*accproto.GetAccountV2Response, error) {
+			return s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
 				Email:          email,
 				OrganizationId: organizationID,
 			})
@@ -197,4 +200,114 @@ func (s *EnvironmentService) checkOrganizationRole(
 		}
 	}
 	return editor, nil
+}
+
+func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
+	ctx context.Context,
+	requiredRole accproto.AccountV2_Role_Organization,
+	environmentID string,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(
+		ctx,
+		requiredRole,
+		func(email string,
+		) (*accproto.GetAccountV2Response, error) {
+			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID, localizer)
+			if err != nil {
+				return nil, err
+			}
+			return &accproto.GetAccountV2Response{Account: account.AccountV2}, nil
+		})
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Error(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Error(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *EnvironmentService) getAccountV2ByEnvironmentID(
+	ctx context.Context,
+	email, environmentID string,
+	localizer locale.Localizer,
+) (*accdomain.AccountV2, error) {
+	storage := accstorage.NewAccountStorage(s.mysqlClient)
+	account, err := storage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
+	if err != nil {
+		if errors.Is(err, accstorage.ErrAccountNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get account by environment id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentID", environmentID),
+				zap.String("email", email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return account, nil
 }

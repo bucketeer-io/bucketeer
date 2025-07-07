@@ -46,7 +46,12 @@ func (s *EnvironmentService) GetEnvironmentV2(
 	req *environmentproto.GetEnvironmentV2Request,
 ) (*environmentproto.GetEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		req.Id,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -238,22 +243,45 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	req *environmentproto.CreateEnvironmentV2Request,
 ) (*environmentproto.CreateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	if req.Command != nil {
+		if err := validateCreateEnvironmentV2Request(req, localizer); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := validateCreateEnvironmentV2RequestNoCommand(req, localizer); err != nil {
+			return nil, err
+		}
+	}
+
+	// Get project ID from request
+	var projectID string
+	if req.Command != nil {
+		projectID = req.Command.ProjectId
+	} else {
+		projectID = req.ProjectId
+	}
+
+	// Validate the project and get the actual organization ID
+	orgID, err := s.getOrganizationID(ctx, projectID, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the user has admin role for the validated organization
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		orgID,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if req.Command == nil {
-		return s.createEnvironmentV2NoCommand(ctx, req, localizer, editor)
+		return s.createEnvironmentV2NoCommand(ctx, req, localizer, editor, orgID)
 	}
 
-	if err := validateCreateEnvironmentV2Request(req, localizer); err != nil {
-		return nil, err
-	}
-	orgID, err := s.getOrganizationID(ctx, req.Command.ProjectId, localizer)
-	if err != nil {
-		return nil, err
-	}
 	name := strings.TrimSpace(req.Command.Name)
 	newEnvironment, err := domain.NewEnvironmentV2(
 		name,
@@ -280,14 +308,12 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 	req *environmentproto.CreateEnvironmentV2Request,
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
+	orgID string,
 ) (*environmentproto.CreateEnvironmentV2Response, error) {
 	if err := validateCreateEnvironmentV2RequestNoCommand(req, localizer); err != nil {
 		return nil, err
 	}
-	orgID, err := s.getOrganizationID(ctx, req.ProjectId, localizer)
-	if err != nil {
-		return nil, err
-	}
+
 	name := strings.TrimSpace(req.Name)
 	newEnvironment, err := domain.NewEnvironmentV2(
 		name,
@@ -527,7 +553,12 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 	req *environmentproto.UpdateEnvironmentV2Request,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.Id,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -743,7 +774,12 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	req *environmentproto.ArchiveEnvironmentV2Request,
 ) (*environmentproto.ArchiveEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.Id,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -814,7 +850,12 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 	req *environmentproto.UnarchiveEnvironmentV2Request,
 ) (*environmentproto.UnarchiveEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.Id,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}

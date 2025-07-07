@@ -337,7 +337,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -354,7 +354,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -371,7 +371,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -400,7 +400,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -610,7 +610,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -643,7 +643,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -670,7 +670,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id"},
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),

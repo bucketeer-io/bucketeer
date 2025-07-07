@@ -20,7 +20,6 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "google/protobuf/wrappers.proto";
 
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
