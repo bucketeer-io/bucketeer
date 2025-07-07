@@ -10,6 +10,7 @@ export type ListItemProps = {
   value: string;
   selected?: boolean;
   icon?: FunctionComponent;
+  urlCode?: string;
   onSelect?: (value: string) => void;
 };
 
@@ -20,11 +21,12 @@ const ListItem = ({
   selected,
   icon,
   className,
+  urlCode,
   onSelect
 }: ListItemProps) => {
   return (
     <li
-      id={value}
+      id={value || urlCode}
       className={cn(
         'flex items-center justify-between cursor-default',
         'rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100',
