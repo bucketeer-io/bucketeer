@@ -40,13 +40,12 @@ const ConversionRateChart = forwardRef(
       goalResultState?.chartType,
       goalResultState?.tab
     );
-
     const upperBoundaries = useMemo(
       () =>
         goalResult?.variationResults?.map(item =>
           isConversionRateChart
-            ? item.cvrPercentile975Timeseries.values.map(item => item * 100)
-            : item.goalValueSumPerUserPercentile025Timeseries?.values
+            ? item?.cvrPercentile975Timeseries?.values.map(item => item * 100)
+            : item?.goalValueSumPerUserPercentile025Timeseries?.values
         ) || [],
       [goalResult, isConversionRateChart]
     );
@@ -54,8 +53,8 @@ const ConversionRateChart = forwardRef(
       () =>
         goalResult?.variationResults?.map(item =>
           isConversionRateChart
-            ? item.cvrPercentile025Timeseries.values.map(item => item * 100)
-            : item.goalValueSumPerUserPercentile025Timeseries?.values
+            ? item?.cvrPercentile025Timeseries?.values.map(item => item * 100)
+            : item?.goalValueSumPerUserPercentile025Timeseries?.values
         ) || [],
       [goalResult, isConversionRateChart]
     );
@@ -64,8 +63,8 @@ const ConversionRateChart = forwardRef(
       () =>
         goalResult?.variationResults?.map(item =>
           isConversionRateChart
-            ? item.cvrMedianTimeseries.values.map(item => item * 100)
-            : item.goalValueSumPerUserMedianTimeseries?.values
+            ? item?.cvrMedianTimeseries?.values.map(item => item * 100)
+            : item?.goalValueSumPerUserMedianTimeseries?.values
         ) || [],
       [goalResult, isConversionRateChart]
     );
@@ -87,7 +86,7 @@ const ConversionRateChart = forwardRef(
       [goalResult, bins]
     );
 
-    bins = bins?.map(b => Math.round(b * 10000) / 100);
+    bins = useMemo(() => bins?.map(b => Math.round(b * 10000) / 100), [bins]);
 
     return isConversionRateChart &&
       !goalResult.variationResults[0]?.cvrMedianTimeseries ? (
