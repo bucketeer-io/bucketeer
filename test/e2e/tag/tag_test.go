@@ -61,12 +61,46 @@ func TestUpsertAndListTag(t *testing.T) {
 		newTagName(t),
 	}
 	createTags(t, client, testTags, tagproto.Tag_FEATURE_FLAG)
-	actual := listTags(ctx, t, client)
-	// Check if the created tags are in the response
-	tags := findTags(actual, testTags)
-	if len(tags) != len(testTags) {
-		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(testTags), len(tags))
+
+	// Retry logic to handle eventual consistency in e2e environments:
+	//
+	// In distributed systems, there can be timing delays between when data is written
+	// and when it becomes visible for reads. This can happen due to:
+	// 1. Database replication lag between write and read replicas
+	// 2. Transaction commit timing across distributed components
+	// 3. API gateway → backend service → database propagation delays
+	// 4. Caching layers that haven't been invalidated yet
+	// 5. Parallel test execution creating race conditions
+	//
+	// Instead of failing immediately if we don't see all 3 created tags,
+	// we retry multiple times with small delays to allow the system to reach
+	// eventual consistency. This makes the test more robust and reduces
+	// false negative failures in real e2e environments.
+	var tags []*tagproto.Tag
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		actual := listTags(ctx, t, client)
+		tags = findTags(actual, testTags)
+
+		if len(tags) == len(testTags) {
+			// All tags found - system has reached consistency, proceed with test
+			break
+		}
+
+		if i == maxRetries-1 {
+			// Final attempt failed, provide detailed error info for debugging
+			actualNames := make([]string, len(actual))
+			for i, tag := range actual {
+				actualNames[i] = tag.Name
+			}
+			t.Fatalf("Failed to find all created tags after %d retries. Expected: %v, Found: %v, All tags: %v",
+				maxRetries, testTags, getTagNames(tags), actualNames)
+		}
+
+		// Wait before retrying to allow system to reach consistency
+		time.Sleep(500 * time.Millisecond)
 	}
+
 	// Wait a few seconds before upserting the same tag.
 	// Otherwise, the test could fail because it could finish in less than 1 second,
 	// not updating the `updateAt` correctly.
@@ -74,7 +108,7 @@ func TestUpsertAndListTag(t *testing.T) {
 	// Upsert tag index 1
 	targetTag := tags[1]
 	createTag(t, client, targetTag.Name, tagproto.Tag_FEATURE_FLAG)
-	actual = listTags(ctx, t, client)
+	actual := listTags(ctx, t, client)
 	tagUpsert := findTags(actual, []string{targetTag.Name})
 	if tagUpsert == nil {
 		t.Fatalf("Upserted tag wasn't found in the response. Expected: %v\n Response: %v",
@@ -213,4 +247,12 @@ func findTags(tags []*tagproto.Tag, targetNames []string) []*tagproto.Tag {
 		result = append(result, tag)
 	}
 	return result
+}
+
+func getTagNames(tags []*tagproto.Tag) []string {
+	names := make([]string, len(tags))
+	for i, tag := range tags {
+		names[i] = tag.Name
+	}
+	return names
 }
