@@ -36,9 +36,9 @@ const FlagSwitch = ({
     () =>
       feature.variations.map((item, index) => ({
         label: (
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-center w-full gap-x-2">
             <FlagVariationPolygon index={index} />
-            {item.name || item.value}
+            <p className="truncate">{item.name || item.value}</p>
           </div>
         ),
         value: item.id
@@ -111,8 +111,9 @@ const FlagSwitch = ({
                       ''
                     }
                     disabled={!editable}
+                    className="max-w-[400px] truncate"
                   />
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="max-w-[400px]">
                     {options.map((item, index) => (
                       <DropdownMenuItem
                         key={index}

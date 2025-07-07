@@ -40,7 +40,7 @@ const EvaluationTable = ({
 
   return (
     <div className="flex flex-col gap-y-6 w-full min-w-[650px]">
-      <div className="flex items-center w-full">
+      <div className="flex items-center w-full gap-x-6">
         <div className="w-[40%] typo-para-medium text-gray-700">
           {t('evaluation.variation-counts')}
         </div>
@@ -63,7 +63,7 @@ const EvaluationTable = ({
         return (
           <div
             key={index}
-            className="flex items-center w-full px-4 py-5 bg-white rounded-lg shadow-card"
+            className="flex items-center w-full px-4 py-5 bg-white rounded-lg shadow-card gap-x-6"
           >
             <div className="flex items-center w-[40%] gap-x-2">
               <Checkbox
@@ -73,7 +73,7 @@ const EvaluationTable = ({
                 }
               />
               <Polygon
-                className="border-none size-3"
+                className="border-none size-3 min-w-3"
                 style={{
                   background: getVariationColor(index),
                   zIndex: index
