@@ -16,13 +16,18 @@ import {
   StrategyType,
   TargetChange
 } from '@types';
+import { DiscardChangesStateData } from '.';
 import {
   DefaultRuleSchema,
   RuleSchema,
   StrategySchema,
   TargetingSchema
 } from './form-schema';
-import { IndividualRuleItem, RuleClauseType } from './types';
+import {
+  IndividualRuleItem,
+  PrerequisiteSchema,
+  RuleClauseType
+} from './types';
 
 export const getAlreadyTargetedVariation = (
   targets: IndividualRuleItem[],
@@ -381,4 +386,162 @@ export const handleCheckPrerequisites = (
     }
   });
   return prerequisiteChanges;
+};
+
+const getPrerequisiteDiscardChangeData = (
+  item: PrerequisiteChange,
+  activeFeatures: Feature[]
+) => {
+  const currentFeature = activeFeatures.find(
+    feature => feature.id === item.prerequisite.featureId
+  );
+  let variationIndex = -1;
+  const variation = currentFeature?.variations.find((variation, index) => {
+    if (variation.id === item.prerequisite.variationId) {
+      variationIndex = index;
+      return variation;
+    }
+  });
+  return {
+    label: currentFeature?.name || '',
+    featureId: currentFeature?.id || '',
+    variationIndex,
+    variation
+  };
+};
+
+const getPrerequisiteDiscardChangeItem = (
+  checkPrerequisites: PrerequisiteChange[],
+  currentPrerequisite: PrerequisiteChange,
+  changeType: FeatureChangeType
+) => {
+  return checkPrerequisites.find(
+    pre =>
+      pre.changeType === changeType &&
+      pre.prerequisite.featureId === currentPrerequisite.prerequisite.featureId
+  );
+};
+
+export const handleCheckPrerequisiteDiscardChanges = (
+  prerequisites: PrerequisiteSchema[],
+  feature: Feature,
+  activeFeatures: Feature[]
+) => {
+  const checkPrerequisites = handleCheckPrerequisites(
+    feature.prerequisites,
+    prerequisites
+  );
+  if (!checkPrerequisites.length) return null;
+  const prerequisiteChanges: DiscardChangesStateData[] = [];
+
+  checkPrerequisites.forEach(item => {
+    const isDeleteItem = item.changeType === 'DELETE';
+    const isCreateItem = item.changeType === 'CREATE';
+    const prerequisiteData = getPrerequisiteDiscardChangeData(
+      item,
+      activeFeatures
+    );
+    const isExistedItem = prerequisiteChanges.find(
+      pre => pre.featureId === item.prerequisite.featureId
+    );
+    if (isExistedItem) return;
+    if (isDeleteItem) {
+      const updateItem = getPrerequisiteDiscardChangeItem(
+        checkPrerequisites,
+        item,
+        'CREATE'
+      );
+      return prerequisiteChanges.push({
+        ...prerequisiteData,
+        labelType: updateItem ? 'UPDATE' : 'REMOVE'
+      });
+    }
+    if (isCreateItem) {
+      const deleteItem = getPrerequisiteDiscardChangeItem(
+        checkPrerequisites,
+        item,
+        'DELETE'
+      );
+      return prerequisiteChanges.push({
+        ...prerequisiteData,
+        labelType: deleteItem ? 'UPDATE' : 'ADD'
+      });
+    }
+  });
+  return prerequisiteChanges;
+};
+
+const getIndividualDiscardChangeData = (
+  feature: Feature,
+  individual: FeatureTarget
+) => {
+  let variationIndex = -1;
+  const variation = feature?.variations.find((variation, index) => {
+    if (variation.id === individual.variation) {
+      variationIndex = index;
+      return variation;
+    }
+  });
+
+  return {
+    label: individual.users?.join(', ') || '',
+    variationIndex,
+    variation
+  };
+};
+
+const getIndividualDiscardChangeItem = (
+  checkIndividuals: TargetChange[],
+  currentIndividual: TargetChange,
+  changeType: FeatureChangeType
+) => {
+  return checkIndividuals.find(
+    pre =>
+      pre.changeType === changeType &&
+      pre.target.variation === currentIndividual.target.variation
+  );
+};
+
+export const handleCheckIndividualDiscardChanges = (
+  feature: Feature,
+  rules: IndividualRuleItem[]
+) => {
+  const checkIndividualRules = handleCheckIndividualRules(
+    feature.targets,
+    rules
+  );
+  if (!checkIndividualRules.length) return null;
+  const individualChanges: DiscardChangesStateData[] = [];
+  checkIndividualRules.forEach(item => {
+    const isDeleteItem = item.changeType === 'DELETE';
+    const isCreateItem = item.changeType === 'CREATE';
+    const individualData = getIndividualDiscardChangeData(feature, item.target);
+    const isExistedItem = individualChanges.find(
+      pre => pre.variation?.id === item.target.variation
+    );
+    if (isExistedItem) return;
+    if (isDeleteItem) {
+      const updateItem = getIndividualDiscardChangeItem(
+        checkIndividualRules,
+        item,
+        'CREATE'
+      );
+      return individualChanges.push({
+        ...individualData,
+        labelType: updateItem ? 'UPDATE' : 'REMOVE'
+      });
+    }
+    if (isCreateItem) {
+      const deleteItem = getIndividualDiscardChangeItem(
+        checkIndividualRules,
+        item,
+        'DELETE'
+      );
+      return individualChanges.push({
+        ...individualData,
+        labelType: deleteItem ? 'UPDATE' : 'ADD'
+      });
+    }
+  });
+  return individualChanges;
 };

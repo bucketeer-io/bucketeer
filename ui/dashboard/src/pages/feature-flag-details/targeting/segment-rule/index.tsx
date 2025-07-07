@@ -18,7 +18,7 @@ import { TargetingDivider } from '..';
 import Card from '../../elements/card';
 import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
-import { RuleCategory } from '../types';
+import { DiscardChangesType, RuleCategory } from '../types';
 import { getDefaultRolloutStrategy } from '../utils';
 import RuleForm from './rule';
 import SegmentVariation from './variation';
@@ -34,8 +34,8 @@ interface Props {
   isDisableAddIndividualRules: boolean;
   isDisableAddPrerequisite: boolean;
   onAddRule: (rule: RuleCategory) => void;
-  segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
+  handleDiscardChanges: (type: DiscardChangesType, index?: number) => void;
 }
 
 const TargetSegmentRule = ({
@@ -45,8 +45,8 @@ const TargetSegmentRule = ({
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
   onAddRule,
-  segmentRulesRemove,
-  segmentRulesSwap
+  segmentRulesSwap,
+  handleDiscardChanges
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
   const { consoleAccount } = useAuth();
@@ -122,7 +122,12 @@ const TargetSegmentRule = ({
                 <div className="flex items-center gap-x-2">
                   <div
                     className="flex-center cursor-pointer group"
-                    onClick={() => segmentRulesRemove(segmentIndex)}
+                    onClick={() =>
+                      handleDiscardChanges(
+                        DiscardChangesType.CUSTOM,
+                        segmentIndex
+                      )
+                    }
                   >
                     <Icon
                       icon={IconClose}

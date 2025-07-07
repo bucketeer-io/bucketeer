@@ -21,3 +21,9 @@ export interface IndividualRuleItem {
   name?: string;
   users: string[];
 }
+
+export enum DiscardChangesType {
+  PREREQUISITE = 'prerequisite',
+  INDIVIDUAL = 'individual',
+  CUSTOM = 'custom'
+}

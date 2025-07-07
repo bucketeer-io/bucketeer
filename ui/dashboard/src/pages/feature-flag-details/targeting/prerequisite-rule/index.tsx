@@ -1,11 +1,11 @@
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { IconInfo, IconPlus } from '@icons';
+import { IconClose, IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
-import { PrerequisiteSchema } from '../types';
+import { DiscardChangesType, PrerequisiteSchema } from '../types';
 import ConditionForm from './condition';
 import PrerequisiteBanner from './prerequisite-banner';
 
@@ -17,6 +17,7 @@ interface Props {
   isDisableAddPrerequisite: boolean;
   onRemovePrerequisite: (index: number) => void;
   onAddPrerequisite: () => void;
+  handleDiscardChanges: (type: DiscardChangesType) => void;
 }
 
 const PrerequisiteRule = ({
@@ -26,7 +27,8 @@ const PrerequisiteRule = ({
   hasPrerequisiteFlags,
   isDisableAddPrerequisite,
   onRemovePrerequisite,
-  onAddPrerequisite
+  onAddPrerequisite,
+  handleDiscardChanges
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
 
@@ -38,7 +40,7 @@ const PrerequisiteRule = ({
       {prerequisites.length > 0 && (
         <div className="flex flex-col w-full gap-y-6">
           <Card>
-            <div>
+            <div className="flex items-center w-full justify-between">
               <div className="flex items-center gap-x-2">
                 <p className="typo-para-medium leading-4 text-gray-700">
                   {t('form:feature-flags.prerequisites')}
@@ -53,6 +55,18 @@ const PrerequisiteRule = ({
                     </div>
                   }
                   className="max-w-[400px]"
+                />
+              </div>
+              <div
+                className="flex-center cursor-pointer group"
+                onClick={() =>
+                  handleDiscardChanges(DiscardChangesType.PREREQUISITE)
+                }
+              >
+                <Icon
+                  icon={IconClose}
+                  size={'sm'}
+                  className="flex-center text-gray-500 group-hover:text-gray-700"
                 />
               </div>
             </div>

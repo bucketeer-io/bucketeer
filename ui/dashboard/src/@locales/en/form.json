@@ -334,5 +334,8 @@
   "type-to-create-user-id": "Type to create a user ID.",
   "upload-files-error": "Some files could not be uploaded because they are in unsupported formats. Please check the allowed file types and try again.",
   "create-option": "Create \"{{option}}\"",
-  "max": "max"
+  "max": "max",
+  "discard-unsaved-changes": "Discard unsaved changes",
+  "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
+  "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user"
 }

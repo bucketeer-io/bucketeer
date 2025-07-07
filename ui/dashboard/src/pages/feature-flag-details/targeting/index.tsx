@@ -13,7 +13,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { Evaluation, Feature } from '@types';
+import { Evaluation, Feature, FeatureVariation } from '@types';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -27,6 +27,7 @@ import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
+import DiscardChangeModal from '../elements/discard-changes-modal';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
@@ -39,15 +40,36 @@ import { formSchema, TargetingSchema } from './form-schema';
 import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
 import TargetSegmentRule from './segment-rule';
-import { PrerequisiteSchema, RuleCategory } from './types';
+import {
+  DiscardChangesType,
+  IndividualRuleItem,
+  PrerequisiteSchema,
+  RuleCategory
+} from './types';
 import {
   getDefaultRule,
+  handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
+  handleCheckPrerequisiteDiscardChanges,
   handleCheckPrerequisites,
   handleCheckSegmentRules,
   handleCreateDefaultValues,
   handleGetDefaultRuleStrategy
 } from './utils';
+
+export interface DiscardChangesStateData {
+  labelType: 'ADD' | 'UPDATE' | 'REMOVE';
+  label: string;
+  featureId?: string;
+  variation?: FeatureVariation;
+  variationIndex: number;
+}
+
+interface DiscardChangesState {
+  type: DiscardChangesType | undefined;
+  isOpen: boolean;
+  data: DiscardChangesStateData[];
+}
 
 export const TargetingDivider = () => (
   <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
@@ -79,6 +101,12 @@ const TargetingPage = ({
     null
   );
   const [isShowRules, setIsShowRules] = useState<boolean>(feature.enabled);
+  const [discardChangesState, setDiscardChangesState] =
+    useState<DiscardChangesState>({
+      type: undefined,
+      isOpen: false,
+      data: []
+    });
 
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
@@ -116,7 +144,9 @@ const TargetingPage = ({
     control,
     formState: { isDirty, isValid, dirtyFields },
     watch,
-    reset
+    reset,
+    setValue,
+    getValues
   } = form;
 
   const enabledWatch = watch('enabled');
@@ -208,6 +238,69 @@ const TargetingPage = ({
     },
     [segmentRulesWatch]
   );
+
+  const handleDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      const { prerequisites, individualRules, segmentRules } = getValues();
+      let discardData: DiscardChangesStateData[] | null = null;
+      if (type === DiscardChangesType.PREREQUISITE) {
+        discardData = handleCheckPrerequisiteDiscardChanges(
+          prerequisites as PrerequisiteSchema[],
+          feature,
+          activeFeatures
+        );
+        if (!discardData) return onDiscardChanges(type);
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        discardData = handleCheckIndividualDiscardChanges(
+          feature,
+          individualRules as IndividualRuleItem[]
+        );
+        return onDiscardChanges(type);
+      }
+
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        console.log(segmentRules);
+      }
+
+      if (discardData) {
+        setDiscardChangesState({
+          type,
+          isOpen: true,
+          data: discardData
+        });
+      }
+    },
+    [activeFeatures, feature]
+  );
+
+  const onDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      if (type === DiscardChangesType.PREREQUISITE) {
+        setValue('prerequisites', [], {
+          shouldDirty: true
+        });
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        setValue('individualRules', [], {
+          shouldDirty: true
+        });
+      }
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        segmentRulesRemove(index);
+      }
+      handleOnCloseDiscardModal();
+    },
+    []
+  );
+
+  const handleOnCloseDiscardModal = useCallback(() => {
+    setDiscardChangesState({
+      type: undefined,
+      isOpen: false,
+      data: []
+    });
+  }, []);
 
   const onSubmit = useCallback(
     async (
@@ -334,6 +427,7 @@ const TargetingPage = ({
                     onAddPrerequisite={() =>
                       onAddRule(RuleCategory.PREREQUISITE)
                     }
+                    handleDiscardChanges={handleDiscardChanges}
                   />
                 </>
               )}
@@ -350,7 +444,10 @@ const TargetingPage = ({
               {individualRules?.length > 0 && (
                 <>
                   <TargetingDivider />
-                  <IndividualRule individualRules={individualRules} />
+                  <IndividualRule
+                    individualRules={individualRules}
+                    handleDiscardChanges={handleDiscardChanges}
+                  />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
@@ -369,8 +466,8 @@ const TargetingPage = ({
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
                     onAddRule={onAddRule}
-                    segmentRulesRemove={segmentRulesRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
+                    handleDiscardChanges={handleDiscardChanges}
                   />
                   <TargetingDivider />
                   <AddRule
@@ -464,6 +561,11 @@ const TargetingPage = ({
           }}
         />
       )}
+      <DiscardChangeModal
+        {...discardChangesState}
+        onClose={handleOnCloseDiscardModal}
+        onSubmit={onDiscardChanges}
+      />
     </PageLayout.Content>
   );
 };

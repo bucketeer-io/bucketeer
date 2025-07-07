@@ -273,6 +273,8 @@
   "has-experiment": "エクスペリメントあり",
   "push-notification": "プッシュ通知",
   "add": "追加",
+  "update": "更新",
+  "remove": "削除",
   "profile": "プロフィール",
   "started": "開始済み",
   "has-flag-as-rule": "ルールにフィーチャーフラグあり",
@@ -288,5 +290,6 @@
   "member-role-description": "特定の環境にのみアクセスでき、組織設定、プロジェクト、環境、APIキー、メンバーの作成や更新はできません。",
   "admin-role-description": "すべての環境にアクセスでき、すべての操作を実行できます。",
   "teams": "チーム",
-  "docs": "ドキュメント"
+  "docs": "ドキュメント",
+  "discard": "破棄"
 }

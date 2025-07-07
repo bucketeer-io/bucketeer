@@ -6,7 +6,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
-import { IconCopy, IconInfo } from '@icons';
+import { IconClose, IconCopy, IconInfo } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { CreatableSelect, Option } from 'components/creatable-select';
@@ -15,24 +15,26 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { TargetingSchema } from '../form-schema';
-import { IndividualRuleItem } from '../types';
+import { DiscardChangesType, IndividualRuleItem } from '../types';
 import { getAlreadyTargetedVariation } from '../utils';
 
 interface Props {
   individualRules: IndividualRuleItem[];
+  handleDiscardChanges: (type: DiscardChangesType) => void;
 }
 
 export const UserMessage = ({ message }: { message: ReactNode }) => {
   return <div className={'text-center text-gray-500'}>{message}</div>;
 };
 
-const IndividualRule = ({ individualRules }: Props) => {
+const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
   const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const { notify } = useToast();
 
   const methods = useFormContext<TargetingSchema>();
 
-  const { control } = methods;
+  const { control, watch } = methods;
+  const individualRulesWatch = [...(watch('individualRules') || [])];
 
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
@@ -43,7 +45,7 @@ const IndividualRule = ({ individualRules }: Props) => {
 
   return (
     <Card>
-      <div>
+      <div className="flex items-center w-full justify-between">
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium leading-4 text-gray-700">
             {t('form:targeting.individual-target')}
@@ -58,6 +60,16 @@ const IndividualRule = ({ individualRules }: Props) => {
               </div>
             }
             className="max-w-[400px]"
+          />
+        </div>
+        <div
+          className="flex-center cursor-pointer group"
+          onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
+        >
+          <Icon
+            icon={IconClose}
+            size={'sm'}
+            className="flex-center text-gray-500 group-hover:text-gray-700"
           />
         </div>
       </div>
@@ -86,7 +98,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                           const newOption = options.find(o => o['__isNew__']);
                           const alreadyTargetedVariation =
                             getAlreadyTargetedVariation(
-                              individualRules,
+                              individualRulesWatch,
                               item.variationId,
                               newOption?.label || ''
                             );
@@ -97,7 +109,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                         className="w-full"
                         formatCreateLabel={v => {
                           const isAlreadyExisted = getAlreadyTargetedVariation(
-                            individualRules,
+                            individualRulesWatch,
                             item.variationId,
                             v
                           );
