@@ -310,5 +310,6 @@
     "public-admin-desc": "このロールでは、環境設定を含むBucketeerのデータを取得／作成／更新できます。",
     "unknown": "不明",
     "public-api": "パブリックAPI"
-  }
+  },
+  "disabled-archive-current-env": "現在使用中の環境はアーカイブできません。他の環境に切り替えてから、この環境をアーカイブしてください。"
 }
