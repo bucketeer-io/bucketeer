@@ -4,7 +4,6 @@ import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Push, Tag } from '@types';
-import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { IconTrash } from '@icons';
 import Switch from 'components/switch';
@@ -37,7 +36,7 @@ export const useColumns = ({
         const { id, name } = push;
 
         return (
-          <div className="flex flex-col gap-0.5 max-w-fit min-w-[300px]">
+          <div className="flex items-center gap-0.5 max-w-fit min-w-[300px]">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
@@ -51,9 +50,6 @@ export const useColumns = ({
               }
               maxLines={1}
             />
-            <div className="typo-para-tiny text-gray-500 break-all line-clamp-1">
-              {truncateTextCenter(id)}
-            </div>
           </div>
         );
       }
