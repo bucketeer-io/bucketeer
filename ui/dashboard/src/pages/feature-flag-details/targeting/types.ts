@@ -8,6 +8,7 @@ export enum RuleClauseType {
 export interface PrerequisiteSchema {
   featureId: string;
   variationId: string;
+  id?: string;
 }
 
 export enum RuleCategory {
@@ -20,6 +21,13 @@ export interface IndividualRuleItem {
   variationId: string;
   name?: string;
   users: string[];
+  id?: string;
+}
+
+export enum DiscardChangesType {
+  PREREQUISITE = 'prerequisite',
+  INDIVIDUAL = 'individual',
+  CUSTOM = 'custom'
 }
 
 export enum DiscardChangesType {

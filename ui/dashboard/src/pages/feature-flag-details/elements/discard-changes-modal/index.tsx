@@ -1,4 +1,8 @@
 import { Trans } from 'react-i18next';
+import {
+  IconRemoveOutlined,
+  IconUpdateOutlined
+} from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { IconPlus } from '@icons';
 import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting';
@@ -17,6 +21,24 @@ interface Props {
   onSubmit: (type: DiscardChangesType) => void;
 }
 
+const ActionIcon = ({
+  labelType
+}: {
+  labelType: DiscardChangesStateData['labelType'];
+}) => (
+  <Icon
+    icon={
+      labelType === 'ADD'
+        ? IconPlus
+        : labelType === 'REMOVE'
+          ? IconRemoveOutlined
+          : IconUpdateOutlined
+    }
+    size={'sm'}
+    color="gray-600"
+  />
+);
+
 const PrerequisiteDiscardItem = ({
   labelType,
   label,
@@ -28,7 +50,7 @@ const PrerequisiteDiscardItem = ({
     <div className="flex flex-col w-full gap-1">
       <div className="flex w-full gap-x-2">
         <div className="mt-[3px]">
-          <Icon icon={IconPlus} size={'sm'} color="gray-600" />
+          <ActionIcon labelType={labelType} />
         </div>
         <div className="typo-para-medium text-gray-700">
           <Trans
@@ -66,7 +88,7 @@ const IndividualDiscardItem = ({
     <div className="flex flex-col w-full gap-1">
       <div className="flex w-full gap-x-2">
         <div className="mt-[3px]">
-          <Icon icon={IconPlus} size={'sm'} color="gray-600" />
+          <ActionIcon labelType={labelType} />
         </div>
         <div className="typo-para-medium text-gray-700">
           <Trans

@@ -14,6 +14,7 @@ import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Evaluation, Feature, FeatureVariation } from '@types';
+import { isEmpty } from 'utils/data-type';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -54,6 +55,8 @@ import {
   handleCheckPrerequisites,
   handleCheckSegmentRules,
   handleCreateDefaultValues,
+  handleCreateIndividualRules,
+  handleCreatePrerequisites,
   handleGetDefaultRuleStrategy
 } from './utils';
 
@@ -152,7 +155,8 @@ const TargetingPage = ({
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
-
+  const individualRulesWatch = [...(watch('individualRules') || [])];
+  console.log(individualRulesWatch);
   const hasPrerequisiteFlags = activeFeatures.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
   );
@@ -249,27 +253,23 @@ const TargetingPage = ({
           feature,
           activeFeatures
         );
-        if (!discardData) return onDiscardChanges(type);
       }
       if (type === DiscardChangesType.INDIVIDUAL) {
         discardData = handleCheckIndividualDiscardChanges(
           feature,
           individualRules as IndividualRuleItem[]
         );
-        return onDiscardChanges(type);
       }
 
       if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
         console.log(segmentRules);
       }
-
-      if (discardData) {
-        setDiscardChangesState({
-          type,
-          isOpen: true,
-          data: discardData
-        });
-      }
+      if (isEmpty(discardData)) return onDiscardChanges(type);
+      setDiscardChangesState({
+        type,
+        isOpen: true,
+        data: discardData!
+      });
     },
     [activeFeatures, feature]
   );
@@ -277,13 +277,23 @@ const TargetingPage = ({
   const onDiscardChanges = useCallback(
     (type: DiscardChangesType, index?: number) => {
       if (type === DiscardChangesType.PREREQUISITE) {
-        setValue('prerequisites', [], {
-          shouldDirty: true
+        const { prerequisites } = feature;
+
+        const resetPrerequisites = prerequisites.length
+          ? handleCreatePrerequisites(prerequisites)
+          : [];
+
+        setValue('prerequisites', resetPrerequisites, {
+          shouldDirty: resetPrerequisites.length === 0
         });
       }
       if (type === DiscardChangesType.INDIVIDUAL) {
-        setValue('individualRules', [], {
-          shouldDirty: true
+        const { targets, variations } = feature;
+        const resetIndividualRules = targets.length
+          ? handleCreateIndividualRules(targets, variations)
+          : [];
+        setValue('individualRules', resetIndividualRules, {
+          shouldDirty: resetIndividualRules.length === 0
         });
       }
       if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
@@ -291,7 +301,7 @@ const TargetingPage = ({
       }
       handleOnCloseDiscardModal();
     },
-    []
+    [feature]
   );
 
   const handleOnCloseDiscardModal = useCallback(() => {
@@ -561,11 +571,13 @@ const TargetingPage = ({
           }}
         />
       )}
-      <DiscardChangeModal
-        {...discardChangesState}
-        onClose={handleOnCloseDiscardModal}
-        onSubmit={onDiscardChanges}
-      />
+      {discardChangesState.isOpen && (
+        <DiscardChangeModal
+          {...discardChangesState}
+          onClose={handleOnCloseDiscardModal}
+          onSubmit={onDiscardChanges}
+        />
+      )}
     </PageLayout.Content>
   );
 };

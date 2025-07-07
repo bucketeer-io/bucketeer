@@ -1,3 +1,4 @@
+import { IconUndoOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { IconClose, IconInfo, IconPlus } from '@icons';
@@ -64,15 +65,17 @@ const PrerequisiteRule = ({
                 }
               >
                 <Icon
-                  icon={IconClose}
+                  icon={
+                    feature?.prerequisites.length ? IconUndoOutlined : IconClose
+                  }
                   size={'sm'}
                   className="flex-center text-gray-500 group-hover:text-gray-700"
                 />
               </div>
             </div>
-            {prerequisites.map((_, prerequisiteIndex) => (
+            {prerequisites.map((prerequisite, prerequisiteIndex) => (
               <ConditionForm
-                key={prerequisiteIndex}
+                key={prerequisite?.id || prerequisiteIndex}
                 features={features}
                 featureId={feature.id}
                 prerequisiteIndex={prerequisiteIndex}

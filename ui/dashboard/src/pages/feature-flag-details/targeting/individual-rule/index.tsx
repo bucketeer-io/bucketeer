@@ -35,6 +35,12 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
 
   const { control, watch } = methods;
   const individualRulesWatch = [...(watch('individualRules') || [])];
+  const formatIndividualRules = individualRulesWatch.map(item => ({
+    ...item,
+    id: individualRules.find(
+      ({ variationId }) => variationId === item.variationId
+    )?.id
+  }));
 
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
@@ -73,8 +79,8 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
           />
         </div>
       </div>
-      {individualRules.map((item, index) => (
-        <div key={index} className="flex flex-col w-full gap-y-4">
+      {formatIndividualRules.map((item, index) => (
+        <div key={item?.id || index} className="flex flex-col w-full gap-y-4">
           <Form.Field
             control={control}
             name={`individualRules.${index}.users`}

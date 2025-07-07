@@ -1,8 +1,8 @@
 import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 
-export const isEmpty = (
-  data: number | string | undefined | null | boolean | string[]
+export const isEmpty = <T>(
+  data: number | string | undefined | null | boolean | Array<T>
 ) =>
   data === undefined ||
   data === '' ||
