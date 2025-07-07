@@ -28,6 +28,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
@@ -35,6 +36,7 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -96,6 +98,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -426,6 +429,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -694,6 +698,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -926,6 +931,7 @@ func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1008,6 +1014,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1079,12 +1086,312 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.UnarchiveEnvironmentV2(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestEnvironmentV2APIs_Unauthenticated(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	unauthCtx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(unauthCtx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	expectedErr := createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError))
+
+	patterns := []struct {
+		desc      string
+		setupFunc func(*EnvironmentService)
+		testFunc  func(*EnvironmentService) error
+	}{
+		{
+			desc: "CreateEnvironmentV2 - unauthenticated",
+			setupFunc: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+				}, nil)
+			},
+			testFunc: func(s *EnvironmentService) error {
+				_, err := s.CreateEnvironmentV2(unauthCtx, &proto.CreateEnvironmentV2Request{
+					Command: &proto.CreateEnvironmentV2Command{
+						Name:      "name",
+						UrlCode:   "url-code",
+						ProjectId: "project-id",
+					},
+				})
+				return err
+			},
+		},
+		{
+			desc: "CreateEnvironmentV2NoCommand - unauthenticated",
+			setupFunc: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+				}, nil)
+			},
+			testFunc: func(s *EnvironmentService) error {
+				_, err := s.CreateEnvironmentV2(unauthCtx, &proto.CreateEnvironmentV2Request{
+					Name:      "name",
+					UrlCode:   "url-code",
+					ProjectId: "project-id",
+				})
+				return err
+			},
+		},
+		{
+			desc: "UpdateEnvironmentV2 - unauthenticated",
+			setupFunc: func(s *EnvironmentService) {
+				// For unauthenticated users, the error should occur before any storage calls
+			},
+			testFunc: func(s *EnvironmentService) error {
+				_, err := s.UpdateEnvironmentV2(unauthCtx, &proto.UpdateEnvironmentV2Request{
+					Id:            "env-id",
+					RenameCommand: &proto.RenameEnvironmentV2Command{Name: "new-name"},
+				})
+				return err
+			},
+		},
+		{
+			desc: "ArchiveEnvironmentV2 - unauthenticated",
+			setupFunc: func(s *EnvironmentService) {
+				// For unauthenticated users, the error should occur before any storage calls
+			},
+			testFunc: func(s *EnvironmentService) error {
+				_, err := s.ArchiveEnvironmentV2(unauthCtx, &proto.ArchiveEnvironmentV2Request{
+					Id:      "env-id",
+					Command: &proto.ArchiveEnvironmentV2Command{},
+				})
+				return err
+			},
+		},
+		{
+			desc: "UnarchiveEnvironmentV2 - unauthenticated",
+			setupFunc: func(s *EnvironmentService) {
+				// For unauthenticated users, the error should occur before any storage calls
+			},
+			testFunc: func(s *EnvironmentService) error {
+				_, err := s.UnarchiveEnvironmentV2(unauthCtx, &proto.UnarchiveEnvironmentV2Request{
+					Id:      "env-id",
+					Command: &proto.UnarchiveEnvironmentV2Command{},
+				})
+				return err
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setupFunc != nil {
+				p.setupFunc(service)
+			}
+			err := p.testFunc(service)
+			assert.Equal(t, expectedErr, err)
+		})
+	}
+}
+
+func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	roleTestCtx := metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(roleTestCtx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	expectedErr := createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+
+	rolePatterns := []struct {
+		role      string
+		roleValue accountproto.AccountV2_Role_Organization
+	}{
+		{"member", accountproto.AccountV2_Role_Organization_MEMBER},
+		{"unassigned", accountproto.AccountV2_Role_Organization_UNASSIGNED},
+	}
+
+	for _, rolePattern := range rolePatterns {
+		t.Run(rolePattern.role, func(t *testing.T) {
+			patterns := []struct {
+				desc      string
+				setupFunc func(*EnvironmentService)
+				testFunc  func(*EnvironmentService) error
+			}{
+				{
+					desc: "CreateEnvironmentV2 - permission denied",
+					setupFunc: func(s *EnvironmentService) {
+						s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+							gomock.Any(), gomock.Any(),
+						).Return(&domain.Project{
+							Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+						}, nil)
+						s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+							gomock.Any(), &accountproto.GetAccountV2Request{
+								Email:          "email",
+								OrganizationId: "organization-id01",
+							},
+						).Return(&accountproto.GetAccountV2Response{
+							Account: &accountproto.AccountV2{
+								OrganizationRole: rolePattern.roleValue,
+							},
+						}, nil)
+					},
+					testFunc: func(s *EnvironmentService) error {
+						_, err := s.CreateEnvironmentV2(roleTestCtx, &proto.CreateEnvironmentV2Request{
+							Command: &proto.CreateEnvironmentV2Command{
+								Name:      "name",
+								UrlCode:   "url-code",
+								ProjectId: "project-id",
+							},
+						})
+						return err
+					},
+				},
+				{
+					desc: "CreateEnvironmentV2NoCommand - permission denied",
+					setupFunc: func(s *EnvironmentService) {
+						s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+							gomock.Any(), gomock.Any(),
+						).Return(&domain.Project{
+							Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+						}, nil)
+						s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+							gomock.Any(), &accountproto.GetAccountV2Request{
+								Email:          "email",
+								OrganizationId: "organization-id01",
+							},
+						).Return(&accountproto.GetAccountV2Response{
+							Account: &accountproto.AccountV2{
+								OrganizationRole: rolePattern.roleValue,
+							},
+						}, nil)
+					},
+					testFunc: func(s *EnvironmentService) error {
+						_, err := s.CreateEnvironmentV2(roleTestCtx, &proto.CreateEnvironmentV2Request{
+							Name:      "name",
+							UrlCode:   "url-code",
+							ProjectId: "project-id",
+						})
+						return err
+					},
+				},
+				{
+					desc: "UpdateEnvironmentV2 - permission denied",
+					setupFunc: func(s *EnvironmentService) {
+						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
+						row := mysqlmock.NewMockRow(mockController)
+						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+							// Populate the account struct with the test role
+							if len(args) >= 12 {
+								*(args[11].(*int32)) = int32(rolePattern.roleValue)
+							}
+							return nil
+						})
+						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(row)
+					},
+					testFunc: func(s *EnvironmentService) error {
+						_, err := s.UpdateEnvironmentV2(roleTestCtx, &proto.UpdateEnvironmentV2Request{
+							Id:            "env-id",
+							RenameCommand: &proto.RenameEnvironmentV2Command{Name: "new-name"},
+						})
+						return err
+					},
+				},
+				{
+					desc: "ArchiveEnvironmentV2 - permission denied",
+					setupFunc: func(s *EnvironmentService) {
+						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
+						row := mysqlmock.NewMockRow(mockController)
+						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+							// Populate the account struct with the test role
+							if len(args) >= 12 {
+								*(args[11].(*int32)) = int32(rolePattern.roleValue)
+							}
+							return nil
+						})
+						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(row)
+					},
+					testFunc: func(s *EnvironmentService) error {
+						_, err := s.ArchiveEnvironmentV2(roleTestCtx, &proto.ArchiveEnvironmentV2Request{
+							Id:      "env-id",
+							Command: &proto.ArchiveEnvironmentV2Command{},
+						})
+						return err
+					},
+				},
+				{
+					desc: "UnarchiveEnvironmentV2 - permission denied",
+					setupFunc: func(s *EnvironmentService) {
+						// Mock the QueryRowContext call that GetAccountV2ByEnvironmentID will make
+						row := mysqlmock.NewMockRow(mockController)
+						row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(args ...interface{}) error {
+							// Populate the account struct with the test role
+							if len(args) >= 12 {
+								*(args[11].(*int32)) = int32(rolePattern.roleValue)
+							}
+							return nil
+						})
+						s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+							gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(row)
+					},
+					testFunc: func(s *EnvironmentService) error {
+						_, err := s.UnarchiveEnvironmentV2(roleTestCtx, &proto.UnarchiveEnvironmentV2Request{
+							Id:      "env-id",
+							Command: &proto.UnarchiveEnvironmentV2Command{},
+						})
+						return err
+					},
+				},
+			}
+
+			for _, p := range patterns {
+				t.Run(p.desc, func(t *testing.T) {
+					t.Parallel()
+					service := newEnvironmentService(t, mockController, nil)
+					if p.setupFunc != nil {
+						p.setupFunc(service)
+					}
+					err := p.testFunc(service)
+					assert.Equal(t, expectedErr, err)
+				})
+			}
 		})
 	}
 }
