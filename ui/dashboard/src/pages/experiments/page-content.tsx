@@ -107,6 +107,7 @@ const PageContent = ({
         status,
         searchQuery: filters?.searchQuery ?? '',
         isFilter: undefined,
+        maintainer: undefined,
         filterByTab: true,
         statuses:
           status === 'FINISHED'

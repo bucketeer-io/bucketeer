@@ -74,6 +74,7 @@ const CollectionLoader = memo(
             {
               searchQuery: '',
               isFilter: undefined,
+              maintainer: undefined,
               status: 'ACTIVE',
               statuses: ['WAITING', 'RUNNING']
             },

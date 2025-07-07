@@ -9,6 +9,8 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
+import { isNotEmptyObject } from 'utils/data-type';
+import { stringifyParams, useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
@@ -24,6 +26,15 @@ const PageLoader = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
   const { notify, errorNotify } = useToast();
+  const { searchOptions } = useSearchParams();
+
+  const queryString = useMemo(
+    () =>
+      isNotEmptyObject(searchOptions)
+        ? `?${decodeURIComponent(stringifyParams(searchOptions))}`
+        : '',
+    [searchOptions]
+  );
 
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
@@ -41,7 +52,7 @@ const PageLoader = () => {
 
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
-      closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`
+      closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}${queryString}`
     });
 
   const {
@@ -100,29 +111,21 @@ const PageLoader = () => {
     (item: Experiment, type: ExperimentActionsType) => {
       if (type === 'EDIT') {
         return onOpenEditModal(
-          `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`
+          `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}${queryString}`
         );
       }
       setSelectedExperiment(item);
       if (type === 'GOALS-CONNECTION') {
         return onOpenGoalsModal();
       }
-      if (type === 'STOP') {
-        setIsStop(true);
+      if (['START', 'STOP'].includes(type)) {
+        setIsStop(type === 'STOP');
         return onOpenToggleExperimentModal();
       }
-      if (type === 'START') {
-        setIsStop(false);
-        return onOpenToggleExperimentModal();
-      }
-      if (type === 'ARCHIVE') {
-        setIsArchiving(true);
-        return onOpenConfirmModal();
-      }
-      setIsArchiving(false);
+      setIsArchiving(type === 'ARCHIVE');
       return onOpenConfirmModal();
     },
-    []
+    [queryString]
   );
 
   return (
