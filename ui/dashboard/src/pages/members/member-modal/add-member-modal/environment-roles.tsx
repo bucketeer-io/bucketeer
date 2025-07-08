@@ -16,6 +16,7 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import EnvironmentEditorList from 'elements/environment-editor-list';
 import { AddMemberForm } from '.';
 import { EditMemberForm } from '../edit-member-modal';
 
@@ -89,43 +90,21 @@ const EnvironmentRoles = ({
                 <Form.Item className="py-2">
                   <Form.Label required>{t('environment')}</Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:select-environment`)}
-                        label={
-                          environments.find(
-                            item =>
-                              item.id && item.id === environment.environmentId
-                          )?.name
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[310px]"
-                        align="start"
-                        {...field}
-                      >
-                        {environmentsOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.id}
-                            label={item.name}
-                            onSelectOption={value => {
-                              setValue(
-                                `environmentRoles.${envIndex}.environmentId`,
-                                value as string,
-                                {
-                                  shouldDirty: true,
-                                  shouldValidate: true
-                                }
-                              );
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <EnvironmentEditorList
+                      align="start"
+                      value={field.value}
+                      selectedValues={selectedEnvs}
+                      onSelectOption={value =>
+                        setValue(
+                          `environmentRoles.${envIndex}.environmentId`,
+                          value as string,
+                          {
+                            shouldDirty: true,
+                            shouldValidate: true
+                          }
+                        )
+                      }
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

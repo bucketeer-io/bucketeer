@@ -69,12 +69,12 @@ const PageContent = ({
         disabled: undefined,
         environmentIds: undefined
       }),
-    []
+    [filters]
   );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
-      onChangeFilters({ ...defaultFilters });
+      setFilters({ ...defaultFilters });
     }
   }, [searchOptions]);
 

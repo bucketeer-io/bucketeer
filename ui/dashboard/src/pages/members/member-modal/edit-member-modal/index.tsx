@@ -11,7 +11,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateTeams, useQueryTeams } from '@queries/teams';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
@@ -30,7 +30,6 @@ import {
   onFormatEnvironments
 } from 'utils/function';
 import { IconInfo } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -112,6 +111,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { notify } = useToast();
   const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
+
   const [teamOptions, setTeamOptions] = useState<DropdownOption[]>([]);
 
   const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
@@ -121,12 +122,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     }
   });
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
   const { emptyEnvironmentId, formattedEnvironments } =
-    onFormatEnvironments(environments);
+    onFormatEnvironments(editorEnvironments);
 
   const teams = teamCollection?.teams || [];
   const form = useForm<EditMemberForm>({

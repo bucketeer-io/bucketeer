@@ -37,8 +37,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
+  DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -47,7 +46,7 @@ import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
-import DropdownList from 'elements/dropdown-list';
+import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
 
 interface NotificationCreateUpdateModalProps {
@@ -117,17 +116,7 @@ const NotificationCreateUpdateModal = ({
     [consoleAccount]
   );
 
-  const { emptyEnvironmentId, formattedEnvironments } =
-    onFormatEnvironments(editorEnvironments);
-
-  const environmentOptions = useMemo(
-    () =>
-      formattedEnvironments.map(item => ({
-        label: item.name,
-        value: item.id
-      })),
-    [formattedEnvironments]
-  );
+  const { emptyEnvironmentId } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm<NotificationCreateUpdateForm>({
     resolver: yupResolver(
@@ -288,31 +277,11 @@ const NotificationCreateUpdateModal = ({
                   <Form.Item className="py-2">
                     <Form.Label required>{t('environment')}</Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:select-environment`)}
-                          label={
-                            environmentOptions?.find(
-                              item => item.value === getValues('environment')
-                            )?.label
-                          }
-                          disabled={disabled || isEditNotification}
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className={cn('w-[502px]', {
-                            'hidden-scroll': environmentOptions?.length > 15
-                          })}
-                          align="start"
-                          {...field}
-                        >
-                          <DropdownList
-                            options={environmentOptions as DropdownOption[]}
-                            onSelectOption={field.onChange}
-                          />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <EnvironmentEditorList
+                        value={field.value}
+                        onSelectOption={field.onChange}
+                        disabled={disabled || isEditNotification}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

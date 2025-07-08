@@ -13,7 +13,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateTeams, useQueryTeams } from '@queries/teams';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
@@ -23,7 +23,6 @@ import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconEnglishFlag, IconInfo, IconJapanFlag } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -114,7 +113,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { notify, errorNotify } = useToast();
   const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
+  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
   const [teamOptions, setTeamOptions] = useState<DropdownOption[]>([]);
 
   const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
@@ -153,11 +152,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     'label'
   );
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
-  const { formattedEnvironments } = onFormatEnvironments(environments);
+  const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const checkSubmitBtnDisabled = useCallback(() => {
     if (isValid && isAdminRole) return false;
