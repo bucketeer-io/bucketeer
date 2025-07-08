@@ -22,9 +22,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
+
+	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	tagclient "github.com/bucketeer-io/bucketeer/pkg/tag/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
@@ -157,6 +161,111 @@ func TestDeleteTag(t *testing.T) {
 	if len(target) != 0 {
 		t.Fatalf("The tag hasn't deleted. Tag: %v", target)
 	}
+}
+
+func TestFailedDeleteTag(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	tagClient := newTagClient(t)
+	featureClient := newFeatureClient(t)
+	fid := newFeatureID(t)
+	createFfReq := newCreateFeatureReq(fid, []string{"test-tag"})
+	createFeatureNoCmd(t, featureClient, createFfReq)
+
+	// list tags
+	tags, err := tagClient.ListTags(ctx, &tagproto.ListTagsRequest{
+		PageSize:      0,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatalf("Failed to list tags: %v", err)
+	}
+
+	var tagID string
+	for _, tag := range tags.Tags {
+		if tag.Name == "test-tag" {
+			tagID = tag.Id
+		}
+	}
+
+	// Try to delete the tag that is in use by a feature flag
+	req := &tagproto.DeleteTagRequest{
+		Id:            tagID,
+		EnvironmentId: *environmentID,
+	}
+	if _, err := tagClient.DeleteTag(ctx, req); err == nil {
+		t.Fatal("Expected error when deleting tag that is in use, but got none")
+	}
+}
+
+func newFeatureID(t *testing.T) string {
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-feature-id-%s", prefixID, *testID, newUUID(t))
+	}
+	return fmt.Sprintf("%s-feature-id-%s", prefixID, newUUID(t))
+}
+
+func newCreateFeatureReq(featureID string, tags []string) *feature.CreateFeatureRequest {
+	return &feature.CreateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Name:          "e2e-test-feature-name",
+		Description:   "e2e-test-feature-description",
+		Variations: []*feature.Variation{
+			{
+				Value:       "A",
+				Name:        "Variation A",
+				Description: "Thing does A",
+			},
+			{
+				Value:       "B",
+				Name:        "Variation B",
+				Description: "Thing does B",
+			},
+			{
+				Value:       "C",
+				Name:        "Variation C",
+				Description: "Thing does C",
+			},
+			{
+				Value:       "D",
+				Name:        "Variation D",
+				Description: "Thing does D",
+			},
+		},
+		Tags:                     tags,
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+	}
+}
+
+func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.CreateFeature(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func newFeatureClient(t *testing.T) featureclient.Client {
+	t.Helper()
+	creds, err := client.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	featureClient, err := featureclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create feature client:", err)
+	}
+	return featureClient
 }
 
 func listTags(ctx context.Context, t *testing.T, client tagclient.Client) []*tagproto.Tag {

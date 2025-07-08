@@ -23,6 +23,7 @@ var (
 	statusInternal           = gstatus.New(codes.Internal, "tag: internal")
 	statusNameRequired       = gstatus.New(codes.InvalidArgument, "tag: name must be specified")
 	statusEntityTypeRequired = gstatus.New(codes.InvalidArgument, "tag: entity_type must be specified")
+	statusTagInUsed          = gstatus.New(codes.FailedPrecondition, "tag: tag is in use")
 	statusInvalidCursor      = gstatus.New(codes.InvalidArgument, "tag: cursor is invalid")
 	statusInvalidOrderBy     = gstatus.New(codes.InvalidArgument, "tag: order_by is invalid")
 	statusUnauthenticated    = gstatus.New(codes.Unauthenticated, "tag: unauthenticated")
