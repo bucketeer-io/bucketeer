@@ -337,7 +337,7 @@ func (s *TagService) DeleteTag(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
-				zap.Any("tag", tag),
+				zap.Any("id", req.Id),
 			)...,
 		)
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
