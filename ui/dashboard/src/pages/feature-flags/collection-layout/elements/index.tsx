@@ -155,28 +155,33 @@ export const VariationTypeTooltip = ({
   asChild?: boolean;
   className?: string;
   align?: TooltipProps['align'];
-}) => (
-  <Tooltip
-    asChild={asChild}
-    align={align}
-    trigger={trigger}
-    content={
-      <Trans
-        i18nKey={'table:feature-flags.variation-type'}
-        values={{
-          type:
-            variationType === 'JSON'
-              ? variationType
-              : variationType?.toLowerCase()
-        }}
-        components={{
-          text: <span className="capitalize" />
-        }}
-        className={className}
-      />
-    }
-  />
-);
+}) => {
+  const { t } = useTranslation(['table', 'form']);
+  return (
+    <Tooltip
+      asChild={asChild}
+      align={align}
+      trigger={trigger}
+      content={
+        variationType ? (
+          <Trans
+            i18nKey={'table:feature-flags.specific-variation-type'}
+            values={{
+              type:
+                variationType === 'JSON'
+                  ? variationType
+                  : t(`form:${variationType?.toLowerCase()}`)
+            }}
+            components={{
+              text: <span className="capitalize" />
+            }}
+            className={className}
+          />
+        ) : undefined
+      }
+    />
+  );
+};
 
 const FlagIdElement = ({ id }: { id: string }) => {
   const { t } = useTranslation(['message']);
