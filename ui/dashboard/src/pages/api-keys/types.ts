@@ -6,6 +6,8 @@ export interface APIKeysFilters {
   orderDirection: OrderDirection;
   disabled?: boolean;
   searchQuery: string;
+  environment: string;
+  environmentIds: string[];
 }
 
 export interface APIKeyOption {

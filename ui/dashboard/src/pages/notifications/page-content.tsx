@@ -1,8 +1,9 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
+import { isNil } from 'lodash';
 import pickBy from 'lodash/pickBy';
 import { Notification } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -43,6 +44,15 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
+  const filterCount = useMemo(() => {
+    const filterKeys = ['disabled', 'environmentIds'];
+    const count = filterKeys.reduce((acc, curr) => {
+      if (!isNil(filters[curr as keyof NotificationFilters])) ++acc;
+      return acc;
+    }, 0);
+    return count || undefined;
+  }, [filters]);
+
   const onChangeFilters = useCallback(
     (values: Partial<NotificationFilters>) => {
       const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
@@ -53,13 +63,18 @@ const PageContent = ({
   );
 
   const onClearFilters = useCallback(
-    () => setFilters({ searchQuery: '', disabled: undefined }),
+    () =>
+      onChangeFilters({
+        searchQuery: '',
+        disabled: undefined,
+        environmentIds: undefined
+      }),
     []
   );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
-      setFilters({ ...defaultFilters });
+      onChangeFilters({ ...defaultFilters });
     }
   }, [searchOptions]);
 
@@ -84,7 +99,7 @@ const PageContent = ({
           />
         }
         searchValue={filters.searchQuery}
-        filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}
+        filterCount={filterCount}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -97,7 +112,7 @@ const PageContent = ({
             onCloseFilterModal();
           }}
           onClearFilters={() => {
-            onChangeFilters({ disabled: undefined });
+            onChangeFilters({ disabled: undefined, environmentIds: undefined });
             onCloseFilterModal();
           }}
         />
