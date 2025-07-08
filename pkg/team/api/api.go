@@ -17,10 +17,12 @@ package api
 import (
 	"context"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -50,6 +52,7 @@ var (
 	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "team: unauthenticated")
 	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "team: permission denied")
 	statusTeamNotFound     = gstatus.New(codes.NotFound, "team: not found")
+	statusTeamInUsed       = gstatus.New(codes.FailedPrecondition, "team: team is in use by an account")
 )
 
 type options struct {
@@ -69,6 +72,7 @@ type TeamService struct {
 	teamStorage   storage.TeamStorage
 	accountClient accclient.Client
 	publisher     publisher.Publisher
+	flightgroup   singleflight.Group
 	opts          *options
 	logger        *zap.Logger
 }
@@ -228,6 +232,36 @@ func (s *TeamService) DeleteTeam(
 		if err != nil {
 			return err
 		}
+
+		// Check if team is in use by any account
+		acs, err, _ := s.flightgroup.Do(
+			req.OrganizationId,
+			func() (interface{}, error) {
+				return s.listAccountsFromOrganization(ctxWithTx, req.OrganizationId)
+			},
+		)
+		if err != nil {
+			return err
+		}
+		accounts := acs.([]*accproto.AccountV2)
+		var inUsed = false
+		for _, a := range accounts {
+			if slices.Contains(a.Teams, team.Name) {
+				inUsed = true
+				break
+			}
+		}
+		if inUsed {
+			s.logger.Error(
+				"Failed to delete the team because it is in use by an account",
+				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+					zap.String("organizationID", req.OrganizationId),
+					zap.Any("team", team),
+				)...,
+			)
+			return statusTeamInUsed.Err()
+		}
+
 		if err := s.teamStorage.DeleteTeam(ctxWithTx, req.Id); err != nil {
 			return err
 		}
@@ -249,6 +283,16 @@ func (s *TeamService) DeleteTeam(
 		return s.publisher.Publish(ctx, event)
 	})
 	if err != nil {
+		if errors.Is(err, statusTeamInUsed.Err()) {
+			dt, err := statusTeamInUsed.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.Team),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		if errors.Is(err, storage.ErrTeamNotFound) {
 			dt, err := statusTeamNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -262,6 +306,35 @@ func (s *TeamService) DeleteTeam(
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
 	}
 	return &proto.DeleteTeamResponse{}, nil
+}
+
+func (s *TeamService) listAccountsFromOrganization(
+	ctx context.Context,
+	organizationID string,
+) ([]*accproto.AccountV2, error) {
+	resp, err := s.accountClient.ListAccountsV2(ctx, &accproto.ListAccountsV2Request{
+		OrganizationId: organizationID,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to list accounts from organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationId", organizationID),
+			)...,
+		)
+		return nil, err
+	}
+	if resp == nil || resp.Accounts == nil {
+		s.logger.Warn(
+			"No accounts found in organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("organizationId", organizationID),
+			)...,
+		)
+		return nil, nil
+	}
+	return resp.Accounts, nil
 }
 
 func (s *TeamService) validateDeleteTeamRequest(

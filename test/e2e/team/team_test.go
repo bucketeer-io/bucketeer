@@ -16,21 +16,32 @@ package team
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base32"
 	"flag"
 	"fmt"
+	"io"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
+	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	teamclient "github.com/bucketeer-io/bucketeer/pkg/team/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	teamproto "github.com/bucketeer-io/bucketeer/proto/team"
 )
 
 const (
-	prefixID = "e2e-test"
-	timeout  = 60 * time.Second
+	prefixID                = "e2e-test"
+	timeout                 = 60 * time.Second
+	firstName               = "first-name"
+	lastName                = "last-name"
+	language                = "language"
+	e2eAccountAddressPrefix = "e2e-test"
 )
 
 var (
@@ -123,6 +134,86 @@ func TestDeleteTeam(t *testing.T) {
 	if len(target) != 0 {
 		t.Fatalf("The team hasn't deleted. Team: %v", target)
 	}
+}
+
+func TestFailedDeleteTeam(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	teamClient := newTeamClient(t)
+	defer teamClient.Close()
+	accountClient := newAccountClient(t)
+	defer accountClient.Close()
+
+	// create account with team
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := accountClient.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId:   *organizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "test",
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
+		Teams: []string{"team1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// get team id
+	teams := listTeams(ctx, t, teamClient)
+	var teamID string
+	for _, team := range teams {
+		if team.Name == "team1" {
+			teamID = team.Id
+			break
+		}
+	}
+	req := &teamproto.DeleteTeamRequest{
+		Id:             teamID,
+		OrganizationId: *organizationID,
+	}
+	defer cancel()
+	if _, err := teamClient.DeleteTeam(ctx, req); err == nil {
+		t.Fatal("Expected error when deleting team with existing account, but got nil")
+	}
+}
+
+func newAccountClient(t *testing.T) accountclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := accountclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create environment client:", err)
+	}
+	return client
+}
+
+func randomString() string {
+	b := make([]byte, 8)
+	_, err := io.ReadFull(rand.Reader, b)
+	if err != nil {
+		fmt.Println("error:", err)
+		return ""
+	}
+	return strings.TrimRight(base32.StdEncoding.EncodeToString(b), "=")
 }
 
 func listTeams(ctx context.Context, t *testing.T, client teamclient.Client) []*teamproto.Team {

@@ -317,6 +317,42 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 			expectedErr: createError(statusTeamNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
+			desc: "err: team is in use",
+			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:             "team1",
+						OrganizationId: "ns0",
+						Name:           "team1",
+					},
+				}, nil)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.ListAccountsV2Response{
+					Accounts: []*accountproto.AccountV2{
+						{
+							Email: "bucketeer@gmail.com",
+							Teams: []string{"team1"},
+						},
+					},
+				}, nil)
+			},
+			req: &proto.DeleteTeamRequest{
+				OrganizationId: "ns0",
+				Id:             "team1",
+			},
+			expectedRes: nil,
+			expectedErr: createError(statusTeamInUsed, localizer.MustLocalize(locale.Team)),
+		},
+		{
 			desc: "success",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
@@ -333,6 +369,9 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 						OrganizationId: "ns0",
 					},
 				}, nil)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.ListAccountsV2Response{}, nil)
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
