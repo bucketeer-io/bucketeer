@@ -3,6 +3,7 @@ import {
   IconEditOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -18,6 +19,9 @@ export const useColumns = ({
   onActions: (item: Environment, type: EnvironmentActionsType) => void;
 }): ColumnDef<Environment>[] => {
   const { searchOptions } = useSearchParams();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -90,10 +94,13 @@ export const useColumns = ({
       enableSorting: false,
       cell: ({ row }) => {
         const environment = row.original;
-
+        const isDisabled = currentEnvironment.id === environment.id;
         return (
           <DisabledPopoverTooltip
             isNeedAdminAccess
+            content={
+              isDisabled ? t('table:disabled-archive-current-env') : undefined
+            }
             options={[
               {
                 label: `${t('table:popover.edit-env')}`,
@@ -109,7 +116,8 @@ export const useColumns = ({
                 : {
                     label: `${t('table:popover.archive-env')}`,
                     icon: IconArchiveOutlined,
-                    value: 'ARCHIVE'
+                    value: 'ARCHIVE',
+                    disabled: isDisabled
                   }
             ]}
             onClick={value =>

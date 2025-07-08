@@ -310,5 +310,6 @@
     "public-admin-desc": "This role allows reading and writing all data in Bucketeer, including environment settings.",
     "unknown": "Unknown",
     "public-api": "Public API"
-  }
+  },
+  "disabled-archive-current-env": "You cannot archive the environment you are currently using. Please switch to a different environment before archiving this one."
 }
