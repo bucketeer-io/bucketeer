@@ -122,9 +122,13 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
         default:
           break;
       }
+
       setValue(getFieldName('operator', index), _value);
       const currentType = watch(getFieldName('type', index));
-      if (currentType !== value) setValue(getFieldName('values', index), []);
+      if (currentType !== value) {
+        setValue(getFieldName('values', index), []);
+        setValue(getFieldName('attribute', index), '');
+      }
       onChange(value);
     },
     [clauses]
@@ -167,324 +171,345 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
               >
                 {type === 'if' ? t('common:if') : t('common:and')}
               </div>
-              <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500">
-                <div className="flex items-end w-full gap-x-4 max-w-full">
-                  <Form.Field
-                    control={control}
-                    name={getFieldName('type', clauseIndex)}
-                    render={({ field }) => {
-                      return (
-                        <Form.Item
-                          className={cn(
-                            'flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-1',
-                            {
-                              'max-w-[250px]': isEmptySegment
-                            }
-                          )}
-                        >
-                          <Form.Label required>
-                            {t('feature-flags.context-kind')}
-                          </Form.Label>
-                          <Form.Control>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                label={
-                                  situationOptions.find(
-                                    item => item.value === field.value
-                                  )?.label
-                                }
-                                className="w-full"
-                              />
-                              <DropdownMenuContent align="start" {...field}>
-                                {situationOptions.map((item, index) => (
-                                  <DropdownMenuItem
-                                    key={index}
-                                    label={item.label}
-                                    value={item.value}
-                                    onSelectOption={value => {
-                                      handleChangeConditioner(
-                                        value as RuleClauseType,
-                                        clauseIndex,
-                                        field.onChange
-                                      );
-                                    }}
+              <div className="flex items-center w-full flex-1 pl-4 border-l border-primary-500 gap-x-4">
+                <div
+                  className={cn(
+                    'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
+                    {
+                      'grid-cols-3': isUserSegment
+                    }
+                  )}
+                >
+                  <div className="flex flex-1 col-span-1 self-stretch">
+                    <Form.Field
+                      control={control}
+                      name={getFieldName('type', clauseIndex)}
+                      render={({ field }) => {
+                        return (
+                          <Form.Item
+                            className={cn(
+                              'flex flex-col w-full self-stretch py-0 min-w-[170px] order-1',
+                              {
+                                'max-w-[250px]': isEmptySegment
+                              }
+                            )}
+                          >
+                            <Form.Label required>
+                              {t('feature-flags.context-kind')}
+                            </Form.Label>
+                            <Form.Control>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  label={
+                                    situationOptions.find(
+                                      item => item.value === field.value
+                                    )?.label
+                                  }
+                                  className="w-full"
+                                />
+                                <DropdownMenuContent align="start" {...field}>
+                                  {situationOptions.map((item, index) => (
+                                    <DropdownMenuItem
+                                      key={index}
+                                      label={item.label}
+                                      value={item.value}
+                                      onSelectOption={value => {
+                                        handleChangeConditioner(
+                                          value as RuleClauseType,
+                                          clauseIndex,
+                                          field.onChange
+                                        );
+                                      }}
+                                    />
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </Form.Control>
+                            <Form.Message />
+                          </Form.Item>
+                        );
+                      }}
+                    />
+                  </div>
+
+                  {!isUserSegment && (
+                    <div className="flex flex-1 col-span-1 self-stretch">
+                      <Form.Field
+                        control={control}
+                        name={getFieldName('attribute', clauseIndex)}
+                        render={({ field }) => {
+                          return (
+                            <Form.Item className="flex flex-col w-full self-stretch py-0 min-w-[170px] order-2">
+                              <Form.Label required className="relative w-fit">
+                                {isFlag
+                                  ? t(`feature-flags.feature-flag`)
+                                  : t(`feature-flags.attribute-key`)}
+
+                                {!isFlag && (
+                                  <Tooltip
+                                    content={t('targeting.tooltip.attribute')}
+                                    trigger={
+                                      <div className="flex-center size-fit absolute top-0.5 -right-5">
+                                        <Icon icon={IconInfo} size="xxs" />
+                                      </div>
+                                    }
+                                    className="max-w-[300px]"
                                   />
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                )}
+                              </Form.Label>
+                              <Form.Control>
+                                {isFlag ? (
+                                  <DropdownMenuWithSearch
+                                    align="start"
+                                    label={truncateBySide(
+                                      features?.find(item =>
+                                        [
+                                          field.value,
+                                          clause?.attribute
+                                        ].includes(item.id)
+                                      )?.name || '',
+                                      50
+                                    )}
+                                    placeholder={t('experiments.select-flag')}
+                                    isExpand
+                                    options={flagOptions}
+                                    selectedOptions={field.value}
+                                    additionalElement={item => (
+                                      <FeatureFlagStatus
+                                        status={t(
+                                          item.enabled
+                                            ? 'experiments.on'
+                                            : 'experiments.off'
+                                        )}
+                                        enabled={item.enabled as boolean}
+                                      />
+                                    )}
+                                    onSelectOption={value => {
+                                      field.onChange(value);
+                                    }}
+                                    contentClassName="!w-[500px] !max-w-[500px]"
+                                  />
+                                ) : (
+                                  <Input {...field} />
+                                )}
+                              </Form.Control>
+                              <Form.Message />
+                            </Form.Item>
+                          );
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-1 col-span-1 self-stretch">
+                    <Form.Field
+                      control={control}
+                      name={getFieldName('operator', clauseIndex)}
+                      render={({ field }) => (
+                        <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                          {!isEmptySegment && (
+                            <Form.Label required>
+                              {t('feature-flags.operator')}
+                            </Form.Label>
+                          )}
+                          <Form.Control>
+                            {isDate || isCompare ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  label={
+                                    (isDate
+                                      ? conditionerDateOptions
+                                      : conditionerCompareOptions
+                                    ).find(item =>
+                                      [field.value, clause.operator].includes(
+                                        item.value
+                                      )
+                                    )?.label
+                                  }
+                                  className="w-full"
+                                />
+                                <DropdownMenuContent align="start" {...field}>
+                                  {(isDate
+                                    ? conditionerDateOptions
+                                    : conditionerCompareOptions
+                                  ).map((item, index) => (
+                                    <DropdownMenuItem
+                                      key={index}
+                                      label={item.label}
+                                      value={item.value}
+                                      onSelectOption={value =>
+                                        field.onChange(value)
+                                      }
+                                    />
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : isEmptySegment ? (
+                              <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
+                                <Trans
+                                  i18nKey={'message:empty-segment'}
+                                  components={{
+                                    comp: (
+                                      <Link
+                                        target="_blank"
+                                        to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`}
+                                        className={cn(
+                                          'text-primary-500 underline',
+                                          {
+                                            'mx-1': !isLanguageJapanese
+                                          }
+                                        )}
+                                      />
+                                    )
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <Input
+                                {...field}
+                                disabled={isUserSegment || isFlag}
+                                value={
+                                  isUserSegment ? t('is-included-in') : '='
+                                }
+                              />
+                            )}
                           </Form.Control>
                           <Form.Message />
                         </Form.Item>
-                      );
-                    }}
-                  />
-                  {!isUserSegment && (
-                    <Form.Field
-                      control={control}
-                      name={getFieldName('attribute', clauseIndex)}
-                      render={({ field }) => {
-                        return (
-                          <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                            <Form.Label required className="relative w-fit">
-                              {isFlag
-                                ? t(`feature-flags.feature-flag`)
-                                : t(`feature-flags.attribute-key`)}
-
-                              {!isFlag && (
-                                <Tooltip
-                                  content={t('targeting.tooltip.attribute')}
-                                  trigger={
-                                    <div className="flex-center size-fit absolute top-0.5 -right-5">
-                                      <Icon icon={IconInfo} size="xxs" />
-                                    </div>
-                                  }
-                                  className="max-w-[300px]"
-                                />
-                              )}
-                            </Form.Label>
-                            <Form.Control>
-                              {isFlag ? (
-                                <DropdownMenuWithSearch
-                                  align="start"
-                                  label={truncateBySide(
-                                    features?.find(item =>
-                                      [field.value, clause?.attribute].includes(
-                                        item.id
-                                      )
-                                    )?.name || '',
-                                    50
-                                  )}
-                                  placeholder={t('experiments.select-flag')}
-                                  isExpand
-                                  options={flagOptions}
-                                  selectedOptions={field.value}
-                                  additionalElement={item => (
-                                    <FeatureFlagStatus
-                                      status={t(
-                                        item.enabled
-                                          ? 'experiments.on'
-                                          : 'experiments.off'
-                                      )}
-                                      enabled={item.enabled as boolean}
-                                    />
-                                  )}
-                                  onSelectOption={value => {
-                                    field.onChange(value);
-                                  }}
-                                  contentClassName="!w-[500px] !max-w-[500px]"
-                                />
-                              ) : (
-                                <Input {...field} />
-                              )}
-                            </Form.Control>
-                            <Form.Message />
-                          </Form.Item>
-                        );
-                      }}
+                      )}
                     />
-                  )}
-                  <Form.Field
-                    control={control}
-                    name={getFieldName('operator', clauseIndex)}
-                    render={({ field }) => (
-                      <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                        {!isEmptySegment && (
-                          <Form.Label required>
-                            {t('feature-flags.operator')}
-                          </Form.Label>
-                        )}
-                        <Form.Control>
-                          {isDate || isCompare ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                label={
-                                  (isDate
-                                    ? conditionerDateOptions
-                                    : conditionerCompareOptions
-                                  ).find(item =>
-                                    [field.value, clause.operator].includes(
-                                      item.value
-                                    )
-                                  )?.label
-                                }
-                                className="w-full"
-                              />
-                              <DropdownMenuContent align="start" {...field}>
-                                {(isDate
-                                  ? conditionerDateOptions
-                                  : conditionerCompareOptions
-                                ).map((item, index) => (
-                                  <DropdownMenuItem
-                                    key={index}
-                                    label={item.label}
-                                    value={item.value}
-                                    onSelectOption={value =>
-                                      field.onChange(value)
-                                    }
-                                  />
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : isEmptySegment ? (
-                            <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
-                              <Trans
-                                i18nKey={'message:empty-segment'}
-                                components={{
-                                  comp: (
-                                    <Link
-                                      target="_blank"
-                                      to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`}
-                                      className={cn(
-                                        'text-primary-500 underline',
-                                        {
-                                          'mx-1': !isLanguageJapanese
-                                        }
-                                      )}
-                                    />
-                                  )
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <Input
-                              {...field}
-                              disabled={isUserSegment || isFlag}
-                              value={isUserSegment ? t('is-included-in') : '='}
-                            />
-                          )}
-                        </Form.Control>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
+                  </div>
                   {!isEmptySegment && (
-                    <Form.Field
-                      control={control}
-                      name={getFieldName('values', clauseIndex)}
-                      render={({ field }) => {
-                        const { value, ...rest } = field;
-                        const fieldValue = isDate
-                          ? value[0]
-                            ? Number(value[0]) * 1000
-                            : null
-                          : value;
-                        return (
-                          <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                            <Form.Label required className="relative w-fit">
-                              {isFlag
-                                ? t('table:feature-flags.variation')
-                                : isDate
-                                  ? t('feature-flags.value')
-                                  : t('feature-flags.values')}
-                              {!isFlag && !isDate && (
-                                <Tooltip
-                                  content={t('targeting.tooltip.value')}
-                                  trigger={
-                                    <div className="flex-center size-fit absolute top-0.5 -right-5">
-                                      <Icon icon={IconInfo} size="xxs" />
-                                    </div>
-                                  }
-                                  className="max-w-[310px]"
-                                />
-                              )}
-                            </Form.Label>
-                            <Form.Control>
-                              {isDate ? (
-                                <ReactDatePicker
-                                  {...omit(rest, 'ref')}
-                                  timeFormat="HH:mm"
-                                  selected={
-                                    fieldValue ? new Date(fieldValue) : null
-                                  }
-                                  onChange={date => {
-                                    if (date) {
-                                      const value =
-                                        (date.getTime() / 1000)?.toString() ||
-                                        '';
-                                      field.onChange([value]);
+                    <div className="flex flex-1 col-span-1 self-stretch">
+                      <Form.Field
+                        control={control}
+                        name={getFieldName('values', clauseIndex)}
+                        render={({ field }) => {
+                          const { value, ...rest } = field;
+                          const fieldValue = isDate
+                            ? value[0]
+                              ? Number(value[0]) * 1000
+                              : null
+                            : value;
+                          return (
+                            <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                              <Form.Label required className="relative w-fit">
+                                {isFlag
+                                  ? t('table:feature-flags.variation')
+                                  : isDate
+                                    ? t('feature-flags.value')
+                                    : t('feature-flags.values')}
+                                {!isFlag && !isDate && (
+                                  <Tooltip
+                                    content={t('targeting.tooltip.value')}
+                                    trigger={
+                                      <div className="flex-center size-fit absolute top-0.5 -right-5">
+                                        <Icon icon={IconInfo} size="xxs" />
+                                      </div>
                                     }
-                                  }}
-                                />
-                              ) : isFlag || isUserSegment ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    disabled={
-                                      isFlag
-                                        ? !variationOptions?.length
-                                        : !segmentOptions?.length
+                                    className="max-w-[310px]"
+                                  />
+                                )}
+                              </Form.Label>
+                              <Form.Control>
+                                {isDate ? (
+                                  <ReactDatePicker
+                                    {...omit(rest, 'ref')}
+                                    timeFormat="HH:mm"
+                                    selected={
+                                      fieldValue ? new Date(fieldValue) : null
                                     }
-                                    label={
-                                      (isFlag
+                                    onChange={date => {
+                                      if (date) {
+                                        const value =
+                                          (date.getTime() / 1000)?.toString() ||
+                                          '';
+                                        field.onChange([value]);
+                                      }
+                                    }}
+                                  />
+                                ) : isFlag || isUserSegment ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                      disabled={
+                                        isFlag
+                                          ? !variationOptions?.length
+                                          : !segmentOptions?.length
+                                      }
+                                      label={
+                                        (isFlag
+                                          ? variationOptions
+                                          : segmentOptions
+                                        )?.find(item => item.value === value[0])
+                                          ?.label || ''
+                                      }
+                                      placeholder={t('common:select-value')}
+                                      className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                                    />
+                                    <DropdownMenuContent
+                                      align="start"
+                                      {...field}
+                                    >
+                                      {(isFlag
                                         ? variationOptions
                                         : segmentOptions
-                                      )?.find(item => item.value === value[0])
-                                        ?.label || ''
-                                    }
-                                    placeholder={t('common:select-value')}
-                                    className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                                  />
-                                  <DropdownMenuContent align="start" {...field}>
-                                    {(isFlag
-                                      ? variationOptions
-                                      : segmentOptions
-                                    )?.map((item, index) => (
-                                      <DropdownMenuItem
-                                        key={index}
-                                        label={item.label}
-                                        value={item.value}
-                                        onSelectOption={value =>
-                                          field.onChange([value])
-                                        }
+                                      )?.map((item, index) => (
+                                        <DropdownMenuItem
+                                          key={index}
+                                          label={item.label}
+                                          value={item.value}
+                                          onSelectOption={value =>
+                                            field.onChange([value])
+                                          }
+                                        />
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <CreatableSelect
+                                    value={value?.map((item: string) => ({
+                                      label: item,
+                                      value: item
+                                    }))}
+                                    onChange={options => {
+                                      const values = options.map(
+                                        item => item.value
+                                      );
+                                      field.onChange(values);
+                                    }}
+                                    noOptionsMessage={() => (
+                                      <UserMessage
+                                        message={t('no-opts-type-to-create')}
                                       />
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
-                                <CreatableSelect
-                                  value={value?.map((item: string) => ({
-                                    label: item,
-                                    value: item
-                                  }))}
-                                  onChange={options => {
-                                    const values = options.map(
-                                      item => item.value
-                                    );
-                                    field.onChange(values);
-                                  }}
-                                  noOptionsMessage={() => (
-                                    <UserMessage
-                                      message={t('no-opts-type-to-create')}
-                                    />
-                                  )}
-                                />
-                              )}
-                            </Form.Control>
-                            <Form.Message />
-                          </Form.Item>
-                        );
-                      }}
-                    />
+                                    )}
+                                  />
+                                )}
+                              </Form.Control>
+                              <Form.Message />
+                            </Form.Item>
+                          );
+                        }}
+                      />
+                    </div>
                   )}
-
-                  <div
-                    className={cn(
-                      'flex items-center mt-[22px] self-stretch order-5',
-                      {
-                        'items-end mb-4 mt-0': isEmptySegment,
-                        'mt-0': isHaveError
-                      }
-                    )}
+                </div>
+                <div
+                  className={cn(
+                    'flex items-center mt-[22px] self-stretch order-5',
+                    {
+                      'items-end mb-4 mt-0': isEmptySegment,
+                      'mt-0': isHaveError
+                    }
+                  )}
+                >
+                  <Button
+                    type="button"
+                    disabled={formatClauses.length <= 1}
+                    variant={'grey'}
+                    className="flex-center text-gray-500 hover:text-gray-600 size-fit p-0"
+                    onClick={() => remove(clauseIndex)}
                   >
-                    <Button
-                      type="button"
-                      disabled={formatClauses.length <= 1}
-                      variant={'grey'}
-                      className="flex-center text-gray-500 hover:text-gray-600 size-fit p-0"
-                      onClick={() => remove(clauseIndex)}
-                    >
-                      <Icon icon={IconTrash} size={'sm'} />
-                    </Button>
-                  </div>
+                    <Icon icon={IconTrash} size={'sm'} />
+                  </Button>
                 </div>
               </div>
             </div>

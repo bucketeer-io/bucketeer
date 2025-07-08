@@ -334,5 +334,7 @@
   "type-to-create-user-id": "user IDを入力してください。",
   "upload-files-error": "一部のファイルは非対応の形式のためアップロードできませんでした。許可されたファイル形式をご確認のうえ、再度お試しください。",
   "create-option": "「{{option}}」作成する",
-  "max": "最大"
+  "max": "最大",
+  "firebase-service-account-tooltip": "FirebaseサービスアカウントのJSONキーです。Bucketeerはこのキーを使ってFirebaseに認証し、FCMを通じてアプリにプッシュ通知を送信します。",
+  "feature-flag-tags-tooltip": " このFCM連携と対応するフラグを紐付けるためのタグです。フラグにこの設定と一致するタグがある場合、プッシュ通知が送信されます。ここにタグを設定しない場合、タグが付いていないすべてのフラグに対して通知が送信されます。"
 }
