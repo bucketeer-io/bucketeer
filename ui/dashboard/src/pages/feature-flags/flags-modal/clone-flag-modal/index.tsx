@@ -12,7 +12,10 @@ import {
   hasEditable,
   useAuth
 } from 'auth';
-import { PAGE_PATH_FEATURES } from 'constants/routing';
+import {
+  PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -123,9 +126,12 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
               environmentId: targetEnvironment?.id,
               projectId: targetEnvironment?.projectId
             });
-            navigate(`/${targetEnvironment?.urlCode}${PAGE_PATH_FEATURES}`, {
-              replace: true
-            });
+            navigate(
+              `/${targetEnvironment?.urlCode}${PAGE_PATH_FEATURES}/${id}${PAGE_PATH_FEATURE_TARGETING}`,
+              {
+                replace: true
+              }
+            );
           }
         }
       } catch (error) {

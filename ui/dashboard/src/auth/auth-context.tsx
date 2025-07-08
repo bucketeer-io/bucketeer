@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const response = await accountMeFetcher(params);
       const environmentRoles = response.account.environmentRoles;
-      if (!environmentRoles.length) {
+      if (!environmentRoles?.length) {
         clearOrgAndEnvStorage();
         errorNotify(null, t('message:env-are-empty'));
         return logout();
@@ -122,7 +122,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const response = await accountOrganizationFetcher();
       const organizationsList = response.organizations || [];
-      if (organizationId) {
+      const isExistOrg = organizationsList.find(
+        item => item.id === organizationId
+      );
+      if (organizationId && isExistOrg) {
         await onMeFetcher({ organizationId });
       } else if (organizationsList.length === 1) {
         setOrgIdStorage(organizationsList[0].id);

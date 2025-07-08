@@ -179,9 +179,7 @@ export const EnvironmentRoot = memo(
 
     const handleCheckEnvCodeOnInit = useCallback(() => {
       const envIdStorage = getCurrentEnvIdStorage();
-      // console.log({ envIdStorage });
       const projectEnvironment = getCurrentProjectEnvironmentStorage();
-      // console.log(projectEnvironment);
       let isExistEnv: EnvironmentRole | undefined = undefined;
       if (projectEnvironment) {
         const projectEnvironmentId = checkEnvironmentEmptyId(
@@ -197,13 +195,18 @@ export const EnvironmentRoot = memo(
         if (envUrlCode && isExistEnv?.environment.urlCode !== envUrlCode)
           isExistEnv = undefined;
       }
-      if (!projectEnvironment || !isExistEnv) {
+      if (!isExistEnv) {
         isExistEnv = account.environmentRoles.find(
           item => item.environment.urlCode === envUrlCode
         );
       }
 
       if (!envUrlCode || !isExistEnv) {
+        setCurrentEnvIdStorage(currentEnv.id || ENVIRONMENT_WITH_EMPTY_ID);
+        setCurrentProjectEnvironmentStorage({
+          environmentId: currentEnv.id || ENVIRONMENT_WITH_EMPTY_ID,
+          projectId: currentEnv.projectId
+        });
         return navigate(`/${currentEnv.urlCode}${PAGE_PATH_FEATURES}`, {
           replace: true
         });
