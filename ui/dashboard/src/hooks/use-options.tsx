@@ -28,7 +28,9 @@ export enum FilterTypes {
   HAS_RULE = 'hasFeatureFlagAsRule',
   IN_USE = 'in-use',
   NOT_IN_USE = 'not-in-use',
-  TEAMS = 'teams'
+  TEAMS = 'teams',
+  ENVIRONMENT_ID = 'environmentId',
+  ENVIRONMENT_IDs = 'environmentIds'
 }
 
 const useOptions = () => {
@@ -445,6 +447,18 @@ const useOptions = () => {
     [language]
   );
 
+  const environmentEnabledFilterOptions = useMemo(
+    () => [
+      {
+        value: FilterTypes.ENVIRONMENT_IDs,
+        label: translation('environment'),
+        filterValue: []
+      },
+      ...filterEnabledOptions
+    ],
+    [language, filterEnabledOptions]
+  );
+
   return {
     filterEnabledOptions,
     filterStatusOptions,
@@ -465,7 +479,8 @@ const useOptions = () => {
     situationOptions,
     conditionerCompareOptions,
     conditionerDateOptions,
-    apiKeyOptions
+    apiKeyOptions,
+    environmentEnabledFilterOptions
   };
 };
 

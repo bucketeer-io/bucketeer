@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryEnvironments } from '@queries/environments';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import { isNotEmpty } from 'utils/data-type';
+import { debounce, isNil } from 'lodash';
+import { isEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { cn } from 'utils/style';
+import { IconPlus, IconTrash } from '@icons';
 import { APIKeysFilters } from 'pages/api-keys/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -10,9 +16,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuSearch,
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<APIKeysFilters>) => void;
@@ -35,35 +45,214 @@ const FilterAPIKeyModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const { filterEnabledOptions, enabledOptions } = useOptions();
-  const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
-  const [valueOption, setValueOption] = useState<FilterOption>();
+  const { environmentEnabledFilterOptions, booleanOptions } = useOptions();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
+    environmentEnabledFilterOptions[0]
+  ]);
+  const [searchValue, setSearchValue] = useState('');
+  const [debounceValue, setDebounceValue] = useState('');
+  const inputSearchRef = useRef<HTMLInputElement>(null);
 
-  const isDisabledSubmitBtn = useMemo(
-    () => !selectedFilterType || !valueOption,
-    [selectedFilterType, valueOption]
+  const remainingFilterOptions = useMemo(
+    () =>
+      environmentEnabledFilterOptions.filter(
+        option => !selectedFilters.find(item => item.value === option.value)
+      ),
+    [selectedFilters, environmentEnabledFilterOptions]
   );
 
-  const onConfirmHandler = () => {
-    switch (selectedFilterType?.value) {
-      case FilterTypes.ENABLED:
-        if (valueOption?.value) {
-          onSubmit({
-            disabled: valueOption?.value === 'no'
+  const isDisabledAddButton = useMemo(
+    () =>
+      !remainingFilterOptions.length ||
+      selectedFilters.length >= environmentEnabledFilterOptions.length,
+
+    [environmentEnabledFilterOptions, selectedFilters, remainingFilterOptions]
+  );
+
+  const isDisabledSubmitButton = useMemo(
+    () => !!selectedFilters.find(item => isEmpty(item.filterValue)),
+    [selectedFilters]
+  );
+
+  const debouncedSearch = useCallback(
+    debounce(value => {
+      setSearchValue(value);
+    }, 500),
+    []
+  );
+
+  const { data: environmentCollection, isLoading: isLoadingEnvironments } =
+    useQueryEnvironments({
+      params: {
+        cursor: '0',
+        organizationId: currentEnvironment.organizationId
+      },
+      enabled:
+        !!currentEnvironment.organizationId &&
+        !!selectedFilters.find(
+          item => item.value === FilterTypes.ENVIRONMENT_IDs
+        )
+    });
+
+  const environments = useMemo(
+    () => environmentCollection?.environments || [],
+    [environmentCollection]
+  );
+
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
+
+  const environmentOptions = useMemo(
+    () =>
+      formattedEnvironments.map(item => ({
+        label: item.name,
+        value: item.id
+      })),
+    [formattedEnvironments]
+  );
+
+  const handleFocusSearchInput = useCallback(() => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
+
+  const getValueOptions = useCallback(
+    (filterOption: FilterOption) => {
+      if (!filterOption.value) return [];
+      const isEnvironmentFilter =
+        filterOption.value === FilterTypes.ENVIRONMENT_IDs;
+
+      if (isEnvironmentFilter) {
+        return environmentOptions?.filter(item =>
+          searchValue
+            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
+            : item
+        );
+      }
+
+      return booleanOptions;
+    },
+    [booleanOptions, searchValue, environmentOptions]
+  );
+
+  const handleGetLabelFilterValue = useCallback(
+    (filterOption?: FilterOption) => {
+      if (filterOption) {
+        const { value: filterType, filterValue } = filterOption;
+        const isEnvironmentFilter = filterType === FilterTypes.ENVIRONMENT_IDs;
+
+        if (isEnvironmentFilter) {
+          return (
+            (Array.isArray(filterValue) &&
+              filterValue
+                .map(
+                  item =>
+                    environmentOptions.find(env => env.value === item)?.label
+                )
+                ?.join(', ')) ||
+            ''
+          );
+        }
+        return (
+          booleanOptions.find(item => item.value === filterValue)?.label || ''
+        );
+      }
+      return '';
+    },
+    [booleanOptions, environmentOptions]
+  );
+
+  const handleChangeFilterValue = useCallback(
+    (value: string | number, filterIndex: number) => {
+      const filterOption = selectedFilters[filterIndex];
+      const { value: filterType, filterValue } = filterOption;
+      const isEnvironmentFilter = filterType === FilterTypes.ENVIRONMENT_IDs;
+      let newFilterValue: string | number | string[] = value;
+      if (isEnvironmentFilter) {
+        const values = filterValue as string[];
+        const isExisted = values.find(item => item === value);
+        const newValue: string[] = isExisted
+          ? values.filter(item => item !== value)
+          : [...values, value as string];
+        newFilterValue = newValue;
+      }
+      selectedFilters[filterIndex] = {
+        ...selectedFilters[filterIndex],
+        filterValue: newFilterValue
+      };
+      setSelectedFilters([...selectedFilters]);
+    },
+    [selectedFilters]
+  );
+
+  const onConfirmHandler = useCallback(() => {
+    const defaultFilters = {
+      disabled: undefined,
+      environmentIds: undefined
+    };
+    const newFilters = {};
+
+    selectedFilters.forEach(filter => {
+      const isEnvironmentFilter = filter.value === FilterTypes.ENVIRONMENT_IDs;
+      const isEnabledFilter = filter.value === FilterTypes.ENABLED;
+      Object.assign(newFilters, {
+        [isEnabledFilter ? 'disabled' : FilterTypes.ENVIRONMENT_IDs]:
+          isEnvironmentFilter
+            ? Array.isArray(filter.filterValue)
+              ? filter.filterValue.map(item => checkEnvironmentEmptyId(item))
+              : []
+            : isEmpty(filter.filterValue)
+              ? undefined
+              : !filter.filterValue
+      });
+    });
+
+    onSubmit({
+      ...defaultFilters,
+      ...newFilters
+    });
+  }, [selectedFilters]);
+
+  const handleSetFilterOnInit = useCallback(() => {
+    if (filters) {
+      const { disabled, environmentIds } = filters || {};
+      const filterTypeArr: FilterOption[] = [];
+
+      const addFilterOption = (
+        index: number,
+        value: FilterOption['filterValue']
+      ) => {
+        if (!isNil(value)) {
+          const option = environmentEnabledFilterOptions[index];
+          filterTypeArr.push({
+            ...option,
+            filterValue:
+              option.value === FilterTypes.ENVIRONMENT_IDs
+                ? Array.isArray(value)
+                  ? value.map(item => item || emptyEnvironmentId)
+                  : []
+                : value
+                  ? 0
+                  : 1
           });
         }
-        return;
+      };
+      addFilterOption(0, environmentIds);
+      addFilterOption(1, disabled);
+
+      setSelectedFilters(
+        filterTypeArr.length
+          ? filterTypeArr
+          : [environmentEnabledFilterOptions[0]]
+      );
     }
-  };
+  }, [filters, emptyEnvironmentId]);
 
   useEffect(() => {
-    if (isNotEmpty(filters?.disabled)) {
-      setSelectedFilterType(filterEnabledOptions[0]);
-      setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
-    } else {
-      setSelectedFilterType(undefined);
-      setValueOption(undefined);
-    }
+    handleSetFilterOnInit();
   }, [filters]);
 
   return (
@@ -74,55 +263,149 @@ const FilterAPIKeyModal = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
-        <div className="flex items-center w-full h-12 gap-x-4">
-          <div className="typo-para-small text-center py-[3px] px-4 rounded text-accent-pink-500 bg-accent-pink-50">
-            {t(`if`)}
-          </div>
-          <Divider vertical={true} className="border-primary-500" />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-filter`)}
-              label={selectedFilterType?.label}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {filterEnabledOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setSelectedFilterType(item)}
+        {selectedFilters.map((filterOption, filterIndex) => {
+          const { label, value: filterType } = filterOption;
+          const isEnvironmentFilter =
+            filterType === FilterTypes.ENVIRONMENT_IDs;
+          const valueOptions = getValueOptions(filterOption);
+          return (
+            <div
+              className="flex items-center w-full h-12 gap-x-4"
+              key={filterIndex}
+            >
+              <div
+                className={cn(
+                  'typo-para-small text-center py-[3px] w-[42px] min-w-[42px] rounded text-accent-pink-500 bg-accent-pink-50',
+                  {
+                    'bg-gray-200 text-gray-600': filterIndex !== 0
+                  }
+                )}
+              >
+                {t(filterIndex === 0 ? `if` : 'and')}
+              </div>
+              <Divider vertical={true} className="border-primary-500" />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  placeholder={t(`select-filter`)}
+                  label={label}
+                  variant="secondary"
+                  className="w-full truncate"
                 />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">is</p>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-value`)}
-              label={valueOption?.label}
-              disabled={!selectedFilterType}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {enabledOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setValueOption(item)}
+                <DropdownMenuContent className="w-[270px]" align="start">
+                  {remainingFilterOptions.map((item, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      value={item.value || ''}
+                      label={item.label}
+                      onSelectOption={() => {
+                        const filterValue =
+                          item.value === FilterTypes.ENVIRONMENT_IDs ? [] : '';
+                        selectedFilters[filterIndex] = {
+                          ...item,
+                          filterValue
+                        };
+                        setSelectedFilters([...selectedFilters]);
+                      }}
+                    />
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <p className="typo-para-medium text-gray-600">is</p>
+              <DropdownMenu
+                onOpenChange={open => {
+                  if (open) return handleFocusSearchInput();
+                  setDebounceValue('');
+                  setSearchValue('');
+                }}
+              >
+                <DropdownMenuTrigger
+                  disabled={
+                    (isEnvironmentFilter && isLoadingEnvironments) ||
+                    !filterType
+                  }
+                  loading={isEnvironmentFilter && isLoadingEnvironments}
+                  placeholder={t(`select-value`)}
+                  label={handleGetLabelFilterValue(filterOption)}
+                  variant="secondary"
+                  className="w-full truncate"
                 />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenuContent
+                  className={cn('w-[235px]', {
+                    'pt-0 w-[300px]': isEnvironmentFilter,
+                    'hidden-scroll': valueOptions?.length > 15
+                  })}
+                  align="start"
+                >
+                  {isEnvironmentFilter && (
+                    <DropdownMenuSearch
+                      ref={inputSearchRef}
+                      value={debounceValue}
+                      onChange={value => {
+                        setDebounceValue(value);
+                        debouncedSearch(value);
+                        handleFocusSearchInput();
+                      }}
+                    />
+                  )}
+                  {valueOptions?.length > 0 ? (
+                    <DropdownList
+                      isMultiselect={isEnvironmentFilter}
+                      selectedOptions={
+                        isEnvironmentFilter &&
+                        Array.isArray(filterOption?.filterValue)
+                          ? filterOption.filterValue
+                          : undefined
+                      }
+                      options={valueOptions as DropdownOption[]}
+                      onSelectOption={value =>
+                        handleChangeFilterValue(value, filterIndex)
+                      }
+                    />
+                  ) : (
+                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+                      {t('no-options-found')}
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant={'grey'}
+                className="px-0 w-fit"
+                disabled={selectedFilters.length <= 1}
+                onClick={() =>
+                  setSelectedFilters(
+                    selectedFilters.filter((_, index) => filterIndex !== index)
+                  )
+                }
+              >
+                <Icon icon={IconTrash} size={'sm'} />
+              </Button>
+            </div>
+          );
+        })}
+        <Button
+          disabled={isDisabledAddButton}
+          variant={'text'}
+          className="h-6 px-0"
+          onClick={() => {
+            setSelectedFilters([
+              ...selectedFilters,
+              {
+                label: '',
+                value: undefined,
+                filterValue: ''
+              }
+            ]);
+          }}
+        >
+          <Icon icon={IconPlus} />
+          {t('add-filter')}
+        </Button>
       </div>
 
       <ButtonBar
         secondaryButton={
-          <Button disabled={isDisabledSubmitBtn} onClick={onConfirmHandler}>
+          <Button disabled={isDisabledSubmitButton} onClick={onConfirmHandler}>
             {t(`confirm`)}
           </Button>
         }

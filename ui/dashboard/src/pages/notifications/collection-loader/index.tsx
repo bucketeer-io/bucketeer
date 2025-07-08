@@ -31,7 +31,7 @@ const CollectionLoader = memo(
     const columns = useColumns({ onActions });
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const editorEnvironmentIds = getEditorEnvironmentIds(consoleAccount!);
+    const { editorEnvironmentIDs } = getEditorEnvironmentIds(consoleAccount!);
 
     const {
       data: collection,
@@ -40,7 +40,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchNotifications({
       ...filters,
-      environmentIds: editorEnvironmentIds,
+      environmentIds: filters?.environmentIds || editorEnvironmentIDs,
       organizationId: currentEnvironment.organizationId
     });
 
@@ -62,7 +62,7 @@ const CollectionLoader = memo(
     const emptyState = (
       <CollectionEmpty
         data={apiKeys}
-        isFilter={isNotEmpty(filters?.disabled)}
+        isFilter={isNotEmpty(filters?.disabled ?? filters.environmentIds)}
         searchQuery={filters.searchQuery}
         onClear={onClearFilters}
         empty={<EmptyCollection onAdd={onAdd} />}

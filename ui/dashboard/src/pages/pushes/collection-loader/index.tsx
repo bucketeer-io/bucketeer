@@ -31,7 +31,7 @@ const CollectionLoader = memo(
   }) => {
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const editorEnvironmentIds = getEditorEnvironmentIds(consoleAccount!);
+    const { editorEnvironmentIDs } = getEditorEnvironmentIds(consoleAccount!);
 
     const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
       organizationId: currentEnvironment.organizationId,
@@ -48,7 +48,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchPushes({
       ...filters,
-      environmentIds: editorEnvironmentIds,
+      environmentIds: filters?.environmentIds || editorEnvironmentIDs,
       organizationId: currentEnvironment.organizationId
     });
 
@@ -70,7 +70,7 @@ const CollectionLoader = memo(
     const emptyState = (
       <CollectionEmpty
         data={pushes}
-        isFilter={isNotEmpty(filters?.disabled)}
+        isFilter={isNotEmpty(filters?.disabled ?? filters?.environmentIds)}
         searchQuery={filters.searchQuery}
         onClear={onClearFilters}
         empty={<EmptyCollection onAdd={onAdd} />}

@@ -6,6 +6,8 @@ export interface NotificationFilters {
   orderDirection: OrderDirection;
   disabled?: boolean;
   searchQuery: string;
+  environmentId: string;
+  environmentIds: string[];
 }
 
 export type NotificationActionsType = 'EDIT' | 'ENABLE' | 'DISABLE' | 'DELETE';

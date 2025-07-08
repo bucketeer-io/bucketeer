@@ -6,6 +6,8 @@ export interface PushFilters {
   orderDirection: OrderDirection;
   disabled?: boolean;
   searchQuery: string;
+  environmentId: string;
+  environmentIds: string[];
 }
 
 export type PushActionsType = 'EDIT' | 'ENABLE' | 'DISABLE' | 'DELETE';

@@ -59,7 +59,7 @@ const CollectionLoader = memo(
     const emptyState = (
       <CollectionEmpty
         data={apiKeys}
-        isFilter={isNotEmpty(filters?.disabled)}
+        isFilter={!isNotEmpty(filters?.disabled ?? filters?.environmentIds)}
         searchQuery={filters.searchQuery}
         onClear={onClearFilters}
         empty={<EmptyCollection onAdd={onAdd} />}
