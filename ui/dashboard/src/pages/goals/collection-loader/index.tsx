@@ -2,6 +2,7 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Goal } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -35,7 +36,7 @@ const CollectionLoader = ({
   } = useFetchGoals({
     ...filters,
     archived: filters.status === 'ARCHIVED',
-    environmentId: currentEnvironment.id
+    environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {

@@ -11,6 +11,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconClose, IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -56,7 +57,7 @@ const TargetSegmentRule = ({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     }
   });
 

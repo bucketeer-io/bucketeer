@@ -10,6 +10,7 @@ import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { isNotEmptyObject } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
@@ -60,7 +61,9 @@ const PageLoader = () => {
     isLoading,
     refetch,
     isError
-  } = useFetchExperiments({ environmentId: currentEnvironment.id });
+  } = useFetchExperiments({
+    environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+  });
 
   const summary = useMemo(() => collection?.summary, [collection]);
 
@@ -88,7 +91,7 @@ const PageLoader = () => {
       mutation.mutate({
         id: selectedExperiment?.id,
         archived: isArchiving,
-        environmentId: currentEnvironment.id
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
       });
     }
   };
@@ -97,7 +100,7 @@ const PageLoader = () => {
     if (selectedExperiment?.id) {
       mutation.mutate({
         id: selectedExperiment?.id,
-        environmentId: currentEnvironment.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
         startAt: selectedExperiment.startAt,
         stopAt: selectedExperiment.stopAt,
         status: {

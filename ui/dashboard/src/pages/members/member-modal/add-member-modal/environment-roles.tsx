@@ -81,13 +81,16 @@ const EnvironmentRoles = ({
       </Button>
 
       {environmentRolesWatch?.map((environment, envIndex) => (
-        <div key={envIndex} className="flex items-start w-full gap-x-4">
-          <div className="flex-1">
+        <div
+          key={envIndex}
+          className="flex items-start w-full max-w-full gap-x-4"
+        >
+          <div className="flex w-full max-w-[310px]">
             <Form.Field
               control={control}
               name={`environmentRoles.${envIndex}.environmentId`}
               render={({ field }) => (
-                <Form.Item className="py-2">
+                <Form.Item className="flex flex-col w-full py-2">
                   <Form.Label required>{t('environment')}</Form.Label>
                   <Form.Control>
                     <EnvironmentEditorList
@@ -104,6 +107,7 @@ const EnvironmentRoles = ({
                           }
                         )
                       }
+                      triggerClassName="max-w-full truncate"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -113,8 +117,8 @@ const EnvironmentRoles = ({
           </div>
 
           <div
-            className={cn('w-[140px] h-full', {
-              'w-[170px]': isJapaneseLanguage
+            className={cn('w-[140px] min-w-[140px] h-full', {
+              'w-[170px] min-w-[170px]': isJapaneseLanguage
             })}
           >
             <Form.Field
@@ -168,17 +172,17 @@ const EnvironmentRoles = ({
               )}
             />
           </div>
-          {environmentRolesWatch.length > 1 && (
-            <Button
-              variant="text"
-              size="icon"
-              type="button"
-              className="p-0 size-5 mt-5 self-center"
-              onClick={() => onDeleteEnvironment(envIndex)}
-            >
-              <Icon icon={IconTrash} size="sm" color="gray-600" />
-            </Button>
-          )}
+
+          <Button
+            variant="grey"
+            size="icon"
+            type="button"
+            disabled={environmentRolesWatch.length <= 1}
+            className="p-0 size-5 min-w-5 mt-5 self-center"
+            onClick={() => onDeleteEnvironment(envIndex)}
+          >
+            <Icon icon={IconTrash} size="sm" />
+          </Button>
         </div>
       ))}
     </>

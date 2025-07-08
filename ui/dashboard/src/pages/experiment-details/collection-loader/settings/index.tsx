@@ -17,6 +17,7 @@ import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
@@ -77,7 +78,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     }
   });
 
@@ -93,7 +94,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const { data: featureCollection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     }
   });
 
@@ -159,7 +160,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       description,
       startAt,
       stopAt,
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     });
   };
 
@@ -170,7 +171,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     onSuccess: data => {
       invalidateExperimentDetails(queryClient, {
         id: data.experiment.id,
-        environmentId: currentEnvironment.id
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
       });
       invalidateExperiments(queryClient);
       notify({

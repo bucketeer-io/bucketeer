@@ -61,7 +61,7 @@ const GridViewCollection = ({
   const popoverOptions = useMemo(
     () =>
       compact([
-        searchOptions.status === 'ARCHIVED'
+        searchOptions.tab === 'ARCHIVED'
           ? {
               label: `${t('unarchive-flag')}`,
               icon: IconArchiveOutlined,

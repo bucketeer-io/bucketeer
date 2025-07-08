@@ -12,6 +12,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from 'pages/feature-flag-details/elements/confirm-required-modal';
@@ -99,7 +100,7 @@ const PageLoader = () => {
       if (selectedFlag?.id) {
         mutation.mutate({
           id: selectedFlag.id,
-          environmentId: currentEnvironment.id,
+          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
           ...params
         });
       }
@@ -116,13 +117,13 @@ const PageLoader = () => {
           if (['ENABLE', 'DISABLE'].includes(scheduleType as string)) {
             resp = await featureUpdater({
               id: selectedFlag.id,
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               enabled: !selectedFlag.enabled,
               comment
             });
           } else {
             resp = await autoOpsCreator({
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               featureId: selectedFlag.id,
               opsType: 'SCHEDULE',
               datetimeClauses: [

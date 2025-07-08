@@ -14,6 +14,7 @@ import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, TriggerItemType } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconPlus } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
@@ -55,7 +56,7 @@ const TriggerList = ({
 
   const { data: triggerCollection, isLoading } = useQueryTriggers({
     params: {
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       featureId: feature.id,
       cursor: String(0)
     }
@@ -185,7 +186,7 @@ const TriggerList = ({
                   ref={formRef}
                   selectedTrigger={actionState?.trigger}
                   featureId={feature.id}
-                  environmentId={currentEnvironment.id}
+                  environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
                   onCancel={onReset}
                   setTriggerNewlyCreated={setTriggerNewlyCreated}
                 />
@@ -203,7 +204,7 @@ const TriggerList = ({
             <CreateTriggerForm
               disabled={isDisabledCreate}
               featureId={feature.id}
-              environmentId={currentEnvironment.id}
+              environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
               onCancel={onReset}
               setTriggerNewlyCreated={setTriggerNewlyCreated}
             />
@@ -243,7 +244,7 @@ const TriggerList = ({
           onSubmit={() =>
             mutationState.mutate({
               id: actionState.trigger!.flagTrigger.id,
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               reset: isReset,
               disabled: isReset
                 ? actionState.trigger!.flagTrigger.disabled

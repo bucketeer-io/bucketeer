@@ -9,6 +9,7 @@ import { usePartialState } from 'hooks';
 import { pickBy } from 'lodash';
 import { CodeReference, Feature, RepositoryType } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import { IconBitbucket, IconGithub, IconGitLab } from '@icons';
 import { DropdownOption } from 'components/dropdown';
@@ -74,7 +75,7 @@ const CodeReferencesPage = ({ feature }: { feature: Feature }) => {
   const { data: codeRefCollection, isLoading: isLoadingCodeRefs } =
     useQueryCodeRefs({
       params: {
-        environmentId: currentEnvironment.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
         featureId: feature.id,
         ...filters
       },

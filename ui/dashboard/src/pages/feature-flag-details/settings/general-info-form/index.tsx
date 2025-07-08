@@ -15,6 +15,7 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo, IconWatch } from '@icons';
 import Button from 'components/button';
 import { DropdownOption } from 'components/dropdown';
@@ -53,7 +54,7 @@ const GeneralInfoForm = ({
     params: {
       cursor: String(0),
       entityType: 'FEATURE_FLAG',
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     }
   });
 
@@ -61,7 +62,7 @@ const GeneralInfoForm = ({
     useQueryAccounts({
       params: {
         cursor: String(0),
-        environmentId: currentEnvironment.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
         organizationId: currentEnvironment.organizationId,
         environmentRole: 2
       }
@@ -143,7 +144,7 @@ const GeneralInfoForm = ({
 
         const resp = await featureUpdater({
           id: flagId,
-          environmentId: currentEnvironment.id,
+          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
           comment,
           ...handleCheckTags(tags),
           ...rest

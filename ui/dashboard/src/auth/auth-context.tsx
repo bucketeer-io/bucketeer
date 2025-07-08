@@ -11,6 +11,7 @@ import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
+import { isNil } from 'lodash';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -23,6 +24,10 @@ import {
   getOrgIdStorage,
   setOrgIdStorage
 } from 'storage/organization';
+import {
+  clearCurrentProjectEnvironmentStorage,
+  setCurrentProjectEnvironmentStorage
+} from 'storage/project-environment';
 import {
   clearTokenStorage,
   getTokenStorage,
@@ -75,6 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const clearOrgAndEnvStorage = () => {
     clearOrgIdStorage();
     clearCurrentEnvIdStorage();
+    clearCurrentProjectEnvironmentStorage();
   };
 
   const onMeFetcher = async (params: MeFetcherParams) => {
@@ -96,8 +102,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.account.language !== getLanguage()) {
         await setLanguage(response.account.language as Language);
       }
-      if (!environmentId) {
-        setCurrentEnvIdStorage(environmentRoles[0].environment.id);
+      if (isNil(environmentId)) {
+        const environment = environmentRoles[0].environment;
+        setCurrentEnvIdStorage(environment.id);
+        setCurrentProjectEnvironmentStorage({
+          environmentId: environment.id,
+          projectId: environment.projectId
+        });
       }
     } catch (error) {
       clearOrgAndEnvStorage();

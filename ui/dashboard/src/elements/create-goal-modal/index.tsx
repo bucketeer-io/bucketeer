@@ -11,6 +11,7 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType, Goal } from '@types';
 import { onGenerateSlug } from 'utils/converts';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
@@ -71,7 +72,7 @@ const CreateGoalModal = ({
         const { name, id, description } = values;
         const resp = await goalCreator({
           connectionType,
-          environmentId: currentEnvironment.id,
+          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
           name,
           id,
           description

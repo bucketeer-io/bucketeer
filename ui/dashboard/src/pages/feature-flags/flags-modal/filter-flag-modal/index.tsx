@@ -6,6 +6,7 @@ import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
 import { FlagFilters } from 'pages/feature-flags/types';
@@ -54,7 +55,7 @@ const FilterFlagModal = ({
   const { data: collection, isLoading } = useQueryAccounts({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment?.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
       organizationId: currentEnvironment?.organizationId
     },
     enabled: !!selectedFilters?.find(
@@ -65,7 +66,7 @@ const FilterFlagModal = ({
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment?.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
       entityType: 'FEATURE_FLAG'
     },
     enabled: !!selectedFilters?.find(item => item.value === FilterTypes.TAGS)

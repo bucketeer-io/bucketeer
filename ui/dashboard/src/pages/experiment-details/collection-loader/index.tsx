@@ -3,6 +3,7 @@ import { useQueryExperimentResultDetails } from '@queries/experiment-result';
 import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { Experiment } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { ExperimentDetailsTab } from '../page-content';
 import Results from './results';
 import ExperimentSettings from './settings';
@@ -26,7 +27,7 @@ const CollectionLoader = ({
   } = useQueryExperimentResultDetails({
     params: {
       experimentId: params?.experimentId || '',
-      environmentId: currentEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     },
     retry: experiment.status !== 'WAITING'
   });
@@ -36,7 +37,7 @@ const CollectionLoader = ({
   const { data: featureResultCollection, isError: featureError } =
     useQueryFeature({
       params: {
-        environmentId: currentEnvironment.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
         id: experiment.featureId
       }
     });

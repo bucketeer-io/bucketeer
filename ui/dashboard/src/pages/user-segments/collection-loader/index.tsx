@@ -4,6 +4,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { UserSegment } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -36,7 +37,7 @@ const CollectionLoader = memo(
   }) => {
     const columns = useColumns({ segmentUploading, onActionHandler });
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
       data: collection,
@@ -45,7 +46,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchSegments({
       ...filters,
-      environmentId: currenEnvironment.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {

@@ -9,6 +9,7 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { Goal } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import DeleteGoalModal from 'pages/goal-details/elements/delete-goal-modal';
 import ConfirmModal from 'elements/confirm-modal';
 import AddGoalModal from './goals-modal/add-goal-modal';
@@ -59,7 +60,7 @@ const PageLoader = () => {
     mutationFn: async (goal: Goal) => {
       return goalDeleter({
         id: goal.id,
-        environmentId: currentEnvironment.id
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
       });
     },
     onSuccess: () => {
@@ -152,7 +153,7 @@ const PageLoader = () => {
             onUpdateGoal({
               id: selectedGoal.id,
               name: selectedGoal.name,
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               description: selectedGoal.description,
               archived: selectedGoal.archived ? false : true
             })

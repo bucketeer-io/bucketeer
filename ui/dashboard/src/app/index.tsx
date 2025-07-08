@@ -16,6 +16,7 @@ import {
   getCurrentEnvironment,
   hasEditable
 } from 'auth';
+import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import {
   PAGE_PATH_APIKEYS,
   PAGE_PATH_AUDIT_LOGS,
@@ -42,10 +43,15 @@ import {
   setCurrentEnvIdStorage
 } from 'storage/environment';
 import { getIsLoginFirstTimeStorage } from 'storage/login';
+import {
+  getCurrentProjectEnvironmentStorage,
+  setCurrentProjectEnvironmentStorage
+} from 'storage/project-environment';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
-import { ConsoleAccount } from '@types';
+import { ConsoleAccount, EnvironmentRole } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
@@ -172,10 +178,31 @@ export const EnvironmentRoot = memo(
     const currentEnv = getCurrentEnvironment(account);
 
     const handleCheckEnvCodeOnInit = useCallback(() => {
-      const isExistEnv = account.environmentRoles.find(
-        item => item.environment.urlCode === envUrlCode
-      );
       const envIdStorage = getCurrentEnvIdStorage();
+      // console.log({ envIdStorage });
+      const projectEnvironment = getCurrentProjectEnvironmentStorage();
+      // console.log(projectEnvironment);
+      let isExistEnv: EnvironmentRole | undefined = undefined;
+      if (projectEnvironment) {
+        const projectEnvironmentId = checkEnvironmentEmptyId(
+          projectEnvironment.environmentId
+        );
+        isExistEnv = account.environmentRoles.find(item => {
+          const { environment, project } = item || {};
+          return (
+            environment.id === projectEnvironmentId &&
+            project.id === projectEnvironment.projectId
+          );
+        });
+        if (envUrlCode && isExistEnv?.environment.urlCode !== envUrlCode)
+          isExistEnv = undefined;
+      }
+      if (!projectEnvironment || !isExistEnv) {
+        isExistEnv = account.environmentRoles.find(
+          item => item.environment.urlCode === envUrlCode
+        );
+      }
+
       if (!envUrlCode || !isExistEnv) {
         return navigate(`/${currentEnv.urlCode}${PAGE_PATH_FEATURES}`, {
           replace: true
@@ -194,7 +221,11 @@ export const EnvironmentRoot = memo(
         : '';
       const path = params['*'] ? `/${params['*']}` : '';
 
-      setCurrentEnvIdStorage(environment.id || environment.urlCode);
+      setCurrentEnvIdStorage(environment.id || ENVIRONMENT_WITH_EMPTY_ID);
+      setCurrentProjectEnvironmentStorage({
+        environmentId: environment.id,
+        projectId: environment.projectId
+      });
       return navigate(`/${environment.urlCode}${path}${queryParams}`, {
         replace: true
       });

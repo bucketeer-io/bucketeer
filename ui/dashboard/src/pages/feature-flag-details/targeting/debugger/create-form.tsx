@@ -7,6 +7,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { Evaluation, Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import AddDebuggerForm from 'pages/debugger/add-debugger-form';
 import {
   addDebuggerFormSchema,
@@ -80,7 +81,7 @@ const CreateDebuggerForm = ({
         dataMap?.forEach((value, key) => (userData[key] = value));
 
         const resp = await debuggerEvaluate({
-          environmentId: currentEnvironment.id,
+          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
           featureIds: values.flags,
           users: values.userIds.map(item => ({
             id: item,

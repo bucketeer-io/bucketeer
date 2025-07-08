@@ -14,6 +14,7 @@ import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Evaluation, Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -83,7 +84,7 @@ const TargetingPage = ({
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       featureIds: [feature.id]
     }
   });
@@ -91,7 +92,7 @@ const TargetingPage = ({
   const { data: collection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       archived: false
     },
     enabled: !!currentEnvironment
@@ -240,7 +241,7 @@ const TargetingPage = ({
             !['ENABLE', 'DISABLE'].includes(scheduleType as string);
           if (isScheduleUpdate) {
             resp = await autoOpsCreator({
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               featureId: feature.id,
               opsType: 'SCHEDULE',
               datetimeClauses: [
@@ -253,7 +254,7 @@ const TargetingPage = ({
           } else {
             resp = await featureUpdater({
               id,
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               enabled: isScheduleUpdate ? false : enabled,
               defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
               ruleChanges: handleCheckSegmentRules(rules, segmentRules),

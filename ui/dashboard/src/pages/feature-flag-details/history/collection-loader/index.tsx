@@ -8,6 +8,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog, Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { DataCollection } from 'pages/audit-logs/collection-layout/data-collection';
 import Pagination from 'components/pagination';
 import FormLoading from 'elements/form-loading';
@@ -51,7 +52,7 @@ const CollectionLoader = forwardRef(
     } = useFetchHistories({
       ...filters,
       featureId: feature.id,
-      environmentId: currentEnvironment?.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
       enabledFetching:
         params?.envUrlCode === currentEnvironment?.urlCode && !isPending
     });

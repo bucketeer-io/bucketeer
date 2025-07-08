@@ -5,6 +5,7 @@ import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
@@ -31,7 +32,7 @@ const CollectionLoader = memo(
     onClearFilters: () => void;
   }) => {
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
       data: collection,
@@ -40,26 +41,26 @@ const CollectionLoader = memo(
       isError
     } = useFetchFlags({
       ...filters,
-      environmentId: currenEnvironment?.id
+      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id)
     });
 
     const { data: accountCollection } = useQueryAccounts({
       params: {
-        organizationId: currenEnvironment?.organizationId,
+        organizationId: currentEnvironment?.organizationId,
         cursor: String(0)
       }
     });
 
     const { data: autoOpsCollection } = useQueryAutoOpsRules({
       params: {
-        environmentId: currenEnvironment?.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
         cursor: String(0)
       }
     });
 
     const { data: rolloutCollection } = useQueryRollouts({
       params: {
-        environmentId: currenEnvironment?.id,
+        environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
         cursor: String(0)
       }
     });

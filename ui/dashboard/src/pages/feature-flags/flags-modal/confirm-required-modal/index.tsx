@@ -18,6 +18,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconToastWarning } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -65,7 +66,7 @@ const ConfirmationRequiredModal = ({
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       featureIds: selectedFlag?.id ? [selectedFlag?.id] : []
     },
     refetchOnMount: 'always',
@@ -130,14 +131,14 @@ const ConfirmationRequiredModal = ({
         let resp;
         if (['ENABLE', 'DISABLE'].includes(scheduleType)) {
           resp = await featureUpdater({
-            environmentId: currentEnvironment.id,
+            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
             id,
             enabled: isEnable,
             comment
           });
         } else {
           resp = await autoOpsCreator({
-            environmentId: currentEnvironment.id,
+            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
             featureId: selectedFlag.id,
             opsType: 'SCHEDULE',
             datetimeClauses: [

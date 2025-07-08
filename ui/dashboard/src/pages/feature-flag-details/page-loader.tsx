@@ -3,6 +3,7 @@ import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { FlagStatus } from 'pages/feature-flags/collection-layout/elements';
 import { getFlagStatus } from 'pages/feature-flags/collection-layout/elements/utils';
 import { Tooltip } from 'components/tooltip';
@@ -24,7 +25,7 @@ const PageLoader = () => {
     refetch
   } = useQueryFeature({
     params: {
-      environmentId: currentEnvironment?.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
       id: params?.flagId || ''
     },
     enabled:

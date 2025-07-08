@@ -10,6 +10,7 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Goal } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import InfoMessage from 'components/info-message';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
@@ -38,7 +39,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     mutationFn: async () => {
       return goalDeleter({
         id: goal.id,
-        environmentId: currentEnvironment.id
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
       });
     },
     onSuccess: () => {
@@ -62,7 +63,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       onCloseConfirmModal();
       invalidateGoalDetails(queryClient, {
         id: goal.id,
-        environmentId: currentEnvironment.id
+        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
       });
       invalidateGoals(queryClient);
       notify({
@@ -157,7 +158,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
             onUpdateGoal({
               id: goal.id,
               name: goal.name,
-              environmentId: currentEnvironment.id,
+              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
               description: goal.description,
               archived: !goal.archived
             })

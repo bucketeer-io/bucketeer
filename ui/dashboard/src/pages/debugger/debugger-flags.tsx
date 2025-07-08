@@ -4,6 +4,7 @@ import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
@@ -27,7 +28,7 @@ const DebuggerFlags = ({
   const { data: flagCollection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       archived: false
     }
   });

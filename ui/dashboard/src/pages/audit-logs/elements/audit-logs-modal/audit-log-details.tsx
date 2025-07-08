@@ -7,6 +7,7 @@ import { useToast } from 'hooks';
 import { getLanguage, useTranslation } from 'i18n';
 import { areJsonStringsEqual, isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import AuditLogAvatar from 'pages/audit-logs/collection-layout/audit-log-avatar';
 import AuditLogTitle from 'pages/audit-logs/collection-layout/audit-log-title';
@@ -53,7 +54,7 @@ const AuditLogDetailsModal = ({
     error
   } = useQueryAuditLogDetails({
     params: {
-      environmentId: currentEnvironment.id,
+      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
       id: auditLogId
     },
     enabled: params?.envUrlCode === currentEnvironment?.urlCode
