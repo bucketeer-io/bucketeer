@@ -15,7 +15,6 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureVariation, FeatureVariationType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { createFlagFormSchema } from 'pages/create-flag/form-schema';
@@ -90,7 +89,7 @@ const CreateFlagForm = ({
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+      environmentId: currentEnvironment?.id,
       entityType: 'FEATURE_FLAG'
     }
   });
@@ -159,7 +158,7 @@ const CreateFlagForm = ({
         variations
       } = values;
       const resp = await featureCreator({
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+        environmentId: currentEnvironment.id,
         id: flagId,
         name,
         tags,
@@ -177,7 +176,7 @@ const CreateFlagForm = ({
         notify({
           message: t('message:collection-action-success', {
             collection: t('source-type.feature-flag'),
-            action: t('create')
+            action: t('created')
           })
         });
         invalidateFeatures(queryClient);

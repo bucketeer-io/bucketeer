@@ -6,7 +6,6 @@ import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
 import { EvaluationTimeRange, Feature } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import {
   ChartToggleLegendRef,
@@ -42,7 +41,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
 
   const { data: evaluationCollection, isLoading } = useQueryEvaluation({
     params: {
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+      environmentId: currentEnvironment.id,
       featureId: feature.id,
       timeRange: filters.period
     },

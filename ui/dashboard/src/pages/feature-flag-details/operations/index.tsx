@@ -22,7 +22,6 @@ import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
 import { AutoOpsRule, Feature, Rollout } from '@types';
 import { isNotEmpty } from 'utils/data-type';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import ConfirmModal from 'elements/confirm-modal';
@@ -113,7 +112,7 @@ const Operations = ({
     () => ({
       cursor: String(0),
       featureIds: [feature.id],
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }),
     [feature, currentEnvironment]
   );
@@ -142,7 +141,7 @@ const Operations = ({
   const { data: opsCountCollection } = useQueryAutoOpsCount({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+      environmentId: currentEnvironment.id,
       featureIds: [feature.id],
       autoOpsRuleIds: eventRateActiveIds
     },
@@ -198,13 +197,13 @@ const Operations = ({
           operationModalState.operationType === OpsTypeMap.ROLLOUT;
         if (isStopRollout) {
           resp = await rolloutStopped({
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+            environmentId: currentEnvironment.id,
             id: operationModalState?.selectedData?.id,
             stoppedBy: 'USER'
           });
         } else {
           resp = await autoOpsStop({
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+            environmentId: currentEnvironment.id,
             id: operationModalState?.selectedData?.id
           });
         }
@@ -239,7 +238,7 @@ const Operations = ({
           operationModalState.operationType === OpsTypeMap.ROLLOUT;
         const deleteFn = isStopRollout ? rolloutDelete : autoOpsDelete;
         const resp = await deleteFn({
-          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+          environmentId: currentEnvironment.id,
           id: operationModalState?.selectedData?.id
         });
 
@@ -341,7 +340,7 @@ const Operations = ({
           isFinishedTab={currentTab === OperationTab.FINISHED}
           isOpen={isScheduleAction}
           featureId={feature.id}
-          environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
+          environmentId={currentEnvironment.id}
           isEnabledFlag={feature.enabled}
           rollouts={rollouts}
           actionType={operationModalState.actionType}
@@ -355,7 +354,7 @@ const Operations = ({
           editable={editable}
           isOpen={isEventRateAction}
           feature={feature}
-          environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
+          environmentId={currentEnvironment.id}
           actionType={operationModalState.actionType}
           isFinishedTab={currentTab === OperationTab.FINISHED}
           selectedData={operationModalState?.selectedData as AutoOpsRule}
@@ -371,7 +370,7 @@ const Operations = ({
             isOpen={isRolloutAction}
             feature={feature}
             urlCode={currentEnvironment.urlCode}
-            environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
+            environmentId={currentEnvironment.id}
             actionType={operationModalState.actionType}
             selectedData={operationModalState?.selectedData as Rollout}
             rollouts={rollouts}

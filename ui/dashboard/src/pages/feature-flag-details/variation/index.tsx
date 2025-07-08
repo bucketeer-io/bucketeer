@@ -14,7 +14,6 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { Feature, FeatureVariation, VariationChange } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import Form from 'components/form';
 import InfoMessage from 'components/info-message';
 import ConfirmationRequiredModal, {
@@ -44,7 +43,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
   const { data: experimentCollection } = useQueryExperiments({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+      environmentId: currentEnvironment.id,
       featureId: feature.id,
       statuses: ['WAITING', 'RUNNING']
     }
@@ -113,7 +112,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
 
           const resp = await featureUpdater({
             id: feature.id,
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+            environmentId: currentEnvironment.id,
             comment,
             resetSamplingSeed: resetSampling,
             offVariation,

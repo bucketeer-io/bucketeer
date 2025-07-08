@@ -2,7 +2,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryExperimentDetails } from '@queries/experiment-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import NotFoundPage from 'pages/not-found';
 import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
@@ -22,7 +21,7 @@ const PageLoader = () => {
   } = useQueryExperimentDetails({
     params: {
       id: params?.experimentId || '',
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }
   });
 

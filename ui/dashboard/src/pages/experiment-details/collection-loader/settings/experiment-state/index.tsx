@@ -9,7 +9,6 @@ import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment, ExperimentResult } from '@types';
 import { formatLongDateTime } from 'utils/date-time';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import {
   IconExperiment,
@@ -73,7 +72,7 @@ const ExperimentState = ({
 
       invalidateExperiments(queryClient);
       invalidateExperimentDetails(queryClient, {
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+        environmentId: currentEnvironment.id,
         id: experiment?.id ?? ''
       });
       mutation.reset();
@@ -95,7 +94,7 @@ const ExperimentState = ({
     if (experiment?.id) {
       mutation.mutate({
         id: experiment?.id,
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+        environmentId: currentEnvironment.id,
         status: {
           status: isRunning ? 'FORCE_STOPPED' : 'RUNNING'
         }

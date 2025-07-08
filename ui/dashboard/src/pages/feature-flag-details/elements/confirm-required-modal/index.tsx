@@ -10,7 +10,6 @@ import {
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconToastWarning } from '@icons';
 import Button from 'components/button';
@@ -58,7 +57,7 @@ const ConfirmationRequiredModal = ({
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+      environmentId: currentEnvironment.id,
       featureIds: [feature.id]
     },
     refetchOnMount: !!feature && isShowRolloutWarning ? 'always' : false,

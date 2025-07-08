@@ -5,7 +5,6 @@ import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
@@ -41,7 +40,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchFlags({
       ...filters,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id)
+      environmentId: currentEnvironment?.id
     });
 
     const { data: accountCollection } = useQueryAccounts({
@@ -53,14 +52,14 @@ const CollectionLoader = memo(
 
     const { data: autoOpsCollection } = useQueryAutoOpsRules({
       params: {
-        environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+        environmentId: currentEnvironment?.id,
         cursor: String(0)
       }
     });
 
     const { data: rolloutCollection } = useQueryRollouts({
       params: {
-        environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+        environmentId: currentEnvironment?.id,
         cursor: String(0)
       }
     });

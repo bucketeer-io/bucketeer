@@ -9,7 +9,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { getFlagStatus } from 'pages/feature-flags/collection-layout/elements/utils';
 import ArchiveModal from 'pages/feature-flags/flags-modal/archive-modal';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
@@ -60,7 +59,7 @@ const ArchiveFlag = ({
     async ({ comment }: { comment?: string }) => {
       mutation.mutate({
         id: feature.id,
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+        environmentId: currentEnvironment.id,
         archived: !feature.archived,
         comment
       });

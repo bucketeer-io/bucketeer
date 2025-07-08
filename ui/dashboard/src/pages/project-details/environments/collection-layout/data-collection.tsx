@@ -7,7 +7,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
@@ -95,8 +94,7 @@ export const useColumns = ({
       enableSorting: false,
       cell: ({ row }) => {
         const environment = row.original;
-        const isDisabled =
-          checkEnvironmentEmptyId(currentEnvironment.id) === environment.id;
+        const isDisabled = currentEnvironment.id === environment.id;
         return (
           <DisabledPopoverTooltip
             isNeedAdminAccess

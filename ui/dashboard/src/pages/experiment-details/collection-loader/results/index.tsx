@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { cloneDeep } from 'lodash';
 import { Experiment, ExperimentResult, Feature } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';
 import { EmptyCollection } from './results-empty';
@@ -97,7 +96,7 @@ const Results = ({
           isNarrow={goalsNarrow.includes(item.goalId)}
           experiment={experiment}
           feature={feature}
-          environmentId={checkEnvironmentEmptyId(currentEnvironment.id)}
+          environmentId={currentEnvironment.id}
           isRequireComment={currentEnvironment.requireComment}
           goalResult={item}
           goalResultState={goalResultState[index]}

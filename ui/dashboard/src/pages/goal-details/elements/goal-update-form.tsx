@@ -6,7 +6,6 @@ import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
@@ -52,7 +51,7 @@ const GoalUpdateForm = ({
   const handleOnSubmit: SubmitHandler<GoalDetailsForm> = values =>
     onSubmit({
       ...values,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }).finally(() =>
       form.reset({
         name: values.name,

@@ -4,7 +4,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { useFormatDateTime } from 'utils/date-time';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
 import HeaderDetails from './elements/header-details';
@@ -22,7 +21,7 @@ const PageLoader = () => {
   const { data, isLoading, refetch, isError } = useQueryGoalDetails({
     params: {
       id: goalId!,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }
   });
   const goal = data?.goal;

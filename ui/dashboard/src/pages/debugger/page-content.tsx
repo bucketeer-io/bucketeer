@@ -7,7 +7,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { Evaluation } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { ExpandOrCollapse } from 'pages/audit-logs/types';
 import Form from 'components/form';
 import PageLayout from 'elements/page-layout';
@@ -34,7 +33,7 @@ const PageContent = () => {
   const { data: featureCollection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }
   });
 
@@ -109,7 +108,7 @@ const PageContent = () => {
         dataMap?.forEach((value, key) => (userData[key] = value));
 
         const resp = await debuggerEvaluate({
-          environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+          environmentId: currentEnvironment.id,
           featureIds: values.flags,
           users: values.userIds.map(item => ({
             id: item,

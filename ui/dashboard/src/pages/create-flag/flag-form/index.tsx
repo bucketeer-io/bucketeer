@@ -13,7 +13,6 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
@@ -49,7 +48,7 @@ const FlagForm = () => {
   const { data: collection } = useQueryTags({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+      environmentId: currentEnvironment?.id,
       entityType: 'FEATURE_FLAG'
     }
   });
@@ -94,7 +93,7 @@ const FlagForm = () => {
         variations
       } = values;
       const resp = await featureCreator({
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+        environmentId: currentEnvironment.id,
         id: flagId,
         name,
         tags,

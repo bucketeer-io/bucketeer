@@ -78,7 +78,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   } = useQueryFeature({
     params: {
       id: flagId as string,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id)
+      environmentId: currentEnvironment?.id
     },
     enabled: !!flagId
   });
@@ -90,10 +90,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
     values: {
       id: feature?.id || '',
       name: feature?.name || '',
-      originEnvironmentId:
-        checkEnvironmentEmptyId(currentEnvironment?.id) ||
-        emptyEnvironmentId ||
-        '',
+      originEnvironmentId: currentEnvironment?.id || emptyEnvironmentId || '',
       destinationEnvironmentId: ''
     }
   });

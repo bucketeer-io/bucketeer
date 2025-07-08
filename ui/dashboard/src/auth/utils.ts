@@ -37,6 +37,11 @@ export const currentEnvironmentRole = (
   if (!curEnvRole) {
     curEnvRole = account.environmentRoles[0];
   }
+
+  curEnvRole.environment = {
+    ...curEnvRole.environment,
+    id: checkEnvironmentEmptyId(curEnvRole.environment.id)
+  };
   return curEnvRole;
 };
 

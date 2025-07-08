@@ -11,7 +11,6 @@ import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import { UserSegmentForm } from 'pages/user-segments/types';
 import Button from 'components/button';
@@ -112,7 +111,7 @@ const SegmentCreateUpdateModal = ({
         let newSegment = userSegment;
         if (!userSegment) {
           const resp = await userSegmentCreator({
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+            environmentId: currentEnvironment.id,
             name: values.name,
             description: values.description
           });
@@ -132,7 +131,7 @@ const SegmentCreateUpdateModal = ({
           covertFileToUint8ToBase64(file, async base64String => {
             await userSegmentBulkUpload({
               segmentId: segmentId as string,
-              environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+              environmentId: currentEnvironment.id,
               state: 'INCLUDED',
               data: base64String
             });
@@ -149,7 +148,7 @@ const SegmentCreateUpdateModal = ({
               id: segmentId as string,
               name,
               description,
-              environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+              environmentId: currentEnvironment.id
             });
           }
         }

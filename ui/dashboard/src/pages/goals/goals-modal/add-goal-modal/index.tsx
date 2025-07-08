@@ -10,7 +10,6 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -86,7 +85,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
       const resp = await goalCreator({
         ...values,
         connectionType: values.connectionType as ConnectionType,
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+        environmentId: currentEnvironment.id
       });
       if (resp.goal) addSuccess();
     } catch (error) {

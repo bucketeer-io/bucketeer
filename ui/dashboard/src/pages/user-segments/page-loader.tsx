@@ -11,7 +11,6 @@ import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import PageContent from './page-content';
 import { UserSegmentsActionsType } from './types';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
@@ -51,7 +50,7 @@ const PageLoader = () => {
     error
   } = useQueryUserSegment({
     params: {
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id),
+      environmentId: currentEnvironment.id,
       id: id as string
     },
     enabled: !!isEdit && !!id && !selectedSegment
@@ -65,7 +64,7 @@ const PageLoader = () => {
       if (editable)
         return userSegmentDelete({
           id: selectedSegment.id,
-          environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+          environmentId: currentEnvironment.id
         });
     },
     onSuccess: () => {
@@ -111,7 +110,7 @@ const PageLoader = () => {
     async (segment: UserSegment) => {
       const resp = await userSegmentBulkDownload({
         segmentId: segment.id,
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+        environmentId: currentEnvironment.id
       });
       if (resp.data) {
         const url = window.URL.createObjectURL(

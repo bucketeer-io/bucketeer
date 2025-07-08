@@ -5,7 +5,6 @@ import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { isNil } from 'lodash';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo } from '@icons';
 import {
   DropdownMenu,
@@ -34,7 +33,7 @@ const VariationList = ({
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+      environmentId: currentEnvironment?.id,
       featureIds: [feature?.id]
     },
     enabled: !isNil(currentEnvironment?.id) && !!feature?.id
@@ -45,7 +44,7 @@ const VariationList = ({
   const { data: operationCollection } = useQueryAutoOpsRules({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+      environmentId: currentEnvironment?.id,
       featureIds: [feature?.id]
     }
   });

@@ -25,7 +25,6 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo, IconPlus } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
@@ -140,7 +139,7 @@ const ExperimentCreateUpdateModal = ({
   } = useQueryExperimentDetails({
     params: {
       id: experimentId as string,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     },
     enabled: !!experimentId
   });
@@ -160,7 +159,7 @@ const ExperimentCreateUpdateModal = ({
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     }
   });
 
@@ -177,7 +176,7 @@ const ExperimentCreateUpdateModal = ({
     useQueryFeatures({
       params: {
         cursor: String(0),
-        environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+        environmentId: currentEnvironment.id
       }
     });
 
@@ -268,7 +267,7 @@ const ExperimentCreateUpdateModal = ({
             description,
             startAt,
             stopAt,
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+            environmentId: currentEnvironment.id
           });
         } else {
           resp = await experimentCreator({
@@ -279,7 +278,7 @@ const ExperimentCreateUpdateModal = ({
             startAt,
             stopAt,
             description,
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+            environmentId: currentEnvironment.id
           });
         }
         if (resp) {
@@ -292,7 +291,7 @@ const ExperimentCreateUpdateModal = ({
           invalidateExperiments(queryClient);
           invalidateExperimentDetails(queryClient, {
             id: experimentId as string,
-            environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+            environmentId: currentEnvironment.id
           });
           onClose();
         }

@@ -2,7 +2,6 @@ import { forwardRef, Ref, useImperativeHandle } from 'react';
 import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import Pagination from 'components/pagination';
 import FormLoading from 'elements/form-loading';
 import PageLayout from 'elements/page-layout';
@@ -42,7 +41,7 @@ const CollectionLoader = forwardRef(
       isError
     } = useFetchAuditLogs({
       ...filters,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment?.id),
+      environmentId: currentEnvironment?.id,
       enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
     });
 

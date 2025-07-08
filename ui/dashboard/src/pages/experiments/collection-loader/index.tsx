@@ -4,7 +4,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
@@ -43,7 +42,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchExperiments({
       ...filters,
-      environmentId: checkEnvironmentEmptyId(currentEnvironment.id)
+      environmentId: currentEnvironment.id
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {
