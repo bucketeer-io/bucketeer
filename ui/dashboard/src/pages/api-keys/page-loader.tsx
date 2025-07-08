@@ -5,7 +5,12 @@ import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import {
+  getAccountAccess,
+  getCurrentEnvironment,
+  getEditorEnvironments,
+  useAuth
+} from 'auth';
 import { ID_NEW, PAGE_PATH_APIKEYS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -13,7 +18,6 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { APIKey } from '@types';
 import { useSearchParams } from 'utils/search-params';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import ConfirmModal from 'elements/confirm-modal';
 import APIKeyCreateUpdateModal from './api-key-modal/api-key-create-update-modal';
 import PageContent from './page-content';
@@ -24,6 +28,7 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
   const navigate = useNavigate();
 
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
@@ -57,11 +62,6 @@ const PageLoader = () => {
     useToggleOpen(false);
   const { searchOptions } = useSearchParams();
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
-
   const apiKeyEnvironmentId = searchOptions?.environmentId;
 
   const {
@@ -91,7 +91,7 @@ const PageLoader = () => {
   const onHandleActions = useCallback(
     (apiKey: APIKey, type: APIKeyActionsType) => {
       setSelectedAPIKey(apiKey);
-      const environment = environments.find(
+      const environment = editorEnvironments.find(
         item => item.name === apiKey.environmentName
       );
       switch (type) {
@@ -107,12 +107,12 @@ const PageLoader = () => {
           break;
       }
     },
-    [environments, commonPath]
+    [editorEnvironments, commonPath]
   );
 
   const mutationState = useMutation({
     mutationFn: async (selectedAPIKey: APIKey) => {
-      const environmentId = environments.find(
+      const environmentId = editorEnvironments.find(
         item => item.name === selectedAPIKey.environmentName
       )?.id;
       return apiKeyUpdater({
@@ -165,9 +165,8 @@ const PageLoader = () => {
           isOpen={!!isAdd || !!isEdit}
           apiKeyEnvironmentId={apiKeyEnvironmentId as string}
           isLoadingApiKey={isLoadingApiKey}
-          isLoadingEnvs={isLoadingEnvs}
           apiKey={selectedAPIKey}
-          environments={environments}
+          environments={editorEnvironments}
           onClose={handleOnCloseModal}
         />
       )}

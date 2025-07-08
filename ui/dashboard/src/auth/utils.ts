@@ -73,14 +73,20 @@ export const getEnvironmentsByProjectId = (
     .map(role => role.environment);
 };
 
-export const getEditorEnvironmentIds = (account: ConsoleAccount) => {
-  const editorEnvironments = account.environmentRoles
-    .filter(item => item.role === 'Environment_EDITOR')
-    .map(item => item.environment);
+export const getEditorEnvironments = (account: ConsoleAccount) => {
+  const environmentsEditorRole = account.environmentRoles.filter(
+    item => item.role === 'Environment_EDITOR'
+  );
+  const editorEnvironments = environmentsEditorRole.map(
+    item => item.environment
+  );
   const editorEnvironmentIDs = editorEnvironments.map(item => item.id);
+  const projects = environmentsEditorRole.map(item => item.project);
+
   return {
     editorEnvironments,
-    editorEnvironmentIDs
+    editorEnvironmentIDs,
+    projects
   };
 };
 

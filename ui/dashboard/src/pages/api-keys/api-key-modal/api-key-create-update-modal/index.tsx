@@ -15,19 +15,13 @@ import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
-import DropdownList from 'elements/dropdown-list';
+import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
 
 interface APIKeyCreateUpdateModalProps {
@@ -35,7 +29,6 @@ interface APIKeyCreateUpdateModalProps {
   isLoadingApiKey: boolean;
   apiKeyEnvironmentId: string;
   environments: Environment[];
-  isLoadingEnvs: boolean;
   apiKey?: APIKey;
   onClose: () => void;
 }
@@ -58,7 +51,6 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
 const APIKeyCreateUpdateModal = ({
   isOpen,
   isLoadingApiKey,
-  isLoadingEnvs,
   apiKeyEnvironmentId,
   apiKey,
   environments,
@@ -70,8 +62,7 @@ const APIKeyCreateUpdateModal = ({
   const { apiKeyOptions } = useOptions();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
-  const { emptyEnvironmentId, formattedEnvironments } =
-    onFormatEnvironments(environments);
+  const { emptyEnvironmentId } = onFormatEnvironments(environments);
 
   const isEditApiKey = useMemo(
     () => !!apiKey || !!isLoadingApiKey || !!apiKeyEnvironmentId,
@@ -94,25 +85,8 @@ const APIKeyCreateUpdateModal = ({
   });
 
   const {
-    watch,
     formState: { isValid, isSubmitting, isDirty }
   } = form;
-
-  const environmentIdWatch = watch('environmentId');
-
-  const currentEnv = useMemo(
-    () => formattedEnvironments.find(item => item.id === environmentIdWatch),
-    [formattedEnvironments, environmentIdWatch]
-  );
-
-  const environmentOptions = useMemo(
-    () =>
-      formattedEnvironments.map(item => ({
-        label: item.name,
-        value: item.id
-      })),
-    [formattedEnvironments]
-  );
 
   const onSubmit: SubmitHandler<APIKeyCreateUpdateForm> = useCallback(
     async values => {
@@ -209,28 +183,11 @@ const APIKeyCreateUpdateModal = ({
                   <Form.Item className="py-2">
                     <Form.Label required>{t('environment')}</Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:select-environment`)}
-                          label={currentEnv?.name}
-                          disabled={!!apiKey || disabled}
-                          variant="secondary"
-                          loading={isLoadingEnvs}
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className={cn('w-[502px]', {
-                            'hidden-scroll': environmentOptions?.length > 15
-                          })}
-                          align="start"
-                          {...field}
-                        >
-                          <DropdownList
-                            options={environmentOptions as DropdownOption[]}
-                            onSelectOption={field.onChange}
-                          />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <EnvironmentEditorList
+                        disabled={!!apiKey || disabled}
+                        value={field.value}
+                        onSelectOption={field.onChange}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

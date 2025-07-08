@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getEditorEnvironmentIds, useAuth } from 'auth';
+import { getEditorEnvironments, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { debounce, isNil } from 'lodash';
@@ -46,7 +46,7 @@ const FilterAPIKeyModal = ({
   const { t } = useTranslation(['common']);
   const { environmentEnabledFilterOptions, booleanOptions } = useOptions();
   const { consoleAccount } = useAuth();
-  const { editorEnvironments } = getEditorEnvironmentIds(consoleAccount!);
+  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
 
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     environmentEnabledFilterOptions[0]

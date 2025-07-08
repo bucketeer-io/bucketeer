@@ -12,6 +12,7 @@ import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -23,6 +24,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
 
 interface CloneFlagModalProps {
@@ -64,10 +66,10 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       id: flagId as string,
       environmentId: currentEnvironment?.id
     },
-    enabled: !!flagId && !!currentEnvironment?.id
+    enabled: !!flagId
   });
 
-  const { data: collection, isLoading: isLoadingEnvs } = useQueryEnvironments({
+  const { data: collection } = useQueryEnvironments({
     params: {
       organizationId: currentEnvironment.organizationId,
       pageSize: LIST_PAGE_SIZE,
@@ -76,9 +78,6 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   });
 
   const environments = collection?.environments || [];
-
-  const destinationEnvironments =
-    environments?.filter(item => item.id !== currentEnvironment?.id) || [];
 
   const feature = featureCollection?.feature;
 
@@ -98,7 +97,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       const resp = await featureClone({
         id,
         environmentId: originEnvironmentId,
-        targetEnvironmentId: destinationEnvironmentId
+        targetEnvironmentId: checkEnvironmentEmptyId(destinationEnvironmentId)
       });
 
       if (resp) {
@@ -205,38 +204,11 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       {t('form:destination-env')}
                     </Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:select-environment`)}
-                          label={
-                            destinationEnvironments.find(
-                              item => !!field.value && item.id === field.value
-                            )?.name
-                          }
-                          disabled={
-                            isLoadingEnvs || isLoadingFeature || !editable
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className="w-[502px]"
-                          align="start"
-                          {...field}
-                        >
-                          {destinationEnvironments.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={item.name}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <EnvironmentEditorList
+                        value={field.value}
+                        disabled={!editable}
+                        onSelectOption={field.onChange}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

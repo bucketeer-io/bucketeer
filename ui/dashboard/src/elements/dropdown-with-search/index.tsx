@@ -19,6 +19,47 @@ import {
 } from 'components/dropdown';
 import DropdownList from 'elements/dropdown-list';
 
+export interface DropdownMenuWithSearchProps {
+  align?: 'start' | 'center' | 'end';
+  hidden?: boolean;
+  label?: ReactNode;
+  placeholder?: string;
+  isLoading?: boolean;
+  isMultiselect?: boolean;
+  options: DropdownOption[];
+  selectedOptions?: string[];
+  createNewOption?: ReactNode;
+  triggerClassName?: string;
+  contentClassName?: string;
+  isExpand?: boolean;
+  disabled?: boolean;
+  trigger?: ReactNode;
+  showArrow?: boolean;
+  showClear?: boolean;
+  ariaLabel?: string;
+  inputPlaceholder?: string;
+  selectedFieldValue?: string;
+  itemSize?: number;
+  notFoundOption?: (
+    value: string,
+    onChangeValue: (value: string) => void
+  ) => ReactNode;
+  additionalElement?: (item: DropdownOption) => ReactNode;
+  onSelectOption: (value: DropdownValue) => void;
+  onKeyDown?: ({
+    event,
+    searchValue,
+    matchOptions,
+    onClearSearchValue
+  }: {
+    event: KeyboardEvent<HTMLInputElement>;
+    searchValue: string;
+    matchOptions: DropdownOption[];
+    onClearSearchValue: () => void;
+  }) => void;
+  onClear?: () => void;
+}
+
 const DropdownMenuWithSearch = ({
   align,
   hidden,
@@ -39,50 +80,13 @@ const DropdownMenuWithSearch = ({
   ariaLabel,
   inputPlaceholder,
   selectedFieldValue = 'value',
+  itemSize = 44,
   notFoundOption,
   additionalElement,
   onSelectOption,
   onKeyDown,
   onClear
-}: {
-  align?: 'start' | 'center' | 'end';
-  hidden?: boolean;
-  label?: ReactNode;
-  placeholder?: string;
-  isLoading?: boolean;
-  isMultiselect?: boolean;
-  options: DropdownOption[];
-  selectedOptions?: string[];
-  createNewOption?: ReactNode;
-  triggerClassName?: string;
-  contentClassName?: string;
-  isExpand?: boolean;
-  disabled?: boolean;
-  trigger?: ReactNode;
-  showArrow?: boolean;
-  showClear?: boolean;
-  ariaLabel?: string;
-  inputPlaceholder?: string;
-  selectedFieldValue?: string;
-  notFoundOption?: (
-    value: string,
-    onChangeValue: (value: string) => void
-  ) => ReactNode;
-  additionalElement?: (item: DropdownOption) => ReactNode;
-  onSelectOption: (value: DropdownValue) => void;
-  onKeyDown?: ({
-    event,
-    searchValue,
-    matchOptions,
-    onClearSearchValue
-  }: {
-    event: KeyboardEvent<HTMLInputElement>;
-    searchValue: string;
-    matchOptions: DropdownOption[];
-    onClearSearchValue: () => void;
-  }) => void;
-  onClear?: () => void;
-}) => {
+}: DropdownMenuWithSearchProps) => {
   const { t } = useTranslation(['common']);
   const inputSearchRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLInputElement>(null);
@@ -185,7 +189,7 @@ const DropdownMenuWithSearch = ({
         {dropdownOptions?.length > 0 ? (
           <DropdownList
             options={dropdownOptions}
-            itemSize={44}
+            itemSize={itemSize}
             isMultiselect={isMultiselect}
             selectedOptions={selectedOptions}
             selectedFieldValue={selectedFieldValue}

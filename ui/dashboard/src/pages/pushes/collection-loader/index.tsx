@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
-import { getCurrentEnvironment, getEditorEnvironmentIds, useAuth } from 'auth';
+import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Push } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -31,7 +31,7 @@ const CollectionLoader = memo(
   }) => {
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { editorEnvironmentIDs } = getEditorEnvironmentIds(consoleAccount!);
+    const { editorEnvironmentIDs } = getEditorEnvironments(consoleAccount!);
 
     const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
       organizationId: currentEnvironment.organizationId,
