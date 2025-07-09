@@ -1,16 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryOrganizationDetails } from '@queries/organization-details';
 import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
-import { useTranslation } from 'i18n';
-import { useFormatDateTime } from 'utils/date-time';
 import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['table']);
   const navigate = useNavigate();
-  const formatDateTime = useFormatDateTime();
   const { organizationId } = useParams();
 
   const { data, isLoading, refetch, isError } = useQueryOrganizationDetails({
@@ -30,9 +26,7 @@ const PageLoader = () => {
         <>
           <PageDetailsHeader
             title={organization.name}
-            description={t('created-at-time', {
-              time: formatDateTime(organization.createdAt)
-            })}
+            description={organization.createdAt}
             onBack={() => navigate(`${PAGE_PATH_ORGANIZATIONS}`)}
           />
           <PageContent organization={organization} />

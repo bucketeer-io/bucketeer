@@ -1,11 +1,9 @@
 import { ReactNode } from 'react';
-import {
-  IconAccessTimeOutlined,
-  IconArrowBackFilled
-} from 'react-icons-material-design';
+import { IconArrowBackFilled } from 'react-icons-material-design';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 import SupportPopover from 'elements/page-header/support';
+import CreatedAtTime from './created-at-time';
 
 export type PageDetailsHeaderProps = {
   title?: string;
@@ -24,8 +22,8 @@ const PageDetailsHeader = ({
 }: PageDetailsHeaderProps) => {
   return (
     <header className="grid pt-7 px-6">
-      <div className="flex items-center justify-between gap-x-2">
-        <div className="flex items-center gap-4">
+      <div className="flex items-start justify-between gap-x-2">
+        <div className="flex items-start gap-4">
           <button
             className={cn(
               'size-6 min-w-6 flex-center rounded hover:shadow-border-gray-500',
@@ -35,9 +33,9 @@ const PageDetailsHeader = ({
           >
             <Icon icon={IconArrowBackFilled} size="xxs" />
           </button>
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-start gap-x-2">
             {title && (
-              <h1 className="text-gray-900 flex-1 typo-head-bold-huge -mt-1">
+              <h1 className="text-gray-900 flex-1 typo-head-bold-huge -mt-1.5">
                 {title}
               </h1>
             )}
@@ -48,10 +46,7 @@ const PageDetailsHeader = ({
       </div>
 
       {description && (
-        <div className="text-gray-500 flex items-center gap-1.5 mt-4">
-          <Icon icon={IconAccessTimeOutlined} size="xxs" />
-          <p className="typo-para-small">{description}</p>
-        </div>
+        <CreatedAtTime createdAt={description} className="mt-4" />
       )}
       {children}
     </header>
