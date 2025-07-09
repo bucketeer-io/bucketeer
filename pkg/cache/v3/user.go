@@ -53,7 +53,7 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]st
 	for {
 		cursor, k, err = u.cache.Scan(cursor, scanKey, userAttributesMaxSize)
 		if err != nil {
-			break
+			return nil, err
 		}
 		keys = append(keys, k...)
 		if cursor == 0 {
@@ -70,16 +70,12 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]st
 	for _, fullKey := range keys {
 		// Split by ":" and get the last part which is the attribute key
 		parts := strings.Split(fullKey, ":")
-		userAttrKindIndex := -1
 		for i, part := range parts {
-			if part == userAttributeKind {
-				userAttrKindIndex = i
+			// If userAttrKindIndex is found, use the next element as the key
+			if part == userAttributeKind && i+1 < len(parts) {
+				attributeKeys = append(attributeKeys, parts[i+1])
 				break
 			}
-		}
-		// If userAttrKindIndex is found, use the next element as the key
-		if userAttrKindIndex != -1 && userAttrKindIndex+1 < len(parts) {
-			attributeKeys = append(attributeKeys, parts[userAttrKindIndex+1])
 		}
 	}
 
