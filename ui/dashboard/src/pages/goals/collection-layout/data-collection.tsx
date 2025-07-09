@@ -7,7 +7,6 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { ConnectionType, Goal } from '@types';
-import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
@@ -78,7 +77,7 @@ export const useColumns = ({
               }
             />
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(id)}
+              {id}
               <div onClick={() => handleCopyId(id)}>
                 <Icon
                   icon={IconCopy}
