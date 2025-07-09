@@ -34,6 +34,7 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
@@ -69,6 +70,7 @@ type server struct {
 	auditLogService        *string
 	tagService             *string
 	teamService            *string
+	notificationService    *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -146,6 +148,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"team-service",
 			"bucketeer-team-service address.",
 		).Default("team:9090").String(),
+		notificationService: cmd.Flag(
+			"notification-service",
+			"bucketeer-notification-service address.",
+		).Default("notification:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -377,6 +383,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer teamClient.Close()
 
+	notificationClient, err := notificationclient.NewClient(*s.notificationService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer notificationClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -400,6 +418,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		autoOpsClient,
 		tagClient,
 		teamClient,
+		notificationClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
