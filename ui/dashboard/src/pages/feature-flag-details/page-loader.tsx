@@ -7,6 +7,8 @@ import { FlagStatus } from 'pages/feature-flags/collection-layout/elements';
 import { getFlagStatus } from 'pages/feature-flags/collection-layout/elements/utils';
 import { Tooltip } from 'components/tooltip';
 import PageDetailsHeader from 'elements/page-details-header';
+import CreatedAtTime from 'elements/page-details-header/created-at-time';
+import HeaderDetailsID from 'elements/page-details-header/header-details-id';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
 
@@ -57,9 +59,12 @@ const PageLoader = () => {
               content={t(`feature-flags.${flagStatus}-description`)}
               className="max-w-[300px]"
             />
+            <CreatedAtTime createdAt={feature.createdAt} />
           </>
         }
-      />
+      >
+        <HeaderDetailsID id={feature.id} />
+      </PageDetailsHeader>
       <PageContent feature={feature} />
     </>
   );

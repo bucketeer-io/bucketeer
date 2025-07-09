@@ -42,7 +42,7 @@ const SupportPopover = () => {
       sideOffset={6}
       className="py-1.5 shadow-card-secondary"
       trigger={
-        <div className="flex-center size-fit">
+        <div className="flex-center size-6 min-w-6">
           <Icon icon={IconHelpOutlineOutlined} size="sm" color="gray-500" />
         </div>
       }
