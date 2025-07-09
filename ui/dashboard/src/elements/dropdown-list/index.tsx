@@ -46,8 +46,9 @@ const RowWithData = ({
         currentItem[selectedFieldValue] as string
       )}
       isMultiselect={isMultiselect}
-      value={currentItem.value}
-      label={currentItem.label}
+      value={currentItem?.value}
+      label={currentItem?.label}
+      description={currentItem?.description}
       icon={currentItem?.icon}
       disabled={currentItem?.disabled}
       additionalElement={additionalElement && additionalElement(currentItem)}
