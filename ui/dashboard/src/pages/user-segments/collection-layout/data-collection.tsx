@@ -95,6 +95,34 @@ export const useColumns = ({
       }
     },
     {
+      accessorKey: 'status',
+      header: `${t('status')}`,
+      size: 150,
+      minSize: 150,
+      maxSize: 150,
+      cell: ({ row }) => {
+        const segment = row.original;
+        const isUploading = getUploadingStatus(segment);
+        return (
+          <div
+            className={cn(
+              'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit text-center whitespace-nowrap rounded',
+              {
+                'bg-gray-200 text-gray-600': !segment.isInUseStatus,
+                'bg-accent-orange-50 text-accent-orange-500': isUploading
+              }
+            )}
+          >
+            {isUploading
+              ? t('uploading')
+              : segment.isInUseStatus
+                ? t('in-use')
+                : t('not-in-use')}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'updatedAt',
       header: t('table:updated-at'),
       size: 200,
