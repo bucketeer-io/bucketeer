@@ -36,7 +36,7 @@ const CollectionLoader = memo(
   }) => {
     const columns = useColumns({ segmentUploading, onActionHandler });
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
       data: collection,
@@ -45,7 +45,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchSegments({
       ...filters,
-      environmentId: currenEnvironment.id
+      environmentId: currentEnvironment.id
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {

@@ -82,7 +82,7 @@ export const useColumns = ({
   const { searchOptions } = useSearchParams();
 
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   return [
     {
@@ -100,7 +100,7 @@ export const useColumns = ({
               content={<NameWithTooltip.Content content={name} id={id} />}
               trigger={
                 <Link
-                  to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${id}/results`}
+                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${id}/results`}
                 >
                   <NameWithTooltip.Trigger
                     id={id}

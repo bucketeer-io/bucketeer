@@ -1,24 +1,47 @@
+import { isNil } from 'lodash';
 import { unwrapUndefinable } from 'option-t/undefinable';
 import { getCurrentEnvIdStorage } from 'storage/environment';
+import { getCurrentProjectEnvironmentStorage } from 'storage/project-environment';
 import { ConsoleAccount, Environment, EnvironmentRole, Project } from '@types';
-import { isNotEmpty } from 'utils/data-type';
+import { checkEnvironmentEmptyId } from 'utils/function';
 
 export const currentEnvironmentRole = (
   account: ConsoleAccount
 ): EnvironmentRole => {
   const currentEnvId = getCurrentEnvIdStorage();
-  const curEnvId = isNotEmpty(currentEnvId)
+  const projectEnvironment = getCurrentProjectEnvironmentStorage();
+  const curEnvId = !isNil(currentEnvId)
     ? currentEnvId
     : account.environmentRoles[0].environment.id;
 
-  let curEnvRole = account.environmentRoles.find(environmentRole => {
-    const { environment } = environmentRole || {};
-    const environmentId = environment?.id || environment?.urlCode;
-    return environmentId === curEnvId;
-  });
+  let curEnvRole = undefined;
+  const checkEmptyEnvironmentId = checkEnvironmentEmptyId(curEnvId);
+  const checkEmptyProjectEnvironmentId =
+    projectEnvironment &&
+    checkEnvironmentEmptyId(projectEnvironment?.environmentId);
+  if (checkEmptyEnvironmentId === checkEmptyProjectEnvironmentId) {
+    curEnvRole = account.environmentRoles.find(environmentRole => {
+      const { environment, project } = environmentRole || {};
+      return (
+        project.id === projectEnvironment?.projectId &&
+        environment.id === checkEmptyEnvironmentId
+      );
+    });
+  } else {
+    curEnvRole = account.environmentRoles.find(environmentRole => {
+      const { environment } = environmentRole || {};
+      const environmentId = environment?.id;
+      return environmentId === checkEmptyEnvironmentId;
+    });
+  }
   if (!curEnvRole) {
     curEnvRole = account.environmentRoles[0];
   }
+
+  curEnvRole.environment = {
+    ...curEnvRole.environment,
+    id: checkEnvironmentEmptyId(curEnvRole.environment.id)
+  };
   return curEnvRole;
 };
 
@@ -33,11 +56,21 @@ export const getCurrentProject = (
   currentEnvId: string
 ) => {
   try {
+    const projectEnvironment = getCurrentProjectEnvironmentStorage();
+    const checkEmptyEnvironmentId = checkEnvironmentEmptyId(currentEnvId);
+    const checkEmptyProjectEnvironmentId =
+      projectEnvironment &&
+      checkEnvironmentEmptyId(projectEnvironment?.environmentId);
+    if (checkEmptyEnvironmentId === checkEmptyProjectEnvironmentId) {
+      return unwrapUndefinable(
+        roles.find(item => item.project.id === projectEnvironment?.projectId)
+      )?.project;
+    }
     return unwrapUndefinable(
       roles.find(role => {
         const { environment } = role || {};
-        const environmentId = environment?.id || environment?.urlCode;
-        return environmentId === currentEnvId;
+        const environmentId = environment?.id;
+        return environmentId === checkEmptyEnvironmentId;
       })
     )?.project;
   } catch {

@@ -9,6 +9,7 @@ import {
   getUniqueProjects,
   useAuth
 } from 'auth';
+import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -18,6 +19,10 @@ import {
   setCurrentEnvIdStorage
 } from 'storage/environment';
 import { clearOrgIdStorage } from 'storage/organization';
+import {
+  clearCurrentProjectEnvironmentStorage,
+  setCurrentProjectEnvironmentStorage
+} from 'storage/project-environment';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChecked, IconChevronRight, IconFolder, IconNoData } from '@icons';
@@ -48,9 +53,10 @@ const MyProjects = () => {
     (lastEnvironmentId?: string) => {
       const { environmentRoles } = consoleAccount!;
       const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-      const { id, urlCode } = currentEnvironment || {};
+      const { id } = currentEnvironment || {};
 
-      const environmentId = lastEnvironmentId || id || urlCode;
+      const environmentId = lastEnvironmentId || id;
+
       const currentProjects = getUniqueProjects(environmentRoles);
       const currentProject = getCurrentProject(environmentRoles, environmentId);
 
@@ -65,7 +71,7 @@ const MyProjects = () => {
         currentProject.id
       );
 
-      setCurrentEnvIdStorage(environmentId);
+      setCurrentEnvIdStorage(environmentId || ENVIRONMENT_WITH_EMPTY_ID);
       setProjects(currentProjects);
       setSelectedProject(currentProject);
       setSelectedEnvironment(currentEnvironment);
@@ -105,10 +111,14 @@ const MyProjects = () => {
   const onHandleChange = useCallback(
     (value: Environment) => {
       if (selectedEnvironment?.id === value.id) return;
-
       setSelectedEnvironment(value);
       clearCurrentEnvIdStorage();
-      setCurrentEnvIdStorage(value.id || value.urlCode);
+      clearCurrentProjectEnvironmentStorage();
+      setCurrentEnvIdStorage(value.id || ENVIRONMENT_WITH_EMPTY_ID);
+      setCurrentProjectEnvironmentStorage({
+        environmentId: value.id || ENVIRONMENT_WITH_EMPTY_ID,
+        projectId: value.projectId
+      });
       navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
         replace: false,
         state: {
@@ -118,7 +128,7 @@ const MyProjects = () => {
       setIsShowProjectsList(false);
       onClearSearch();
     },
-    [setSelectedEnvironment, consoleAccount]
+    [setSelectedEnvironment, consoleAccount, selectedEnvironment]
   );
 
   const handleOpenSelectMenu = useCallback(
@@ -144,7 +154,6 @@ const MyProjects = () => {
   const onChangeProject = useCallback(
     (project: Project) => {
       const { environmentRoles } = consoleAccount!;
-
       const currentEnvironments = getEnvironmentsByProjectId(
         environmentRoles,
         project.id

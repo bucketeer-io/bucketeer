@@ -31,7 +31,7 @@ const CollectionLoader = memo(
     onClearFilters: () => void;
   }) => {
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
       data: collection,
@@ -40,26 +40,26 @@ const CollectionLoader = memo(
       isError
     } = useFetchFlags({
       ...filters,
-      environmentId: currenEnvironment?.id
+      environmentId: currentEnvironment?.id
     });
 
     const { data: accountCollection } = useQueryAccounts({
       params: {
-        organizationId: currenEnvironment?.organizationId,
+        organizationId: currentEnvironment?.organizationId,
         cursor: String(0)
       }
     });
 
     const { data: autoOpsCollection } = useQueryAutoOpsRules({
       params: {
-        environmentId: currenEnvironment?.id,
+        environmentId: currentEnvironment?.id,
         cursor: String(0)
       }
     });
 
     const { data: rolloutCollection } = useQueryRollouts({
       params: {
-        environmentId: currenEnvironment?.id,
+        environmentId: currentEnvironment?.id,
         cursor: String(0)
       }
     });

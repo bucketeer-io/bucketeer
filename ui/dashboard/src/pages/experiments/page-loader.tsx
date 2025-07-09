@@ -60,7 +60,9 @@ const PageLoader = () => {
     isLoading,
     refetch,
     isError
-  } = useFetchExperiments({ environmentId: currentEnvironment.id });
+  } = useFetchExperiments({
+    environmentId: currentEnvironment.id
+  });
 
   const summary = useMemo(() => collection?.summary, [collection]);
 

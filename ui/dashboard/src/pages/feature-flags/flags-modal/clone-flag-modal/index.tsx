@@ -1,18 +1,28 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { featureClone } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQueryEnvironments } from '@queries/environments';
 import { useQueryFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
+import {
+  getCurrentEnvironment,
+  getEditorEnvironments,
+  hasEditable,
+  useAuth
+} from 'auth';
+import {
+  PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
+import { setCurrentEnvIdStorage } from 'storage/environment';
+import { setCurrentProjectEnvironmentStorage } from 'storage/project-environment';
 import * as yup from 'yup';
-import { checkEnvironmentEmptyId } from 'utils/function';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -50,7 +60,11 @@ const formSchema = ({ requiredMessage }: FormSchemaProps) =>
 
 const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const { consoleAccount } = useAuth();
+  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(editorEnvironments);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
@@ -69,16 +83,6 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
     enabled: !!flagId
   });
 
-  const { data: collection } = useQueryEnvironments({
-    params: {
-      organizationId: currentEnvironment.organizationId,
-      pageSize: LIST_PAGE_SIZE,
-      cursor: String(0)
-    }
-  });
-
-  const environments = collection?.environments || [];
-
   const feature = featureCollection?.feature;
 
   const form = useForm({
@@ -86,34 +90,53 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
     values: {
       id: feature?.id || '',
       name: feature?.name || '',
-      originEnvironmentId: currentEnvironment?.id || '',
+      originEnvironmentId: currentEnvironment?.id || emptyEnvironmentId || '',
       destinationEnvironmentId: ''
     }
   });
 
-  const onSubmit: SubmitHandler<CloneFlagForm> = async values => {
-    try {
-      const { id, destinationEnvironmentId, originEnvironmentId } = values;
-      const resp = await featureClone({
-        id,
-        environmentId: originEnvironmentId,
-        targetEnvironmentId: checkEnvironmentEmptyId(destinationEnvironmentId)
-      });
-
-      if (resp) {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('common:source-type.feature-flag'),
-            action: t('cloned')
-          })
+  const onSubmit: SubmitHandler<CloneFlagForm> = useCallback(
+    async values => {
+      try {
+        const { id, destinationEnvironmentId, originEnvironmentId } = values;
+        const resp = await featureClone({
+          id,
+          environmentId: checkEnvironmentEmptyId(originEnvironmentId),
+          targetEnvironmentId: checkEnvironmentEmptyId(destinationEnvironmentId)
         });
-        invalidateFeatures(queryClient);
-        onClose();
+
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('common:source-type.feature-flag'),
+              action: t('cloned')
+            })
+          });
+          const targetEnvironment = formattedEnvironments.find(
+            item => item.id === destinationEnvironmentId
+          );
+          invalidateFeatures(queryClient);
+          onClose();
+          if (targetEnvironment) {
+            setCurrentEnvIdStorage(targetEnvironment?.id);
+            setCurrentProjectEnvironmentStorage({
+              environmentId: targetEnvironment?.id,
+              projectId: targetEnvironment?.projectId
+            });
+            navigate(
+              `/${targetEnvironment?.urlCode}${PAGE_PATH_FEATURES}/${id}${PAGE_PATH_FEATURE_TARGETING}`,
+              {
+                replace: true
+              }
+            );
+          }
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
-    }
-  };
+    },
+    [formattedEnvironments]
+  );
 
   useEffect(() => {
     if (featureError) {
@@ -164,8 +187,9 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            environments.find(item => item.id === field.value)
-                              ?.name
+                            formattedEnvironments.find(
+                              item => item.id === field.value
+                            )?.name
                           }
                           disabled
                           variant="secondary"
@@ -176,7 +200,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {formattedEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}

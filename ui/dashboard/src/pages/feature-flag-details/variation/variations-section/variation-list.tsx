@@ -4,6 +4,7 @@ import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { isNil } from 'lodash';
 import { IconInfo } from '@icons';
 import {
   DropdownMenu,
@@ -35,7 +36,7 @@ const VariationList = ({
       environmentId: currentEnvironment?.id,
       featureIds: [feature?.id]
     },
-    enabled: !!currentEnvironment?.id && !!feature?.id
+    enabled: !isNil(currentEnvironment?.id) && !!feature?.id
   });
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];

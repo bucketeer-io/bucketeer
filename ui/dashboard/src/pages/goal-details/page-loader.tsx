@@ -19,7 +19,10 @@ const PageLoader = () => {
   const { goalId } = useParams();
 
   const { data, isLoading, refetch, isError } = useQueryGoalDetails({
-    params: { id: goalId!, environmentId: currentEnvironment.id }
+    params: {
+      id: goalId!,
+      environmentId: currentEnvironment.id
+    }
   });
   const goal = data?.goal;
   const isErrorState = isError || !goal;

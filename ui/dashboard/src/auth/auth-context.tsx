@@ -11,6 +11,7 @@ import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
+import { isNil } from 'lodash';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -23,6 +24,10 @@ import {
   getOrgIdStorage,
   setOrgIdStorage
 } from 'storage/organization';
+import {
+  clearCurrentProjectEnvironmentStorage,
+  setCurrentProjectEnvironmentStorage
+} from 'storage/project-environment';
 import {
   clearTokenStorage,
   getTokenStorage,
@@ -75,13 +80,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const clearOrgAndEnvStorage = () => {
     clearOrgIdStorage();
     clearCurrentEnvIdStorage();
+    clearCurrentProjectEnvironmentStorage();
   };
 
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
       const response = await accountMeFetcher(params);
       const environmentRoles = response.account.environmentRoles;
-      if (!environmentRoles.length) {
+      if (!environmentRoles?.length) {
         clearOrgAndEnvStorage();
         errorNotify(null, t('message:env-are-empty'));
         return logout();
@@ -96,8 +102,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.account.language !== getLanguage()) {
         await setLanguage(response.account.language as Language);
       }
-      if (!environmentId) {
-        setCurrentEnvIdStorage(environmentRoles[0].environment.id);
+      if (isNil(environmentId)) {
+        const environment = environmentRoles[0].environment;
+        setCurrentEnvIdStorage(environment.id);
+        setCurrentProjectEnvironmentStorage({
+          environmentId: environment.id,
+          projectId: environment.projectId
+        });
       }
     } catch (error) {
       clearOrgAndEnvStorage();
@@ -111,7 +122,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const response = await accountOrganizationFetcher();
       const organizationsList = response.organizations || [];
-      if (organizationId) {
+      const isExistOrg = organizationsList.find(
+        item => item.id === organizationId
+      );
+      if (organizationId && isExistOrg) {
         await onMeFetcher({ organizationId });
       } else if (organizationsList.length === 1) {
         setOrgIdStorage(organizationsList[0].id);

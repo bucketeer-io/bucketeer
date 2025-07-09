@@ -33,7 +33,7 @@ const CollectionLoader = memo(
     const { t } = useTranslation(['message']);
     const columns = useColumns({ onActions });
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { searchOptions, onChangSearchParams } = useSearchParams();
     const {
       data: collection,
@@ -42,7 +42,7 @@ const CollectionLoader = memo(
       isError
     } = useFetchExperiments({
       ...filters,
-      environmentId: currenEnvironment.id
+      environmentId: currentEnvironment.id
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {
