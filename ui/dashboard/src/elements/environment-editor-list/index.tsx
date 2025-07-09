@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { getEditorEnvironments, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { onFormatEnvironments } from 'utils/function';
@@ -14,7 +14,8 @@ interface Props extends Omit<DropdownMenuWithSearchProps, 'options'> {
 const EnvironmentEditorList = ({
   value,
   placeholder,
-  itemSize = 40,
+  itemSize = 60,
+  maxOptions = 10,
   selectedValues,
   ...props
 }: Props) => {
@@ -27,8 +28,9 @@ const EnvironmentEditorList = ({
 
   const environmentOptions = useMemo(() => {
     const options = formattedEnvironments.map(item => ({
-      label: `${item.name} (${t('common:source-type.project')}: ${projects.find(project => project.id === item.projectId)?.name})`,
+      label: `${item.name}`,
       value: item.id,
+      description: `${t('common:source-type.project')}: ${projects.find(project => project.id === item.projectId)?.name}`,
       projectId: item.projectId
     }));
     return options;
@@ -45,17 +47,22 @@ const EnvironmentEditorList = ({
     return remainingEnvironments;
   }, [environmentOptions, selectedValues]);
 
+  const getEnvLabel = useCallback(
+    (value: string) => {
+      const selectedEnv = environmentOptions.find(env => env.value === value);
+      return selectedEnv
+        ? `${selectedEnv.label} (${selectedEnv.description})`
+        : value;
+    },
+    [environmentOptions]
+  );
+
   const environmentLabel = useMemo(() => {
     if (Array.isArray(value)) {
-      return value
-        .map(
-          item =>
-            environmentOptions.find(env => env.value === item)?.label || item
-        )
-        .join(', ');
+      return value.map(item => getEnvLabel(item)).join(', ');
     }
     if (typeof value === 'string') {
-      return environmentOptions.find(env => env.value === value)?.label;
+      return getEnvLabel(value);
     }
     return '';
   }, [value, environmentOptions]);
@@ -68,6 +75,8 @@ const EnvironmentEditorList = ({
       isMultiselect={Array.isArray(value)}
       selectedOptions={Array.isArray(value) ? value : undefined}
       itemSize={itemSize}
+      maxOptions={maxOptions}
+      itemClassName="!p-1.5 !mb-0"
       {...props}
     />
   );

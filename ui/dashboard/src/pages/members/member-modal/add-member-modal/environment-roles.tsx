@@ -85,7 +85,11 @@ const EnvironmentRoles = ({
           key={envIndex}
           className="flex items-start w-full max-w-full gap-x-4"
         >
-          <div className="flex w-full max-w-[310px]">
+          <div
+            className={cn('flex w-full max-w-[310px]', {
+              'max-w-[290px]': isJapaneseLanguage
+            })}
+          >
             <Form.Field
               control={control}
               name={`environmentRoles.${envIndex}.environmentId`}
@@ -118,7 +122,7 @@ const EnvironmentRoles = ({
 
           <div
             className={cn('w-[140px] min-w-[140px] h-full', {
-              'w-[170px] min-w-[170px]': isJapaneseLanguage
+              'w-[160px] min-w-[160px]': isJapaneseLanguage
             })}
           >
             <Form.Field

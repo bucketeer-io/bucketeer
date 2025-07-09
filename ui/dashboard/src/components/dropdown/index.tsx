@@ -26,7 +26,7 @@ export type DropdownOption = {
   label: ReactNode;
   value: DropdownValue;
   icon?: FunctionComponent;
-  description?: boolean;
+  description?: string;
   haveCheckbox?: boolean;
   disabled?: boolean;
   labelText?: string;
@@ -294,9 +294,7 @@ const DropdownMenuItem = forwardRef<
             />
           )}
           {description && (
-            <p className="typo-para-small leading-4 text-gray-500">
-              {description}
-            </p>
+            <p className="typo-para-small text-gray-500">{description}</p>
           )}
         </div>
         {additionalElement}

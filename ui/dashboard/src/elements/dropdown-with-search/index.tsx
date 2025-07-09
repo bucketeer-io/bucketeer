@@ -31,6 +31,7 @@ export interface DropdownMenuWithSearchProps {
   createNewOption?: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
+  itemClassName?: string;
   isExpand?: boolean;
   disabled?: boolean;
   trigger?: ReactNode;
@@ -40,6 +41,7 @@ export interface DropdownMenuWithSearchProps {
   inputPlaceholder?: string;
   selectedFieldValue?: string;
   itemSize?: number;
+  maxOptions?: number;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -72,6 +74,7 @@ const DropdownMenuWithSearch = ({
   createNewOption,
   triggerClassName,
   contentClassName,
+  itemClassName,
   isExpand,
   disabled,
   trigger,
@@ -81,6 +84,7 @@ const DropdownMenuWithSearch = ({
   inputPlaceholder,
   selectedFieldValue = 'value',
   itemSize = 44,
+  maxOptions = 15,
   notFoundOption,
   additionalElement,
   onSelectOption,
@@ -153,7 +157,7 @@ const DropdownMenuWithSearch = ({
         align={align}
         className={cn(
           'w-[500px] py-0',
-          { 'hidden-scroll': dropdownOptions?.length > 15 },
+          { 'hidden-scroll': dropdownOptions?.length > maxOptions },
           contentClassName
         )}
         style={
@@ -190,11 +194,13 @@ const DropdownMenuWithSearch = ({
           <DropdownList
             options={dropdownOptions}
             itemSize={itemSize}
+            maxOptions={maxOptions}
             isMultiselect={isMultiselect}
             selectedOptions={selectedOptions}
             selectedFieldValue={selectedFieldValue}
             additionalElement={additionalElement}
             onSelectOption={onSelectOption}
+            className={itemClassName}
           />
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
