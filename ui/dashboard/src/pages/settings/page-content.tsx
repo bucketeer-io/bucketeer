@@ -3,6 +3,9 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
+import { invalidateOrganizationDetails } from '@queries/organization-details';
+import { invalidateOrganizations } from '@queries/organizations';
+import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
@@ -43,6 +46,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const queryClient = useQueryClient();
 
   const { t } = useTranslation(['common', 'form', 'message']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
@@ -82,6 +86,10 @@ const PageContent = ({ organization }: { organization: Organization }) => {
             action: t('updated')
           })
         });
+        invalidateOrganizationDetails(queryClient, {
+          id: currentEnvironment.organizationId
+        });
+        invalidateOrganizations(queryClient);
       }
     } catch (error) {
       errorNotify(error);
