@@ -1,6 +1,6 @@
 import { type Nullable } from 'option-t/nullable';
 
-const KEY = 'organization';
+const KEY = 'organizationId';
 
 export const getOrgIdStorage = (): Nullable<string> => {
   try {

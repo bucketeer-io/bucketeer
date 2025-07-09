@@ -817,7 +817,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
 		rest.WithPort(*s.dashboardServicePort),
-		rest.WithService(NewDashboardService()),
+		rest.WithService(NewDashboardService(*s.webConsoleEnvJSPath)),
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
