@@ -18,6 +18,7 @@ const SettingsPage = () => {
       <PageHeader
         title={t(`organization-settings`)}
         description={t(`setting-subtitle`)}
+        isShowApiEndpoint
       />
       <PageLoader />
     </PageLayout.Root>

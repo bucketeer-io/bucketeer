@@ -8,7 +8,11 @@ const APIKeysPage = () => {
 
   return (
     <PageLayout.Root title={t('api-keys')}>
-      <PageHeader title={t('api-keys')} description={t('api-keys-subtitle')} />
+      <PageHeader
+        title={t('api-keys')}
+        description={t('api-keys-subtitle')}
+        isShowApiEndpoint
+      />
       <PageLoader />
     </PageLayout.Root>
   );
