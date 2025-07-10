@@ -26,6 +26,7 @@ import (
 
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
@@ -63,6 +64,7 @@ func NewEvalEventWriter(
 	project, ds string,
 	size int,
 	location *time.Location,
+	registerer metrics.Registerer,
 	options ...EvalEventWriterOption,
 ) (Writer, error) {
 	var option EvalEventWriterOption
@@ -101,6 +103,7 @@ func NewEvalEventWriter(
 		evaluationEventTable,
 		evt.ProtoReflect().Descriptor(),
 		writer.WithLogger(l),
+		writer.WithMetrics(registerer),
 	)
 	if err != nil {
 		return nil, err

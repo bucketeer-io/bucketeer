@@ -590,6 +590,7 @@ func (s *server) registerPubSubProcessorMap(
 			exClient,
 			ftClient,
 			processor.EvaluationCountEventDWHPersisterName,
+			registerer,
 			logger,
 		)
 		if err != nil {
@@ -609,6 +610,7 @@ func (s *server) registerPubSubProcessorMap(
 			exClient,
 			ftClient,
 			processor.GoalCountEventDWHPersisterName,
+			registerer,
 			logger,
 		)
 		if err != nil {
