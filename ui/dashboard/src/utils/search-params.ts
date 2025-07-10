@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { NavigateOptions, useLocation, useNavigate } from 'react-router-dom';
 import queryString, { ParsedQuery } from 'query-string';
 
 export type SearchParams = ParsedQuery<string>;
@@ -13,11 +13,15 @@ export function useSearchParams() {
   }, [location.search]);
 
   const onChangSearchParams = useCallback(
-    (options: Record<string, string | number | boolean | string[]>) => {
+    (
+      options: Record<string, string | number | boolean | string[]>,
+      state?: NavigateOptions['state']
+    ) => {
       navigate(
         `${location.pathname}?${decodeURIComponent(stringifyParams(options))}`,
         {
-          replace: true
+          replace: true,
+          state
         }
       );
     },

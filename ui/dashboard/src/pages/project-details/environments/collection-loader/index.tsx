@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
@@ -31,6 +31,10 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+    const location = useLocation();
+    const organizationId =
+      location?.state?.organizationId || currentEnvironment.organizationId;
+
     const {
       data: collection,
       isLoading,
@@ -39,7 +43,7 @@ const CollectionLoader = memo(
     } = useFetchEnvironments({
       ...filters,
       projectId,
-      organizationId: currentEnvironment.organizationId
+      organizationId
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {

@@ -7,7 +7,7 @@ import CreatedAtTime from './created-at-time';
 
 export type PageDetailsHeaderProps = {
   title?: string;
-  description?: string;
+  createdAt?: string;
   children?: ReactNode;
   additionElement?: ReactNode;
   onBack: () => void;
@@ -15,7 +15,7 @@ export type PageDetailsHeaderProps = {
 
 const PageDetailsHeader = ({
   title,
-  description,
+  createdAt,
   children,
   additionElement,
   onBack
@@ -40,14 +40,11 @@ const PageDetailsHeader = ({
               </h1>
             )}
             {additionElement}
+            {createdAt && <CreatedAtTime createdAt={createdAt} />}
           </div>
         </div>
         <SupportPopover />
       </div>
-
-      {description && (
-        <CreatedAtTime createdAt={description} className="mt-4" />
-      )}
       {children}
     </header>
   );

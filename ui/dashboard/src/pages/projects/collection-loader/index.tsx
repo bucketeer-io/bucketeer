@@ -29,7 +29,7 @@ const CollectionLoader = memo(
     onActionHandler: (value: Project) => void;
     onClearFilters: () => void;
   }) => {
-    const columns = useColumns({ onActionHandler });
+    const columns = useColumns({ organizationId, onActionHandler });
     const {
       data: collection,
       isLoading,

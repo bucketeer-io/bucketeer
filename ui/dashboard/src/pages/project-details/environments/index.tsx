@@ -12,7 +12,11 @@ import EnvironmentCreateUpdateModal from './environment-modal/environment-create
 import PageContent from './page-content';
 import { EnvironmentActionsType } from './types';
 
-const ProjectEnvironments = () => {
+const ProjectEnvironments = ({
+  organizationId
+}: {
+  organizationId: string;
+}) => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
@@ -73,11 +77,13 @@ const ProjectEnvironments = () => {
   return (
     <>
       <PageContent
+        organizationId={organizationId}
         onAdd={onOpenCreateUpdateModal}
         onActionHandler={onHandleActions}
       />
       {isOpenCreateUpdateModal && (
         <EnvironmentCreateUpdateModal
+          organizationId={organizationId}
           isOpen={isOpenCreateUpdateModal}
           environment={selectedEnvironment}
           onClose={handleOnCloseModal}

@@ -9,9 +9,10 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { invalidateOrganizations } from '@queries/organizations';
-import { invalidateProjects, useQueryProjects } from '@queries/projects';
+import { useQueryProjectDetails } from '@queries/project-details';
+import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -26,12 +27,15 @@ import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
+import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
+import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EnvironmentCreateUpdateModalProps {
+  organizationId: string;
   isOpen: boolean;
   environment?: Environment;
   onClose: () => void;
@@ -63,6 +67,7 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   });
 
 const EnvironmentCreateUpdateModal = ({
+  organizationId,
   isOpen,
   onClose,
   environment
@@ -73,7 +78,6 @@ const EnvironmentCreateUpdateModal = ({
   const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
     consoleAccount!
@@ -84,15 +88,16 @@ const EnvironmentCreateUpdateModal = ({
     [envEditable, isOrganizationAdmin]
   );
 
-  const { data: collection } = useQueryProjects({
-    params: {
-      organizationId: currentEnvironment.organizationId,
-      cursor: '0',
-      pageSize: 9999
-    }
-  });
+  const { data: collection, isLoading: isLoadingProject } =
+    useQueryProjectDetails({
+      params: {
+        id: projectId!,
+        organizationId
+      },
+      enabled: !!projectId && !!organizationId
+    });
 
-  const project = collection?.projects.find(item => item.id === projectId);
+  const project = collection?.project;
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -222,11 +227,18 @@ const EnvironmentCreateUpdateModal = ({
             <Form.Item>
               <Form.Label required>{`${t(`project`)}`}</Form.Label>
               <Form.Control>
-                <Input
-                  value={project?.name || ''}
-                  placeholder={`${t(`project`)}`}
-                  disabled
-                />
+                <InputGroup
+                  addon={isLoadingProject ? <Spinner size="sm" /> : null}
+                  addonSize="sm"
+                  addonSlot="right"
+                  className="w-full"
+                >
+                  <Input
+                    value={project?.name || ''}
+                    placeholder={`${t(`project`)}`}
+                    disabled
+                  />
+                </InputGroup>
               </Form.Control>
               <Form.Message />
             </Form.Item>

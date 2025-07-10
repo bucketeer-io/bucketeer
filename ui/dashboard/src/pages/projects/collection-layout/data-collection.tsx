@@ -16,8 +16,10 @@ import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 
 export const useColumns = ({
+  organizationId,
   onActionHandler
 }: {
+  organizationId?: string;
   onActionHandler: (value: Project) => void;
 }): ColumnDef<Project>[] => {
   const { t } = useTranslation(['common', 'table']);
@@ -62,6 +64,7 @@ export const useColumns = ({
             trigger={
               <Link
                 to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${id}`}
+                state={{ organizationId }}
               >
                 <NameWithTooltip.Trigger
                   id={id}
