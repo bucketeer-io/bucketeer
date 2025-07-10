@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
@@ -14,8 +13,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
-import { useFormatDateTime } from 'utils/date-time';
-import { IconInfo, IconWatch } from '@icons';
+import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
@@ -24,7 +22,6 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
-import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import SelectMenu from 'elements/select-menu';
@@ -43,7 +40,6 @@ const GeneralInfoForm = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
-  const formatDateTime = useFormatDateTime();
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
@@ -187,29 +183,9 @@ const GeneralInfoForm = ({
     <FormProvider {...form}>
       <Form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
-          <div className="flex items-center gap-x-2">
-            <p className="typo-head-bold-small text-gray-800">
-              {t('general-info')}
-            </p>
-            <DateTooltip
-              trigger={
-                <div className="flex items-center gap-x-2 text-gray-700 typo-para-small whitespace-nowrap -mb-1">
-                  <Icon icon={IconWatch} size={'xxs'} />
-                  {Number(feature.createdAt) === 0 ? (
-                    t('never')
-                  ) : (
-                    <Trans
-                      i18nKey={'common:time-created'}
-                      values={{
-                        time: formatDateTime(feature.createdAt)
-                      }}
-                    />
-                  )}
-                </div>
-              }
-              date={Number(feature.createdAt) === 0 ? null : feature.createdAt}
-            />
-          </div>
+          <p className="typo-head-bold-small text-gray-800">
+            {t('general-info')}
+          </p>
 
           <Form.Field
             name="maintainer"

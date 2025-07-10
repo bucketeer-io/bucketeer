@@ -3,6 +3,7 @@ import { useTranslation } from 'i18n';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
+import DateTooltip from 'elements/date-tooltip';
 
 const CreatedAtTime = ({
   createdAt,
@@ -15,16 +16,30 @@ const CreatedAtTime = ({
   const formatDateTime = useFormatDateTime();
 
   return (
-    <div
-      className={cn('flex items-center h-6 text-gray-500 gap-1.5', className)}
-    >
-      <Icon icon={IconAccessTimeOutlined} size="xxs" />
-      <p className="typo-para-small">
-        {t('created-at-time', {
-          time: formatDateTime(createdAt)
-        })}
-      </p>
-    </div>
+    <DateTooltip
+      align="end"
+      alignOffset={-40}
+      trigger={
+        <div
+          className={cn(
+            'flex items-center w-fit h-6 gap-1.5 text-gray-500 whitespace-nowrap -mb-1',
+            className
+          )}
+        >
+          <Icon icon={IconAccessTimeOutlined} size={'xxs'} />
+          {Number(createdAt) === 0 ? (
+            t('never')
+          ) : (
+            <p className="typo-para-small">
+              {t('created-at-time', {
+                time: formatDateTime(createdAt)
+              })}
+            </p>
+          )}
+        </div>
+      }
+      date={Number(createdAt) === 0 ? null : createdAt}
+    />
   );
 };
 
