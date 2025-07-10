@@ -3095,7 +3095,7 @@ func TestUpdateTagsGranular(t *testing.T) {
 			expectedFunc: func() *Feature {
 				return genF()
 			},
-			expectedErr: errors.New("feature: value not found"),
+			expectedErr: errors.New("feature: tag not found"),
 		},
 	}
 
