@@ -28,6 +28,7 @@ import (
 	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
@@ -77,6 +78,7 @@ func NewGoalEventWriter(
 	redisClient redisv3.Client,
 	maxRetryGoalEventPeriod time.Duration,
 	retryGoalEventInterval time.Duration,
+	registerer metrics.Registerer,
 	options ...GoalEventWriterOption,
 ) (Writer, error) {
 	var option GoalEventWriterOption
@@ -130,6 +132,7 @@ func NewGoalEventWriter(
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
 		writer.WithLogger(logger),
+		writer.WithMetrics(registerer),
 	)
 	if err != nil {
 		return nil, err
@@ -139,6 +142,7 @@ func NewGoalEventWriter(
 		project,
 		bigQueryDataLocation,
 		bqquerier.WithLogger(logger),
+		bqquerier.WithMetrics(registerer),
 	)
 	if err != nil {
 		return nil, err
