@@ -43,6 +43,7 @@ const PageLoader = () => {
             onBack={() =>
               navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`)
             }
+            createdAt={experiment?.createdAt}
             title={experiment?.name}
           />
           <PageContent experiment={experiment} />

@@ -26,7 +26,7 @@ const PageLoader = () => {
         <>
           <PageDetailsHeader
             title={organization.name}
-            description={organization.createdAt}
+            createdAt={organization.createdAt}
             onBack={() => navigate(`${PAGE_PATH_ORGANIZATIONS}`)}
           />
           <PageContent organization={organization} />

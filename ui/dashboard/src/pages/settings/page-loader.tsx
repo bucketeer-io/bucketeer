@@ -1,24 +1,25 @@
-import { useQueryOrganizationDetails } from '@queries/organization-details';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { OrganizationDetailsResponse } from '@api/organization';
+import { QueryObserverResult } from '@tanstack/react-query';
+import { Organization } from '@types';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
 
-const PageLoader = () => {
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+interface Props {
+  isLoading: boolean;
+  isError: boolean;
+  organization?: Organization;
+  onRetry: () => Promise<
+    QueryObserverResult<OrganizationDetailsResponse, Error>
+  >;
+}
 
-  const { data, isLoading, refetch, isError } = useQueryOrganizationDetails({
-    params: { id: currentEnvironment.organizationId }
-  });
-
-  const organization = data?.organization;
-
+const PageLoader = ({ isLoading, isError, organization, onRetry }: Props) => {
   return (
     <>
       {isLoading ? (
         <PageLayout.LoadingState />
       ) : isError || !organization ? (
-        <PageLayout.ErrorState onRetry={refetch} />
+        <PageLayout.ErrorState onRetry={onRetry} />
       ) : (
         <PageContent organization={organization} />
       )}

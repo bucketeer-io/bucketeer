@@ -5,7 +5,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import PageDetailsHeader from 'elements/page-details-header';
-import CreatedAtTime from 'elements/page-details-header/created-at-time';
 import HeaderDetailsID from 'elements/page-details-header/header-details-id';
 import PageLayout from 'elements/page-layout';
 import Status from 'elements/status';
@@ -43,6 +42,7 @@ const PageLoader = () => {
         <>
           <PageDetailsHeader
             title={goal.name}
+            createdAt={goal.createdAt}
             additionElement={
               <>
                 <Status
@@ -51,7 +51,6 @@ const PageLoader = () => {
                   )}
                   isInUseStatus={goal.isInUseStatus}
                 />
-                <CreatedAtTime createdAt={goal.createdAt} />
               </>
             }
             onBack={handleBack}

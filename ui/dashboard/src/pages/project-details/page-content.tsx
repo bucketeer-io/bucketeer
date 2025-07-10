@@ -13,7 +13,13 @@ import ProjectEnvironments from './environments';
 import ProjectSettings from './settings';
 import { TabItem } from './types';
 
-const PageContent = ({ project }: { project: Project }) => {
+const PageContent = ({
+  organizationId,
+  project
+}: {
+  organizationId: string;
+  project: Project;
+}) => {
   const { t } = useTranslation(['common']);
   const { projectId } = useParams();
   const { consoleAccount } = useAuth();
@@ -36,7 +42,10 @@ const PageContent = ({ project }: { project: Project }) => {
       <Tabs>
         <TabsList className="px-6">
           {projectTabs.map((item, index) => (
-            <TabsLink key={index} to={`${url}${item.to}`}>
+            <TabsLink
+              key={index}
+              to={`${url}${item.to}?organizationId=${organizationId}`}
+            >
               {item.title}
             </TabsLink>
           ))}
@@ -47,12 +56,15 @@ const PageContent = ({ project }: { project: Project }) => {
             <Route
               index
               element={
-                <Navigate to={`${url}${PAGE_PATH_ENVIRONMENTS}`} replace />
+                <Navigate
+                  to={`${url}${PAGE_PATH_ENVIRONMENTS}?organizationId=${organizationId}`}
+                  replace
+                />
               }
             />
             <Route
               path={PAGE_PATH_ENVIRONMENTS}
-              element={<ProjectEnvironments />}
+              element={<ProjectEnvironments organizationId={organizationId} />}
             />
             <Route
               path={PAGE_PATH_SETTINGS}

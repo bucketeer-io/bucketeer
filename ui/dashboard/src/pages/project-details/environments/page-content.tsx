@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { usePartialState } from 'hooks';
@@ -16,9 +16,11 @@ import CollectionLoader from './collection-loader';
 import { EnvironmentActionsType, EnvironmentFilters } from './types';
 
 const PageContent = ({
+  organizationId,
   onAdd,
   onActionHandler
 }: {
+  organizationId: string;
   onAdd: () => void;
   onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
@@ -38,11 +40,17 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<EnvironmentFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<EnvironmentFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<EnvironmentFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(
+        options,
+        organizationId ? { organizationId } : undefined
+      );
+      setFilters({ ...values });
+    },
+    [filters, organizationId]
+  );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
