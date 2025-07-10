@@ -176,11 +176,15 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                   className={cn(
                     'grid grid-cols-4 items-end w-full gap-x-4 max-w-full',
                     {
-                      'grid-cols-3': isUserSegment
+                      'grid-cols-3': isUserSegment && !isEmptySegment
                     }
                   )}
                 >
-                  <div className="flex flex-1 col-span-1 self-stretch">
+                  <div
+                    className={cn('flex flex-1 col-span-1 self-stretch', {
+                      'flex-initial': isEmptySegment
+                    })}
+                  >
                     <Form.Field
                       control={control}
                       name={getFieldName('type', clauseIndex)}
@@ -300,7 +304,11 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                       />
                     </div>
                   )}
-                  <div className="flex flex-1 col-span-1 self-stretch">
+                  <div
+                    className={cn('flex flex-1 col-span-1 self-stretch', {
+                      'col-span-3': isEmptySegment
+                    })}
+                  >
                     <Form.Field
                       control={control}
                       name={getFieldName('operator', clauseIndex)}
