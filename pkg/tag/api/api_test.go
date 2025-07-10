@@ -29,6 +29,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	featurestoragemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -38,6 +39,7 @@ import (
 	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
@@ -402,6 +404,11 @@ func TestDeleteTagMySQL(t *testing.T) {
 		{
 			desc: "err: GetTag",
 			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
@@ -413,8 +420,13 @@ func TestDeleteTagMySQL(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc: "err: in used",
 			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) error {
+					return fn(ctx, nil)
+				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.Tag{
@@ -425,6 +437,42 @@ func TestDeleteTagMySQL(t *testing.T) {
 						EntityType:    proto.Tag_FEATURE_FLAG,
 					},
 				}, nil)
+				s.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*feature.Feature{
+					{
+						Id:   "feature-0",
+						Tags: []string{"test-tag"},
+					},
+				}, 0, int64(0), nil)
+			},
+			req: &proto.DeleteTagRequest{
+				Id:            "tag-0",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusTagInUsed, localizer.MustLocalize(locale.Tag)),
+		},
+		{
+			desc: "success",
+			setup: func(s *TagService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Tag{
+					Tag: &proto.Tag{
+						Id:            "tag-0",
+						Name:          "test-tag",
+						EnvironmentId: "ns0",
+						EntityType:    proto.Tag_FEATURE_FLAG,
+					},
+				}, nil)
+				s.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -474,10 +522,11 @@ func createTagService(c *gomock.Controller) *TagService {
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TagService{
-		mysqlClient:   mysqlClientMock,
-		tagStorage:    tagstoragemock.NewMockTagStorage(c),
-		accountClient: accountClientMock,
-		publisher:     p,
+		mysqlClient:    mysqlClientMock,
+		tagStorage:     tagstoragemock.NewMockTagStorage(c),
+		featureStorage: featurestoragemock.NewMockFeatureStorage(c),
+		accountClient:  accountClientMock,
+		publisher:      p,
 		opts: &options{
 			logger: zap.NewNop(),
 		},

@@ -16,6 +16,8 @@ package api
 
 import (
 	"context"
+	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -27,6 +29,7 @@ import (
 
 	accclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
+	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -36,6 +39,7 @@ import (
 	tagstorage "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	accproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
@@ -52,12 +56,13 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type TagService struct {
-	mysqlClient   mysql.Client
-	tagStorage    tagstorage.TagStorage
-	accountClient accclient.Client
-	publisher     publisher.Publisher
-	opts          *options
-	logger        *zap.Logger
+	mysqlClient    mysql.Client
+	tagStorage     tagstorage.TagStorage
+	featureStorage ftstorage.FeatureStorage
+	accountClient  accclient.Client
+	publisher      publisher.Publisher
+	opts           *options
+	logger         *zap.Logger
 }
 
 func NewTagService(
@@ -73,12 +78,13 @@ func NewTagService(
 		opt(dopts)
 	}
 	return &TagService{
-		mysqlClient:   mysqlClient,
-		tagStorage:    tagstorage.NewTagStorage(mysqlClient),
-		accountClient: accountClient,
-		publisher:     publisher,
-		opts:          dopts,
-		logger:        dopts.logger.Named("api"),
+		mysqlClient:    mysqlClient,
+		tagStorage:     tagstorage.NewTagStorage(mysqlClient),
+		featureStorage: ftstorage.NewFeatureStorage(mysqlClient),
+		accountClient:  accountClient,
+		publisher:      publisher,
+		opts:           dopts,
+		logger:         dopts.logger.Named("api"),
 	}
 }
 
@@ -330,28 +336,59 @@ func (s *TagService) DeleteTag(
 		)
 		return nil, err
 	}
-	tag, err := s.tagStorage.GetTag(ctx, req.Id, req.EnvironmentId)
+	var tag *domain.Tag
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		tagDB, err := s.tagStorage.GetTag(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get tag",
+				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Any("id", req.Id),
+				)...,
+			)
+			return err
+		}
+		tag = tagDB
+
+		// Check if the tag is in use by any feature
+		features, err := s.listFeaturesFromEnvironment(ctxWithTx, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		var inUsed = false
+		for _, f := range features {
+			if slices.Contains(f.Tags, tagDB.Name) {
+				inUsed = true
+				break
+			}
+		}
+		if inUsed {
+			s.logger.Error(
+				"Failed to delete the tag because it is in use by a feature",
+				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Any("tag", tagDB),
+				)...,
+			)
+			return statusTagInUsed.Err()
+		}
+
+		// Delete it from DB
+		return s.tagStorage.DeleteTag(ctxWithTx, req.Id)
+	})
 	if err != nil {
-		s.logger.Error(
-			"Failed to get tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.Any("id", req.Id),
-			)...,
-		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
-	}
-	// Delete it from DB
-	if err := s.tagStorage.DeleteTag(ctx, req.Id); err != nil {
-		s.logger.Error(
-			"Failed to delete the tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.Any("tag", tag),
-			)...,
-		)
+		if errors.Is(err, statusTagInUsed.Err()) {
+			dt, err := statusTagInUsed.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.Tag),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	// Publish event
@@ -375,6 +412,39 @@ func (s *TagService) DeleteTag(
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	return &proto.DeleteTagResponse{}, nil
+}
+
+func (s *TagService) listFeaturesFromEnvironment(
+	ctx context.Context,
+	environmentID string,
+) ([]*feature.Feature, error) {
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, &mysql.ListOptions{
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "feature.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentID,
+			},
+		},
+		Orders:      nil,
+		JSONFilters: nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		SearchQuery: nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentID", environmentID),
+			)...,
+		)
+		return nil, err
+	}
+	return features, nil
 }
 
 func (s *TagService) validateDeleteTagRquest(req *proto.DeleteTagRequest, localizer locale.Localizer) error {
