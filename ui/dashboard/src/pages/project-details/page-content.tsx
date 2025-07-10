@@ -44,10 +44,7 @@ const PageContent = ({
           {projectTabs.map((item, index) => (
             <TabsLink
               key={index}
-              to={`${url}${item.to}`}
-              state={{
-                organizationId
-              }}
+              to={`${url}${item.to}?organizationId=${organizationId}`}
             >
               {item.title}
             </TabsLink>
@@ -60,10 +57,7 @@ const PageContent = ({
               index
               element={
                 <Navigate
-                  to={`${url}${PAGE_PATH_ENVIRONMENTS}`}
-                  state={{
-                    organizationId
-                  }}
+                  to={`${url}${PAGE_PATH_ENVIRONMENTS}?organizationId=${organizationId}`}
                   replace
                 />
               }

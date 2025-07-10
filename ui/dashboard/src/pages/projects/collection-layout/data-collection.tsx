@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_PROJECTS } from 'constants/routing';
+import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -63,8 +63,7 @@ export const useColumns = ({
             content={<NameWithTooltip.Content content={name} id={id} />}
             trigger={
               <Link
-                to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${id}`}
-                state={{ organizationId }}
+                to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${id}${PAGE_PATH_ENVIRONMENTS}?organizationId=${organizationId}`}
               >
                 <NameWithTooltip.Trigger
                   id={id}

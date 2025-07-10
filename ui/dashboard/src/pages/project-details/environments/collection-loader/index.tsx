@@ -1,9 +1,9 @@
 import { memo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Environment } from '@types';
+import { useSearchParams } from 'utils/search-params';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -28,12 +28,8 @@ const CollectionLoader = memo(
   }) => {
     const { projectId } = useParams();
     const columns = useColumns({ onActions });
-    const { consoleAccount } = useAuth();
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-    const location = useLocation();
-    const organizationId =
-      location?.state?.organizationId || currentEnvironment.organizationId;
+    const { searchOptions } = useSearchParams();
+    const organizationId = searchOptions?.organizationId as string;
 
     const {
       data: collection,
@@ -43,7 +39,8 @@ const CollectionLoader = memo(
     } = useFetchEnvironments({
       ...filters,
       projectId,
-      organizationId
+      organizationId,
+      enabledQuery: !!projectId && !!organizationId
     });
 
     const onSortingChangeHandler = (sorting: SortingState) => {

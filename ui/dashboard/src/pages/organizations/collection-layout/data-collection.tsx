@@ -5,6 +5,7 @@ import {
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
+import { PAGE_PATH_ORGANIZATIONS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -36,7 +37,9 @@ export const useColumns = ({
             id={id}
             content={<NameWithTooltip.Content content={name} id={id} />}
             trigger={
-              <Link to={id}>
+              <Link
+                to={`${PAGE_PATH_ORGANIZATIONS}/${id}${PAGE_PATH_PROJECTS}`}
+              >
                 <NameWithTooltip.Trigger id={id} name={name} />
               </Link>
             }
