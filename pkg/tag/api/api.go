@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -61,7 +60,6 @@ type TagService struct {
 	tagStorage     tagstorage.TagStorage
 	featureStorage ftstorage.FeatureStorage
 	accountClient  accclient.Client
-	flightgroup    singleflight.Group
 	publisher      publisher.Publisher
 	opts           *options
 	logger         *zap.Logger
@@ -355,16 +353,10 @@ func (s *TagService) DeleteTag(
 		tag = tagDB
 
 		// Check if the tag is in use by any feature
-		fs, err, _ := s.flightgroup.Do(
-			req.EnvironmentId,
-			func() (interface{}, error) {
-				return s.listFeaturesFromEnvironment(ctxWithTx, req.EnvironmentId)
-			},
-		)
+		features, err := s.listFeaturesFromEnvironment(ctxWithTx, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		features := fs.([]*feature.Feature)
 		var inUsed = false
 		for _, f := range features {
 			if slices.Contains(f.Tags, tagDB.Name) {

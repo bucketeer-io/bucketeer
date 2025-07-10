@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -72,7 +71,6 @@ type TeamService struct {
 	teamStorage   storage.TeamStorage
 	accountClient accclient.Client
 	publisher     publisher.Publisher
-	flightgroup   singleflight.Group
 	opts          *options
 	logger        *zap.Logger
 }
@@ -234,16 +232,10 @@ func (s *TeamService) DeleteTeam(
 		}
 
 		// Check if team is in use by any account
-		acs, err, _ := s.flightgroup.Do(
-			req.OrganizationId,
-			func() (interface{}, error) {
-				return s.listAccountsFromOrganization(ctxWithTx, req.OrganizationId)
-			},
-		)
+		accounts, err := s.listAccountsFromOrganization(ctxWithTx, req.OrganizationId)
 		if err != nil {
 			return err
 		}
-		accounts := acs.([]*accproto.AccountV2)
 		var inUsed = false
 		for _, a := range accounts {
 			if slices.Contains(a.Teams, team.Name) {
