@@ -47,6 +47,9 @@ import "proto/tag/service.proto";
 import "proto/tag/tag.proto";
 import "proto/team/service.proto";
 import "proto/team/team.proto";
+import "proto/notification/service.proto";
+import "proto/notification/subscription.proto";
+import "proto/notification/recipient.proto";
 
 message PingRequest {}
 
@@ -704,6 +707,64 @@ message ListTeamsResponse {
   string cursor = 2;
   int64 total_count = 3;
 }
+
+message GetSubscriptionRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetSubscriptionResponse {
+  notification.Subscription subscription = 1;
+}
+
+message ListSubscriptionsRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  repeated notification.Subscription.SourceType source_types = 3;
+  notification.ListSubscriptionsRequest.OrderBy order_by = 4;
+  notification.ListSubscriptionsRequest.OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+  string organization_id = 8 [(google.api.field_behavior) = REQUIRED];
+  repeated string environment_ids = 9;
+}
+
+message ListSubscriptionsResponse {
+  repeated notification.Subscription subscriptions = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateSubscriptionRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  repeated notification.Subscription.SourceType source_types = 2
+      [(google.api.field_behavior) = REQUIRED];
+  notification.Recipient recipient = 3 [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_flag_tags = 4;
+}
+
+message CreateSubscriptionResponse {
+  notification.Subscription subscription = 1;
+}
+
+message DeleteSubscriptionRequest {
+  string id = 1;
+}
+
+message DeleteSubscriptionResponse {}
+
+message UpdateSubscriptionRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  repeated notification.Subscription.SourceType source_types = 2;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.BoolValue disabled = 4
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "disabled"
+        description: "if true, the subscription is disabled, otherwise enabled."
+      }];
+  repeated string feature_flag_tags = 5;
+}
+
+message UpdateSubscriptionResponse {}
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: { title: "Bucketeer Gateway Service" version: "1.0" }
@@ -1418,6 +1479,68 @@ service Gateway {
       description: "List Teams. To call this API, you need a `READ` API Key role.",
       tags: "Teams",
       operation_id: "api.gateway.v1.teams.list"
+    };
+  }
+  rpc GetSubscription(GetSubscriptionRequest)
+      returns (GetSubscriptionResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscription"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Subscription",
+      description: "Get a Subscription by ID. To call this API, you need a `READ` API Key role.",
+      tags: "Subscriptions",
+      operation_id: "api.gateway.v1.subscriptions.get"
+    };
+  }
+  rpc ListSubscriptions(ListSubscriptionsRequest)
+      returns (ListSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Subscriptions",
+      description: "List Subscriptions. To call this API, you need a `READ` API Key role.",
+      tags: "Subscriptions",
+      operation_id: "api.gateway.v1.subscriptions.list"
+    };
+  }
+  rpc CreateSubscription(CreateSubscriptionRequest)
+      returns (CreateSubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v1/subscription"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Subscription",
+      description: "Create a new Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Subscriptions",
+      operation_id: "api.gateway.v1.subscriptions.create"
+    };
+  }
+  rpc DeleteSubscription(DeleteSubscriptionRequest)
+      returns (DeleteSubscriptionResponse) {
+    option (google.api.http) = {
+      delete: "/v1/subscription"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Subscription",
+      description: "Delete a Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Subscriptions",
+      operation_id: "api.gateway.v1.subscriptions.delete"
+    };
+  }
+  rpc UpdateSubscription(UpdateSubscriptionRequest)
+      returns (UpdateSubscriptionResponse) {
+    option (google.api.http) = {
+      patch: "/v1/subscription"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Subscription",
+      description: "Update a Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Subscriptions",
+      operation_id: "api.gateway.v1.subscriptions.update"
     };
   }
 }

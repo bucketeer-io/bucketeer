@@ -40,6 +40,7 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	notificationclientmock "github.com/bucketeer-io/bucketeer/pkg/notification/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	pushclientmock "github.com/bucketeer-io/bucketeer/pkg/push/client/mock"
 	tagclientmock "github.com/bucketeer-io/bucketeer/pkg/tag/client/mock"
@@ -97,7 +98,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -4007,6 +4008,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		goalPublisher:          publishermock.NewMockPublisher(mockController),
 		tagClient:              tagclientmock.NewMockClient(mockController),
 		teamClient:             teamclientmock.NewMockClient(mockController),
+		notificationClient:     notificationclientmock.NewMockClient(mockController),
 		userPublisher:          publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:    publishermock.NewMockPublisher(mockController),
 		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),

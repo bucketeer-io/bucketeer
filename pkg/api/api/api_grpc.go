@@ -40,6 +40,7 @@ import (
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -155,6 +156,7 @@ type grpcGatewayService struct {
 	autoOpsClient          autoopsclient.Client
 	tagClient              tagclient.Client
 	teamClient             teamclient.Client
+	notificationClient     notificationclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -175,6 +177,7 @@ func NewGrpcGatewayService(
 	autoOpsClient autoopsclient.Client,
 	tagClient tagclient.Client,
 	teamClient teamclient.Client,
+	notificationClient notificationclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -197,6 +200,7 @@ func NewGrpcGatewayService(
 		autoOpsClient:          autoOpsClient,
 		tagClient:              tagClient,
 		teamClient:             teamClient,
+		notificationClient:     notificationClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
