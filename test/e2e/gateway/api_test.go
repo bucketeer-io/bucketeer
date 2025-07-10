@@ -202,162 +202,197 @@ func TestHTTPBooleanStringHandling(t *testing.T) {
 	// boolean strings sent from the Android SDK via HTTP requests,
 	// specifically the userAttributesUpdated field in get_evaluations API
 
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	cmd := newCreateFeatureCommand(featureID)
+	createFeature(t, client, cmd)
+	addTag(t, tag, featureID, client)
+	enableFeature(t, featureID, client)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
+
 	testCases := []struct {
 		name        string
 		description string
-		requestBody map[string]interface{}
+		requestBody func(uuid, tag, userID string) map[string]interface{}
 	}{
 		{
 			name:        "boolean_string_true_lowercase",
 			description: "userAttributesUpdated as 'true' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationsId": "test-evaluations-id",
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "true",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationsId": fmt.Sprintf("test-evaluations-id-%s", uuid),
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "true",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_false_lowercase",
 			description: "userAttributesUpdated as 'false' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "false",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "false",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_true_titlecase",
 			description: "userAttributesUpdated as 'True' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "True",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "True",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_false_titlecase",
 			description: "userAttributesUpdated as 'False' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "False",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "False",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_true_uppercase",
 			description: "userAttributesUpdated as 'TRUE' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "TRUE",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "TRUE",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_false_uppercase",
 			description: "userAttributesUpdated as 'FALSE' string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "FALSE",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "FALSE",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_numeric_1",
 			description: "userAttributesUpdated as '1' string (true)",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "1",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "1",
+					},
+				}
 			},
 		},
 		{
 			name:        "boolean_string_numeric_0",
 			description: "userAttributesUpdated as '0' string (false)",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "0",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "0",
+					},
+				}
 			},
 		},
 		{
 			name:        "empty_user_evaluation_condition",
 			description: "Empty user evaluation condition object",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{},
+				}
 			},
 		},
 		{
 			name:        "null_user_data",
 			description: "User data is null with boolean string",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id":   "test-user-id",
-					"data": nil,
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": "false",
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id":   userID,
+						"data": nil,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": "false",
+					},
+				}
 			},
 		},
 		{
 			name:        "actual_boolean_value",
 			description: "userAttributesUpdated as actual boolean (not string)",
-			requestBody: map[string]interface{}{
-				"tag": "test-tag",
-				"user": map[string]interface{}{
-					"id": "test-user-id",
-				},
-				"userEvaluationCondition": map[string]interface{}{
-					"evaluatedAt":           time.Now().Unix() - 60,
-					"userAttributesUpdated": true, // actual boolean
-				},
+			requestBody: func(uuid, tag, userID string) map[string]interface{} {
+				return map[string]interface{}{
+					"tag": tag,
+					"user": map[string]interface{}{
+						"id": userID,
+					},
+					"userEvaluationCondition": map[string]interface{}{
+						"evaluatedAt":           time.Now().Unix() - 60,
+						"userAttributesUpdated": true, // actual boolean
+					},
+				}
 			},
 		},
 	}
@@ -366,9 +401,8 @@ func TestHTTPBooleanStringHandling(t *testing.T) {
 		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			// Make the HTTP request - should succeed for all cases
-			response := util.GetEvaluationsRaw(t, tc.requestBody, *gatewayAddr, *apiKeyPath)
+			response := util.GetEvaluationsRaw(t, tc.requestBody(uuid, tag, userID), *gatewayAddr, *apiKeyPath)
 
 			// Verify we got a valid response (no error occurred)
 			assert.NotNil(t, response, "Response should not be nil for test case: %s", tc.description)

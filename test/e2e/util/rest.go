@@ -24,6 +24,8 @@ import (
 	"os"
 	"testing"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -119,11 +121,18 @@ func GetEvaluationsRaw(
 	// Send the raw request body to test boolean string handling
 	resp := SendHTTPRequestRaw(t, url, requestBody, apiKeyPath)
 
-	var ger getEvaluationsResponse
-	if err := json.Unmarshal(resp, &ger); err != nil {
-		t.Fatalf("Failed to unmarshal response: %v, data: %s", err, string(resp))
+	// Use the actual gateway proto response type for proper protobuf enum handling
+	var gatewayResp gwproto.GetEvaluationsResponse
+	if err := protojson.Unmarshal(resp, &gatewayResp); err != nil {
+		t.Fatalf("Failed to unmarshal gateway response: %v, data: %s", err, string(resp))
 	}
-	return &ger
+
+	// Convert to the expected test response format
+	ger := &getEvaluationsResponse{
+		Evaluations:       gatewayResp.Evaluations,
+		UserEvaluationsID: gatewayResp.UserEvaluationsId,
+	}
+	return ger
 }
 
 func GetEvaluation(t *testing.T, tag, featureID, userID, gatewayAddr, apiKeyPath string) *getEvaluationResponse {
