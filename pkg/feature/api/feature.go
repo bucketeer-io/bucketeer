@@ -1107,7 +1107,7 @@ func (s *FeatureService) UpdateFeature(
 			feature.Feature,
 			// check require comment.
 			domainevent.WithComment(req.Comment),
-			domainevent.WithNewVersion(feature.Version),
+			domainevent.WithNewVersion(updated.Version),
 		)
 		if err != nil {
 			return err

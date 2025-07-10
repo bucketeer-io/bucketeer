@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/proto/common"
@@ -45,9 +46,15 @@ func (f *Feature) Update(
 	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
 ) (*Feature, error) {
-	updated := &Feature{}
-	if err := copier.Copy(updated, f); err != nil {
+	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
+	// This ensures consistent JSON serialization in both API responses and audit logs
+	var clonedFeature feature.Feature
+	if err := copier.CopyWithOption(&clonedFeature, f.Feature, copier.Option{DeepCopy: true}); err != nil {
 		return nil, err
+	}
+
+	updated := &Feature{
+		Feature: &clonedFeature,
 	}
 
 	// We split variation changes into two separate steps to handle dependencies correctly:
@@ -126,10 +133,8 @@ func (f *Feature) Update(
 	}
 
 	// Increment version and update timestamp if there are changes
-	if updated.hasChangesComparedTo(f) {
-		if err := updated.IncrementVersion(); err != nil {
-			return nil, err
-		}
+	if !proto.Equal(f.Feature, updated.Feature) {
+		updated.Version++
 		updated.UpdatedAt = time.Now().Unix()
 	}
 
@@ -345,192 +350,6 @@ func (f *Feature) applyGranularChanges(
 	return nil
 }
 
-// hasChangesComparedTo checks if there are any changes compared to the original feature
-func (f *Feature) hasChangesComparedTo(other *Feature) bool {
-	// Basic field comparisons
-	if f.Name != other.Name ||
-		f.Description != other.Description ||
-		f.Enabled != other.Enabled ||
-		f.Archived != other.Archived ||
-		f.OffVariation != other.OffVariation ||
-		f.SamplingSeed != other.SamplingSeed {
-		return true
-	}
-
-	// Compare tags
-	if len(f.Tags) != len(other.Tags) {
-		return true
-	}
-	tagMap := make(map[string]struct{}, len(f.Tags))
-	for _, tag := range f.Tags {
-		tagMap[tag] = struct{}{}
-	}
-	for _, tag := range other.Tags {
-		if _, exists := tagMap[tag]; !exists {
-			return true
-		}
-	}
-
-	// Compare prerequisites
-	if len(f.Prerequisites) != len(other.Prerequisites) {
-		return true
-	}
-	prereqMap := make(map[string]string, len(f.Prerequisites))
-	for _, p := range f.Prerequisites {
-		prereqMap[p.FeatureId] = p.VariationId
-	}
-	for _, p := range other.Prerequisites {
-		if varID, exists := prereqMap[p.FeatureId]; !exists || varID != p.VariationId {
-			return true
-		}
-	}
-
-	// Compare targets
-	if len(f.Targets) != len(other.Targets) {
-		return true
-	}
-	targetMap := make(map[string]map[string]struct{}, len(f.Targets))
-	for _, t := range f.Targets {
-		userMap := make(map[string]struct{}, len(t.Users))
-		for _, u := range t.Users {
-			userMap[u] = struct{}{}
-		}
-		targetMap[t.Variation] = userMap
-	}
-	for _, t := range other.Targets {
-		userMap, exists := targetMap[t.Variation]
-		if !exists || len(userMap) != len(t.Users) {
-			return true
-		}
-		for _, u := range t.Users {
-			if _, exists := userMap[u]; !exists {
-				return true
-			}
-		}
-	}
-
-	// Compare rules
-	if len(f.Rules) != len(other.Rules) {
-		return true
-	}
-	ruleMap := make(map[string]*feature.Rule, len(f.Rules))
-	for _, r := range f.Rules {
-		ruleMap[r.Id] = r
-	}
-	for _, r := range other.Rules {
-		if existing, exists := ruleMap[r.Id]; !exists || !compareRules(existing, r) {
-			return true
-		}
-	}
-
-	// Compare variations
-	if len(f.Variations) != len(other.Variations) {
-		return true
-	}
-	variationMap := make(map[string]*feature.Variation, len(f.Variations))
-	for _, v := range f.Variations {
-		variationMap[v.Id] = v
-	}
-	for _, v := range other.Variations {
-		if existing, exists := variationMap[v.Id]; !exists || !compareVariations(existing, v) {
-			return true
-		}
-	}
-
-	// Compare default strategy
-	if !compareStrategies(f.DefaultStrategy, other.DefaultStrategy) {
-		return true
-	}
-
-	return false
-}
-
-// compareRules compares two rules for equality
-func compareRules(a, b *feature.Rule) bool {
-	if a.Id != b.Id {
-		return false
-	}
-	if !compareStrategies(a.Strategy, b.Strategy) {
-		return false
-	}
-	if len(a.Clauses) != len(b.Clauses) {
-		return false
-	}
-	clauseMap := make(map[string]*feature.Clause, len(a.Clauses))
-	for _, c := range a.Clauses {
-		clauseMap[c.Id] = c
-	}
-	for _, c := range b.Clauses {
-		if existing, exists := clauseMap[c.Id]; !exists || !compareClauses(existing, c) {
-			return false
-		}
-	}
-	return true
-}
-
-// compareClauses compares two clauses for equality
-func compareClauses(a, b *feature.Clause) bool {
-	return a.Id == b.Id &&
-		a.Attribute == b.Attribute &&
-		a.Operator == b.Operator &&
-		compareStringSlices(a.Values, b.Values)
-}
-
-// compareVariations compares two variations for equality
-func compareVariations(a, b *feature.Variation) bool {
-	return a.Id == b.Id &&
-		a.Value == b.Value &&
-		a.Name == b.Name &&
-		a.Description == b.Description
-}
-
-// compareStrategies compares two strategies for equality
-func compareStrategies(a, b *feature.Strategy) bool {
-	if a == nil || b == nil {
-		return a == b
-	}
-	if a.Type != b.Type {
-		return false
-	}
-	switch a.Type {
-	case feature.Strategy_FIXED:
-		return a.FixedStrategy.Variation == b.FixedStrategy.Variation
-	case feature.Strategy_ROLLOUT:
-		if len(a.RolloutStrategy.Variations) != len(b.RolloutStrategy.Variations) {
-			return false
-		}
-		variationMap := make(map[string]int32, len(a.RolloutStrategy.Variations))
-		for _, v := range a.RolloutStrategy.Variations {
-			variationMap[v.Variation] = v.Weight
-		}
-		for _, v := range b.RolloutStrategy.Variations {
-			if weight, exists := variationMap[v.Variation]; !exists || weight != v.Weight {
-				return false
-			}
-		}
-		return true
-	default:
-		return false
-	}
-}
-
-// compareStringSlices compares two string slices for equality
-func compareStringSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	valueMap := make(map[string]struct{}, len(a))
-	for _, v := range a {
-		valueMap[v] = struct{}{}
-	}
-	for _, v := range b {
-		if _, exists := valueMap[v]; !exists {
-			return false
-		}
-	}
-	return true
-}
-
 // New functions for Update method that handle timestamp updates intelligently
 // These functions only update the timestamp when actual changes occur
 // TODO: Remove these duplicate functions once old console is deprecated
@@ -590,6 +409,7 @@ func (f *Feature) updateAddVariation(id, value, name, description string) error 
 		Name:        name,
 		Description: description,
 	})
+	f.addTarget(id)
 	return nil
 }
 
@@ -610,7 +430,7 @@ func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
 	}
 
 	// Only update if the variation actually changed
-	if !compareVariations(f.Variations[idx], variation) {
+	if !proto.Equal(f.Variations[idx], variation) {
 		f.Variations[idx] = variation
 	}
 	return nil
@@ -753,7 +573,7 @@ func (f *Feature) updateChangeRule(rule *feature.Rule) error {
 
 	// Only update if the rule actually changed
 	existingRule := f.Rules[idx]
-	if !compareRules(existingRule, rule) {
+	if !proto.Equal(existingRule, rule) {
 		f.Rules[idx] = rule
 	}
 	return nil

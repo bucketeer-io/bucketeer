@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -1603,7 +1604,7 @@ func TestUpdateCompleteNoChangesScenario(t *testing.T) {
 	assert.Equal(t, originalFeature.Prerequisites, updated.Prerequisites)
 
 	// Compare default strategy
-	assert.True(t, compareStrategies(originalFeature.DefaultStrategy, updated.DefaultStrategy),
+	assert.True(t, proto.Equal(originalFeature.DefaultStrategy, updated.DefaultStrategy),
 		"Default strategy should remain identical")
 }
 

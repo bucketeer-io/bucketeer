@@ -23,24 +23,24 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/common"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 func makeFeature(id string) *Feature {
 	return &Feature{
-		Feature: &proto.Feature{
+		Feature: &ftproto.Feature{
 			Id:            id,
 			Name:          "test feature",
 			Version:       1,
 			Enabled:       true,
 			CreatedAt:     time.Now().Unix(),
-			VariationType: feature.Feature_STRING,
-			Variations: []*proto.Variation{
+			VariationType: ftproto.Feature_STRING,
+			Variations: []*ftproto.Variation{
 				{
 					Id:          "variation-A",
 					Value:       "A",
@@ -60,7 +60,7 @@ func makeFeature(id string) *Feature {
 					Description: "Thing does C",
 				},
 			},
-			Targets: []*proto.Target{
+			Targets: []*ftproto.Target{
 				{
 					Variation: "variation-A",
 					Users: []string{
@@ -80,20 +80,20 @@ func makeFeature(id string) *Feature {
 					},
 				},
 			},
-			Rules: []*proto.Rule{
+			Rules: []*ftproto.Rule{
 				{
 					Id: "rule-1",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
 							Variation: "variation-A",
 						},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        "clause-1",
 							Attribute: "name",
-							Operator:  proto.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values: []string{
 								"user1",
 								"user2",
@@ -103,17 +103,17 @@ func makeFeature(id string) *Feature {
 				},
 				{
 					Id: "rule-2",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
 							Variation: "variation-B",
 						},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        "clause-2",
 							Attribute: "name",
-							Operator:  proto.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values: []string{
 								"user3",
 								"user4",
@@ -122,9 +122,9 @@ func makeFeature(id string) *Feature {
 					},
 				},
 			},
-			DefaultStrategy: &proto.Strategy{
-				Type: proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{
+			DefaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
 					Variation: "variation-B",
 				},
 			},
@@ -139,8 +139,8 @@ func TestNewFeature(t *testing.T) {
 		id                       string
 		name                     string
 		description              string
-		variationType            feature.Feature_VariationType
-		variations               []*feature.Variation
+		variationType            ftproto.Feature_VariationType
+		variations               []*ftproto.Variation
 		tags                     []string
 		defaultOnVariationIndex  int
 		defaultOffVariationIndex int
@@ -152,8 +152,8 @@ func TestNewFeature(t *testing.T) {
 			id:            "test-feature",
 			name:          "test feature",
 			description:   "test feature description",
-			variationType: feature.Feature_BOOLEAN,
-			variations: []*feature.Variation{
+			variationType: ftproto.Feature_BOOLEAN,
+			variations: []*ftproto.Variation{
 				{
 					Value:       "true",
 					Name:        "Variation A",
@@ -171,8 +171,8 @@ func TestNewFeature(t *testing.T) {
 			id:            "test-feature",
 			name:          "test feature",
 			description:   "test feature description",
-			variationType: feature.Feature_BOOLEAN,
-			variations: []*feature.Variation{
+			variationType: ftproto.Feature_BOOLEAN,
+			variations: []*ftproto.Variation{
 				{
 					Value:       "true",
 					Name:        "Variation A",
@@ -195,8 +195,8 @@ func TestNewFeature(t *testing.T) {
 			id:            "test-feature",
 			name:          "test feature",
 			description:   "test feature description",
-			variationType: feature.Feature_BOOLEAN,
-			variations: []*feature.Variation{
+			variationType: ftproto.Feature_BOOLEAN,
+			variations: []*ftproto.Variation{
 				{
 					Value:       "true",
 					Name:        "Variation A",
@@ -219,8 +219,8 @@ func TestNewFeature(t *testing.T) {
 			id:            "test-feature",
 			name:          "test feature",
 			description:   "test feature description",
-			variationType: feature.Feature_BOOLEAN,
-			variations: []*feature.Variation{
+			variationType: ftproto.Feature_BOOLEAN,
+			variations: []*ftproto.Variation{
 				{
 					Value:       "true",
 					Name:        "Variation A",
@@ -284,29 +284,29 @@ func TestAddVariation(t *testing.T) {
 	id2, _ := uuid.NewUUID()
 	patterns := []struct {
 		desc          string
-		variationType feature.Feature_VariationType
+		variationType ftproto.Feature_VariationType
 		id            string
 		name          string
 		value         string
 		description   string
 		expectedErr   error
-		variations    []*feature.Variation
+		variations    []*ftproto.Variation
 	}{
 		{
 			desc:          "fail: empty name",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			id:            id1.String(),
 			name:          "",
 			value:         "true",
 			description:   "first variation",
 			expectedErr:   errVariationNameRequired,
-			variations: []*feature.Variation{
+			variations: []*ftproto.Variation{
 				{Id: id1.String(), Name: "v1", Value: "true", Description: "first variation"},
 			},
 		},
 		{
 			desc:          "fail: empty value",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			id:            id1.String(),
 			name:          "v1",
 			value:         "",
@@ -315,19 +315,19 @@ func TestAddVariation(t *testing.T) {
 		},
 		{
 			desc:          "fail: duplicate value",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			id:            id2.String(),
 			name:          "v2",
 			value:         "true", // same value as first variation
 			description:   "second variation",
 			expectedErr:   errVariationValueUnique,
-			variations: []*feature.Variation{
+			variations: []*ftproto.Variation{
 				{Id: id1.String(), Name: "v1", Value: "true", Description: "first variation"},
 			},
 		},
 		{
 			desc:          "success: valid variation",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			id:            id1.String(),
 			name:          "v1",
 			value:         "true",
@@ -338,7 +338,7 @@ func TestAddVariation(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			f := &Feature{Feature: &feature.Feature{
+			f := &Feature{Feature: &ftproto.Feature{
 				VariationType: p.variationType,
 				Variations:    p.variations,
 			}}
@@ -561,19 +561,19 @@ func TestAddFixedStrategyRule(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		id          string
-		strategy    *proto.Strategy
-		clauses     []*feature.Clause
+		strategy    *ftproto.Strategy
+		clauses     []*ftproto.Clause
 		expectedErr bool
 	}{
 		{
 			desc:     "fail: add rule with nil strategy",
 			id:       "rule-2",
 			strategy: nil,
-			clauses: []*feature.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
 					Attribute: "name",
-					Operator:  feature.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 					},
@@ -584,15 +584,15 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		{
 			desc: "fail: add rule with nil clauses",
 			id:   "rule-3",
-			strategy: &proto.Strategy{
-				Type:          proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{Variation: ""},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: ""},
 			},
-			clauses: []*feature.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
 					Attribute: "name",
-					Operator:  feature.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 					},
@@ -603,15 +603,15 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		{
 			desc: "success",
 			id:   "rule-3",
-			strategy: &proto.Strategy{
-				Type:          proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{Variation: f.Variations[0].Id},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: f.Variations[0].Id},
 			},
-			clauses: []*feature.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
 					Attribute: "name",
-					Operator:  feature.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 					},
@@ -621,7 +621,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		rule := &proto.Rule{
+		rule := &ftproto.Rule{
 			Id:       p.id,
 			Strategy: p.strategy,
 			Clauses:  p.clauses,
@@ -639,12 +639,12 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 	id1, _ := uuid.NewUUID()
 	patterns := []struct {
 		desc        string
-		rule        *proto.Rule
+		rule        *ftproto.Rule
 		expectedErr bool
 	}{
 		{
 			desc: "fail: rule already exists",
-			rule: &feature.Rule{
+			rule: &ftproto.Rule{
 				Id:       "rule-2",
 				Strategy: nil,
 			},
@@ -652,12 +652,12 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 		},
 		{
 			desc: "fail: variation not found",
-			rule: &feature.Rule{
+			rule: &ftproto.Rule{
 				Id: "rule-3",
-				Strategy: &proto.Strategy{
-					Type: proto.Strategy_ROLLOUT,
-					RolloutStrategy: &proto.RolloutStrategy{
-						Variations: []*proto.RolloutStrategy_Variation{
+				Strategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
 							{
 								Variation: f.Variations[0].Id,
 								Weight:    30000,
@@ -674,12 +674,12 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 		},
 		{
 			desc: "success",
-			rule: &feature.Rule{
+			rule: &ftproto.Rule{
 				Id: "rule-3",
-				Strategy: &proto.Strategy{
-					Type: proto.Strategy_ROLLOUT,
-					RolloutStrategy: &proto.RolloutStrategy{
-						Variations: []*proto.RolloutStrategy_Variation{
+				Strategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
 							{
 								Variation: f.Variations[0].Id,
 								Weight:    30000,
@@ -691,10 +691,10 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 						},
 					},
 				},
-				Clauses: []*proto.Clause{{
+				Clauses: []*ftproto.Clause{{
 					Id:        id1.String(),
 					Attribute: "name",
-					Operator:  proto.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 					},
@@ -717,13 +717,13 @@ func TestChangeRuleStrategyToFixed(t *testing.T) {
 	r := f.Rules[0]
 	rID := r.Id
 	vID := f.Variations[1].Id
-	expected := &proto.Strategy{
-		Type:          proto.Strategy_FIXED,
-		FixedStrategy: &proto.FixedStrategy{Variation: vID},
+	expected := &ftproto.Strategy{
+		Type:          ftproto.Strategy_FIXED,
+		FixedStrategy: &ftproto.FixedStrategy{Variation: vID},
 	}
 	patterns := []*struct {
 		ruleID   string
-		strategy *proto.Strategy
+		strategy *ftproto.Strategy
 		expected error
 	}{
 		{
@@ -733,17 +733,17 @@ func TestChangeRuleStrategyToFixed(t *testing.T) {
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.Strategy{
-				Type:          proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{Variation: ""},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: ""},
 			},
 			expected: errVariationNotFound,
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.Strategy{
-				Type:          proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{Variation: "variation-D"},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: "variation-D"},
 			},
 			expected: errVariationNotFound,
 		},
@@ -818,9 +818,9 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	rID := r.Id
 	vID1 := f.Variations[0].Id
 	vID2 := f.Variations[1].Id
-	expected := &proto.Strategy{
-		Type: proto.Strategy_ROLLOUT,
-		RolloutStrategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+	expected := &ftproto.Strategy{
+		Type: ftproto.Strategy_ROLLOUT,
+		RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 			{
 				Variation: vID1,
 				Weight:    30,
@@ -833,7 +833,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	}
 	patterns := []*struct {
 		ruleID   string
-		strategy *proto.Strategy
+		strategy *ftproto.Strategy
 		expected error
 	}{
 		{
@@ -843,9 +843,9 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 					{
 						Variation: "",
 						Weight:    30000,
@@ -860,9 +860,9 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 					{
 						Variation: vID1,
 						Weight:    30000,
@@ -877,9 +877,9 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 					{
 						Variation: vID1,
 						Weight:    30000,
@@ -1011,7 +1011,7 @@ func TestChangeClauseOperator(t *testing.T) {
 	patterns := []struct {
 		rule        string
 		clause      string
-		operator    proto.Clause_Operator
+		operator    ftproto.Clause_Operator
 		ruleIdx     int
 		idx         int
 		expectedErr error
@@ -1019,7 +1019,7 @@ func TestChangeClauseOperator(t *testing.T) {
 		{
 			rule:        "rule-1",
 			clause:      "clause-1",
-			operator:    proto.Clause_IN,
+			operator:    ftproto.Clause_IN,
 			ruleIdx:     0,
 			idx:         0,
 			expectedErr: nil,
@@ -1222,10 +1222,10 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 	f := makeFeature("test-feature")
 	expected := "variation-D"
 	f.AddVariation(expected, "D", "Variation D", "Thing does D")
-	f.ChangeDefaultStrategy(&proto.Strategy{
-		Type: proto.Strategy_ROLLOUT,
-		RolloutStrategy: &proto.RolloutStrategy{
-			Variations: []*proto.RolloutStrategy_Variation{
+	f.ChangeDefaultStrategy(&ftproto.Strategy{
+		Type: ftproto.Strategy_ROLLOUT,
+		RolloutStrategy: &ftproto.RolloutStrategy{
+			Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: "variation-A",
 					Weight:    100000,
@@ -1352,7 +1352,7 @@ func TestChangeFixedStrategy(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := f.ChangeFixedStrategy(p.ruleID, &proto.FixedStrategy{Variation: p.variationID})
+		err := f.ChangeFixedStrategy(p.ruleID, &ftproto.FixedStrategy{Variation: p.variationID})
 		assert.Equal(t, p.expected, err)
 	}
 	if r.Strategy.FixedStrategy.Variation != vID {
@@ -1366,7 +1366,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	rID := r.Id
 	vID1 := f.Variations[0].Id
 	vID2 := f.Variations[1].Id
-	expected := &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+	expected := &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 		{
 			Variation: vID1,
 			Weight:    30,
@@ -1378,17 +1378,17 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	}}
 	patterns := []*struct {
 		ruleID   string
-		strategy *proto.RolloutStrategy
+		strategy *ftproto.RolloutStrategy
 		expected error
 	}{
 		{
 			ruleID:   "",
-			strategy: &proto.RolloutStrategy{},
+			strategy: &ftproto.RolloutStrategy{},
 			expected: errRuleNotFound,
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: "",
 					Weight:    30,
@@ -1402,7 +1402,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 		},
 		{
 			ruleID: rID,
-			strategy: &proto.RolloutStrategy{Variations: []*proto.RolloutStrategy_Variation{
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: vID1,
 					Weight:    30,
@@ -1451,8 +1451,8 @@ func TestIsStale(t *testing.T) {
 	}{
 		{
 			desc: "false",
-			feature: &Feature{Feature: &proto.Feature{
-				LastUsedInfo: &proto.FeatureLastUsedInfo{
+			feature: &Feature{Feature: &ftproto.Feature{
+				LastUsedInfo: &ftproto.FeatureLastUsedInfo{
 					LastUsedAt: t1.Unix(),
 				},
 			}},
@@ -1461,8 +1461,8 @@ func TestIsStale(t *testing.T) {
 		},
 		{
 			desc: "true",
-			feature: &Feature{Feature: &proto.Feature{
-				LastUsedInfo: &proto.FeatureLastUsedInfo{
+			feature: &Feature{Feature: &ftproto.Feature{
+				LastUsedInfo: &ftproto.FeatureLastUsedInfo{
 					LastUsedAt: t1.Unix(),
 				},
 			}},
@@ -1485,67 +1485,67 @@ func TestValidateVariationValue(t *testing.T) {
 	require.NoError(t, err)
 	patterns := []struct {
 		desc          string
-		variationType feature.Feature_VariationType
+		variationType ftproto.Feature_VariationType
 		value         string
 		expected      error
 	}{
 		{
 			desc:          "invalid bool",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			value:         "hoge",
 			expected:      errVariationTypeUnmatched,
 		},
 		{
 			desc:          "empty string",
-			variationType: feature.Feature_JSON,
+			variationType: ftproto.Feature_JSON,
 			value:         "",
 			expected:      errVariationValueRequired,
 		},
 		{
 			desc:          "invalid number",
-			variationType: feature.Feature_NUMBER,
+			variationType: ftproto.Feature_NUMBER,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      errVariationTypeUnmatched,
 		},
 		{
 			desc:          "invalid json",
-			variationType: feature.Feature_JSON,
+			variationType: ftproto.Feature_JSON,
 			value:         "true",
 			expected:      errVariationTypeUnmatched,
 		},
 		{
 			desc:          "valid bool",
-			variationType: feature.Feature_BOOLEAN,
+			variationType: ftproto.Feature_BOOLEAN,
 			value:         "true",
 			expected:      nil,
 		},
 		{
 			desc:          "valid number float",
-			variationType: feature.Feature_NUMBER,
+			variationType: ftproto.Feature_NUMBER,
 			value:         "1.23",
 			expected:      nil,
 		},
 		{
 			desc:          "valid number int",
-			variationType: feature.Feature_NUMBER,
+			variationType: ftproto.Feature_NUMBER,
 			value:         "123",
 			expected:      nil,
 		},
 		{
 			desc:          "valid json",
-			variationType: feature.Feature_JSON,
+			variationType: ftproto.Feature_JSON,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
 		{
 			desc:          "valid json array",
-			variationType: feature.Feature_JSON,
+			variationType: ftproto.Feature_JSON,
 			value:         `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
 			expected:      nil,
 		},
 		{
 			desc:          "valid string",
-			variationType: feature.Feature_STRING,
+			variationType: ftproto.Feature_STRING,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
@@ -1553,9 +1553,9 @@ func TestValidateVariationValue(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			f := &Feature{Feature: &feature.Feature{
+			f := &Feature{Feature: &ftproto.Feature{
 				VariationType: p.variationType,
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: "value-1"},
 					{Id: v2.String(), Value: "value-2"},
 				},
@@ -1572,34 +1572,34 @@ func TestNewClonedFeature(t *testing.T) {
 		offVariationIndex int
 		expectedEnabled   bool
 		expectedVersion   int32
-		defaultStrategy   *feature.Strategy
-		rules             []*feature.Rule
+		defaultStrategy   *ftproto.Strategy
+		rules             []*ftproto.Rule
 	}{
 		{
 			maintainer:        "sample@example.com",
 			offVariationIndex: 2,
 			expectedEnabled:   false,
 			expectedVersion:   int32(1),
-			defaultStrategy: &proto.Strategy{
-				Type: proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{
+			defaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
 					Variation: "variation-B",
 				},
 			},
-			rules: []*proto.Rule{
+			rules: []*ftproto.Rule{
 				{
 					Id: "rule-1",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
 							Variation: "variation-A",
 						},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        "clause-1",
 							Attribute: "name",
-							Operator:  proto.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values: []string{
 								"user1",
 								"user2",
@@ -1609,17 +1609,17 @@ func TestNewClonedFeature(t *testing.T) {
 				},
 				{
 					Id: "rule-2",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
 							Variation: "variation-B",
 						},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        "clause-2",
 							Attribute: "name",
-							Operator:  proto.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values: []string{
 								"user3",
 								"user4",
@@ -1634,10 +1634,10 @@ func TestNewClonedFeature(t *testing.T) {
 			offVariationIndex: 2,
 			expectedEnabled:   false,
 			expectedVersion:   int32(1),
-			defaultStrategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{
-					Variations: []*proto.RolloutStrategy_Variation{
+			defaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{
 							Variation: "variation-A",
 							Weight:    100000,
@@ -1653,13 +1653,13 @@ func TestNewClonedFeature(t *testing.T) {
 					},
 				},
 			},
-			rules: []*proto.Rule{
+			rules: []*ftproto.Rule{
 				{
 					Id: "rule-1",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_ROLLOUT,
-						RolloutStrategy: &proto.RolloutStrategy{
-							Variations: []*proto.RolloutStrategy_Variation{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_ROLLOUT,
+						RolloutStrategy: &ftproto.RolloutStrategy{
+							Variations: []*ftproto.RolloutStrategy_Variation{
 								{
 									Variation: "variation-A",
 									Weight:    100000,
@@ -1678,10 +1678,10 @@ func TestNewClonedFeature(t *testing.T) {
 				},
 				{
 					Id: "rule-2",
-					Strategy: &proto.Strategy{
-						Type: proto.Strategy_ROLLOUT,
-						RolloutStrategy: &proto.RolloutStrategy{
-							Variations: []*proto.RolloutStrategy_Variation{
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_ROLLOUT,
+						RolloutStrategy: &ftproto.RolloutStrategy{
+							Variations: []*ftproto.RolloutStrategy_Variation{
 								{
 									Variation: "variation-A",
 									Weight:    100,
@@ -1716,7 +1716,7 @@ func TestNewClonedFeature(t *testing.T) {
 		for i := range actual.Variations {
 			assert.Equal(t, actual.Variations[i].Id, actual.Targets[i].Variation)
 		}
-		if actual.DefaultStrategy.Type == feature.Strategy_FIXED {
+		if actual.DefaultStrategy.Type == ftproto.Strategy_FIXED {
 			assert.Equal(t, actual.Variations[1].Id, actual.DefaultStrategy.FixedStrategy.Variation)
 		} else {
 			for i := range actual.Variations {
@@ -1726,7 +1726,7 @@ func TestNewClonedFeature(t *testing.T) {
 		assert.NotNil(t, actual.Prerequisites)
 		assert.Equal(t, len(actual.Prerequisites), 0)
 		for i := range actual.Rules {
-			if actual.Rules[i].Strategy.Type == feature.Strategy_FIXED {
+			if actual.Rules[i].Strategy.Type == ftproto.Strategy_FIXED {
 				assert.Equal(t, actual.Rules[i].Strategy.FixedStrategy.Variation, actual.Variations[i].Id)
 			} else {
 				for idx := range actual.Variations {
@@ -1748,24 +1748,24 @@ func TestResetSamplingSeed(t *testing.T) {
 func TestFeatureIDsDependsOn(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		feature  *feature.Feature
+		feature  *ftproto.Feature
 		expected []string
 	}{
 		{
-			feature:  &feature.Feature{},
+			feature:  &ftproto.Feature{},
 			expected: []string{},
 		},
 		{
-			feature: &feature.Feature{
-				Prerequisites: []*feature.Prerequisite{
+			feature: &ftproto.Feature{
+				Prerequisites: []*ftproto.Prerequisite{
 					{FeatureId: "feature-1"},
 				},
 			},
 			expected: []string{"feature-1"},
 		},
 		{
-			feature: &feature.Feature{
-				Prerequisites: []*feature.Prerequisite{
+			feature: &ftproto.Feature{
+				Prerequisites: []*ftproto.Prerequisite{
 					{FeatureId: "feature-1"},
 					{FeatureId: "feature-2"},
 				},
@@ -1773,11 +1773,11 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 			expected: []string{"feature-1", "feature-2"},
 		},
 		{
-			feature: &feature.Feature{
-				Rules: []*feature.Rule{
+			feature: &ftproto.Feature{
+				Rules: []*ftproto.Rule{
 					{
-						Clauses: []*feature.Clause{
-							{Attribute: "feature-1", Operator: feature.Clause_FEATURE_FLAG},
+						Clauses: []*ftproto.Clause{
+							{Attribute: "feature-1", Operator: ftproto.Clause_FEATURE_FLAG},
 						},
 					},
 				},
@@ -1785,12 +1785,12 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 			expected: []string{"feature-1"},
 		},
 		{
-			feature: &feature.Feature{
-				Rules: []*feature.Rule{
+			feature: &ftproto.Feature{
+				Rules: []*ftproto.Rule{
 					{
-						Clauses: []*feature.Clause{
-							{Attribute: "feature-1", Operator: feature.Clause_FEATURE_FLAG},
-							{Attribute: "feature-2", Operator: feature.Clause_FEATURE_FLAG},
+						Clauses: []*ftproto.Clause{
+							{Attribute: "feature-1", Operator: ftproto.Clause_FEATURE_FLAG},
+							{Attribute: "feature-2", Operator: ftproto.Clause_FEATURE_FLAG},
 						},
 					},
 				},
@@ -1798,14 +1798,14 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 			expected: []string{"feature-1", "feature-2"},
 		},
 		{
-			feature: &feature.Feature{
-				Prerequisites: []*feature.Prerequisite{
+			feature: &ftproto.Feature{
+				Prerequisites: []*ftproto.Prerequisite{
 					{FeatureId: "feature-1"},
 				},
-				Rules: []*feature.Rule{
+				Rules: []*ftproto.Rule{
 					{
-						Clauses: []*feature.Clause{
-							{Attribute: "feature-2", Operator: feature.Clause_FEATURE_FLAG},
+						Clauses: []*ftproto.Clause{
+							{Attribute: "feature-2", Operator: ftproto.Clause_FEATURE_FLAG},
 						},
 					},
 				},
@@ -1825,16 +1825,16 @@ func TestValidateClauses(t *testing.T) {
 	id3, _ := uuid.NewUUID()
 	patterns := []struct {
 		desc     string
-		clauses  []*proto.Clause
+		clauses  []*ftproto.Clause
 		expected error
 	}{
 		{
 			desc: "success: 2 clauses",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
 					Attribute: "name",
-					Operator:  proto.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 						"user2",
@@ -1842,14 +1842,14 @@ func TestValidateClauses(t *testing.T) {
 				},
 				{
 					Id:       id2.String(),
-					Operator: proto.Clause_SEGMENT,
+					Operator: ftproto.Clause_SEGMENT,
 					Values: []string{
 						"value",
 					},
 				},
 				{
 					Id:        id3.String(),
-					Operator:  proto.Clause_FEATURE_FLAG,
+					Operator:  ftproto.Clause_FEATURE_FLAG,
 					Attribute: "feature-1",
 					Values: []string{
 						"true",
@@ -1860,16 +1860,16 @@ func TestValidateClauses(t *testing.T) {
 		},
 		{
 			desc:     "err: zero clause",
-			clauses:  []*proto.Clause{},
+			clauses:  []*ftproto.Clause{},
 			expected: fmt.Errorf("feature: rule must have at least one clause"),
 		},
 		{
 			desc: "err: id is empty",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        "",
 					Attribute: "name",
-					Operator:  proto.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Values:    []string{"user1"},
 				},
 			},
@@ -1877,10 +1877,10 @@ func TestValidateClauses(t *testing.T) {
 		},
 		{
 			desc: "err: compare missing attribute",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:       id1.String(),
-					Operator: proto.Clause_EQUALS,
+					Operator: ftproto.Clause_EQUALS,
 					Values: []string{
 						"user1",
 						"user2",
@@ -1891,10 +1891,10 @@ func TestValidateClauses(t *testing.T) {
 		},
 		{
 			desc: "err: compare missing values",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
-					Operator:  proto.Clause_EQUALS,
+					Operator:  ftproto.Clause_EQUALS,
 					Attribute: "name",
 				},
 			},
@@ -1902,10 +1902,10 @@ func TestValidateClauses(t *testing.T) {
 		},
 		{
 			desc: "err: segment attribute not empty",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
-					Operator:  proto.Clause_SEGMENT,
+					Operator:  ftproto.Clause_SEGMENT,
 					Attribute: "name",
 					Values: []string{
 						"user1",
@@ -1916,30 +1916,30 @@ func TestValidateClauses(t *testing.T) {
 		},
 		{
 			desc: "err: segment value empty",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:       id1.String(),
-					Operator: proto.Clause_SEGMENT,
+					Operator: ftproto.Clause_SEGMENT,
 				},
 			},
 			expected: errClauseValuesEmpty,
 		},
 		{
 			desc: "err: feature flag attribute empty",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:       id1.String(),
-					Operator: proto.Clause_FEATURE_FLAG,
+					Operator: ftproto.Clause_FEATURE_FLAG,
 				},
 			},
 			expected: errClauseAttributeEmpty,
 		},
 		{
 			desc: "err: feature flag values empty",
-			clauses: []*proto.Clause{
+			clauses: []*ftproto.Clause{
 				{
 					Id:        id1.String(),
-					Operator:  proto.Clause_FEATURE_FLAG,
+					Operator:  ftproto.Clause_FEATURE_FLAG,
 					Attribute: "feature-1",
 				},
 			},
@@ -1967,33 +1967,33 @@ func TestUpdate(t *testing.T) {
 		tags                *common.StringListValue
 		enabled             *wrapperspb.BoolValue
 		archived            *wrapperspb.BoolValue
-		defaultStrategy     *feature.Strategy
+		defaultStrategy     *ftproto.Strategy
 		offVariation        *wrapperspb.StringValue
 		resetSamplingSeed   bool
-		prerequisiteChanges []*feature.PrerequisiteChange
-		targetChanges       []*feature.TargetChange
-		ruleChanges         []*feature.RuleChange
-		variationChanges    []*feature.VariationChange
-		tagChanges          []*feature.TagChange
+		prerequisiteChanges []*ftproto.PrerequisiteChange
+		targetChanges       []*ftproto.TargetChange
+		ruleChanges         []*ftproto.RuleChange
+		variationChanges    []*ftproto.VariationChange
+		tagChanges          []*ftproto.TagChange
 		expected            *Feature
 		expectedErr         error
 	}{
 		{
 			desc: "success: no changes when updating with same values",
-			feature: &Feature{Feature: &feature.Feature{
+			feature: &Feature{Feature: &ftproto.Feature{
 				Name:        "test-feature",
 				Description: "test description",
 				Tags:        []string{"tag1"},
 				Enabled:     true,
 				Archived:    false,
-				DefaultStrategy: &feature.Strategy{
-					Type: feature.Strategy_FIXED,
-					FixedStrategy: &feature.FixedStrategy{
+				DefaultStrategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
 						Variation: id1.String(),
 					},
 				},
 				OffVariation: id2.String(),
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 				},
@@ -2003,121 +2003,130 @@ func TestUpdate(t *testing.T) {
 			tags:        &common.StringListValue{Values: []string{"tag1"}},
 			enabled:     wrapperspb.Bool(true),
 			archived:    wrapperspb.Bool(false),
-			defaultStrategy: &feature.Strategy{
-				Type: feature.Strategy_FIXED,
-				FixedStrategy: &feature.FixedStrategy{
+			defaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
 					Variation: id1.String(),
 				},
 			},
 			offVariation: wrapperspb.String(id2.String()),
-			expected: &Feature{Feature: &feature.Feature{
+			expected: &Feature{Feature: &ftproto.Feature{
 				Name:        "test-feature",
 				Description: "test description",
 				Tags:        []string{"tag1"},
 				Enabled:     true,
 				Archived:    false,
-				DefaultStrategy: &feature.Strategy{
-					Type: feature.Strategy_FIXED,
-					FixedStrategy: &feature.FixedStrategy{
+				DefaultStrategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
 						Variation: id1.String(),
 					},
 				},
 				OffVariation: id2.String(),
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 				},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{},
+				Rules:         []*ftproto.Rule{},
 			}},
 		},
 		{
 			desc: "success: version incremented with full replacement fields",
-			feature: &Feature{Feature: &feature.Feature{
+			feature: &Feature{Feature: &ftproto.Feature{
 				Name:        "old-name",
 				Description: "old description",
 				Tags:        []string{"old-tag"},
 				Enabled:     false,
 				Archived:    false,
-				DefaultStrategy: &feature.Strategy{
-					Type: feature.Strategy_FIXED,
-					FixedStrategy: &feature.FixedStrategy{
+				DefaultStrategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
 						Variation: id1.String(),
 					},
 				},
 				OffVariation: id2.String(),
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 				},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{},
+				Rules:         []*ftproto.Rule{},
 			}},
 			name:        wrapperspb.String("new-name"),
 			description: wrapperspb.String("new description"),
 			tags:        &common.StringListValue{Values: []string{"new-tag"}},
 			enabled:     wrapperspb.Bool(true),
 			archived:    wrapperspb.Bool(false),
-			defaultStrategy: &feature.Strategy{
-				Type: feature.Strategy_FIXED,
-				FixedStrategy: &feature.FixedStrategy{
+			defaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
 					Variation: id1.String(),
 				},
 			},
 			offVariation: wrapperspb.String(id1.String()),
-			expected: &Feature{Feature: &feature.Feature{
+			expected: &Feature{Feature: &ftproto.Feature{
 				Name:        "new-name",
 				Description: "new description",
 				Tags:        []string{"new-tag"},
 				Enabled:     true,
 				Archived:    false,
-				DefaultStrategy: &feature.Strategy{
-					Type: feature.Strategy_FIXED,
-					FixedStrategy: &feature.FixedStrategy{
+				DefaultStrategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
 						Variation: id1.String(),
 					},
 				},
 				OffVariation: id1.String(),
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 				},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{},
+				Rules:         []*ftproto.Rule{},
 			}},
 		},
 		{
 			desc: "success: granular updates for variations, rules, prerequisites, targets, and tags",
-			feature: &Feature{Feature: &feature.Feature{
+			feature: &Feature{Feature: &ftproto.Feature{
 				Name: "test-feature",
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 				},
-				Targets: []*feature.Target{
+				Targets: []*ftproto.Target{
 					{Variation: id1.String(), Users: []string{}},
 					{Variation: id2.String(), Users: []string{}},
 				},
 			}},
-			variationChanges: []*feature.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Variation: &feature.Variation{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Variation: &ftproto.Variation{
 						Id:    id3.String(),
 						Name:  "v3",
 						Value: "new-value",
 					},
 				},
 			},
-			ruleChanges: []*feature.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Rule: &feature.Rule{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &feature.Strategy{
-							Type: feature.Strategy_FIXED,
-							FixedStrategy: &feature.FixedStrategy{
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
 								Variation: id1.String(),
 							},
 						},
-						Clauses: []*feature.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        id1.String(),
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{"user1"},
 								Attribute: "name",
 							},
@@ -2125,64 +2134,64 @@ func TestUpdate(t *testing.T) {
 					},
 				},
 			},
-			prerequisiteChanges: []*feature.PrerequisiteChange{
+			prerequisiteChanges: []*ftproto.PrerequisiteChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Prerequisite: &feature.Prerequisite{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Prerequisite: &ftproto.Prerequisite{
 						FeatureId:   "feature-1",
 						VariationId: id1.String(),
 					},
 				},
 			},
-			targetChanges: []*feature.TargetChange{
+			targetChanges: []*ftproto.TargetChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Target: &feature.Target{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Target: &ftproto.Target{
 						Variation: id1.String(),
 						Users:     []string{"user1"},
 					},
 				},
 			},
-			tagChanges: []*feature.TagChange{
+			tagChanges: []*ftproto.TagChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
+					ChangeType: ftproto.ChangeType_CREATE,
 					Tag:        "new-tag",
 				},
 			},
-			expected: &Feature{Feature: &feature.Feature{
+			expected: &Feature{Feature: &ftproto.Feature{
 				Name: "test-feature",
 				Tags: []string{"new-tag"},
-				Variations: []*feature.Variation{
+				Variations: []*ftproto.Variation{
 					{Id: id1.String(), Name: "v1", Value: "true"},
 					{Id: id2.String(), Name: "v2", Value: "false"},
 					{Name: "v3", Value: "new-value"},
 				},
-				Rules: []*feature.Rule{
+				Rules: []*ftproto.Rule{
 					{
 						Id: ruleID.String(),
-						Strategy: &feature.Strategy{
-							Type: feature.Strategy_FIXED,
-							FixedStrategy: &feature.FixedStrategy{
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
 								Variation: id1.String(),
 							},
 						},
-						Clauses: []*feature.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        id1.String(),
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{"user1"},
 								Attribute: "name",
 							},
 						},
 					},
 				},
-				Prerequisites: []*feature.Prerequisite{
+				Prerequisites: []*ftproto.Prerequisite{
 					{
 						FeatureId:   "feature-1",
 						VariationId: id1.String(),
 					},
 				},
-				Targets: []*feature.Target{
+				Targets: []*ftproto.Target{
 					{
 						Variation: id1.String(),
 						Users:     []string{"user1"},
@@ -2230,7 +2239,7 @@ func TestUpdate(t *testing.T) {
 
 			// Check variations
 			var createdVariationID string
-			hasVariationCreate := len(p.variationChanges) > 0 && p.variationChanges[0].ChangeType == feature.ChangeType_CREATE
+			hasVariationCreate := len(p.variationChanges) > 0 && p.variationChanges[0].ChangeType == ftproto.ChangeType_CREATE
 			if hasVariationCreate {
 				assert.Equal(t, len(p.expected.Variations), len(updated.Variations))
 				for i := range updated.Variations {
@@ -2240,7 +2249,11 @@ func TestUpdate(t *testing.T) {
 				}
 				createdVariationID = updated.Variations[len(updated.Variations)-1].Id
 			} else {
-				assert.Equal(t, p.expected.Variations, updated.Variations)
+				// Use proto.Equal for protobuf message comparison to avoid internal structure differences
+				assert.Equal(t, len(p.expected.Variations), len(updated.Variations), "Variations length should match")
+				for i := range p.expected.Variations {
+					assert.True(t, proto.Equal(p.expected.Variations[i], updated.Variations[i]), "Variation %d should be equal", i)
+				}
 			}
 
 			// Check targets
@@ -2257,11 +2270,21 @@ func TestUpdate(t *testing.T) {
 					assert.Equal(t, p.expected.Targets[i].Users, updated.Targets[i].Users)
 				}
 			} else {
-				assert.Equal(t, p.expected.Targets, updated.Targets)
+				// Use proto.Equal for protobuf message comparison
+				assert.Equal(t, len(p.expected.Targets), len(updated.Targets), "Targets length should match")
+				for i := range p.expected.Targets {
+					assert.True(t, proto.Equal(p.expected.Targets[i], updated.Targets[i]), "Target %d should be equal", i)
+				}
 			}
-			// Check prerequisites and rules
-			assert.Equal(t, p.expected.Prerequisites, updated.Prerequisites)
-			assert.Equal(t, p.expected.Rules, updated.Rules)
+			// Check prerequisites and rules using proto.Equal
+			assert.Equal(t, len(p.expected.Prerequisites), len(updated.Prerequisites), "Prerequisites length should match")
+			for i := range p.expected.Prerequisites {
+				assert.True(t, proto.Equal(p.expected.Prerequisites[i], updated.Prerequisites[i]), "Prerequisite %d should be equal", i)
+			}
+			assert.Equal(t, len(p.expected.Rules), len(updated.Rules), "Rules length should match")
+			for i := range p.expected.Rules {
+				assert.True(t, proto.Equal(p.expected.Rules[i], updated.Rules[i]), "Rule %d should be equal", i)
+			}
 		})
 	}
 }
@@ -2276,24 +2299,24 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 	// Baseline feature with no prerequisites.
 	genF := func() *Feature {
 		return &Feature{
-			Feature: &proto.Feature{
+			Feature: &ftproto.Feature{
 				Id:            "i",
 				Name:          "n",
 				Description:   "d",
 				Archived:      false,
 				Enabled:       false,
 				Tags:          []string{"t1", "t2"},
-				VariationType: feature.Feature_BOOLEAN,
-				Variations: []*proto.Variation{
+				VariationType: ftproto.Feature_BOOLEAN,
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
 					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
 				},
-				Prerequisites: []*proto.Prerequisite{},
-				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
-				Rules:         []*proto.Rule{},
-				DefaultStrategy: &proto.Strategy{
-					Type:          proto.Strategy_FIXED,
-					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*ftproto.Rule{},
+				DefaultStrategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 				},
 				OffVariation: v1.String(),
 			},
@@ -2303,17 +2326,17 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 	patterns := []struct {
 		desc                string
 		inputFunc           func() *Feature
-		prerequisiteChanges []*proto.PrerequisiteChange
+		prerequisiteChanges []*ftproto.PrerequisiteChange
 		expectedFunc        func() *Feature
 		expectedErr         error
 	}{
 		{
 			desc:      "Prerequisite Create - success",
 			inputFunc: genF,
-			prerequisiteChanges: []*proto.PrerequisiteChange{
+			prerequisiteChanges: []*ftproto.PrerequisiteChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Prerequisite: &proto.Prerequisite{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Prerequisite: &ftproto.Prerequisite{
 						FeatureId:   "f1",
 						VariationId: v1.String(),
 					},
@@ -2333,10 +2356,10 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 				_ = f.AddPrerequisite("f1", v1.String())
 				return f
 			},
-			prerequisiteChanges: []*proto.PrerequisiteChange{
+			prerequisiteChanges: []*ftproto.PrerequisiteChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Prerequisite: &proto.Prerequisite{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Prerequisite: &ftproto.Prerequisite{
 						FeatureId:   "f1",
 						VariationId: v1.String(),
 					},
@@ -2353,10 +2376,10 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 			inputFunc: func() *Feature {
 				return genF()
 			},
-			prerequisiteChanges: []*proto.PrerequisiteChange{
+			prerequisiteChanges: []*ftproto.PrerequisiteChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Prerequisite: &proto.Prerequisite{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Prerequisite: &ftproto.Prerequisite{
 						FeatureId:   "non-existent",
 						VariationId: v2.String(),
 					},
@@ -2372,10 +2395,10 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 			inputFunc: func() *Feature {
 				return genF()
 			},
-			prerequisiteChanges: []*proto.PrerequisiteChange{
+			prerequisiteChanges: []*ftproto.PrerequisiteChange{
 				{
-					ChangeType: feature.ChangeType_DELETE,
-					Prerequisite: &proto.Prerequisite{
+					ChangeType: ftproto.ChangeType_DELETE,
+					Prerequisite: &ftproto.Prerequisite{
 						FeatureId:   "non-existent",
 						VariationId: v1.String(),
 					},
@@ -2411,27 +2434,27 @@ func TestUpdateTargetsGranular(t *testing.T) {
 
 	genF := func() *Feature {
 		return &Feature{
-			Feature: &proto.Feature{
+			Feature: &ftproto.Feature{
 				Id:            "i",
 				Name:          "n",
 				Description:   "d",
 				Archived:      false,
 				Enabled:       false,
 				Tags:          []string{"t1"},
-				VariationType: feature.Feature_BOOLEAN,
-				Variations: []*proto.Variation{
+				VariationType: ftproto.Feature_BOOLEAN,
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
 					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
 				},
-				Prerequisites: []*proto.Prerequisite{},
-				Targets: []*proto.Target{
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets: []*ftproto.Target{
 					{Variation: v1.String(), Users: []string{"u1"}},
 					{Variation: v2.String(), Users: []string{"u2"}},
 				},
-				Rules: []*proto.Rule{},
-				DefaultStrategy: &proto.Strategy{
-					Type:          proto.Strategy_FIXED,
-					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				Rules: []*ftproto.Rule{},
+				DefaultStrategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 				},
 				OffVariation: v1.String(),
 			},
@@ -2441,17 +2464,17 @@ func TestUpdateTargetsGranular(t *testing.T) {
 	patterns := []struct {
 		desc          string
 		inputFunc     func() *Feature
-		targetChanges []*proto.TargetChange
+		targetChanges []*ftproto.TargetChange
 		expectedFunc  func() *Feature
 		expectedErr   error
 	}{
 		{
 			desc:      "Target Create - error: empty target fields",
 			inputFunc: genF,
-			targetChanges: []*proto.TargetChange{
+			targetChanges: []*ftproto.TargetChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Target:     &proto.Target{Variation: "", Users: []string{}},
+					ChangeType: ftproto.ChangeType_CREATE,
+					Target:     &ftproto.Target{Variation: "", Users: []string{}},
 				},
 			},
 			expectedFunc: func() *Feature {
@@ -2462,10 +2485,10 @@ func TestUpdateTargetsGranular(t *testing.T) {
 		{
 			desc:      "Target Update - error: target not found",
 			inputFunc: genF,
-			targetChanges: []*proto.TargetChange{
+			targetChanges: []*ftproto.TargetChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Target:     &proto.Target{Variation: "non-existent", Users: []string{"u-new"}},
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Target:     &ftproto.Target{Variation: "non-existent", Users: []string{"u-new"}},
 				},
 			},
 			expectedFunc: func() *Feature {
@@ -2476,10 +2499,10 @@ func TestUpdateTargetsGranular(t *testing.T) {
 		{
 			desc:      "Target Delete - error: target not found",
 			inputFunc: genF,
-			targetChanges: []*proto.TargetChange{
+			targetChanges: []*ftproto.TargetChange{
 				{
-					ChangeType: feature.ChangeType_DELETE,
-					Target:     &proto.Target{Variation: "non-existent"},
+					ChangeType: ftproto.ChangeType_DELETE,
+					Target:     &ftproto.Target{Variation: "non-existent"},
 				},
 			},
 			expectedFunc: func() *Feature {
@@ -2517,24 +2540,24 @@ func TestUpdateRulesGranular(t *testing.T) {
 	// genF returns a baseline Feature with no rules.
 	genF := func() *Feature {
 		return &Feature{
-			Feature: &proto.Feature{
+			Feature: &ftproto.Feature{
 				Id:            "i",
 				Name:          "n",
 				Description:   "d",
 				Archived:      false,
 				Enabled:       false,
 				Tags:          []string{"t1"},
-				VariationType: feature.Feature_BOOLEAN,
-				Variations: []*proto.Variation{
+				VariationType: ftproto.Feature_BOOLEAN,
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
 					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
 				},
-				Prerequisites: []*proto.Prerequisite{},
-				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
-				Rules:         []*proto.Rule{},
-				DefaultStrategy: &proto.Strategy{
-					Type:          proto.Strategy_FIXED,
-					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*ftproto.Rule{},
+				DefaultStrategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 				},
 				OffVariation: v1.String(),
 			},
@@ -2545,16 +2568,16 @@ func TestUpdateRulesGranular(t *testing.T) {
 	patterns := []struct {
 		desc         string
 		inputFunc    func() *Feature
-		ruleChanges  []*proto.RuleChange
+		ruleChanges  []*ftproto.RuleChange
 		expectedFunc func() *Feature
 		expectedErr  error
 	}{
 		{
 			desc:      "Rule Create - error: rule required",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
+					ChangeType: ftproto.ChangeType_CREATE,
 					Rule:       nil,
 				},
 			},
@@ -2564,17 +2587,17 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Create - error: nil strategy",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Rule: &ftproto.Rule{
 						Id:       ruleID.String(),
 						Strategy: nil, // This should trigger errStrategyRequired
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "attr",
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{"val"},
 							},
 						},
@@ -2587,16 +2610,16 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Create - error: no clauses",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 						},
-						Clauses: []*proto.Clause{},
+						Clauses: []*ftproto.Clause{},
 					},
 				},
 			},
@@ -2606,20 +2629,20 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Create - error: clause attribute not empty for SEGMENT operator",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 						},
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "non-empty", // Not allowed for SEGMENT operator
-								Operator:  feature.Clause_SEGMENT,
+								Operator:  ftproto.Clause_SEGMENT,
 								Values:    []string{"val"},
 							},
 						},
@@ -2632,20 +2655,20 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Create - error: clause values empty for SEGMENT operator",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 						},
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "", // Correct for SEGMENT operator
-								Operator:  feature.Clause_SEGMENT,
+								Operator:  ftproto.Clause_SEGMENT,
 								Values:    []string{}, // Missing values
 							},
 						},
@@ -2658,20 +2681,20 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Update - error: rule not found",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Rule: &ftproto.Rule{
 						Id: "non-existent",
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v2.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v2.String()},
 						},
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "attr",
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{"val-updated"},
 							},
 						},
@@ -2686,37 +2709,37 @@ func TestUpdateRulesGranular(t *testing.T) {
 			inputFunc: func() *Feature {
 				f := genF()
 				// Pre-add a valid rule.
-				_ = f.AddRule(&proto.Rule{
+				_ = f.AddRule(&ftproto.Rule{
 					Id: ruleID.String(),
-					Strategy: &proto.Strategy{
-						Type:          feature.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+					Strategy: &ftproto.Strategy{
+						Type:          ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        clauseID.String(),
 							Attribute: "attr",
-							Operator:  feature.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values:    []string{"val"},
 						},
 					},
 				})
 				return f
 			},
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 						},
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "", // empty attribute for non-SEGMENT operator not allowed
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{"val-updated"},
 							},
 						},
@@ -2731,37 +2754,37 @@ func TestUpdateRulesGranular(t *testing.T) {
 			inputFunc: func() *Feature {
 				f := genF()
 				// Pre-add a valid rule.
-				_ = f.AddRule(&proto.Rule{
+				_ = f.AddRule(&ftproto.Rule{
 					Id: ruleID.String(),
-					Strategy: &proto.Strategy{
-						Type:          feature.Strategy_FIXED,
-						FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+					Strategy: &ftproto.Strategy{
+						Type:          ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 					},
-					Clauses: []*proto.Clause{
+					Clauses: []*ftproto.Clause{
 						{
 							Id:        clauseID.String(),
 							Attribute: "attr",
-							Operator:  feature.Clause_EQUALS,
+							Operator:  ftproto.Clause_EQUALS,
 							Values:    []string{"val"},
 						},
 					},
 				})
 				return f
 			},
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Rule: &proto.Rule{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Rule: &ftproto.Rule{
 						Id: ruleID.String(),
-						Strategy: &proto.Strategy{
-							Type:          feature.Strategy_FIXED,
-							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						Strategy: &ftproto.Strategy{
+							Type:          ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 						},
-						Clauses: []*proto.Clause{
+						Clauses: []*ftproto.Clause{
 							{
 								Id:        clauseID.String(),
 								Attribute: "attr",
-								Operator:  feature.Clause_EQUALS,
+								Operator:  ftproto.Clause_EQUALS,
 								Values:    []string{}, // empty values not allowed
 							},
 						},
@@ -2774,10 +2797,10 @@ func TestUpdateRulesGranular(t *testing.T) {
 		{
 			desc:      "Rule Delete - error: empty rule id",
 			inputFunc: genF,
-			ruleChanges: []*proto.RuleChange{
+			ruleChanges: []*ftproto.RuleChange{
 				{
-					ChangeType: feature.ChangeType_DELETE,
-					Rule:       &proto.Rule{Id: ""},
+					ChangeType: ftproto.ChangeType_DELETE,
+					Rule:       &ftproto.Rule{Id: ""},
 				},
 			},
 			expectedFunc: func() *Feature { return genF() },
@@ -2814,24 +2837,24 @@ func TestUpdateVariationsGranular(t *testing.T) {
 	// Baseline generator for JSON type.
 	genFJSON := func() *Feature {
 		return &Feature{
-			Feature: &proto.Feature{
+			Feature: &ftproto.Feature{
 				Id:            "i",
 				Name:          "n",
 				Description:   "d",
 				Archived:      false,
 				Enabled:       false,
 				Tags:          []string{"t1"},
-				VariationType: feature.Feature_JSON,
-				Variations: []*proto.Variation{
+				VariationType: ftproto.Feature_JSON,
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: `{"key": "value1"}`, Name: "n1", Description: "d1"},
 					{Id: v2.String(), Value: `{"key": "value2"}`, Name: "n2", Description: "d2"},
 				},
-				Prerequisites: []*proto.Prerequisite{},
-				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
-				Rules:         []*proto.Rule{},
-				DefaultStrategy: &proto.Strategy{
-					Type:          proto.Strategy_FIXED,
-					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*ftproto.Rule{},
+				DefaultStrategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 				},
 				OffVariation: v1.String(),
 			},
@@ -2842,17 +2865,17 @@ func TestUpdateVariationsGranular(t *testing.T) {
 	patterns := []struct {
 		desc             string
 		inputFunc        func() *Feature
-		variationChanges []*proto.VariationChange
+		variationChanges []*ftproto.VariationChange
 		expectedFunc     func() *Feature
 		expectedErr      error
 	}{
 		{
 			desc:      "Variation Create - success",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
-					Variation: &proto.Variation{
+					ChangeType: ftproto.ChangeType_CREATE,
+					Variation: &ftproto.Variation{
 						Id:          v3.String(),
 						Value:       `{"key": "value3"}`,
 						Name:        "n3",
@@ -2863,14 +2886,14 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			expectedFunc: func() *Feature {
 				f := genFJSON()
 				// Add the new variation directly
-				f.Variations = append(f.Variations, &proto.Variation{
+				f.Variations = append(f.Variations, &ftproto.Variation{
 					Id:          v3.String(),
 					Value:       `{"key": "value3"}`,
 					Name:        "n3",
 					Description: "d3",
 				})
 				// Add corresponding target for the new variation
-				f.Targets = append(f.Targets, &proto.Target{
+				f.Targets = append(f.Targets, &ftproto.Target{
 					Variation: v3.String(),
 					Users:     []string{},
 				})
@@ -2881,10 +2904,10 @@ func TestUpdateVariationsGranular(t *testing.T) {
 		{
 			desc:      "Variation Update - success",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Variation: &proto.Variation{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Variation: &ftproto.Variation{
 						Id:          v1.String(),
 						Value:       `{"key": "updated-value1"}`,
 						Name:        "n1-updated",
@@ -2911,10 +2934,10 @@ func TestUpdateVariationsGranular(t *testing.T) {
 				require.NoError(t, err)
 				return f
 			},
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_DELETE,
-					Variation:  &proto.Variation{Id: v3.String()},
+					ChangeType: ftproto.ChangeType_DELETE,
+					Variation:  &ftproto.Variation{Id: v3.String()},
 				},
 			},
 			expectedFunc: genFJSON,
@@ -2923,9 +2946,9 @@ func TestUpdateVariationsGranular(t *testing.T) {
 		{
 			desc:      "Variation Update - error: nil variation",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
+					ChangeType: ftproto.ChangeType_UPDATE,
 					Variation:  nil,
 				},
 			},
@@ -2935,10 +2958,10 @@ func TestUpdateVariationsGranular(t *testing.T) {
 		{
 			desc:      "Variation Update - error: empty name",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Variation: &proto.Variation{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Variation: &ftproto.Variation{
 						Id:          v1.String(),
 						Value:       `{"key": "value1"}`,
 						Name:        "",
@@ -2952,10 +2975,10 @@ func TestUpdateVariationsGranular(t *testing.T) {
 		{
 			desc:      "Variation Update - success: valid JSON object",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Variation: &proto.Variation{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Variation: &ftproto.Variation{
 						Id:          v1.String(),
 						Value:       `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 						Name:        "n1-updated",
@@ -2976,10 +2999,10 @@ func TestUpdateVariationsGranular(t *testing.T) {
 		{
 			desc:      "Variation Update - success: valid JSON array",
 			inputFunc: genFJSON,
-			variationChanges: []*proto.VariationChange{
+			variationChanges: []*ftproto.VariationChange{
 				{
-					ChangeType: feature.ChangeType_UPDATE,
-					Variation: &proto.Variation{
+					ChangeType: ftproto.ChangeType_UPDATE,
+					Variation: &ftproto.Variation{
 						Id:          v1.String(),
 						Value:       `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
 						Name:        "n1-updated",
@@ -3032,24 +3055,24 @@ func TestUpdateTagsGranular(t *testing.T) {
 	require.NoError(t, err)
 	genF := func() *Feature {
 		return &Feature{
-			Feature: &proto.Feature{
+			Feature: &ftproto.Feature{
 				Id:            "i",
 				Name:          "n",
 				Description:   "d",
 				Archived:      false,
 				Enabled:       false,
 				Tags:          []string{"t1", "t2"},
-				VariationType: feature.Feature_BOOLEAN,
-				Variations: []*proto.Variation{
+				VariationType: ftproto.Feature_BOOLEAN,
+				Variations: []*ftproto.Variation{
 					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
 					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
 				},
-				Prerequisites: []*proto.Prerequisite{},
-				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
-				Rules:         []*proto.Rule{},
-				DefaultStrategy: &proto.Strategy{
-					Type:          proto.Strategy_FIXED,
-					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*ftproto.Rule{},
+				DefaultStrategy: &ftproto.Strategy{
+					Type:          ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{Variation: v1.String()},
 				},
 				OffVariation: v1.String(),
 			},
@@ -3059,20 +3082,20 @@ func TestUpdateTagsGranular(t *testing.T) {
 	patterns := []struct {
 		desc         string
 		inputFunc    func() *Feature
-		tagChanges   []*proto.TagChange
+		tagChanges   []*ftproto.TagChange
 		expectedFunc func() *Feature
 		expectedErr  error
 	}{
 		{
 			desc:      "Tag Create - error: duplicate create should not add duplicate",
 			inputFunc: genF,
-			tagChanges: []*proto.TagChange{
+			tagChanges: []*ftproto.TagChange{
 				{
-					ChangeType: feature.ChangeType_CREATE,
+					ChangeType: ftproto.ChangeType_CREATE,
 					Tag:        "new-tag",
 				},
 				{
-					ChangeType: feature.ChangeType_CREATE,
+					ChangeType: ftproto.ChangeType_CREATE,
 					Tag:        "new-tag",
 				},
 			},
@@ -3086,9 +3109,9 @@ func TestUpdateTagsGranular(t *testing.T) {
 		{
 			desc:      "Tag Delete - error: tag not found",
 			inputFunc: genF,
-			tagChanges: []*proto.TagChange{
+			tagChanges: []*ftproto.TagChange{
 				{
-					ChangeType: feature.ChangeType_DELETE,
+					ChangeType: ftproto.ChangeType_DELETE,
 					Tag:        "non-existent-tag",
 				},
 			},
@@ -3125,31 +3148,31 @@ func TestValidateStrategy(t *testing.T) {
 	t.Parallel()
 	id1, _ := uuid.NewUUID()
 	id2, _ := uuid.NewUUID()
-	variations := []*feature.Variation{
+	variations := []*ftproto.Variation{
 		{Id: id1.String(), Value: "true", Name: "n1", Description: "d1"},
 		{Id: id2.String(), Value: "false", Name: "n2", Description: "d2"},
 	}
 	tests := []struct {
 		desc        string
-		strategy    *feature.Strategy
-		variations  []*feature.Variation
+		strategy    *ftproto.Strategy
+		variations  []*ftproto.Variation
 		expectedErr error
 	}{
 		{
 			desc: "success: fixed strategy",
-			strategy: &feature.Strategy{
-				Type:          feature.Strategy_FIXED,
-				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: id1.String()},
 			},
 			variations:  variations,
 			expectedErr: nil,
 		},
 		{
 			desc: "success: rollout strategy",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
 				},
@@ -3165,19 +3188,19 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: fixed strategy with non-existent variation",
-			strategy: &feature.Strategy{
-				Type:          feature.Strategy_FIXED,
-				FixedStrategy: &feature.FixedStrategy{Variation: "non-existent"},
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: "non-existent"},
 			},
 			variations:  variations,
 			expectedErr: errVariationNotFound,
 		},
 		{
 			desc: "fail: rollout strategy with non-existent variation",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: "non-existent", Weight: 100},
 					},
 				},
@@ -3187,7 +3210,7 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: unsupported strategy type",
-			strategy: &feature.Strategy{
+			strategy: &ftproto.Strategy{
 				Type: 999,
 			},
 			variations:  variations,
@@ -3195,27 +3218,27 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: fixed strategy is nil",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_FIXED,
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
 			},
 			variations:  variations,
 			expectedErr: ErrRuleStrategyCannotBeEmpty,
 		},
 		{
 			desc: "fail: rollout strategy is nil",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
 			},
 			variations:  variations,
 			expectedErr: ErrRuleStrategyCannotBeEmpty,
 		},
 		{
 			desc: "fail: both strategies are set",
-			strategy: &feature.Strategy{
-				Type:          feature.Strategy_FIXED,
-				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type:          ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{Variation: id1.String()},
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
 				},
@@ -3225,14 +3248,14 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "success: rollout strategy with valid audience",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 50},
 						{Variation: id2.String(), Weight: 50},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       50,
 						DefaultVariation: id1.String(),
 					},
@@ -3243,13 +3266,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "success: rollout strategy with 0% audience",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       0,
 						DefaultVariation: "",
 					},
@@ -3260,13 +3283,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "success: rollout strategy with 100% audience",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       100,
 						DefaultVariation: "",
 					},
@@ -3277,13 +3300,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: audience percentage below 0",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       -1,
 						DefaultVariation: id1.String(),
 					},
@@ -3294,13 +3317,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: audience percentage above 100",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       101,
 						DefaultVariation: id1.String(),
 					},
@@ -3311,13 +3334,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: audience percentage between 1-99 without default variation",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       50,
 						DefaultVariation: "",
 					},
@@ -3328,13 +3351,13 @@ func TestValidateStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: audience with non-existent default variation",
-			strategy: &feature.Strategy{
-				Type: feature.Strategy_ROLLOUT,
-				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
 						{Variation: id1.String(), Weight: 100},
 					},
-					Audience: &feature.Audience{
+					Audience: &ftproto.Audience{
 						Percentage:       50,
 						DefaultVariation: "non-existent",
 					},
