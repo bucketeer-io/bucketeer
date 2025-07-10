@@ -166,7 +166,7 @@ func (s *AutoOpsService) createProgressiveRolloutNoCommand(
 			},
 			req.EnvironmentId,
 			progressiveRollout.ProgressiveRollout,
-			&autoopsproto.ProgressiveRollout{},
+			nil,
 		)
 		if err != nil {
 			return err
@@ -469,8 +469,8 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 				Id: req.Id,
 			},
 			req.EnvironmentId,
-			&autoopsproto.ProgressiveRollout{},
-			progressiveRollout,
+			nil,                // Current state: entity no longer exists
+			progressiveRollout, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

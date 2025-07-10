@@ -19,7 +19,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -207,7 +206,6 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		return nil, dt.Err()
 	}
 
-	prev := &domain.Subscription{}
 	event, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_SUBSCRIPTION,
@@ -221,7 +219,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		},
 		req.EnvironmentId,
 		subscription.Subscription,
-		prev,
+		nil,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -583,10 +581,6 @@ func (s *NotificationService) DeleteSubscription(
 		if err != nil {
 			return err
 		}
-		prev := &domain.Subscription{}
-		if err = copier.Copy(prev, subscription); err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_SUBSCRIPTION,
@@ -594,8 +588,8 @@ func (s *NotificationService) DeleteSubscription(
 			eventproto.Event_SUBSCRIPTION_DELETED,
 			&eventproto.SubscriptionDeletedEvent{},
 			req.EnvironmentId,
-			subscription.Subscription,
-			prev,
+			nil,                       // Current state: entity no longer exists
+			subscription.Subscription, // Previous state: what was deleted
 		)
 		if err = s.subscriptionStorage.DeleteSubscription(contextWithTx, req.Id, req.EnvironmentId); err != nil {
 			return err

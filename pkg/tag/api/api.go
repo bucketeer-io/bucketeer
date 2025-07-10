@@ -402,8 +402,8 @@ func (s *TagService) DeleteTag(
 			EnvironmentId: tag.EnvironmentId,
 		},
 		tag.EnvironmentId,
-		tag,
-		tag,
+		nil, // Current state: entity no longer exists
+		tag, // Previous state: what was deleted
 	)
 	if err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)

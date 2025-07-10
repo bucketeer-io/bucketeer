@@ -17,7 +17,6 @@ import {
 import { useToast } from 'hooks';
 import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
-import { areJsonStringsEqual, isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
@@ -26,12 +25,9 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import DateTooltip from 'elements/date-tooltip';
+import { useAuditLogDataPatterns } from '../hooks/use-audit-log-data-patterns';
 import { AuditLogTab } from '../types';
-import {
-  convertJSONToRender,
-  formatJSONWithIndent,
-  getActionText
-} from '../utils';
+import { getActionText } from '../utils';
 import AuditLogAvatar from './audit-log-avatar';
 import AuditLogTitle from './audit-log-title';
 import AuditLogJSONCompare from './json-compare';
@@ -48,15 +44,7 @@ const AuditLogItem = memo(
     prefix: string;
     onClick: () => void;
   }) => {
-    const {
-      editor,
-      timestamp,
-      options,
-      entityData,
-      previousEntityData,
-      type,
-      entityType
-    } = auditLog;
+    const { editor, timestamp, options, entityType, type } = auditLog;
     const isLanguageJapanese = getLanguage() === 'ja';
     const { t } = useTranslation(['common', 'table', 'message']);
     const { notify } = useToast();
@@ -69,34 +57,16 @@ const AuditLogItem = memo(
       AuditLogTab.CHANGES
     );
 
-    // TODO: Because there is a data issue in the DB, we must check the previous_entity_data if it is empty.
-    // Once the backend fixes this, we can remove this condition.
-    const isOldDataIssue = useMemo(
-      () => !previousEntityData && !!entityData,
-      [entityData, previousEntityData]
-    );
-
-    const isSameData = useMemo(
-      () => areJsonStringsEqual(entityData, previousEntityData),
-      [entityData, previousEntityData]
-    );
-
-    const isHaveEntityData = useMemo(
-      () =>
-        !!entityData &&
-        !!isJsonString(entityData) &&
-        !!formatJSONWithIndent(entityData) &&
-        !!convertJSONToRender(formatJSONWithIndent(entityData)),
-      [entityData, currentTab, isExpanded]
-    );
-
-    const parsedEntityData = useMemo(() => {
-      try {
-        return JSON.parse(entityData);
-      } catch {
-        return null;
-      }
-    }, [entityData]);
+    // Use centralized audit log data patterns logic
+    const {
+      isHaveEntityData,
+      parsedEntityData,
+      effectiveIsSameData,
+      shouldShowChanges,
+      displayMode,
+      entityData,
+      previousEntityData
+    } = useAuditLogDataPatterns(auditLog);
 
     const lineNumberRef = useRef(0);
     const time = useMemo(
@@ -272,14 +242,12 @@ const AuditLogItem = memo(
               >
                 <p className="typo-para-small text-gray-500 uppercase cursor-default">
                   {t(
-                    isSameData ||
-                      isOldDataIssue ||
-                      currentTab === AuditLogTab.SNAPSHOT
+                    currentTab === AuditLogTab.SNAPSHOT
                       ? 'current-version'
-                      : 'updates'
+                      : displayMode
                   )}
                 </p>
-                {!isSameData && !isOldDataIssue && (
+                {shouldShowChanges && (
                   <div className="flex items-center">
                     <Button
                       variant={'secondary-2'}
@@ -318,7 +286,7 @@ const AuditLogItem = memo(
                 })}
               >
                 <AuditLogJSONCompare
-                  isSameData={isOldDataIssue || isSameData}
+                  isSameData={effectiveIsSameData}
                   prefix={prefix}
                   lineNumber={lineNumberRef.current}
                   currentTab={currentTab}

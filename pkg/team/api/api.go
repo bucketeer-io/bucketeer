@@ -266,8 +266,8 @@ func (s *TeamService) DeleteTeam(
 				Id:             team.Id,
 				OrganizationId: req.OrganizationId,
 			},
-			nil,
-			nil,
+			nil,  // Current state: entity no longer exists
+			team, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

@@ -449,7 +449,7 @@ func (s *EnvironmentService) newCreateDomainEvent(
 			UpdatedAt:   newProj.UpdatedAt,
 		},
 		newProj,
-		&environmentproto.Project{},
+		nil,
 	)
 	if err != nil {
 		return nil, err

@@ -20,7 +20,6 @@ import (
 	"strconv"
 
 	pb "github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -556,10 +555,6 @@ func (s *experimentService) createExperimentNoCommand(
 				return statusGoalTypeMismatch.Err()
 			}
 		}
-		prev := &domain.Experiment{}
-		if err = copier.Copy(prev, experiment); err != nil {
-			return err
-		}
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_EXPERIMENT,
@@ -582,7 +577,7 @@ func (s *experimentService) createExperimentNoCommand(
 			},
 			req.EnvironmentId,
 			experiment.Experiment,
-			prev,
+			nil,
 		)
 		if err != nil {
 			return err
