@@ -71,3 +71,77 @@ export namespace User {
     };
   }
 }
+
+export class UserAttributes extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  clearUserAttributesList(): void;
+  getUserAttributesList(): Array<UserAttribute>;
+  setUserAttributesList(value: Array<UserAttribute>): void;
+  addUserAttributes(value?: UserAttribute, index?: number): UserAttribute;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UserAttributes.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UserAttributes
+  ): UserAttributes.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UserAttributes,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UserAttributes;
+  static deserializeBinaryFromReader(
+    message: UserAttributes,
+    reader: jspb.BinaryReader
+  ): UserAttributes;
+}
+
+export namespace UserAttributes {
+  export type AsObject = {
+    environmentId: string;
+    userAttributesList: Array<UserAttribute.AsObject>;
+  };
+}
+
+export class UserAttribute extends jspb.Message {
+  getKey(): string;
+  setKey(value: string): void;
+
+  clearValuesList(): void;
+  getValuesList(): Array<string>;
+  setValuesList(value: Array<string>): void;
+  addValues(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UserAttribute.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UserAttribute
+  ): UserAttribute.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UserAttribute,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UserAttribute;
+  static deserializeBinaryFromReader(
+    message: UserAttribute,
+    reader: jspb.BinaryReader
+  ): UserAttribute;
+}
+
+export namespace UserAttribute {
+  export type AsObject = {
+    key: string;
+    valuesList: Array<string>;
+  };
+}
