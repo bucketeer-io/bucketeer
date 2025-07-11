@@ -27,10 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-var (
-	ErrTagNotFound = errors.New("feature: tag not found")
-)
-
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
@@ -350,11 +346,6 @@ func (f *Feature) applyGranularChanges(
 	return nil
 }
 
-// New functions for Update method that handle timestamp updates intelligently
-// These functions only update the timestamp when actual changes occur
-// TODO: Remove these duplicate functions once old console is deprecated
-
-// updateEnable enables the feature only if it's not already enabled
 func (f *Feature) updateEnable() error {
 	if !f.Enabled {
 		f.Enabled = true
@@ -362,7 +353,6 @@ func (f *Feature) updateEnable() error {
 	return nil
 }
 
-// updateDisable disables the feature only if it's not already disabled
 func (f *Feature) updateDisable() error {
 	if f.Enabled {
 		f.Enabled = false
@@ -370,7 +360,6 @@ func (f *Feature) updateDisable() error {
 	return nil
 }
 
-// updateArchive archives the feature only if it's not already archived
 func (f *Feature) updateArchive() error {
 	if !f.Archived {
 		f.Archived = true
@@ -378,7 +367,6 @@ func (f *Feature) updateArchive() error {
 	return nil
 }
 
-// updateUnarchive unarchives the feature only if it's not already unarchived
 func (f *Feature) updateUnarchive() error {
 	if f.Archived {
 		f.Archived = false
@@ -386,7 +374,6 @@ func (f *Feature) updateUnarchive() error {
 	return nil
 }
 
-// updateAddVariation adds a variation, updating timestamp only if successful
 func (f *Feature) updateAddVariation(id, value, name, description string) error {
 	if id == "" {
 		return errVariationIDRequired
@@ -413,7 +400,6 @@ func (f *Feature) updateAddVariation(id, value, name, description string) error 
 	return nil
 }
 
-// updateChangeVariation changes a variation only if it actually differs
 func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
 	if variation == nil {
 		return errVariationRequired
@@ -436,7 +422,6 @@ func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
 	return nil
 }
 
-// updateRemoveVariation removes a variation, updating timestamp only if successful
 func (f *Feature) updateRemoveVariation(id string) error {
 	if len(f.Variations) == 1 {
 		return errVariationInUse
@@ -452,7 +437,6 @@ func (f *Feature) updateRemoveVariation(id string) error {
 	return nil
 }
 
-// updateAddPrerequisite adds a prerequisite, updating timestamp only if successful
 func (f *Feature) updateAddPrerequisite(featureID, variationID string) error {
 	if err := validatePrerequisite(featureID, variationID); err != nil {
 		return err
@@ -467,7 +451,6 @@ func (f *Feature) updateAddPrerequisite(featureID, variationID string) error {
 	return nil
 }
 
-// updateChangePrerequisiteVariation changes a prerequisite variation only if it differs
 func (f *Feature) updateChangePrerequisiteVariation(featureID, variationID string) error {
 	if err := validatePrerequisite(featureID, variationID); err != nil {
 		return err
@@ -484,7 +467,6 @@ func (f *Feature) updateChangePrerequisiteVariation(featureID, variationID strin
 	return nil
 }
 
-// updateRemovePrerequisite removes a prerequisite, updating timestamp only if successful
 func (f *Feature) updateRemovePrerequisite(featureID string) error {
 	idx, err := f.findPrerequisiteIndex(featureID)
 	if err != nil {
@@ -494,7 +476,6 @@ func (f *Feature) updateRemovePrerequisite(featureID string) error {
 	return nil
 }
 
-// updateAddTargetUsers adds target users, updating timestamp only if users were actually added
 func (f *Feature) updateAddTargetUsers(target *feature.Target) error {
 	idx, err := f.findTarget(target.Variation)
 	if err != nil {
@@ -514,7 +495,6 @@ func (f *Feature) updateAddTargetUsers(target *feature.Target) error {
 	return nil
 }
 
-// updateRemoveTargetUsers removes target users, updating timestamp only if users were actually removed
 func (f *Feature) updateRemoveTargetUsers(target *feature.Target) error {
 	idx, err := f.findTarget(target.Variation)
 	if err != nil {
@@ -537,7 +517,6 @@ func (f *Feature) updateRemoveTargetUsers(target *feature.Target) error {
 	return nil
 }
 
-// updateAddRule adds a rule, updating timestamp only if successful
 func (f *Feature) updateAddRule(rule *feature.Rule) error {
 	if rule == nil {
 		return errRuleRequired
@@ -555,7 +534,6 @@ func (f *Feature) updateAddRule(rule *feature.Rule) error {
 	return nil
 }
 
-// updateChangeRule changes a rule only if it actually differs
 func (f *Feature) updateChangeRule(rule *feature.Rule) error {
 	if rule == nil {
 		return errRuleRequired
@@ -579,7 +557,6 @@ func (f *Feature) updateChangeRule(rule *feature.Rule) error {
 	return nil
 }
 
-// updateRemoveRule removes a rule, updating timestamp only if successful
 func (f *Feature) updateRemoveRule(id string) error {
 	idx, err := f.findRuleIndex(id)
 	if err != nil {
@@ -589,7 +566,6 @@ func (f *Feature) updateRemoveRule(id string) error {
 	return nil
 }
 
-// updateAddTag adds a tag, updating timestamp only if tag was actually added
 func (f *Feature) updateAddTag(tag string) error {
 	if slices.Contains(f.Tags, tag) {
 		return nil
@@ -598,19 +574,15 @@ func (f *Feature) updateAddTag(tag string) error {
 	return nil
 }
 
-// updateRemoveTag removes a tag, updating timestamp only if tag was actually removed
 func (f *Feature) updateRemoveTag(tag string) error {
 	index := slices.Index(f.Tags, tag)
 	if index == -1 {
-		return ErrTagNotFound
+		return errors.New("feature: tag not found")
 	}
 	f.Tags = slices.Delete(f.Tags, index, index+1)
 	return nil
 }
 
-// Helper functions to support the update methods
-
-// findRuleIndex finds the index of a rule by ID
 func (f *Feature) findRuleIndex(id string) (int, error) {
 	for i, rule := range f.Rules {
 		if rule.Id == id {
@@ -620,7 +592,6 @@ func (f *Feature) findRuleIndex(id string) (int, error) {
 	return -1, errRuleNotFound
 }
 
-// findPrerequisiteIndex finds the index of a prerequisite by feature ID
 func (f *Feature) findPrerequisiteIndex(featureID string) (int, error) {
 	for i, prereq := range f.Prerequisites {
 		if prereq.FeatureId == featureID {

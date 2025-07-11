@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -1450,7 +1451,7 @@ func TestUpdateRemoveTag(t *testing.T) {
 				f.Tags = []string{"tag1"}
 				return f
 			},
-			expectedErr: ErrTagNotFound,
+			expectedErr: errors.New("feature: tag not found"),
 		},
 		{
 			desc: "success - remove last tag",
