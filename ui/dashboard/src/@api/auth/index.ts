@@ -3,3 +3,4 @@ export * from './signin';
 export * from './authentication-url';
 export * from './exchange-token';
 export * from './switch-organization';
+export * from './demo-site-status';

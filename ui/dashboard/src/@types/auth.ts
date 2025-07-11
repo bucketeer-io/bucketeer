@@ -85,3 +85,7 @@ export interface SwitchOrganizationPayload {
 export interface SwitchOrganizationResponse {
   token: AuthToken;
 }
+
+export interface DemoSiteStatusType {
+  isDemoSiteEnabled: boolean;
+}

@@ -23,6 +23,7 @@ import {
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_DEBUGGER,
+  PAGE_PATH_DEMO_SITE,
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
@@ -57,13 +58,13 @@ import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
+import AccessDemoPage from 'pages/demo';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
-import AccessDemoPage from 'pages/signin/demo';
 import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
@@ -107,6 +108,7 @@ function App() {
                 path={PAGE_PATH_AUTH_SIGNIN}
                 element={<SignInEmailPage />}
               />
+              <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
               <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
             </Routes>
           </AuthProvider>
@@ -122,13 +124,8 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
-  const {
-    isInitialLoading,
-    isLogin,
-    consoleAccount,
-    myOrganizations,
-    isAccessDemoPage
-  } = useAuth();
+  const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
+    useAuth();
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
@@ -136,10 +133,6 @@ export const Root = memo(() => {
 
   if (isInitialLoading) {
     return <AppLoading />;
-  }
-  console.log({ isAccessDemoPage });
-  if (isAccessDemoPage) {
-    return <AccessDemoPage />;
   }
 
   if (isLogin && consoleAccount) {

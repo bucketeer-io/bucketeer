@@ -56,8 +56,6 @@ interface AuthContextType {
 
   isGoogleAuthError: boolean;
   setIsGoogleAuthError: (v: boolean) => void;
-  isAccessDemoPage: boolean;
-  setIsAccessDemoPage: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,7 +81,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
-  const [isAccessDemoPage, setIsAccessDemoPage] = useState(true);
 
   const clearOrgAndEnvStorage = () => {
     clearOrgIdStorage();
@@ -217,10 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsInitialLoading,
 
         isGoogleAuthError,
-        setIsGoogleAuthError,
-
-        isAccessDemoPage,
-        setIsAccessDemoPage
+        setIsGoogleAuthError
       }}
     >
       {children}
