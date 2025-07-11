@@ -141,7 +141,7 @@ const theme = {
   fontFamily: {
     'sofia-pro': ['Sofia Pro', 'sans-serif'],
     'fira-code': ['FiraCode', 'monospace'],
-    'noto-sans': ['Noto Sans', 'sans-serif']
+    'noto-sans-jp': ['Noto Sans JP', 'sans-serif']
   },
   extend: {
     animation: {

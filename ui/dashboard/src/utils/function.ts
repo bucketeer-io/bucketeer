@@ -119,7 +119,7 @@ export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
     );
     htmlElement.style.setProperty(
       'font-family',
-      isLanguageJapanese ? 'Noto Sans, sans-serif' : 'Sofia Pro, sans-serif',
+      isLanguageJapanese ? 'Noto Sans JP, sans-serif' : 'Sofia Pro, sans-serif',
       'important'
     );
   }

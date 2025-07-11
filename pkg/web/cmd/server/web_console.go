@@ -17,6 +17,7 @@ package server
 import (
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/ui/dashboard"
@@ -54,9 +55,26 @@ func webConsoleHandler() http.Handler {
 	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
+// fontCacheHandler adds cache headers for font files
+func fontCacheHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add cache headers for font files
+		if isFontFile(r.URL.Path) {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			w.Header().Set("ETag", `"font-v1"`)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isFontFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return ext == ".woff2" || ext == ".woff" || ext == ".ttf" || ext == ".otf"
+}
+
 // dashboardHandler returns a http.Handler for the new dashboard UI.
 func dashboardHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS)})
+	return fontCacheHandler(http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS)}))
 }
 
 func webConsoleEnvJSHandler(path string) http.Handler {
