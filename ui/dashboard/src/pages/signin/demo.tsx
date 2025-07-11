@@ -35,14 +35,17 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
         })
       ),
     email: yup.string().email().required(requiredMessage),
-    isAgree: yup.boolean().required(requiredMessage)
+    isAgree: yup
+      .boolean()
+      .isTrue(translation('message:required-agreement-terms'))
+      .required(requiredMessage)
   });
 
 const AccessDemoPage = () => {
-  const { t } = useTranslation(['auth', 'common', 'form']);
+  const { t } = useTranslation(['auth', 'common', 'form', 'message']);
   const navigate = useNavigate();
 
-  const [showAuthError, setShowAuthError] = useState(false);
+  const [hasPermissionCreateDemo, setHasPermissionCreateDemo] = useState(true);
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -50,18 +53,21 @@ const AccessDemoPage = () => {
       organizationName: '',
       organizationUrlCode: '',
       email: '',
-      isAgree: false
+      isAgree: undefined
     },
     mode: 'onChange'
   });
 
+  const {
+    formState: { isDirty, isValid, isSubmitting }
+  } = form;
+
   const onSubmit: SubmitHandler<AccessDemoForm> = async values => {
     try {
       console.log(values);
-      navigate(PAGE_PATH_ROOT);
     } catch (error) {
       if (error) {
-        setShowAuthError(true);
+        setHasPermissionCreateDemo(false);
       }
     }
   };
@@ -81,9 +87,9 @@ const AccessDemoPage = () => {
       <p className="text-gray-600 typo-para-medium mt-4">
         {t(`access-demo-page-desc`)}
       </p>
-      {showAuthError && (
+      {hasPermissionCreateDemo && (
         <p className="text-accent-red-500 typo-para-medium mt-6">
-          {t(`error-message.invalid-sign-in`)}
+          {t(`message:not-has-permission-create-demo`)}
         </p>
       )}
 
@@ -137,7 +143,7 @@ const AccessDemoPage = () => {
             name="email"
             render={({ field }) => (
               <Form.Item>
-                <Form.Label>{t('owner-email')}</Form.Label>
+                <Form.Label required>{t('owner-email')}</Form.Label>
                 <Form.Control>
                   <Input placeholder={t('email')} {...field} />
                 </Form.Control>
@@ -163,7 +169,8 @@ const AccessDemoPage = () => {
           />
           <Button
             type="submit"
-            loading={form.formState.isSubmitting}
+            disabled={!isValid || !isDirty || !hasPermissionCreateDemo}
+            loading={isSubmitting}
             className="mt-8 w-full"
           >
             {t('common:submit')}
