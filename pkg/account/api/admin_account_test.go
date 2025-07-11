@@ -33,6 +33,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
+	envstoragemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -397,9 +398,9 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+				s.organizationStorage.(*envstoragemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
 			expected:    nil,
@@ -432,16 +433,14 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+				s.organizationStorage.(*envstoragemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListOrganizationsResponse{
-					Organizations: []*environmentproto.Organization{
-						{
-							Id:          "org0",
-							SystemAdmin: true,
-						},
+				).Return([]*environmentproto.Organization{
+					{
+						Id:          "org0",
+						SystemAdmin: true,
 					},
-				}, nil)
+				}, 0, int64(0), nil)
 			},
 			input: &accountproto.GetMyOrganizationsRequest{},
 			expected: &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{
@@ -525,9 +524,9 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+				s.organizationStorage.(*envstoragemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
 			expected:    nil,
@@ -560,16 +559,14 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+				s.organizationStorage.(*envstoragemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListOrganizationsResponse{
-					Organizations: []*environmentproto.Organization{
-						{
-							Id:          "org0",
-							SystemAdmin: true,
-						},
+				).Return([]*environmentproto.Organization{
+					{
+						Id:          "org0",
+						SystemAdmin: true,
 					},
-				}, nil)
+				}, 0, int64(0), nil)
 			},
 			input: &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
 			expected: &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{
@@ -885,25 +882,23 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+				s.organizationStorage.(*envstoragemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListOrganizationsResponse{
-					Organizations: []*environmentproto.Organization{
-						{
-							Id:          "system-org",
-							Name:        "System Admin Org",
-							SystemAdmin: true,
-							Disabled:    false,
-							Archived:    false,
-						},
-						{
-							Id:       "regular-org",
-							Name:     "Regular Org",
-							Disabled: false,
-							Archived: false,
-						},
+				).Return([]*environmentproto.Organization{
+					{
+						Id:          "system-org",
+						Name:        "System Admin Org",
+						SystemAdmin: true,
+						Disabled:    false,
+						Archived:    false,
 					},
-				}, nil)
+					{
+						Id:       "regular-org",
+						Name:     "Regular Org",
+						Disabled: false,
+						Archived: false,
+					},
+				}, 0, int64(0), nil)
 			},
 			email: "sysadmin@example.com",
 			expected: []*environmentproto.Organization{

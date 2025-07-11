@@ -91,6 +91,7 @@ type authService struct {
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
 	environmentStorage  envstotage.EnvironmentStorage
+	accountStorage      accountstotage.AccountStorage
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
@@ -122,6 +123,7 @@ func NewAuthService(
 		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
 		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
 		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
+		accountStorage:      accountstotage.NewAccountStorage(mysqlClient),
 		accountClient:       accountClient,
 		verifier:            verifier,
 		googleAuthenticator: google.NewAuthenticator(
@@ -244,21 +246,35 @@ func (s *authService) ExchangeToken(
 		return nil, dt.Err()
 	}
 
-	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email, localizer)
+	// Get accounts with organizations once and reuse the results
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, userInfo.Email)
 	if err != nil {
-		s.logger.Error("Failed to get organizations by email",
+		s.logger.Error("Failed to get accounts with organization",
 			zap.Error(err),
-			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
-			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("email", userInfo.Email),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	organizations, err := s.getOrganizationsFromAccounts(ctx, accountsWithOrg, localizer)
+	if err != nil {
+		s.logger.Error("Failed to get organizations from accounts",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
 		)
 		return nil, err
 	}
 
-	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
+	s.updateUserInfoForOrganizationsWithAccounts(ctx, userInfo, accountsWithOrg)
 
-	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
+	account, err := s.checkAccountStatusWithAccounts(ctx, userInfo.Email, accountsWithOrg, organizations, localizer)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -413,8 +429,7 @@ func (s *authService) SwitchOrganization(
 			Token: token,
 		}, nil
 	}
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-	account, err := accountStorage.GetAccountV2(ctx, accessToken.Email, newOrganizationID)
+	account, err := s.accountStorage.GetAccountV2(ctx, accessToken.Email, newOrganizationID)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get account",
@@ -494,8 +509,7 @@ func (s *authService) getOrganizationsByEmail(
 	email string,
 	localizer locale.Localizer,
 ) ([]*envproto.Organization, error) {
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, email)
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get accounts with organization",
@@ -514,23 +528,10 @@ func (s *authService) getOrganizationsByEmail(
 
 	// Check if user has system admin organization
 	if s.hasSystemAdminOrganizationFromAccounts(accountsWithOrg) {
-		// For system admin, get all organizations
+		// For system admin, get all organizations (including disabled and archived)
 		organizations, _, _, err := s.organizationStorage.ListOrganizations(
 			ctx,
-			&mysql.ListOptions{
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "organization.disabled",
-						Operator: mysql.OperatorEqual,
-						Value:    false,
-					},
-					{
-						Column:   "organization.archived",
-						Operator: mysql.OperatorEqual,
-						Value:    false,
-					},
-				},
-			})
+			&mysql.ListOptions{})
 		if err != nil {
 			s.logger.Error(
 				"Failed to get organizations",
@@ -596,118 +597,6 @@ func (s *authService) getOrganizationsByEmail(
 	}
 
 	return myOrgs, nil
-}
-
-func (s *authService) updateUserInfoForOrganizations(
-	ctx context.Context,
-	userInfo *auth.UserInfo,
-	organizations []*envproto.Organization,
-) {
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, userInfo.Email)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get accounts with organization",
-			zap.Error(err),
-			zap.String("email", userInfo.Email),
-		)
-		return
-	}
-
-	accountMap := make(map[string]*acproto.AccountV2)
-	for _, accountWithOrg := range accountsWithOrg {
-		accountMap[accountWithOrg.AccountV2.OrganizationId] = accountWithOrg.AccountV2
-	}
-
-	for _, org := range organizations {
-		account, exists := accountMap[org.Id]
-		if !exists {
-			// Account not found for this organization, skip
-			continue
-		}
-
-		if account.LastSeen == 0 {
-			// Download avatar image if URL exists
-			var avatarBytes []byte
-			if userInfo.Avatar != "" {
-				avatarBytes, err = s.downloadAvatar(ctx, userInfo.Avatar)
-				if err != nil {
-					s.logger.Error(
-						"Failed to download avatar image",
-						zap.Error(err),
-						zap.String("avatarUrl", userInfo.Avatar),
-					)
-					// Continue with update even if avatar download fails
-				}
-			}
-
-			// Handle empty first/last names from Google by providing fallbacks
-			firstName := userInfo.FirstName
-			lastName := userInfo.LastName
-
-			// If first name is empty, try to extract from full name or use email prefix
-			if firstName == "" {
-				if userInfo.Name != "" {
-					parts := strings.Fields(userInfo.Name)
-					if len(parts) > 0 {
-						firstName = parts[0]
-					}
-				}
-				if firstName == "" {
-					// Use email prefix as fallback
-					emailParts := strings.Split(userInfo.Email, "@")
-					if len(emailParts) > 0 {
-						firstName = emailParts[0]
-					}
-				}
-			}
-
-			// If last name is empty, try to extract from full name or use default
-			if lastName == "" {
-				if userInfo.Name != "" {
-					parts := strings.Fields(userInfo.Name)
-					if len(parts) > 1 {
-						lastName = strings.Join(parts[1:], " ")
-					}
-				}
-				if lastName == "" {
-					s.logger.Warn("Last name is empty. Using default fallback",
-						zap.String("name", userInfo.Name),
-						zap.String("last_name", lastName),
-					)
-					lastName = "User" // Default fallback
-				}
-			}
-
-			// Update account using storage directly
-			accountToUpdate := &domain.AccountV2{
-				AccountV2: &acproto.AccountV2{
-					Email:          userInfo.Email,
-					OrganizationId: org.Id,
-					FirstName:      firstName,
-					LastName:       lastName,
-					AvatarImageUrl: userInfo.Avatar,
-					Language:       "en",
-				},
-			}
-
-			// Only set avatar fields if we have avatar bytes
-			if len(avatarBytes) > 0 {
-				accountToUpdate.AccountV2.AvatarImage = avatarBytes
-				accountToUpdate.AccountV2.AvatarFileType = "image/png"
-			}
-
-			err = accountStorage.UpdateAccountV2(ctx, accountToUpdate)
-			if err != nil {
-				s.logger.Error(
-					"Failed to update account first name, last name or avatar",
-					zap.Error(err),
-					zap.String("email", userInfo.Email),
-					zap.String("organizationId", org.Id),
-				)
-			}
-		}
-	}
 }
 
 func (s *authService) downloadAvatar(ctx context.Context, url string) ([]byte, error) {
@@ -850,11 +739,8 @@ func (s *authService) checkAccountStatus(
 	organizations []*envproto.Organization,
 	localizer locale.Localizer,
 ) (*acproto.GetAccountV2Response, error) {
-	// Create account storage to use optimized query
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-
 	// Use optimized query to get all accounts with organizations in one call
-	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, email)
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email)
 	if err != nil {
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -892,7 +778,7 @@ func (s *authService) checkAccountStatus(
 		Message: localizer.MustLocalize(locale.UnauthenticatedError),
 	})
 	if err != nil {
-		return nil, err
+		return nil, auth.StatusInternal.Err()
 	}
 	return nil, dt.Err()
 }
@@ -913,6 +799,219 @@ func (s *authService) hasSystemAdminOrganizationFromAccounts(accountsWithOrg []*
 		}
 	}
 	return false
+}
+
+// getOrganizationsFromAccounts extracts organizations from accounts data
+func (s *authService) getOrganizationsFromAccounts(
+	ctx context.Context,
+	accountsWithOrg []*domain.AccountWithOrganization,
+	localizer locale.Localizer,
+) ([]*envproto.Organization, error) {
+	// Check if user has system admin organization
+	if s.hasSystemAdminOrganizationFromAccounts(accountsWithOrg) {
+		// For system admin, get all organizations (including disabled and archived)
+		organizations, _, _, err := s.organizationStorage.ListOrganizations(
+			ctx,
+			&mysql.ListOptions{})
+		if err != nil {
+			s.logger.Error(
+				"Failed to get organizations",
+				zap.Error(err),
+			)
+			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, auth.StatusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		return organizations, nil
+	}
+
+	// For regular users, filter organizations based on account status
+	myOrgs := make([]*envproto.Organization, 0, len(accountsWithOrg))
+	for _, accWithOrg := range accountsWithOrg {
+		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
+			continue
+		}
+		// If the account is an admin account, we append the organization.
+		// Otherwise, we check if the account is enabled in any environment in this organization.
+		if accWithOrg.AccountV2.OrganizationRole == acproto.AccountV2_Role_Organization_ADMIN {
+			myOrgs = append(myOrgs, accWithOrg.Organization)
+			continue
+		}
+		// TODO: Remove this loop after the web console 3.0 is ready
+		// If the account is enabled in any environment in this organization,
+		// we append the organization.
+		// Note: When we disable an account on the web console,
+		// we are updating the role to UNASSIGNED, not the `disabled` column.
+		// When the new console is ready, we will use the DisableAccount API instead,
+		// which will update the `disabled` column in the DB.
+		var enabled bool
+		for _, role := range accWithOrg.AccountV2.EnvironmentRoles {
+			if role.Role != acproto.AccountV2_Role_Environment_UNASSIGNED {
+				enabled = true
+			}
+		}
+		if !enabled {
+			continue
+		}
+		myOrgs = append(myOrgs, accWithOrg.Organization)
+	}
+
+	if len(myOrgs) == 0 {
+		s.logger.Error(
+			"The account is not registered in any organization",
+		)
+		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return myOrgs, nil
+}
+
+// updateUserInfoForOrganizationsWithAccounts updates user info using pre-fetched accounts data
+func (s *authService) updateUserInfoForOrganizationsWithAccounts(
+	ctx context.Context,
+	userInfo *auth.UserInfo,
+	accountsWithOrg []*domain.AccountWithOrganization,
+) {
+	// Update accounts that need updating
+	for _, accountWithOrg := range accountsWithOrg {
+		account := accountWithOrg.AccountV2
+		if account.LastSeen == 0 {
+			// Handle empty first/last names from Google by providing fallbacks
+			firstName := userInfo.FirstName
+			lastName := userInfo.LastName
+
+			// If first name is empty, try to extract from full name or use email prefix
+			if firstName == "" {
+				if userInfo.Name != "" {
+					parts := strings.Fields(userInfo.Name)
+					if len(parts) > 0 {
+						firstName = parts[0]
+					}
+				}
+				if firstName == "" {
+					// Use email prefix as fallback
+					emailParts := strings.Split(userInfo.Email, "@")
+					if len(emailParts) > 0 {
+						firstName = emailParts[0]
+					}
+				}
+			}
+
+			// If last name is empty, try to extract from full name or use default
+			if lastName == "" {
+				if userInfo.Name != "" {
+					parts := strings.Fields(userInfo.Name)
+					if len(parts) > 1 {
+						lastName = strings.Join(parts[1:], " ")
+					}
+				}
+				if lastName == "" {
+					s.logger.Warn("Last name is empty. Using default fallback",
+						zap.String("name", userInfo.Name),
+						zap.String("last_name", lastName),
+					)
+					lastName = "User" // Default fallback
+				}
+			}
+
+			// Download avatar image
+			var avatarBytes []byte
+			if userInfo.Avatar != "" {
+				downloadedBytes, err := s.downloadAvatar(ctx, userInfo.Avatar)
+				if err != nil {
+					s.logger.Error(
+						"Failed to download avatar image",
+						zap.Error(err),
+						zap.String("avatarUrl", userInfo.Avatar),
+					)
+					// Continue with update even if avatar download fails
+				} else {
+					// Only set avatar fields if we have avatar bytes
+					avatarBytes = downloadedBytes
+				}
+			}
+
+			// Update account with all data including avatar
+			accountToUpdate := &domain.AccountV2{
+				AccountV2: &acproto.AccountV2{
+					Email:          userInfo.Email,
+					OrganizationId: account.OrganizationId,
+					FirstName:      firstName,
+					LastName:       lastName,
+					AvatarImageUrl: userInfo.Avatar,
+					AvatarImage:    avatarBytes,
+					AvatarFileType: "image/png",
+					Language:       "en",
+				},
+			}
+
+			// Only set avatar fields if we have avatar bytes
+			if len(avatarBytes) > 0 {
+				accountToUpdate.AccountV2.AvatarImage = avatarBytes
+				accountToUpdate.AccountV2.AvatarFileType = "image/png"
+			}
+
+			err := s.accountStorage.UpdateAccountV2(ctx, accountToUpdate)
+			if err != nil {
+				s.logger.Error(
+					"Failed to update account first name, last name or avatar",
+					zap.Error(err),
+					zap.String("email", userInfo.Email),
+					zap.String("organizationId", account.OrganizationId),
+				)
+			}
+		}
+	}
+}
+
+func (s *authService) checkAccountStatusWithAccounts(
+	ctx context.Context,
+	email string,
+	accountsWithOrg []*domain.AccountWithOrganization,
+	organizations []*envproto.Organization,
+	localizer locale.Localizer,
+) (*acproto.GetAccountV2Response, error) {
+	// Create a map for quick lookup
+	accountMap := make(map[string]*acproto.AccountV2)
+	for _, accountWithOrg := range accountsWithOrg {
+		accountMap[accountWithOrg.AccountV2.OrganizationId] = accountWithOrg.AccountV2
+	}
+
+	// Check if the user has at least one account enabled in any Organization
+	for _, org := range organizations {
+		account, exists := accountMap[org.Id]
+		if !exists {
+			// System admin accounts have access to all organizations,
+			// but they are registered only in the system admin organization.
+			// So, to avoid false errors, we ignore them if the account wasn't found in non-system admin organizations.
+			continue
+		}
+		if !account.Disabled {
+			// The account must have at least one account enabled
+			return &acproto.GetAccountV2Response{Account: account}, nil
+		}
+	}
+	// The account wasn't found or doesn't belong to any organization
+	dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.UnauthenticatedError),
+	})
+	if err != nil {
+		return nil, auth.StatusInternal.Err()
+	}
+	return nil, dt.Err()
 }
 
 func (s *authService) PrepareDemoUser() {
@@ -1012,15 +1111,14 @@ func (s *authService) PrepareDemoUser() {
 		return
 	}
 	// Create a demo account if not exists
-	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-	_, err = accountStorage.GetAccountV2(
+	_, err = s.accountStorage.GetAccountV2(
 		ctx,
 		config.Email,
 		config.OrganizationId,
 	)
 	if err != nil {
 		if errors.Is(err, accountstotage.ErrAccountNotFound) {
-			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+			err = s.accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
 					Email:            config.Email,

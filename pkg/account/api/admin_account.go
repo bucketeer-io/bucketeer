@@ -23,13 +23,13 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -390,12 +390,9 @@ func (s *AccountService) getMyOrganizations(
 		return nil, dt.Err()
 	}
 	if s.containsSystemAdminOrganization(accountsWithOrg) {
-		resp, err := s.environmentClient.ListOrganizations(
+		organizations, _, _, err := s.organizationStorage.ListOrganizations(
 			ctx,
-			&environmentproto.ListOrganizationsRequest{
-				Disabled: wrapperspb.Bool(false),
-				Archived: wrapperspb.Bool(false),
-			})
+			&mysql.ListOptions{})
 		if err != nil {
 			s.logger.Error(
 				"Failed to get organizations",
@@ -410,7 +407,7 @@ func (s *AccountService) getMyOrganizations(
 			}
 			return nil, dt.Err()
 		}
-		return resp.Organizations, nil
+		return organizations, nil
 	}
 	myOrgs := make([]*environmentproto.Organization, 0, len(accountsWithOrg))
 	for _, accWithOrg := range accountsWithOrg {
