@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { AuditLog } from '@types';
 import { areJsonStringsEqual, isJsonString } from 'utils/converts';
-import { convertJSONToRender, formatJSONWithIndent } from '../utils';
+import {
+  convertJSONToRender,
+  formatJSONWithIndent
+} from '../pages/audit-logs/utils';
 
 /**
  * Custom hook to handle all audit log data patterns and provide consistent logic

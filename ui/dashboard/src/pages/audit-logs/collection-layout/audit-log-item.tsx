@@ -25,7 +25,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import DateTooltip from 'elements/date-tooltip';
-import { useAuditLogDataPatterns } from '../hooks/use-audit-log-data-patterns';
+import { useAuditLogDataPatterns } from '../../../hooks/use-audit-log-data-patterns';
 import { AuditLogTab } from '../types';
 import { getActionText } from '../utils';
 import AuditLogAvatar from './audit-log-avatar';
