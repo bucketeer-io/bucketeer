@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -131,36 +132,64 @@ func (s *TagService) CreateTag(
 	var event *eventproto.Event
 	var actualTag *domain.Tag
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		// Check if tag exists before upsert to determine if it's create or update
+		existingTag, err := s.tagStorage.GetTagByName(ctxWithTx, tag.Name, tag.EnvironmentId, tag.EntityType)
+		isCreate := err != nil && errors.Is(err, tagstorage.ErrTagNotFound)
+		if err != nil && !isCreate {
+			return err
+		}
+
 		if err := s.tagStorage.UpsertTag(ctxWithTx, tag); err != nil {
 			return err
 		}
+
 		// Fetch the actual tag from DB to get correct final state after upsert
 		actualTag, err = s.tagStorage.GetTagByName(ctxWithTx, tag.Name, tag.EnvironmentId, tag.EntityType)
 		if err != nil {
 			return err
 		}
-		// Publish event with the correct tag data from database
-		event, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_TAG,
-			actualTag.Id,
-			eventproto.Event_TAG_CREATED,
-			&eventproto.TagCreatedEvent{
+
+		// Use appropriate event type with appropriate previous entity data based on whether it's create or update
+		var previousEntityData interface{}
+		var eventType eventproto.Event_Type
+		var eventData pb.Message
+		if isCreate {
+			previousEntityData = nil
+			eventType = eventproto.Event_TAG_CREATED
+			eventData = &eventproto.TagCreatedEvent{
 				Id:            actualTag.Id,
 				Name:          actualTag.Name,
 				CreatedAt:     actualTag.CreatedAt,
 				UpdatedAt:     actualTag.UpdatedAt,
 				EntityType:    actualTag.EntityType,
 				EnvironmentId: actualTag.EnvironmentId,
-			},
+			}
+		} else {
+			previousEntityData = existingTag
+			eventType = eventproto.Event_TAG_UPDATED
+			eventData = &eventproto.TagUpdatedEvent{
+				Id:            actualTag.Id,
+				Name:          actualTag.Name,
+				CreatedAt:     actualTag.CreatedAt,
+				UpdatedAt:     actualTag.UpdatedAt,
+				EntityType:    actualTag.EntityType,
+				EnvironmentId: actualTag.EnvironmentId,
+			}
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_TAG,
+			actualTag.Id,
+			eventType,
+			eventData,
 			actualTag.EnvironmentId,
 			actualTag,
-			actualTag,
+			previousEntityData,
 		)
 		if err != nil {
 			return err
 		}
-		return s.publisher.Publish(ctx, event)
+		return nil
 	})
 	if err != nil {
 		s.logger.Error(
@@ -171,6 +200,9 @@ func (s *TagService) CreateTag(
 				zap.Any("tag", tag),
 			)...,
 		)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+	}
+	if err := s.publisher.Publish(ctx, event); err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	return &proto.CreateTagResponse{Tag: actualTag.Tag}, nil
