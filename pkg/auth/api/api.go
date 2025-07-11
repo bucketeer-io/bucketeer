@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -139,6 +140,25 @@ func NewAuthService(
 
 func (s *authService) Register(server *grpc.Server) {
 	authproto.RegisterAuthServiceServer(server, s)
+}
+
+func (s *authService) GetDeploymentStatus(
+	ctx context.Context,
+	_ *authproto.GetDeploymentStatusRequest,
+) (*authproto.GetDeploymentStatusResponse, error) {
+	isDemoEnabledStr := os.Getenv("DEMO_SITE_ENABLED")
+	if isDemoEnabledStr != "true" {
+		s.logger.Warn(
+			"DEMO_SITE_ENABLED environment variable is not true, defaulting to false",
+			log.FieldsFromImcomingContext(ctx)...,
+		)
+		return &authproto.GetDeploymentStatusResponse{
+			IsDemoSiteEnabled: false,
+		}, nil
+	}
+	return &authproto.GetDeploymentStatusResponse{
+		IsDemoSiteEnabled: true,
+	}, nil
 }
 
 func (s *authService) GetAuthenticationURL(

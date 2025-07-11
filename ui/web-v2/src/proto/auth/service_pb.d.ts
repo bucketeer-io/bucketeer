@@ -348,6 +348,63 @@ export namespace SwitchOrganizationResponse {
   };
 }
 
+export class GetDeploymentStatusRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDeploymentStatusRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetDeploymentStatusRequest
+  ): GetDeploymentStatusRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetDeploymentStatusRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetDeploymentStatusRequest;
+  static deserializeBinaryFromReader(
+    message: GetDeploymentStatusRequest,
+    reader: jspb.BinaryReader
+  ): GetDeploymentStatusRequest;
+}
+
+export namespace GetDeploymentStatusRequest {
+  export type AsObject = {};
+}
+
+export class GetDeploymentStatusResponse extends jspb.Message {
+  getIsDemoSiteEnabled(): boolean;
+  setIsDemoSiteEnabled(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDeploymentStatusResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetDeploymentStatusResponse
+  ): GetDeploymentStatusResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetDeploymentStatusResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetDeploymentStatusResponse;
+  static deserializeBinaryFromReader(
+    message: GetDeploymentStatusResponse,
+    reader: jspb.BinaryReader
+  ): GetDeploymentStatusResponse;
+}
+
+export namespace GetDeploymentStatusResponse {
+  export type AsObject = {
+    isDemoSiteEnabled: boolean;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;
