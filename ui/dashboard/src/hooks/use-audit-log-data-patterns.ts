@@ -12,32 +12,20 @@ import {
  *
  * AUDIT LOG DATA PATTERNS SUPPORTED:
  *
- * 1. NEW CREATION EVENTS (after backend fix):
- *    - entityData: actual entity JSON
- *    - previousEntityData: "" (empty, from nil)
+ * 1. CREATION EVENTS:
+ *    - Action type ends with "CREATED"
  *    - Shows: "CREATED" with everything in green (added diff)
+ *    - Data manipulation: Shows created entity vs empty previous state
  *
- * 2. OLD CREATION EVENTS (before backend fix - backward compatibility):
- *    - entityData: actual entity JSON (same as previous)
- *    - previousEntityData: actual entity JSON (copy of same)
- *    - Shows: "CREATED" with everything in green (added diff)
- *    - Note: Data is manipulated for diff viewer (created entity vs empty)
- *
- * 3. NEW DELETION EVENTS (after backend fix):
- *    - entityData: "" (empty, from nil)
- *    - previousEntityData: actual deleted entity JSON
+ * 2. DELETION EVENTS:
+ *    - Action type ends with "DELETED"
  *    - Shows: "DELETED" with everything in red (deletion diff)
+ *    - Data manipulation: Shows empty current state vs deleted entity
  *
- * 4. OLD DELETION EVENTS (before backend fix - backward compatibility):
- *    - entityData: actual entity JSON (same as previous)
- *    - previousEntityData: actual entity JSON (copy of same)
- *    - Shows: "DELETED" with everything in red (deletion diff)
- *    - Note: Data is manipulated for diff viewer (empty vs deleted entity)
- *
- * 5. REGULAR UPDATE EVENTS:
- *    - entityData: updated entity JSON
- *    - previousEntityData: old entity JSON
+ * 3. UPDATE EVENTS:
+ *    - Action type ends with "UPDATED" or other patterns
  *    - Shows: "UPDATED" with actual diff between old and new
+ *    - No data manipulation needed
  */
 export const useAuditLogDataPatterns = (auditLog: AuditLog | undefined) => {
   const entityData = auditLog?.entityData || '';
@@ -61,31 +49,8 @@ export const useAuditLogDataPatterns = (auditLog: AuditLog | undefined) => {
     [entityData, previousEntityData]
   );
 
-  // Handle creation events (both new and old patterns)
-  // New pattern: previousEntityData is empty (nil from backend)
-  // Old pattern: previousEntityData equals entityData but event type is CREATED
-  const isOldDataIssue = useMemo(
-    () => !previousEntityData && !!entityData,
-    [entityData, previousEntityData]
-  );
-
-  const isOldCreationPattern = useMemo(
-    () => isCreationEvent && isSameData && !!entityData && !!previousEntityData,
-    [isCreationEvent, isSameData, entityData, previousEntityData]
-  );
-
-  const isAnyCreationEvent = useMemo(
-    () => isOldDataIssue || isOldCreationPattern,
-    [isOldDataIssue, isOldCreationPattern]
-  );
-
-  // BACKWARD COMPATIBILITY: Handle old deletion data that incorrectly had the same entity
-  // in both entityData and previousEntityData fields. For these cases, we should still
-  // show it as a deletion (everything deleted) rather than "CURRENT VERSION".
-  const shouldShowAsDeletion = useMemo(
-    () => isDeletionEvent && isSameData && !!entityData && !!previousEntityData,
-    [isDeletionEvent, isSameData, entityData, previousEntityData]
-  );
+  // Handle creation events - if the action type is CREATED, it's a creation event
+  const isAnyCreationEvent = useMemo(() => isCreationEvent, [isCreationEvent]);
 
   const isHaveEntityData = useMemo(() => {
     if (!auditLog) return false;
@@ -129,16 +94,16 @@ export const useAuditLogDataPatterns = (auditLog: AuditLog | undefined) => {
     // For deletions and creations, never treat as "same data" - always show the diff
     if (isDeletionEvent || isAnyCreationEvent) return false;
 
-    return isSameData && !shouldShowAsDeletion;
-  }, [isDeletionEvent, isAnyCreationEvent, isSameData, shouldShowAsDeletion]);
+    return isSameData;
+  }, [isDeletionEvent, isAnyCreationEvent, isSameData]);
 
   // Determine if tabs/changes should be shown
   const shouldShowChanges = useMemo(() => {
     // For deletions and creations, always show changes/tabs
     if (isDeletionEvent || isAnyCreationEvent) return true;
 
-    return !isSameData || shouldShowAsDeletion;
-  }, [isDeletionEvent, isAnyCreationEvent, isSameData, shouldShowAsDeletion]);
+    return !isSameData;
+  }, [isDeletionEvent, isAnyCreationEvent, isSameData]);
 
   // Determine the appropriate display mode for better UX
   const displayMode = useMemo(() => {
@@ -175,11 +140,8 @@ export const useAuditLogDataPatterns = (auditLog: AuditLog | undefined) => {
   return {
     isDeletionEvent,
     isCreationEvent,
-    isOldDataIssue,
-    isOldCreationPattern,
     isAnyCreationEvent,
     isSameData,
-    shouldShowAsDeletion,
     isHaveEntityData,
     parsedEntityData,
     effectiveIsSameData,
