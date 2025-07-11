@@ -32,7 +32,8 @@ const IndividualRule = ({ individualRules }: Props) => {
 
   const methods = useFormContext<TargetingSchema>();
 
-  const { control } = methods;
+  const { control, watch } = methods;
+  const individualRulesWatch = watch('individualRules') as IndividualRuleItem[];
 
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
@@ -86,7 +87,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                           const newOption = options.find(o => o['__isNew__']);
                           const alreadyTargetedVariation =
                             getAlreadyTargetedVariation(
-                              individualRules,
+                              individualRulesWatch,
                               item.variationId,
                               newOption?.label || ''
                             );
@@ -97,7 +98,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                         className="w-full"
                         formatCreateLabel={v => {
                           const isAlreadyExisted = getAlreadyTargetedVariation(
-                            individualRules,
+                            individualRulesWatch,
                             item.variationId,
                             v
                           );

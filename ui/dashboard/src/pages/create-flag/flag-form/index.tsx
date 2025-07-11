@@ -7,7 +7,10 @@ import { invalidateFeatures } from '@queries/features';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_FEATURES } from 'constants/routing';
+import {
+  PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -116,7 +119,9 @@ const FlagForm = () => {
         });
         invalidateFeatures(queryClient);
         invalidateTags(queryClient);
-        onBack();
+        navigate(
+          `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${resp.feature.id}${PAGE_PATH_FEATURE_TARGETING}`
+        );
       }
     } catch (error) {
       errorNotify(error);
