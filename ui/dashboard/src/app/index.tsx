@@ -63,6 +63,7 @@ import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
+import AccessDemoPage from 'pages/signin/demo';
 import SignInEmailPage from 'pages/signin/email';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
@@ -121,8 +122,13 @@ function App() {
 export const Root = memo(() => {
   const authToken = getTokenStorage();
   const [pageKey, setPageKey] = useState<string>(uuid());
-  const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
-    useAuth();
+  const {
+    isInitialLoading,
+    isLogin,
+    consoleAccount,
+    myOrganizations,
+    isAccessDemoPage
+  } = useAuth();
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
@@ -130,6 +136,10 @@ export const Root = memo(() => {
 
   if (isInitialLoading) {
     return <AppLoading />;
+  }
+  console.log({ isAccessDemoPage });
+  if (isAccessDemoPage) {
+    return <AccessDemoPage />;
   }
 
   if (isLogin && consoleAccount) {

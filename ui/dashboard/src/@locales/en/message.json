@@ -51,5 +51,7 @@
   "env-are-empty": "The environments are empty.",
   "org-not-found": "The organization is not found.",
   "auth-context-error": "useAuth must be used within an AuthProvider",
-  "empty-segment": "No segments found. Please <comp>create</comp> a segment first."
+  "empty-segment": "No segments found. Please <comp>create</comp> a segment first.",
+  "not-has-permission-create-demo": "You do not have permission to create a Demo organization.",
+  "required-agreement-terms": "Agreement to the Terms of Use and Privacy Policy is required to proceed."
 }

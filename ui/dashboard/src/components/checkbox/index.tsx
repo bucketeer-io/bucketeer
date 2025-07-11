@@ -43,10 +43,10 @@ const Checkbox = forwardRef(
               }
             )}
             checked={checked}
-            id={inputId}
             ref={ref}
             onCheckedChange={onCheckedChange}
             {...props}
+            id={inputId}
           >
             <CheckboxPrimitive.Indicator
               className={cn('flex-center size-full opacity-0', {
