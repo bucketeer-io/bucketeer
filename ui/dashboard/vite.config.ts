@@ -27,17 +27,19 @@ export default defineConfig({
         families: [
           {
             name: 'Sofia Pro',
-            src: './src/assets/fonts/sofiapro/*.ttf'
+            src: './src/assets/fonts/sofiapro/*.woff2'
           },
           {
             name: 'FiraCode',
-            src: './src/assets/fonts/firacode/*.ttf'
+            src: './src/assets/fonts/firacode/*.woff2'
           },
           {
-            name: 'Noto Sans',
-            src: './src/assets/fonts/noto-sans/*.ttf'
+            name: 'Noto Sans JP',
+            src: './src/assets/fonts/noto-sans-jp/*.woff2'
           }
-        ]
+        ],
+        preload: true,
+        display: 'swap'
       }
     })
   ]
