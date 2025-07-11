@@ -7519,9 +7519,6 @@ export class TagUpdatedEvent extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
-  getCreatedAt(): number;
-  setCreatedAt(value: number): void;
-
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
@@ -7558,7 +7555,6 @@ export namespace TagUpdatedEvent {
   export type AsObject = {
     id: string;
     name: string;
-    createdAt: number;
     updatedAt: number;
     entityType: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
     environmentId: string;

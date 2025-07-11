@@ -123,7 +123,7 @@ func TestCreateTagMySQL(t *testing.T) {
 						EntityType:    proto.Tag_FEATURE_FLAG,
 						EnvironmentId: "ns0",
 					},
-				}, nil).Times(2)
+				}, nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("storage error"))
@@ -144,9 +144,6 @@ func TestCreateTagMySQL(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
 					return fn(ctx, nil)
 				})
-				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
 				).Return(nil, errors.New("get error"))
@@ -167,9 +164,6 @@ func TestCreateTagMySQL(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
 					return fn(ctx, nil)
 				})
-				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
 				).Return(&domain.Tag{
@@ -181,7 +175,10 @@ func TestCreateTagMySQL(t *testing.T) {
 						EntityType:    proto.Tag_FEATURE_FLAG,
 						EnvironmentId: "ns0",
 					},
-				}, nil)
+				}, nil).Times(2)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("publish error"))
@@ -216,7 +213,7 @@ func TestCreateTagMySQL(t *testing.T) {
 						EntityType:    proto.Tag_FEATURE_FLAG,
 						EnvironmentId: "ns0",
 					},
-				}, nil)
+				}, nil).Times(2)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -244,9 +241,6 @@ func TestCreateTagMySQL(t *testing.T) {
 				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
 					return fn(ctx, nil)
 				})
-				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
 				// Simulate upsert of existing tag - same ID and created_at, but updated updated_at
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "existing-tag", "ns0", proto.Tag_FEATURE_FLAG,
@@ -259,7 +253,10 @@ func TestCreateTagMySQL(t *testing.T) {
 						EntityType:    proto.Tag_FEATURE_FLAG,
 						EnvironmentId: "ns0",
 					},
-				}, nil)
+				}, nil).Times(2)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)

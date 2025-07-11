@@ -24020,21 +24020,16 @@
               },
               {
                 "id": 3,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
                 "name": "updated_at",
                 "type": "int64"
               },
               {
-                "id": 5,
+                "id": 4,
                 "name": "entity_type",
                 "type": "bucketeer.tag.Tag.EntityType"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "environment_id",
                 "type": "string"
               }

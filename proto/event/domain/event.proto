@@ -1302,10 +1302,9 @@ message TagCreatedEvent {
 message TagUpdatedEvent {
   string id = 1;
   string name = 2;
-  int64 created_at = 3;
-  int64 updated_at = 4;
-  bucketeer.tag.Tag.EntityType entity_type = 5;
-  string environment_id = 6;
+  int64 updated_at = 3;
+  bucketeer.tag.Tag.EntityType entity_type = 4;
+  string environment_id = 5;
 }
 
 message TagDeletedEvent {

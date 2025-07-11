@@ -170,7 +170,6 @@ func (s *TagService) CreateTag(
 			eventData = &eventproto.TagUpdatedEvent{
 				Id:            actualTag.Id,
 				Name:          actualTag.Name,
-				CreatedAt:     actualTag.CreatedAt,
 				UpdatedAt:     actualTag.UpdatedAt,
 				EntityType:    actualTag.EntityType,
 				EnvironmentId: actualTag.EnvironmentId,

@@ -1452,6 +1452,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Tag),
 			),
 		}
+	case proto.Event_TAG_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Tag),
+			),
+		}
 	case proto.Event_TAG_DELETED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
