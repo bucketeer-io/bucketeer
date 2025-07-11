@@ -28,9 +28,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -416,10 +413,8 @@ func (s *authService) SwitchOrganization(
 			Token: token,
 		}, nil
 	}
-	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-		Email:          accessToken.Email,
-		OrganizationId: newOrganizationID,
-	})
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	account, err := accountStorage.GetAccountV2(ctx, accessToken.Email, newOrganizationID)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get account",
@@ -436,8 +431,8 @@ func (s *authService) SwitchOrganization(
 		}
 		return nil, dt.Err()
 	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
-	if account.Account.Disabled {
+	accountDomain := *account
+	if account.AccountV2.Disabled {
 		s.logger.Error(
 			"The account is disabled",
 			zap.String("email", accessToken.Email),
@@ -499,15 +494,11 @@ func (s *authService) getOrganizationsByEmail(
 	email string,
 	localizer locale.Localizer,
 ) ([]*envproto.Organization, error) {
-	orgResp, err := s.accountClient.GetMyOrganizationsByEmail(
-		ctx,
-		&acproto.GetMyOrganizationsByEmailRequest{
-			Email: email,
-		},
-	)
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, email)
 	if err != nil {
 		s.logger.Error(
-			"Failed to get account's organizations",
+			"Failed to get accounts with organization",
 			zap.Error(err),
 			zap.String("email", email),
 		)
@@ -520,7 +511,76 @@ func (s *authService) getOrganizationsByEmail(
 		}
 		return nil, dt.Err()
 	}
-	if len(orgResp.Organizations) == 0 {
+
+	// Check if user has system admin organization
+	if s.hasSystemAdminOrganizationFromAccounts(accountsWithOrg) {
+		// For system admin, get all organizations
+		organizations, _, _, err := s.organizationStorage.ListOrganizations(
+			ctx,
+			&mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "organization.disabled",
+						Operator: mysql.OperatorEqual,
+						Value:    false,
+					},
+					{
+						Column:   "organization.archived",
+						Operator: mysql.OperatorEqual,
+						Value:    false,
+					},
+				},
+			})
+		if err != nil {
+			s.logger.Error(
+				"Failed to get organizations",
+				zap.Error(err),
+				zap.String("email", email),
+			)
+			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, auth.StatusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		return organizations, nil
+	}
+
+	// For regular users, filter organizations based on account status
+	myOrgs := make([]*envproto.Organization, 0, len(accountsWithOrg))
+	for _, accWithOrg := range accountsWithOrg {
+		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
+			continue
+		}
+		// If the account is an admin account, we append the organization.
+		// Otherwise, we check if the account is enabled in any environment in this organization.
+		if accWithOrg.AccountV2.OrganizationRole == acproto.AccountV2_Role_Organization_ADMIN {
+			myOrgs = append(myOrgs, accWithOrg.Organization)
+			continue
+		}
+		// TODO: Remove this loop after the web console 3.0 is ready
+		// If the account is enabled in any environment in this organization,
+		// we append the organization.
+		// Note: When we disable an account on the web console,
+		// we are updating the role to UNASSIGNED, not the `disabled` column.
+		// When the new console is ready, we will use the DisableAccount API instead,
+		// which will update the `disabled` column in the DB.
+		var enabled bool
+		for _, role := range accWithOrg.AccountV2.EnvironmentRoles {
+			if role.Role != acproto.AccountV2_Role_Environment_UNASSIGNED {
+				enabled = true
+			}
+		}
+		if !enabled {
+			continue
+		}
+		myOrgs = append(myOrgs, accWithOrg.Organization)
+	}
+
+	if len(myOrgs) == 0 {
 		s.logger.Error(
 			"The account is not registered in any organization",
 			zap.String("email", email),
@@ -534,7 +594,8 @@ func (s *authService) getOrganizationsByEmail(
 		}
 		return nil, dt.Err()
 	}
-	return orgResp.Organizations, nil
+
+	return myOrgs, nil
 }
 
 func (s *authService) updateUserInfoForOrganizations(
@@ -542,26 +603,30 @@ func (s *authService) updateUserInfoForOrganizations(
 	userInfo *auth.UserInfo,
 	organizations []*envproto.Organization,
 ) {
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, userInfo.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get accounts with organization",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
+		)
+		return
+	}
+
+	accountMap := make(map[string]*acproto.AccountV2)
+	for _, accountWithOrg := range accountsWithOrg {
+		accountMap[accountWithOrg.AccountV2.OrganizationId] = accountWithOrg.AccountV2
+	}
+
 	for _, org := range organizations {
-		account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-			Email:          userInfo.Email,
-			OrganizationId: org.Id,
-		})
-		if err != nil {
-			// Because we don't know what organization the user belongs when exchanging the token,
-			// we ignore logs that were not found to avoid unnecessary logging.
-			if status.Code(err) != codes.NotFound {
-				s.logger.Error(
-					"Failed to get account",
-					zap.Error(err),
-					zap.String("email", userInfo.Email),
-					zap.String("organizationId", org.Id),
-				)
-			}
+		account, exists := accountMap[org.Id]
+		if !exists {
+			// Account not found for this organization, skip
 			continue
 		}
 
-		if account.Account.LastSeen == 0 {
+		if account.LastSeen == 0 {
 			// Download avatar image if URL exists
 			var avatarBytes []byte
 			if userInfo.Avatar != "" {
@@ -614,23 +679,25 @@ func (s *authService) updateUserInfoForOrganizations(
 				}
 			}
 
-			updateReq := &acproto.UpdateAccountV2Request{
-				Email:          userInfo.Email,
-				OrganizationId: org.Id,
-				FirstName:      wrapperspb.String(firstName),
-				LastName:       wrapperspb.String(lastName),
-				AvatarImageUrl: wrapperspb.String(userInfo.Avatar),
-				Language:       wrapperspb.String("en"), // Default language
+			// Update account using storage directly
+			accountToUpdate := &domain.AccountV2{
+				AccountV2: &acproto.AccountV2{
+					Email:          userInfo.Email,
+					OrganizationId: org.Id,
+					FirstName:      firstName,
+					LastName:       lastName,
+					AvatarImageUrl: userInfo.Avatar,
+					Language:       "en",
+				},
 			}
 
+			// Only set avatar fields if we have avatar bytes
 			if len(avatarBytes) > 0 {
-				updateReq.Avatar = &acproto.UpdateAccountV2Request_AccountV2Avatar{
-					AvatarImage:    avatarBytes,
-					AvatarFileType: "image/png",
-				}
+				accountToUpdate.AccountV2.AvatarImage = avatarBytes
+				accountToUpdate.AccountV2.AvatarFileType = "image/png"
 			}
 
-			_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
+			err = accountStorage.UpdateAccountV2(ctx, accountToUpdate)
 			if err != nil {
 				s.logger.Error(
 					"Failed to update account first name, last name or avatar",
@@ -783,30 +850,40 @@ func (s *authService) checkAccountStatus(
 	organizations []*envproto.Organization,
 	localizer locale.Localizer,
 ) (*acproto.GetAccountV2Response, error) {
-	for _, org := range organizations {
-		resp, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-			Email:          email,
-			OrganizationId: org.Id,
+	// Create account storage to use optimized query
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+
+	// Use optimized query to get all accounts with organizations in one call
+	accountsWithOrg, err := accountStorage.GetAccountsWithOrganization(ctx, email)
+	if err != nil {
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			if status.Code(err) == codes.NotFound {
-				// System admin accounts have access to all organizations,
-				// but they are registered only in the system admin organization.
-				// So, to avoid false errors, we ignore them if the account wasn't found in non-system admin organizations.
-				continue
-			}
-			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, auth.StatusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusInternal.Err()
 		}
-		if !resp.Account.Disabled {
+		return nil, dt.Err()
+	}
+
+	// Create a map for quick lookup
+	accountMap := make(map[string]*acproto.AccountV2)
+	for _, accountWithOrg := range accountsWithOrg {
+		accountMap[accountWithOrg.AccountV2.OrganizationId] = accountWithOrg.AccountV2
+	}
+
+	// Check if the user has at least one account enabled in any Organization
+	for _, org := range organizations {
+		account, exists := accountMap[org.Id]
+		if !exists {
+			// System admin accounts have access to all organizations,
+			// but they are registered only in the system admin organization.
+			// So, to avoid false errors, we ignore them if the account wasn't found in non-system admin organizations.
+			continue
+		}
+		if !account.Disabled {
 			// The account must have at least one account enabled
-			return resp, nil
+			return &acproto.GetAccountV2Response{Account: account}, nil
 		}
 	}
 	// The account wasn't found or doesn't belong to any organization
@@ -823,6 +900,15 @@ func (s *authService) checkAccountStatus(
 func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) bool {
 	for _, org := range orgs {
 		if org.SystemAdmin {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *authService) hasSystemAdminOrganizationFromAccounts(accountsWithOrg []*domain.AccountWithOrganization) bool {
+	for _, accountWithOrg := range accountsWithOrg {
+		if accountWithOrg.Organization.SystemAdmin {
 			return true
 		}
 	}
