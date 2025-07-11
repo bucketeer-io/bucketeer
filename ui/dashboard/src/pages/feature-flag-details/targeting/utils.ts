@@ -263,7 +263,7 @@ export const handleCheckSegmentRules = (
     const formattedRule = {
       ...currentRule,
       clauses: currentRule?.clauses,
-      strategy: handleGetStrategy(item?.strategy)
+      strategy: handleGetStrategy(currentRule?.strategy)
     } as FeatureRuleChange;
 
     const formattedItem = {
