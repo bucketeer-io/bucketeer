@@ -15,9 +15,12 @@
 package domain
 
 import (
+	"errors"
+	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/proto/common"
@@ -39,9 +42,15 @@ func (f *Feature) Update(
 	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
 ) (*Feature, error) {
-	updated := &Feature{}
-	if err := copier.Copy(updated, f); err != nil {
+	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
+	// This ensures consistent JSON serialization in both API responses and audit logs
+	var clonedFeature feature.Feature
+	if err := copier.CopyWithOption(&clonedFeature, f.Feature, copier.Option{DeepCopy: true}); err != nil {
 		return nil, err
+	}
+
+	updated := &Feature{
+		Feature: &clonedFeature,
 	}
 
 	// We split variation changes into two separate steps to handle dependencies correctly:
@@ -120,10 +129,8 @@ func (f *Feature) Update(
 	}
 
 	// Increment version and update timestamp if there are changes
-	if updated.hasChangesComparedTo(f) {
-		if err := updated.IncrementVersion(); err != nil {
-			return nil, err
-		}
+	if !proto.Equal(f.Feature, updated.Feature) {
+		updated.Version++
 		updated.UpdatedAt = time.Now().Unix()
 	}
 
@@ -203,16 +210,16 @@ func (f *Feature) applyGeneralUpdates(
 	}
 	if enabled != nil {
 		if enabled.Value {
-			_ = f.Enable()
+			_ = f.updateEnable()
 		} else {
-			_ = f.Disable()
+			_ = f.updateDisable()
 		}
 	}
 	if archived != nil {
 		if archived.Value {
-			_ = f.Archive()
+			_ = f.updateArchive()
 		} else {
-			_ = f.Unarchive()
+			_ = f.updateUnarchive()
 		}
 	}
 	if defaultStrategy != nil {
@@ -236,7 +243,7 @@ func (f *Feature) applyVariationChanges(
 	for _, change := range variationChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
-			if err := f.AddVariation(
+			if err := f.updateAddVariation(
 				change.Variation.Id,
 				change.Variation.Value,
 				change.Variation.Name,
@@ -245,11 +252,11 @@ func (f *Feature) applyVariationChanges(
 				return err
 			}
 		case feature.ChangeType_UPDATE:
-			if err := f.ChangeVariation(change.Variation); err != nil {
+			if err := f.updateChangeVariation(change.Variation); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.RemoveVariation(change.Variation.Id); err != nil {
+			if err := f.updateRemoveVariation(change.Variation.Id); err != nil {
 				return err
 			}
 		}
@@ -268,21 +275,21 @@ func (f *Feature) applyGranularChanges(
 	for _, change := range prerequisiteChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
-			if err := f.AddPrerequisite(
+			if err := f.updateAddPrerequisite(
 				change.Prerequisite.FeatureId,
 				change.Prerequisite.VariationId,
 			); err != nil {
 				return err
 			}
 		case feature.ChangeType_UPDATE:
-			if err := f.ChangePrerequisiteVariation(
+			if err := f.updateChangePrerequisiteVariation(
 				change.Prerequisite.FeatureId,
 				change.Prerequisite.VariationId,
 			); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.RemovePrerequisite(
+			if err := f.updateRemovePrerequisite(
 				change.Prerequisite.FeatureId,
 			); err != nil {
 				return err
@@ -294,11 +301,11 @@ func (f *Feature) applyGranularChanges(
 	for _, change := range targetChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
-			if err := f.AddTargetUsers(change.Target); err != nil {
+			if err := f.updateAddTargetUsers(change.Target); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.RemoveTargetUsers(change.Target); err != nil {
+			if err := f.updateRemoveTargetUsers(change.Target); err != nil {
 				return err
 			}
 		}
@@ -308,15 +315,15 @@ func (f *Feature) applyGranularChanges(
 	for _, change := range ruleChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
-			if err := f.AddRule(change.Rule); err != nil {
+			if err := f.updateAddRule(change.Rule); err != nil {
 				return err
 			}
 		case feature.ChangeType_UPDATE:
-			if err := f.ChangeRule(change.Rule); err != nil {
+			if err := f.updateChangeRule(change.Rule); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.RemoveRule(change.Rule.Id); err != nil {
+			if err := f.updateRemoveRule(change.Rule.Id); err != nil {
 				return err
 			}
 		}
@@ -326,11 +333,11 @@ func (f *Feature) applyGranularChanges(
 	for _, change := range tagChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
-			if err := f.AddTag(change.Tag); err != nil {
+			if err := f.updateAddTag(change.Tag); err != nil {
 				return err
 			}
 		case feature.ChangeType_DELETE:
-			if err := f.RemoveTag(change.Tag); err != nil {
+			if err := f.updateRemoveTag(change.Tag); err != nil {
 				return err
 			}
 		}
@@ -339,188 +346,257 @@ func (f *Feature) applyGranularChanges(
 	return nil
 }
 
-// hasChangesComparedTo checks if there are any changes compared to the original feature
-func (f *Feature) hasChangesComparedTo(other *Feature) bool {
-	// Basic field comparisons
-	if f.Name != other.Name ||
-		f.Description != other.Description ||
-		f.Enabled != other.Enabled ||
-		f.Archived != other.Archived ||
-		f.OffVariation != other.OffVariation ||
-		f.SamplingSeed != other.SamplingSeed {
-		return true
+func (f *Feature) updateEnable() error {
+	if !f.Enabled {
+		f.Enabled = true
 	}
-
-	// Compare tags
-	if len(f.Tags) != len(other.Tags) {
-		return true
-	}
-	tagMap := make(map[string]struct{}, len(f.Tags))
-	for _, tag := range f.Tags {
-		tagMap[tag] = struct{}{}
-	}
-	for _, tag := range other.Tags {
-		if _, exists := tagMap[tag]; !exists {
-			return true
-		}
-	}
-
-	// Compare prerequisites
-	if len(f.Prerequisites) != len(other.Prerequisites) {
-		return true
-	}
-	prereqMap := make(map[string]string, len(f.Prerequisites))
-	for _, p := range f.Prerequisites {
-		prereqMap[p.FeatureId] = p.VariationId
-	}
-	for _, p := range other.Prerequisites {
-		if varID, exists := prereqMap[p.FeatureId]; !exists || varID != p.VariationId {
-			return true
-		}
-	}
-
-	// Compare targets
-	if len(f.Targets) != len(other.Targets) {
-		return true
-	}
-	targetMap := make(map[string]map[string]struct{}, len(f.Targets))
-	for _, t := range f.Targets {
-		userMap := make(map[string]struct{}, len(t.Users))
-		for _, u := range t.Users {
-			userMap[u] = struct{}{}
-		}
-		targetMap[t.Variation] = userMap
-	}
-	for _, t := range other.Targets {
-		userMap, exists := targetMap[t.Variation]
-		if !exists || len(userMap) != len(t.Users) {
-			return true
-		}
-		for _, u := range t.Users {
-			if _, exists := userMap[u]; !exists {
-				return true
-			}
-		}
-	}
-
-	// Compare rules
-	if len(f.Rules) != len(other.Rules) {
-		return true
-	}
-	ruleMap := make(map[string]*feature.Rule, len(f.Rules))
-	for _, r := range f.Rules {
-		ruleMap[r.Id] = r
-	}
-	for _, r := range other.Rules {
-		if existing, exists := ruleMap[r.Id]; !exists || !compareRules(existing, r) {
-			return true
-		}
-	}
-
-	// Compare variations
-	if len(f.Variations) != len(other.Variations) {
-		return true
-	}
-	variationMap := make(map[string]*feature.Variation, len(f.Variations))
-	for _, v := range f.Variations {
-		variationMap[v.Id] = v
-	}
-	for _, v := range other.Variations {
-		if existing, exists := variationMap[v.Id]; !exists || !compareVariations(existing, v) {
-			return true
-		}
-	}
-
-	// Compare default strategy
-	if !compareStrategies(f.DefaultStrategy, other.DefaultStrategy) {
-		return true
-	}
-
-	return false
+	return nil
 }
 
-// compareRules compares two rules for equality
-func compareRules(a, b *feature.Rule) bool {
-	if a.Id != b.Id {
-		return false
+func (f *Feature) updateDisable() error {
+	if f.Enabled {
+		f.Enabled = false
 	}
-	if !compareStrategies(a.Strategy, b.Strategy) {
-		return false
-	}
-	if len(a.Clauses) != len(b.Clauses) {
-		return false
-	}
-	clauseMap := make(map[string]*feature.Clause, len(a.Clauses))
-	for _, c := range a.Clauses {
-		clauseMap[c.Id] = c
-	}
-	for _, c := range b.Clauses {
-		if existing, exists := clauseMap[c.Id]; !exists || !compareClauses(existing, c) {
-			return false
-		}
-	}
-	return true
+	return nil
 }
 
-// compareClauses compares two clauses for equality
-func compareClauses(a, b *feature.Clause) bool {
-	return a.Id == b.Id &&
-		a.Attribute == b.Attribute &&
-		a.Operator == b.Operator &&
-		compareStringSlices(a.Values, b.Values)
+func (f *Feature) updateArchive() error {
+	if !f.Archived {
+		f.Archived = true
+	}
+	return nil
 }
 
-// compareVariations compares two variations for equality
-func compareVariations(a, b *feature.Variation) bool {
-	return a.Id == b.Id &&
-		a.Value == b.Value &&
-		a.Name == b.Name &&
-		a.Description == b.Description
+func (f *Feature) updateUnarchive() error {
+	if f.Archived {
+		f.Archived = false
+	}
+	return nil
 }
 
-// compareStrategies compares two strategies for equality
-func compareStrategies(a, b *feature.Strategy) bool {
-	if a == nil || b == nil {
-		return a == b
+func (f *Feature) updateAddVariation(id, value, name, description string) error {
+	if id == "" {
+		return errVariationIDRequired
 	}
-	if a.Type != b.Type {
-		return false
+	if value == "" {
+		return errVariationValueRequired
 	}
-	switch a.Type {
-	case feature.Strategy_FIXED:
-		return a.FixedStrategy.Variation == b.FixedStrategy.Variation
-	case feature.Strategy_ROLLOUT:
-		if len(a.RolloutStrategy.Variations) != len(b.RolloutStrategy.Variations) {
-			return false
-		}
-		variationMap := make(map[string]int32, len(a.RolloutStrategy.Variations))
-		for _, v := range a.RolloutStrategy.Variations {
-			variationMap[v.Variation] = v.Weight
-		}
-		for _, v := range b.RolloutStrategy.Variations {
-			if weight, exists := variationMap[v.Variation]; !exists || weight != v.Weight {
-				return false
-			}
-		}
-		return true
-	default:
-		return false
+	if name == "" {
+		return errVariationNameRequired
 	}
+	if err := f.validateVariationValue(id, value); err != nil {
+		return err
+	}
+	if _, err := f.findVariationIndex(id); err == nil {
+		return errVariationValueUnique // variation already exists
+	}
+	f.Variations = append(f.Variations, &feature.Variation{
+		Id:          id,
+		Value:       value,
+		Name:        name,
+		Description: description,
+	})
+	f.addTarget(id)
+	return nil
 }
 
-// compareStringSlices compares two string slices for equality
-func compareStringSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
+func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
+	if variation == nil {
+		return errVariationRequired
 	}
-	valueMap := make(map[string]struct{}, len(a))
-	for _, v := range a {
-		valueMap[v] = struct{}{}
+	idx, err := f.findVariationIndex(variation.Id)
+	if err != nil {
+		return err
 	}
-	for _, v := range b {
-		if _, exists := valueMap[v]; !exists {
-			return false
+	if variation.Name == "" {
+		return errVariationNameRequired
+	}
+	if err := f.validateVariationValue(variation.Id, variation.Value); err != nil {
+		return err
+	}
+
+	// Only update if the variation actually changed
+	if !proto.Equal(f.Variations[idx], variation) {
+		f.Variations[idx] = variation
+	}
+	return nil
+}
+
+func (f *Feature) updateRemoveVariation(id string) error {
+	if len(f.Variations) == 1 {
+		return errVariationInUse
+	}
+	idx, err := f.findVariationIndex(id)
+	if err != nil {
+		return err
+	}
+	if err := f.validateRemoveVariation(id); err != nil {
+		return err
+	}
+	f.Variations = slices.Delete(f.Variations, idx, idx+1)
+	return nil
+}
+
+func (f *Feature) updateAddPrerequisite(featureID, variationID string) error {
+	if err := validatePrerequisite(featureID, variationID); err != nil {
+		return err
+	}
+	if _, err := f.findPrerequisite(featureID); err == nil {
+		return errPrerequisiteAlreadyExists
+	}
+	f.Prerequisites = append(f.Prerequisites, &feature.Prerequisite{
+		FeatureId:   featureID,
+		VariationId: variationID,
+	})
+	return nil
+}
+
+func (f *Feature) updateChangePrerequisiteVariation(featureID, variationID string) error {
+	if err := validatePrerequisite(featureID, variationID); err != nil {
+		return err
+	}
+	idx, err := f.findPrerequisiteIndex(featureID)
+	if err != nil {
+		return err
+	}
+
+	// Only update if the variation actually changed
+	if f.Prerequisites[idx].VariationId != variationID {
+		f.Prerequisites[idx].VariationId = variationID
+	}
+	return nil
+}
+
+func (f *Feature) updateRemovePrerequisite(featureID string) error {
+	idx, err := f.findPrerequisiteIndex(featureID)
+	if err != nil {
+		return err
+	}
+	f.Prerequisites = slices.Delete(f.Prerequisites, idx, idx+1)
+	return nil
+}
+
+func (f *Feature) updateAddTargetUsers(target *feature.Target) error {
+	idx, err := f.findTarget(target.Variation)
+	if err != nil {
+		return err
+	}
+	if target.Users == nil {
+		return errTargetUsersRequired
+	}
+	for _, user := range target.Users {
+		if user == "" {
+			return errTargetUserRequired
+		}
+		if !contains(user, f.Targets[idx].Users) {
+			f.Targets[idx].Users = append(f.Targets[idx].Users, user)
 		}
 	}
-	return true
+	return nil
+}
+
+func (f *Feature) updateRemoveTargetUsers(target *feature.Target) error {
+	idx, err := f.findTarget(target.Variation)
+	if err != nil {
+		return err
+	}
+	if target.Users == nil {
+		return errTargetUsersRequired
+	}
+	for _, user := range target.Users {
+		if user == "" {
+			return errTargetUserRequired
+		}
+		uidx, err := index(user, f.Targets[idx].Users)
+		if err != nil {
+			// User not found, skip (don't return error for non-existent user removal)
+			continue
+		}
+		f.Targets[idx].Users = append(f.Targets[idx].Users[:uidx], f.Targets[idx].Users[uidx+1:]...)
+	}
+	return nil
+}
+
+func (f *Feature) updateAddRule(rule *feature.Rule) error {
+	if rule == nil {
+		return errRuleRequired
+	}
+	if err := validateClauses(rule.Clauses); err != nil {
+		return err
+	}
+	if err := validateStrategy(rule.Strategy, f.Variations); err != nil {
+		return err
+	}
+	if _, err := f.findRule(rule.Id); err == nil {
+		return errRuleAlreadyExists
+	}
+	f.Rules = append(f.Rules, rule)
+	return nil
+}
+
+func (f *Feature) updateChangeRule(rule *feature.Rule) error {
+	if rule == nil {
+		return errRuleRequired
+	}
+	idx, err := f.findRuleIndex(rule.Id)
+	if err != nil {
+		return err
+	}
+	if err := validateClauses(rule.Clauses); err != nil {
+		return err
+	}
+	if err := validateStrategy(rule.Strategy, f.Variations); err != nil {
+		return err
+	}
+
+	// Only update if the rule actually changed
+	existingRule := f.Rules[idx]
+	if !proto.Equal(existingRule, rule) {
+		f.Rules[idx] = rule
+	}
+	return nil
+}
+
+func (f *Feature) updateRemoveRule(id string) error {
+	idx, err := f.findRuleIndex(id)
+	if err != nil {
+		return err
+	}
+	f.Rules = slices.Delete(f.Rules, idx, idx+1)
+	return nil
+}
+
+func (f *Feature) updateAddTag(tag string) error {
+	if slices.Contains(f.Tags, tag) {
+		return nil
+	}
+	f.Tags = append(f.Tags, tag)
+	return nil
+}
+
+func (f *Feature) updateRemoveTag(tag string) error {
+	index := slices.Index(f.Tags, tag)
+	if index == -1 {
+		return errors.New("feature: tag not found")
+	}
+	f.Tags = slices.Delete(f.Tags, index, index+1)
+	return nil
+}
+
+func (f *Feature) findRuleIndex(id string) (int, error) {
+	for i, rule := range f.Rules {
+		if rule.Id == id {
+			return i, nil
+		}
+	}
+	return -1, errRuleNotFound
+}
+
+func (f *Feature) findPrerequisiteIndex(featureID string) (int, error) {
+	for i, prereq := range f.Prerequisites {
+		if prereq.FeatureId == featureID {
+			return i, nil
+		}
+	}
+	return -1, errPrerequisiteNotFound
 }
