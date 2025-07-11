@@ -37,7 +37,8 @@ export default defineConfig({
             name: 'Noto Sans',
             src: './src/assets/fonts/noto-sans/*.ttf'
           }
-        ]
+        ],
+        preload: false
       }
     })
   ]
