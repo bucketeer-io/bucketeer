@@ -346,7 +346,7 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 				UpdatedAt:      newEnvironment.UpdatedAt,
 			},
 			newEnvironment.EnvironmentV2,
-			&domain.EnvironmentV2{},
+			nil,
 		)
 		if err != nil {
 			return err

@@ -255,6 +255,7 @@ message Event {
     FLAG_TRIGGER_UPDATED = 1608;
     TAG_CREATED = 1701;
     TAG_DELETED = 1702;
+    TAG_UPDATED = 1703;
     CODE_REFERENCE_CREATED = 1800;
     CODE_REFERENCE_UPDATED = 1801;
     CODE_REFERENCE_DELETED = 1802;
@@ -1296,6 +1297,14 @@ message TagCreatedEvent {
   int64 updated_at = 4;
   bucketeer.tag.Tag.EntityType entity_type = 5;
   string environment_id = 6;
+}
+
+message TagUpdatedEvent {
+  string id = 1;
+  string name = 2;
+  int64 updated_at = 3;
+  bucketeer.tag.Tag.EntityType entity_type = 4;
+  string environment_id = 5;
 }
 
 message TagDeletedEvent {

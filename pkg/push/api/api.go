@@ -21,7 +21,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -320,10 +319,6 @@ func (s *PushService) createPushNoCommand(
 		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
-		prev := &domain.Push{}
-		if err = copier.Copy(prev, push); err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
@@ -336,7 +331,7 @@ func (s *PushService) createPushNoCommand(
 			},
 			req.EnvironmentId,
 			push,
-			prev,
+			nil,
 		)
 		if err != nil {
 			return err
@@ -759,10 +754,6 @@ func (s *PushService) DeletePush(
 		if err != nil {
 			return err
 		}
-		prev := &domain.Push{}
-		if err = copier.Copy(prev, push); err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
@@ -774,8 +765,8 @@ func (s *PushService) DeletePush(
 				Name:              push.Name,
 			},
 			req.EnvironmentId,
-			push,
-			prev,
+			nil,  // Current state: entity no longer exists
+			push, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

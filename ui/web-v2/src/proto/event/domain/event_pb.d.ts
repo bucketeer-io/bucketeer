@@ -311,6 +311,7 @@ export namespace Event {
     FLAG_TRIGGER_UPDATED: 1608;
     TAG_CREATED: 1701;
     TAG_DELETED: 1702;
+    TAG_UPDATED: 1703;
     CODE_REFERENCE_CREATED: 1800;
     CODE_REFERENCE_UPDATED: 1801;
     CODE_REFERENCE_DELETED: 1802;
@@ -7505,6 +7506,55 @@ export namespace TagCreatedEvent {
     id: string;
     name: string;
     createdAt: number;
+    updatedAt: number;
+    entityType: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
+    environmentId: string;
+  };
+}
+
+export class TagUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  getEntityType(): proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
+  setEntityType(
+    value: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap]
+  ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TagUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TagUpdatedEvent
+  ): TagUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TagUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TagUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: TagUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): TagUpdatedEvent;
+}
+
+export namespace TagUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
     updatedAt: number;
     entityType: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
     environmentId: string;

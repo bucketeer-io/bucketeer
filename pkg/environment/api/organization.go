@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
@@ -475,10 +474,6 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		return nil, statusInternal.Err()
 	}
 	// Publish the auditlog event
-	prev := &domain.Organization{}
-	if err = copier.Copy(prev, organization); err != nil {
-		return nil, statusInternal.Err()
-	}
 	event, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_ORGANIZATION,
@@ -497,7 +492,7 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 			UpdatedAt:   organization.UpdatedAt,
 		},
 		organization,
-		prev,
+		nil,
 	)
 	if err != nil {
 		return nil, statusInternal.Err()

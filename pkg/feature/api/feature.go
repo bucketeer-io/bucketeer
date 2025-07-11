@@ -910,7 +910,7 @@ func (s *FeatureService) createFeatureNoCommand(
 			},
 			req.EnvironmentId,
 			feature,
-			featureproto.Feature{},
+			nil,
 		)
 		if err != nil {
 			return err

@@ -19,7 +19,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
@@ -191,10 +190,6 @@ func (s *FeatureService) createSegmentNoCommand(
 			)
 			return err
 		}
-		prev := &domain.Segment{}
-		if err := copier.Copy(prev, segment); err != nil {
-			return err
-		}
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
@@ -207,7 +202,7 @@ func (s *FeatureService) createSegmentNoCommand(
 			},
 			req.EnvironmentId,
 			segment.Segment,
-			prev,
+			nil,
 		)
 		if err != nil {
 			return nil
@@ -317,10 +312,6 @@ func (s *FeatureService) deleteSegmentNoCommand(
 			)
 			return err
 		}
-		prev := &domain.Segment{}
-		if err := copier.Copy(prev, segment); err != nil {
-			return err
-		}
 		event, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_SEGMENT,
@@ -330,8 +321,8 @@ func (s *FeatureService) deleteSegmentNoCommand(
 				Id: segment.Id,
 			},
 			req.EnvironmentId,
-			segment.Segment,
-			prev,
+			nil,             // Current state: entity no longer exists
+			segment.Segment, // Previous state: what was deleted
 		)
 		if err != nil {
 			return nil

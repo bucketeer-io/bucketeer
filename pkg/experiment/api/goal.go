@@ -388,7 +388,6 @@ func (s *experimentService) createGoalNoCommand(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		prev := &domain.Goal{}
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_GOAL,
@@ -405,7 +404,7 @@ func (s *experimentService) createGoalNoCommand(
 			},
 			req.EnvironmentId,
 			goal.Goal,
-			prev,
+			nil,
 		)
 		if err != nil {
 			return err
@@ -770,8 +769,8 @@ func (s *experimentService) DeleteGoal(
 				Id: goal.Id,
 			},
 			req.EnvironmentId,
-			goal.Goal,
-			&domain.Goal{},
+			nil,       // Current state: entity no longer exists
+			goal.Goal, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

@@ -984,10 +984,6 @@ func (s *AccountService) DeleteAccountV2(
 		if err != nil {
 			return err
 		}
-		deleteAccount := &domain.AccountV2{}
-		if err := copier.Copy(deleteAccount, account); err != nil {
-			return err
-		}
 		deleteAccountV2Event, err := domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
@@ -997,8 +993,8 @@ func (s *AccountService) DeleteAccountV2(
 				Email:          account.Email,
 				OrganizationId: account.OrganizationId,
 			},
-			deleteAccount,
-			account,
+			nil,     // Current state: entity no longer exists
+			account, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

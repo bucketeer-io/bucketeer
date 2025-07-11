@@ -4,19 +4,15 @@ import { useParams } from 'react-router-dom';
 import { useQueryAuditLogDetails } from '@queries/audit-log-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
+import { useAuditLogDataPatterns } from 'hooks/use-audit-log-data-patterns';
 import { getLanguage, useTranslation } from 'i18n';
-import { areJsonStringsEqual, isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import AuditLogAvatar from 'pages/audit-logs/collection-layout/audit-log-avatar';
 import AuditLogTitle from 'pages/audit-logs/collection-layout/audit-log-title';
 import ReactDiffViewer from 'pages/audit-logs/collection-layout/json-compare';
 import { AuditLogTab } from 'pages/audit-logs/types';
-import {
-  convertJSONToRender,
-  formatJSONWithIndent,
-  getActionText
-} from 'pages/audit-logs/utils';
+import { getActionText } from 'pages/audit-logs/utils';
 import SlideModal from 'components/modal/slide';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import DateTooltip from 'elements/date-tooltip';
@@ -61,38 +57,16 @@ const AuditLogDetailsModal = ({
 
   const auditLog = collection?.auditLog;
 
-  // TODO: Because there is a data issue in the DB, we must check the previous_entity_data if it is empty.
-  // Once the backend fixes this, we can remove this condition.
-  const isOldDataIssue = useMemo(
-    () => !auditLog?.previousEntityData && !!auditLog?.entityData,
-    [auditLog]
-  );
-
-  const isSameData = useMemo(
-    () =>
-      auditLog
-        ? areJsonStringsEqual(auditLog.entityData, auditLog.previousEntityData)
-        : false,
-    [auditLog]
-  );
-
-  const isHaveEntityData = useMemo(() => {
-    if (!auditLog) return false;
-    return (
-      !!auditLog.entityData &&
-      !!isJsonString(auditLog.entityData) &&
-      !!formatJSONWithIndent(auditLog.entityData) &&
-      !!convertJSONToRender(formatJSONWithIndent(auditLog.entityData))
-    );
-  }, [auditLog]);
-
-  const parsedEntityData = useMemo(() => {
-    try {
-      return auditLog?.entityData ? JSON.parse(auditLog?.entityData) : null;
-    } catch {
-      return null;
-    }
-  }, [auditLog?.entityData]);
+  // Use centralized audit log data patterns logic
+  const {
+    isHaveEntityData,
+    parsedEntityData,
+    effectiveIsSameData,
+    shouldShowChanges,
+    displayMode,
+    entityData,
+    previousEntityData
+  } = useAuditLogDataPatterns(auditLog);
 
   const dateTime = useMemo(
     () =>
@@ -202,7 +176,7 @@ const AuditLogDetailsModal = ({
               value={currentTab}
               onValueChange={value => handleChangeTab(value as AuditLogTab)}
             >
-              {!isSameData && !isOldDataIssue && (
+              {shouldShowChanges && (
                 <TabsList>
                   <TabsTrigger value={AuditLogTab.CHANGES}>
                     {t(`changes`)}
@@ -215,11 +189,9 @@ const AuditLogDetailsModal = ({
 
               <p className="typo-para-small text-gray-500 uppercase">
                 {t(
-                  isSameData ||
-                    isOldDataIssue ||
-                    currentTab === AuditLogTab.SNAPSHOT
+                  currentTab === AuditLogTab.SNAPSHOT
                     ? 'current-version'
-                    : 'updates'
+                    : displayMode
                 )}
               </p>
 
@@ -229,12 +201,12 @@ const AuditLogDetailsModal = ({
               >
                 {auditLog && (
                   <ReactDiffViewer
-                    isSameData={isOldDataIssue || isSameData}
+                    isSameData={effectiveIsSameData}
                     prefix="line-00"
                     currentTab={currentTab}
                     lineNumber={lineNumberRef.current}
-                    entityData={auditLog?.entityData}
-                    previousEntityData={auditLog.previousEntityData}
+                    entityData={entityData}
+                    previousEntityData={previousEntityData}
                   />
                 )}
               </TabsContent>

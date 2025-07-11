@@ -20518,6 +20518,10 @@
                 "integer": 1702
               },
               {
+                "name": "TAG_UPDATED",
+                "integer": 1703
+              },
+              {
                 "name": "CODE_REFERENCE_CREATED",
                 "integer": 1800
               },
@@ -23996,6 +24000,36 @@
               },
               {
                 "id": 6,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TagUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "entity_type",
+                "type": "bucketeer.tag.Tag.EntityType"
+              },
+              {
+                "id": 5,
                 "name": "environment_id",
                 "type": "string"
               }

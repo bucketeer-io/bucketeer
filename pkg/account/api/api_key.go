@@ -19,7 +19,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
@@ -198,10 +197,6 @@ func (s *AccountService) createAPIKeyNoCommand(
 		return nil, dt.Err()
 	}
 
-	prev := &domain.APIKey{}
-	if err := copier.Copy(prev, key); err != nil {
-		return nil, err
-	}
 	e, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_APIKEY,
@@ -219,7 +214,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 		},
 		req.EnvironmentId,
 		key.APIKey,
-		prev,
+		nil,
 	)
 	if err != nil {
 		return nil, err

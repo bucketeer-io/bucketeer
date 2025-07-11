@@ -320,7 +320,6 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 		}
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		prev := &domain.AutoOpsRule{}
 		e, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
@@ -336,7 +335,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 			},
 			req.EnvironmentId,
 			autoOpsRule.AutoOpsRule,
-			prev,
+			nil,
 		)
 		if err != nil {
 			return err
@@ -780,8 +779,8 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 			eventproto.Event_AUTOOPS_RULE_DELETED,
 			&eventproto.AutoOpsRuleDeletedEvent{},
 			req.EnvironmentId,
-			autoOpsRule.AutoOpsRule,
-			&domain.AutoOpsRule{},
+			nil,                     // Current state: entity no longer exists
+			autoOpsRule.AutoOpsRule, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err

@@ -839,7 +839,7 @@ func TestDeletePushMySQL(t *testing.T) {
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+				).Return(nil, v2ps.ErrPushNotFound)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {

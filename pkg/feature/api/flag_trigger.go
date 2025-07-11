@@ -199,7 +199,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 			},
 			req.EnvironmentId,
 			flagTrigger,
-			&domain.FlagTrigger{},
+			nil,
 		)
 		if err != nil {
 			return err
@@ -763,8 +763,8 @@ func (s *FeatureService) DeleteFlagTrigger(
 				EnvironmentId: flagTrigger.EnvironmentId,
 			},
 			request.EnvironmentId,
-			&domain.FlagTrigger{},
-			flagTrigger,
+			nil,         // Current state: entity no longer exists
+			flagTrigger, // Previous state: what was deleted
 		)
 		if err != nil {
 			return err
