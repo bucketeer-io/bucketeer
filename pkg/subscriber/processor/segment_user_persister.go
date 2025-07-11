@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -28,10 +29,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
@@ -50,6 +53,14 @@ type segmentUserPersisterConfig struct {
 	DomainEventTopic   string `json:"domainEventTopic"`
 	FlushSize          int    `json:"flushSize"`
 	FlushInterval      int    `json:"flushInterval"`
+	// PubSub configuration
+	PubSubType          string `json:"pubSubType"`          // google or redis-stream
+	RedisServerName     string `json:"redisServerName"`     // Redis server name
+	RedisAddr           string `json:"redisAddr"`           // Redis address
+	RedisPoolSize       int    `json:"redisPoolSize"`       // Redis pool size
+	RedisMinIdle        int    `json:"redisMinIdle"`        // Redis min idle connections
+	RedisPartitionCount int    `json:"redisPartitionCount"` // Redis partition count
+	Project             string `json:"project"`             // Google Cloud project ID
 }
 
 type segmentUserPersister struct {
@@ -66,6 +77,7 @@ func NewSegmentUserPersister(
 	config interface{},
 	batchClient btclient.Client,
 	mysqlClient mysql.Client,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -84,18 +96,49 @@ func NewSegmentUserPersister(
 		logger.Error("SegmentUserPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
 	}
-	// create domain publisher
+
+	// Create domain publisher using factory pattern
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client, err := pubsub.NewClient(
-		ctx,
-		segmentPersisterConfig.DomainEventProject,
-		pubsub.WithLogger(logger),
-	)
+
+	// Determine PubSub type and create appropriate client
+	var pubSubType factory.PubSubType
+	switch segmentPersisterConfig.PubSubType {
+	case "redis-stream":
+		pubSubType = factory.RedisStream
+	case "google":
+		pubSubType = factory.Google
+	default:
+		// Default to Google for backward compatibility
+		pubSubType = factory.Google
+	}
+
+	// Create factory client options
+	var opts []factory.Option
+	opts = append(opts, factory.WithPubSubType(pubSubType))
+	opts = append(opts, factory.WithLogger(logger))
+
+	if pubSubType == factory.Google {
+		opts = append(opts, factory.WithProjectID(segmentPersisterConfig.Project))
+	} else if pubSubType == factory.RedisStream {
+		// Create Redis client internally
+		redisClient, err := createRedisClientForSegmentPersister(ctx, segmentPersisterConfig, logger, registerer)
+		if err != nil {
+			logger.Error("SegmentUserPersister: failed to create Redis client", zap.Error(err))
+			return nil, err
+		}
+		opts = append(opts, factory.WithRedisClient(redisClient))
+		if segmentPersisterConfig.RedisPartitionCount > 0 {
+			opts = append(opts, factory.WithPartitionCount(segmentPersisterConfig.RedisPartitionCount))
+		}
+	}
+
+	client, err := factory.NewClient(ctx, opts...)
 	if err != nil {
 		logger.Error("SegmentUserPersister: failed to create pubsub client", zap.Error(err))
 		return nil, err
 	}
+
 	domainPublisher, err := client.CreatePublisher(segmentPersisterConfig.DomainEventTopic)
 	if err != nil {
 		logger.Error("SegmentUserPersister: failed to create domain publisher", zap.Error(err))
@@ -110,6 +153,47 @@ func NewSegmentUserPersister(
 		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
 		logger:                     logger,
 	}, nil
+}
+
+// createRedisClientForSegmentPersister creates a Redis client from the configuration
+func createRedisClientForSegmentPersister(
+	ctx context.Context,
+	conf segmentUserPersisterConfig,
+	logger *zap.Logger,
+	registerer metrics.Registerer,
+) (v3.Client, error) {
+	redisAddr := conf.RedisAddr
+	if redisAddr == "" {
+		return nil, fmt.Errorf("redis address is required for Redis PubSub")
+	}
+
+	redisPoolSize := 10
+	if conf.RedisPoolSize > 0 {
+		redisPoolSize = conf.RedisPoolSize
+	}
+
+	redisMinIdle := 3
+	if conf.RedisMinIdle > 0 {
+		redisMinIdle = conf.RedisMinIdle
+	}
+
+	logger.Debug("Creating Redis client for segment user persister",
+		zap.String("address", redisAddr),
+		zap.Int("poolSize", redisPoolSize),
+		zap.Int("minIdle", redisMinIdle),
+		zap.String("serverName", conf.RedisServerName),
+		zap.String("pubSubType", conf.PubSubType),
+	)
+
+	// Create Redis client
+	return v3.NewClient(
+		redisAddr,
+		v3.WithPoolSize(redisPoolSize),
+		v3.WithMinIdleConns(redisMinIdle),
+		v3.WithServerName(conf.RedisServerName),
+		v3.WithMetrics(registerer),
+		v3.WithLogger(logger),
+	)
 }
 
 func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
