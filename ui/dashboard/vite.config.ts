@@ -16,7 +16,18 @@ export default defineConfig({
     open: true
   },
   build: {
-    outDir: 'build'
+    outDir: 'build',
+    rollupOptions: {
+      output: {
+        assetFileNames: assetInfo => {
+          const fileName = assetInfo.names?.[0] || '';
+          if (fileName && /\.(woff|woff2|eot|ttf|otf)$/.test(fileName)) {
+            return 'assets/fonts/[name]-[hash][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
+    }
   },
   plugins: [
     react(),
