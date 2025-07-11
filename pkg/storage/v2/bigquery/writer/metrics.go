@@ -15,6 +15,7 @@
 package writer
 
 import (
+	"sync"
 	"time"
 
 	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
@@ -41,6 +42,7 @@ const (
 )
 
 var (
+	registerOnce   sync.Once
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -104,8 +106,10 @@ func getCodeFromError(err error) string {
 }
 
 func RegisterMetrics(r metrics.Registerer) {
-	r.MustRegister(
-		handledCounter,
-		handledHistogram,
-	)
+	registerOnce.Do(func() {
+		r.MustRegister(
+			handledCounter,
+			handledHistogram,
+		)
+	})
 }

@@ -38,7 +38,6 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/processor"
@@ -480,7 +479,6 @@ func (s *server) registerPubSubProcessorMap(
 	logger *zap.Logger,
 ) (*processor.PubSubProcessors, error) {
 	processors := processor.NewPubSubProcessors(registerer)
-	writer.RegisterMetrics(registerer)
 
 	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)
 	if err != nil {

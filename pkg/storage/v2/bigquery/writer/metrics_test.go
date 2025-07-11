@@ -36,6 +36,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -172,4 +173,25 @@ func TestGetCodeFromError(t *testing.T) {
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 		})
 	}
+}
+
+func TestRegisterMetrics(t *testing.T) {
+	t.Parallel()
+
+	// Create a new registry to avoid interfering with other tests
+	registry := prometheus.NewRegistry()
+
+	// Test that RegisterMetrics can be called multiple times without panic
+	// This should not panic due to the sync.Once protection
+	assert.NotPanics(t, func() {
+		RegisterMetrics(registry)
+	})
+
+	assert.NotPanics(t, func() {
+		RegisterMetrics(registry)
+	})
+
+	assert.NotPanics(t, func() {
+		RegisterMetrics(registry)
+	})
 }

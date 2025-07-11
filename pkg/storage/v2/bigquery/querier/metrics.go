@@ -17,6 +17,7 @@ package querier
 import (
 	"errors"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,6 +41,7 @@ const (
 )
 
 var (
+	registerOnce   sync.Once
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -96,8 +98,10 @@ func getCodeFromError(err error) string {
 }
 
 func registerMetrics(r metrics.Registerer) {
-	r.MustRegister(
-		handledCounter,
-		handledHistogram,
-	)
+	registerOnce.Do(func() {
+		r.MustRegister(
+			handledCounter,
+			handledHistogram,
+		)
+	})
 }
