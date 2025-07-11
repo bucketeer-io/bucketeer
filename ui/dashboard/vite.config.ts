@@ -49,7 +49,7 @@ export default defineConfig({
             src: './src/assets/fonts/noto-sans-jp/*.woff2'
           }
         ],
-        preload: true,
+        preload: false,
         display: 'swap'
       }
     })
