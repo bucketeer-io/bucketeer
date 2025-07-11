@@ -12,7 +12,7 @@ import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryProjectDetails } from '@queries/project-details';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getAccountAccess, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
@@ -77,7 +77,8 @@ const EnvironmentCreateUpdateModal = ({
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
-  const { consoleAccount } = useAuth();
+  const { consoleAccount, onMeFetcher } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
     consoleAccount!
@@ -142,13 +143,14 @@ const EnvironmentCreateUpdateModal = ({
           invalidateOrganizations(queryClient);
           invalidateProjects(queryClient);
           invalidateEnvironments(queryClient);
+          onMeFetcher({ organizationId: currentEnvironment.organizationId });
           onClose();
         }
       } catch (error) {
         errorNotify(error);
       }
     },
-    [environment]
+    [environment, currentEnvironment]
   );
 
   return (
@@ -214,6 +216,7 @@ const EnvironmentCreateUpdateModal = ({
                   </Form.Label>
                   <Form.Control>
                     <Input
+                      {...field}
                       value={field.value}
                       placeholder={`${t('form:placeholder-code')}`}
                       disabled={disabled || !!environment}
