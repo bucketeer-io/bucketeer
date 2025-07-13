@@ -50,6 +50,7 @@ type batchService struct {
 	experimentCacher          jobs.Job
 	autoOpsRulesCacher        jobs.Job
 	tagDeleter                jobs.Job
+	demoDataDeleter           jobs.Job
 	logger                    *zap.Logger
 }
 
@@ -60,7 +61,7 @@ func NewBatchService(
 	redisCounterDeleter, experimentCalculator,
 	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
 	featureFlagCacher, segmentUserCacher, apiKeyCacher,
-	experimentCacher, autoOpsRulesCacher, tagDeleter jobs.Job,
+	experimentCacher, autoOpsRulesCacher, tagDeleter, demoDataDeleter jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -82,6 +83,7 @@ func NewBatchService(
 		experimentCacher:          experimentCacher,
 		autoOpsRulesCacher:        autoOpsRulesCacher,
 		tagDeleter:                tagDeleter,
+		demoDataDeleter:           demoDataDeleter,
 		logger:                    logger.Named("batch-service"),
 	}
 }
@@ -126,6 +128,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.autoOpsRulesCacher.Run(ctx)
 	case batch.BatchJob_TagDeleter:
 		err = s.tagDeleter.Run(ctx)
+	case batch.BatchJob_DemoDataDeleter:
+		err = s.demoDataDeleter.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(
