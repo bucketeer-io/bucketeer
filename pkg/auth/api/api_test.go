@@ -28,6 +28,7 @@ func TestAuthService_GetDeploymentStatus(t *testing.T) {
 	options := defaultOptions
 	service := &authService{
 		logger: options.logger,
+		opts:   &options,
 	}
 	patterns := []struct {
 		desc        string

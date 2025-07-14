@@ -1001,7 +1001,7 @@ func (s *server) createAuthService(
 	serviceOptions := []authapi.Option{
 		authapi.WithLogger(logger),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
-		authapi.WithDemoEnabled(*s.isDemoSiteEnabled),
+		authapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
 	}
 	if *s.emailFilter != "" {
 		filter, err := regexp.Compile(*s.emailFilter)

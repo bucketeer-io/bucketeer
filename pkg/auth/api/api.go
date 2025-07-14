@@ -87,7 +87,7 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
-func WithDemoEnabled(isDemoSiteEnabled bool) Option {
+func WithDemoSiteEnabled(isDemoSiteEnabled bool) Option {
 	return func(opts *options) {
 		opts.isDemoSiteEnabled = isDemoSiteEnabled
 	}
