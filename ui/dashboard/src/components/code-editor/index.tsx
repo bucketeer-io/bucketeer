@@ -65,13 +65,12 @@ export default function ReactCodeEditor(props: ReactCodeEditorProps) {
         automaticLayout: true,
         renderLineHighlight: 'all',
         cursorBlinking: 'smooth',
-        cursorSmoothCaretAnimation: true,
+        cursorSmoothCaretAnimation: 'on',
         tabSize: 4,
         renderWhitespace: 'boundary',
         folding: true,
         foldingHighlight: true,
         showFoldingControls: 'always',
-        highlightActiveIndentGuide: true,
         scrollbar: {
           vertical: 'visible',
           horizontal: 'visible',
@@ -94,9 +93,11 @@ export default function ReactCodeEditor(props: ReactCodeEditorProps) {
         editor.onDidChangeCursorSelection(() => {
           const selection = editor.getSelection();
           const editorDomNode = editor.getDomNode();
+          if (!editorDomNode) return;
+
           const highlightedLines =
             editorDomNode.querySelectorAll('.highlighted-line');
-          highlightedLines?.forEach((line: HTMLElement) =>
+          highlightedLines?.forEach((line: Element) =>
             line.classList.remove('highlighted-line')
           );
           if (selection && !selection.isEmpty()) {
