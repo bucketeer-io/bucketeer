@@ -15,9 +15,12 @@
 package server
 
 import (
+	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/ui/dashboard"
 	webv2 "github.com/bucketeer-io/bucketeer/ui/web-v2"
@@ -54,9 +57,57 @@ func webConsoleHandler() http.Handler {
 	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
+// fontCacheHandler adds cache headers for font files
+func cacheHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add cache headers for font files
+		if isFontFile(r.URL.Path) {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			w.Header().Set("Vary", "Accept-Encoding")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isFontFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return ext == ".woff2" || ext == ".woff" || ext == ".ttf" || ext == ".otf"
+}
+
+// compressedFileServer serves pre-compressed Brotli/Gzip assets when available.
+func compressedFileServer(root http.FileSystem) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		ae := r.Header.Get("Accept-Encoding")
+		// Brotli
+		if strings.Contains(ae, "br") {
+			if f, err := root.Open(path + ".br"); err == nil {
+				defer f.Close()
+				w.Header().Set("Content-Encoding", "br")
+				w.Header().Set("Vary", "Accept-Encoding")
+				http.ServeContent(w, r, path, time.Time{}, f)
+				return
+			}
+		}
+		// Gzip
+		if strings.Contains(ae, "gzip") {
+			if f, err := root.Open(path + ".gz"); err == nil {
+				defer f.Close()
+				w.Header().Set("Content-Encoding", "gzip")
+				w.Header().Set("Vary", "Accept-Encoding")
+				http.ServeContent(w, r, path, time.Time{}, f)
+				return
+			}
+		}
+		// Fallback
+		http.FileServer(root).ServeHTTP(w, r)
+	})
+}
+
 // dashboardHandler returns a http.Handler for the new dashboard UI.
 func dashboardHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS)})
+	fs := http.FS(dashboard.FS)
+	return http.FileServer(&spaFileSystem{root: fs})
 }
 
 func webConsoleEnvJSHandler(path string) http.Handler {
@@ -72,9 +123,9 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 }
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
-	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
-	mux.HandleFunc("/legacy/static/js/",
-		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+	mux.Handle("/", webConsoleHandler())
+	mux.Handle("/legacy/static/js/",
+		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)))
 }
 
 type DashboardService struct {
@@ -85,8 +136,30 @@ func NewDashboardService(consoleEnvJSPath string) DashboardService {
 	return DashboardService{consoleEnvJSPath: consoleEnvJSPath}
 }
 
+// Register sets up handlers for assets, fonts, the SPA, and env-JS.
 func (d DashboardService) Register(mux *http.ServeMux) {
-	mux.HandleFunc("/", dashboardHandler().ServeHTTP)
-	mux.HandleFunc("/static/js/",
-		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(d.consoleEnvJSPath)).ServeHTTP)
+	// Subtree for embedded assets
+	embedded := dashboard.FS
+	assetsSub, err := fs.Sub(embedded, "assets")
+	if err != nil {
+		panic("failed to get embedded dashboard assets: " + err.Error())
+	}
+	assetsFS := http.FS(assetsSub)
+
+	// Serve pre-compressed static assets (JS/CSS/images/fonts) with font caching
+	mux.Handle("/assets/", http.StripPrefix(
+		"/assets/",
+		cacheHandler(
+			compressedFileServer(assetsFS),
+		),
+	))
+
+	// Serve dynamic env JS with compression
+	mux.Handle("/static/js/", http.StripPrefix(
+		"/static/js/",
+		compressedFileServer(http.Dir(d.consoleEnvJSPath)),
+	))
+
+	// SPA entry point with index.html fallback
+	mux.Handle("/", dashboardHandler())
 }

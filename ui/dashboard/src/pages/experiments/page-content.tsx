@@ -210,7 +210,7 @@ const PageContent = ({
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status as string} className="mt-0">
+        <TabsContent value={(filters.status as string) || ''} className="mt-0">
           <TableListContainer>
             <CollectionLoader
               onAdd={onAdd}
