@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
@@ -61,6 +63,7 @@ type evaluationCountEventPersister struct {
 	mysqlClient                         mysql.Client
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
+	userAttributesCache                 cachev3.UserAttributesCache
 	mutex                               sync.Mutex
 	logger                              *zap.Logger
 }
@@ -70,6 +73,7 @@ func NewEvaluationCountEventPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
+	userAttributesCache cachev3.UserAttributesCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -93,6 +97,7 @@ func NewEvaluationCountEventPersister(
 		mysqlClient:                         mysqlClient,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
+		userAttributesCache:                 userAttributesCache,
 		mutex:                               sync.Mutex{},
 		logger:                              logger,
 	}
@@ -109,6 +114,8 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 	updateEvaluationCounter := func(envEvents environmentEventMap) {
 		// Increment the evaluation event count in the Redis
 		fails := p.incrementEnvEvents(envEvents)
+		// Save user attributes to cache
+		p.updateUserAttributes(envEvents)
 		// Check to Ack or Nack the messages
 		p.checkMessages(batch, fails)
 		// Reset the maps and the timer
@@ -482,4 +489,67 @@ func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 		return err
 	}
 	return nil
+}
+
+func (p *evaluationCountEventPersister) updateUserAttributes(envEvents environmentEventMap) {
+	for environmentId, events := range envEvents {
+		userAttributesMap := make(map[string]*userproto.UserAttribute)
+
+		for _, event := range events {
+			if event.User == nil {
+				continue
+			}
+
+			// Extract user attributes from User.Data
+			for key, value := range event.User.Data {
+				if key == "" || value == "" {
+					continue
+				}
+
+				if attr, exists := userAttributesMap[key]; exists {
+					// Check if value already exists to avoid duplicates
+					found := false
+					for _, existingValue := range attr.Values {
+						if existingValue == value {
+							found = true
+							break
+						}
+					}
+					if !found {
+						attr.Values = append(attr.Values, value)
+					}
+				} else {
+					userAttributesMap[key] = &userproto.UserAttribute{
+						Key:    key,
+						Values: []string{value},
+					}
+				}
+			}
+		}
+
+		// Convert map to slice and save to cache
+		if len(userAttributesMap) > 0 {
+			userAttributes := &userproto.UserAttributes{
+				EnvironmentId:  environmentId,
+				UserAttributes: make([]*userproto.UserAttribute, 0, len(userAttributesMap)),
+			}
+
+			for _, attr := range userAttributesMap {
+				userAttributes.UserAttributes = append(userAttributes.UserAttributes, attr)
+			}
+
+			if err := p.userAttributesCache.Put(userAttributes); err != nil {
+				p.logger.Error("Failed to save user attributes to cache",
+					zap.Error(err),
+					zap.String("environmentId", userAttributes.EnvironmentId),
+					zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+				)
+			} else {
+				p.logger.Debug("Successfully saved user attributes to cache",
+					zap.String("environmentId", userAttributes.EnvironmentId),
+					zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+				)
+			}
+		}
+	}
 }
