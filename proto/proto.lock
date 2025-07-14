@@ -6645,6 +6645,19 @@
                 "type": "Token"
               }
             ]
+          },
+          {
+            "name": "GetDemoSiteStatusRequest"
+          },
+          {
+            "name": "GetDemoSiteStatusResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "is_demo_site_enabled",
+                "type": "bool"
+              }
+            ]
           }
         ],
         "services": [
@@ -7301,6 +7314,43 @@
                             ]
                           }
                         ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetDemoSiteStatus",
+                "in_type": "GetDemoSiteStatusRequest",
+                "out_type": "GetDemoSiteStatusResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/demo_site_status"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Demo Site Status"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the status of the demo site."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_demo_site_status"
                       }
                     ]
                   }

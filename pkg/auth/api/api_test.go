@@ -13,3 +13,56 @@
 // limitations under the License.
 
 package api
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+)
+
+func TestAuthService_GetDeploymentStatus(t *testing.T) {
+	t.Parallel()
+	options := defaultOptions
+	service := &authService{
+		logger: options.logger,
+		opts:   &options,
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(s *authService)
+		expectedErr error
+		expected    *authproto.GetDemoSiteStatusResponse
+	}{
+		{
+			desc: "success: true",
+			setup: func(s *authService) {
+				s.opts.isDemoSiteEnabled = true
+			},
+			expectedErr: nil,
+			expected: &authproto.GetDemoSiteStatusResponse{
+				IsDemoSiteEnabled: true,
+			},
+		},
+		{
+			desc: "success: false",
+			setup: func(s *authService) {
+				s.opts.isDemoSiteEnabled = false
+			},
+			expectedErr: nil,
+			expected: &authproto.GetDemoSiteStatusResponse{
+				IsDemoSiteEnabled: false,
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			p.setup(service)
+			resp, err := service.GetDemoSiteStatus(context.Background(), nil)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, resp)
+		})
+	}
+}

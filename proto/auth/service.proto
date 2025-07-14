@@ -75,6 +75,12 @@ message SwitchOrganizationResponse {
   Token token = 1;
 }
 
+message GetDemoSiteStatusRequest {}
+
+message GetDemoSiteStatusResponse {
+  bool is_demo_site_enabled = 1;
+}
+
 service AuthService {
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
     option (google.api.http) = {
@@ -248,6 +254,18 @@ service AuthService {
           }
         }
       }
+    };
+  }
+  rpc GetDemoSiteStatus(GetDemoSiteStatusRequest)
+      returns (GetDemoSiteStatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/demo_site_status"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Demo Site Status",
+      description: "Get the status of the demo site.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_demo_site_status",
     };
   }
 }

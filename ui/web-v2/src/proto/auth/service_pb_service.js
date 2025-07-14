@@ -55,6 +55,15 @@ AuthService.SwitchOrganization = {
   responseType: proto_auth_service_pb.SwitchOrganizationResponse
 };
 
+AuthService.GetDemoSiteStatus = {
+  methodName: 'GetDemoSiteStatus',
+  service: AuthService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auth_service_pb.GetDemoSiteStatusRequest,
+  responseType: proto_auth_service_pb.GetDemoSiteStatusResponse
+};
+
 exports.AuthService = AuthService;
 
 function AuthServiceClient(serviceHost, options) {
@@ -208,6 +217,41 @@ AuthServiceClient.prototype.switchOrganization = function switchOrganization(
     callback = arguments[1];
   }
   var client = grpc.unary(AuthService.SwitchOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AuthServiceClient.prototype.getDemoSiteStatus = function getDemoSiteStatus(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AuthService.GetDemoSiteStatus, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

@@ -348,6 +348,63 @@ export namespace SwitchOrganizationResponse {
   };
 }
 
+export class GetDemoSiteStatusRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDemoSiteStatusRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetDemoSiteStatusRequest
+  ): GetDemoSiteStatusRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetDemoSiteStatusRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetDemoSiteStatusRequest;
+  static deserializeBinaryFromReader(
+    message: GetDemoSiteStatusRequest,
+    reader: jspb.BinaryReader
+  ): GetDemoSiteStatusRequest;
+}
+
+export namespace GetDemoSiteStatusRequest {
+  export type AsObject = {};
+}
+
+export class GetDemoSiteStatusResponse extends jspb.Message {
+  getIsDemoSiteEnabled(): boolean;
+  setIsDemoSiteEnabled(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetDemoSiteStatusResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetDemoSiteStatusResponse
+  ): GetDemoSiteStatusResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetDemoSiteStatusResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetDemoSiteStatusResponse;
+  static deserializeBinaryFromReader(
+    message: GetDemoSiteStatusResponse,
+    reader: jspb.BinaryReader
+  ): GetDemoSiteStatusResponse;
+}
+
+export namespace GetDemoSiteStatusResponse {
+  export type AsObject = {
+    isDemoSiteEnabled: boolean;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;

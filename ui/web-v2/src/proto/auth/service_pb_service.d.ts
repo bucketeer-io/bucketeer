@@ -49,6 +49,15 @@ type AuthServiceSwitchOrganization = {
   readonly responseType: typeof proto_auth_service_pb.SwitchOrganizationResponse;
 };
 
+type AuthServiceGetDemoSiteStatus = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.GetDemoSiteStatusRequest;
+  readonly responseType: typeof proto_auth_service_pb.GetDemoSiteStatusResponse;
+};
+
 export class AuthService {
   static readonly serviceName: string;
   static readonly ExchangeToken: AuthServiceExchangeToken;
@@ -56,6 +65,7 @@ export class AuthService {
   static readonly RefreshToken: AuthServiceRefreshToken;
   static readonly SignIn: AuthServiceSignIn;
   static readonly SwitchOrganization: AuthServiceSwitchOrganization;
+  static readonly GetDemoSiteStatus: AuthServiceGetDemoSiteStatus;
 }
 
 export type ServiceError = {
@@ -176,6 +186,21 @@ export class AuthServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.SwitchOrganizationResponse | null
+    ) => void
+  ): UnaryResponse;
+  getDemoSiteStatus(
+    requestMessage: proto_auth_service_pb.GetDemoSiteStatusRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.GetDemoSiteStatusResponse | null
+    ) => void
+  ): UnaryResponse;
+  getDemoSiteStatus(
+    requestMessage: proto_auth_service_pb.GetDemoSiteStatusRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.GetDemoSiteStatusResponse | null
     ) => void
   ): UnaryResponse;
 }
