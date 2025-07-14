@@ -13,7 +13,7 @@ import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
-import { isNil } from 'lodash';
+import isNil from 'lodash/isNil';
 import { Undefinable } from 'option-t/undefinable';
 import { clearConsoleVersion, getConsoleVersion } from 'storage/console';
 import {

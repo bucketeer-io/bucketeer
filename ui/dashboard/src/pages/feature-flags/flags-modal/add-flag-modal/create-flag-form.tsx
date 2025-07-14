@@ -11,7 +11,7 @@ import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureVariation, FeatureVariationType } from '@types';
 import { onGenerateSlug } from 'utils/converts';

@@ -75,6 +75,7 @@
     "react-select": "^5.9.0",
     "tailwind-merge": "^2.4.0",
     "timeago.js": "^4.0.2",
+    "vite-plugin-imagemin": "^0.6.1",
     "web-vitals": "^4.2.3",
     "yup": "^1.4.0"
   },

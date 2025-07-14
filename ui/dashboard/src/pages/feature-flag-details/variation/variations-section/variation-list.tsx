@@ -4,7 +4,7 @@ import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
-import { isNil } from 'lodash';
+import isNil from 'lodash/isNil';
 import { IconInfo } from '@icons';
 import {
   DropdownMenu,

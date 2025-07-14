@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { isNumber } from 'lodash';
+import isNumber from 'lodash/isNumber';
 import { Feature, FeatureVariationType } from '@types';
 import {
   IconFlagJSON,

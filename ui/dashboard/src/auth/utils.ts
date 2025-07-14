@@ -1,4 +1,4 @@
-import { isNil } from 'lodash';
+import isNil from 'lodash/isNil';
 import { unwrapUndefinable } from 'option-t/undefinable';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import { getCurrentProjectEnvironmentStorage } from 'storage/project-environment';

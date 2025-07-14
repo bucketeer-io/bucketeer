@@ -3,7 +3,7 @@ import { useQueryTeams } from '@queries/teams';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';

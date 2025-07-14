@@ -37,7 +37,7 @@ import {
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
 import { i18n } from 'i18n';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage

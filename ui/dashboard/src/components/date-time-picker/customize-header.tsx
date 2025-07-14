@@ -1,6 +1,6 @@
 import { ReactDatePickerCustomHeaderProps } from 'react-datepicker';
 import { getYear } from 'date-fns';
-import { range } from 'lodash';
+import range from 'lodash/range';
 import { IconChevronRight } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';

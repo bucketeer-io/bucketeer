@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation, FeatureVariationType } from '@types';
 import { IconInfo } from '@icons';

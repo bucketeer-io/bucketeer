@@ -4,7 +4,7 @@ import {
   IconRefreshOutlined
 } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import { compact } from 'lodash';
+import compact from 'lodash/compact';
 import { Trigger } from '@types';
 import { IconDisable, IconTrash } from '@icons';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';

@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
 import { Evaluation, Feature } from '@types';
 import { IconDebugger } from '@icons';

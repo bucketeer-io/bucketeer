@@ -1,6 +1,6 @@
 import { FunctionComponent, ReactNode } from 'react';
 import { cva } from 'class-variance-authority';
-import { isNil } from 'lodash';
+import isNil from 'lodash/isNil';
 import { Color, IconSize } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight } from '@icons';
