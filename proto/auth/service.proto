@@ -75,9 +75,9 @@ message SwitchOrganizationResponse {
   Token token = 1;
 }
 
-message GetDeploymentStatusRequest {}
+message GetDemoSiteStatusRequest {}
 
-message GetDeploymentStatusResponse {
+message GetDemoSiteStatusResponse {
   bool is_demo_site_enabled = 1;
 }
 
@@ -256,38 +256,16 @@ service AuthService {
       }
     };
   }
-  rpc GetDeploymentStatus(GetDeploymentStatusRequest)
-      returns (GetDeploymentStatusResponse) {
+  rpc GetDemoSiteStatus(GetDemoSiteStatusRequest)
+      returns (GetDemoSiteStatusResponse) {
     option (google.api.http) = {
-      get: "/v1/deployment_status"
+      get: "/v1/demo_site_status"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get Deployment Status",
-      description: "Get the deployment status of Bucketeer.",
-      tags: "Deployment Status",
-      operation_id: "web.v1.deployment_status.get",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
+      summary: "Get Demo Site Status",
+      description: "Get the status of the demo site.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_demo_site_status",
     };
   }
 }

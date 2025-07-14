@@ -94,24 +94,24 @@ func (mr *MockClientMockRecorder) GetAuthenticationURL(ctx, in any, opts ...any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticationURL", reflect.TypeOf((*MockClient)(nil).GetAuthenticationURL), varargs...)
 }
 
-// GetDeploymentStatus mocks base method.
-func (m *MockClient) GetDeploymentStatus(ctx context.Context, in *auth.GetDeploymentStatusRequest, opts ...grpc.CallOption) (*auth.GetDeploymentStatusResponse, error) {
+// GetDemoSiteStatus mocks base method.
+func (m *MockClient) GetDemoSiteStatus(ctx context.Context, in *auth.GetDemoSiteStatusRequest, opts ...grpc.CallOption) (*auth.GetDemoSiteStatusResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetDeploymentStatus", varargs...)
-	ret0, _ := ret[0].(*auth.GetDeploymentStatusResponse)
+	ret := m.ctrl.Call(m, "GetDemoSiteStatus", varargs...)
+	ret0, _ := ret[0].(*auth.GetDemoSiteStatusResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetDeploymentStatus indicates an expected call of GetDeploymentStatus.
-func (mr *MockClientMockRecorder) GetDeploymentStatus(ctx, in any, opts ...any) *gomock.Call {
+// GetDemoSiteStatus indicates an expected call of GetDemoSiteStatus.
+func (mr *MockClientMockRecorder) GetDemoSiteStatus(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeploymentStatus", reflect.TypeOf((*MockClient)(nil).GetDeploymentStatus), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDemoSiteStatus", reflect.TypeOf((*MockClient)(nil).GetDemoSiteStatus), varargs...)
 }
 
 // RefreshToken mocks base method.

@@ -6647,10 +6647,10 @@
             ]
           },
           {
-            "name": "GetDeploymentStatusRequest"
+            "name": "GetDemoSiteStatusRequest"
           },
           {
-            "name": "GetDeploymentStatusResponse",
+            "name": "GetDemoSiteStatusResponse",
             "fields": [
               {
                 "id": 1,
@@ -7320,16 +7320,16 @@
                 ]
               },
               {
-                "name": "GetDeploymentStatus",
-                "in_type": "GetDeploymentStatusRequest",
-                "out_type": "GetDeploymentStatusResponse",
+                "name": "GetDemoSiteStatus",
+                "in_type": "GetDemoSiteStatusRequest",
+                "out_type": "GetDemoSiteStatusResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/deployment_status"
+                        "value": "/v1/demo_site_status"
                       }
                     ]
                   },
@@ -7338,109 +7338,19 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get Deployment Status"
+                        "value": "Get Demo Site Status"
                       },
                       {
                         "name": "description",
-                        "value": "Get the deployment status of Bucketeer."
+                        "value": "Get the status of the demo site."
                       },
                       {
                         "name": "tags",
-                        "value": "Deployment Status"
+                        "value": "Authentication"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.deployment_status.get"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
+                        "value": "web.v1.auth.get_demo_site_status"
                       }
                     ]
                   }

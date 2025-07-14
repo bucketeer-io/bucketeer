@@ -348,58 +348,58 @@ export namespace SwitchOrganizationResponse {
   };
 }
 
-export class GetDeploymentStatusRequest extends jspb.Message {
+export class GetDemoSiteStatusRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): GetDeploymentStatusRequest.AsObject;
+  toObject(includeInstance?: boolean): GetDemoSiteStatusRequest.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetDeploymentStatusRequest
-  ): GetDeploymentStatusRequest.AsObject;
+    msg: GetDemoSiteStatusRequest
+  ): GetDemoSiteStatusRequest.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetDeploymentStatusRequest,
+    message: GetDemoSiteStatusRequest,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): GetDeploymentStatusRequest;
+  static deserializeBinary(bytes: Uint8Array): GetDemoSiteStatusRequest;
   static deserializeBinaryFromReader(
-    message: GetDeploymentStatusRequest,
+    message: GetDemoSiteStatusRequest,
     reader: jspb.BinaryReader
-  ): GetDeploymentStatusRequest;
+  ): GetDemoSiteStatusRequest;
 }
 
-export namespace GetDeploymentStatusRequest {
+export namespace GetDemoSiteStatusRequest {
   export type AsObject = {};
 }
 
-export class GetDeploymentStatusResponse extends jspb.Message {
+export class GetDemoSiteStatusResponse extends jspb.Message {
   getIsDemoSiteEnabled(): boolean;
   setIsDemoSiteEnabled(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): GetDeploymentStatusResponse.AsObject;
+  toObject(includeInstance?: boolean): GetDemoSiteStatusResponse.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetDeploymentStatusResponse
-  ): GetDeploymentStatusResponse.AsObject;
+    msg: GetDemoSiteStatusResponse
+  ): GetDemoSiteStatusResponse.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetDeploymentStatusResponse,
+    message: GetDemoSiteStatusResponse,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): GetDeploymentStatusResponse;
+  static deserializeBinary(bytes: Uint8Array): GetDemoSiteStatusResponse;
   static deserializeBinaryFromReader(
-    message: GetDeploymentStatusResponse,
+    message: GetDemoSiteStatusResponse,
     reader: jspb.BinaryReader
-  ): GetDeploymentStatusResponse;
+  ): GetDemoSiteStatusResponse;
 }
 
-export namespace GetDeploymentStatusResponse {
+export namespace GetDemoSiteStatusResponse {
   export type AsObject = {
     isDemoSiteEnabled: boolean;
   };

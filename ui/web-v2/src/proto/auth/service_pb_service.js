@@ -55,13 +55,13 @@ AuthService.SwitchOrganization = {
   responseType: proto_auth_service_pb.SwitchOrganizationResponse
 };
 
-AuthService.GetDeploymentStatus = {
-  methodName: 'GetDeploymentStatus',
+AuthService.GetDemoSiteStatus = {
+  methodName: 'GetDemoSiteStatus',
   service: AuthService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_auth_service_pb.GetDeploymentStatusRequest,
-  responseType: proto_auth_service_pb.GetDeploymentStatusResponse
+  requestType: proto_auth_service_pb.GetDemoSiteStatusRequest,
+  responseType: proto_auth_service_pb.GetDemoSiteStatusResponse
 };
 
 exports.AuthService = AuthService;
@@ -243,7 +243,7 @@ AuthServiceClient.prototype.switchOrganization = function switchOrganization(
   };
 };
 
-AuthServiceClient.prototype.getDeploymentStatus = function getDeploymentStatus(
+AuthServiceClient.prototype.getDemoSiteStatus = function getDemoSiteStatus(
   requestMessage,
   metadata,
   callback
@@ -251,7 +251,7 @@ AuthServiceClient.prototype.getDeploymentStatus = function getDeploymentStatus(
   if (arguments.length === 2) {
     callback = arguments[1];
   }
-  var client = grpc.unary(AuthService.GetDeploymentStatus, {
+  var client = grpc.unary(AuthService.GetDemoSiteStatus, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

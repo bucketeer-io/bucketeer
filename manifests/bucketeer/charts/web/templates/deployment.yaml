@@ -65,7 +65,7 @@ spec:
               value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
             - name: BUCKETEER_WEB_PROFILE
               value: "{{.Values.env.profile}}"
-            - name: DEMO_SITE_ENABLED
+            - name: BUCKETEER_WEB_DEMO_SITE_ENABLED
               value: "{{.Values.env.demoSiteEnabled}}"
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"

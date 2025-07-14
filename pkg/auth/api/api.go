@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -56,14 +55,16 @@ const (
 )
 
 type options struct {
-	refreshTokenTTL time.Duration
-	emailFilter     *regexp.Regexp
-	logger          *zap.Logger
+	refreshTokenTTL   time.Duration
+	emailFilter       *regexp.Regexp
+	logger            *zap.Logger
+	isDemoSiteEnabled bool
 }
 
 var defaultOptions = options{
-	refreshTokenTTL: 7 * 24 * time.Hour,
-	logger:          zap.NewNop(),
+	refreshTokenTTL:   7 * 24 * time.Hour,
+	logger:            zap.NewNop(),
+	isDemoSiteEnabled: false,
 }
 
 type Option func(*options)
@@ -83,6 +84,12 @@ func WithEmailFilter(regexp *regexp.Regexp) Option {
 func WithLogger(logger *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = logger
+	}
+}
+
+func WithDemoEnabled(isDemoSiteEnabled bool) Option {
+	return func(opts *options) {
+		opts.isDemoSiteEnabled = isDemoSiteEnabled
 	}
 }
 
@@ -142,22 +149,12 @@ func (s *authService) Register(server *grpc.Server) {
 	authproto.RegisterAuthServiceServer(server, s)
 }
 
-func (s *authService) GetDeploymentStatus(
-	ctx context.Context,
-	_ *authproto.GetDeploymentStatusRequest,
-) (*authproto.GetDeploymentStatusResponse, error) {
-	isDemoEnabledStr := os.Getenv("DEMO_SITE_ENABLED")
-	if isDemoEnabledStr != "true" {
-		s.logger.Warn(
-			"DEMO_SITE_ENABLED environment variable is not true, defaulting to false",
-			log.FieldsFromImcomingContext(ctx)...,
-		)
-		return &authproto.GetDeploymentStatusResponse{
-			IsDemoSiteEnabled: false,
-		}, nil
-	}
-	return &authproto.GetDeploymentStatusResponse{
-		IsDemoSiteEnabled: true,
+func (s *authService) GetDemoSiteStatus(
+	_ context.Context,
+	_ *authproto.GetDemoSiteStatusRequest,
+) (*authproto.GetDemoSiteStatusResponse, error) {
+	return &authproto.GetDemoSiteStatusResponse{
+		IsDemoSiteEnabled: s.opts.isDemoSiteEnabled,
 	}, nil
 }
 

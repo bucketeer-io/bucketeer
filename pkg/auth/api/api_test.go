@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,47 +25,41 @@ import (
 
 func TestAuthService_GetDeploymentStatus(t *testing.T) {
 	t.Parallel()
+	options := defaultOptions
+	service := &authService{
+		logger: options.logger,
+	}
 	patterns := []struct {
 		desc        string
-		setup       func()
+		setup       func(s *authService)
 		expectedErr error
-		expected    *authproto.GetDeploymentStatusResponse
+		expected    *authproto.GetDemoSiteStatusResponse
 	}{
 		{
 			desc: "success: true",
-			setup: func() {
-				err := os.Setenv("DEMO_SITE_ENABLED", "true")
-				if err != nil {
-					t.Fatalf("failed to set environment variable: %v", err)
-				}
+			setup: func(s *authService) {
+				s.opts.isDemoSiteEnabled = true
 			},
 			expectedErr: nil,
-			expected: &authproto.GetDeploymentStatusResponse{
+			expected: &authproto.GetDemoSiteStatusResponse{
 				IsDemoSiteEnabled: true,
 			},
 		},
 		{
 			desc: "success: false",
-			setup: func() {
-				err := os.Setenv("DEMO_SITE_ENABLED", "false")
-				if err != nil {
-					t.Fatalf("failed to set environment variable: %v", err)
-				}
+			setup: func(s *authService) {
+				s.opts.isDemoSiteEnabled = false
 			},
 			expectedErr: nil,
-			expected: &authproto.GetDeploymentStatusResponse{
+			expected: &authproto.GetDemoSiteStatusResponse{
 				IsDemoSiteEnabled: false,
 			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			p.setup()
-			options := defaultOptions
-			s := &authService{
-				logger: options.logger,
-			}
-			resp, err := s.GetDeploymentStatus(context.Background(), nil)
+			p.setup(service)
+			resp, err := service.GetDemoSiteStatus(context.Background(), nil)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, resp)
 		})

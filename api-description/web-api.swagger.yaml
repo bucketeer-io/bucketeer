@@ -2672,34 +2672,16 @@ paths:
             $ref: '#/definitions/featureDebugEvaluateFeaturesRequest'
       tags:
         - feature
-  /v1/deployment_status:
+  /v1/demo_site_status:
     get:
-      summary: Get Deployment Status
-      description: Get the deployment status of Bucketeer.
-      operationId: web.v1.deployment_status.get
+      summary: Get Demo Site Status
+      description: Get the status of the demo site.
+      operationId: web.v1.auth.get_demo_site_status
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/authGetDeploymentStatusResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
+            $ref: '#/definitions/authGetDemoSiteStatusResponse'
         "503":
           description: Returned for internal errors.
           schema:
@@ -2714,7 +2696,7 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       tags:
-        - Deployment Status
+        - Authentication
   /v1/environment/archive_environment:
     post:
       summary: Archive
@@ -9419,7 +9401,7 @@ definitions:
     properties:
       url:
         type: string
-  authGetDeploymentStatusResponse:
+  authGetDemoSiteStatusResponse:
     type: object
     properties:
       isDemoSiteEnabled:

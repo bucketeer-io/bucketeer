@@ -49,13 +49,13 @@ type AuthServiceSwitchOrganization = {
   readonly responseType: typeof proto_auth_service_pb.SwitchOrganizationResponse;
 };
 
-type AuthServiceGetDeploymentStatus = {
+type AuthServiceGetDemoSiteStatus = {
   readonly methodName: string;
   readonly service: typeof AuthService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_auth_service_pb.GetDeploymentStatusRequest;
-  readonly responseType: typeof proto_auth_service_pb.GetDeploymentStatusResponse;
+  readonly requestType: typeof proto_auth_service_pb.GetDemoSiteStatusRequest;
+  readonly responseType: typeof proto_auth_service_pb.GetDemoSiteStatusResponse;
 };
 
 export class AuthService {
@@ -65,7 +65,7 @@ export class AuthService {
   static readonly RefreshToken: AuthServiceRefreshToken;
   static readonly SignIn: AuthServiceSignIn;
   static readonly SwitchOrganization: AuthServiceSwitchOrganization;
-  static readonly GetDeploymentStatus: AuthServiceGetDeploymentStatus;
+  static readonly GetDemoSiteStatus: AuthServiceGetDemoSiteStatus;
 }
 
 export type ServiceError = {
@@ -188,19 +188,19 @@ export class AuthServiceClient {
       responseMessage: proto_auth_service_pb.SwitchOrganizationResponse | null
     ) => void
   ): UnaryResponse;
-  getDeploymentStatus(
-    requestMessage: proto_auth_service_pb.GetDeploymentStatusRequest,
+  getDemoSiteStatus(
+    requestMessage: proto_auth_service_pb.GetDemoSiteStatusRequest,
     metadata: grpc.Metadata,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.GetDeploymentStatusResponse | null
+      responseMessage: proto_auth_service_pb.GetDemoSiteStatusResponse | null
     ) => void
   ): UnaryResponse;
-  getDeploymentStatus(
-    requestMessage: proto_auth_service_pb.GetDeploymentStatusRequest,
+  getDemoSiteStatus(
+    requestMessage: proto_auth_service_pb.GetDemoSiteStatusRequest,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.GetDeploymentStatusResponse | null
+      responseMessage: proto_auth_service_pb.GetDemoSiteStatusResponse | null
     ) => void
   ): UnaryResponse;
 }

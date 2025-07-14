@@ -95,6 +95,7 @@ type server struct {
 	*kingpin.CmdClause
 	port                            *int
 	project                         *string
+	isDemoSiteEnabled               *bool
 	timezone                        *string
 	certPath                        *string
 	keyPath                         *string
@@ -185,9 +186,12 @@ type DataWarehouseMySQLConfig struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:   cmd,
-		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
+		CmdClause: cmd,
+		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:   cmd.Flag("project", "Google Cloud project name.").Required().String(),
+		isDemoSiteEnabled: cmd.Flag(
+			"demo-site-enabled",
+			"Is demo site enabled").Default("false").Bool(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -997,6 +1001,7 @@ func (s *server) createAuthService(
 	serviceOptions := []authapi.Option{
 		authapi.WithLogger(logger),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
+		authapi.WithDemoEnabled(*s.isDemoSiteEnabled),
 	}
 	if *s.emailFilter != "" {
 		filter, err := regexp.Compile(*s.emailFilter)
