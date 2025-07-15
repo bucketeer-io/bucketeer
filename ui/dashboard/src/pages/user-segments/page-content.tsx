@@ -32,7 +32,7 @@ const PageContent = ({
     type: UserSegmentsActionsType
   ) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const organizationIds = useMemo(
@@ -79,6 +79,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         link={DOCUMENTATION_LINKS.SEGMENT}
+        placeholder={t('form:name-desc-search-placeholder')}
+        name="segment-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

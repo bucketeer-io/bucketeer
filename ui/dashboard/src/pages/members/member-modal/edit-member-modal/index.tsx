@@ -245,6 +245,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     <Input
                       placeholder={`${t('form:enter-first-name')}`}
                       {...field}
+                      name="first-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -259,8 +260,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   <Form.Label required>{t('last-name')}</Form.Label>
                   <Form.Control>
                     <Input
-                      placeholder={`${t('form:enter-first-name')}`}
+                      placeholder={`${t('form:enter-last-name')}`}
                       {...field}
+                      name="last-name"
                     />
                   </Form.Control>
                   <Form.Message />

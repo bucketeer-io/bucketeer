@@ -18,6 +18,9 @@ interface FilterProps {
   isShowDocumentation?: boolean;
   className?: string;
   link?: string;
+  placeholder?: string;
+  name?: string;
+  inputId?: string;
   onSearchChange?: (value: string) => void;
   onOpenFilter?: () => void;
 }
@@ -29,6 +32,8 @@ const Filter = ({
   isShowDocumentation = true,
   className,
   link = '',
+  placeholder,
+  name,
   onSearchChange,
   onOpenFilter
 }: FilterProps) => {
@@ -45,7 +50,8 @@ const Filter = ({
       {onSearchChange && (
         <div className="w-full max-w-[365px]">
           <SearchInput
-            placeholder={`${t('form:placeholder-search-input')}`}
+            name={name}
+            placeholder={placeholder || `${t('form:placeholder-search-input')}`}
             value={searchValue}
             onChange={onSearchChange}
           />

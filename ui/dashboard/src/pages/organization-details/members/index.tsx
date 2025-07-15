@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePartialState, useToggleOpen } from 'hooks';
+import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Account } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -13,7 +14,7 @@ import CollectionLoader from './collection-loader';
 
 const OrganizationMembers = () => {
   const { organizationId } = useParams();
-
+  const { t } = useTranslation(['form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<OrganizationMembersFilters> = searchOptions;
 
@@ -44,6 +45,8 @@ const OrganizationMembers = () => {
     <>
       <Filter
         isShowDocumentation={false}
+        placeholder={t('email-search-placeholder')}
+        name="org-members-list-search"
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />

@@ -43,6 +43,7 @@ const DebuggerAttributes = () => {
                   <Form.Control>
                     <Input
                       {...field}
+                      name="debugger-attribute-key"
                       onKeyDown={e => {
                         if (e.key === 'Enter') e.preventDefault();
                       }}
@@ -61,6 +62,7 @@ const DebuggerAttributes = () => {
                   <Form.Control>
                     <Input
                       {...field}
+                      name="debugger-attribute-value"
                       onKeyDown={e => {
                         if (e.key === 'Enter') e.preventDefault();
                       }}

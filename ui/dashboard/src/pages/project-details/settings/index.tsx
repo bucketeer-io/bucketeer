@@ -124,6 +124,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                       disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      name="project-name"
                     />
                   </Form.Control>
                   <Form.Message />

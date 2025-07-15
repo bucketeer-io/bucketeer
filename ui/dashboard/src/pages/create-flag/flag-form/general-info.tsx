@@ -45,6 +45,7 @@ const GeneralInfo = ({
                   <Input
                     placeholder={`${t('placeholder-name')}`}
                     {...field}
+                    name="flag-name"
                     onChange={value => {
                       field.onChange(value);
                       if (!isUpdate) {
@@ -84,6 +85,7 @@ const GeneralInfo = ({
                     placeholder={`${t('feature-flags.placeholder-flag')}`}
                     disabled={isUpdate}
                     {...field}
+                    name="flag-id"
                   />
                 </Form.Control>
                 <Form.Message />
@@ -101,7 +103,11 @@ const GeneralInfo = ({
                   {t('description')}
                 </Form.Label>
                 <Form.Control>
-                  <Input placeholder={t('placeholder-desc')} {...field} />
+                  <Input
+                    placeholder={t('placeholder-desc')}
+                    {...field}
+                    name="flag-description"
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>

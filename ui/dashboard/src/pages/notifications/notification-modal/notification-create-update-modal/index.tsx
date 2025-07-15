@@ -245,6 +245,7 @@ const NotificationCreateUpdateModal = ({
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}
+                        name="notification-name"
                       />
                     </Form.Control>
                     <Form.Message />
@@ -264,6 +265,7 @@ const NotificationCreateUpdateModal = ({
                         disabled={disabled || isEditNotification}
                         placeholder={`${t('form:placeholder-url')}`}
                         {...field}
+                        name="notification-url"
                       />
                     </Form.Control>
                     <Form.Message />
@@ -336,6 +338,7 @@ const NotificationCreateUpdateModal = ({
               </p>
 
               <SearchInput
+                name="notification-type"
                 value={searchValue}
                 onChange={onSearchTypes}
                 placeholder={t(`form:search-notification-type`)}

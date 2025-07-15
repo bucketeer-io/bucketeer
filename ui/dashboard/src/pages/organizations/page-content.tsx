@@ -23,7 +23,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Organization, type: OrganizationActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
 
   // NOTE: Need improve search options
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -67,6 +67,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         isShowDocumentation={false}
+        placeholder={t('form:name-search-placeholder')}
+        name="organization-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>

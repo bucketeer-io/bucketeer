@@ -231,6 +231,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                         placeholder={`${t('placeholder-name')}`}
                         disabled={!editable}
                         {...field}
+                        name="experiment-name"
                       />
                     </Form.Control>
                     <Form.Message />

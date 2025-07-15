@@ -49,8 +49,8 @@ const Input = forwardRef(
       value: _value,
       onChange,
       onBlur,
-      role = 'presentation',
-      autoComplete = 'off',
+      role = 'form',
+      autoComplete = 'on',
       variant = 'primary',
       ...props
     }: InputProps,

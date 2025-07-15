@@ -147,6 +147,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
     <PageLayout.Content className="pt-0 gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.FLAG_HISTORY}
+        placeholder={t('form:name-email-search-placeholder')}
         action={
           <>
             <ReactDateRangePicker

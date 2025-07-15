@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePartialState, useToggleOpen } from 'hooks';
+import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -14,7 +15,7 @@ import TableListContainer from 'elements/table-list-container';
 
 const OrganizationProjects = () => {
   const { organizationId } = useParams();
-
+  const { t } = useTranslation(['form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
   const [selectedProject, setSelectedProject] = useState<Project>();
@@ -59,6 +60,8 @@ const OrganizationProjects = () => {
     <div className="flex flex-col flex-1 size-full">
       <Filter
         isShowDocumentation={false}
+        placeholder={t('name-email-search-placeholder')}
+        name="org-projects-list-search"
         onOpenFilter={onOpenFilterModal}
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

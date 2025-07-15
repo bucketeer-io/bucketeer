@@ -168,6 +168,7 @@ const OrganizationCreateUpdateModal = ({
                           );
                         }
                       }}
+                      name="organization-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -185,6 +186,7 @@ const OrganizationCreateUpdateModal = ({
                       placeholder={`${t('form:placeholder-code')}`}
                       disabled={!!organization}
                       {...field}
+                      name="organization-code"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -245,6 +247,7 @@ const OrganizationCreateUpdateModal = ({
                       <Input
                         placeholder={`${t('form:placeholder-email')}`}
                         {...field}
+                        name="organization-email"
                       />
                     )}
                   </Form.Control>

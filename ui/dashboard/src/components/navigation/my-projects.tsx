@@ -191,6 +191,7 @@ const MyProjects = () => {
             <Divider />
             <div className="p-5">
               <SearchInput
+                name="my-project-search"
                 placeholder={t(`search`)}
                 value={searchValue}
                 onChange={onSearchProject}

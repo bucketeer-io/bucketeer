@@ -28,7 +28,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Goal, type: GoalActions) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<GoalFilters> = searchOptions;
@@ -60,6 +60,8 @@ const PageContent = ({
       {/* <Overview /> */}
       <Filter
         link={DOCUMENTATION_LINKS.GOALS}
+        placeholder={t('form:name-desc-search-placeholder')}
+        name="goals-list-search"
         action={
           <DisabledButtonTooltip
             hidden={editable}

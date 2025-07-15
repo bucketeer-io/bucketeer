@@ -150,6 +150,7 @@ const ProjectCreateUpdateModal = ({
                           );
                         }
                       }}
+                      name="project-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -180,6 +181,7 @@ const ProjectCreateUpdateModal = ({
                       value={field.value}
                       placeholder={`${t('form:placeholder-code')}`}
                       disabled={!!project || disabled}
+                      name="project-code"
                     />
                   </Form.Control>
                   <Form.Message />

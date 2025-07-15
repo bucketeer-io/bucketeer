@@ -156,6 +156,7 @@ const SwitchOrganization = ({
         <SearchInput
           variant="secondary"
           placeholder={`${t('form:placeholder-search')}`}
+          name="switch-org-search"
           value={searchValue}
           onChange={value => onSearchOrganization(value)}
         />

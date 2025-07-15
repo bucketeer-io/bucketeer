@@ -25,7 +25,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
@@ -86,6 +86,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         link={DOCUMENTATION_LINKS.MEMBERS}
+        placeholder={t('form:email-search-placeholder')}
+        name="members-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

@@ -124,6 +124,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                           isIdDirty ? id : onGenerateSlug(value)
                         );
                       }}
+                      name="goal-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -153,6 +154,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                     <Input
                       placeholder={`${t('form:placeholder-goal-id')}`}
                       {...field}
+                      name="goal-id"
                     />
                   </Form.Control>
                   <Form.Message />

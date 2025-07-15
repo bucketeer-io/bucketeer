@@ -126,6 +126,7 @@ const ConfirmationRequiredModal = ({
                             onChange={value => {
                               field.onChange(value);
                             }}
+                            name="comment"
                           />
                         </Form.Control>
                         <Form.Message />

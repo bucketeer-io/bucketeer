@@ -192,6 +192,7 @@ const SegmentCreateUpdateModal = ({
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={isDisabled}
                         {...field}
+                        name="user-segment-name"
                       />
                     </Form.Control>
                     <Form.Message />

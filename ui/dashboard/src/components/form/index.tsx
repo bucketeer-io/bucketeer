@@ -55,9 +55,18 @@ interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   className?: string;
 }
 
-const Form = ({ children, onSubmit, className }: FormProps) => {
+const Form = ({
+  children,
+  onSubmit,
+  className,
+  autoComplete = 'on'
+}: FormProps) => {
   return (
-    <form onSubmit={onSubmit} className={cn(className)}>
+    <form
+      onSubmit={onSubmit}
+      className={cn(className)}
+      autoComplete={autoComplete}
+    >
       {children}
     </form>
   );

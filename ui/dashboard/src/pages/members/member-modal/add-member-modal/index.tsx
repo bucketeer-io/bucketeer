@@ -211,6 +211,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     <Input
                       placeholder={t('form:placeholder-email')}
                       {...field}
+                      name="member-email"
                     />
                   </Form.Control>
                   <Form.Message />

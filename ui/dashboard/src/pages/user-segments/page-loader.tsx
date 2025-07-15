@@ -156,7 +156,7 @@ const PageLoader = () => {
 
       {(!!isAdd || !!isEdit) && (
         <SegmentCreateUpdateModal
-          isUpdate={!!isEdit || !!id || !!selectedSegment || isLoadingSegment}
+          isUpdate={!!isEdit || !!selectedSegment || isLoadingSegment}
           isDisabled={!editable}
           isOpen={!!isAdd || !!isEdit}
           isLoadingSegment={isLoadingSegment}
