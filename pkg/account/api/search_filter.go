@@ -26,7 +26,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	grpcapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -159,28 +158,33 @@ func (s *AccountService) UpdateSearchFilter(
 				zap.String("email", req.Email),
 			)...,
 		)
-		var errDetails *errdetails.LocalizedMessage
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			errDetails = &errdetails.LocalizedMessage{
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
 			}
+			return nil, dt.Err()
 		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			errDetails = &errdetails.LocalizedMessage{
+			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
 			}
-		} else {
-			errDetails = &errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			}
+			return nil, dt.Err()
 		}
-		return nil, grpcapi.NewGRPCStatus(
-			err,
-			"account",
-			errDetails,
-		).Err()
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.UpdateSearchFilterResponse{}, nil
 }
@@ -249,27 +253,34 @@ func (s *AccountService) DeleteSearchFilter(
 				zap.String("searchFilterID", req.Command.Id),
 			)...,
 		)
-		errDetail := &errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		}
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			errDetail = &errdetails.LocalizedMessage{
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
 			}
+			return nil, dt.Err()
 		}
 		if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			errDetail = &errdetails.LocalizedMessage{
+			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
 			}
+			return nil, dt.Err()
 		}
-		return nil, grpcapi.NewGRPCStatus(
-			err,
-			"account",
-			errDetail,
-		).Err()
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 
 	return &accountproto.DeleteSearchFilterResponse{}, nil

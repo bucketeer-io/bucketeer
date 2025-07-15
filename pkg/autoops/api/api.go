@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	grpcapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -266,14 +265,14 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, grpcapi.NewGRPCStatus(
-			err,
-			"autoops",
-			&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			},
-		).Err()
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 	if err != nil {
