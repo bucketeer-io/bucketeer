@@ -27,6 +27,8 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	grpcapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -55,14 +57,14 @@ func (s *AccountService) GetMe(
 			"Email inside IDToken has an invalid format",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", t.Email))...,
 		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"email"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+			},
+		).Err()
 	}
 	projects, err := s.listProjectsByOrganizationID(ctx, req.OrganizationId)
 	if err != nil {
@@ -353,14 +355,14 @@ func (s *AccountService) GetMyOrganizationsByEmail(
 			"Email inside request has an invalid format",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", req.Email))...,
 		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"email"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+			},
+		).Err()
 	}
 	myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
 	if err != nil {

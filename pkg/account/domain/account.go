@@ -25,6 +25,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/common"
@@ -35,7 +36,7 @@ var (
 	maxAccountNameLength = 250
 	// nolint:lll
 	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
+	ErrSearchFilterNotFound     = pkgErr.NewErrorInvalidAugment("account", []string{"search_filter_id"})
 	ErrTeamNotFound             = errors.New("team: not found")
 	statusMissingOrganizationID = gstatus.New(
 		codes.InvalidArgument,

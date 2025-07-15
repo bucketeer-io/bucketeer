@@ -29,8 +29,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	grpcapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
@@ -1343,14 +1345,14 @@ func (s *AccountService) ListAccountsV2(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"cursor"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+			},
+		).Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -1446,14 +1448,14 @@ func (s *AccountService) newAccountV2ListOrders(
 	case accountproto.ListAccountsV2Request_TEAMS:
 		column = "teams"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"order_by"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+			},
+		).Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == accountproto.ListAccountsV2Request_DESC {

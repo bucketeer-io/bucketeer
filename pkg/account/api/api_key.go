@@ -25,7 +25,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	grpcapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -453,14 +455,14 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"api_key_id"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+			},
+		).Err()
 	}
 	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
@@ -522,14 +524,14 @@ func (s *AccountService) ListAPIKeys(
 	}
 	filterEnvironmentIDs := s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	if req.OrganizationId == "" {
-		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"organization_id"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+			},
+		).Err()
 	}
 	filters := []*mysql.FilterV2{
 		{
@@ -578,14 +580,14 @@ func (s *AccountService) ListAPIKeys(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"cursor"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+			},
+		).Err()
 	}
 	listOptions := &mysql.ListOptions{
 		Filters:     filters,
@@ -678,14 +680,14 @@ func (s *AccountService) newAPIKeyListOrders(
 	case proto.ListAPIKeysRequest_STATE:
 		column = "api_key.disabled"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"order_by"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+			},
+		).Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListAPIKeysRequest_DESC {
@@ -704,14 +706,14 @@ func (s *AccountService) GetEnvironmentAPIKey(
 		return nil, err
 	}
 	if req.ApiKey == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, grpcapi.NewGRPCStatus(
+			pkgErr.NewErrorInvalidAugment("account", []string{"api_key_id"}),
+			"account",
+			&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+			},
+		).Err()
 	}
 	envAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, req.ApiKey)
 	if err != nil {
