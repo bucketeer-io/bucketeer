@@ -31,14 +31,6 @@ func (s *FeatureService) GetUserAttributeKeys(
 	req *featureproto.GetUserAttributeKeysRequest,
 ) (*featureproto.GetUserAttributeKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
-	if err != nil {
-		s.logger.Error("Failed to get user attribute keys", zap.Error(err))
-		return nil, err
-	}
-
 	if req.EnvironmentId == "" {
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -48,6 +40,13 @@ func (s *FeatureService) GetUserAttributeKeys(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		s.logger.Error("Failed to get user attribute keys", zap.Error(err))
+		return nil, err
 	}
 
 	userAttributeKeys, err := s.userAttributesCache.GetUserAttributeKeyAll(req.EnvironmentId)
