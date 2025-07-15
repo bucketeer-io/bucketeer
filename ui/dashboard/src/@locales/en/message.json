@@ -52,6 +52,7 @@
   "org-not-found": "The organization is not found.",
   "auth-context-error": "useAuth must be used within an AuthProvider",
   "empty-segment": "No segments found. Please <comp>create</comp> a segment first.",
-  "not-has-permission-create-demo": "You do not have permission to create a Demo organization.",
+  "demo-not-available": "The Demo feature is not available at the moment.",
+  "demo-available": "Authenticate with Google and get started!",
   "required-agreement-terms": "Agreement to the Terms of Use and Privacy Policy is required to proceed."
 }

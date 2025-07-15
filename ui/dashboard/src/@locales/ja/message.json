@@ -52,6 +52,7 @@
   "org-not-found": "組織が見つかりません。",
   "auth-context-error": "useAuthはAuthProvider内で使用する必要があります",
   "empty-segment": "セグメントがありません。先に<comp>作成</comp>してください。",
-  "not-has-permission-create-demo": "You do not have permission to create a Demo organization.",
+  "demo-not-available": "現在、デモ機能はご利用いただけません。",
+  "demo-available": "Googleで認証してデモをスタート！",
   "required-agreement-terms": "続行するには、利用規約とプライバシーポリシーに同意する必要があります。"
 }
