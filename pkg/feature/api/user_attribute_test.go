@@ -19,10 +19,11 @@ import (
 	"errors"
 	"testing"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
+
+	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
