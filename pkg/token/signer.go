@@ -28,6 +28,7 @@ import (
 type Signer interface {
 	SignAccessToken(*AccessToken) (string, error)
 	SignRefreshToken(*RefreshToken) (string, error)
+	SignDemoCreationToken(*DemoCreationToken) (string, error)
 }
 
 type signer struct {
@@ -66,6 +67,10 @@ func (s *signer) SignAccessToken(token *AccessToken) (string, error) {
 }
 
 func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
+	return jwt.Signed(s.sig).Claims(token).Serialize()
+}
+
+func (s *signer) SignDemoCreationToken(token *DemoCreationToken) (string, error) {
 	return jwt.Signed(s.sig).Claims(token).Serialize()
 }
 

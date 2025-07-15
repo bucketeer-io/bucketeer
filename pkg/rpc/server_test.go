@@ -81,6 +81,12 @@ func (v *dummyVerifier) VerifyRefreshToken(rawRefreshToken string) (*token.Refre
 	}, nil
 }
 
+func (v *dummyVerifier) VerifyDemoCreationToken(rawDemoToken string) (*token.DemoCreationToken, error) {
+	return &token.DemoCreationToken{
+		Email: "test@email",
+	}, nil
+}
+
 type dummyPerRPCCredentials struct {
 	Metadata map[string]string
 }

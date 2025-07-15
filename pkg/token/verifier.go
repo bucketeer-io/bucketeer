@@ -29,6 +29,7 @@ import (
 type Verifier interface {
 	VerifyAccessToken(string) (*AccessToken, error)
 	VerifyRefreshToken(string) (*RefreshToken, error)
+	VerifyDemoCreationToken(string) (*DemoCreationToken, error)
 }
 
 type verifier struct {
@@ -95,6 +96,34 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	t := &RefreshToken{}
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+	}
+	if t.Expiry.Before(time.Now()) {
+		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
+	}
+	if t.Email == "" {
+		return nil, fmt.Errorf("email must be not empty")
+	}
+	return t, nil
+}
+
+func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationToken, error) {
+	jws, err := jose.ParseSigned(rawDemoToken, []jose.SignatureAlgorithm{v.algorithm})
+	if err != nil {
+		return nil, fmt.Errorf("malformed jwt: %v", err)
+	}
+	payload, err := jws.Verify(v.pubKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid jwt: %v", err)
+	}
+	t := &DemoCreationToken{}
+	if err := json.Unmarshal(payload, t); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+	}
+	if t.Issuer != v.issuer {
+		return nil, fmt.Errorf("demo token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
+	}
+	if t.Audience != v.audience {
+		return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
 	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)

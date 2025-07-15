@@ -96,3 +96,71 @@ func TestSign(t *testing.T) {
 		}
 	}
 }
+
+func TestSignDemoCreationToken(t *testing.T) {
+	t.Parallel()
+	issuer := "test_issuer"
+	audience := "test_client_id"
+	signer, err := NewSigner("testdata/valid-private.pem")
+	require.NoError(t, err)
+	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	require.NoError(t, err)
+	testcases := []struct {
+		desc  string
+		token *DemoCreationToken
+		ok    bool
+	}{
+		{
+			desc: "success: valid demo token",
+			token: &DemoCreationToken{
+				Issuer:   issuer,
+				Audience: audience,
+				Email:    "test@email.com",
+				Expiry:   time.Now().Add(time.Hour),
+				IssuedAt: time.Now(),
+			},
+			ok: true,
+		},
+		{
+			desc: "error: missing email",
+			token: &DemoCreationToken{
+				Issuer:   issuer,
+				Audience: audience,
+				Expiry:   time.Now().Add(time.Hour),
+				IssuedAt: time.Now(),
+			},
+			ok: false,
+		},
+		{
+			desc: "error: expired token",
+			token: &DemoCreationToken{
+				Issuer:   issuer,
+				Audience: audience,
+				Email:    "test@email.com",
+				Expiry:   time.Now().Add(-time.Hour), // expired
+				IssuedAt: time.Now().Add(-2 * time.Hour),
+			},
+			ok: false,
+		},
+	}
+	for i, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			des := fmt.Sprintf("index: %d, desc: %s", i, tc.desc)
+			signedToken, err := signer.SignDemoCreationToken(tc.token)
+			require.NoError(t, err, des)
+			require.True(t, len(signedToken) > 0, des)
+			parsedToken, err := verifier.VerifyDemoCreationToken(signedToken)
+			if tc.ok {
+				require.NoError(t, err, fmt.Sprintf("index: %d, error: %v", i, err))
+				require.Equal(t, tc.token.Issuer, parsedToken.Issuer, des)
+				require.Equal(t, tc.token.Audience, parsedToken.Audience, des)
+				require.True(t, tc.token.Expiry.Equal(parsedToken.Expiry), des)
+				require.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt), des)
+				require.Equal(t, tc.token.Email, parsedToken.Email, des)
+			} else {
+				require.Error(t, err, des)
+			}
+		})
+	}
+}
