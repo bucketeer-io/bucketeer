@@ -245,6 +245,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	*s.certPath = s.insertTelepresenceMountRoot(*s.certPath)
 
 	registerer := metrics.DefaultRegisterer()
+	jobs.RegisterMetrics(registerer)
 
 	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthAudience)
 	if err != nil {
@@ -506,7 +507,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		calculator.NewExperimentCalculate(
-			stan.NewStan(*s.stanHost, *s.stanPort),
+			stan.NewStan(*s.stanHost, *s.stanPort, registerer, logger),
 			*s.stanModelID,
 			environmentClient,
 			experimentClient,

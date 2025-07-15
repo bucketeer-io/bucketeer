@@ -18,6 +18,7 @@ package cacher
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -64,7 +65,11 @@ func NewSegmentUserCacher(
 	}
 }
 
-func (c *segmentUserCacher) Run(ctx context.Context) error {
+func (c *segmentUserCacher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobSegmentUserCacher, lastErr, time.Since(startTime))
+	}()
 	envs, err := c.listAllEnvironments(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list all environments")

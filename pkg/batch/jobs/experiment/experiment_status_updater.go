@@ -61,6 +61,11 @@ func NewExperimentStatusUpdater(
 }
 
 func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobExperimentStatusUpdater, lastErr, time.Since(startTime))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, u.opts.Timeout)
 	defer cancel()
 	environments, err := u.listEnvironments(ctx)
