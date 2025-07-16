@@ -245,7 +245,10 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 //
 //	200 OK – Operation name and metadata.
 //	404 Not Found – Operation not found.
-func (s Stan) GetOperationDetails(ctx context.Context, operationID string) (getOperationResp GetOperationResp, err error) {
+func (s Stan) GetOperationDetails(
+	ctx context.Context,
+	operationID string,
+) (getOperationResp GetOperationResp, err error) {
 	startTime := time.Now()
 	var statusCode int
 	defer func() {
@@ -327,7 +330,11 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (result i
 //	200 OK – Parameters for Stan Model
 //	400 Bad Request – Error associated with request.
 //	404 Not Found – Model not found.
-func (s Stan) StanParams(ctx context.Context, modelID string, data map[string]interface{}) (constrainedNames []string, paramNames []string) {
+func (s Stan) StanParams(
+	ctx context.Context,
+	modelID string,
+	data map[string]interface{},
+) (constrainedNames []string, paramNames []string) {
 	startTime := time.Now()
 	var statusCode int
 	var err error
