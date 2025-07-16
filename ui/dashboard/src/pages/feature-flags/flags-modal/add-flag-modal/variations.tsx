@@ -108,6 +108,7 @@ const Variations = ({
                       <Input
                         {...field}
                         placeholder={t('form:placeholder-name')}
+                        name="flag-variation-name"
                       />
                     </Form.Control>
                     <Form.Message />

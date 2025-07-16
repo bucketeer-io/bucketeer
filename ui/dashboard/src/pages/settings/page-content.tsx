@@ -115,6 +115,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                       disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      name="organization-name"
                     />
                   </Form.Control>
                   <Form.Message />

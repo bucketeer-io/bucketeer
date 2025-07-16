@@ -82,6 +82,7 @@ const GoalUpdateForm = ({
                     disabled={disabled}
                     placeholder={`${t('form:placeholder-name')}`}
                     {...field}
+                    name="goal-name"
                   />
                 </Form.Control>
                 <Form.Message />

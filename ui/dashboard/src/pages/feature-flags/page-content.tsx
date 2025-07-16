@@ -29,7 +29,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const location = useLocation();
   const { consoleAccount } = useAuth();
 
@@ -141,6 +141,8 @@ const PageContent = ({
       />
       <Filter
         link={DOCUMENTATION_LINKS.FEATURE_FLAGS}
+        placeholder={t('form:flag-search-placeholder')}
+        name="flag-list-search"
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />

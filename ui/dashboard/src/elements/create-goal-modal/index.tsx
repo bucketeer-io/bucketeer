@@ -124,6 +124,7 @@ const CreateGoalModal = ({
                         const id = onGenerateSlug(value);
                         setValue('id', id);
                       }}
+                      name="goal-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -140,6 +141,7 @@ const CreateGoalModal = ({
                     <Input
                       {...field}
                       placeholder={t('form:placeholder-goal-id')}
+                      name="goal-id"
                     />
                   </Form.Control>
                   <Form.Message />

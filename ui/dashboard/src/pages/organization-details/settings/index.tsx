@@ -106,6 +106,7 @@ const OrganizationSettings = ({
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      name="organization-name"
                     />
                   </Form.Control>
                   <Form.Message />

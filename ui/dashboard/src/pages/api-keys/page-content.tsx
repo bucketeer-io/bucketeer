@@ -26,7 +26,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<APIKeysFilters> = searchOptions;
@@ -81,6 +81,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         link={DOCUMENTATION_LINKS.API_KEYS}
+        placeholder={t('form:name-desc-search-placeholder')}
+        name="api-keys-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

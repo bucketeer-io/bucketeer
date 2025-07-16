@@ -24,7 +24,7 @@ const PageContent = ({
   onAdd: () => void;
   onEdit: (v: Project) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
@@ -75,6 +75,8 @@ const PageContent = ({
       <Filter
         isShowDocumentation={false}
         onOpenFilter={onOpenFilterModal}
+        placeholder={t('form:name-email-search-placeholder')}
+        name="projects-list-search"
         action={
           <DisabledButtonTooltip
             hidden={envEditable && isOrganizationAdmin}

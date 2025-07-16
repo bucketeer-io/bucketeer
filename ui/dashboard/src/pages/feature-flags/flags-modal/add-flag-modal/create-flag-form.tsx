@@ -228,6 +228,7 @@ const CreateFlagForm = ({
                         isFlagIdDirty ? flagId : onGenerateSlug(value)
                       );
                     }}
+                    name="flag-name"
                   />
                 </Form.Control>
                 <Form.Message />
@@ -257,6 +258,7 @@ const CreateFlagForm = ({
                   <Input
                     placeholder={`${t('form:feature-flags.placeholder-flag')}`}
                     {...field}
+                    name="flag-id"
                   />
                 </Form.Control>
                 <Form.Message />

@@ -220,6 +220,7 @@ const PushCreateUpdateModal = ({
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}
+                        name="push-name"
                       />
                     </Form.Control>
                     <Form.Message />

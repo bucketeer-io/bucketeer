@@ -367,6 +367,7 @@ const ExperimentCreateUpdateModal = ({
                         disabled={disabled}
                         placeholder={`${t('placeholder-name')}`}
                         {...field}
+                        name="experiment-name"
                       />
                     </Form.Control>
                     <Form.Message />

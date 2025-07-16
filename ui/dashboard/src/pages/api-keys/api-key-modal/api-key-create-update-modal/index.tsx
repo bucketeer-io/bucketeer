@@ -148,6 +148,7 @@ const APIKeyCreateUpdateModal = ({
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}
+                        name="api-key-name"
                       />
                     </Form.Control>
                     <Form.Message />

@@ -218,6 +218,7 @@ const GeneralInfoForm = ({
                     {...field}
                     placeholder={t('placeholder-name')}
                     disabled={disabled}
+                    name="flag-variation-name"
                   />
                 </Form.Control>
                 <Form.Message />

@@ -210,7 +210,9 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                   <Form.Control>
                     <Input
                       placeholder={t('form:placeholder-email')}
+                      autoComplete="email"
                       {...field}
+                      name="member-email"
                     />
                   </Form.Control>
                   <Form.Message />

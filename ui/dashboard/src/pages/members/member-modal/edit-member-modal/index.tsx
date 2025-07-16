@@ -244,7 +244,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   <Form.Control>
                     <Input
                       placeholder={`${t('form:enter-first-name')}`}
+                      autoComplete="given-name"
                       {...field}
+                      name="first-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -259,8 +261,10 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   <Form.Label required>{t('last-name')}</Form.Label>
                   <Form.Control>
                     <Input
-                      placeholder={`${t('form:enter-first-name')}`}
+                      placeholder={`${t('form:enter-last-name')}`}
+                      autoComplete="family-name"
                       {...field}
+                      name="last-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -274,6 +278,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   disabled
                   value={member.email}
                   placeholder={t('form:placeholder-email')}
+                  autoComplete="email"
+                  name="member-email"
                 />
               </Form.Control>
               <Form.Message />

@@ -36,7 +36,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ExperimentFilters> = searchOptions;
@@ -150,6 +150,8 @@ const PageContent = ({
       />
       <Filter
         link={DOCUMENTATION_LINKS.EXPERIMENTS}
+        placeholder={t('form:name-desc-search-placeholder')}
+        name="experiments-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

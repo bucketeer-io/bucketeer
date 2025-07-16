@@ -188,6 +188,7 @@ const EnvironmentCreateUpdateModal = ({
                           );
                         }
                       }}
+                      name="environment-name"
                     />
                   </Form.Control>
                   <Form.Message />
@@ -220,6 +221,7 @@ const EnvironmentCreateUpdateModal = ({
                       value={field.value}
                       placeholder={`${t('form:placeholder-code')}`}
                       disabled={disabled || !!environment}
+                      name="environment-code"
                     />
                   </Form.Control>
                   <Form.Message />

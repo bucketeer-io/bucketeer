@@ -27,7 +27,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Push, type: PushActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<PushFilters> = searchOptions;
@@ -82,6 +82,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         link={DOCUMENTATION_LINKS.PUSHES}
+        placeholder={t('form:name-search-placeholder')}
+        name="pushes-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

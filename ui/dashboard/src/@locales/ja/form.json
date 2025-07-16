@@ -336,5 +336,10 @@
   "create-option": "「{{option}}」作成する",
   "max": "最大",
   "firebase-service-account-tooltip": "FirebaseサービスアカウントのJSONキーです。Bucketeerはこのキーを使ってFirebaseに認証し、FCMを通じてアプリにプッシュ通知を送信します。",
-  "feature-flag-tags-tooltip": " このFCM連携と対応するフラグを紐付けるためのタグです。フラグにこの設定と一致するタグがある場合、プッシュ通知が送信されます。ここにタグを設定しない場合、タグが付いていないすべてのフラグに対して通知が送信されます。"
+  "feature-flag-tags-tooltip": " このFCM連携と対応するフラグを紐付けるためのタグです。フラグにこの設定と一致するタグがある場合、プッシュ通知が送信されます。ここにタグを設定しない場合、タグが付いていないすべてのフラグに対して通知が送信されます。",
+  "flag-search-placeholder": "名前、ID、説明を検索...",
+  "name-email-search-placeholder": "名前、メールアドレスを検索...",
+  "name-desc-search-placeholder": "名前、説明を検索...",
+  "email-search-placeholder": "メールアドレスを検索...",
+  "name-search-placeholder": "名前を検索..."
 }

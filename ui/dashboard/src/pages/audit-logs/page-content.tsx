@@ -26,7 +26,7 @@ export type ExpandOrCollapseRef = {
 };
 
 const PageContent = () => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const params = useParams();
   const navigate = useNavigate();
 
@@ -136,6 +136,8 @@ const PageContent = () => {
     <PageLayout.Content className="gap-y-6">
       <Filter
         link={DOCUMENTATION_LINKS.AUDIT_LOGS}
+        placeholder={t('form:name-email-search-placeholder')}
+        name="audit-logs-search"
         action={
           <>
             <EntityTypeDropdown

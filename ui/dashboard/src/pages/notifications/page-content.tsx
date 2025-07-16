@@ -27,7 +27,7 @@ const PageContent = ({
   onAdd: () => void;
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
 
@@ -82,6 +82,8 @@ const PageContent = ({
     <PageLayout.Content>
       <Filter
         link={DOCUMENTATION_LINKS.NOTIFICATIONS}
+        placeholder={t('form:name-search-placeholder')}
+        name="notifications-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip

@@ -9,6 +9,7 @@ export interface SearchBarProps {
   value: string;
   disabled?: boolean;
   variant?: 'primary' | 'secondary';
+  name?: string;
   onChange: (value: string) => void;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -18,6 +19,7 @@ const SearchInput = ({
   value: defaultValue,
   disabled,
   variant = 'primary',
+  name,
   onChange,
   onKeyDown
 }: SearchBarProps) => {
@@ -65,6 +67,8 @@ const SearchInput = ({
           placeholder={placeholder}
           value={searchValue}
           disabled={disabled}
+          name={name}
+          id={name}
           onChange={setSearchValue}
           onKeyDown={e => onKeyDown && onKeyDown(e)}
         />

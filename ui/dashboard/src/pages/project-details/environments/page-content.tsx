@@ -24,7 +24,7 @@ const PageContent = ({
   onAdd: () => void;
   onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form']);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<EnvironmentFilters> = searchOptions;
@@ -62,6 +62,8 @@ const PageContent = ({
     <>
       <Filter
         isShowDocumentation={false}
+        placeholder={t('form:name-desc-search-placeholder')}
+        name="project-envs-list-search"
         action={
           <DisabledButtonTooltip
             type={!isOrganizationAdmin ? 'admin' : 'editor'}
