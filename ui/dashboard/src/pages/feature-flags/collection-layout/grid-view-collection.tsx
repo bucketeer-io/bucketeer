@@ -8,7 +8,7 @@ import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { compact } from 'lodash';
+import compact from 'lodash/compact';
 import { Account, AutoOpsRule, Feature, Rollout } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';

@@ -3,7 +3,7 @@ import { useQueryEvaluation } from '@queries/evaluation';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import { EvaluationTimeRange, Feature } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';

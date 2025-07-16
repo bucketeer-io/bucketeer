@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { Experiment, ExperimentResult, Feature } from '@types';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';

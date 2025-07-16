@@ -7,7 +7,8 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": []
   },
   "include": ["vite.config.ts", ".eslintrc.cjs", "svgo.config.cjs"]
 }

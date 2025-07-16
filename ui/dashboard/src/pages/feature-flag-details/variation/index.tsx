@@ -12,7 +12,7 @@ import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import InfoMessage from 'components/info-message';

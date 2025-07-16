@@ -3,7 +3,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { isNil } from 'lodash';
+import isNil from 'lodash/isNil';
 import pickBy from 'lodash/pickBy';
 import { Notification } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';

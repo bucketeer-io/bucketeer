@@ -6,7 +6,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
-import { omit } from 'lodash';
+import omit from 'lodash/omit';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
 import { truncateBySide } from 'utils/converts';

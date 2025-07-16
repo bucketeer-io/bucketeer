@@ -11,7 +11,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
 import { isSameOrBeforeDate } from 'utils/function';
 import { cn } from 'utils/style';

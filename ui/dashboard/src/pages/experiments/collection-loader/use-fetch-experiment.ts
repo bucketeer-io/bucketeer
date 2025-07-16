@@ -1,6 +1,6 @@
 import { useQueryExperiments } from '@queries/experiments';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import { ExperimentStatus, OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { ExperimentTab } from '../types';

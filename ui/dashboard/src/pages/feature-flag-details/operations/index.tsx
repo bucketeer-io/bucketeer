@@ -19,7 +19,7 @@ import {
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import { AutoOpsRule, Feature, Rollout } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';

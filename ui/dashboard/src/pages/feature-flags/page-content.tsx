@@ -5,7 +5,7 @@ import { hasEditable, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Feature, FeatureCountByStatus } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';

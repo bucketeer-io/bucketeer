@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import { pickBy } from 'lodash';
+import pickBy from 'lodash/pickBy';
 import { TriggerItemType } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';

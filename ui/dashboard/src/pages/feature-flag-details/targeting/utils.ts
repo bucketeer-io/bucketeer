@@ -1,4 +1,5 @@
-import { isEqual, omit } from 'lodash';
+import isEqual from 'lodash/isEqual';
+import omit from 'lodash/omit';
 import { v4 as uuid } from 'uuid';
 import {
   Feature,
