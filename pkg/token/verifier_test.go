@@ -79,6 +79,7 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			actualToken, err := verifier.VerifyAccessToken(p.rawAccessToken)
 			if p.valid {
 				assert.NotNil(t, actualToken)
@@ -145,6 +146,7 @@ func TestVerifyDemoCreationToken(t *testing.T) {
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			actualToken, err := verifier.VerifyDemoCreationToken(p.rawDemoToken)
 			if p.valid {
 				assert.NotNil(t, actualToken)

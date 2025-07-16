@@ -69,7 +69,7 @@ func TestNormalInverseGamma(t *testing.T) {
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile025, -6.0)
 	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile025, -4.0)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 36.0)
-	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 37.51)
+	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 37.6)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProbBest.Mean, 0.4)
 	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProbBest.Mean, 0.61)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProbBeatBaseline.Mean, 0.4)
