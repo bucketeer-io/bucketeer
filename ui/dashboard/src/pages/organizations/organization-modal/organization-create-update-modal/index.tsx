@@ -155,6 +155,7 @@ const OrganizationCreateUpdateModal = ({
                   <Form.Control>
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
+                      autoComplete="organization"
                       {...field}
                       onChange={value => {
                         field.onChange(value);
@@ -246,6 +247,7 @@ const OrganizationCreateUpdateModal = ({
                     ) : (
                       <Input
                         placeholder={`${t('form:placeholder-email')}`}
+                        autoComplete="email"
                         {...field}
                         name="organization-email"
                       />

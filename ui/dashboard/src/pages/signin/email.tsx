@@ -130,7 +130,11 @@ const SignInWithEmail = () => {
               <Form.Item>
                 <Form.Label>{t('email')}</Form.Label>
                 <Form.Control>
-                  <Input placeholder={t('email')} {...field} />
+                  <Input
+                    placeholder={t('email')}
+                    autoComplete="email"
+                    {...field}
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -151,6 +155,7 @@ const SignInWithEmail = () => {
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder={t('password')}
+                      autoComplete="current-password"
                       {...field}
                     />
                   </InputGroup>
