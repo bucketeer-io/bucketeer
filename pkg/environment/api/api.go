@@ -20,8 +20,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -31,6 +29,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	v2 "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -40,6 +39,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accproto "github.com/bucketeer-io/bucketeer/proto/account"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )

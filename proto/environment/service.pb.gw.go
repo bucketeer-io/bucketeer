@@ -1365,7 +1365,7 @@ func RegisterEnvironmentServiceHandlerServer(ctx context.Context, mux *runtime.S
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.environment.EnvironmentService/ExchangeDemoToken", runtime.WithHTTPPathPattern("/v1/organization/exchange_demo_token"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.environment.EnvironmentService/ExchangeDemoToken", runtime.WithHTTPPathPattern("/v1/exchange_demo_token"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1957,7 +1957,7 @@ func RegisterEnvironmentServiceHandlerClient(ctx context.Context, mux *runtime.S
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.environment.EnvironmentService/ExchangeDemoToken", runtime.WithHTTPPathPattern("/v1/organization/exchange_demo_token"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.environment.EnvironmentService/ExchangeDemoToken", runtime.WithHTTPPathPattern("/v1/exchange_demo_token"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2025,7 +2025,7 @@ var (
 
 	pattern_EnvironmentService_ListProjectsV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "environment", "list_projects_v2"}, ""))
 
-	pattern_EnvironmentService_ExchangeDemoToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "organization", "exchange_demo_token"}, ""))
+	pattern_EnvironmentService_ExchangeDemoToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "exchange_demo_token"}, ""))
 )
 
 var (

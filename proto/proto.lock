@@ -18886,7 +18886,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/organization/exchange_demo_token"
+                        "value": "/v1/exchange_demo_token"
                       },
                       {
                         "name": "body",
