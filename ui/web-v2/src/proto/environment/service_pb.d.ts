@@ -10,6 +10,8 @@ import * as proto_environment_environment_pb from '../../proto/environment/envir
 import * as proto_environment_project_pb from '../../proto/environment/project_pb';
 import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
 import * as proto_environment_command_pb from '../../proto/environment/command_pb';
+import * as proto_auth_token_pb from '../../proto/auth/token_pb';
+import * as proto_auth_service_pb from '../../proto/auth/service_pb';
 
 export class GetEnvironmentV2Request extends jspb.Message {
   getId(): string;
@@ -2026,5 +2028,79 @@ export namespace ListProjectsV2Response {
     projectsList: Array<proto_environment_project_pb.Project.AsObject>;
     cursor: string;
     totalCount: number;
+  };
+}
+
+export class ExchangeDemoTokenRequest extends jspb.Message {
+  getCode(): string;
+  setCode(value: string): void;
+
+  getRedirectUrl(): string;
+  setRedirectUrl(value: string): void;
+
+  getType(): proto_auth_service_pb.AuthTypeMap[keyof proto_auth_service_pb.AuthTypeMap];
+  setType(
+    value: proto_auth_service_pb.AuthTypeMap[keyof proto_auth_service_pb.AuthTypeMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExchangeDemoTokenRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ExchangeDemoTokenRequest
+  ): ExchangeDemoTokenRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ExchangeDemoTokenRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ExchangeDemoTokenRequest;
+  static deserializeBinaryFromReader(
+    message: ExchangeDemoTokenRequest,
+    reader: jspb.BinaryReader
+  ): ExchangeDemoTokenRequest;
+}
+
+export namespace ExchangeDemoTokenRequest {
+  export type AsObject = {
+    code: string;
+    redirectUrl: string;
+    type: proto_auth_service_pb.AuthTypeMap[keyof proto_auth_service_pb.AuthTypeMap];
+  };
+}
+
+export class ExchangeDemoTokenResponse extends jspb.Message {
+  hasToken(): boolean;
+  clearToken(): void;
+  getToken(): proto_auth_token_pb.Token | undefined;
+  setToken(value?: proto_auth_token_pb.Token): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExchangeDemoTokenResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ExchangeDemoTokenResponse
+  ): ExchangeDemoTokenResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ExchangeDemoTokenResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ExchangeDemoTokenResponse;
+  static deserializeBinaryFromReader(
+    message: ExchangeDemoTokenResponse,
+    reader: jspb.BinaryReader
+  ): ExchangeDemoTokenResponse;
+}
+
+export namespace ExchangeDemoTokenResponse {
+  export type AsObject = {
+    token?: proto_auth_token_pb.Token.AsObject;
   };
 }

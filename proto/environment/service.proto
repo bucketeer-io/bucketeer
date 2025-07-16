@@ -27,6 +27,9 @@ import "proto/environment/project.proto";
 import "proto/environment/organization.proto";
 import "proto/environment/command.proto";
 
+import "proto/auth/token.proto";
+import "proto/auth/service.proto";
+
 message GetEnvironmentV2Request {
   string id = 1;
 }
@@ -380,6 +383,16 @@ message ListProjectsV2Response {
   repeated Project projects = 1;
   string cursor = 2;
   int64 total_count = 3;
+}
+
+message ExchangeDemoTokenRequest {
+  string code = 1;
+  string redirect_url = 2;
+  auth.AuthType type = 3;
+}
+
+message ExchangeDemoTokenResponse {
+  auth.Token token = 1;
 }
 
 service EnvironmentService {
@@ -1471,6 +1484,41 @@ service EnvironmentService {
           examples: {
             key: "application/json"
             value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ExchangeDemoToken(ExchangeDemoTokenRequest)
+      returns (ExchangeDemoTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/exchange_demo_token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Demo Token",
+      description: "Exchange the demo token from the OAuth provider to the Bucketeer token.\nCurrently, we only support Google.",
+      tags: "Organization",
+      operation_id: "web.v1.organization.exchange_demo_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
           }
         }
       }

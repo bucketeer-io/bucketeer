@@ -6188,6 +6188,57 @@ paths:
           type: string
       tags:
         - ops_goal_user_count
+  /v1/organization/exchange_demo_token:
+    post:
+      summary: Exchange Demo Token
+      description: |-
+        Exchange the demo token from the OAuth provider to the Bucketeer token.
+        Currently, we only support Google.
+      operationId: web.v1.organization.exchange_demo_token
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentExchangeDemoTokenResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentExchangeDemoTokenRequest'
+      tags:
+        - Organization
   /v1/progressive_rollout:
     get:
       summary: Get
@@ -10869,6 +10920,20 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+  environmentExchangeDemoTokenRequest:
+    type: object
+    properties:
+      code:
+        type: string
+      redirectUrl:
+        type: string
+      type:
+        $ref: '#/definitions/authAuthType'
+  environmentExchangeDemoTokenResponse:
+    type: object
+    properties:
+      token:
+        $ref: '#/definitions/authToken'
   environmentGetEnvironmentV2Response:
     type: object
     properties:

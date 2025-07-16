@@ -220,6 +220,15 @@ type EnvironmentServiceListProjectsV2 = {
   readonly responseType: typeof proto_environment_service_pb.ListProjectsV2Response;
 };
 
+type EnvironmentServiceExchangeDemoToken = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ExchangeDemoTokenRequest;
+  readonly responseType: typeof proto_environment_service_pb.ExchangeDemoTokenResponse;
+};
+
 export class EnvironmentService {
   static readonly serviceName: string;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
@@ -246,6 +255,7 @@ export class EnvironmentService {
   static readonly UnarchiveOrganization: EnvironmentServiceUnarchiveOrganization;
   static readonly ConvertTrialOrganization: EnvironmentServiceConvertTrialOrganization;
   static readonly ListProjectsV2: EnvironmentServiceListProjectsV2;
+  static readonly ExchangeDemoToken: EnvironmentServiceExchangeDemoToken;
 }
 
 export type ServiceError = {
@@ -651,6 +661,21 @@ export class EnvironmentServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_environment_service_pb.ListProjectsV2Response | null
+    ) => void
+  ): UnaryResponse;
+  exchangeDemoToken(
+    requestMessage: proto_environment_service_pb.ExchangeDemoTokenRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.ExchangeDemoTokenResponse | null
+    ) => void
+  ): UnaryResponse;
+  exchangeDemoToken(
+    requestMessage: proto_environment_service_pb.ExchangeDemoTokenRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.ExchangeDemoTokenResponse | null
     ) => void
   ): UnaryResponse;
 }
