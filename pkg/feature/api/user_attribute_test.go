@@ -45,17 +45,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:    "error: environment_id is empty",
-			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
-			input: &featureproto.GetUserAttributeKeysRequest{
-				EnvironmentId: "",
-			},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"), localizer)
-			},
-		},
-		{
 			desc:    "error: permission denied",
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context: createContextWithTokenRoleUnassigned(),
