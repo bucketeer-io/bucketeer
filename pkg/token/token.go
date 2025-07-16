@@ -35,3 +35,11 @@ type RefreshToken struct {
 	IssuedAt       time.Time `json:"iat"`
 	OrganizationID string    `json:"organization_id"`
 }
+
+type DemoCreationToken struct {
+	Issuer   string    `json:"iss"`
+	Audience string    `json:"aud"`
+	Expiry   time.Time `json:"exp"`
+	IssuedAt time.Time `json:"iat"`
+	Email    string    `json:"email"`
+}
