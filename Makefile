@@ -248,7 +248,7 @@ e2e-l4:
 
 .PHONY: e2e
 e2e:
-	go test -v ./test/e2e/gateway/... -args \
+	go test -v ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \

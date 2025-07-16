@@ -31,16 +31,6 @@ func (s *FeatureService) GetUserAttributeKeys(
 	req *featureproto.GetUserAttributeKeysRequest,
 ) (*featureproto.GetUserAttributeKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId, localizer)

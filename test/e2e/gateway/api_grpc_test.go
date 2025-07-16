@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -921,6 +922,94 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	}
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+}
+
+func TestGetUserAttributeKeys(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	environmentId := *environmentID
+	maxRetryCount := 5
+	sleepSecond := 30
+
+	// Create some evaluation events to populate user attributes cache
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+
+	// Register evaluation events with user attributes
+	c := newGatewayClient(t, *apiKeyPath)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(maxRetryCount*sleepSecond)*time.Second)
+	defer cancel()
+
+	testUserDataKeySuffix := "testGetUserAttributeKeys-"
+	data := map[string]string{
+		testUserDataKeySuffix + uuid: "0.1.0",
+	}
+
+	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+		Timestamp:      time.Now().Unix(),
+		FeatureId:      featureID,
+		FeatureVersion: 1,
+		UserId:         userID,
+		VariationId:    "variation-id",
+		User: &userproto.User{
+			Id:   userID,
+			Data: data,
+		},
+		Reason: &featureproto.Reason{},
+		Tag:    tag,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &gatewayproto.RegisterEventsRequest{
+		Events: []*eventproto.Event{
+			{
+				Id:    newUUID(t),
+				Event: evaluation,
+			},
+		},
+	}
+	response, err := c.RegisterEvents(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Errors) > 0 {
+		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+
+	isFoundKey := false
+	for i := 0; i < maxRetryCount; i++ {
+		// Test GetUserAttributeKeys API
+		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
+			EnvironmentId: environmentId,
+		}
+		userAttrResp, err := client.GetUserAttributeKeys(ctx, userAttrReq)
+		if err != nil {
+			t.Fatal("Failed to get user attribute keys:", err)
+		}
+		println("User Attribute Keys length:", len(userAttrResp.UserAttributeKeys))
+		for _, key := range userAttrResp.UserAttributeKeys {
+			println("User Attribute Key:", key)
+			if strings.HasPrefix(key, testUserDataKeySuffix) {
+				println("Found matching user attribute key:", key)
+				isFoundKey = true
+				break
+			}
+		}
+		if isFoundKey {
+			break
+		}
+		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
+	}
+	if !isFoundKey {
+		t.Fatalf("User attribute key with prefix '%s' not found after %d retries", testUserDataKeySuffix, maxRetryCount)
 	}
 }
 

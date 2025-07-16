@@ -51,6 +51,7 @@ type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
 type environmentLastUsedInfoCache map[string]lastUsedInfoCache
 type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
+type userAttributesCache map[string]*userproto.UserAttributes
 
 type EvaluationCountEventPersisterConfig struct {
 	FlushSize          int `json:"flushSize"`
@@ -63,8 +64,10 @@ type evaluationCountEventPersister struct {
 	mysqlClient                         mysql.Client
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
-	userAttributesCache                 cachev3.UserAttributesCache
-	mutex                               sync.Mutex
+	userAttributesCacher                cachev3.UserAttributesCache
+	userAttributesCache                 userAttributesCache
+	envLastUsedCacheMutex               sync.Mutex
+	userAttributesCacheMutex            sync.Mutex
 	logger                              *zap.Logger
 }
 
@@ -73,7 +76,7 @@ func NewEvaluationCountEventPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
-	userAttributesCache cachev3.UserAttributesCache,
+	userAttributesCacher cachev3.UserAttributesCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -97,13 +100,18 @@ func NewEvaluationCountEventPersister(
 		mysqlClient:                         mysqlClient,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
-		userAttributesCache:                 userAttributesCache,
-		mutex:                               sync.Mutex{},
+		userAttributesCacher:                userAttributesCacher,
+		userAttributesCache:                 make(userAttributesCache),
+		envLastUsedCacheMutex:               sync.Mutex{},
+		userAttributesCacheMutex:            sync.Mutex{},
 		logger:                              logger,
 	}
 	// write flag last used info cache periodically
 	//nolint:errcheck
 	go e.writeFlagLastUsedInfoCache(ctx)
+	// write user attributes cache periodically
+	//nolint:errcheck
+	go e.writeUserAttributesCache(ctx)
 	return e, nil
 }
 
@@ -114,8 +122,6 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 	updateEvaluationCounter := func(envEvents environmentEventMap) {
 		// Increment the evaluation event count in the Redis
 		fails := p.incrementEnvEvents(envEvents)
-		// Save user attributes to cache
-		p.updateUserAttributes(envEvents)
 		// Check to Ack or Nack the messages
 		p.checkMessages(batch, fails)
 		// Reset the maps and the timer
@@ -147,11 +153,15 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
+			// Update the user attributes cache
+			p.cacheUserAttributes(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
+			// Update the user attributes cache
+			p.cacheUserAttributes(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ctx.Done():
 			// Nack the messages to be redelivered
@@ -347,8 +357,8 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
 	environmentId string,
 ) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.envLastUsedCacheMutex.Lock()
+	defer p.envLastUsedCacheMutex.Unlock()
 	var clientVersion string
 	if event.User == nil {
 		p.logger.Warn("Failed to cache last used info. User is nil.",
@@ -396,15 +406,15 @@ func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.C
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			p.logger.Debug("Write cache timer triggered")
+			p.logger.Debug("Write FlagLastUsedInfo cache timer triggered")
 			p.writeEnvLastUsedInfo()
 		}
 	}
 }
 
 func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.envLastUsedCacheMutex.Lock()
+	defer p.envLastUsedCacheMutex.Unlock()
 
 	for environmentId, cache := range p.envLastUsedCache {
 		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
@@ -491,18 +501,24 @@ func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 	return nil
 }
 
-func (p *evaluationCountEventPersister) updateUserAttributes(envEvents environmentEventMap) {
+func (p *evaluationCountEventPersister) cacheUserAttributes(envEvents environmentEventMap) {
+	p.userAttributesCacheMutex.Lock()
+	defer p.userAttributesCacheMutex.Unlock()
 	for environmentId, events := range envEvents {
+		if _, exists := p.userAttributesCache[environmentId]; exists {
+			continue
+		}
+
 		userAttributesMap := make(map[string]*userproto.UserAttribute)
 
 		for _, event := range events {
-			if event.User == nil {
+			if event.User == nil || event.User.Data == nil {
 				continue
 			}
 
 			// Extract user attributes from User.Data
 			for key, value := range event.User.Data {
-				if key == "" || value == "" {
+				if key == "" {
 					continue
 				}
 
@@ -537,19 +553,54 @@ func (p *evaluationCountEventPersister) updateUserAttributes(envEvents environme
 			for _, attr := range userAttributesMap {
 				userAttributes.UserAttributes = append(userAttributes.UserAttributes, attr)
 			}
+			p.userAttributesCache[environmentId] = userAttributes
+		}
+	}
+}
 
-			if err := p.userAttributesCache.Put(userAttributes); err != nil {
-				p.logger.Error("Failed to save user attributes to cache",
-					zap.Error(err),
-					zap.String("environmentId", userAttributes.EnvironmentId),
-					zap.Int("attributeCount", len(userAttributes.UserAttributes)),
-				)
-			} else {
-				p.logger.Debug("Successfully saved user attributes to cache",
-					zap.String("environmentId", userAttributes.EnvironmentId),
-					zap.Int("attributeCount", len(userAttributes.UserAttributes)),
-				)
+func (p *evaluationCountEventPersister) writeUserAttributesCache(ctx context.Context) error {
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			p.writeUserAttributes()
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) writeUserAttributes() {
+	p.userAttributesCacheMutex.Lock()
+	defer p.userAttributesCacheMutex.Unlock()
+
+	for _, cache := range p.userAttributesCache {
+		if cache != nil && len(cache.UserAttributes) > 0 {
+			if err := p.upsertUserAttributes(cache); err != nil {
+				continue
 			}
 		}
+	}
+	// Reset the cache
+	p.userAttributesCache = make(userAttributesCache)
+}
+
+func (p *evaluationCountEventPersister) upsertUserAttributes(
+	userAttributes *userproto.UserAttributes,
+) error {
+	if err := p.userAttributesCacher.Put(userAttributes); err != nil {
+		p.logger.Error("Failed to save user attributes to cache",
+			zap.Error(err),
+			zap.String("environmentId", userAttributes.EnvironmentId),
+			zap.Any("attributes", userAttributes.UserAttributes),
+			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+		)
+		return err
+	} else {
+		p.logger.Debug("Successfully saved user attributes to cache",
+			zap.String("environmentId", userAttributes.EnvironmentId),
+			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+		)
+		return nil
 	}
 }
