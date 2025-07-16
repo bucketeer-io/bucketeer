@@ -54,10 +54,10 @@ const (
 	JobProgressiveRolloutWatcher = "progressive_rollout_watcher"
 
 	// Error types
-	ErrorTypeTimeout    = "timeout"
-	ErrorTypeInternal   = "internal"
-	ErrorTypeNotFound   = "not_found"
-	ErrorTypeValidation = "validation"
+	ErrorTypeTimeout    = "Timeout"
+	ErrorTypeInternal   = "Internal"
+	ErrorTypeNotFound   = "NotFound"
+	ErrorTypeValidation = "Validation"
 )
 
 var (

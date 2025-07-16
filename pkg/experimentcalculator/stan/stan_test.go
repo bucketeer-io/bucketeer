@@ -29,7 +29,7 @@ var stan *Stan
 
 func TestMain(m *testing.M) {
 	// setup stan
-	stan = NewStan("localhost", "8080")
+	stan = NewStan("localhost", "8080", nil, nil)
 	// sleep for 5 seconds to wait for stan to be ready
 	time.Sleep(5 * time.Second)
 	m.Run()
