@@ -994,11 +994,8 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		if err != nil {
 			t.Fatal("Failed to get user attribute keys:", err)
 		}
-		println("User Attribute Keys length:", len(userAttrResp.UserAttributeKeys))
 		for _, key := range userAttrResp.UserAttributeKeys {
-			println("User Attribute Key:", key)
 			if strings.HasPrefix(key, testUserDataKeySuffix) {
-				println("Found matching user attribute key:", key)
 				isFoundKey = true
 				break
 			}
