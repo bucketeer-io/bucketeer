@@ -1314,7 +1314,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusMissingOrganizationID.Err(),
+			expectedErr: ErrMissingOrganizationID,
 		},
 		{
 			desc: "error: empty email",

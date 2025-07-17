@@ -25,6 +25,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/common"
@@ -34,13 +35,10 @@ import (
 var (
 	maxAccountNameLength = 250
 	// nolint:lll
-	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
-	ErrTeamNotFound             = errors.New("team: not found")
-	statusMissingOrganizationID = gstatus.New(
-		codes.InvalidArgument,
-		"account: organization id must be specified",
-	)
+	emailRegex                    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	ErrSearchFilterNotFound       = errors.New("account: search filter not found")
+	ErrTeamNotFound               = errors.New("team: not found")
+	ErrMissingOrganizationID      = pkgErr.NewErrorInvalidAugment("account", "organization id must be specified", pkgErr.InvalidTypeEmpty, "organization_id")
 	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
 	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
 	statusFullNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: full name is empty")
@@ -377,7 +375,7 @@ func (a *AccountV2) GetAccountFullName() string {
 
 func validate(a *AccountV2) error {
 	if a.OrganizationId == "" {
-		return statusMissingOrganizationID.Err()
+		return ErrMissingOrganizationID
 	}
 	if a.Email == "" {
 		return statusEmailIsEmpty.Err()

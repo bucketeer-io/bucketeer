@@ -1,0 +1,171 @@
+// Copyright 2025 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package api
+
+import (
+	"errors"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.Status {
+	var pkg string
+	var reason string
+	var messageKey string
+	var metadatas []map[string]string
+	var st *status.Status
+	var invalidAugmentError *pkgErr.ErrorInvalidAugment
+	var notFoundError *pkgErr.ErrorNotFound
+	var alreadyExistsError *pkgErr.ErrorAlreadyExists
+	var unauthenticatedError *pkgErr.ErrorUnauthenticated
+	var permissionDeniedError *pkgErr.ErrorPermissionDenied
+	var internalError *pkgErr.ErrorInternal
+
+	if errors.As(err, &invalidAugmentError) {
+		pkg = invalidAugmentError.PackageName
+		st = status.New(codes.InvalidArgument, invalidAugmentError.Message)
+		reason = "INVALID_AUGMENT"
+		metadatas = append(metadatas, invalidAugmentError.Metadata)
+	} else if errors.As(err, &notFoundError) {
+		pkg = notFoundError.PackageName
+		st = status.New(codes.NotFound, notFoundError.Message)
+		reason = "NOT_FOUND"
+		metadatas = append(metadatas, notFoundError.Metadata)
+	} else if errors.As(err, &internalError) {
+		pkg = internalError.PackageName
+		st = status.New(codes.Internal, internalError.Message)
+		reason = "INTERNAL"
+		metadatas = append(metadatas, internalError.Metadata)
+	} else if errors.As(err, &alreadyExistsError) {
+		pkg = alreadyExistsError.PackageName
+		st = status.New(codes.AlreadyExists, alreadyExistsError.Message)
+		reason = "ALREADY_EXISTS"
+		metadatas = append(metadatas, alreadyExistsError.Metadata)
+	} else if errors.As(err, &unauthenticatedError) {
+		pkg = unauthenticatedError.PackageName
+		st = status.New(codes.Unauthenticated, unauthenticatedError.Message)
+		reason = "UNAUTHENTICATED"
+		metadatas = append(metadatas, unauthenticatedError.Metadata)
+	} else if errors.As(err, &permissionDeniedError) {
+		pkg = permissionDeniedError.PackageName
+		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
+		reason = "PERMISSION_DENIED"
+		metadatas = append(metadatas, permissionDeniedError.Metadata)
+	} else {
+		pkg = "unknown"
+		st = status.New(codes.Unknown, err.Error())
+		reason = "UNKNOWN"
+		messageKey = "unknown"
+	}
+	// when adding multiple details
+	for _, md := range anotherDetailData {
+		for k, v := range md {
+			metadatas = append(metadatas, map[string]string{
+				"messageKey": messageKey,
+				k:            v,
+			})
+		}
+	}
+
+	for _, md := range metadatas {
+		st, err = st.WithDetails(&errdetails.ErrorInfo{
+			Reason:   reason,
+			Domain:   pkg + ".bucketeer.io",
+			Metadata: md,
+		})
+		if err != nil {
+			return status.New(codes.Internal, err.Error())
+		}
+	}
+	return st
+}
+
+// // ToDo: Once multilingual support has been moved to the frontend, delete localizedMessage.
+// func AddLocalizedMessage(s *status.Status, localizedMessage *errdetails.LocalizedMessage) *status.Status {
+// 	st, err := s.WithDetails(localizedMessage)
+// 	if err != nil {
+// 		return status.New(codes.Internal, err.Error())
+// 	}
+// 	return st
+// }
+
+// func NewGRPCStatus(
+// 	err error,
+// 	localizedMessage *errdetails.LocalizedMessage,
+// 	anotherDetailData ...map[string]string,
+// ) *status.Status {
+// 	var pkg string
+// 	var reason string
+// 	var messageKey string
+// 	var metadatas []map[string]string
+// 	var st *status.Status
+// 	var invalidAugmentError *pkgErr.ErrorInvalidAugment
+// 	var notFoundError *pkgErr.ErrorNotFound
+
+// 	if errors.As(err, &invalidAugmentError) {
+// 		pkg = invalidAugmentError.Pkg
+// 		st = status.New(codes.InvalidArgument, invalidAugmentError.Message)
+// 		reason = "INVALID_AUGMENT"
+// 		metadatas = append(metadatas, invalidAugmentError.Metadata)
+// 	} else if errors.As(err, &notFoundError) {
+// 		pkg = notFoundError.Pkg
+// 		st = status.New(codes.NotFound, notFoundError.Message)
+// 		reason = "NOT_FOUND"
+// 		metadatas = append(metadatas, notFoundError.Metadata)
+// 	} else {
+// 		pkg = "unknown"
+// 		st = status.New(codes.Unknown, err.Error())
+// 		reason = "UNKNOWN"
+// 		messageKey = "unknown"
+// 	}
+// 	// when adding multiple details
+// 	for _, md := range anotherDetailData {
+// 		for k, v := range md {
+// 			metadatas = append(metadatas, map[string]string{
+// 				"messageKey": messageKey,
+// 				k:            v,
+// 			})
+// 		}
+// 	}
+
+// 	for _, md := range metadatas {
+// 		st, err = st.WithDetails(&errdetails.ErrorInfo{
+// 			Reason:   reason,
+// 			Domain:   pkg + ".bucketeer.io",
+// 			Metadata: md,
+// 		})
+// 		if err != nil {
+// 			return status.New(codes.Internal, err.Error())
+// 		}
+// 	}
+// 	if localizedMessage != nil {
+// 		st, err = st.WithDetails(localizedMessage)
+// 		if err != nil {
+// 			return status.New(codes.Internal, err.Error())
+// 		}
+// 	}
+// 	return st
+// }
+
+// func (s *status.Status) addLocalizedMessage	(localizedMessage *errdetails.LocalizedMessage) *status.Status {
+// 	st, err := s.WithDetails(localizedMessage)
+// 	if err != nil {
+// 		return status.New(codes.Internal, err.Error())
+// 	}
+// 	return st
+// }
