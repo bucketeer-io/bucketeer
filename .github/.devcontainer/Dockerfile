@@ -17,10 +17,6 @@ RUN apt-get update \
         # The tools in this package are used when installing packages for Python
         build-essential \
         swig3.0 \
-        # Required for gifsicle and mozjpeg node modules (vite-plugin-imagemin)
-        autoconf \
-        automake \
-        libtool \
         # Required for Microsoft SQL Server
         unixodbc-dev \
         # Required for PostgreSQL
