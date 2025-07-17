@@ -2,7 +2,6 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
-import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { cn } from 'utils/style';
 import { IconToastWarning } from '@icons';
@@ -17,7 +16,6 @@ const SegmentWarning = ({
   className?: string;
   isDeleting?: boolean;
 }) => {
-  const { t } = useTranslation(['form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -35,38 +33,34 @@ const SegmentWarning = ({
           color="accent-yellow-500"
           className="mt-1"
         />
-        {isDeleting ? (
-          <Trans
-            i18nKey="form:delete-user-segment-warning"
-            values={{ count: 1 }}
-            components={{
-              p: <p className="typo-para-medium text-accent-yellow-500" />
-            }}
-          />
-        ) : (
-          <p className="typo-para-medium text-accent-yellow-500">
-            {t('form:update-user-segment-warning')}
-          </p>
-        )}
+        <Trans
+          i18nKey={
+            isDeleting
+              ? 'form:delete-user-segment-warning'
+              : 'form:update-user-segment-warning'
+          }
+          values={{ count: features.length }}
+          components={{
+            p: <p className="typo-para-medium text-accent-yellow-500" />
+          }}
+        />
       </div>
-      {isDeleting && (
-        <div className="flex flex-col w-full gap-y-1 mt-2">
-          {features?.map((item, index) => (
-            <div
-              key={item.id}
-              className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500"
+      <div className="flex flex-col w-full gap-y-1 mt-2">
+        {features?.map((item, index) => (
+          <div
+            key={item.id}
+            className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500"
+          >
+            <p>{index + 1}.</p>
+            <Link
+              to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
+              className="hover:underline"
             >
-              <p>{index + 1}.</p>
-              <Link
-                to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
-                className="hover:underline"
-              >
-                {item.name}
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
+              {item.name}
+            </Link>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

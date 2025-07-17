@@ -218,6 +218,13 @@ const SegmentCreateUpdateModal = ({
               <Divider className="mt-1 mb-5" />
 
               <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
+
+              {isDisabledUserIds && userSegment && (
+                <div className="mb-5">
+                  <SegmentWarning features={userSegment.features} />
+                </div>
+              )}
+
               <RadioGroup
                 defaultValue={userIdsType}
                 onValueChange={setUserIdsType}
@@ -326,10 +333,6 @@ const SegmentCreateUpdateModal = ({
                   )}
                 />
               </RadioGroup>
-
-              {isDisabledUserIds && userSegment && (
-                <SegmentWarning features={userSegment.features} />
-              )}
 
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
