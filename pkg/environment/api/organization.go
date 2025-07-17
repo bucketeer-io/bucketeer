@@ -33,6 +33,7 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -206,6 +207,158 @@ func (s *EnvironmentService) ListOrganizations(
 	}, nil
 }
 
+func (s *EnvironmentService) CreateDemoOrganization(
+	ctx context.Context,
+	req *environmentproto.CreateDemoOrganizationRequest,
+) (*environmentproto.CreateDemoOrganizationResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	if !s.opts.isDemoSiteEnabled {
+		dt, err := statusDemoSiteDisabled.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.Organization),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	demoToken, ok := rpc.GetDemoCreationToken(ctx)
+	if !ok {
+		s.logger.Error("failed to get access demoToken",
+			log.FieldsFromImcomingContext(ctx)...,
+		)
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	editor := &eventproto.Editor{
+		Email:   demoToken.Email,
+		IsAdmin: false,
+	}
+	if err := validateCreateDemoOrganizationRequest(req, localizer); err != nil {
+		s.logger.Error("failed to validate CreateDemoOrganizationRequest",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+
+	organization, err := s.createOrganizationMySQL(
+		ctx,
+		req.Name,
+		req.UrlCode,
+		req.OwnerEmail,
+		req.Description,
+		false,
+		false,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Publish the auditlog event
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_ORGANIZATION,
+		organization.Id,
+		eventproto.Event_DEMO_ORGANIZATION_CREATED,
+		&eventproto.OrganizationCreatedEvent{
+			Id:          organization.Id,
+			Name:        organization.Name,
+			UrlCode:     organization.UrlCode,
+			OwnerEmail:  organization.OwnerEmail,
+			Description: organization.Description,
+			Disabled:    organization.Disabled,
+			Archived:    organization.Archived,
+			Trial:       organization.Trial,
+			CreatedAt:   organization.CreatedAt,
+			UpdatedAt:   organization.UpdatedAt,
+		},
+		organization,
+		nil,
+	)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error("failed to publish event",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &environmentproto.CreateDemoOrganizationResponse{
+		Organization: organization.Organization,
+	}, nil
+}
+
+func validateCreateDemoOrganizationRequest(
+	req *environmentproto.CreateDemoOrganizationRequest,
+	localizer locale.Localizer,
+) error {
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.Name) > maxOrganizationNameLength {
+		dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	req.UrlCode = strings.TrimSpace(req.UrlCode)
+	if !organizationUrlCodeRegex.MatchString(req.UrlCode) {
+		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	req.OwnerEmail = strings.TrimSpace(req.OwnerEmail)
+	if !emailRegex.MatchString(req.OwnerEmail) {
+		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func (s *EnvironmentService) newOrganizationListOrders(
 	orderBy environmentproto.ListOrganizationsRequest_OrderBy,
 	orderDirection environmentproto.ListOrganizationsRequest_OrderDirection,
@@ -366,23 +519,69 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 	// Create the organization
 	name := strings.TrimSpace(req.Name)
 	urlCode := strings.TrimSpace(req.UrlCode)
-	organization, err := domain.NewOrganization(
+	organization, err := s.createOrganizationMySQL(
+		ctx,
 		name,
 		urlCode,
 		req.OwnerEmail,
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
+		localizer,
 	)
 	if err != nil {
-		s.logger.Error(
-			"Failed to create an organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
+		return nil, err
+	}
+	// Publish the auditlog event
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_ORGANIZATION,
+		organization.Id,
+		eventproto.Event_ORGANIZATION_CREATED,
+		&eventproto.OrganizationCreatedEvent{
+			Id:          organization.Id,
+			Name:        organization.Name,
+			UrlCode:     organization.UrlCode,
+			OwnerEmail:  organization.OwnerEmail,
+			Description: organization.Description,
+			Disabled:    organization.Disabled,
+			Archived:    organization.Archived,
+			Trial:       organization.Trial,
+			CreatedAt:   organization.CreatedAt,
+			UpdatedAt:   organization.UpdatedAt,
+		},
+		organization,
+		nil,
+	)
+	if err != nil {
 		return nil, statusInternal.Err()
 	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		return nil, statusInternal.Err()
+	}
+	return &environmentproto.CreateOrganizationResponse{
+		Organization: organization.Organization,
+	}, nil
+}
+
+func (s *EnvironmentService) createOrganizationMySQL(
+	ctx context.Context,
+	name string,
+	urlCode string,
+	ownerEmail string,
+	description string,
+	isTrial bool,
+	isSystemAdmin bool,
+	localizer locale.Localizer,
+) (*domain.Organization, error) {
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		ownerEmail,
+		description,
+		isTrial,
+		isSystemAdmin,
+	)
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Check if there is already a system admin organization
@@ -473,36 +672,7 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		)
 		return nil, statusInternal.Err()
 	}
-	// Publish the auditlog event
-	event, err := domainevent.NewAdminEvent(
-		editor,
-		eventproto.Event_ORGANIZATION,
-		organization.Id,
-		eventproto.Event_ORGANIZATION_CREATED,
-		&eventproto.OrganizationCreatedEvent{
-			Id:          organization.Id,
-			Name:        organization.Name,
-			UrlCode:     organization.UrlCode,
-			OwnerEmail:  organization.OwnerEmail,
-			Description: organization.Description,
-			Disabled:    organization.Disabled,
-			Archived:    organization.Archived,
-			Trial:       organization.Trial,
-			CreatedAt:   organization.CreatedAt,
-			UpdatedAt:   organization.UpdatedAt,
-		},
-		organization,
-		nil,
-	)
-	if err != nil {
-		return nil, statusInternal.Err()
-	}
-	if err = s.publisher.Publish(ctx, event); err != nil {
-		return nil, statusInternal.Err()
-	}
-	return &environmentproto.CreateOrganizationResponse{
-		Organization: organization.Organization,
-	}, nil
+	return organization, nil
 }
 
 func (s *EnvironmentService) validateCreateOrganizationRequestNoCommand(
@@ -692,8 +862,7 @@ func (s *EnvironmentService) createOwnerAccount(
 		accountproto.AccountV2_Role_Organization_OWNER,
 		envRoles,
 	)
-	accountStorage := v2acc.NewAccountStorage(s.mysqlClient)
-	if err := accountStorage.CreateAccountV2(ctx, account); err != nil {
+	if err := s.accountStorage.CreateAccountV2(ctx, account); err != nil {
 		return err
 	}
 	return nil

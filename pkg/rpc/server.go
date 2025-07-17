@@ -140,6 +140,7 @@ func (s *Server) setupRPC() {
 	}
 	if s.verifier != nil {
 		interceptors = append(interceptors, AuthUnaryServerInterceptor(s.verifier))
+		interceptors = append(interceptors, DemoAuthUnaryServerInterceptor(s.verifier))
 	}
 	s.rpcServer = grpc.NewServer(
 		grpc.Creds(creds),

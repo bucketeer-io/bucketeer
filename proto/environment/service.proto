@@ -401,6 +401,17 @@ message DemoCreationToken {
   int64 expiry = 3;
 }
 
+message CreateDemoOrganizationRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string url_code = 2 [(google.api.field_behavior) = REQUIRED];
+  string owner_email = 3 [(google.api.field_behavior) = REQUIRED];
+  string description = 4;
+}
+
+message CreateDemoOrganizationResponse {
+  Organization organization = 1;
+}
+
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {
@@ -1525,6 +1536,52 @@ service EnvironmentService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreateDemoOrganization(CreateDemoOrganizationRequest)
+      returns (CreateDemoOrganizationResponse) {
+    option (google.api.http) = {
+      post: "/v1/environment/create_demo_organization"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Demo Organization",
+      description: "Create a demo organization. To call this API, you need an `SYSTEM_ADMIN` role.",
+      tags: "Organization",
+      operation_id: "web.v1.environment.create_demo_organization",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
           }
         }
       }
