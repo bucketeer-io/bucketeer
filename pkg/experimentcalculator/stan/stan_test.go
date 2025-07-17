@@ -22,14 +22,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bucketeer-io/bucketeer/pkg/log"
 )
 
 var stan *Stan
 
 func TestMain(m *testing.M) {
 	// setup stan
-	stan = NewStan("localhost", "8080", nil, nil)
+	logger, err := log.NewLogger()
+	if err != nil {
+		panic(err)
+	}
+	registry := prometheus.NewRegistry()
+	stan = NewStan("localhost", "8080", registry, logger)
 	// sleep for 5 seconds to wait for stan to be ready
 	time.Sleep(5 * time.Second)
 	m.Run()
