@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -43,7 +44,8 @@ func TestNewEnvironmentService(t *testing.T) {
 	mysqlClient := mysqlmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
-	s := NewEnvironmentService(ac, mysqlClient, p, WithLogger(logger))
+	s := NewEnvironmentService(
+		ac, mysqlClient, p, &auth.OAuthConfig{}, "", "", nil, nil, WithLogger(logger))
 	assert.IsType(t, &EnvironmentService{}, s)
 }
 

@@ -56,4 +56,6 @@ var (
 	statusUnauthenticated           = gstatus.New(codes.Unauthenticated, "environment: unauthenticated")
 	statusPermissionDenied          = gstatus.New(codes.PermissionDenied, "environment: permission denied")
 	statusNotFound                  = gstatus.New(codes.NotFound, "environment: not found")
+	statusDemoSiteDisabled          = gstatus.New(codes.FailedPrecondition, "environment: demo site is not enabled")
+	statusUserAlreadyInOrganization = gstatus.New(codes.FailedPrecondition, "environment: user already in organization")
 )

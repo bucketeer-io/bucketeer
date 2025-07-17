@@ -226,6 +226,15 @@ EnvironmentService.ListProjectsV2 = {
   responseType: proto_environment_service_pb.ListProjectsV2Response
 };
 
+EnvironmentService.ExchangeDemoToken = {
+  methodName: 'ExchangeDemoToken',
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.ExchangeDemoTokenRequest,
+  responseType: proto_environment_service_pb.ExchangeDemoTokenResponse
+};
+
 exports.EnvironmentService = EnvironmentService;
 
 function EnvironmentServiceClient(serviceHost, options) {
@@ -1027,5 +1036,37 @@ EnvironmentServiceClient.prototype.listProjectsV2 = function listProjectsV2(
     }
   };
 };
+
+EnvironmentServiceClient.prototype.exchangeDemoToken =
+  function exchangeDemoToken(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(EnvironmentService.ExchangeDemoToken, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
 
 exports.EnvironmentServiceClient = EnvironmentServiceClient;

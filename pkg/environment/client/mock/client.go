@@ -294,6 +294,26 @@ func (mr *MockClientMockRecorder) EnableProject(ctx, in any, opts ...any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableProject", reflect.TypeOf((*MockClient)(nil).EnableProject), varargs...)
 }
 
+// ExchangeDemoToken mocks base method.
+func (m *MockClient) ExchangeDemoToken(ctx context.Context, in *environment.ExchangeDemoTokenRequest, opts ...grpc.CallOption) (*environment.ExchangeDemoTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExchangeDemoToken", varargs...)
+	ret0, _ := ret[0].(*environment.ExchangeDemoTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExchangeDemoToken indicates an expected call of ExchangeDemoToken.
+func (mr *MockClientMockRecorder) ExchangeDemoToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeDemoToken", reflect.TypeOf((*MockClient)(nil).ExchangeDemoToken), varargs...)
+}
+
 // GetEnvironmentV2 mocks base method.
 func (m *MockClient) GetEnvironmentV2(ctx context.Context, in *environment.GetEnvironmentV2Request, opts ...grpc.CallOption) (*environment.GetEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()

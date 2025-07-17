@@ -14644,6 +14644,56 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "ExchangeDemoTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "type",
+                "type": "auth.AuthType"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeDemoTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "demo_creation_token",
+                "type": "DemoCreationToken"
+              }
+            ]
+          },
+          {
+            "name": "DemoCreationToken",
+            "fields": [
+              {
+                "id": 1,
+                "name": "access_token",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "token_type",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "expiry",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -18845,6 +18895,137 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "ExchangeDemoToken",
+                "in_type": "ExchangeDemoTokenRequest",
+                "out_type": "ExchangeDemoTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/exchange_demo_token"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Exchange Demo Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Exchange the demo token from the OAuth provider to the Bucketeer token.\\nCurrently, we only support Google."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Organization"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.organization.exchange_demo_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -18873,6 +19054,12 @@
           },
           {
             "path": "proto/environment/command.proto"
+          },
+          {
+            "path": "proto/auth/token.proto"
+          },
+          {
+            "path": "proto/auth/service.proto"
           }
         ],
         "package": {

@@ -644,12 +644,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go autoOpsServer.Run()
 
 	// environmentService
-	environmentService := environmentapi.NewEnvironmentService(
-		accountClient,
+	environmentService, err := s.createEnvironmentService(
 		mysqlClient,
+		accountClient,
 		domainTopicPublisher,
-		environmentapi.WithLogger(logger),
+		oAuthConfig,
+		verifier,
+		oAuthConfig,
+		logger,
 	)
+	if err != nil {
+		return err
+	}
 	environmentServer := rpc.NewServer(environmentService, *s.certPath, *s.keyPath,
 		"environment-server",
 		rpc.WithPort(*s.environmentServicePort),
@@ -1018,6 +1024,44 @@ func (s *server) createAuthService(
 		mysqlClient,
 		accountClient,
 		config,
+		serviceOptions...,
+	), nil
+}
+
+func (s *server) createEnvironmentService(
+	mysqlClient mysql.Client,
+	accountClient accountclient.Client,
+	domainTopicPublisher publisher.Publisher,
+	oAuthConfig *auth.OAuthConfig,
+	verifier token.Verifier,
+	config *auth.OAuthConfig,
+	logger *zap.Logger,
+) (rpc.Service, error) {
+	signer, err := token.NewSigner(*s.oauthPrivateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	serviceOptions := []environmentapi.Option{
+		environmentapi.WithLogger(logger),
+		environmentapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
+	}
+	if *s.emailFilter != "" {
+		filter, err := regexp.Compile(*s.emailFilter)
+		if err != nil {
+			return nil, err
+		}
+		serviceOptions = append(serviceOptions, environmentapi.WithEmailFilter(filter))
+	}
+
+	return environmentapi.NewEnvironmentService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		oAuthConfig,
+		config.Issuer,
+		config.Audience,
+		signer,
+		verifier,
 		serviceOptions...,
 	), nil
 }
