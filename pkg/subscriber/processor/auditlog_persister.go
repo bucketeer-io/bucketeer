@@ -164,7 +164,22 @@ func (a auditLogPersister) createAuditLogsMySQL(
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
 				messages[i].Ack()
 			} else {
-				a.logger.Error("Failed to put audit logs", zap.Error(err))
+				var publicApiEditor string
+				if aud.Editor.PublicApiEditor != nil {
+					publicApiEditor = aud.Editor.PublicApiEditor.Maintainer
+				}
+				a.logger.Error("Failed to put audit logs",
+					zap.Error(err),
+					zap.String("entity_id", aud.EntityId),
+					zap.String("editor", aud.Editor.Email),
+					zap.String("public_api_editor", publicApiEditor),
+					zap.String("type", aud.Type.String()),
+					zap.Int("entity_data_size", len(aud.EntityData)),
+					zap.Int("previous_entity_data_size", len(aud.PreviousEntityData)),
+					zap.Any("entity_type", aud.EntityType),
+					zap.String("entity_data", aud.EntityData),
+					zap.String("previous_entity_data", aud.PreviousEntityData),
+				)
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.RepeatableError.String()).Inc()
 				messages[i].Nack()
 			}
