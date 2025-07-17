@@ -44,59 +44,21 @@ SELECT
             ops_type = 3 AND
             aor.deleted = 0
     ) AS kill_switch_count,
-    COALESCE(
-        (SELECT flui.feature_id 
-        FROM feature_last_used_info flui
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        ''
-    ) AS feature_id,
-    COALESCE(
-        (SELECT flui.version 
-        FROM feature_last_used_info flui 
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        0
-    ) AS version,
-    COALESCE(
-        (SELECT flui.last_used_at 
-        FROM feature_last_used_info flui
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        0
-    ) AS last_used_at,
-    COALESCE(
-        (SELECT flui.created_at
-        FROM feature_last_used_info flui
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        0
-    ) AS created_at,
-    COALESCE(
-        (SELECT flui.client_oldest_version
-        FROM feature_last_used_info flui
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        ''
-    ) AS client_oldest_version,
-    COALESCE(
-        (SELECT flui.client_latest_version
-        FROM feature_last_used_info flui
-        WHERE flui.feature_id = feature.id
-        AND flui.environment_id = feature.environment_id
-        ORDER BY flui.last_used_at DESC, flui.version DESC
-        LIMIT 1),
-        ''
-    ) AS client_latest_version
+    COALESCE(feature_last_used_info.feature_id, '') AS feature_id,
+    COALESCE(feature_last_used_info.version, 0) AS version,
+    COALESCE(feature_last_used_info.last_used_at, 0) AS last_used_at,
+    COALESCE(feature_last_used_info.created_at, 0) AS created_at,
+    COALESCE(feature_last_used_info.client_oldest_version, '') AS client_oldest_version,
+    COALESCE(feature_last_used_info.client_latest_version, '') AS client_latest_version
 FROM
     feature
+LEFT JOIN feature_last_used_info ON
+    feature.id = feature_last_used_info.feature_id AND
+    feature.environment_id = feature_last_used_info.environment_id AND
+    NOT EXISTS (
+        SELECT 1 FROM feature_last_used_info flui2
+        WHERE flui2.feature_id = feature_last_used_info.feature_id
+        AND flui2.environment_id = feature_last_used_info.environment_id
+        AND (flui2.last_used_at > feature_last_used_info.last_used_at
+        OR (flui2.last_used_at = feature_last_used_info.last_used_at AND flui2.version > feature_last_used_info.version))
+    )
