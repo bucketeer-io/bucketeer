@@ -3,8 +3,8 @@
 }
 
 .token.boolean {
-    @apply !text-accent-pink-500;
-  }
+  @apply !text-accent-pink-500;
+}
 
 .token.comment {
   @apply !text-accent-green-600;

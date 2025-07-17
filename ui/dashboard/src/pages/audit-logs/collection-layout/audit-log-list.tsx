@@ -48,18 +48,20 @@ const AuditLogList = memo(
                 {getDateLabel(item)}
               </p>
               <div className="flex flex-col w-full gap-y-2">
-                {formattedAuditLogs.get(item)?.map((item, i) => (
-                  <AuditLogItem
-                    isExpanded={
-                      expandOrCollapseAllState === ExpandOrCollapse.EXPAND ||
-                      expandedItems.includes(item.id)
-                    }
-                    key={item.id}
-                    prefix={`line-${index}${i}`}
-                    auditLog={item}
-                    onClick={() => onToggleExpandItem(item.id)}
-                  />
-                ))}
+                {formattedAuditLogs
+                  .get(item)
+                  ?.map((item, i) => (
+                    <AuditLogItem
+                      isExpanded={
+                        expandOrCollapseAllState === ExpandOrCollapse.EXPAND ||
+                        expandedItems.includes(item.id)
+                      }
+                      key={item.id}
+                      prefix={`line-${index}${i}`}
+                      auditLog={item}
+                      onClick={() => onToggleExpandItem(item.id)}
+                    />
+                  ))}
               </div>
             </div>
           );

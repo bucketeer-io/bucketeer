@@ -22,7 +22,6 @@ import (
 var (
 	errAuditLogInvalidConfig                     = errors.New("auditLog: invalid config")
 	ErrSegmentInvalidConfig                      = errors.New("segment: invalid config")
-	ErrSegmentInUse                              = errors.New("segment: segment is in use")
 	ErrSegmentExceededMaxUserIDLength            = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength) //nolint:lll
 	ErrUserEventInvalidConfig                    = errors.New("user event: invalid config")
 	ErrEvaluationCountInvalidConfig              = errors.New("evaluation count: invalid config")

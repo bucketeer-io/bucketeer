@@ -2,7 +2,6 @@ import react from '@vitejs/plugin-react';
 import Unfonts from 'unplugin-fonts/vite';
 import { defineConfig } from 'vite';
 import { compression } from 'vite-plugin-compression2';
-import viteImageMin from 'vite-plugin-imagemin';
 import svgr from 'vite-plugin-svgr';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 
@@ -71,7 +70,6 @@ export default defineConfig({
         preload: false,
         display: 'swap'
       }
-    }),
-    viteImageMin()
+    })
   ]
 });

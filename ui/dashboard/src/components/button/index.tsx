@@ -5,7 +5,7 @@ import { cn } from 'utils/style';
 import Spinner from 'components/spinner';
 
 const buttonVariants = cva(
-  'inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out whitespace-nowrap',
+  'inline-flex animate-fade gap-2 disabled:cursor-not-allowed items-center justify-center duration-300 ease-out whitespace-nowrap',
   {
     variants: {
       variant: {
@@ -31,7 +31,7 @@ const buttonVariants = cva(
           'bg-accent-red-500 text-gray-50 shadow-border-accent-red-500',
           'rounded-lg px-6 py-2',
           'hover:bg-accent-red-600 hover:shadow-border-accent-red-600',
-          'disabled:bg-accent-red-50 disabled:text-gray-500'
+          'disabled:bg-accent-red-50 disabled:shadow-border-gray-400 disabled:text-gray-500'
         ],
         text: [
           'text-primary-500 px-2',
