@@ -64,4 +64,5 @@ LEFT JOIN feature_last_used_info ON
     )
 LEFT JOIN experiment ON
     feature.id = experiment.feature_id AND
-    feature.environment_id = experiment.environment_id
+    feature.environment_id = experiment.environment_id AND
+    experiment.deleted = 0

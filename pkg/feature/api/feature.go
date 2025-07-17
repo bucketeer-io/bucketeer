@@ -572,11 +572,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			Value:    false,
 		},
 		{
-			Column:   "experiment.deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
 			Column:   "feature.environment_id",
 			Operator: mysql.OperatorEqual,
 			Value:    environmentId,
