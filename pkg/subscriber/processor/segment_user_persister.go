@@ -193,14 +193,6 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.String("environmentId", event.EnvironmentId),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
-			case errors.Is(err, ErrSegmentInUse):
-				msg.Ack()
-				p.logger.Warn(
-					"segment is in use",
-					zap.Error(err),
-					zap.String("environmentId", event.EnvironmentId),
-				)
-				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, ErrSegmentExceededMaxUserIDLength):
 				msg.Ack()
 				p.logger.Warn(
@@ -268,13 +260,6 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 
 func (p *segmentUserPersister) handleEvent(
 	ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
-	segment, _, err := p.segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentId)
-	if err != nil {
-		return err
-	}
-	if segment.IsInUseStatus {
-		return ErrSegmentInUse
-	}
 	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentId, event.SegmentId, event.Data, event.State)
 	if err != nil {
 		if err := p.updateSegmentStatus(
