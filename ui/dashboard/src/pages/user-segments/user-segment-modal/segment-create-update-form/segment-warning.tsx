@@ -8,11 +8,13 @@ import { IconToastWarning } from '@icons';
 import Icon from 'components/icon';
 
 const SegmentWarning = ({
+  isDeleting = false,
   features,
   className
 }: {
   features: Feature[];
   className?: string;
+  isDeleting?: boolean;
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -32,14 +34,18 @@ const SegmentWarning = ({
           className="mt-1"
         />
         <Trans
-          i18nKey="form:update-user-segment-warning"
-          values={{ count: 1 }}
+          i18nKey={
+            isDeleting
+              ? 'form:delete-user-segment-warning'
+              : 'form:update-user-segment-warning'
+          }
+          values={{ count: features.length }}
           components={{
             p: <p className="typo-para-medium text-accent-yellow-500" />
           }}
         />
       </div>
-      <div className="flex flex-col w-full gap-y-1">
+      <div className="flex flex-col w-full gap-y-1 mt-2">
         {features?.map((item, index) => (
           <div
             key={item.id}

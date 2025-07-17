@@ -57,7 +57,8 @@
   "browse": "browse",
   "enter-user-ids": "Enter user IDs",
   "update-user-segment": "Updating this field will replace the current list with the new one.",
-  "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
+  "delete-user-segment-warning": "<p>This segment can’t be deleted because it is being used by {{count}} flag(s). Remove this segment from all flags before deleting it.</p>",
+  "update-user-segment-warning": "<p>This segment is being used by {{count}} flag(s). If any of these flags are used in experiments, changing the segment may affect the accuracy of the results, since it could change which users are included in each variation. Please double-check before updating.</p>",
   "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)",
   "experiments": {
     "experiment-id": "Experiment ID",
