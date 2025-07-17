@@ -12,7 +12,7 @@
       "userUid": "1000",
       "userGid": "1000"
     },
-    "ghcr.io/devcontainers-contrib/features/protoc:1": {
+    "ghcr.io/devcontainers-extra/features/protoc-asdf:1": {
       "version": "23.4"
     },
     "ghcr.io/devcontainers/features/sshd:1": {
