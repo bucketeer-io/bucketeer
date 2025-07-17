@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
+import { urls } from 'configs';
 import { useSubmit } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
@@ -8,23 +10,27 @@ import AuthWrapper from 'pages/signin/elements/auth-wrapper';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import FormLoading from 'elements/form-loading';
-import CreateDemoOrganizationForm from './create-demo-org-form';
+import DemoForm from './demo-form';
 
 const AccessDemoPage = () => {
   const { t } = useTranslation(['auth', 'common', 'form', 'message']);
 
   const { data: demoSiteStatusData, isLoading } = useQueryDemoSiteStatus();
-  const isDemoSiteEnabled = demoSiteStatusData?.isDemoSiteEnabled;
+  const isDemoSiteEnabled = !demoSiteStatusData?.isDemoSiteEnabled;
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated] = useState(false);
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
-    // call the API to authenticate with Google
+    const state = `${Date.now()}`;
 
-    return new Promise(rs => {
-      setTimeout(() => {
-        rs(setIsAuthenticated(true));
-      }, 1000);
+    return authenticationUrl({
+      state,
+      redirectUrl: urls.AUTH_REDIRECT,
+      type: 2 // Google auth type
+    }).then(response => {
+      if (response.url) {
+        window.location.href = response.url;
+      }
     });
   });
 
@@ -34,18 +40,25 @@ const AccessDemoPage = () => {
         <FormLoading />
       ) : (
         <>
-          <h1 className="text-gray-900 typo-head-bold-huge">{t('demo')}</h1>
-          <p
+          <h1 className="text-gray-900 typo-head-bold-huge">
+            {t(isAuthenticated ? 'privacy-notice' : 'demo')}
+          </h1>
+          <div
             className={cn('text-gray-600 typo-para-medium mt-6', {
               'text-accent-red-500': !isDemoSiteEnabled
             })}
-          >
-            {t(
-              `message:${isDemoSiteEnabled ? 'demo-available' : 'demo-not-available'}`
-            )}
-          </p>
-          {!isDemoSiteEnabled && (
-            <div>
+            dangerouslySetInnerHTML={{
+              __html: t(
+                isAuthenticated
+                  ? 'message:demo-privacy-description'
+                  : isDemoSiteEnabled
+                    ? 'message:demo-available'
+                    : 'message:demo-not-available'
+              )
+            }}
+          />
+          {isDemoSiteEnabled && (
+            <>
               {!isAuthenticated ? (
                 <Button
                   loading={submitting}
@@ -57,11 +70,9 @@ const AccessDemoPage = () => {
                   {`Sign in With Google`}
                 </Button>
               ) : (
-                <CreateDemoOrganizationForm
-                  isDemoSiteEnabled={isDemoSiteEnabled}
-                />
+                <DemoForm isDemoSiteEnabled={isDemoSiteEnabled} />
               )}
-            </div>
+            </>
           )}
         </>
       )}

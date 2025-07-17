@@ -54,5 +54,6 @@
   "empty-segment": "セグメントがありません。先に<comp>作成</comp>してください。",
   "demo-not-available": "現在、デモ機能はご利用いただけません。",
   "demo-available": "Googleで認証してデモをスタート！",
+  "demo-privacy-description": "デモの利用状況を分析し、必要に応じてBucketeerに関するご意見を伺うため、お名前とメールアドレスを収集しています。.<br />ご提供いただいた情報を第三者に共有することはありません。ご質問や情報の削除をご希望の場合は、Slackからご連絡ください。",
   "required-agreement-terms": "続行するには、利用規約とプライバシーポリシーに同意する必要があります。"
 }

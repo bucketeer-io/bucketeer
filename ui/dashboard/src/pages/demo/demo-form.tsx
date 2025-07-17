@@ -35,11 +35,7 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
       .required(requiredMessage)
   });
 
-const CreateDemoOrganizationForm = ({
-  isDemoSiteEnabled
-}: {
-  isDemoSiteEnabled?: boolean;
-}) => {
+const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
   const { t } = useTranslation(['auth', 'common', 'form', 'message']);
 
   const form = useForm({
@@ -69,7 +65,7 @@ const CreateDemoOrganizationForm = ({
 
   return (
     <FormProvider {...form}>
-      <Form onSubmit={form.handleSubmit(onSubmit)} className="mt-8">
+      <Form onSubmit={form.handleSubmit(onSubmit)} className="mt-5">
         <Form.Field
           control={form.control}
           name="organizationName"
@@ -133,7 +129,7 @@ const CreateDemoOrganizationForm = ({
             <Form.Item>
               <Form.Control>
                 <Checkbox
-                  title={t('agree-terms')}
+                  title={t('demo-agree-terms')}
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
@@ -155,4 +151,4 @@ const CreateDemoOrganizationForm = ({
   );
 };
 
-export default CreateDemoOrganizationForm;
+export default DemoForm;
