@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -16,10 +14,12 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -219,13 +219,6 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		expected    *proto.Organization
 		expectedErr error
 	}{
-		// Deprecated
-		// {
-		// 	desc:        "err: ErrNoCommand",
-		// 	setup:       nil,
-		// 	req:         &proto.CreateOrganizationRequest{},
-		// 	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		// },
 		{
 			desc:  "err: ErrInvalidOrganizationName: empty name",
 			setup: nil,
@@ -1127,6 +1120,147 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.ConvertTrialOrganization(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createDemoContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	orgExpected, err := domain.NewOrganization(
+		"name",
+		"url-code",
+		"test@test.org",
+		"description",
+		false,
+		false,
+	)
+	require.NoError(t, err)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.CreateDemoOrganizationRequest
+		expected    *proto.Organization
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrInvalidOrganizationName: empty name",
+			setup:       nil,
+			req:         &proto.CreateDemoOrganizationRequest{Name: ""},
+			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc:        "err: ErrInvalidOrganizationName: only space",
+			setup:       nil,
+			req:         &proto.CreateDemoOrganizationRequest{Name: "    "},
+			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc:        "err: ErrInvalidOrganizationName: max name length exceeded",
+			setup:       nil,
+			req:         &proto.CreateDemoOrganizationRequest{Name: strings.Repeat("a", 51)},
+			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:        "err: ErrInvalidOrganizationUrlCode: can't use uppercase",
+			setup:       nil,
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "CODE"},
+			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:        "err: ErrInvalidOrganizationUrlCode: max id length exceeded",
+			setup:       nil,
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc: "err: ErrOrganizationAlreadyExists: duplicate id",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrOrganizationAlreadyExists)
+			},
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
+			expectedErr: createError(statusOrganizationAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "err: ErrInternal",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().CreateOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().CreateProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(2)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateDemoOrganizationRequest{
+				Name:        orgExpected.Name,
+				UrlCode:     orgExpected.UrlCode,
+				Description: orgExpected.Description,
+				OwnerEmail:  "test@test.org",
+			},
+			expected:    orgExpected.Organization,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newDemoEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.CreateDemoOrganization(ctx, p.req)
+			if resp != nil {
+				assert.True(t, len(resp.Organization.Name) > 0)
+				assert.Equal(t, p.expected.Name, resp.Organization.Name)
+				assert.Equal(t, p.expected.UrlCode, resp.Organization.UrlCode)
+				assert.Equal(t, p.expected.Description, resp.Organization.Description)
+				assert.Equal(t, p.expected.Disabled, resp.Organization.Disabled)
+				assert.Equal(t, p.expected.Archived, resp.Organization.Archived)
+				assert.Equal(t, p.expected.Trial, resp.Organization.Trial)
+				assert.True(t, resp.Organization.CreatedAt > 0)
+				assert.True(t, resp.Organization.UpdatedAt > 0)
+			}
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
