@@ -400,16 +400,6 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		if err != nil {
 			return err
 		}
-		if segment.IsInUseStatus {
-			dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.SegmentInUse),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
 		if segment.Status == featureproto.Segment_UPLOADING {
 			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -504,16 +494,6 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err
-		}
-		if segment.IsInUseStatus {
-			dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.SegmentInUse),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
 		}
 		if segment.Status == featureproto.Segment_UPLOADING {
 			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
