@@ -59,9 +59,7 @@ const SegmentCreateUpdateModal = ({
     [userSegment]
   );
 
-  const [userIdsType, setUserIdsType] = useState(
-    isDisabledUserIds ? '' : 'upload'
-  );
+  const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
 
   const form = useForm({
@@ -218,11 +216,12 @@ const SegmentCreateUpdateModal = ({
                 )}
               />
               <Divider className="mt-1 mb-5" />
+
               <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
               <RadioGroup
                 defaultValue={userIdsType}
                 onValueChange={setUserIdsType}
-                disabled={isDisabledUserIds || isDisabled}
+                disabled={isDisabled}
                 className="flex flex-col w-full gap-y-4"
               >
                 <Form.Field
@@ -231,7 +230,7 @@ const SegmentCreateUpdateModal = ({
                   render={({ field }) => (
                     <Form.Item
                       className={cn('py-0', {
-                        'opacity-50': isDisabledUserIds || isDisabled
+                        'opacity-50': isDisabled
                       })}
                     >
                       <Form.Control>
@@ -247,31 +246,28 @@ const SegmentCreateUpdateModal = ({
                               className={cn(
                                 'cursor-pointer typo-para-small text-gray-700',
                                 {
-                                  'cursor-not-allowed':
-                                    isDisabledUserIds || isDisabled
+                                  'cursor-not-allowed': isDisabled
                                 }
                               )}
                             >
                               {t('form:browse-files')}
                             </label>
                           </div>
-                          {userIdsType === 'upload' &&
-                            !isDisabledUserIds &&
-                            !isDisabled && (
-                              <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
-                                <Upload
-                                  files={files}
-                                  className="border-l border-primary-500 pl-4"
-                                  uploadClassName="min-h-[200px] h-[200px]"
-                                  onChange={files => {
-                                    setFiles(files);
-                                    field.onChange(
-                                      files?.length ? files[0] : null
-                                    );
-                                  }}
-                                />
-                              </div>
-                            )}
+                          {userIdsType === 'upload' && !isDisabled && (
+                            <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
+                              <Upload
+                                files={files}
+                                className="border-l border-primary-500 pl-4"
+                                uploadClassName="min-h-[200px] h-[200px]"
+                                onChange={files => {
+                                  setFiles(files);
+                                  field.onChange(
+                                    files?.length ? files[0] : null
+                                  );
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       </Form.Control>
                       <Form.Message />
@@ -284,7 +280,7 @@ const SegmentCreateUpdateModal = ({
                   render={({ field }) => (
                     <Form.Item
                       className={cn('py-0', {
-                        'opacity-50': isDisabledUserIds || isDisabled
+                        'opacity-50': isDisabled
                       })}
                     >
                       <Form.Control>
@@ -300,8 +296,7 @@ const SegmentCreateUpdateModal = ({
                               className={cn(
                                 'cursor-pointer typo-para-small text-gray-700',
                                 {
-                                  'cursor-not-allowed':
-                                    isDisabledUserIds || isDisabled
+                                  'cursor-not-allowed': isDisabled
                                 }
                               )}
                             >

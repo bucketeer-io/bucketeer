@@ -57,7 +57,8 @@
   "browse": "ブラウズ",
   "enter-user-ids": "ユーザーIDを入力",
   "update-user-segment": "このフィールドを更新すると、現在のリストが新しいリストに置き換えられます。",
-  "update-user-segment-warning": "<p>{{count}}個のフラグが使用しているため、ユーザーIDリストを更新できません。更新する前にフラグからセグメントを削除してください。</p>",
+  "delete-user-segment-warning": "<p>{{count}}個のフラグが使用しているため、ユーザーIDリストを更新できません。更新する前にフラグからセグメントを削除してください。</p>",
+  "update-user-segment-warning": "このユーザーセグメントは、1つ以上のフィーチャーフラグで使用されています。これらのフラグが実験に使われている場合、セグメントを変更すると、各バリエーションに含まれるユーザーが変わるため、エクスペリメント結果の正確性に影響する可能性があります。更新前に十分ご確認ください。",
   "placeholder-enter-user-ids": "カンマで区切ってIDを入力（例：userId1, userId2, userId3,...）",
   "experiments": {
     "experiment-id": "エクスペリメントID",

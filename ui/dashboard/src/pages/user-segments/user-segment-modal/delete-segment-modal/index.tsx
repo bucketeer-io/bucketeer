@@ -41,7 +41,11 @@ const DeleteUserSegmentModal = ({
     >
       <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
         {isInUseSegment ? (
-          <SegmentWarning features={userSegment.features} className="mt-0" />
+          <SegmentWarning
+            features={userSegment.features}
+            isDeleting
+            className="mt-0"
+          />
         ) : (
           <>
             <IconDelete />
