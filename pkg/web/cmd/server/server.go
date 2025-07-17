@@ -1043,7 +1043,6 @@ func (s *server) createEnvironmentService(
 	}
 	serviceOptions := []environmentapi.Option{
 		environmentapi.WithLogger(logger),
-		environmentapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
 		environmentapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
 	}
 	if *s.emailFilter != "" {

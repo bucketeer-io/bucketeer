@@ -10847,6 +10847,16 @@ definitions:
         $ref: '#/definitions/environmentCreateTrialProjectCommand'
   environmentCreateTrialProjectResponse:
     type: object
+  environmentDemoCreationToken:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      tokenType:
+        type: string
+      expiry:
+        type: string
+        format: int64
   environmentDisableOrganizationCommand:
     type: object
   environmentDisableOrganizationRequest:
@@ -10932,8 +10942,8 @@ definitions:
   environmentExchangeDemoTokenResponse:
     type: object
     properties:
-      token:
-        $ref: '#/definitions/authToken'
+      demoCreationToken:
+        $ref: '#/definitions/environmentDemoCreationToken'
   environmentGetEnvironmentV2Response:
     type: object
     properties:

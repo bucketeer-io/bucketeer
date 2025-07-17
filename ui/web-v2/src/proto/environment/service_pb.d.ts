@@ -2073,10 +2073,10 @@ export namespace ExchangeDemoTokenRequest {
 }
 
 export class ExchangeDemoTokenResponse extends jspb.Message {
-  hasToken(): boolean;
-  clearToken(): void;
-  getToken(): proto_auth_token_pb.Token | undefined;
-  setToken(value?: proto_auth_token_pb.Token): void;
+  hasDemoCreationToken(): boolean;
+  clearDemoCreationToken(): void;
+  getDemoCreationToken(): DemoCreationToken | undefined;
+  setDemoCreationToken(value?: DemoCreationToken): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExchangeDemoTokenResponse.AsObject;
@@ -2101,6 +2101,45 @@ export class ExchangeDemoTokenResponse extends jspb.Message {
 
 export namespace ExchangeDemoTokenResponse {
   export type AsObject = {
-    token?: proto_auth_token_pb.Token.AsObject;
+    demoCreationToken?: DemoCreationToken.AsObject;
+  };
+}
+
+export class DemoCreationToken extends jspb.Message {
+  getAccessToken(): string;
+  setAccessToken(value: string): void;
+
+  getTokenType(): string;
+  setTokenType(value: string): void;
+
+  getExpiry(): number;
+  setExpiry(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DemoCreationToken.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DemoCreationToken
+  ): DemoCreationToken.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DemoCreationToken,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DemoCreationToken;
+  static deserializeBinaryFromReader(
+    message: DemoCreationToken,
+    reader: jspb.BinaryReader
+  ): DemoCreationToken;
+}
+
+export namespace DemoCreationToken {
+  export type AsObject = {
+    accessToken: string;
+    tokenType: string;
+    expiry: number;
   };
 }

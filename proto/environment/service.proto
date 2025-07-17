@@ -392,7 +392,13 @@ message ExchangeDemoTokenRequest {
 }
 
 message ExchangeDemoTokenResponse {
-  auth.Token token = 1;
+  DemoCreationToken demo_creation_token = 1;
+}
+
+message DemoCreationToken {
+  string access_token = 1;
+  string token_type = 2;
+  int64 expiry = 3;
 }
 
 service EnvironmentService {

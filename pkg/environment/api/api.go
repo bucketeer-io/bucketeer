@@ -45,19 +45,12 @@ import (
 )
 
 type options struct {
-	refreshTokenTTL   time.Duration
 	emailFilter       *regexp.Regexp
 	isDemoSiteEnabled bool
 	logger            *zap.Logger
 }
 
 type Option func(*options)
-
-func WithRefreshTokenTTL(ttl time.Duration) Option {
-	return func(opts *options) {
-		opts.refreshTokenTTL = ttl
-	}
-}
 
 func WithEmailFilter(regexp *regexp.Regexp) Option {
 	return func(opts *options) {
@@ -145,7 +138,7 @@ func (s *EnvironmentService) ExchangeDemoToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := statusDemoSiteNotEnabled.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusDemoSiteDisabled.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.Organization),
 		})
@@ -197,33 +190,37 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		}
 		return nil, dt.Err()
 	}
-
-	// check account exist in any organization
-	account, err := s.accountClient.GetMyOrganizationsByEmail(ctx, &accproto.GetMyOrganizationsByEmailRequest{
-		Email: userInfo.Email,
-	})
-	if err != nil {
-		s.logger.Error("Failed to get account by email",
-			zap.Error(err),
+	if !userInfo.VerifiedEmail {
+		s.logger.Error("Email is not verified",
 			zap.String("email", userInfo.Email),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := auth.StatusEmailNotVerified.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
+			Message: localizer.MustLocalize(locale.Account),
 		})
 		if err != nil {
-			return nil, auth.StatusInternal.Err()
+			return nil, auth.StatusEmailNotVerified.Err()
 		}
 		return nil, dt.Err()
 	}
-	if len(account.Organizations) > 0 {
-		s.logger.Error("Account already exists in an organization",
+
+	existedInSystem, err := s.checkEmailExistedInSystem(ctx, userInfo.Email, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if existedInSystem {
+		s.logger.Error("Email already exists in the system",
 			zap.String("email", userInfo.Email),
-			zap.Int("organizations_count", len(account.Organizations)),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusUserAlreadyInOrganization.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			Message: localizer.MustLocalize(locale.Organization),
 		})
 		if err != nil {
 			return nil, auth.StatusInternal.Err()
@@ -242,15 +239,46 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		return nil, err
 	}
 	return &environmentproto.ExchangeDemoTokenResponse{
-		Token: demoToken,
+		DemoCreationToken: demoToken,
 	}, nil
+}
+
+func (s *EnvironmentService) checkEmailExistedInSystem(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (bool, error) {
+	getAccountOrgs, err := s.accountClient.GetMyOrganizationsByEmail(ctx, &accproto.GetMyOrganizationsByEmailRequest{
+		Email: email,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to get organizations by email",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email), zap.Error(err))...,
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return false, auth.StatusInternal.Err()
+		}
+		return false, dt.Err()
+	}
+	if len(getAccountOrgs.Organizations) > 0 {
+		s.logger.Error(
+			"Email already exists in the system",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email))...)
+		return true, nil
+	}
+	return false, nil
 }
 
 func (s *EnvironmentService) generateDemoToken(
 	ctx context.Context,
 	userEmail string,
 	localizer locale.Localizer,
-) (*authproto.Token, error) {
+) (*environmentproto.DemoCreationToken, error) {
 	if err := s.checkEmail(userEmail, localizer); err != nil {
 		s.logger.Error(
 			"Access denied email",
@@ -286,38 +314,10 @@ func (s *EnvironmentService) generateDemoToken(
 		return nil, dt.Err()
 	}
 
-	// Create refresh token
-	refreshTokenTTL := 5 * time.Minute
-	if s.opts.refreshTokenTTL > 0 {
-		refreshTokenTTL = s.opts.refreshTokenTTL
-	}
-	refreshToken := &token.DemoCreationToken{
-		Email:    userEmail,
-		Expiry:   timeNow.Add(refreshTokenTTL),
-		IssuedAt: timeNow,
-	}
-
-	signedRefreshToken, err := s.signer.SignDemoCreationToken(refreshToken)
-	if err != nil {
-		s.logger.Error(
-			"Failed to sign refresh token",
-			zap.Error(err),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	return &authproto.Token{
-		AccessToken:  signedAccessToken,
-		RefreshToken: signedRefreshToken,
-		TokenType:    "Bearer",
-		Expiry:       accessTokenTTL.Unix(),
+	return &environmentproto.DemoCreationToken{
+		AccessToken: signedAccessToken,
+		TokenType:   "Bearer",
+		Expiry:      accessTokenTTL.Unix(),
 	}, nil
 }
 

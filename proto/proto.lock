@@ -14670,8 +14670,28 @@
             "fields": [
               {
                 "id": 1,
-                "name": "token",
-                "type": "auth.Token"
+                "name": "demo_creation_token",
+                "type": "DemoCreationToken"
+              }
+            ]
+          },
+          {
+            "name": "DemoCreationToken",
+            "fields": [
+              {
+                "id": 1,
+                "name": "access_token",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "token_type",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "expiry",
+                "type": "int64"
               }
             ]
           }
