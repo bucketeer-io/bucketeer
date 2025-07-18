@@ -37,4 +37,6 @@ export const PAGE_PATH_FEATURE_HISTORY = '/history';
 export const PAGE_PATH_FEATURE_CODE_REFS = '/code-references';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
+export const PAGE_PATH_AUTH_DEMO_CALLBACK = '/demo/auth/callback';
 export const PAGE_PATH_AUTH_SIGNIN = '/auth/signin';
+export const PAGE_PATH_DEMO_SITE = '/demo';
