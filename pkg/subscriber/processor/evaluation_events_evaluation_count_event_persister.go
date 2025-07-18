@@ -505,11 +505,17 @@ func (p *evaluationCountEventPersister) cacheUserAttributes(envEvents environmen
 	p.userAttributesCacheMutex.Lock()
 	defer p.userAttributesCacheMutex.Unlock()
 	for environmentId, events := range envEvents {
-		if _, exists := p.userAttributesCache[environmentId]; exists {
-			continue
-		}
-
 		userAttributesMap := make(map[string]*userproto.UserAttribute)
+
+		if existingCache, exists := p.userAttributesCache[environmentId]; exists {
+			for _, attr := range existingCache.UserAttributes {
+				userAttributesMap[attr.Key] = &userproto.UserAttribute{
+					Key:    attr.Key,
+					Values: make([]string, len(attr.Values)),
+				}
+				copy(userAttributesMap[attr.Key].Values, attr.Values)
+			}
+		}
 
 		for _, event := range events {
 			if event.User == nil || event.User.Data == nil {
