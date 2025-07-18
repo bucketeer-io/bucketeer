@@ -8,7 +8,19 @@ When using MySQL as a data warehouse backend, users may want to configure a sepa
 
 ## Usage
 
-### Basic Usage
+### Using Make Commands (Recommended)
+
+For convenience, you can use the provided make commands:
+
+```bash
+# For general usage
+MYSQL_HOST=your-host MYSQL_PORT=3306 MYSQL_USER=your-user MYSQL_PASS=your-pass MYSQL_DB_NAME=your-db make create-mysql-event-tables
+
+# For Docker Compose environment (uses default localhost settings)
+make docker-compose-create-mysql-event-tables
+```
+
+### Direct Go Usage
 
 ```bash
 go run ./hack/create-mysql-event-tables create \
@@ -50,13 +62,26 @@ Both tables include appropriate indexes for optimal query performance.
 
 ## Example Scenarios
 
-### Scenario 1: Separate Data Warehouse Database
+### Scenario 1: Docker Compose Environment
+You're using Docker Compose and want to create event tables in the local MySQL database:
+
+```bash
+# Uses default Docker Compose MySQL settings (localhost:3306, user:bucketeer, pass:bucketeer, db:bucketeer)
+make docker-compose-create-mysql-event-tables
+```
+
+### Scenario 2: Separate Data Warehouse Database
 Your main Bucketeer console uses one MySQL database, but you want to use a separate MySQL database for analytics/data warehouse purposes.
 
 ```bash
-# Main console database: bucketeer-console
-# Data warehouse database: bucketeer-analytics
+# Using make command (recommended)
+MYSQL_HOST=analytics-mysql.example.com \
+MYSQL_USER=analytics_user \
+MYSQL_PASS=analytics_password \
+MYSQL_DB_NAME=bucketeer-analytics \
+make create-mysql-event-tables
 
+# Or using direct Go command
 go run ./hack/create-mysql-event-tables create \
   --mysql-host=analytics-mysql.example.com \
   --mysql-user=analytics_user \
@@ -64,10 +89,19 @@ go run ./hack/create-mysql-event-tables create \
   --mysql-db-name=bucketeer-analytics
 ```
 
-### Scenario 2: Different MySQL Server
+### Scenario 3: Different MySQL Server
 You want to use a completely different MySQL server instance for the data warehouse.
 
 ```bash
+# Using make command (recommended)
+MYSQL_HOST=data-warehouse-mysql.example.com \
+MYSQL_PORT=3307 \
+MYSQL_USER=dw_user \
+MYSQL_PASS=dw_password \
+MYSQL_DB_NAME=bucketeer_dw \
+make create-mysql-event-tables
+
+# Or using direct Go command
 go run ./hack/create-mysql-event-tables create \
   --mysql-host=data-warehouse-mysql.example.com \
   --mysql-port=3307 \

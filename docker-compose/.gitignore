@@ -1,0 +1,8 @@
+# Ignore runtime directories that may be created by docker-compose
+logs/
+nginx-logs/
+
+# Ignore any local environment overrides
+docker-compose.override.yml
+.env
+.env.local 
