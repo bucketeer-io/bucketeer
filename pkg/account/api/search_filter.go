@@ -24,9 +24,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 
+	accounterr "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -167,7 +168,7 @@ func (s *AccountService) UpdateSearchFilter(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
+		} else if errors.Is(err, accounterr.ErrSearchFilterNotFound) {
 			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -177,14 +178,7 @@ func (s *AccountService) UpdateSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.UpdateSearchFilterResponse{}, nil
 }
@@ -263,7 +257,7 @@ func (s *AccountService) DeleteSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		if errors.Is(err, domain.ErrSearchFilterNotFound) {
+		if errors.Is(err, accounterr.ErrSearchFilterNotFound) {
 			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
@@ -273,14 +267,7 @@ func (s *AccountService) DeleteSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	return &accountproto.DeleteSearchFilterResponse{}, nil

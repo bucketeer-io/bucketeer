@@ -15,38 +15,65 @@
 package api
 
 import (
+	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
-const packageName = "account"
-
 var (
-	statusInternal                               = api.NewGRPCStatus(pkgErr.NewErrorInternal(packageName, "internal"))
-	statusInvalidCursor                          = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "cursor is invalid", pkgErr.InvalidTypeNotMatchFormat, "cursor"))
-	statusNoCommand                              = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "command must not be empty", pkgErr.InvalidTypeEmpty, "command"))
-	statusMissingOrganizationID                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "organization id must be specified", pkgErr.InvalidTypeEmpty, "organization id"))
-	statusEmailIsEmpty                           = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "email is empty", pkgErr.InvalidTypeEmpty, "email"))
-	statusInvalidEmail                           = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "invalid email format", pkgErr.InvalidTypeNotMatchFormat, "email"))
-	statusFirstNameIsEmpty                       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "first name is empty", pkgErr.InvalidTypeEmpty, "first name"))
-	statusInvalidFirstName                       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "invalid first name format", pkgErr.InvalidTypeNotMatchFormat, "first name"))
-	statusLastNameIsEmpty                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "last name is empty", pkgErr.InvalidTypeEmpty, "last name"))
-	statusInvalidLastName                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "invalid last name format", pkgErr.InvalidTypeNotMatchFormat, "last name"))
-	statusLanguageIsEmpty                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "language is empty", pkgErr.InvalidTypeEmpty, "language"))
-	statusInvalidOrganizationRole                = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "invalid organization roles", pkgErr.InvalidTypeEmpty, "organization role"))
-	statusInvalidEnvironmentRole                 = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "environment role must be specified", pkgErr.InvalidTypeEmpty, "environment role"))
-	statusInvalidUpdateEnvironmentRolesWriteType = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "update environment roles write type must be specified", pkgErr.InvalidTypeEmpty, "update environment roles write type"))
-	statusMissingAPIKeyID                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "apikey id must be specified", pkgErr.InvalidTypeEmpty, "apikey id"))
-	statusMissingAPIKeyName                      = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "apikey name must be not empty", pkgErr.InvalidTypeEmpty, "apikey name"))
-	statusInvalidOrderBy                         = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "order_by is invalid", pkgErr.InvalidTypeNotMatchFormat, "order_by"))
-	statusNotFound                               = api.NewGRPCStatus(pkgErr.NewErrorNotFound(packageName, "account not found", "account"))
-	statusAlreadyExists                          = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(packageName, "account already exists", "account"))
-	statusUnauthenticated                        = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(packageName, "account unauthenticated"))
-	statusPermissionDenied                       = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(packageName, "permission denied"))
-	statusSearchFilterNameIsEmpty                = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "search filter name is empty", pkgErr.InvalidTypeEmpty, "search filter name"))
-	statusSearchFilterQueryIsEmpty               = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "search filter query is empty", pkgErr.InvalidTypeEmpty, "search filter query"))
-	statusSearchFilterTargetTypeIsRequired       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "search filter target type is required", pkgErr.InvalidTypeEmpty, "search filter target type"))
-	statusSearchFilterIDIsEmpty                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "search filter ID is empty", pkgErr.InvalidTypeEmpty, "search filter ID"))
-	statusSearchFilterIDNotFound                 = api.NewGRPCStatus(pkgErr.NewErrorNotFound(packageName, "search filter not found", "search filter"))
-	statusInvalidListAPIKeyRequest               = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(packageName, "invalid list api key request", pkgErr.InvalidTypeEmpty, "list api key request"))
+	statusInternal                               = api.NewGRPCStatus(pkgErr.NewErrorInternal(account.PackageName, "internal"))
+	statusInvalidCursor                          = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "cursor is invalid", pkgErr.InvalidTypeNotMatchFormat, "cursor"))
+	statusNoCommand                              = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "command must not be empty", pkgErr.InvalidTypeEmpty, "command"))
+	statusMissingOrganizationID                  = api.NewGRPCStatus(account.ErrMissingOrganizationID)
+	statusEmailIsEmpty                           = api.NewGRPCStatus(account.ErrEmailIsEmpty)
+	statusInvalidEmail                           = api.NewGRPCStatus(account.ErrEmailInvalidFormat)
+	statusFirstNameIsEmpty                       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "first name is empty", pkgErr.InvalidTypeEmpty, "first name"))
+	statusInvalidFirstName                       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "invalid first name format", pkgErr.InvalidTypeNotMatchFormat, "first name"))
+	statusLastNameIsEmpty                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "last name is empty", pkgErr.InvalidTypeEmpty, "last name"))
+	statusInvalidLastName                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "invalid last name format", pkgErr.InvalidTypeNotMatchFormat, "last name"))
+	statusLanguageIsEmpty                        = api.NewGRPCStatus(account.ErrLanguageIsEmpty)
+	statusInvalidOrganizationRole                = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "invalid organization roles", pkgErr.InvalidTypeEmpty, "organization role"))
+	statusInvalidEnvironmentRole                 = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "environment role must be specified", pkgErr.InvalidTypeEmpty, "environment role"))
+	statusInvalidUpdateEnvironmentRolesWriteType = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "update environment roles write type must be specified", pkgErr.InvalidTypeEmpty, "update environment roles write type"))
+	statusMissingAPIKeyID                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "apikey id must be specified", pkgErr.InvalidTypeEmpty, "apikey id"))
+	statusMissingAPIKeyName                      = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "apikey name must be not empty", pkgErr.InvalidTypeEmpty, "apikey name"))
+	statusInvalidOrderBy                         = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "order_by is invalid", pkgErr.InvalidTypeNotMatchFormat, "order_by"))
+	statusNotFound                               = api.NewGRPCStatus(pkgErr.NewErrorNotFound(account.PackageName, "account not found", "account"))
+	statusAlreadyExists                          = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(account.PackageName, "account already exists", "account"))
+	statusUnauthenticated                        = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(account.PackageName, "account unauthenticated"))
+	statusPermissionDenied                       = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(account.PackageName, "permission denied"))
+	statusSearchFilterNameIsEmpty                = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "search filter name is empty", pkgErr.InvalidTypeEmpty, "search filter name"))
+	statusSearchFilterQueryIsEmpty               = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "search filter query is empty", pkgErr.InvalidTypeEmpty, "search filter query"))
+	statusSearchFilterTargetTypeIsRequired       = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "search filter target type is required", pkgErr.InvalidTypeEmpty, "search filter target type"))
+	statusSearchFilterIDIsEmpty                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "search filter ID is empty", pkgErr.InvalidTypeEmpty, "search filter ID"))
+	statusSearchFilterIDNotFound                 = api.NewGRPCStatus(account.ErrSearchFilterNotFound)
+	statusInvalidListAPIKeyRequest               = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "invalid list api key request", pkgErr.InvalidTypeEmpty, "list api key request"))
 )
+
+// func NewAccountError(err error, localizer *locale.Localizer) error {
+// 	var localizedMessage *errdetails.LocalizedMessage
+
+// 	if errors.Is(err, pkgErr.ErrorNotFound) || errors.Is(err, pkgErr.ErrorUnexpectedAffectedRows) {
+// 		localizedMessage = &errdetails.LocalizedMessage{
+// 			Locale:  localizer.GetLocale(),
+// 			Message: localizer.MustLocalize(locale.NotFoundError),
+// 		}
+// 	} else if errors.Is(err, v2as.ErrAccountAlreadyExists) {
+// 		localizedMessage = &errdetails.LocalizedMessage{
+// 			Locale:  localizer.GetLocale(),
+// 			Message: localizer.MustLocalize(locale.AlreadyExistsError),
+// 		}
+// 	} else {
+// 		localizedMessage = &errdetails.LocalizedMessage{
+// 			Locale:  localizer.GetLocale(),
+// 			Message: localizer.MustLocalize(locale.InternalServerError),
+// 		}
+// 	}
+// 	status := api.NewGRPCStatus(err)
+// 	dt, err := status.WithDetails(localizedMessage)
+// 	if err != nil {
+// 		return status.Err()
+// 	}
+
+// 	return dt.Err()
+// }

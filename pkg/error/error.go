@@ -31,7 +31,7 @@ const (
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
-func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, arg string) *ErrorInvalidAugment {
+func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, arg string) error {
 	//example: account:invalid augment[account_id:empty]
 	msg := pkg + ":"
 	if message != "" {
@@ -80,7 +80,7 @@ type ErrorNotFound struct {
 	argument    string
 }
 
-func NewErrorNotFound(pkg string, message string, arg string) *ErrorNotFound {
+func NewErrorNotFound(pkg string, message string, arg string) error {
 	//example: account:account_id not found
 	msg := pkg + ":"
 	if message != "" {
@@ -122,7 +122,7 @@ type ErrorAlreadyExists struct {
 	argument    string
 }
 
-func NewErrorAlreadyExists(pkg string, message string, arg string) *ErrorAlreadyExists {
+func NewErrorAlreadyExists(pkg string, message string, arg string) error {
 	msg := pkg + ":"
 	if message != "" {
 		msg += message
@@ -157,7 +157,7 @@ type ErrorUnauthenticated struct {
 	Metadata    map[string]string
 }
 
-func NewErrorUnauthenticated(pkg string, message string) *ErrorUnauthenticated {
+func NewErrorUnauthenticated(pkg string, message string) error {
 	msg := pkg + ":"
 	if message != "" {
 		msg += message
@@ -190,7 +190,7 @@ type ErrorPermissionDenied struct {
 	Metadata    map[string]string
 }
 
-func NewErrorPermissionDenied(pkg string, message string) *ErrorPermissionDenied {
+func NewErrorPermissionDenied(pkg string, message string) error {
 	msg := pkg + ":"
 	if message != "" {
 		msg += message
@@ -217,13 +217,46 @@ func (e *ErrorPermissionDenied) Unwrap() error {
 	return errors.New(e.Message)
 }
 
+type ErrorUnexpectedAffectedRows struct {
+	PackageName string
+	Message     string
+	Metadata    map[string]string
+}
+
+func NewErrorUnexpectedAffectedRows(pkg string, message string) error {
+	msg := pkg + ":"
+	if message != "" {
+		msg += message
+	} else {
+		msg += "unexpected affected rows"
+	}
+
+	messageKey := pkg + ".unexpected_affected_rows"
+	metadata := map[string]string{
+		"messageKey": messageKey,
+	}
+	return &ErrorUnexpectedAffectedRows{
+		PackageName: pkg,
+		Message:     msg,
+		Metadata:    metadata,
+	}
+}
+
+func (e *ErrorUnexpectedAffectedRows) Error() string {
+	return e.Message
+}
+
+func (e *ErrorUnexpectedAffectedRows) Unwrap() error {
+	return errors.New(e.Message)
+}
+
 type ErrorInternal struct {
 	PackageName string
 	Message     string
 	Metadata    map[string]string
 }
 
-func NewErrorInternal(pkg string, message string) *ErrorInternal {
+func NewErrorInternal(pkg string, message string) error {
 	msg := pkg + ":"
 	if message != "" {
 		msg += message

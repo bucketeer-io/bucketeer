@@ -15,17 +15,14 @@
 package domain
 
 import (
-	"errors"
 	"regexp"
 	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/common"
@@ -35,17 +32,7 @@ import (
 var (
 	maxAccountNameLength = 250
 	// nolint:lll
-	emailRegex                    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	ErrSearchFilterNotFound       = errors.New("account: search filter not found")
-	ErrTeamNotFound               = errors.New("team: not found")
-	ErrMissingOrganizationID      = pkgErr.NewErrorInvalidAugment("account", "organization id must be specified", pkgErr.InvalidTypeEmpty, "organization_id")
-	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
-	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
-	statusFullNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: full name is empty")
-	statusInvalidFirstName        = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
-	statusInvalidLastName         = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
-	statusLanguageIsEmpty         = gstatus.New(codes.InvalidArgument, "account: language is empty")
-	statusInvalidOrganizationRole = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
+	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
 type AccountV2 struct {
@@ -167,7 +154,7 @@ func (a *AccountV2) AddTeam(team string) error {
 func (a *AccountV2) RemoveTeam(team string) error {
 	idx := slices.Index(a.Teams, team)
 	if idx == -1 {
-		return ErrTeamNotFound
+		return account.ErrTeamNotFound
 	}
 	a.Teams = slices.Delete(a.Teams, idx, idx+1)
 	return nil
@@ -309,7 +296,7 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 			return nil
 		}
 	}
-	return ErrSearchFilterNotFound
+	return account.ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
@@ -320,7 +307,7 @@ func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
 			return nil
 		}
 	}
-	return ErrSearchFilterNotFound
+	return account.ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
@@ -331,7 +318,7 @@ func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
 			return nil
 		}
 	}
-	return ErrSearchFilterNotFound
+	return account.ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) error {
@@ -347,7 +334,7 @@ func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) err
 			return nil
 		}
 	}
-	return ErrSearchFilterNotFound
+	return account.ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, environmentID string) {
@@ -375,34 +362,34 @@ func (a *AccountV2) GetAccountFullName() string {
 
 func validate(a *AccountV2) error {
 	if a.OrganizationId == "" {
-		return ErrMissingOrganizationID
+		return account.ErrMissingOrganizationID
 	}
 	if a.Email == "" {
-		return statusEmailIsEmpty.Err()
+		return account.ErrEmailIsEmpty
 	}
 	if !emailRegex.MatchString(a.Email) {
-		return statusInvalidEmail.Err()
+		return account.ErrEmailInvalidFormat
 	}
 	// If both first name and last name are empty, the name field must not be empty
 	if a.FirstName == "" && a.LastName == "" {
 		// TODO: This should be removed after the new console is released and the migration is completed
 		if a.Name == "" {
-			return statusFullNameIsEmpty.Err()
+			return account.ErrFullNameIsEmpty
 		}
 	}
 	// Validate first name length if it's provided
 	if a.FirstName != "" && len(a.FirstName) > maxAccountNameLength {
-		return statusInvalidFirstName.Err()
+		return account.ErrFullNameInvalidFormat
 	}
 	// Validate last name length if it's provided
 	if a.LastName != "" && len(a.LastName) > maxAccountNameLength {
-		return statusInvalidLastName.Err()
+		return account.ErrLastNameInvalidFormat
 	}
 	if a.Language == "" {
-		return statusLanguageIsEmpty.Err()
+		return account.ErrLanguageIsEmpty
 	}
 	if a.OrganizationRole == proto.AccountV2_Role_Organization_UNASSIGNED {
-		return statusInvalidOrganizationRole.Err()
+		return account.ErrOrganizationRoleInvalid
 	}
 	return nil
 }

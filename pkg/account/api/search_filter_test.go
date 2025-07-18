@@ -29,6 +29,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -665,7 +667,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -676,7 +678,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "err: account not found",
@@ -1223,7 +1225,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -1233,7 +1235,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "filterID",
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "err: account not found",
