@@ -27,7 +27,6 @@ import (
 	v2als "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	domainevent "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -41,7 +40,6 @@ type auditLogPersisterConfig struct {
 
 type auditLogPersister struct {
 	auditLogPersisterConfig auditLogPersisterConfig
-	mysqlAdminStorage       v2als.AdminAuditLogStorage
 	mysqlStorage            v2als.AuditLogStorage
 	logger                  *zap.Logger
 }
@@ -69,7 +67,6 @@ func NewAuditLogPersister(
 	}
 	return &auditLogPersister{
 		auditLogPersisterConfig: persisterConfig,
-		mysqlAdminStorage:       v2als.NewAdminAuditLogStorage(mysqlClient),
 		mysqlStorage:            v2als.NewAuditLogStorage(mysqlClient),
 		logger:                  logger,
 	}, nil
@@ -123,8 +120,8 @@ func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
 	defer cancel()
 	// Environment audit logs
 	a.createAuditLogsMySQL(ctx, auditlogs, messages, a.mysqlStorage.CreateAuditLog)
-	// Admin audit logs
-	a.createAuditLogsMySQL(ctx, adminAuditLogs, adminMessages, a.mysqlAdminStorage.CreateAdminAuditLog)
+	// Admin audit logs - now stored in unified audit_log table with empty environment_id
+	a.createAuditLogsMySQL(ctx, adminAuditLogs, adminMessages, a.mysqlStorage.CreateAuditLog)
 }
 
 func (a auditLogPersister) extractAuditLogs(
@@ -141,7 +138,7 @@ func (a auditLogPersister) extractAuditLogs(
 		if event.IsAdminEvent {
 			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(
 				event,
-				storage.AdminEnvironmentID,
+				"", // Empty string for organization-scoped logs in unified table
 			))
 			adminMessages = append(adminMessages, msg)
 		} else {

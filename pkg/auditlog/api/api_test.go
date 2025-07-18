@@ -418,7 +418,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
@@ -429,7 +429,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
@@ -440,13 +440,19 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "success with default page size when page_size is 0",
 			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
 					&mysql.ListOptions{
-						Limit:   200, // maxAuditLogPageSize (used as default when page_size is 0)
-						Offset:  0,
-						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
-						Filters: []*mysql.FilterV2{},
+						Limit:  200, // maxAuditLogPageSize (used as default when page_size is 0)
+						Offset: 0,
+						Orders: []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "", // Empty string for organization-scoped logs
+							},
+						},
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
@@ -457,13 +463,19 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "success: page size exceeds maximum",
 			setup: func(s *auditlogService) {
-				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
 					&mysql.ListOptions{
-						Limit:   200, // maxAuditLogPageSize
-						Offset:  0,
-						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
-						Filters: []*mysql.FilterV2{},
+						Limit:  200, // maxAuditLogPageSize
+						Offset: 0,
+						Orders: []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "", // Empty string for organization-scoped logs
+							},
+						},
 					},
 				).Return(createAuditLogs(t), 200, int64(10), nil)
 			},
