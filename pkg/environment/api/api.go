@@ -29,6 +29,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	v2acc "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	v2 "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -79,6 +80,7 @@ type EnvironmentService struct {
 	projectStorage      v2.ProjectStorage
 	orgStorage          v2.OrganizationStorage
 	environmentStorage  v2.EnvironmentStorage
+	accountStorage      v2acc.AccountStorage
 	publisher           publisher.Publisher
 	googleAuthenticator auth.Authenticator
 	verifier            token.Verifier
@@ -110,6 +112,7 @@ func NewEnvironmentService(
 		projectStorage:     v2.NewProjectStorage(mysqlClient),
 		orgStorage:         v2.NewOrganizationStorage(mysqlClient),
 		environmentStorage: v2.NewEnvironmentStorage(mysqlClient),
+		accountStorage:     v2acc.NewAccountStorage(mysqlClient),
 		publisher:          publisher,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,

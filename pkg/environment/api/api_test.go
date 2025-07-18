@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -63,6 +64,19 @@ func createContextWithToken(t *testing.T) context.Context {
 	return context.WithValue(ctx, rpc.Key, token)
 }
 
+func createDemoContextWithToken(t *testing.T) context.Context {
+	t.Helper()
+	token := &token.DemoCreationToken{
+		Issuer:   "issuer",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
+	}
+	ctx := context.TODO()
+	return context.WithValue(ctx, rpc.Key, token)
+}
+
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
 	token := &token.AccessToken{
@@ -85,7 +99,28 @@ func newEnvironmentService(t *testing.T, mockController *gomock.Controller, s st
 		orgStorage:         storagemock.NewMockOrganizationStorage(mockController),
 		projectStorage:     storagemock.NewMockProjectStorage(mockController),
 		environmentStorage: storagemock.NewMockEnvironmentStorage(mockController),
+		accountStorage:     accstoragemock.NewMockAccountStorage(mockController),
 		publisher:          publishermock.NewMockPublisher(mockController),
 		logger:             logger.Named("api"),
+	}
+}
+
+func newDemoEnvironmentService(t *testing.T, mockController *gomock.Controller, s storage.Client) *EnvironmentService {
+	t.Helper()
+	logger, err := log.NewLogger()
+	require.NoError(t, err)
+	return &EnvironmentService{
+		accountClient:      acmock.NewMockClient(mockController),
+		mysqlClient:        mysqlmock.NewMockClient(mockController),
+		orgStorage:         storagemock.NewMockOrganizationStorage(mockController),
+		projectStorage:     storagemock.NewMockProjectStorage(mockController),
+		environmentStorage: storagemock.NewMockEnvironmentStorage(mockController),
+		accountStorage:     accstoragemock.NewMockAccountStorage(mockController),
+		publisher:          publishermock.NewMockPublisher(mockController),
+		logger:             logger.Named("api"),
+		opts: &options{
+			logger:            logger,
+			isDemoSiteEnabled: true,
+		},
 	}
 }
