@@ -17,6 +17,7 @@ package cacher
 
 import (
 	"context"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -58,7 +59,11 @@ func NewAutoOpsRulesCacher(
 	}
 }
 
-func (c *autoOpsRulesCacher) Run(ctx context.Context) error {
+func (c *autoOpsRulesCacher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobAutoOpsRulesCacher, lastErr, time.Since(startTime))
+	}()
 	envs, err := c.listAllEnvironments(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list all environments")

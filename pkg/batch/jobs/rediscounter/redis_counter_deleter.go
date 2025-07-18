@@ -76,11 +76,15 @@ func NewRedisCounterDeleter(
 }
 
 func (r *redisCounterDeleter) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobRedisCounterDeleter, lastErr, time.Since(startTime))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, r.opts.Timeout)
 	defer cancel()
 
 	r.logger.Info("Starting to delete old counters from Redis")
-	startTime := time.Now()
 	envs, err := r.listEnvironments(ctx)
 	if err != nil {
 		return err

@@ -69,7 +69,11 @@ func NewExperimentCacher(
 	}
 }
 
-func (c *experimentCacher) Run(ctx context.Context) error {
+func (c *experimentCacher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobExperimentCacher, lastErr, time.Since(startTime))
+	}()
 	envs, err := c.listAllEnvironments(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list all environments")

@@ -106,9 +106,12 @@ func (e *experimentCalculate) runCalculation() {
 	// Create a context with timeout from the options inside the goroutine
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), e.opts.Timeout)
 	defer cancel() // Ensure context is canceled when goroutine completes
-
+	var err error
 	e.logger.Info("Started experiment calculation job")
 	startTime := time.Now().In(e.location)
+	defer func() {
+		jobs.RecordJob(jobs.JobExperimentCalculator, err, time.Since(startTime))
+	}()
 	environments, environmentErr := e.listEnvironments(ctxWithTimeout)
 	if environmentErr != nil {
 		e.logger.Error("Failed to list environments when calculating experiments",
@@ -116,6 +119,7 @@ func (e *experimentCalculate) runCalculation() {
 				zap.Error(environmentErr),
 			)...,
 		)
+		err = environmentErr
 		return
 	}
 	var calculatedCount int
@@ -127,6 +131,7 @@ func (e *experimentCalculate) runCalculation() {
 					zap.Error(experimentErr),
 				)...,
 			)
+			err = experimentErr
 			return
 		}
 		if experiments == nil {

@@ -45,9 +45,9 @@ const (
 
 func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCalculator {
 	registerer := metricsmock.NewMockRegisterer(mockController)
-	registerer.EXPECT().MustRegister(gomock.Any()).Return()
+	registerer.EXPECT().MustRegister(gomock.Any()).Return().AnyTimes() // Allow any number of calls for metrics registration
 	return NewExperimentCalculator(
-		stan.NewStan("localhost", "8080"),
+		stan.NewStan("localhost", "8080", registerer, zap.NewNop()),
 		stanModelID,
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),

@@ -18,6 +18,7 @@ package cacher
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -59,7 +60,11 @@ func NewAPIKeyCacher(
 	}
 }
 
-func (c *apiKeyCacher) Run(ctx context.Context) error {
+func (c *apiKeyCacher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobAPIKeyCacher, lastErr, time.Since(startTime))
+	}()
 	envAPIKeys, err := c.accStorage.ListAllEnvironmentAPIKeys(ctx)
 	if err != nil {
 		return err

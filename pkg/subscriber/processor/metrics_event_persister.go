@@ -116,7 +116,7 @@ func (m metricsEventPersister) handle(message *puller.Message) error {
 func (m metricsEventPersister) unmarshalMessage(message *puller.Message) (*eventproto.MetricsEvent, error) {
 	event := &eventproto.Event{}
 	if err := proto.Unmarshal(message.Data, event); err != nil {
-		m.logger.Error("ummarshal event failed",
+		m.logger.Error("unmarshal event failed",
 			zap.Error(err),
 			zap.Any("msg", message),
 		)
@@ -125,7 +125,7 @@ func (m metricsEventPersister) unmarshalMessage(message *puller.Message) (*event
 	}
 	me := &eventproto.MetricsEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, me); err != nil {
-		m.logger.Error("ummarshal metrics event failed",
+		m.logger.Error("unmarshal metrics event failed",
 			zap.Error(err),
 			zap.Any("msg", message),
 		)

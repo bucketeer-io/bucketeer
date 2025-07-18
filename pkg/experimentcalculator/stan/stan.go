@@ -23,12 +23,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-gota/gota/dataframe"
 	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
 var (
@@ -130,12 +132,14 @@ type GetParamsResp struct {
 	} `json:"params"`
 }
 
-func NewStan(host, port string) *Stan {
+func NewStan(host, port string, registerer metrics.Registerer, logger *zap.Logger) *Stan {
+	RegisterMetrics(registerer)
+
 	client := resty.New()
 	client.SetBaseURL(fmt.Sprintf("http://%s:%s", host, port))
 	return &Stan{
 		client: client,
-		logger: zap.NewNop(),
+		logger: logger,
 	}
 }
 
@@ -144,8 +148,13 @@ func NewStan(host, port string) *Stan {
 //
 //	201 Created – Identifier for compiled Stan model and compiler output.
 //	400 Bad Request – Error associated with compile request.
-func (s Stan) CompileModel(ctx context.Context, programCode string) (ModelCompileResp, error) {
-	compileResp := ModelCompileResp{}
+func (s Stan) CompileModel(ctx context.Context, programCode string) (compileResp ModelCompileResp, err error) {
+	startTime := time.Now()
+	var statusCode int
+	defer func() {
+		RecordHTTPStan(methodCompileModel, err, statusCode, time.Since(startTime))
+	}()
+
 	compileReq := ModelCompileReq{ProgramCode: programCode}
 
 	resp, err := s.client.R().
@@ -160,7 +169,9 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (ModelCompil
 		)
 		return compileResp, err
 	}
-	if resp.StatusCode() != http.StatusCreated {
+	statusCode = resp.StatusCode()
+
+	if statusCode != http.StatusCreated {
 		s.logger.Error("HttpStan failed to compile model",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("status", resp.Status()),
@@ -185,7 +196,13 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (ModelCompil
 //	201 Created – Identifier for completed Stan fit
 //	400 Bad Request – Error associated with request.
 //	404 Not Found – Fit not found.
-func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (string, error) {
+func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (result string, err error) {
+	startTime := time.Now()
+	var statusCode int
+	defer func() {
+		RecordHTTPStan(methodCreateFit, err, statusCode, time.Since(startTime))
+	}()
+
 	createFitResp := CreateFitResp{}
 	crateFitErrResp := CreateFitErrResp{}
 
@@ -203,7 +220,9 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 		)
 		return "", err
 	}
-	if resp.StatusCode() != http.StatusCreated {
+
+	statusCode = resp.StatusCode()
+	if statusCode != http.StatusCreated {
 		s.logger.Error("HttpStan failed to create fit",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
@@ -226,8 +245,15 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 //
 //	200 OK – Operation name and metadata.
 //	404 Not Found – Operation not found.
-func (s Stan) GetOperationDetails(ctx context.Context, operationID string) (GetOperationResp, error) {
-	getOperationResp := GetOperationResp{}
+func (s Stan) GetOperationDetails(
+	ctx context.Context,
+	operationID string,
+) (getOperationResp GetOperationResp, err error) {
+	startTime := time.Now()
+	var statusCode int
+	defer func() {
+		RecordHTTPStan(methodGetOperationDetails, err, statusCode, time.Since(startTime))
+	}()
 
 	resp, err := s.client.R().
 		SetPathParam("operation_id", operationID).
@@ -236,7 +262,9 @@ func (s Stan) GetOperationDetails(ctx context.Context, operationID string) (GetO
 	if err != nil {
 		return getOperationResp, err
 	}
-	if resp.StatusCode() != http.StatusOK {
+
+	statusCode = resp.StatusCode()
+	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get operation details",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("operation_id", operationID),
@@ -258,7 +286,13 @@ func (s Stan) GetOperationDetails(ctx context.Context, operationID string) (GetO
 //
 //	200 OK – Newline-delimited JSON-encoded messages from Stan. Includes draws.
 //	404 Not Found – Fit not found.
-func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (io.ReadCloser, error) {
+func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (result io.ReadCloser, err error) {
+	startTime := time.Now()
+	var statusCode int
+	defer func() {
+		RecordHTTPStan(methodGetFitResult, err, statusCode, time.Since(startTime))
+	}()
+
 	resp, err := s.client.R().
 		SetPathParam("model_id", modelID).
 		SetPathParam("fit_id", fitID).
@@ -273,7 +307,9 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (io.ReadC
 		)
 		return nil, err
 	}
-	if resp.StatusCode() != http.StatusOK {
+
+	statusCode = resp.StatusCode()
+	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get fit result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
@@ -294,7 +330,18 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (io.ReadC
 //	200 OK – Parameters for Stan Model
 //	400 Bad Request – Error associated with request.
 //	404 Not Found – Model not found.
-func (s Stan) StanParams(ctx context.Context, modelID string, data map[string]interface{}) ([]string, []string) {
+func (s Stan) StanParams(
+	ctx context.Context,
+	modelID string,
+	data map[string]interface{},
+) (constrainedNames []string, paramNames []string) {
+	startTime := time.Now()
+	var statusCode int
+	var err error
+	defer func() {
+		RecordHTTPStan(methodStanParams, err, statusCode, time.Since(startTime))
+	}()
+
 	paramsResp := GetParamsResp{}
 	resp, err := s.client.R().
 		SetPathParam("model_id", modelID).
@@ -311,7 +358,9 @@ func (s Stan) StanParams(ctx context.Context, modelID string, data map[string]in
 		)
 		return nil, nil
 	}
-	if resp.StatusCode() != http.StatusOK {
+
+	statusCode = resp.StatusCode()
+	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get params",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("status", resp.Status()),
@@ -320,8 +369,7 @@ func (s Stan) StanParams(ctx context.Context, modelID string, data map[string]in
 		)
 		return nil, nil
 	}
-	var constrainedNames []string
-	var paramNames []string
+
 	for _, param := range paramsResp.Params {
 		constrainedNames = append(constrainedNames, param.ConstrainedNames...)
 		paramNames = append(paramNames, param.Name)

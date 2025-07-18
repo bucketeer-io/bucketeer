@@ -18,6 +18,7 @@ package cacher
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -61,7 +62,11 @@ func NewFeatureFlagCacher(
 	}
 }
 
-func (c *featureFlagCacher) Run(ctx context.Context) error {
+func (c *featureFlagCacher) Run(ctx context.Context) (lastErr error) {
+	startTime := time.Now()
+	defer func() {
+		jobs.RecordJob(jobs.JobFeatureFlagCacher, lastErr, time.Since(startTime))
+	}()
 	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
 		c.logger.Error("Failed to all environment features")
