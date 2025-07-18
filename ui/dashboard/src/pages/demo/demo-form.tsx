@@ -12,7 +12,6 @@ import Input from 'components/input';
 interface AccessDemoForm {
   organizationName: string;
   organizationUrlCode: string;
-  email: string;
   isAgree: boolean;
 }
 
@@ -28,7 +27,6 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
           name: translation('common:url-code')
         })
       ),
-    email: yup.string().email().required(requiredMessage),
     isAgree: yup
       .boolean()
       .isTrue(translation('message:required-agreement-terms'))
@@ -36,14 +34,13 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   });
 
 const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
-  const { t } = useTranslation(['auth', 'common', 'form', 'message']);
+  const { t } = useTranslation(['common', 'form', 'message']);
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       organizationName: '',
       organizationUrlCode: '',
-      email: '',
       isAgree: undefined
     },
     mode: 'onChange'
@@ -104,19 +101,6 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
                   placeholder={`${t('form:placeholder-code')}`}
                   {...field}
                 />
-              </Form.Control>
-              <Form.Message />
-            </Form.Item>
-          )}
-        />
-        <Form.Field
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <Form.Item>
-              <Form.Label required>{t('owner-email')}</Form.Label>
-              <Form.Control>
-                <Input placeholder={t('email')} {...field} />
               </Form.Control>
               <Form.Message />
             </Form.Item>

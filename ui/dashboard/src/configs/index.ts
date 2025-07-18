@@ -1,3 +1,7 @@
+import {
+  PAGE_PATH_AUTH_CALLBACK,
+  PAGE_PATH_AUTH_DEMO_CALLBACK
+} from 'constants/routing';
 import resolveConfig from 'tailwindcss/resolveConfig';
 import customTailwindConfig from '../../tailwind.config';
 
@@ -23,8 +27,12 @@ export const urls = {
     releaseMode !== 'prod' ? import.meta.env.VITE_WEB_API_ENDPOINT : '',
   AUTH_REDIRECT:
     releaseMode !== 'prod'
-      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}/auth/callback`
-      : `${window.location.origin}/auth/callback`,
+      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}${PAGE_PATH_AUTH_CALLBACK}`
+      : `${window.location.origin}${PAGE_PATH_AUTH_CALLBACK}`,
+  AUTH_DEMO_REDIRECT:
+    releaseMode !== 'prod'
+      ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}${PAGE_PATH_AUTH_DEMO_CALLBACK}`
+      : `${window.location.origin}${PAGE_PATH_AUTH_DEMO_CALLBACK}`,
   ORIGIN_URL:
     releaseMode !== 'prod'
       ? `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}`
