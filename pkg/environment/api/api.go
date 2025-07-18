@@ -190,23 +190,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		}
 		return nil, dt.Err()
 	}
-	if !userInfo.VerifiedEmail {
-		s.logger.Error("Email is not verified",
-			zap.String("email", userInfo.Email),
-			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
-			zap.String("redirect_url", req.RedirectUrl),
-		)
-		dt, err := auth.StatusEmailNotVerified.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.Account),
-		})
-		if err != nil {
-			return nil, auth.StatusEmailNotVerified.Err()
-		}
-		return nil, dt.Err()
-	}
-
 	existedInSystem, err := s.checkEmailExistedInSystem(ctx, userInfo.Email, localizer)
 	if err != nil {
 		return nil, err
