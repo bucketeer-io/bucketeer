@@ -15,7 +15,9 @@
     // Persistent yarn cache
     "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume",
     // Persistent npm cache
-    "source=bucketeer-npm-cache,target=/home/codespace/.npm,type=volume"
+    "source=bucketeer-npm-cache,target=/home/codespace/.npm,type=volume",
+    // Persistent Docker image cache for minikube (saves emulator images)
+    "source=bucketeer-docker-images,target=/home/codespace/.docker-images,type=volume"
   ],
   "containerEnv": {
     // Optimize Go module downloads

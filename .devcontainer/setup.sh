@@ -59,6 +59,10 @@ fix_cache_permissions() {
         fi
     done
     
+    # Fix Docker image cache permissions
+    sudo mkdir -p /home/codespace/.docker-images
+    sudo chown -R codespace:codespace /home/codespace/.docker-images
+    
     print_success "Cache permissions fixed"
 }
 
@@ -239,6 +243,144 @@ cleanup_docker_if_needed() {
     fi
 }
 
+# List of critical emulator and development images
+EMULATOR_IMAGES=(
+    "ghcr.io/bucketeer-io/bigquery-emulator:latest"
+    "gcr.io/google.com/cloudsdktool/google-cloud-cli:449.0.0"
+    "docker.io/arigaio/atlas:latest"
+    "gcr.io/distroless/base:latest"
+    "redis:latest"
+    "mysql:8.0"
+    "hashicorp/vault:latest"
+)
+
+# Function to check if internet is available
+check_internet() {
+    curl -s --connect-timeout 5 https://google.com > /dev/null 2>&1
+}
+
+# Function to check which emulator images are already cached
+check_cached_images() {
+    local cached_images=()
+    local missing_images=()
+    
+    for image in "${EMULATOR_IMAGES[@]}"; do
+        local cache_file="/home/codespace/.docker-images/$(echo "$image" | tr '/' '_' | tr ':' '_').tar"
+        if [ -f "$cache_file" ]; then
+            cached_images+=("$image")
+        else
+            missing_images+=("$image")
+        fi
+    done
+    
+    if [ ${#cached_images[@]} -gt 0 ]; then
+        print_success "Cached images: ${cached_images[*]}"
+    fi
+    
+    if [ ${#missing_images[@]} -gt 0 ]; then
+        print_warning "Missing cached images: ${missing_images[*]}"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Function to save Docker image to cache
+save_image_to_cache() {
+    local image=$1
+    local cache_file="/home/codespace/.docker-images/$(echo "$image" | tr '/' '_' | tr ':' '_').tar"
+    
+    if docker image inspect "$image" >/dev/null 2>&1; then
+        print_status "Saving $image to cache..."
+        docker save "$image" -o "$cache_file" && {
+            print_success "Cached $image"
+            return 0
+        }
+    fi
+    return 1
+}
+
+# Function to load Docker image from cache
+load_image_from_cache() {
+    local image=$1
+    local cache_file="/home/codespace/.docker-images/$(echo "$image" | tr '/' '_' | tr ':' '_').tar"
+    
+    if [ -f "$cache_file" ]; then
+        print_status "Loading $image from cache..."
+        docker load -i "$cache_file" && {
+            print_success "Loaded $image from cache"
+            return 0
+        }
+    fi
+    return 1
+}
+
+# Function to pre-pull and cache emulator images
+cache_emulator_images() {
+    if ! check_internet; then
+        print_warning "No internet connection, skipping image pre-pulling"
+        return 0
+    fi
+    
+    print_status "Pre-pulling and caching emulator images..."
+    local pulled_count=0
+    
+    for image in "${EMULATOR_IMAGES[@]}"; do
+        local cache_file="/home/codespace/.docker-images/$(echo "$image" | tr '/' '_' | tr ':' '_').tar"
+        
+        # Skip if already cached
+        if [ -f "$cache_file" ]; then
+            if [ "${DEBUG_SETUP:-}" = "true" ]; then
+                print_success "DEBUG: $image already cached"
+            fi
+            continue
+        fi
+        
+        # Try to pull and cache the image
+        print_status "Pulling $image..."
+        if docker pull "$image" 2>/dev/null; then
+            if save_image_to_cache "$image"; then
+                ((pulled_count++))
+            fi
+        else
+            print_warning "Failed to pull $image (might not exist or network issue)"
+        fi
+    done
+    
+    if [ $pulled_count -gt 0 ]; then
+        print_success "Successfully cached $pulled_count new emulator images"
+    else
+        print_success "All emulator images already cached"
+    fi
+}
+
+# Function to restore cached images to Docker daemon
+restore_cached_images() {
+    print_status "Restoring cached emulator images to Docker daemon..."
+    local restored_count=0
+    
+    for image in "${EMULATOR_IMAGES[@]}"; do
+        # Check if image is already in Docker daemon
+        if docker image inspect "$image" >/dev/null 2>&1; then
+            if [ "${DEBUG_SETUP:-}" = "true" ]; then
+                print_success "DEBUG: $image already in Docker daemon"
+            fi
+            continue
+        fi
+        
+        # Try to load from cache
+        if load_image_from_cache "$image"; then
+            ((restored_count++))
+        fi
+    done
+    
+    if [ $restored_count -gt 0 ]; then
+        print_success "Restored $restored_count images from cache"
+    else
+        print_success "All cached images already available in Docker daemon"
+    fi
+}
+
 # Main setup logic
 main() {
     # Fix any permission issues with mounted cache volumes first
@@ -294,6 +436,9 @@ main() {
     # Cleanup Docker if needed
     cleanup_docker_if_needed
     
+    # Restore cached Docker images first (for offline scenarios)
+    restore_cached_images
+    
     # Install missing components
     if [ "$need_go_tools" = true ]; then
         install_go_tools
@@ -315,8 +460,12 @@ main() {
         install_node_deps "evaluation/typescript" "Evaluation TypeScript"
     fi
     
+    # Pre-pull and cache emulator images if internet is available
+    cache_emulator_images
+    
     print_success "🎉 Post-attach setup completed!"
     print_status "Cache volumes will persist dependencies for next container restart"
+    print_status "Emulator images cached for offline minikube usage"
 }
 
 # Run main function
