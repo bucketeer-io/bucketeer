@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"strings"
 	"testing"
 	"time"
 
@@ -940,6 +939,14 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
 
+	// Get the feature to retrieve correct variation ID and feature version
+	feature := getFeature(t, featureID, client)
+	if len(feature.Variations) == 0 {
+		t.Fatal("Feature has no variations")
+	}
+	variationID := feature.Variations[0].Id
+	featureVersion := feature.Version
+
 	// Register evaluation events with user attributes
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
@@ -947,22 +954,58 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	defer cancel()
 
 	testUserDataKeySuffix := "testGetUserAttributeKeys-"
-	data := map[string]string{
-		testUserDataKeySuffix + uuid: "0.1.0",
+
+	// First evaluation event with 3 attributes
+	data1 := map[string]string{
+		testUserDataKeySuffix + "attr1-" + uuid: "value1",
+		testUserDataKeySuffix + "attr2-" + uuid: "value2",
+		testUserDataKeySuffix + "attr3-" + uuid: "value3",
 	}
 
-	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+	evaluation1, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
-		FeatureVersion: 1,
+		FeatureVersion: featureVersion,
 		UserId:         userID,
-		VariationId:    "variation-id",
+		VariationId:    variationID,
 		User: &userproto.User{
 			Id:   userID,
-			Data: data,
+			Data: data1,
 		},
-		Reason: &featureproto.Reason{},
-		Tag:    tag,
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_CLIENT,
+		},
+		Tag:        tag,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_ANDROID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Second evaluation event with different attributes and source ID
+	data2 := map[string]string{
+		testUserDataKeySuffix + "attr4-" + uuid: "value4",
+		testUserDataKeySuffix + "attr5-" + uuid: "value5",
+		testUserDataKeySuffix + "attr6-" + uuid: "value6",
+	}
+
+	evaluation2, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+		Timestamp:      time.Now().Unix(),
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		UserId:         userID,
+		VariationId:    variationID,
+		User: &userproto.User{
+			Id:   userID,
+			Data: data2,
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_CLIENT,
+		},
+		Tag:        tag,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_IOS,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -972,7 +1015,11 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		Events: []*eventproto.Event{
 			{
 				Id:    newUUID(t),
-				Event: evaluation,
+				Event: evaluation1,
+			},
+			{
+				Id:    newUUID(t),
+				Event: evaluation2,
 			},
 		},
 	}
@@ -984,7 +1031,17 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
 	}
 
-	isFoundKey := false
+	// Check that all 6 attributes are found
+	expectedAttributes := []string{
+		testUserDataKeySuffix + "attr1-" + uuid,
+		testUserDataKeySuffix + "attr2-" + uuid,
+		testUserDataKeySuffix + "attr3-" + uuid,
+		testUserDataKeySuffix + "attr4-" + uuid,
+		testUserDataKeySuffix + "attr5-" + uuid,
+		testUserDataKeySuffix + "attr6-" + uuid,
+	}
+
+	foundAttributes := make(map[string]bool)
 	for i := 0; i < maxRetryCount; i++ {
 		// Test GetUserAttributeKeys API
 		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
@@ -994,19 +1051,33 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		if err != nil {
 			t.Fatal("Failed to get user attribute keys:", err)
 		}
+
+		// Check for all expected attributes
 		for _, key := range userAttrResp.UserAttributeKeys {
-			if strings.HasPrefix(key, testUserDataKeySuffix) {
-				isFoundKey = true
-				break
+			for _, expectedAttr := range expectedAttributes {
+				if key == expectedAttr {
+					foundAttributes[expectedAttr] = true
+				}
 			}
 		}
-		if isFoundKey {
+
+		// If all attributes are found, break
+		if len(foundAttributes) == len(expectedAttributes) {
 			break
 		}
+
 		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
 	}
-	if !isFoundKey {
-		t.Fatalf("User attribute key with prefix '%s' not found after %d retries", testUserDataKeySuffix, maxRetryCount)
+
+	// Verify all expected attributes were found
+	for _, expectedAttr := range expectedAttributes {
+		if !foundAttributes[expectedAttr] {
+			t.Errorf("User attribute key '%s' not found after %d retries", expectedAttr, maxRetryCount)
+		}
+	}
+
+	if len(foundAttributes) != len(expectedAttributes) {
+		t.Fatalf("Expected %d attributes, but found %d", len(expectedAttributes), len(foundAttributes))
 	}
 }
 
