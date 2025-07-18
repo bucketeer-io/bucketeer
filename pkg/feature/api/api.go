@@ -71,6 +71,7 @@ type FeatureService struct {
 	batchClient           btclient.Client
 	environmentClient     envclient.Client
 	segmentUsersCache     cachev3.SegmentUsersCache
+	userAttributesCache   cachev3.UserAttributesCache
 	segmentUsersPublisher publisher.Publisher
 	domainPublisher       publisher.Publisher
 	flightgroup           singleflight.Group
@@ -86,7 +87,7 @@ func NewFeatureService(
 	autoOpsClient autoopsclient.Client,
 	batchClient btclient.Client,
 	environmentClient envclient.Client,
-	v3Cache cache.MultiGetCache,
+	v3Cache cache.MultiGetDeleteCountCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainPublisher publisher.Publisher,
 	triggerURL string,
@@ -113,6 +114,7 @@ func NewFeatureService(
 		environmentClient:     environmentClient,
 		featuresCache:         cachev3.NewFeaturesCache(v3Cache),
 		segmentUsersCache:     cachev3.NewSegmentUsersCache(v3Cache),
+		userAttributesCache:   cachev3.NewUserAttributesCache(v3Cache),
 		segmentUsersPublisher: segmentUsersPublisher,
 		domainPublisher:       domainPublisher,
 		triggerURL:            triggerURL,
