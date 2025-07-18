@@ -34,7 +34,7 @@ RUN apt-get update \
         libc6 \
         libgcc1 \
         libgssapi-krb5-2 \
-        libncurses5 \
+        libncurses6 \
         liblttng-ust1 \
         libssl-dev \
         libstdc++6 \
