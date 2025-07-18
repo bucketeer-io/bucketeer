@@ -26,9 +26,9 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -87,7 +87,7 @@ func (s *AccountService) CreateAccountV2(
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
 		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
-		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
+		if err != nil && !errors.Is(err, accountpkg.ErrAccountNotFound) {
 			return err
 		}
 		if exist != nil {
@@ -115,7 +115,7 @@ func (s *AccountService) CreateAccountV2(
 		return s.accountStorage.CreateAccountV2(ctx, account)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
+		if errors.Is(err, accountpkg.ErrAccountAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -190,7 +190,7 @@ func (s *AccountService) createAccountV2NoCommand(
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
 		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
-		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
+		if err != nil && !errors.Is(err, accountpkg.ErrAccountNotFound) {
 			return err
 		}
 		if exist != nil {
@@ -232,7 +232,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
+		if errors.Is(err, accountpkg.ErrAccountAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -473,7 +473,7 @@ func (s *AccountService) UpdateAccountV2(
 	}
 	updatedAccountPb, err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -564,7 +564,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		req.Disabled,
 	)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -715,7 +715,7 @@ func (s *AccountService) EnableAccountV2(
 		wrapperspb.Bool(false),
 	)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -783,7 +783,7 @@ func (s *AccountService) DisableAccountV2(
 		wrapperspb.Bool(true),
 	)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -964,7 +964,7 @@ func (s *AccountService) DeleteAccountV2(
 		return s.accountStorage.DeleteAccountV2(contextWithTx, account)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -1026,7 +1026,7 @@ func (s *AccountService) getAccountV2(
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -1088,7 +1088,7 @@ func (s *AccountService) getAccountV2ByEnvironmentID(
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

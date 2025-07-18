@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -95,7 +96,7 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 	case *accountproto.ChangeAccountV2AvatarCommand:
 		return h.changeAvatar(ctx, c)
 	default:
-		return ErrBadCommand
+		return account.ErrBadCommand
 	}
 }
 

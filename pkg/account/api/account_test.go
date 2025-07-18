@@ -28,8 +28,8 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	acountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	alstoragemock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
@@ -128,7 +128,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountAlreadyExists)
+				).Return(acountpkg.ErrAccountAlreadyExists)
 			},
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
@@ -412,7 +412,7 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountAlreadyExists)
+				).Return(acountpkg.ErrAccountAlreadyExists)
 			},
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -693,7 +693,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1060,7 +1060,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1285,7 +1285,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1472,7 +1472,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1670,7 +1670,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1811,7 +1811,7 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), "bucketeer@example.com", gomock.Any(),
-				).Return(nil, v2as.ErrAccountNotFound)
+				).Return(nil, acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         "bucketeer@example.com",

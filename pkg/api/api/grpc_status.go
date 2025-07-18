@@ -17,10 +17,11 @@ package api
 import (
 	"errors"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.Status {
@@ -34,6 +35,7 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	var alreadyExistsError *pkgErr.ErrorAlreadyExists
 	var unauthenticatedError *pkgErr.ErrorUnauthenticated
 	var permissionDeniedError *pkgErr.ErrorPermissionDenied
+	var unexpectedAffectedRowsError *pkgErr.ErrorUnexpectedAffectedRows
 	var internalError *pkgErr.ErrorInternal
 
 	if errors.As(err, &invalidAugmentError) {
@@ -66,6 +68,11 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
 		reason = "PERMISSION_DENIED"
 		metadatas = append(metadatas, permissionDeniedError.Metadata)
+	} else if errors.As(err, &unexpectedAffectedRowsError) {
+		pkg = unexpectedAffectedRowsError.PackageName
+		st = status.New(codes.Internal, unexpectedAffectedRowsError.Message)
+		reason = "UNEXPECTED_AFFECTED_ROWS"
+		metadatas = append(metadatas, unexpectedAffectedRowsError.Metadata)
 	} else {
 		pkg = "unknown"
 		st = status.New(codes.Unknown, err.Error())

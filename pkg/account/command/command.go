@@ -16,11 +16,6 @@ package command
 
 import (
 	"context"
-	"errors"
-)
-
-var (
-	ErrBadCommand = errors.New("command: cannot handle command")
 )
 
 type Command interface{}

@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	acountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
@@ -223,7 +224,7 @@ func TestCreateSearchFilter(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -704,7 +705,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -1261,7 +1262,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(v2as.ErrAccountNotFound)
+				).Return(acountpkg.ErrAccountNotFound)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",

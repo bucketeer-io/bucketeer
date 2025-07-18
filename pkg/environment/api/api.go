@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
@@ -595,7 +596,7 @@ func (s *EnvironmentService) getAccountV2ByEnvironmentID(
 	storage := accstorage.NewAccountStorage(s.mysqlClient)
 	account, err := storage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
-		if errors.Is(err, accstorage.ErrAccountNotFound) {
+		if errors.Is(err, accountpkg.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

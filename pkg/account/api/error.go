@@ -38,8 +38,8 @@ var (
 	statusMissingAPIKeyID                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "apikey id must be specified", pkgErr.InvalidTypeEmpty, "apikey id"))
 	statusMissingAPIKeyName                      = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "apikey name must be not empty", pkgErr.InvalidTypeEmpty, "apikey name"))
 	statusInvalidOrderBy                         = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "order_by is invalid", pkgErr.InvalidTypeNotMatchFormat, "order_by"))
-	statusNotFound                               = api.NewGRPCStatus(pkgErr.NewErrorNotFound(account.PackageName, "account not found", "account"))
-	statusAlreadyExists                          = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(account.PackageName, "account already exists", "account"))
+	statusNotFound                               = api.NewGRPCStatus(account.ErrAccountNotFound)
+	statusAlreadyExists                          = api.NewGRPCStatus(account.ErrAccountAlreadyExists)
 	statusUnauthenticated                        = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(account.PackageName, "account unauthenticated"))
 	statusPermissionDenied                       = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(account.PackageName, "permission denied"))
 	statusSearchFilterNameIsEmpty                = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "search filter name is empty", pkgErr.InvalidTypeEmpty, "search filter name"))
@@ -49,31 +49,3 @@ var (
 	statusSearchFilterIDNotFound                 = api.NewGRPCStatus(account.ErrSearchFilterNotFound)
 	statusInvalidListAPIKeyRequest               = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(account.PackageName, "invalid list api key request", pkgErr.InvalidTypeEmpty, "list api key request"))
 )
-
-// func NewAccountError(err error, localizer *locale.Localizer) error {
-// 	var localizedMessage *errdetails.LocalizedMessage
-
-// 	if errors.Is(err, pkgErr.ErrorNotFound) || errors.Is(err, pkgErr.ErrorUnexpectedAffectedRows) {
-// 		localizedMessage = &errdetails.LocalizedMessage{
-// 			Locale:  localizer.GetLocale(),
-// 			Message: localizer.MustLocalize(locale.NotFoundError),
-// 		}
-// 	} else if errors.Is(err, v2as.ErrAccountAlreadyExists) {
-// 		localizedMessage = &errdetails.LocalizedMessage{
-// 			Locale:  localizer.GetLocale(),
-// 			Message: localizer.MustLocalize(locale.AlreadyExistsError),
-// 		}
-// 	} else {
-// 		localizedMessage = &errdetails.LocalizedMessage{
-// 			Locale:  localizer.GetLocale(),
-// 			Message: localizer.MustLocalize(locale.InternalServerError),
-// 		}
-// 	}
-// 	status := api.NewGRPCStatus(err)
-// 	dt, err := status.WithDetails(localizedMessage)
-// 	if err != nil {
-// 		return status.Err()
-// 	}
-
-// 	return dt.Err()
-// }

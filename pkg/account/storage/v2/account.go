@@ -19,6 +19,8 @@ import (
 	_ "embed"
 	"errors"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account"
+	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -46,12 +48,6 @@ var (
 	selectAccountsWithOrganizationSQL string
 )
 
-var (
-	ErrAccountAlreadyExists          = errors.New("account: account already exists")
-	ErrAccountNotFound               = errors.New("account: account not found")
-	ErrAccountUnexpectedAffectedRows = errors.New("account: account unexpected affected rows")
-)
-
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -75,7 +71,7 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return ErrAccountAlreadyExists
+			return account.ErrAccountAlreadyExists
 		}
 		return err
 	}
@@ -112,7 +108,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		return err
 	}
 	if rowsAffected != 1 {
-		return ErrAccountUnexpectedAffectedRows
+		return account.ErrAccountUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -132,7 +128,7 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 		return err
 	}
 	if rowsAffected != 1 {
-		return ErrAccountUnexpectedAffectedRows
+		return account.ErrAccountUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -167,7 +163,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAccountNotFound
+			return nil, accountpkg.ErrAccountNotFound
 		}
 		return nil, err
 	}
@@ -208,7 +204,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAccountNotFound
+			return nil, accountpkg.ErrAccountNotFound
 		}
 		return nil, err
 	}
