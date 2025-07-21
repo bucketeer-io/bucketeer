@@ -41,6 +41,10 @@ export interface AuthResponse {
   token: AuthToken;
 }
 
+export interface DemoAuthResponse {
+  demoCreationToken: AuthToken;
+}
+
 export interface UserInfoForm {
   firstName: string;
   lastName: string;

@@ -44,13 +44,20 @@ export const useToast = () => {
     );
 
   const errorNotify = (error?: unknown, message?: string) => {
-    const { message: _message, status } = (error as AxiosError) || {};
+    const {
+      message: _message,
+      status,
+      response
+    } = (error as AxiosError<{ message?: string }>) || {};
     return notify({
       messageType: 'error',
       message:
         status === 409
           ? t('same-data-exists')
-          : message || _message || t('something-went-wrong')
+          : message ||
+            response?.data?.message ||
+            _message ||
+            t('something-went-wrong')
     });
   };
   return {

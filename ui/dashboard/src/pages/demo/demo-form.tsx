@@ -34,7 +34,7 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   });
 
 const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
-  const { t } = useTranslation(['common', 'form', 'message']);
+  const { t } = useTranslation(['common', 'form', 'auth', 'message']);
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -68,7 +68,7 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
           name="organizationName"
           render={({ field }) => (
             <Form.Item>
-              <Form.Label required>{t('organization-name')}</Form.Label>
+              <Form.Label required>{t('auth:organization-name')}</Form.Label>
               <Form.Control>
                 <Input
                   placeholder={`${t('form:placeholder-name')}`}
@@ -113,7 +113,7 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
             <Form.Item>
               <Form.Control>
                 <Checkbox
-                  title={t('demo-agree-terms')}
+                  title={t('auth:demo-agree-terms')}
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />

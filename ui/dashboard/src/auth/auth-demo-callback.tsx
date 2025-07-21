@@ -6,6 +6,7 @@ import { PAGE_PATH_DEMO_SITE } from 'constants/routing';
 import { getCookieState } from 'cookie';
 import { useSubmit, useToast } from 'hooks';
 import queryString from 'query-string';
+import { setDemoTokenStorage } from 'storage/demo-token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
@@ -20,8 +21,9 @@ export const AuthDemoCallbackPage: FC = memo(() => {
     async (payload: ExchangeTokenPayload) => {
       try {
         const response = await exchangeDemoToken(payload);
-        if (response.token) {
-          navigate(`${PAGE_PATH_DEMO_SITE}?token=${response.token}`);
+        if (response.demoCreationToken) {
+          setDemoTokenStorage(response.demoCreationToken);
+          navigate(PAGE_PATH_DEMO_SITE);
         }
       } catch (error) {
         setIsGoogleAuthError(true);

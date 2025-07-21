@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
 import { urls } from 'configs';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
 import { useTranslation } from 'i18n';
-import queryString from 'query-string';
+import { getDemoTokenStorage } from 'storage/demo-token';
 import { cn } from 'utils/style';
 import { IconGoogle } from '@icons';
 import AuthWrapper from 'pages/signin/elements/auth-wrapper';
@@ -17,14 +15,12 @@ import DemoForm from './demo-form';
 
 const AccessDemoPage = () => {
   const { t } = useTranslation(['common', 'auth', 'message']);
-  const location = useLocation();
-  const query = location.search;
 
-  const [userToken, setUserToken] = useState('');
+  const authToken = getDemoTokenStorage();
   const { data: demoSiteStatusData, isLoading } = useQueryDemoSiteStatus();
 
   const isDemoSiteEnabled = demoSiteStatusData?.isDemoSiteEnabled;
-  const isAuthenticated = Boolean(userToken);
+  const isAuthenticated = Boolean(authToken);
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
     const state = `${Date.now()}`;
@@ -40,13 +36,6 @@ const AccessDemoPage = () => {
       }
     });
   });
-
-  useEffect(() => {
-    const { token } = queryString.parse(query);
-    if (token && typeof token === 'string') {
-      setUserToken(token);
-    }
-  }, [query]);
 
   return (
     <AuthWrapper>
