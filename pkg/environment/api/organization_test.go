@@ -196,7 +196,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 	orgExpected, err := domain.NewOrganization(
 		"name",
 		"url-code",
-		"test@test.org",
+		"test@example.com",
 		"description",
 		false,
 		false,
@@ -1147,7 +1147,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 	orgExpected, err := domain.NewOrganization(
 		"name",
 		"url-code",
-		"test@test.org",
+		"test@example.com",
 		"description",
 		false,
 		false,
@@ -1198,7 +1198,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrOrganizationAlreadyExists)
 			},
-			req:         &proto.CreateDemoOrganizationRequest{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-0", UrlCode: "id-0"},
 			expectedErr: createError(statusOrganizationAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
@@ -1208,7 +1208,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
+			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "id-1"},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
@@ -1237,7 +1237,6 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 				Name:        orgExpected.Name,
 				UrlCode:     orgExpected.UrlCode,
 				Description: orgExpected.Description,
-				OwnerEmail:  "test@test.org",
 			},
 			expected:    orgExpected.Organization,
 			expectedErr: nil,

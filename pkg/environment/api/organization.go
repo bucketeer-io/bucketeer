@@ -250,7 +250,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		ctx,
 		req.Name,
 		req.UrlCode,
-		req.OwnerEmail,
+		demoToken.Email,
 		req.Description,
 		false,
 		false,
@@ -338,18 +338,6 @@ func validateCreateDemoOrganizationRequest(
 		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-
-	req.OwnerEmail = strings.TrimSpace(req.OwnerEmail)
-	if !emailRegex.MatchString(req.OwnerEmail) {
-		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
 		})
 		if err != nil {
 			return statusInternal.Err()

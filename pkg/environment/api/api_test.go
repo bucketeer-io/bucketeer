@@ -71,7 +71,7 @@ func createDemoContextWithToken(t *testing.T) context.Context {
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),
-		Email:    "email",
+		Email:    "test@example.com",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

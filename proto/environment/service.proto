@@ -404,8 +404,7 @@ message DemoCreationToken {
 message CreateDemoOrganizationRequest {
   string name = 1 [(google.api.field_behavior) = REQUIRED];
   string url_code = 2 [(google.api.field_behavior) = REQUIRED];
-  string owner_email = 3 [(google.api.field_behavior) = REQUIRED];
-  string description = 4;
+  string description = 3;
 }
 
 message CreateDemoOrganizationResponse {

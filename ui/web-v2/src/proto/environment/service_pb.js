@@ -12593,8 +12593,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         obj = {
           name: jspb.Message.getFieldWithDefault(msg, 1, ''),
           urlCode: jspb.Message.getFieldWithDefault(msg, 2, ''),
-          ownerEmail: jspb.Message.getFieldWithDefault(msg, 3, ''),
-          description: jspb.Message.getFieldWithDefault(msg, 4, '')
+          description: jspb.Message.getFieldWithDefault(msg, 3, '')
         };
 
       if (includeInstance) {
@@ -12644,10 +12643,6 @@ proto.bucketeer.environment.CreateDemoOrganizationRequest.deserializeBinaryFromR
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setOwnerEmail(value);
-          break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
           msg.setDescription(value);
           break;
         default:
@@ -12690,13 +12685,9 @@ proto.bucketeer.environment.CreateDemoOrganizationRequest.serializeBinaryToWrite
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getOwnerEmail();
-    if (f.length > 0) {
-      writer.writeString(3, f);
-    }
     f = message.getDescription();
     if (f.length > 0) {
-      writer.writeString(4, f);
+      writer.writeString(3, f);
     }
   };
 
@@ -12741,10 +12732,10 @@ proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.setUrlCode =
   };
 
 /**
- * optional string owner_email = 3;
+ * optional string description = 3;
  * @return {string}
  */
-proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.getOwnerEmail =
+proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.getDescription =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -12755,29 +12746,9 @@ proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.getOwnerEmai
  * @param {string} value
  * @return {!proto.bucketeer.environment.CreateDemoOrganizationRequest} returns this
  */
-proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.setOwnerEmail =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
-
-/**
- * optional string description = 4;
- * @return {string}
- */
-proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.getDescription =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.environment.CreateDemoOrganizationRequest} returns this
- */
 proto.bucketeer.environment.CreateDemoOrganizationRequest.prototype.setDescription =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

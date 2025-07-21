@@ -14722,17 +14722,6 @@
               },
               {
                 "id": 3,
-                "name": "owner_email",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 4,
                 "name": "description",
                 "type": "string"
               }
