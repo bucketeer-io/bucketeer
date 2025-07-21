@@ -26,16 +26,20 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Docker volumes used for caching
-CACHE_VOLUMES=(
+# Docker volumes used for caching - organized by type
+GO_VOLUMES=(
     "bucketeer-go-mod-cache"
     "bucketeer-go-tools"
+)
+
+JS_VOLUMES=(
     "bucketeer-dashboard-node-modules"
-    "bucketeer-web-v2-node-modules"
     "bucketeer-eval-ts-node-modules"
     "bucketeer-yarn-cache"
-    "bucketeer-npm-cache"
 )
+
+# Combined array for all cache volumes
+CACHE_VOLUMES=("${GO_VOLUMES[@]}" "${JS_VOLUMES[@]}")
 
 show_help() {
     echo "Bucketeer Dev Container Cache Manager"
@@ -113,13 +117,12 @@ clear_all_volumes() {
 }
 
 clear_go_volumes() {
-    local go_volumes=("bucketeer-go-mod-cache" "bucketeer-go-tools")
     print_warning "This will remove Go-related cache volumes."
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_status "Removing Go cache volumes..."
-        for volume in "${go_volumes[@]}"; do
+        for volume in "${GO_VOLUMES[@]}"; do
             if check_volume_exists "$volume"; then
                 docker volume rm "$volume" && print_success "Removed $volume"
             else
@@ -133,13 +136,12 @@ clear_go_volumes() {
 }
 
 clear_js_volumes() {
-    local js_volumes=("bucketeer-dashboard-node-modules" "bucketeer-web-v2-node-modules" "bucketeer-eval-ts-node-modules" "bucketeer-yarn-cache" "bucketeer-npm-cache")
     print_warning "This will remove JavaScript/Node.js cache volumes."
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_status "Removing JavaScript cache volumes..."
-        for volume in "${js_volumes[@]}"; do
+        for volume in "${JS_VOLUMES[@]}"; do
             if check_volume_exists "$volume"; then
                 docker volume rm "$volume" && print_success "Removed $volume"
             else

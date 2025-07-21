@@ -43,9 +43,9 @@ get_legacy_cache_filename() {
 find_cache_file() {
     local image="$1"
     local temp_container="$2"
-    
+
     echo "DEBUG: Looking for image: $image"
-    
+
     # Try new naming first
     local new_file="$(get_cache_filename "$image")"
     echo "DEBUG: Trying new file: $new_file"
@@ -54,7 +54,7 @@ find_cache_file() {
         echo "$new_file"
         return 0
     fi
-    
+
     # Try legacy naming
     local legacy_file="$(get_legacy_cache_filename "$image")"
     echo "DEBUG: Trying legacy file: $legacy_file"
@@ -63,7 +63,7 @@ find_cache_file() {
         echo "$legacy_file"
         return 0
     fi
-    
+
     echo "DEBUG: No file found!"
     return 1
 }
@@ -71,7 +71,7 @@ find_cache_file() {
 # Test just one image
 test_single_image() {
     print_status "Testing cache file detection for one image..."
-    
+
     local temp_container="debug-cache-$$"
     if ! docker run -d --name "$temp_container" \
         -v bucketeer-docker-images:/cache \
@@ -79,20 +79,20 @@ test_single_image() {
         print_error "Cannot access Docker image cache volume"
         return 1
     fi
-    
+
     local image="ghcr.io/bucketeer-io/bigquery-emulator:latest"
     print_status "Testing image: $image"
-    
+
     echo "=== Files in cache ==="
     docker exec "$temp_container" ls -la /cache/ | grep bigquery
     echo "======================"
-    
+
     if cache_file=$(find_cache_file "$image" "$temp_container"); then
         print_success "Found cache file: $cache_file"
     else
         print_warning "Cache file not found"
     fi
-    
+
     docker stop "$temp_container" >/dev/null 2>&1
     docker rm "$temp_container" >/dev/null 2>&1
 }

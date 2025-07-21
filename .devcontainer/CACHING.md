@@ -9,11 +9,10 @@ The dev container uses Docker named volumes to persist dependencies across conta
 
 - **Go modules cache** (`/go/pkg/mod`): Prevents re-downloading Go dependencies
 - **Go tools** (`/home/codespace/go-tools`): Keeps installed Go development tools
-- **Node.js modules** (various `node_modules` directories): Preserves installed npm/yarn packages
+- **Node.js modules** (various `node_modules` directories): Preserves installed yarn packages
   - `/workspaces/bucketeer/ui/dashboard/node_modules`
-  - `/workspaces/bucketeer/ui/web-v2/node_modules`
   - `/workspaces/bucketeer/evaluation/typescript/node_modules`
-- **Package manager caches**: Yarn and npm local caches at `/home/codespace/.yarn/cache` and `/home/codespace/.npm`
+- **Package manager caches**: Yarn local cache at `/home/codespace/.yarn/cache`
 
 ### 2. Intelligent Setup Script
 The `setup.sh` script implements smart dependency checking:
@@ -56,16 +55,40 @@ The volumes are configured in `devcontainer.json` with absolute paths:
   "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
   "source=bucketeer-go-tools,target=/home/codespace/go-tools,type=volume",
   "source=bucketeer-dashboard-node-modules,target=/workspaces/bucketeer/ui/dashboard/node_modules,type=volume",
-  "source=bucketeer-web-v2-node-modules,target=/workspaces/bucketeer/ui/web-v2/node_modules,type=volume",
   "source=bucketeer-eval-ts-node-modules,target=/workspaces/bucketeer/evaluation/typescript/node_modules,type=volume",
-  "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume",
-  "source=bucketeer-npm-cache,target=/home/codespace/.npm,type=volume"
+  "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume"
 ]
 ```
 
 **Important:** Use absolute paths instead of variables like `${containerHome}` as they are not resolved in mount configurations.
 
 ## Cache Management
+
+### Volume Organization
+The cache manager organizes volumes by type for easier management:
+
+```bash
+# Go-related volumes
+GO_VOLUMES=(
+    "bucketeer-go-mod-cache"
+    "bucketeer-go-tools"
+)
+
+# JavaScript/Node.js-related volumes
+JS_VOLUMES=(
+    "bucketeer-dashboard-node-modules"
+    "bucketeer-eval-ts-node-modules"
+    "bucketeer-yarn-cache"
+)
+
+# Combined array (automatically generated)
+CACHE_VOLUMES=("${GO_VOLUMES[@]}" "${JS_VOLUMES[@]}")
+```
+
+This organization makes it easy to:
+- Add/remove volumes by editing only one array
+- Clear specific technology stacks (Go vs JS)
+- Maintain consistency across all cache operations
 
 ### Check cache status
 The setup script provides a detailed status showing what dependencies are cached vs what needs to be installed:
@@ -100,16 +123,14 @@ The cache manager provides convenient commands for managing cache volumes:
 docker volume rm bucketeer-go-mod-cache
 docker volume rm bucketeer-go-tools
 docker volume rm bucketeer-dashboard-node-modules
-docker volume rm bucketeer-web-v2-node-modules
 docker volume rm bucketeer-eval-ts-node-modules
 docker volume rm bucketeer-yarn-cache
-docker volume rm bucketeer-npm-cache
 ```
 
 ### Force dependency refresh
 ```bash
 # From inside the dev container
-rm -rf ui/dashboard/node_modules ui/web-v2/node_modules evaluation/typescript/node_modules
+rm -rf ui/dashboard/node_modules evaluation/typescript/node_modules
 rm -rf vendor/
 bash .devcontainer/setup.sh
 ```
@@ -155,6 +176,23 @@ For even better performance, consider:
 3. Using Docker BuildKit for faster image builds
 4. Pre-warming the dev container image with common dependencies
 
+### Adding New Cache Volumes
+Thanks to the organized volume structure, adding new cache volumes is simple:
+
+```bash
+# Add a new Node.js project to caching
+JS_VOLUMES+=(
+    "bucketeer-new-project-node-modules"
+)
+
+# Add a new Go cache (e.g., build cache)
+GO_VOLUMES+=(
+    "bucketeer-go-build-cache"
+)
+```
+
+The `CACHE_VOLUMES` array will automatically include new volumes, and all cache manager commands (`status`, `clear-go`, `clear-js`) will work with the new volumes without any additional changes.
+
 ## Script Output Example
 
 When everything is cached:
@@ -166,7 +204,6 @@ When everything is cached:
 [SUCCESS] All Go tools are already installed
 [SUCCESS] Go vendor directory is up to date
 [SUCCESS] Dashboard: Node.js dependencies are up to date
-[SUCCESS] Web-v2: Node.js dependencies are up to date
 [SUCCESS] Evaluation TypeScript: Node.js dependencies are up to date
 [SUCCESS] 🎉 All dependencies are cached and up to date! Setup completed in seconds.
 [INFO] Cache volumes will persist dependencies for next container restart
