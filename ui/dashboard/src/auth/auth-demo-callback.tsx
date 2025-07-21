@@ -12,7 +12,7 @@ import { useAuth } from './auth-context';
 
 export const AuthDemoCallbackPage: FC = memo(() => {
   const { errorNotify } = useToast();
-  const { setIsGoogleAuthError, setIsInitialLoading } = useAuth();
+  const { setIsGoogleAuthError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const query = location.search;
@@ -27,7 +27,6 @@ export const AuthDemoCallbackPage: FC = memo(() => {
         }
       } catch (error) {
         setIsGoogleAuthError(true);
-        setIsInitialLoading(false);
         errorNotify(error);
         navigate(PAGE_PATH_DEMO_SITE);
       }
@@ -37,7 +36,6 @@ export const AuthDemoCallbackPage: FC = memo(() => {
   useEffect(() => {
     const { code, state } = queryString.parse(query);
     const cookieState = getCookieState();
-    setIsInitialLoading(true);
 
     if (!!code && typeof code === 'string' && state === cookieState) {
       onGoogleDemoHandler({

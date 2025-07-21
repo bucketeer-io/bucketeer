@@ -1,7 +1,13 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { organizationDemoCreator } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { AxiosError } from 'axios';
+import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
+import { clearDemoTokenStorage } from 'storage/demo-token';
 import * as yup from 'yup';
 import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
@@ -33,7 +39,16 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
       .required(requiredMessage)
   });
 
-const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
+const DemoForm = ({
+  isDemoSiteEnabled,
+  onDemoAuthenticated
+}: {
+  isDemoSiteEnabled?: boolean;
+  onDemoAuthenticated: (v: boolean) => void;
+}) => {
+  const { errorNotify, notify } = useToast();
+  const navigate = useNavigate();
+
   const { t } = useTranslation(['common', 'form', 'auth', 'message']);
 
   const form = useForm({
@@ -52,11 +67,27 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
 
   const onSubmit: SubmitHandler<AccessDemoForm> = async values => {
     try {
-      console.log(values);
-    } catch (error) {
-      if (error) {
-        console.log(error);
+      const response = await organizationDemoCreator({
+        name: values.organizationName,
+        urlCode: values.organizationUrlCode
+      });
+
+      if (response?.organization) {
+        notify({
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('created')
+          })
+        });
+        clearDemoTokenStorage();
+        navigate(PAGE_PATH_ROOT);
       }
+    } catch (error) {
+      if ((error as AxiosError).status === 401) {
+        onDemoAuthenticated(false);
+        clearDemoTokenStorage();
+      }
+      errorNotify(error);
     }
   };
 

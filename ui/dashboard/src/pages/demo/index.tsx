@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
 import { urls } from 'configs';
@@ -19,8 +20,8 @@ const AccessDemoPage = () => {
   const authToken = getDemoTokenStorage();
   const { data: demoSiteStatusData, isLoading } = useQueryDemoSiteStatus();
 
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(authToken));
   const isDemoSiteEnabled = demoSiteStatusData?.isDemoSiteEnabled;
-  const isAuthenticated = Boolean(authToken);
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
     const state = `${Date.now()}`;
@@ -73,7 +74,10 @@ const AccessDemoPage = () => {
                   {`Sign in With Google`}
                 </Button>
               ) : (
-                <DemoForm isDemoSiteEnabled={isDemoSiteEnabled} />
+                <DemoForm
+                  isDemoSiteEnabled={isDemoSiteEnabled}
+                  onDemoAuthenticated={setIsAuthenticated}
+                />
               )}
             </>
           )}
