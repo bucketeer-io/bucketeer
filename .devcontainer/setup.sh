@@ -3,6 +3,40 @@ set -e
 
 echo "🚀 Starting post-attach setup with intelligent caching..."
 
+# ===== PROJECT CONFIGURATION =====
+# Configure which projects to cache dependencies for
+# To add/remove projects, just update these arrays
+#
+# Example: To add a new Node.js project at "ui/new-app":
+# 1. Add "ui/new-app" to NODE_PROJECTS array
+# 2. Add "New App" to NODE_PROJECTS_NAMES array
+# 3. Add volume mount in devcontainer.json
+# 4. Update cache-manager.sh volume arrays
+# The setup script will handle the rest automatically!
+
+# Node.js projects (directories containing package.json)
+declare -a NODE_PROJECTS=(
+    "ui/dashboard"
+    "evaluation/typescript"
+)
+
+# Display names for Node.js projects (must match array order)
+declare -a NODE_PROJECTS_NAMES=(
+    "Dashboard"
+    "Evaluation TypeScript"
+)
+
+# Go projects (directories containing go.mod)
+# Note: "." represents the root directory
+declare -a GO_PROJECTS=(
+    "."
+)
+
+# Display names for Go projects (must match array order)
+declare -a GO_PROJECTS_NAMES=(
+    "Main Go"
+)
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -50,9 +84,9 @@ fix_cache_permissions() {
     fi
 
     # Fix node_modules permissions
-    for dir in "ui/dashboard/node_modules" "ui/web-v2/node_modules" "evaluation/typescript/node_modules"; do
-        if [ -d "$dir" ]; then
-            sudo chown -R codespace:codespace "$dir"
+    for project in "${NODE_PROJECTS[@]}"; do
+        if [ -d "$project/node_modules" ]; then
+            sudo chown -R codespace:codespace "$project/node_modules"
         fi
     done
 
@@ -246,9 +280,6 @@ main() {
     # Track what needs to be done
     local need_go_tools=false
     local need_go_deps=false
-    local need_dashboard_deps=false
-    local need_web_v2_deps=false
-    local need_eval_ts_deps=false
 
     # Check Go tools
     if ! check_go_tools; then
@@ -261,25 +292,23 @@ main() {
     fi
 
     # Check Node.js dependencies
-    if ! check_node_deps "ui/dashboard" "Dashboard"; then
-        need_dashboard_deps=true
-    fi
-
-    if ! check_node_deps "ui/web-v2" "Web-v2"; then
-        need_web_v2_deps=true
-    fi
-
-    if ! check_node_deps "evaluation/typescript" "Evaluation TypeScript"; then
-        need_eval_ts_deps=true
-    fi
+    declare -a need_node_deps=()
+    for i in "${!NODE_PROJECTS[@]}"; do
+        local project="${NODE_PROJECTS[$i]}"
+        local name="${NODE_PROJECTS_NAMES[$i]}"
+        if ! check_node_deps "$project" "$name"; then
+            need_node_deps+=("$i")
+        fi
+    done
 
     # Summary of what will be installed
     local tasks_to_run=()
     if [ "$need_go_tools" = true ]; then tasks_to_run+=("Go tools"); fi
     if [ "$need_go_deps" = true ]; then tasks_to_run+=("Go dependencies"); fi
-    if [ "$need_dashboard_deps" = true ]; then tasks_to_run+=("Dashboard dependencies"); fi
-    if [ "$need_web_v2_deps" = true ]; then tasks_to_run+=("Web-v2 dependencies"); fi
-    if [ "$need_eval_ts_deps" = true ]; then tasks_to_run+=("Evaluation TypeScript dependencies"); fi
+    for i in "${need_node_deps[@]}"; do
+        local name="${NODE_PROJECTS_NAMES[$i]}"
+        tasks_to_run+=("$name dependencies")
+    done
 
     if [ ${#tasks_to_run[@]} -eq 0 ]; then
         print_success "🎉 All dependencies are cached and up to date! Setup completed in seconds."
@@ -300,17 +329,11 @@ main() {
         update_go_deps
     fi
 
-    if [ "$need_dashboard_deps" = true ]; then
-        install_node_deps "ui/dashboard" "Dashboard"
-    fi
-
-    if [ "$need_web_v2_deps" = true ]; then
-        install_node_deps "ui/web-v2" "Web-v2"
-    fi
-
-    if [ "$need_eval_ts_deps" = true ]; then
-        install_node_deps "evaluation/typescript" "Evaluation TypeScript"
-    fi
+    for i in "${need_node_deps[@]}"; do
+        local project="${NODE_PROJECTS[$i]}"
+        local name="${NODE_PROJECTS_NAMES[$i]}"
+        install_node_deps "$project" "$name"
+    done
 
     print_success "🎉 Post-attach setup completed!"
     print_status "Cache volumes will persist dependencies for next container restart"

@@ -2,6 +2,67 @@
 
 This document explains the caching optimizations implemented in the Bucketeer dev container setup to significantly reduce startup times when reopening the dev container.
 
+## 🔧 Project Configuration
+
+The caching system uses dynamic configuration arrays in `setup.sh` to determine which projects to cache. This makes adding or removing projects simple and maintainable.
+
+### Adding a New Node.js Project
+
+To add a new Node.js project for caching:
+
+1. **Update the arrays in `setup.sh`:**
+```bash
+# Add your project directory to NODE_PROJECTS
+declare -a NODE_PROJECTS=(
+    "ui/dashboard"
+    "evaluation/typescript"
+    "path/to/your/new/project"  # Add here
+)
+
+# Add a display name to NODE_PROJECTS_NAMES (same order!)
+declare -a NODE_PROJECTS_NAMES=(
+    "Dashboard"
+    "Evaluation TypeScript"
+    "Your New Project"  # Add here
+)
+```
+
+2. **Add a corresponding volume in `devcontainer.json`:**
+```json
+"bucketeer-your-project-node-modules:/workspaces/bucketeer/path/to/your/new/project/node_modules"
+```
+
+3. **Update `cache-manager.sh` volume arrays:**
+```bash
+JS_VOLUMES=(
+    "bucketeer-dashboard-node-modules"
+    "bucketeer-eval-ts-node-modules"
+    "bucketeer-your-project-node-modules"  # Add here
+    "bucketeer-yarn-cache"
+)
+```
+
+That's it! The setup script will automatically handle dependency checking, caching, and installation for your new project.
+
+### Adding a New Go Project
+
+To add a new Go project:
+
+1. **Update the arrays in `setup.sh`:**
+```bash
+declare -a GO_PROJECTS=(
+    "."
+    "path/to/your/go/project"  # Add here
+)
+
+declare -a GO_PROJECTS_NAMES=(
+    "Main Go"
+    "Your Go Project"  # Add here
+)
+```
+
+2. **Consider adding Go module volume mounts** if the project has its own module cache needs.
+
 ## Caching Strategies
 
 ### 1. Persistent Volume Mounts
@@ -10,8 +71,8 @@ The dev container uses Docker named volumes to persist dependencies across conta
 - **Go modules cache** (`/go/pkg/mod`): Prevents re-downloading Go dependencies
 - **Go tools** (`/home/codespace/go-tools`): Keeps installed Go development tools
 - **Node.js modules** (various `node_modules` directories): Preserves installed yarn packages
-  - `/workspaces/bucketeer/ui/dashboard/node_modules`
-  - `/workspaces/bucketeer/evaluation/typescript/node_modules`
+  - Currently configured for: `ui/dashboard` and `evaluation/typescript`
+  - Automatically configured based on `NODE_PROJECTS` array in `setup.sh`
 - **Package manager caches**: Yarn local cache at `/home/codespace/.yarn/cache`
 
 ### 2. Intelligent Setup Script
