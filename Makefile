@@ -465,27 +465,16 @@ docker-compose-build:
 # To skip the build step when starting services, run:
 # make docker-compose-up SKIP_BUILD=true
 .PHONY: docker-compose-up
-docker-compose-up: docker-compose-setup
+docker-compose-up: docker-compose-setup docker-compose-init-env
 	@if [ "$(SKIP_BUILD)" = "true" ]; then \
 		echo "⏭️  Skipping build step as requested (SKIP_BUILD=true)."; \
 	else \
 		make docker-compose-build; \
 	fi
 	@echo "🚀 Starting Bucketeer services with Docker Compose..."
-	@if [ -f docker-compose/.env ]; then \
-		echo "✅ Using environment variables from docker-compose/.env"; \
-		set -a && . docker-compose/.env && set +a && \
-		docker-compose -f docker-compose/docker-compose.yml up -d; \
-	else \
-		echo "❌ Error: docker-compose/.env file not found!"; \
-		echo ""; \
-		echo "Please create docker-compose/.env file with your environment variables."; \
-		echo "You can start by copying the default template:"; \
-		echo "  cp docker-compose/env.default docker-compose/.env"; \
-		echo ""; \
-		echo "Then customize the variables as needed and run 'make docker-compose-up' again."; \
-		exit 1; \
-	fi
+	@set -a && . docker-compose/.env && set +a && \
+	docker-compose -f docker-compose/docker-compose.yml up -d
+
 
 .PHONY: docker-compose-down
 docker-compose-down:
