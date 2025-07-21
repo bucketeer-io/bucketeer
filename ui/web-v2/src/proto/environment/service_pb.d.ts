@@ -2151,9 +2151,6 @@ export class CreateDemoOrganizationRequest extends jspb.Message {
   getUrlCode(): string;
   setUrlCode(value: string): void;
 
-  getOwnerEmail(): string;
-  setOwnerEmail(value: string): void;
-
   getDescription(): string;
   setDescription(value: string): void;
 
@@ -2182,7 +2179,6 @@ export namespace CreateDemoOrganizationRequest {
   export type AsObject = {
     name: string;
     urlCode: string;
-    ownerEmail: string;
     description: string;
   };
 }

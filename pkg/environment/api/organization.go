@@ -239,7 +239,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		Email:   demoToken.Email,
 		IsAdmin: false,
 	}
-	if err := validateCreateDemoOrganizationRequest(req, localizer); err != nil {
+	if err := validateCreateDemoOrganizationRequest(req, demoToken.Email, localizer); err != nil {
 		s.logger.Error("failed to validate CreateDemoOrganizationRequest",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
@@ -250,7 +250,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		ctx,
 		req.Name,
 		req.UrlCode,
-		req.OwnerEmail,
+		demoToken.Email,
 		req.Description,
 		false,
 		false,
@@ -309,6 +309,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 
 func validateCreateDemoOrganizationRequest(
 	req *environmentproto.CreateDemoOrganizationRequest,
+	ownerEmail string,
 	localizer locale.Localizer,
 ) error {
 	req.Name = strings.TrimSpace(req.Name)
@@ -345,8 +346,8 @@ func validateCreateDemoOrganizationRequest(
 		return dt.Err()
 	}
 
-	req.OwnerEmail = strings.TrimSpace(req.OwnerEmail)
-	if !emailRegex.MatchString(req.OwnerEmail) {
+	ownerEmail = strings.TrimSpace(ownerEmail)
+	if !emailRegex.MatchString(ownerEmail) {
 		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),

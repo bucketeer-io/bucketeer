@@ -10776,14 +10776,11 @@ definitions:
         type: string
       urlCode:
         type: string
-      ownerEmail:
-        type: string
       description:
         type: string
     required:
       - name
       - urlCode
-      - ownerEmail
   environmentCreateDemoOrganizationResponse:
     type: object
     properties:
