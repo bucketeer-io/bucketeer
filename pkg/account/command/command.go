@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	ErrBadCommand = pkgErr.NewErrorInvalidAugment("account", "cannot handle command", pkgErr.InvalidTypeNotMatchFormat, "command")
+	ErrBadCommand = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "cannot handle command", pkgErr.InvalidTypeNotMatchFormat, "command")
 )
 
 type Command interface{}
