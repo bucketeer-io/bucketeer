@@ -54,6 +54,6 @@
   "empty-segment": "No segments found. Please <comp>create</comp> a segment first.",
   "demo-not-available": "The Demo feature is not available at the moment.",
   "demo-available": "Authenticate with Google and get started!",
-  "demo-privacy-description": "We collect your name and email address to analyze demo usage, and we may contact you for feedback about Bucketeer.<br />We will not share your information with any third parties. For any questions or to delete your information, please contact us via Slack.",
-  "required-agreement-terms": "Agreement to the Terms of Use and Privacy Policy is required to proceed."
+  "demo-privacy-description": "We collect your name and email address to analyze demo usage, and we may contact you for feedback about Bucketeer.<br />We will not share your information with any third parties. For any questions or to delete your information, please contact us via <comp>Slack</comp>.",
+  "required-agreement-terms": "The agreement to the Terms of Use and Privacy Policy is required to proceed."
 }

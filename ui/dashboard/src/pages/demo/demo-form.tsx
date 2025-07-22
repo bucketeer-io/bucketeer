@@ -15,7 +15,7 @@ import Checkbox from 'components/checkbox';
 import Form from 'components/form';
 import Input from 'components/input';
 
-interface AccessDemoForm {
+interface CreateDemoForm {
   organizationName: string;
   organizationUrlCode: string;
   isAgree: boolean;
@@ -39,13 +39,7 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
       .required(requiredMessage)
   });
 
-const DemoForm = ({
-  isDemoSiteEnabled,
-  onDemoAuthenticated
-}: {
-  isDemoSiteEnabled?: boolean;
-  onDemoAuthenticated: (v: boolean) => void;
-}) => {
+const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
   const { errorNotify, notify } = useToast();
   const navigate = useNavigate();
 
@@ -65,7 +59,7 @@ const DemoForm = ({
     formState: { isDirty, isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<AccessDemoForm> = async values => {
+  const onSubmit: SubmitHandler<CreateDemoForm> = async values => {
     try {
       const response = await organizationDemoCreator({
         name: values.organizationName,
@@ -84,7 +78,6 @@ const DemoForm = ({
       }
     } catch (error) {
       if ((error as AxiosError).status === 401) {
-        onDemoAuthenticated(false);
         clearDemoTokenStorage();
       }
       errorNotify(error);

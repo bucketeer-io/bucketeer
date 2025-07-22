@@ -9,7 +9,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
-import { Language, useTranslation } from 'i18n';
+import { getLanguage, Language, useTranslation } from 'i18n';
 import { clearIsLoginFirstTimeStorage } from 'storage/login';
 import * as yup from 'yup';
 import { isNotEmptyObject } from 'utils/data-type';
@@ -111,7 +111,7 @@ const UserInformation = () => {
       firstName: consoleAccount?.firstName || '',
       lastName: consoleAccount?.lastName || '',
       avatar: avatarSrc,
-      language: Language.ENGLISH
+      language: getLanguage() || Language.ENGLISH
     },
     mode: 'onChange'
   });

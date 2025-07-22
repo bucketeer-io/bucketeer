@@ -61,6 +61,7 @@ import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
 import AccessDemoPage from 'pages/demo';
+import CreateDemoPage from 'pages/demo/demo-create';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
@@ -115,6 +116,10 @@ function App() {
                 element={<SignInEmailPage />}
               />
               <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
+              <Route
+                path={`${PAGE_PATH_DEMO_SITE}/new`}
+                element={<CreateDemoPage />}
+              />
               <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
             </Routes>
           </AuthProvider>

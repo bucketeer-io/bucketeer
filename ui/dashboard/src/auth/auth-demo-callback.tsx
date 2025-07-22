@@ -23,7 +23,7 @@ export const AuthDemoCallbackPage: FC = memo(() => {
         const response = await exchangeDemoToken(payload);
         if (response.demoCreationToken) {
           setDemoTokenStorage(response.demoCreationToken);
-          navigate(PAGE_PATH_DEMO_SITE);
+          navigate(`${PAGE_PATH_DEMO_SITE}/new`);
         }
       } catch (error) {
         setIsGoogleAuthError(true);
