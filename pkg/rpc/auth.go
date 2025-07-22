@@ -26,9 +26,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
-type tokenKey struct{}
+type contextKey int
 
-var Key = tokenKey{}
+const (
+	accessTokenKey contextKey = iota
+	demoCreationTokenKey
+)
 
 const (
 	healthServiceName          = "/grpc.health.v1.Health/"
@@ -36,6 +39,29 @@ const (
 	exchangeDemoTokenName      = "/bucketeer.environment.EnvironmentService/ExchangeDemoToken"
 	createDemoOrganizationName = "/bucketeer.environment.EnvironmentService/CreateDemoOrganization"
 )
+
+type authFunc func(verifier token.Verifier, token string) (interface{}, error)
+
+type methodAuth struct {
+	authFunc authFunc
+	key      interface{}
+}
+
+var specificAuthMethods = map[string]methodAuth{
+	createDemoOrganizationName: {
+		authFunc: func(v token.Verifier, token string) (interface{}, error) {
+			return v.VerifyDemoCreationToken(token)
+		},
+		key: demoCreationTokenKey,
+	},
+}
+
+var defaultAuth = methodAuth{
+	authFunc: func(v token.Verifier, token string) (interface{}, error) {
+		return v.VerifyAccessToken(token)
+	},
+	key: accessTokenKey,
+}
 
 var (
 	skipAuthMethods = []string{
@@ -57,6 +83,13 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 				return handler(ctx, req)
 			}
 		}
+		authConfig := defaultAuth
+		for method, config := range specificAuthMethods {
+			if strings.HasPrefix(info.FullMethod, method) {
+				authConfig = config
+				break
+			}
+		}
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Unauthenticated, "token is required")
@@ -69,31 +102,21 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		if len(subs) != 2 {
 			return nil, status.Error(codes.Unauthenticated, "token is malformed")
 		}
-		token, err := verifier.VerifyAccessToken(subs[1])
+		token, err := authConfig.authFunc(verifier, subs[1])
 		if err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
 		}
-		if (token == nil || token.OrganizationID == "") &&
-			strings.HasPrefix(info.FullMethod, createDemoOrganizationName) {
-			demoToken, err := verifier.VerifyDemoCreationToken(subs[1])
-			if err != nil {
-				return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
-			}
-			ctx = context.WithValue(ctx, Key, demoToken)
-			return handler(ctx, req)
-		}
-
-		ctx = context.WithValue(ctx, Key, token)
+		ctx = context.WithValue(ctx, authConfig.key, token)
 		return handler(ctx, req)
 	}
 }
 
 func GetAccessToken(ctx context.Context) (*token.AccessToken, bool) {
-	t, ok := ctx.Value(Key).(*token.AccessToken)
+	t, ok := ctx.Value(accessTokenKey).(*token.AccessToken)
 	return t, ok
 }
 
 func GetDemoCreationToken(ctx context.Context) (*token.DemoCreationToken, bool) {
-	t, ok := ctx.Value(Key).(*token.DemoCreationToken)
+	t, ok := ctx.Value(demoCreationTokenKey).(*token.DemoCreationToken)
 	return t, ok
 }
