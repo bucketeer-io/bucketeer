@@ -229,6 +229,10 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		)
 		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UnauthenticatedError,
+				"demo creation token",
+			),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()

@@ -16,6 +16,7 @@ package rpc
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -37,6 +38,14 @@ const (
 	createDemoOrganizationName = "/bucketeer.environment.EnvironmentService/CreateDemoOrganization"
 )
 
+var (
+	skipAuthMethods = []string{
+		healthServiceName,
+		flagTriggerWebhookName,
+		exchangeDemoTokenName,
+	}
+)
+
 func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -44,9 +53,7 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if strings.HasPrefix(info.FullMethod, healthServiceName) ||
-			strings.HasPrefix(info.FullMethod, flagTriggerWebhookName) ||
-			strings.HasPrefix(info.FullMethod, exchangeDemoTokenName) {
+		if slices.Contains(skipAuthMethods, info.FullMethod) {
 			return handler(ctx, req)
 		}
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -65,47 +72,17 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		if err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
 		}
-		ctx = context.WithValue(ctx, Key, token)
-		return handler(ctx, req)
-	}
-}
-
-func DemoAuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		if !strings.HasPrefix(info.FullMethod, createDemoOrganizationName) {
+		if (token == nil || token.OrganizationID == "") &&
+			strings.HasPrefix(info.FullMethod, createDemoOrganizationName) {
+			demoToken, err := verifier.VerifyDemoCreationToken(subs[1])
+			if err != nil {
+				return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
+			}
+			ctx = context.WithValue(ctx, Key, demoToken)
 			return handler(ctx, req)
 		}
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "token is required")
-		}
-		rawTokens, ok := md["authorization"]
-		if !ok || len(rawTokens) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "token is required")
-		}
-		subs := strings.Split(rawTokens[0], " ")
-		if len(subs) != 2 {
-			return nil, status.Error(codes.Unauthenticated, "token is malformed")
-		}
 
-		// this will try to unmarshall the token as an access token first,
-		// if there is organization ID in the access token, it means this is not a demo creation token.
-		// Because demo creation token does not have organization ID.
-		accessToken, _ := verifier.VerifyAccessToken(subs[1])
-		if accessToken != nil && accessToken.OrganizationID != "" {
-			return nil, status.Error(codes.PermissionDenied, "this is not a demo creation token")
-		}
-
-		demoToken, err := verifier.VerifyDemoCreationToken(subs[1])
-		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
-		}
-		ctx = context.WithValue(ctx, Key, demoToken)
+		ctx = context.WithValue(ctx, Key, token)
 		return handler(ctx, req)
 	}
 }
