@@ -345,18 +345,6 @@ func validateCreateDemoOrganizationRequest(
 		}
 		return dt.Err()
 	}
-
-	ownerEmail = strings.TrimSpace(ownerEmail)
-	if !emailRegex.MatchString(ownerEmail) {
-		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
