@@ -16,7 +16,6 @@ package rpc
 
 import (
 	"context"
-	"slices"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -53,8 +52,10 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if slices.Contains(skipAuthMethods, info.FullMethod) {
-			return handler(ctx, req)
+		for _, method := range skipAuthMethods {
+			if strings.HasPrefix(info.FullMethod, method) {
+				return handler(ctx, req)
+			}
 		}
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
