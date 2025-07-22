@@ -29,8 +29,8 @@ import (
 type contextKey int
 
 const (
-	accessTokenKey contextKey = iota
-	demoCreationTokenKey
+	AccessTokenKey contextKey = iota
+	DemoCreationTokenKey
 )
 
 const (
@@ -52,7 +52,7 @@ var specificAuthMethods = map[string]methodAuth{
 		authFunc: func(v token.Verifier, token string) (interface{}, error) {
 			return v.VerifyDemoCreationToken(token)
 		},
-		key: demoCreationTokenKey,
+		key: DemoCreationTokenKey,
 	},
 }
 
@@ -60,7 +60,7 @@ var defaultAuth = methodAuth{
 	authFunc: func(v token.Verifier, token string) (interface{}, error) {
 		return v.VerifyAccessToken(token)
 	},
-	key: accessTokenKey,
+	key: AccessTokenKey,
 }
 
 var (
@@ -112,11 +112,11 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 }
 
 func GetAccessToken(ctx context.Context) (*token.AccessToken, bool) {
-	t, ok := ctx.Value(accessTokenKey).(*token.AccessToken)
+	t, ok := ctx.Value(AccessTokenKey).(*token.AccessToken)
 	return t, ok
 }
 
 func GetDemoCreationToken(ctx context.Context) (*token.DemoCreationToken, bool) {
-	t, ok := ctx.Value(demoCreationTokenKey).(*token.DemoCreationToken)
+	t, ok := ctx.Value(DemoCreationTokenKey).(*token.DemoCreationToken)
 	return t, ok
 }

@@ -82,7 +82,7 @@ func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool)
 		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 func createContextWithInvalidEmailToken(t *testing.T) context.Context {
@@ -95,5 +95,5 @@ func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 		Email:    "bucketeer@",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }

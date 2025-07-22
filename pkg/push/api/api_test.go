@@ -1167,7 +1167,7 @@ func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 // convert to pointer

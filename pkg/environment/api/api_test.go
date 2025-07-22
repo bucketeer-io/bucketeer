@@ -61,7 +61,7 @@ func createContextWithToken(t *testing.T) context.Context {
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 func createDemoContextWithToken(t *testing.T) context.Context {
@@ -74,7 +74,7 @@ func createDemoContextWithToken(t *testing.T) context.Context {
 		Email:    "test@example.com",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.DemoCreationTokenKey, token)
 }
 
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
@@ -87,7 +87,7 @@ func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 		Email:    "email",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 func newEnvironmentService(t *testing.T, mockController *gomock.Controller, s storage.Client) *EnvironmentService {
 	t.Helper()

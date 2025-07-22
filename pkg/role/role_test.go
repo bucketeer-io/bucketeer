@@ -267,7 +267,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 
 func getContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
 	t.Helper()
-	return context.WithValue(context.Background(), rpc.Key, token)
+	return context.WithValue(context.Background(), rpc.AccessTokenKey, token)
 }
 
 func getContextWithTokenAndAPIKey(
@@ -278,7 +278,7 @@ func getContextWithTokenAndAPIKey(
 	apiKeyName string,
 ) context.Context {
 	t.Helper()
-	ctx := context.WithValue(context.Background(), rpc.Key, token)
+	ctx := context.WithValue(context.Background(), rpc.AccessTokenKey, token)
 	headerMetaData := metadata.New(map[string]string{
 		APIKeyTokenMDKey:      apiKeyToken,
 		APIKeyMaintainerMDKey: apiKeyMaintainer,
