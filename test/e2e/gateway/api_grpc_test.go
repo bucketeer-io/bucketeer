@@ -1014,12 +1014,9 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	req := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
-				Id:    newUUID(t),
-				Event: evaluation1,
-			},
-			{
-				Id:    newUUID(t),
-				Event: evaluation2,
+				Id:            newUUID(t),
+				Event:         evaluation1,
+				EnvironmentId: environmentId,
 			},
 		},
 	}
@@ -1029,6 +1026,25 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	}
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+
+	time.Sleep(time.Duration(sleepSecond) * time.Second)
+
+	req2 := &gatewayproto.RegisterEventsRequest{
+		Events: []*eventproto.Event{
+			{
+				Id:            newUUID(t),
+				Event:         evaluation2,
+				EnvironmentId: environmentId,
+			},
+		},
+	}
+	response2, err := c.RegisterEvents(ctx, req2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response2.Errors) > 0 {
+		t.Fatalf("Failed to register events. Error: %v", response2.Errors)
 	}
 
 	// Check that all 6 attributes are found
@@ -1043,6 +1059,8 @@ func TestGetUserAttributeKeys(t *testing.T) {
 
 	foundAttributes := make(map[string]bool)
 	for i := 0; i < maxRetryCount; i++ {
+		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
+
 		// Test GetUserAttributeKeys API
 		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
 			EnvironmentId: environmentId,
@@ -1065,8 +1083,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		if len(foundAttributes) == len(expectedAttributes) {
 			break
 		}
-
-		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
 	}
 
 	// Verify all expected attributes were found
