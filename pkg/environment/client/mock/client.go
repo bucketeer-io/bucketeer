@@ -134,6 +134,26 @@ func (mr *MockClientMockRecorder) ConvertTrialProject(ctx, in any, opts ...any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConvertTrialProject", reflect.TypeOf((*MockClient)(nil).ConvertTrialProject), varargs...)
 }
 
+// CreateDemoOrganization mocks base method.
+func (m *MockClient) CreateDemoOrganization(ctx context.Context, in *environment.CreateDemoOrganizationRequest, opts ...grpc.CallOption) (*environment.CreateDemoOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateDemoOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.CreateDemoOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDemoOrganization indicates an expected call of CreateDemoOrganization.
+func (mr *MockClientMockRecorder) CreateDemoOrganization(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDemoOrganization", reflect.TypeOf((*MockClient)(nil).CreateDemoOrganization), varargs...)
+}
+
 // CreateEnvironmentV2 mocks base method.
 func (m *MockClient) CreateEnvironmentV2(ctx context.Context, in *environment.CreateEnvironmentV2Request, opts ...grpc.CallOption) (*environment.CreateEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()

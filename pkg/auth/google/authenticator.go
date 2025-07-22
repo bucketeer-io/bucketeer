@@ -44,7 +44,7 @@ type googleUserInfo struct {
 	FamilyName    string `json:"family_name"`
 	Picture       string `json:"picture"`
 	Email         string `json:"email"`
-	EmailVerified bool   `json:"email_verified"`
+	EmailVerified bool   `json:"verified_email"`
 }
 
 type Authenticator struct {
@@ -110,6 +110,7 @@ func (a Authenticator) getGoogleUserInfo(
 ) (googleUserInfo, error) {
 	var userInfo googleUserInfo
 	client := config.Client(ctx, t)
+	// API doc: https://googleoauth2.apidog.io/
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
 		a.logger.Error("auth/google: failed to get user info", zap.Error(err))

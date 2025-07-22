@@ -906,5 +906,5 @@ func setToken(t *testing.T, ctx context.Context, isSystemAdmin bool) context.Con
 		Email:         "email",
 		IsSystemAdmin: isSystemAdmin,
 	}
-	return context.WithValue(ctx, rpc.Key, tokenID)
+	return context.WithValue(ctx, rpc.AccessTokenKey, tokenID)
 }

@@ -2143,3 +2143,75 @@ export namespace DemoCreationToken {
     expiry: number;
   };
 }
+
+export class CreateDemoOrganizationRequest extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateDemoOrganizationRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CreateDemoOrganizationRequest
+  ): CreateDemoOrganizationRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CreateDemoOrganizationRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CreateDemoOrganizationRequest;
+  static deserializeBinaryFromReader(
+    message: CreateDemoOrganizationRequest,
+    reader: jspb.BinaryReader
+  ): CreateDemoOrganizationRequest;
+}
+
+export namespace CreateDemoOrganizationRequest {
+  export type AsObject = {
+    name: string;
+    urlCode: string;
+    description: string;
+  };
+}
+
+export class CreateDemoOrganizationResponse extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateDemoOrganizationResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CreateDemoOrganizationResponse
+  ): CreateDemoOrganizationResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CreateDemoOrganizationResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CreateDemoOrganizationResponse;
+  static deserializeBinaryFromReader(
+    message: CreateDemoOrganizationResponse,
+    reader: jspb.BinaryReader
+  ): CreateDemoOrganizationResponse;
+}
+
+export namespace CreateDemoOrganizationResponse {
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject;
+  };
+}

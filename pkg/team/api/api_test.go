@@ -435,5 +435,5 @@ func createContextWithToken(t *testing.T) context.Context {
 		IsSystemAdmin: false,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, accessToken)
+	return context.WithValue(ctx, rpc.AccessTokenKey, accessToken)
 }

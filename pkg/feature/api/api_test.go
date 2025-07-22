@@ -76,7 +76,7 @@ func createContextWithToken() context.Context {
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 func createContextWithTokenRoleUnassigned() context.Context {
@@ -88,7 +88,7 @@ func createContextWithTokenRoleUnassigned() context.Context {
 		Email:    "email",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 // FIXME: Deprecated. Do not use for a new test. Replace this with createFeatureServiceNew.

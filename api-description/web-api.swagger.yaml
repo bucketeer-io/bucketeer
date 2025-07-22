@@ -2929,6 +2929,64 @@ paths:
             $ref: '#/definitions/environmentConvertTrialProjectRequest'
       tags:
         - Project
+  /v1/environment/create_demo_organization:
+    post:
+      summary: Create Demo Organization
+      description: Create a demo organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.create_demo_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentCreateDemoOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentCreateDemoOrganizationRequest'
+      tags:
+        - Organization
   /v1/environment/create_environment:
     post:
       summary: Create
@@ -10600,6 +10658,7 @@ definitions:
       - ORGANIZATION_TRIAL_CONVERTED
       - ORGANIZATION_OWNER_EMAIL_CHANGED
       - ORGANIZATION_UPDATED
+      - DEMO_ORGANIZATION_CREATED
       - FLAG_TRIGGER_CREATED
       - FLAG_TRIGGER_RESET
       - FLAG_TRIGGER_DESCRIPTION_CHANGED
@@ -10710,6 +10769,23 @@ definitions:
         $ref: '#/definitions/environmentConvertTrialProjectCommand'
   environmentConvertTrialProjectResponse:
     type: object
+  environmentCreateDemoOrganizationRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+    required:
+      - name
+      - urlCode
+  environmentCreateDemoOrganizationResponse:
+    type: object
+    properties:
+      organization:
+        $ref: '#/definitions/bucketeerenvironmentOrganization'
   environmentCreateEnvironmentV2Command:
     type: object
     properties:

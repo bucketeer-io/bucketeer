@@ -583,7 +583,7 @@ func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 		Email:    "email",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 func createContextWithTokenRoleOwner(t *testing.T) context.Context {
@@ -597,5 +597,5 @@ func createContextWithTokenRoleOwner(t *testing.T) context.Context {
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }

@@ -154,7 +154,7 @@ func createContextWithTokenAndMetadata(metadata map[string][]string) context.Con
 	if metadata != nil {
 		ctx = md.NewIncomingContext(ctx, metadata)
 	}
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 func createContextWithTokenRoleUnassigned() context.Context {
@@ -166,7 +166,7 @@ func createContextWithTokenRoleUnassigned() context.Context {
 		Email:    "email",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, token)
 }
 
 // convert to pointer

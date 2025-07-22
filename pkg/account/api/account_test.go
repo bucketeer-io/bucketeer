@@ -2023,5 +2023,5 @@ func setToken(ctx context.Context, isSystemAdmin bool) context.Context {
 		Email:         "email",
 		IsSystemAdmin: isSystemAdmin,
 	}
-	return context.WithValue(ctx, rpc.Key, t)
+	return context.WithValue(ctx, rpc.AccessTokenKey, t)
 }

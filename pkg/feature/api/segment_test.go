@@ -842,5 +842,5 @@ func setToken(ctx context.Context) context.Context {
 		IssuedAt: time.Now(),
 		Email:    "email",
 	}
-	return context.WithValue(ctx, rpc.Key, t)
+	return context.WithValue(ctx, rpc.AccessTokenKey, t)
 }
