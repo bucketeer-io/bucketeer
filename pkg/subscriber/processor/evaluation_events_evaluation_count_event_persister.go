@@ -580,15 +580,21 @@ func (p *evaluationCountEventPersister) writeUserAttributes() {
 	p.userAttributesCacheMutex.Lock()
 	defer p.userAttributesCacheMutex.Unlock()
 
-	for _, cache := range p.userAttributesCache {
+	for envID, cache := range p.userAttributesCache {
 		if cache != nil && len(cache.UserAttributes) > 0 {
 			if err := p.upsertUserAttributes(cache); err != nil {
+				p.logger.Error(
+					"Failed to save user attributes, will retry next cycle",
+					zap.Error(err),
+					zap.String("environmentId", envID),
+				)
 				continue
 			}
+			// If successful, delete it from the cache.
+			// The failed items will remain for the next attempt.
+			delete(p.userAttributesCache, envID)
 		}
 	}
-	// Reset the cache
-	p.userAttributesCache = make(userAttributesCache)
 }
 
 func (p *evaluationCountEventPersister) upsertUserAttributes(
