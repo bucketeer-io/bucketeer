@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -116,7 +115,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc:        "ErrBadCommand",
 			input:       nil,
-			expectedErr: account.ErrBadCommand,
+			expectedErr: ErrBadCommand,
 		},
 	}
 	for _, p := range patterns {

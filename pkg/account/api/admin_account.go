@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -217,7 +216,7 @@ func (s *AccountService) getAccount(
 ) (*accountproto.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
-		if errors.Is(err, accountpkg.ErrAccountNotFound) {
+		if errors.Is(err, v2as.ErrAccountNotFound) {
 			s.logger.Error("Account not found",
 				zap.String("email", email),
 				zap.String("organizationId", organizationID),

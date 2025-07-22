@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
@@ -57,7 +56,7 @@ func TestCreateAccountV2(t *testing.T) {
 			input: &domain.AccountV2{
 				AccountV2: &proto.AccountV2{Email: "test@example.com"},
 			},
-			expectedErr: account.ErrAccountAlreadyExists,
+			expectedErr: ErrAccountAlreadyExists,
 		},
 		{
 			desc: "Error",
@@ -118,7 +117,7 @@ func TestUpdateAccountV2(t *testing.T) {
 			input: &domain.AccountV2{
 				AccountV2: &proto.AccountV2{Email: "test@example.com"},
 			},
-			expectedErr: account.ErrAccountUnexpectedAffectedRows,
+			expectedErr: ErrAccountUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -181,7 +180,7 @@ func TestGetAccountV2(t *testing.T) {
 			},
 			email:          "test@example.com",
 			organizationID: "org-0",
-			expectedErr:    account.ErrAccountNotFound,
+			expectedErr:    ErrAccountNotFound,
 		},
 		{
 			desc: "Error",
@@ -244,7 +243,7 @@ func TestGetAccountV2ByEnvironmentID(t *testing.T) {
 			},
 			email:         "test@example.com",
 			environmentID: "env-0",
-			expectedErr:   account.ErrAccountNotFound,
+			expectedErr:   ErrAccountNotFound,
 		},
 		{
 			desc: "Error",

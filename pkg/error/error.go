@@ -15,6 +15,10 @@ package error
 
 import "errors"
 
+const (
+	AccountPackageName = "account"
+)
+
 type ErrorInvalidAugment struct {
 	PackageName string
 	Message     string

@@ -20,7 +20,6 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -66,7 +65,7 @@ func (h *apiKeyCommandHandler) Handle(ctx context.Context, cmd Command) error {
 	case *accountproto.DisableAPIKeyCommand:
 		return h.disable(ctx, c)
 	default:
-		return account.ErrBadCommand
+		return ErrBadCommand
 	}
 }
 

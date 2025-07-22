@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
@@ -198,7 +197,7 @@ func TestGetMeMySQL(t *testing.T) {
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, accountpkg.ErrAccountNotFound)
+				).Return(nil, v2as.ErrAccountNotFound)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",

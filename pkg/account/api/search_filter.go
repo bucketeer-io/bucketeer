@@ -23,11 +23,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 
-	accounterr "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -86,7 +86,7 @@ func (s *AccountService) CreateSearchFilter(
 				zap.String("filterTargetType", req.Command.FilterTargetType.String()),
 			)...,
 		)
-		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -159,7 +159,7 @@ func (s *AccountService) UpdateSearchFilter(
 				zap.String("email", req.Email),
 			)...,
 		)
-		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -168,7 +168,7 @@ func (s *AccountService) UpdateSearchFilter(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		} else if errors.Is(err, accounterr.ErrSearchFilterNotFound) {
+		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
 			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -247,7 +247,7 @@ func (s *AccountService) DeleteSearchFilter(
 				zap.String("searchFilterID", req.Command.Id),
 			)...,
 		)
-		if errors.Is(err, accountpkg.ErrAccountNotFound) || errors.Is(err, accountpkg.ErrAccountUnexpectedAffectedRows) {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
@@ -257,7 +257,7 @@ func (s *AccountService) DeleteSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		if errors.Is(err, accounterr.ErrSearchFilterNotFound) {
+		if errors.Is(err, domain.ErrSearchFilterNotFound) {
 			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),

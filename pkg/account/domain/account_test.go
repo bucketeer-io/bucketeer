@@ -18,8 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
-	accounterr "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -533,7 +531,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 			existingFilters:  nil,
 			updateFilterName: "update-name",
 			expectedFilters:  []*proto.SearchFilter{},
-			error:            accounterr.ErrSearchFilterNotFound,
+			error:            ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -688,7 +686,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			existingFilters:   nil,
 			updateFilterQuery: "update-query",
 			expectedFilters:   []*proto.SearchFilter{},
-			error:             accounterr.ErrSearchFilterNotFound,
+			error:             ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -843,7 +841,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			existingFilters:     nil,
 			updateDefaultFilter: false,
 			expectedFilters:     []*proto.SearchFilter{},
-			error:               accounterr.ErrSearchFilterNotFound,
+			error:               ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -1002,7 +1000,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			desc:            "don't have a filter",
 			existingFilters: nil,
 			expectedFilters: nil,
-			error:           accounterr.ErrSearchFilterNotFound,
+			error:           ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -1303,7 +1301,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrFullNameIsEmpty,
+			expectedErr: ErrFullNameIsEmpty,
 		},
 		{
 			desc: "error: missing organization id",
@@ -1316,7 +1314,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrMissingOrganizationID,
+			expectedErr: ErrMissingOrganizationID,
 		},
 		{
 			desc: "error: empty email",
@@ -1329,7 +1327,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrEmailIsEmpty,
+			expectedErr: ErrEmailIsEmpty,
 		},
 		{
 			desc: "error: invalid email format",
@@ -1342,7 +1340,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrEmailInvalidFormat,
+			expectedErr: ErrEmailInvalidFormat,
 		},
 		{
 			desc: "error: empty language",
@@ -1355,7 +1353,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrLanguageIsEmpty,
+			expectedErr: ErrLanguageIsEmpty,
 		},
 		{
 			desc: "error: invalid organization role",
@@ -1368,7 +1366,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_UNASSIGNED,
 			},
-			expectedErr: account.ErrOrganizationRoleInvalid,
+			expectedErr: ErrOrganizationRoleInvalid,
 		},
 		{
 			desc: "error: first name too long",
@@ -1381,7 +1379,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrFullNameInvalidFormat,
+			expectedErr: ErrFirstNameInvalidFormat,
 		},
 		{
 			desc: "error: last name too long",
@@ -1394,7 +1392,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: account.ErrLastNameInvalidFormat,
+			expectedErr: ErrLastNameInvalidFormat,
 		},
 	}
 

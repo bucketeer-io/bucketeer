@@ -32,7 +32,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
@@ -951,7 +950,7 @@ func (s *authService) PrepareDemoUser() {
 		config.OrganizationId,
 	)
 	if err != nil {
-		if errors.Is(err, account.ErrAccountNotFound) {
+		if errors.Is(err, accountstotage.ErrAccountNotFound) {
 			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
@@ -970,7 +969,7 @@ func (s *authService) PrepareDemoUser() {
 					UpdatedAt: now.Unix(),
 				},
 			})
-			if err != nil && !errors.Is(err, account.ErrAccountAlreadyExists) {
+			if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
 				s.logger.Error("Create account for demo user error", zap.Error(err))
 			}
 		}

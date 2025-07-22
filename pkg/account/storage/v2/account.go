@@ -19,9 +19,8 @@ import (
 	_ "embed"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account"
-	accountpkg "github.com/bucketeer-io/bucketeer/pkg/account"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -48,6 +47,12 @@ var (
 	selectAccountsWithOrganizationSQL string
 )
 
+var (
+	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", "account")
+	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")
+	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows")
+)
+
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -71,7 +76,7 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrDuplicateEntry) {
-			return account.ErrAccountAlreadyExists
+			return ErrAccountAlreadyExists
 		}
 		return err
 	}
@@ -108,7 +113,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		return err
 	}
 	if rowsAffected != 1 {
-		return account.ErrAccountUnexpectedAffectedRows
+		return ErrAccountUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -128,7 +133,7 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 		return err
 	}
 	if rowsAffected != 1 {
-		return account.ErrAccountUnexpectedAffectedRows
+		return ErrAccountUnexpectedAffectedRows
 	}
 	return nil
 }
@@ -163,7 +168,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, accountpkg.ErrAccountNotFound
+			return nil, ErrAccountNotFound
 		}
 		return nil, err
 	}
@@ -204,7 +209,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, accountpkg.ErrAccountNotFound
+			return nil, ErrAccountNotFound
 		}
 		return nil, err
 	}

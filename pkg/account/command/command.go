@@ -16,6 +16,12 @@ package command
 
 import (
 	"context"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+)
+
+var (
+	ErrBadCommand = pkgErr.NewErrorInvalidAugment("account", "cannot handle command", pkgErr.InvalidTypeNotMatchFormat, "command")
 )
 
 type Command interface{}
