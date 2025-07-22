@@ -1,6 +1,25 @@
 {
   "name": "bucketeer",
   "image": "ghcr.io/bucketeer-io/bucketeer-devcontainer:latest",
+  "mounts": [
+    // Persistent Go modules cache
+    "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
+    // Persistent Go tools cache
+    "source=bucketeer-go-tools,target=/home/codespace/go-tools,type=volume",
+    // Persistent Node.js cache for dashboard
+    "source=bucketeer-dashboard-node-modules,target=/workspaces/bucketeer/ui/dashboard/node_modules,type=volume",
+    // Persistent Node.js cache for evaluation typescript
+    "source=bucketeer-eval-ts-node-modules,target=/workspaces/bucketeer/evaluation/typescript/node_modules,type=volume",
+    // Persistent yarn cache
+    "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume"
+  ],
+  "containerEnv": {
+    // Optimize Go module downloads
+    "GOPROXY": "https://proxy.golang.org,direct",
+    "GOSUMDB": "sum.golang.org",
+    // Optimize yarn installs
+    "YARN_CACHE_FOLDER": "/home/codespace/.yarn/cache"
+  },
   "customizations": {
     "codespaces": {
       "openFiles": [
@@ -42,5 +61,5 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "postAttachCommand": "docker image prune -f && docker builder prune -f && make local-deps && make update-repos && (cd ui/web-v2 && yarn)"
+  "postAttachCommand": "bash .devcontainer/setup.sh"
 }
