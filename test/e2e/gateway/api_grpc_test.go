@@ -924,6 +924,179 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	}
 }
 
+func TestGetUserAttributeKeys(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	environmentId := *environmentID
+	maxRetryCount := 5
+	sleepSecond := 30
+
+	// Create some evaluation events to populate user attributes cache
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+
+	// Get the feature to retrieve correct variation ID and feature version
+	feature := getFeature(t, featureID, client)
+	if len(feature.Variations) == 0 {
+		t.Fatal("Feature has no variations")
+	}
+	variationID := feature.Variations[0].Id
+	featureVersion := feature.Version
+
+	// Register evaluation events with user attributes
+	c := newGatewayClient(t, *apiKeyPath)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(maxRetryCount*sleepSecond)*time.Second)
+	defer cancel()
+
+	testUserDataKeySuffix := "testGetUserAttributeKeys-"
+
+	// First evaluation event with 3 attributes
+	data1 := map[string]string{
+		testUserDataKeySuffix + "attr1-" + uuid: "value1",
+		testUserDataKeySuffix + "attr2-" + uuid: "value2",
+		testUserDataKeySuffix + "attr3-" + uuid: "value3",
+	}
+
+	evaluation1, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+		Timestamp:      time.Now().Unix(),
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		UserId:         userID,
+		VariationId:    variationID,
+		User: &userproto.User{
+			Id:   userID,
+			Data: data1,
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_CLIENT,
+		},
+		Tag:        tag,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_ANDROID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Second evaluation event with different attributes and source ID
+	data2 := map[string]string{
+		testUserDataKeySuffix + "attr4-" + uuid: "value4",
+		testUserDataKeySuffix + "attr5-" + uuid: "value5",
+		testUserDataKeySuffix + "attr6-" + uuid: "value6",
+	}
+
+	evaluation2, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
+		Timestamp:      time.Now().Unix(),
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		UserId:         userID,
+		VariationId:    variationID,
+		User: &userproto.User{
+			Id:   userID,
+			Data: data2,
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_CLIENT,
+		},
+		Tag:        tag,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_IOS,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &gatewayproto.RegisterEventsRequest{
+		Events: []*eventproto.Event{
+			{
+				Id:            newUUID(t),
+				Event:         evaluation1,
+				EnvironmentId: environmentId,
+			},
+		},
+	}
+	response, err := c.RegisterEvents(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Errors) > 0 {
+		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+
+	time.Sleep(time.Duration(sleepSecond) * time.Second)
+
+	req2 := &gatewayproto.RegisterEventsRequest{
+		Events: []*eventproto.Event{
+			{
+				Id:            newUUID(t),
+				Event:         evaluation2,
+				EnvironmentId: environmentId,
+			},
+		},
+	}
+	response2, err := c.RegisterEvents(ctx, req2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response2.Errors) > 0 {
+		t.Fatalf("Failed to register events. Error: %v", response2.Errors)
+	}
+
+	// Check that all 6 attributes are found
+	expectedAttributes := []string{
+		testUserDataKeySuffix + "attr1-" + uuid,
+		testUserDataKeySuffix + "attr2-" + uuid,
+		testUserDataKeySuffix + "attr3-" + uuid,
+		testUserDataKeySuffix + "attr4-" + uuid,
+		testUserDataKeySuffix + "attr5-" + uuid,
+		testUserDataKeySuffix + "attr6-" + uuid,
+	}
+
+	foundAttributes := make(map[string]bool)
+	for i := 0; i < maxRetryCount; i++ {
+		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
+
+		// Test GetUserAttributeKeys API
+		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
+			EnvironmentId: environmentId,
+		}
+		userAttrResp, err := client.GetUserAttributeKeys(ctx, userAttrReq)
+		if err != nil {
+			t.Fatal("Failed to get user attribute keys:", err)
+		}
+
+		// Check for all expected attributes
+		for _, key := range userAttrResp.UserAttributeKeys {
+			for _, expectedAttr := range expectedAttributes {
+				if key == expectedAttr {
+					foundAttributes[expectedAttr] = true
+				}
+			}
+		}
+
+		// If all attributes are found, break
+		if len(foundAttributes) == len(expectedAttributes) {
+			break
+		}
+	}
+
+	// Verify all expected attributes were found
+	for _, expectedAttr := range expectedAttributes {
+		if !foundAttributes[expectedAttr] {
+			t.Errorf("User attribute key '%s' not found after %d retries", expectedAttr, maxRetryCount)
+		}
+	}
+
+	if len(foundAttributes) != len(expectedAttributes) {
+		t.Fatalf("Expected %d attributes, but found %d", len(expectedAttributes), len(foundAttributes))
+	}
+}
+
 func newGatewayClient(t *testing.T, apiKey string) gatewayclient.Client {
 	t.Helper()
 	creds, err := gatewayclient.NewPerRPCCredentials(apiKey)
