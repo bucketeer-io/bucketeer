@@ -34,7 +34,7 @@ const PageLoader = () => {
             title={project.name}
             description={project.createdAt}
             onBack={() =>
-              navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_PROJECTS}`)
+              navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}`)
             }
           />
           <PageContent project={project} />

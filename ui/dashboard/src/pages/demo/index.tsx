@@ -1,9 +1,11 @@
 import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
+import { useAuth } from 'auth';
 import { urls } from 'configs';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
 import { useTranslation, getLanguage, Language, setLanguage } from 'i18n';
+import { clearDemoTokenStorage } from 'storage/demo-token';
 import { cn } from 'utils/style';
 import { IconGoogle, IconEnglishFlag } from '@icons';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
@@ -19,8 +21,9 @@ import Icon from 'components/icon';
 import FormLoading from 'elements/form-loading';
 
 const AccessDemoPage = () => {
-  const language = getLanguage();
   const { t } = useTranslation(['common', 'auth', 'message']);
+  const language = getLanguage();
+  const { demoGoogleAuthError } = useAuth();
 
   const { data: demoSiteStatusData, isLoading } = useQueryDemoSiteStatus();
 
@@ -29,6 +32,7 @@ const AccessDemoPage = () => {
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
     const state = `${Date.now()}`;
     setCookieState(state);
+    clearDemoTokenStorage();
 
     return authenticationUrl({
       state,
@@ -94,6 +98,11 @@ const AccessDemoPage = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          {demoGoogleAuthError && (
+            <div className="typo-para-medium text-accent-red-500 first-letter:uppercase mt-6">
+              {demoGoogleAuthError.split('environment:')}
+            </div>
+          )}
           <div
             className={cn('text-gray-600 typo-para-medium mt-8', {
               'text-accent-red-500': !isDemoSiteEnabled
