@@ -144,7 +144,8 @@ func (a *AccountV2) Update(
 	if len(environmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
 	}
-	if updated.OrganizationRole == proto.AccountV2_Role_Organization_ADMIN {
+	if updated.OrganizationRole == proto.AccountV2_Role_Organization_ADMIN ||
+		updated.OrganizationRole == proto.AccountV2_Role_Organization_OWNER {
 		updated.EnvironmentRoles = []*proto.AccountV2_EnvironmentRole{}
 	}
 	if isDisabled != nil {

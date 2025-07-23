@@ -204,7 +204,7 @@ func (s *AccountService) createAccountV2NoCommand(
 			if err != nil {
 				return err
 			}
-			// Store the event to publish after transaction
+			// Store the event to publish after the transaction commits to ensure consistency
 			createAccountEvent = updateAccountEvent
 			return nil
 		}
@@ -1195,8 +1195,7 @@ func (s *AccountService) ListAccountsV2(
 		return nil, err
 	}
 
-	// If not an organization admin or organization owner or system admin,
-	// a user can only view accounts in their environments
+	// Users with member role can only view accounts in the environments they have access to
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
 	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
 		requestEnvironmentRoles, err = s.constructEnvironmentRoles(req, editor)

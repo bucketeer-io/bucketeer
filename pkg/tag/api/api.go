@@ -645,10 +645,7 @@ func (s *TagService) getAllowedEnvironments(
 	editor *eventproto.Editor,
 ) []string {
 	filterEnvironmentIDs := make([]string, 0)
-	if editor.OrganizationRole == accproto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
-		// if the user is an admin, no need to filter environments.
-		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
-	} else {
+	if editor.OrganizationRole == accproto.AccountV2_Role_Organization_MEMBER {
 		// only show API keys in allowed environments for member.
 		if len(reqEnvironmentIDs) > 0 {
 			for _, id := range reqEnvironmentIDs {
@@ -664,6 +661,9 @@ func (s *TagService) getAllowedEnvironments(
 				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
 			}
 		}
+	} else {
+		// if the user is an admin or owner, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
 	}
 	return filterEnvironmentIDs
 }
