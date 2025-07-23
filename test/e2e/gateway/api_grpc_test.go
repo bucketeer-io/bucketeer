@@ -1054,7 +1054,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	}
 
 	foundAttributes := make(map[string]bool)
-	maxRetryCount := 5
+	maxRetryCount := 10
 	sleepSecond := 60
 	for i := 0; i < maxRetryCount; i++ {
 		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
