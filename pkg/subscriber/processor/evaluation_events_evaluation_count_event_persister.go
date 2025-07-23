@@ -502,7 +502,6 @@ func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 }
 
 func (p *evaluationCountEventPersister) cacheUserAttributes(envEvents environmentEventMap) {
-	p.logger.Error("KAKI Cache user attributes event size", zap.Int("size", len(envEvents)))
 	p.userAttributesCacheMutex.Lock()
 	defer p.userAttributesCacheMutex.Unlock()
 	for environmentId, events := range envEvents {
@@ -542,7 +541,6 @@ func (p *evaluationCountEventPersister) cacheUserAttributes(envEvents environmen
 						attr.Values = append(attr.Values, value)
 					}
 				} else {
-					p.logger.Error("KAKI userAttributesMap", zap.String("key", key), zap.String("value", value))
 					userAttributesMap[key] = &userproto.UserAttribute{
 						Key:    key,
 						Values: []string{value},
@@ -579,7 +577,6 @@ func (p *evaluationCountEventPersister) writeUserAttributesCache(ctx context.Con
 }
 
 func (p *evaluationCountEventPersister) writeUserAttributes() {
-	p.logger.Error("KAKI writeUserAttributes cashe size", zap.Int("size", len(p.userAttributesCache)))
 	p.userAttributesCacheMutex.Lock()
 	defer p.userAttributesCacheMutex.Unlock()
 
@@ -603,9 +600,6 @@ func (p *evaluationCountEventPersister) writeUserAttributes() {
 func (p *evaluationCountEventPersister) upsertUserAttributes(
 	userAttributes *userproto.UserAttributes,
 ) error {
-	for _, attr := range userAttributes.UserAttributes {
-		p.logger.Error("KAKI upsertUserAttributes", zap.String("key", attr.Key), zap.Strings("values", attr.Values))
-	}
 	if err := p.userAttributesCacher.Put(userAttributes); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),
