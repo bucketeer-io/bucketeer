@@ -930,8 +930,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	defer client.Close()
 	uuid := newUUID(t)
 	environmentId := *environmentID
-	maxRetryCount := 5
-	sleepSecond := 30
 
 	// Create some evaluation events to populate user attributes cache
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -1028,8 +1026,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
 	}
 
-	time.Sleep(time.Duration(sleepSecond) * time.Second)
-
 	req2 := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
@@ -1058,6 +1054,8 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	}
 
 	foundAttributes := make(map[string]bool)
+	maxRetryCount := 5
+	sleepSecond := 60
 	for i := 0; i < maxRetryCount; i++ {
 		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
 
