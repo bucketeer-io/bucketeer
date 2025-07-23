@@ -47,6 +47,7 @@ var (
 	selectAccountsWithOrganizationSQL string
 )
 
+// nolint:lll
 var (
 	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", "account")
 	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")

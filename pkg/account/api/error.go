@@ -19,6 +19,7 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
+// nolint:lll
 var (
 	statusInternal                               = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 	statusInvalidCursor                          = api.NewGRPCStatus(pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "cursor is invalid", pkgErr.InvalidTypeNotMatchFormat, "cursor"))

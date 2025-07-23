@@ -20,6 +20,7 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
+// nolint:lll
 var (
 	ErrBadCommand = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "cannot handle command", pkgErr.InvalidTypeNotMatchFormat, "command")
 )

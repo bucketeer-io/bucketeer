@@ -29,6 +29,7 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
+// nolint:lll
 var (
 	maxAccountNameLength = 250
 	// nolint:lll
