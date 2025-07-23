@@ -200,7 +200,13 @@ func (s *AccountService) createAccountV2NoCommand(
 			return err
 		}
 		if exist != nil {
-			return s.changeExistedAccountV2EnvironmentRoles(contextWithTx, req, exist, editor)
+			updateAccountEvent, err := s.changeExistedAccountV2EnvironmentRoles(contextWithTx, req, exist, editor)
+			if err != nil {
+				return err
+			}
+			// Store the event to publish after transaction
+			createAccountEvent = updateAccountEvent
+			return nil
 		}
 		// TODO: temporary implementation end ---
 
@@ -314,15 +320,15 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	req *accountproto.CreateAccountV2Request,
 	account *domain.AccountV2,
 	editor *eventproto.Editor,
-) error {
+) (*eventproto.Event, error) {
 	var updateAccountEvent *eventproto.Event
 	updated := &domain.AccountV2{}
 	if err := copier.Copy(updated, account); err != nil {
-		return err
+		return nil, err
 	}
 	err := updated.PatchEnvironmentRole(req.EnvironmentRoles)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	updateAccountEvent, err = domainevent.NewAdminEvent(
@@ -345,19 +351,20 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 				zap.String("email", req.Email),
 			)...,
 		)
-		return err
-	}
-	if err = s.publisher.Publish(ctx, updateAccountEvent); err != nil {
-		return err
+		return nil, err
 	}
 	err = s.accountStorage.UpdateAccountV2(ctx, updated)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.adminAuditLogStorage.CreateAdminAuditLog(
+	err = s.adminAuditLogStorage.CreateAdminAuditLog(
 		ctx,
 		domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID),
 	)
+	if err != nil {
+		return nil, err
+	}
+	return updateAccountEvent, nil
 }
 
 func (s *AccountService) upsertTags(

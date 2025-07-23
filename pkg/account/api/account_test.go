@@ -495,10 +495,6 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
