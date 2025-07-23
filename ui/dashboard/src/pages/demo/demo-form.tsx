@@ -1,10 +1,10 @@
+import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { organizationDemoCreator } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { AxiosError } from 'axios';
 import { PAGE_PATH_ROOT } from 'constants/routing';
-import { useToast } from 'hooks';
+import { ServerErrorType, useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { clearDemoTokenStorage } from 'storage/demo-token';
@@ -40,10 +40,11 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   });
 
 const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
-  const { errorNotify, notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'auth', 'message']);
+  const { notify } = useToast();
   const navigate = useNavigate();
 
-  const { t } = useTranslation(['common', 'form', 'auth', 'message']);
+  const [demoFormError, setDemoFormError] = useState<ServerErrorType>();
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -77,15 +78,17 @@ const DemoForm = ({ isDemoSiteEnabled }: { isDemoSiteEnabled?: boolean }) => {
         navigate(PAGE_PATH_ROOT);
       }
     } catch (error) {
-      if ((error as AxiosError).status === 401) {
-        clearDemoTokenStorage();
-      }
-      errorNotify(error);
+      setDemoFormError(error as ServerErrorType);
     }
   };
 
   return (
     <FormProvider {...form}>
+      {demoFormError?.response?.data?.message && (
+        <div className="typo-para-medium text-accent-red-500 mt-6">
+          {demoFormError?.response?.data?.message}
+        </div>
+      )}
       <Form onSubmit={form.handleSubmit(onSubmit)} className="mt-5">
         <Form.Field
           control={form.control}
