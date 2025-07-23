@@ -333,6 +333,107 @@ func TestListTeams(t *testing.T) {
 	}
 }
 
+func TestGetTeamByName(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc           string
+		setup          func(*teamStorage)
+		name           string
+		organizationID string
+		expectedTeam   *domain.Team
+		expectedErr    error
+	}{
+		{
+			desc: "ErrTeamNotFound",
+			setup: func(s *teamStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			name:           "test-team",
+			organizationID: "env-0",
+			expectedTeam:   nil,
+			expectedErr:    ErrTeamNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *teamStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			name:           "test-team",
+			organizationID: "env-0",
+			expectedTeam:   nil,
+			expectedErr:    errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *teamStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(
+					gomock.Any(), // id
+					gomock.Any(), // name
+					gomock.Any(), // description
+					gomock.Any(), // created_at
+					gomock.Any(), // updated_at
+					gomock.Any(), // organization_id
+					gomock.Any(), // organization_name
+				).Do(func(args ...interface{}) {
+					*args[0].(*string) = "team-id-0"
+					*args[1].(*string) = "test-team"
+					*args[2].(*string) = "test-description"
+					*args[3].(*int64) = int64(2)
+					*args[4].(*int64) = int64(3)
+					*args[5].(*string) = "test-org"
+					*args[6].(*string) = "test-org-name"
+				}).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					selectTeamByNameSQL,
+					"test-team",
+					"test-org",
+				).Return(row)
+			},
+			name:           "test-team",
+			organizationID: "test-org",
+			expectedTeam: &domain.Team{
+				Team: &proto.Team{
+					Id:               "team-id-0",
+					Name:             "test-team",
+					Description:      "test-description",
+					CreatedAt:        2,
+					UpdatedAt:        3,
+					OrganizationId:   "test-org",
+					OrganizationName: "test-org-name",
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			storage := newTeamStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			team, err := storage.GetTeamByName(context.Background(), p.name, p.organizationID)
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				assert.Equal(t, p.expectedTeam, team)
+			}
+		})
+	}
+}
+
 func newTeamStorageWithMock(t *testing.T, mockController *gomock.Controller) *teamStorage {
 	t.Helper()
 	return &teamStorage{mock.NewMockQueryExecer(mockController)}
