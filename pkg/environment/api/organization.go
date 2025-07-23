@@ -50,13 +50,9 @@ func (s *EnvironmentService) GetOrganization(
 	req *environmentproto.GetOrganizationRequest,
 ) (*environmentproto.GetOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER, localizer)
 	if err != nil {
-		// A member can access the organization details but can't update it
-		_, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER, localizer)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	if err := s.validateGetOrganizationRequest(req, localizer); err != nil {
 		return nil, err
