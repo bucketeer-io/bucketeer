@@ -125,7 +125,9 @@ export const getEditorEnvironments = (account: ConsoleAccount) => {
 
 export const getAccountAccess = (account: ConsoleAccount) => {
   const envEditable = hasEditable(account);
-  const isOrganizationAdmin =
-    account?.organizationRole === 'Organization_ADMIN';
+  const isOrganizationAdmin = [
+    'Organization_OWNER',
+    'Organization_ADMIN'
+  ].includes(account?.organizationRole);
   return { envEditable, isOrganizationAdmin };
 };
