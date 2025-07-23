@@ -1195,9 +1195,10 @@ func (s *AccountService) ListAccountsV2(
 		return nil, err
 	}
 
-	// If not an organization admin or system admin, a user can only view accounts in their environments
+	// If not an organization admin or organization owner or system admin,
+	// a user can only view accounts in their environments
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
-	if editor.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN && !editor.IsAdmin {
+	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
 		requestEnvironmentRoles, err = s.constructEnvironmentRoles(req, editor)
 		if err != nil {
 			return nil, err
