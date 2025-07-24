@@ -418,7 +418,7 @@ func (s *AccountService) getMyOrganizations(
 		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
 			continue
 		}
-		// If the user is an admin or owner, no need to filter environments.
+		// Add the organization if the account is an admin or owner.
 		// Otherwise, we check if the account is enabled in any environment in this organization.
 		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN ||
 			accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_OWNER {
