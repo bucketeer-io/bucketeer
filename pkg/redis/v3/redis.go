@@ -370,14 +370,13 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 	nodeIndex := cursor >> 32
 	nodeCursor := cursor & 0xFFFFFFFF
 
-	// Get cluster nodes
-	var nodeAddrs []string
+	// Get consistent list of master node addresses
 	clusterNodes, err := clusterClient.ClusterNodes(context.TODO()).Result()
 	if err != nil {
 		return 0, nil, err
 	}
 
-	// Parse master nodes from cluster nodes info
+	var nodeAddrs []string
 	for _, line := range strings.Split(clusterNodes, "\n") {
 		if line == "" {
 			continue
@@ -402,8 +401,13 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 		return 0, []string{}, nil
 	}
 
-	// Connect to specific node and scan
+	// Use cluster client to scan specific node
 	nodeAddr := nodeAddrs[nodeIndex]
+
+	// Create connection to specific node using original cluster settings
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
 	nodeClient := goredis.NewClient(&goredis.Options{
 		Addr:         nodeAddr,
 		Password:     clusterClient.Options().Password,
@@ -415,7 +419,7 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 	})
 	defer nodeClient.Close()
 
-	keys, newNodeCursor, err := nodeClient.Scan(context.TODO(), nodeCursor, key, count).Result()
+	keys, newNodeCursor, err := nodeClient.Scan(ctx, nodeCursor, key, count).Result()
 	if err != nil {
 		return 0, nil, err
 	}
