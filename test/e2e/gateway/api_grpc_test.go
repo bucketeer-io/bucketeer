@@ -1023,7 +1023,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(response.Errors) > 0 {
-		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+		t.Fatalf("Failed to register first events. Error: %v", response.Errors)
 	}
 
 	req2 := &gatewayproto.RegisterEventsRequest{
@@ -1040,7 +1040,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(response2.Errors) > 0 {
-		t.Fatalf("Failed to register events. Error: %v", response2.Errors)
+		t.Fatalf("Failed to register second events. Error: %v", response2.Errors)
 	}
 
 	// Check that all 6 attributes are found
@@ -1056,19 +1056,14 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	foundAttributes := make(map[string]bool)
 	maxRetryCount := 5
 	sleepSecond := 60
+
 	for i := 0; i < maxRetryCount; i++ {
 		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
 
-		getKeyCtx, getKeyCancel := context.WithTimeout(context.Background(), timeout)
-		defer getKeyCancel()
-
-		// Test GetUserAttributeKeys API
-		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
-			EnvironmentId: environmentId,
-		}
-		userAttrResp, err := client.GetUserAttributeKeys(getKeyCtx, userAttrReq)
+		// Test GetUserAttributeKeys API with retry logic for network issues
+		userAttrResp, err := getUserAttributeKeysWithRetry(t, client, environmentId, 3)
 		if err != nil {
-			t.Fatal("Failed to get user attribute keys:", err)
+			t.Fatal("Failed to get user attribute keys after retries:", err)
 		}
 
 		// Check for all expected attributes
@@ -1096,6 +1091,32 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	if len(foundAttributes) != len(expectedAttributes) {
 		t.Fatalf("Expected %d attributes, but found %d", len(expectedAttributes), len(foundAttributes))
 	}
+}
+
+// getUserAttributeKeysWithRetry adds retry logic for network resilience
+func getUserAttributeKeysWithRetry(t *testing.T, client featureclient.Client, environmentId string, maxRetries int) (*featureproto.GetUserAttributeKeysResponse, error) {
+	t.Helper()
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		getKeyCtx, getKeyCancel := context.WithTimeout(context.Background(), timeout)
+
+		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
+			EnvironmentId: environmentId,
+		}
+		userAttrResp, err := client.GetUserAttributeKeys(getKeyCtx, userAttrReq)
+		getKeyCancel()
+
+		if err == nil {
+			return userAttrResp, nil
+		}
+
+		// If not the last attempt, wait before retrying
+		if attempt < maxRetries {
+			time.Sleep(time.Duration(attempt*2) * time.Second)
+		}
+	}
+
+	return nil, fmt.Errorf("GetUserAttributeKeys failed after %d attempts", maxRetries)
 }
 
 func newGatewayClient(t *testing.T, apiKey string) gatewayclient.Client {
