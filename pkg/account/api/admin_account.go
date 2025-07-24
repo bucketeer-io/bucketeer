@@ -170,10 +170,11 @@ func (s *AccountService) GetMe(
 		return nil, err
 	}
 	var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
-	if account.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
-		envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
-	} else {
+	if account.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
 		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	} else {
+		// If the user is an admin or owner, no need to filter environments.
+		envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 	}
 
 	// update user last seen
@@ -417,9 +418,10 @@ func (s *AccountService) getMyOrganizations(
 		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
 			continue
 		}
-		// If the account is an admin account, we append the organization.
+		// Add the organization if the account is an admin or owner.
 		// Otherwise, we check if the account is enabled in any environment in this organization.
-		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN ||
+			accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_OWNER {
 			myOrgs = append(myOrgs, accWithOrg.Organization)
 			continue
 		}
