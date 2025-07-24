@@ -228,6 +228,7 @@ processors:
     flushSize: 100
     flushInterval: 10
     writeCacheInterval: 10
+    userAttributeTTLDay: 1
   segmentUserPersister:
     domainEventProject: bucketeer-test
     domainEventTopic: domain

@@ -26,14 +26,14 @@ import (
 )
 
 const (
-	userAttributeKind     = "user_attr"
-	userAttributesMaxSize = int64(100)
-	userAttributeTTL      = time.Duration(30 * 24 * time.Hour)
+	userAttributeKind          = "user_attr"
+	userAttributesMaxSize      = int64(100)
+	defalutUserAttributeTTLDay = 30
 )
 
 type UserAttributesCache interface {
 	GetUserAttributeKeyAll(environmentId string) ([]string, error)
-	Put(userAttributes *userproto.UserAttributes) error
+	Put(userAttributes *userproto.UserAttributes, ttlDay int) error
 }
 
 type userAttributesCache struct {
@@ -82,7 +82,7 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]st
 	return attributeKeys, nil
 }
 
-func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) error {
+func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttlDay int) error {
 	if userAttributes == nil {
 		return errors.New("user attributes is nil")
 	}
@@ -92,7 +92,11 @@ func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) erro
 		for _, value := range attribute.Values {
 			pipe.SAdd(key, value)
 		}
-		pipe.Expire(key, userAttributeTTL)
+		var ttl = defalutUserAttributeTTLDay
+		if ttlDay > 0 {
+			ttl = ttlDay
+		}
+		pipe.Expire(key, time.Duration(ttl)*24*time.Hour)
 	}
 	_, err := pipe.Exec()
 	if err != nil {

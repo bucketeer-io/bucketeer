@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -111,27 +112,63 @@ func TestPutUserAttributesCache(t *testing.T) {
 		desc        string
 		setup       func(*userAttributesCache, *redismock.MockPipeClient)
 		input       *userproto.UserAttributes
+		ttlDay      int
 		expectedErr error
 	}{
 		{
 			desc:        "nil_input",
 			setup:       nil,
 			input:       nil,
+			ttlDay:      30,
 			expectedErr: errors.New("user attributes is nil"),
 		},
 		{
-			desc: "success",
+			desc: "success_with_default_ttl",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
 				for _, attr := range userAttrs.UserAttributes {
 					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, userAttributeTTL)
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
 			input:       userAttrs,
+			ttlDay:      0,
+			expectedErr: nil,
+		},
+		{
+			desc: "success_with_custom_ttl",
+			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
+				customTTL := 7
+				for _, attr := range userAttrs.UserAttributes {
+					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
+					for _, v := range attr.Values {
+						pipe.EXPECT().SAdd(key, v)
+					}
+					pipe.EXPECT().Expire(key, time.Duration(customTTL)*24*time.Hour)
+				}
+				pipe.EXPECT().Exec().Return(nil, nil)
+			},
+			input:       userAttrs,
+			ttlDay:      7,
+			expectedErr: nil,
+		},
+		{
+			desc: "success_with_negative_ttl_uses_default",
+			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
+				for _, attr := range userAttrs.UserAttributes {
+					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
+					for _, v := range attr.Values {
+						pipe.EXPECT().SAdd(key, v)
+					}
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
+				}
+				pipe.EXPECT().Exec().Return(nil, nil)
+			},
+			input:       userAttrs,
+			ttlDay:      -1,
 			expectedErr: nil,
 		},
 		{
@@ -142,11 +179,12 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, userAttributeTTL)
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
 				}
 				pipe.EXPECT().Exec().Return(nil, errors.New("exec error"))
 			},
 			input:       userAttrs,
+			ttlDay:      0,
 			expectedErr: errors.New("exec error"),
 		},
 	}
@@ -154,7 +192,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			uac := newUserAttributesCache(t, mockController)
 			if p.input == nil {
-				err := uac.Put(p.input)
+				err := uac.Put(p.input, p.ttlDay)
 				assert.Equal(t, p.expectedErr, err)
 				return
 			}
@@ -163,7 +201,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 			if p.setup != nil {
 				p.setup(uac, pipe)
 			}
-			err := uac.Put(p.input)
+			err := uac.Put(p.input, p.ttlDay)
 			if p.expectedErr != nil {
 				assert.EqualError(t, err, p.expectedErr.Error())
 			} else {

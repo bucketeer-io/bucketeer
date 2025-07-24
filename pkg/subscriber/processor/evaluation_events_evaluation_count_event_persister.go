@@ -54,9 +54,10 @@ type environmentEventMap map[string]eventMap
 type userAttributesCache map[string]*userproto.UserAttributes
 
 type EvaluationCountEventPersisterConfig struct {
-	FlushSize          int `json:"flushSize"`
-	FlushInterval      int `json:"flushInterval"`
-	WriteCacheInterval int `json:"writeCacheInterval"`
+	FlushSize           int `json:"flushSize"`
+	FlushInterval       int `json:"flushInterval"`
+	WriteCacheInterval  int `json:"writeCacheInterval"`
+	UserAttributeTTLDay int `json:"userAttributeTTLDay"`
 }
 
 type evaluationCountEventPersister struct {
@@ -600,7 +601,10 @@ func (p *evaluationCountEventPersister) writeUserAttributes() {
 func (p *evaluationCountEventPersister) upsertUserAttributes(
 	userAttributes *userproto.UserAttributes,
 ) error {
-	if err := p.userAttributesCacher.Put(userAttributes); err != nil {
+	if err := p.userAttributesCacher.Put(
+		userAttributes,
+		p.evaluationCountEventPersisterConfig.UserAttributeTTLDay,
+	); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),
 			zap.String("environmentId", userAttributes.EnvironmentId),
