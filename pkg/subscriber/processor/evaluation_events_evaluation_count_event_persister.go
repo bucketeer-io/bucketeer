@@ -57,7 +57,7 @@ type EvaluationCountEventPersisterConfig struct {
 	FlushSize           int `json:"flushSize"`
 	FlushInterval       int `json:"flushInterval"`
 	WriteCacheInterval  int `json:"writeCacheInterval"`
-	UserAttributeTTLDay int `json:"userAttributeTTLDay"`
+	UserAttributeKeyTTL int `json:"userAttributeKeyTtl"`
 }
 
 type evaluationCountEventPersister struct {
@@ -603,7 +603,7 @@ func (p *evaluationCountEventPersister) upsertUserAttributes(
 ) error {
 	if err := p.userAttributesCacher.Put(
 		userAttributes,
-		p.evaluationCountEventPersisterConfig.UserAttributeTTLDay,
+		p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL,
 	); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),

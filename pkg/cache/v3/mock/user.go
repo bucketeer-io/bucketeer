@@ -56,15 +56,15 @@ func (mr *MockUserAttributesCacheMockRecorder) GetUserAttributeKeyAll(environmen
 }
 
 // Put mocks base method.
-func (m *MockUserAttributesCache) Put(userAttributes *user.UserAttributes, ttlDay int) error {
+func (m *MockUserAttributesCache) Put(userAttributes *user.UserAttributes, ttl int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", userAttributes, ttlDay)
+	ret := m.ctrl.Call(m, "Put", userAttributes, ttl)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockUserAttributesCacheMockRecorder) Put(userAttributes, ttlDay any) *gomock.Call {
+func (mr *MockUserAttributesCacheMockRecorder) Put(userAttributes, ttl any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockUserAttributesCache)(nil).Put), userAttributes, ttlDay)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockUserAttributesCache)(nil).Put), userAttributes, ttl)
 }

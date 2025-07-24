@@ -130,7 +130,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
@@ -147,7 +147,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, time.Duration(customTTL)*24*time.Hour)
+					pipe.EXPECT().Expire(key, time.Duration(customTTL)*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
@@ -163,7 +163,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
@@ -179,7 +179,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTLDay*24*time.Hour)
+					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, errors.New("exec error"))
 			},

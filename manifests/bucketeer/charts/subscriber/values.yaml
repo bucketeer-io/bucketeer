@@ -232,7 +232,7 @@ processors:
     flushSize: 100
     flushInterval: 10
     writeCacheInterval: 10
-    userAttributeTTLDay: 1
+    userAttributeKeyTtl: 604800 # 7 days
   segmentUserPersister:
     domainEventProject:
     domainEventTopic:
