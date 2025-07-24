@@ -875,14 +875,17 @@ func (s *EnvironmentService) UpdateOrganization(
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
 	if err != nil {
-		// If not system admin, check if user is organization owner
-		editor, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
-		if err != nil {
+		return nil, err
+	}
+	// Additional security validations for ownership transfer
+	if req.OwnerEmail != nil || (req.ChangeOwnerEmailCommand != nil && req.ChangeOwnerEmailCommand.OwnerEmail != "") {
+		if err := s.validateOwnershipTransfer(ctx, req, editor, localizer); err != nil {
 			return nil, err
 		}
 	}
+
 	commands := s.getUpdateOrganizationCommands(req)
 	if len(commands) == 0 {
 		return s.updateOrganizationNoCommand(ctx, req, editor, localizer)
@@ -942,8 +945,8 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 			return err
 		}
 		// Set the new owner email if it changes
-		if prevOwnerEmail != organization.OwnerEmail {
-			newOwnerEmail = organization.OwnerEmail
+		if prevOwnerEmail != updated.OwnerEmail {
+			newOwnerEmail = updated.OwnerEmail
 		}
 		return orgStorage.UpdateOrganization(ctxWithTx, updated)
 	})
@@ -1186,31 +1189,109 @@ func (s *EnvironmentService) updateOrganization(
 	return nil
 }
 
+// validateOwnershipTransfer performs additional security validations for ownership transfer
+func (s *EnvironmentService) validateOwnershipTransfer(
+	ctx context.Context,
+	req *environmentproto.UpdateOrganizationRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) error {
+	// Get current organization to validate against
+	organization, err := s.orgStorage.GetOrganization(ctx, req.Id)
+	if err != nil {
+		return err
+	}
+
+	// Determine the new owner email being requested
+	var newOwnerEmail string
+	if req.OwnerEmail != nil {
+		newOwnerEmail = req.OwnerEmail.Value
+	} else if req.ChangeOwnerEmailCommand != nil {
+		newOwnerEmail = req.ChangeOwnerEmailCommand.OwnerEmail
+	}
+
+	// Don't allow no-op updates (setting same owner)
+	if newOwnerEmail == organization.OwnerEmail {
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.InvalidArgumentError,
+				"new owner email is the same as the current owner",
+			),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	// If not system admin, ensure current user is actually the current owner
+	if !editor.IsAdmin && editor.Email != organization.OwnerEmail {
+		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	// New owner must exist and be a member of the organization
+	newOwnerAccount, err := s.accountStorage.GetAccountV2(ctx, newOwnerEmail, req.Id)
+	if err != nil {
+		if errors.Is(err, v2acc.ErrAccountNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "new owner account not found in organization"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return err
+	}
+
+	// New owner account must be enabled
+	if newOwnerAccount.Disabled {
+		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "new owner account is disabled"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	return nil
+}
+
 func (s *EnvironmentService) updateOwnerRole(
 	ctx context.Context,
 	organizationID, prevOwnerEmail, newOwnerEmail string,
 ) error {
-	accStorage := v2acc.NewAccountStorage(s.mysqlClient)
 	// Update the old owner organization role
-	prevOwnerAcc, err := accStorage.GetAccountV2(ctx, prevOwnerEmail, organizationID)
+	prevOwnerAcc, err := s.accountStorage.GetAccountV2(ctx, prevOwnerEmail, organizationID)
 	if err != nil {
 		return err
 	}
 	if err := prevOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_ADMIN); err != nil {
 		return err
 	}
-	if err := accStorage.UpdateAccountV2(ctx, prevOwnerAcc); err != nil {
+	if err := s.accountStorage.UpdateAccountV2(ctx, prevOwnerAcc); err != nil {
 		return err
 	}
 	// Update the new owner organization role
-	newOwnerAcc, err := accStorage.GetAccountV2(ctx, newOwnerEmail, organizationID)
+	newOwnerAcc, err := s.accountStorage.GetAccountV2(ctx, newOwnerEmail, organizationID)
 	if err != nil {
 		return err
 	}
 	if err := newOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_OWNER); err != nil {
 		return err
 	}
-	if err := accStorage.UpdateAccountV2(ctx, newOwnerAcc); err != nil {
+	if err := s.accountStorage.UpdateAccountV2(ctx, newOwnerAcc); err != nil {
 		return err
 	}
 	return nil
