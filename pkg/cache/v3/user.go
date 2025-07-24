@@ -28,7 +28,7 @@ import (
 const (
 	userAttributeKind       = "user_attr"
 	userAttributesMaxSize   = int64(100)
-	defalutUserAttributeTTL = 30 * 24 * 60 * 60 // 30 days
+	defalutUserAttributeTTL = 7 * 24 * 60 * 60 // 7 days
 )
 
 type UserAttributesCache interface {
