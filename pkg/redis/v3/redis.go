@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -331,7 +332,19 @@ func (c *client) Stats() redis.PoolStats {
 func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName).Inc()
-	keys, cursor, err := c.rc.Scan(context.TODO(), cursor, key, count).Result()
+
+	var keys []string
+	var newCursor uint64
+	var err error
+
+	if c.clientType == ClientTypeCluster {
+		// Use cluster-aware pagination
+		newCursor, keys, err = c.scanClusterWithPagination(cursor, key, count)
+	} else {
+		// Use standard approach for non-cluster client
+		keys, newCursor, err = c.rc.Scan(context.TODO(), cursor, key, count).Result()
+	}
+
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -342,7 +355,82 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Observe(
 		time.Since(startTime).Seconds())
-	return cursor, keys, err
+	return newCursor, keys, err
+}
+
+// scanClusterWithPagination implements cursor-based pagination across cluster nodes
+// Cursor encoding: nodeIndex<<32 | nodeCursor (0 means start from node 0)
+func (c *client) scanClusterWithPagination(cursor uint64, key string, count int64) (uint64, []string, error) {
+	clusterClient, ok := c.rc.(*goredis.ClusterClient)
+	if !ok {
+		return 0, nil, fmt.Errorf("client is not a cluster client")
+	}
+
+	// Decode cursor: high 32 bits = nodeIndex, low 32 bits = nodeCursor
+	nodeIndex := cursor >> 32
+	nodeCursor := cursor & 0xFFFFFFFF
+
+	// Get cluster nodes
+	var nodeAddrs []string
+	clusterNodes, err := clusterClient.ClusterNodes(context.TODO()).Result()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	// Parse master nodes from cluster nodes info
+	for _, line := range strings.Split(clusterNodes, "\n") {
+		if line == "" {
+			continue
+		}
+		parts := strings.Fields(line)
+		if len(parts) >= 3 && strings.Contains(parts[2], "master") {
+			// parts[1] format: "ip:port@cluster_port" - we only want "ip:port"
+			addr := parts[1]
+			if atIndex := strings.Index(addr, "@"); atIndex != -1 {
+				addr = addr[:atIndex] // Remove @cluster_port suffix
+			}
+			nodeAddrs = append(nodeAddrs, addr)
+		}
+	}
+
+	if len(nodeAddrs) == 0 {
+		return 0, nil, fmt.Errorf("no master nodes found in cluster")
+	}
+
+	// If nodeIndex >= number of nodes, scanning is complete
+	if nodeIndex >= uint64(len(nodeAddrs)) {
+		return 0, []string{}, nil
+	}
+
+	// Connect to specific node and scan
+	nodeAddr := nodeAddrs[nodeIndex]
+	nodeClient := goredis.NewClient(&goredis.Options{
+		Addr:         nodeAddr,
+		Password:     clusterClient.Options().Password,
+		MaxRetries:   clusterClient.Options().MaxRetries,
+		DialTimeout:  clusterClient.Options().DialTimeout,
+		PoolSize:     clusterClient.Options().PoolSize,
+		MinIdleConns: clusterClient.Options().MinIdleConns,
+		PoolTimeout:  clusterClient.Options().PoolTimeout,
+	})
+	defer nodeClient.Close()
+
+	keys, newNodeCursor, err := nodeClient.Scan(context.TODO(), nodeCursor, key, count).Result()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	// Encode new cursor
+	var newCursor uint64
+	if newNodeCursor == 0 {
+		// Current node scan complete, move to next node
+		newCursor = (nodeIndex + 1) << 32
+	} else {
+		// Continue scanning current node
+		newCursor = (nodeIndex << 32) | newNodeCursor
+	}
+
+	return newCursor, keys, nil
 }
 
 func (c *client) Get(key string) ([]byte, error) {
