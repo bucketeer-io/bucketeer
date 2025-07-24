@@ -930,8 +930,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	defer client.Close()
 	uuid := newUUID(t)
 	environmentId := *environmentID
-	maxRetryCount := 5
-	sleepSecond := 30
 
 	// Create some evaluation events to populate user attributes cache
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -950,9 +948,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	// Register evaluation events with user attributes
 	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(maxRetryCount*sleepSecond)*time.Second)
-	defer cancel()
-
 	testUserDataKeySuffix := "testGetUserAttributeKeys-"
 
 	// First evaluation event with 3 attributes
@@ -1011,6 +1006,9 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout*2)
+	defer cancel()
+
 	req := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
@@ -1027,8 +1025,6 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
 	}
-
-	time.Sleep(time.Duration(sleepSecond) * time.Second)
 
 	req2 := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
@@ -1058,14 +1054,19 @@ func TestGetUserAttributeKeys(t *testing.T) {
 	}
 
 	foundAttributes := make(map[string]bool)
+	maxRetryCount := 5
+	sleepSecond := 60
 	for i := 0; i < maxRetryCount; i++ {
 		time.Sleep(time.Duration(sleepSecond) * time.Second) // Wait for cache to update
+
+		getKeyCtx, getKeyCancel := context.WithTimeout(context.Background(), timeout)
+		defer getKeyCancel()
 
 		// Test GetUserAttributeKeys API
 		userAttrReq := &featureproto.GetUserAttributeKeysRequest{
 			EnvironmentId: environmentId,
 		}
-		userAttrResp, err := client.GetUserAttributeKeys(ctx, userAttrReq)
+		userAttrResp, err := client.GetUserAttributeKeys(getKeyCtx, userAttrReq)
 		if err != nil {
 			t.Fatal("Failed to get user attribute keys:", err)
 		}
