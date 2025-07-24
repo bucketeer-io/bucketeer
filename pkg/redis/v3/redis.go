@@ -339,7 +339,7 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 
 	if c.clientType == ClientTypeCluster {
 		// Use cluster-aware pagination
-		newCursor, keys, err = c.scanClusterWithPagination(cursor, key, count)
+		keys, newCursor, err = c.scanClusterWithPagination(cursor, key, count)
 	} else {
 		// Use standard approach for non-cluster client
 		keys, newCursor, err = c.rc.Scan(context.TODO(), cursor, key, count).Result()
@@ -360,10 +360,10 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 
 // scanClusterWithPagination implements cursor-based pagination across cluster nodes
 // Cursor encoding: nodeIndex<<32 | nodeCursor (0 means start from node 0)
-func (c *client) scanClusterWithPagination(cursor uint64, key string, count int64) (uint64, []string, error) {
+func (c *client) scanClusterWithPagination(cursor uint64, key string, count int64) ([]string, uint64, error) {
 	clusterClient, ok := c.rc.(*goredis.ClusterClient)
 	if !ok {
-		return 0, nil, fmt.Errorf("client is not a cluster client")
+		return nil, 0, fmt.Errorf("client is not a cluster client")
 	}
 
 	// Decode cursor: high 32 bits = nodeIndex, low 32 bits = nodeCursor
@@ -373,7 +373,7 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 	// Get consistent list of master node addresses
 	clusterNodes, err := clusterClient.ClusterNodes(context.TODO()).Result()
 	if err != nil {
-		return 0, nil, err
+		return nil, 0, err
 	}
 
 	var nodeAddrs []string
@@ -393,12 +393,12 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 	}
 
 	if len(nodeAddrs) == 0 {
-		return 0, nil, fmt.Errorf("no master nodes found in cluster")
+		return nil, 0, fmt.Errorf("no master nodes found in cluster")
 	}
 
 	// If nodeIndex >= number of nodes, scanning is complete
 	if nodeIndex >= uint64(len(nodeAddrs)) {
-		return 0, []string{}, nil
+		return []string{}, 0, nil
 	}
 
 	// Use cluster client to scan specific node
@@ -421,7 +421,7 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 
 	keys, newNodeCursor, err := nodeClient.Scan(ctx, nodeCursor, key, count).Result()
 	if err != nil {
-		return 0, nil, err
+		return nil, 0, err
 	}
 
 	// Encode new cursor
@@ -434,7 +434,7 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 		newCursor = (nodeIndex << 32) | newNodeCursor
 	}
 
-	return newCursor, keys, nil
+	return keys, newCursor, nil
 }
 
 func (c *client) Get(key string) ([]byte, error) {
