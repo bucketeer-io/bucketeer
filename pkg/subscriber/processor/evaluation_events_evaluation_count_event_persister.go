@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
@@ -49,6 +51,7 @@ type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
 type environmentLastUsedInfoCache map[string]lastUsedInfoCache
 type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
+type userAttributesCache map[string]*userproto.UserAttributes
 
 type EvaluationCountEventPersisterConfig struct {
 	FlushSize          int `json:"flushSize"`
@@ -61,7 +64,10 @@ type evaluationCountEventPersister struct {
 	mysqlClient                         mysql.Client
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
-	mutex                               sync.Mutex
+	userAttributesCacher                cachev3.UserAttributesCache
+	userAttributesCache                 userAttributesCache
+	envLastUsedCacheMutex               sync.Mutex
+	userAttributesCacheMutex            sync.Mutex
 	logger                              *zap.Logger
 }
 
@@ -70,6 +76,7 @@ func NewEvaluationCountEventPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
+	userAttributesCacher cachev3.UserAttributesCache,
 	logger *zap.Logger,
 ) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
@@ -93,12 +100,18 @@ func NewEvaluationCountEventPersister(
 		mysqlClient:                         mysqlClient,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
-		mutex:                               sync.Mutex{},
+		userAttributesCacher:                userAttributesCacher,
+		userAttributesCache:                 make(userAttributesCache),
+		envLastUsedCacheMutex:               sync.Mutex{},
+		userAttributesCacheMutex:            sync.Mutex{},
 		logger:                              logger,
 	}
 	// write flag last used info cache periodically
 	//nolint:errcheck
 	go e.writeFlagLastUsedInfoCache(ctx)
+	// write user attributes cache periodically
+	//nolint:errcheck
+	go e.writeUserAttributesCache(ctx)
 	return e, nil
 }
 
@@ -140,11 +153,15 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
+			// Update the user attributes cache
+			p.cacheUserAttributes(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
+			// Update the user attributes cache
+			p.cacheUserAttributes(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ctx.Done():
 			// Nack the messages to be redelivered
@@ -340,8 +357,8 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
 	environmentId string,
 ) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.envLastUsedCacheMutex.Lock()
+	defer p.envLastUsedCacheMutex.Unlock()
 	var clientVersion string
 	if event.User == nil {
 		p.logger.Warn("Failed to cache last used info. User is nil.",
@@ -389,15 +406,15 @@ func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.C
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			p.logger.Debug("Write cache timer triggered")
+			p.logger.Debug("Write FlagLastUsedInfo cache timer triggered")
 			p.writeEnvLastUsedInfo()
 		}
 	}
 }
 
 func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.envLastUsedCacheMutex.Lock()
+	defer p.envLastUsedCacheMutex.Unlock()
 
 	for environmentId, cache := range p.envLastUsedCache {
 		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
@@ -482,4 +499,120 @@ func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 		return err
 	}
 	return nil
+}
+
+func (p *evaluationCountEventPersister) cacheUserAttributes(envEvents environmentEventMap) {
+	p.userAttributesCacheMutex.Lock()
+	defer p.userAttributesCacheMutex.Unlock()
+	for environmentId, events := range envEvents {
+		userAttributesMap := make(map[string]*userproto.UserAttribute)
+
+		if existingCache, exists := p.userAttributesCache[environmentId]; exists {
+			for _, attr := range existingCache.UserAttributes {
+				userAttributesMap[attr.Key] = &userproto.UserAttribute{
+					Key:    attr.Key,
+					Values: make([]string, len(attr.Values)),
+				}
+				copy(userAttributesMap[attr.Key].Values, attr.Values)
+			}
+		}
+
+		for _, event := range events {
+			if event.User == nil || event.User.Data == nil {
+				continue
+			}
+
+			// Extract user attributes from User.Data
+			for key, value := range event.User.Data {
+				if key == "" {
+					continue
+				}
+
+				if attr, exists := userAttributesMap[key]; exists {
+					// Check if value already exists to avoid duplicates
+					found := false
+					for _, existingValue := range attr.Values {
+						if existingValue == value {
+							found = true
+							break
+						}
+					}
+					if !found {
+						attr.Values = append(attr.Values, value)
+					}
+				} else {
+					userAttributesMap[key] = &userproto.UserAttribute{
+						Key:    key,
+						Values: []string{value},
+					}
+				}
+			}
+		}
+
+		// Convert map to slice and save to cache
+		if len(userAttributesMap) > 0 {
+			userAttributes := &userproto.UserAttributes{
+				EnvironmentId:  environmentId,
+				UserAttributes: make([]*userproto.UserAttribute, 0, len(userAttributesMap)),
+			}
+
+			for _, attr := range userAttributesMap {
+				userAttributes.UserAttributes = append(userAttributes.UserAttributes, attr)
+			}
+			p.userAttributesCache[environmentId] = userAttributes
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) writeUserAttributesCache(ctx context.Context) error {
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			p.writeUserAttributes()
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) writeUserAttributes() {
+	p.userAttributesCacheMutex.Lock()
+	defer p.userAttributesCacheMutex.Unlock()
+
+	for envID, cache := range p.userAttributesCache {
+		if cache != nil && len(cache.UserAttributes) > 0 {
+			if err := p.upsertUserAttributes(cache); err != nil {
+				p.logger.Error(
+					"Failed to save user attributes, will retry next cycle",
+					zap.Error(err),
+					zap.String("environmentId", envID),
+				)
+				continue
+			}
+			// If successful, delete it from the cache.
+			// The failed items will remain for the next attempt.
+			delete(p.userAttributesCache, envID)
+		}
+	}
+}
+
+func (p *evaluationCountEventPersister) upsertUserAttributes(
+	userAttributes *userproto.UserAttributes,
+) error {
+	if err := p.userAttributesCacher.Put(userAttributes); err != nil {
+		p.logger.Error("Failed to save user attributes to cache",
+			zap.Error(err),
+			zap.String("environmentId", userAttributes.EnvironmentId),
+			zap.Any("attributes", userAttributes.UserAttributes),
+			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+		)
+		return err
+	} else {
+		p.logger.Debug("Successfully saved user attributes to cache",
+			zap.String("environmentId", userAttributes.EnvironmentId),
+			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
+		)
+		return nil
+	}
 }

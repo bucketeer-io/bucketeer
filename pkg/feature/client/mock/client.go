@@ -554,6 +554,26 @@ func (mr *MockClientMockRecorder) GetSegmentUser(ctx, in any, opts ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUser", reflect.TypeOf((*MockClient)(nil).GetSegmentUser), varargs...)
 }
 
+// GetUserAttributeKeys mocks base method.
+func (m *MockClient) GetUserAttributeKeys(ctx context.Context, in *feature.GetUserAttributeKeysRequest, opts ...grpc.CallOption) (*feature.GetUserAttributeKeysResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetUserAttributeKeys", varargs...)
+	ret0, _ := ret[0].(*feature.GetUserAttributeKeysResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserAttributeKeys indicates an expected call of GetUserAttributeKeys.
+func (mr *MockClientMockRecorder) GetUserAttributeKeys(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAttributeKeys", reflect.TypeOf((*MockClient)(nil).GetUserAttributeKeys), varargs...)
+}
+
 // ListEnabledFeatures mocks base method.
 func (m *MockClient) ListEnabledFeatures(ctx context.Context, in *feature.ListEnabledFeaturesRequest, opts ...grpc.CallOption) (*feature.ListEnabledFeaturesResponse, error) {
 	m.ctrl.T.Helper()

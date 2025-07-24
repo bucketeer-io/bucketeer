@@ -3863,6 +3863,70 @@ export namespace FlagTriggerWebhookResponse {
   export type AsObject = {};
 }
 
+export class GetUserAttributeKeysRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetUserAttributeKeysRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetUserAttributeKeysRequest
+  ): GetUserAttributeKeysRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetUserAttributeKeysRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetUserAttributeKeysRequest;
+  static deserializeBinaryFromReader(
+    message: GetUserAttributeKeysRequest,
+    reader: jspb.BinaryReader
+  ): GetUserAttributeKeysRequest;
+}
+
+export namespace GetUserAttributeKeysRequest {
+  export type AsObject = {
+    environmentId: string;
+  };
+}
+
+export class GetUserAttributeKeysResponse extends jspb.Message {
+  clearUserAttributeKeysList(): void;
+  getUserAttributeKeysList(): Array<string>;
+  setUserAttributeKeysList(value: Array<string>): void;
+  addUserAttributeKeys(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetUserAttributeKeysResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetUserAttributeKeysResponse
+  ): GetUserAttributeKeysResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetUserAttributeKeysResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetUserAttributeKeysResponse;
+  static deserializeBinaryFromReader(
+    message: GetUserAttributeKeysResponse,
+    reader: jspb.BinaryReader
+  ): GetUserAttributeKeysResponse;
+}
+
+export namespace GetUserAttributeKeysResponse {
+  export type AsObject = {
+    userAttributeKeysList: Array<string>;
+  };
+}
+
 export interface ChangeTypeMap {
   UNSPECIFIED: 0;
   CREATE: 1;

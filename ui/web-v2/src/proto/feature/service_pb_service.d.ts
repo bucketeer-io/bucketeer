@@ -373,6 +373,15 @@ type FeatureServiceListFlagTriggers = {
   readonly responseType: typeof proto_feature_service_pb.ListFlagTriggersResponse;
 };
 
+type FeatureServiceGetUserAttributeKeys = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.GetUserAttributeKeysRequest;
+  readonly responseType: typeof proto_feature_service_pb.GetUserAttributeKeysResponse;
+};
+
 type FeatureServiceFlagTriggerWebhook = {
   readonly methodName: string;
   readonly service: typeof FeatureService;
@@ -425,6 +434,7 @@ export class FeatureService {
   static readonly DeleteFlagTrigger: FeatureServiceDeleteFlagTrigger;
   static readonly GetFlagTrigger: FeatureServiceGetFlagTrigger;
   static readonly ListFlagTriggers: FeatureServiceListFlagTriggers;
+  static readonly GetUserAttributeKeys: FeatureServiceGetUserAttributeKeys;
   static readonly FlagTriggerWebhook: FeatureServiceFlagTriggerWebhook;
 }
 
@@ -1086,6 +1096,21 @@ export class FeatureServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_feature_service_pb.ListFlagTriggersResponse | null
+    ) => void
+  ): UnaryResponse;
+  getUserAttributeKeys(
+    requestMessage: proto_feature_service_pb.GetUserAttributeKeysRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.GetUserAttributeKeysResponse | null
+    ) => void
+  ): UnaryResponse;
+  getUserAttributeKeys(
+    requestMessage: proto_feature_service_pb.GetUserAttributeKeysRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.GetUserAttributeKeysResponse | null
     ) => void
   ): UnaryResponse;
   flagTriggerWebhook(

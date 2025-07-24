@@ -532,12 +532,13 @@ func (s *server) registerPubSubProcessorMap(
 			processor.UserEventPersisterName,
 			userEventPersister,
 		)
-
+		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
 			processorsConfigMap[processor.EvaluationCountEventPersisterName],
 			mysqlClient,
-			cachev3.NewRedisCache(persistentRedisClient),
+			redisCache,
+			cachev3.NewUserAttributesCache(redisCache),
 			logger,
 		)
 		if err != nil {
