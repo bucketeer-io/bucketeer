@@ -123,22 +123,6 @@ func TestPutUserAttributesCache(t *testing.T) {
 			expectedErr: errors.New("user attributes is nil"),
 		},
 		{
-			desc: "success_with_default_ttl",
-			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
-				for _, attr := range userAttrs.UserAttributes {
-					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
-					for _, v := range attr.Values {
-						pipe.EXPECT().SAdd(key, v)
-					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
-				}
-				pipe.EXPECT().Exec().Return(nil, nil)
-			},
-			input:       userAttrs,
-			ttlDay:      0,
-			expectedErr: nil,
-		},
-		{
 			desc: "success_with_custom_ttl",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
 				customTTL := 7
@@ -163,7 +147,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
+					pipe.EXPECT().Expire(key, -1*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
@@ -179,7 +163,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, defalutUserAttributeTTL*time.Second)
+					pipe.EXPECT().Expire(key, 0*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, errors.New("exec error"))
 			},

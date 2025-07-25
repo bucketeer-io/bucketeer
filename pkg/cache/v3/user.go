@@ -26,9 +26,8 @@ import (
 )
 
 const (
-	userAttributeKind       = "user_attr"
-	userAttributesMaxSize   = int64(100)
-	defalutUserAttributeTTL = 7 * 24 * 60 * 60 // 7 days
+	userAttributeKind     = "user_attr"
+	userAttributesMaxSize = int64(100)
 )
 
 type UserAttributesCache interface {
@@ -92,11 +91,7 @@ func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttl 
 		for _, value := range attribute.Values {
 			pipe.SAdd(key, value)
 		}
-		setTTL := defalutUserAttributeTTL
-		if ttl > 0 {
-			setTTL = ttl
-		}
-		pipe.Expire(key, time.Duration(setTTL)*time.Second)
+		pipe.Expire(key, time.Duration(ttl)*time.Second)
 	}
 	_, err := pipe.Exec()
 	if err != nil {
