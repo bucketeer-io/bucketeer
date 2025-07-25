@@ -60,6 +60,7 @@ type PFGetter interface {
 type MultiGetter interface {
 	GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error)
 	Scan(cursor, key, count interface{}) (uint64, []string, error)
+	SMembers(key string) ([]string, error)
 }
 
 type Putter interface {

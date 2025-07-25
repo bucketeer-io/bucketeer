@@ -137,6 +137,21 @@ func (mr *MockMultiGetCacheMockRecorder) Put(key, value, expiration any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetCache)(nil).Put), key, value, expiration)
 }
 
+// SMembers mocks base method.
+func (m *MockMultiGetCache) SMembers(key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SMembers", key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SMembers indicates an expected call of SMembers.
+func (mr *MockMultiGetCacheMockRecorder) SMembers(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetCache)(nil).SMembers), key)
+}
+
 // Scan mocks base method.
 func (m *MockMultiGetCache) Scan(cursor, key, count any) (uint64, []string, error) {
 	m.ctrl.T.Helper()
@@ -336,6 +351,21 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value, expiration a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value, expiration)
 }
 
+// SMembers mocks base method.
+func (m *MockMultiGetDeleteCountCache) SMembers(key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SMembers", key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SMembers indicates an expected call of SMembers.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) SMembers(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).SMembers), key)
+}
+
 // Scan mocks base method.
 func (m *MockMultiGetDeleteCountCache) Scan(cursor, key, count any) (uint64, []string, error) {
 	m.ctrl.T.Helper()
@@ -468,6 +498,21 @@ func (m *MockMultiGetter) GetMulti(keys any, ignoreNotFound bool) ([]any, error)
 func (mr *MockMultiGetterMockRecorder) GetMulti(keys, ignoreNotFound any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockMultiGetter)(nil).GetMulti), keys, ignoreNotFound)
+}
+
+// SMembers mocks base method.
+func (m *MockMultiGetter) SMembers(key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SMembers", key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SMembers indicates an expected call of SMembers.
+func (mr *MockMultiGetterMockRecorder) SMembers(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockMultiGetter)(nil).SMembers), key)
 }
 
 // Scan mocks base method.

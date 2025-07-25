@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,6 +48,7 @@ const (
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
 	saddCmdName         = "SADD"
+	smembersCmdName     = "SMEMBERS"
 	xAddCmdName         = "XADD"
 	xGroupCreateCmdName = "XGROUP_CREATE"
 	xReadGroupCmdName   = "XREADGROUP"
@@ -95,6 +95,7 @@ type Client interface {
 	Del(key string) error
 	Incr(key string) (int64, error)
 	SAdd(key string, members ...interface{}) (int64, error)
+	SMembers(key string) ([]string, error)
 	Pipeline(tx bool) PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
@@ -333,17 +334,7 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName).Inc()
 
-	var keys []string
-	var newCursor uint64
-	var err error
-
-	if c.clientType == ClientTypeCluster {
-		// Use cluster-aware pagination
-		keys, newCursor, err = c.scanClusterWithPagination(cursor, key, count)
-	} else {
-		// Use standard approach for non-cluster client
-		keys, newCursor, err = c.rc.Scan(context.TODO(), cursor, key, count).Result()
-	}
+	keys, cursor, err := c.rc.Scan(context.TODO(), cursor, key, count).Result()
 
 	code := redis.CodeFail
 	switch err {
@@ -355,88 +346,7 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName, code).Observe(
 		time.Since(startTime).Seconds())
-	return newCursor, keys, err
-}
-
-// scanClusterWithPagination implements cursor-based pagination across cluster nodes
-// Cursor encoding: nodeIndex<<32 | nodeCursor (0 means start from node 0)
-func (c *client) scanClusterWithPagination(cursor uint64, key string, count int64) ([]string, uint64, error) {
-	clusterClient, ok := c.rc.(*goredis.ClusterClient)
-	if !ok {
-		return nil, 0, fmt.Errorf("client is not a cluster client")
-	}
-
-	// Decode cursor: high 32 bits = nodeIndex, low 32 bits = nodeCursor
-	nodeIndex := cursor >> 32
-	nodeCursor := cursor & 0xFFFFFFFF
-
-	// Get consistent list of master node addresses
-	clusterNodes, err := clusterClient.ClusterNodes(context.TODO()).Result()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	nodeAddrs := parseClusterMasterAddresses(clusterNodes)
-	if len(nodeAddrs) == 0 {
-		return nil, 0, fmt.Errorf("no master nodes found in cluster")
-	}
-
-	// If nodeIndex >= number of nodes, scanning is complete
-	if nodeIndex >= uint64(len(nodeAddrs)) {
-		return []string{}, 0, nil
-	}
-
-	// Use cluster client to scan specific node
-	nodeAddr := nodeAddrs[nodeIndex]
-
-	// Create connection to specific node using original cluster settings
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-
-	nodeClient := goredis.NewClient(&goredis.Options{
-		Addr:         nodeAddr,
-		Password:     clusterClient.Options().Password,
-		MaxRetries:   clusterClient.Options().MaxRetries,
-		DialTimeout:  clusterClient.Options().DialTimeout,
-		PoolSize:     clusterClient.Options().PoolSize,
-		MinIdleConns: clusterClient.Options().MinIdleConns,
-		PoolTimeout:  clusterClient.Options().PoolTimeout,
-	})
-	defer nodeClient.Close()
-
-	keys, newNodeCursor, err := nodeClient.Scan(ctx, nodeCursor, key, count).Result()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Encode new cursor
-	var newCursor uint64
-	if newNodeCursor == 0 {
-		// Current node scan complete, move to next node
-		newCursor = (nodeIndex + 1) << 32
-	} else {
-		// Continue scanning current node
-		newCursor = (nodeIndex << 32) | newNodeCursor
-	}
-
-	return keys, newCursor, nil
-}
-
-// parseClusterMasterAddresses extracts master node addresses from CLUSTER NODES output
-func parseClusterMasterAddresses(clusterNodesOutput string) []string {
-	nodeAddrs := []string{}
-	for _, line := range strings.Split(clusterNodesOutput, "\n") {
-		if line == "" {
-			continue
-		}
-		parts := strings.Fields(line)
-		if len(parts) >= 3 && strings.Contains(parts[2], "master") {
-			// parts[1] format: "ip:port@cluster_port" - we only want "ip:port"
-			addr, _, _ := strings.Cut(parts[1], "@") // Remove @cluster_port suffix
-			nodeAddrs = append(nodeAddrs, addr)
-		}
-	}
-	return nodeAddrs
+	return cursor, keys, err
 }
 
 func (c *client) Get(key string) ([]byte, error) {
@@ -560,6 +470,21 @@ func (c *client) SAdd(key string, members ...interface{}) (int64, error) {
 	}
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return result, err
+}
+
+func (c *client) SMembers(key string) ([]string, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName).Inc()
+	result, err := c.rc.SMembers(context.TODO(), key).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return result, err
 }
@@ -861,9 +786,6 @@ func (c *pipeClient) Expire(key string, expiration time.Duration) *goredis.BoolC
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	startTime := time.Now()
 	cmdName := pipelineExecCmdName
-	for _, cmd := range c.cmds {
-		cmdName += fmt.Sprintf("_%s", cmd)
-	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
 	v, err := c.pipe.Exec(c.ctx)
 	code := redis.CodeFail

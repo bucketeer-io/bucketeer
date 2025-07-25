@@ -42,18 +42,18 @@ func (m *MockUserAttributesCache) EXPECT() *MockUserAttributesCacheMockRecorder 
 }
 
 // GetUserAttributeKeyAll mocks base method.
-func (m *MockUserAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]string, error) {
+func (m *MockUserAttributesCache) GetUserAttributeKeyAll(environmentID string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserAttributeKeyAll", environmentId)
+	ret := m.ctrl.Call(m, "GetUserAttributeKeyAll", environmentID)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserAttributeKeyAll indicates an expected call of GetUserAttributeKeyAll.
-func (mr *MockUserAttributesCacheMockRecorder) GetUserAttributeKeyAll(environmentId any) *gomock.Call {
+func (mr *MockUserAttributesCacheMockRecorder) GetUserAttributeKeyAll(environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAttributeKeyAll", reflect.TypeOf((*MockUserAttributesCache)(nil).GetUserAttributeKeyAll), environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAttributeKeyAll", reflect.TypeOf((*MockUserAttributesCache)(nil).GetUserAttributeKeyAll), environmentID)
 }
 
 // Put mocks base method.
