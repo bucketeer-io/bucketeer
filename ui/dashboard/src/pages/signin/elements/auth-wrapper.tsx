@@ -8,8 +8,8 @@ interface AuthWrapperProps {
 
 export const AuthWrapper = memo(({ children }: AuthWrapperProps) => {
   return (
-    <div className="flex h-screen">
-      <div className="flex-1 grid place-items-center">
+    <div className="flex min-h-screen overflow-auto">
+      <div className="flex-1 grid place-items-center p-5 pr-0">
         <div className="w-full max-w-[442px]">
           <div className="mb-12">
             <img src={logo} alt="bucketer-logo" />

@@ -41,6 +41,10 @@ export interface AuthResponse {
   token: AuthToken;
 }
 
+export interface DemoAuthResponse {
+  demoCreationToken: AuthToken;
+}
+
 export interface UserInfoForm {
   firstName: string;
   lastName: string;
@@ -84,4 +88,8 @@ export interface SwitchOrganizationPayload {
 
 export interface SwitchOrganizationResponse {
   token: AuthToken;
+}
+
+export interface DemoSiteStatusType {
+  isDemoSiteEnabled: boolean;
 }

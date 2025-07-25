@@ -56,6 +56,9 @@ interface AuthContextType {
 
   isGoogleAuthError: boolean;
   setIsGoogleAuthError: (v: boolean) => void;
+
+  demoGoogleAuthError: string;
+  setDemoGoogleAuthError: (v: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
+  const [demoGoogleAuthError, setDemoGoogleAuthError] = useState('');
 
   const clearOrgAndEnvStorage = () => {
     clearOrgIdStorage();
@@ -214,7 +218,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setIsInitialLoading,
 
         isGoogleAuthError,
-        setIsGoogleAuthError
+        setIsGoogleAuthError,
+
+        demoGoogleAuthError,
+        setDemoGoogleAuthError
       }}
     >
       {children}

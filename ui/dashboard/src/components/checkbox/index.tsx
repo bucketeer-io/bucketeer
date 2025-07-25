@@ -29,12 +29,12 @@ const Checkbox = forwardRef(
 
     return (
       <div
-        className={cn('flex w-fit items-center gap-x-2', {
+        className={cn('flex w-fit items-start gap-x-2', {
           'w-full justify-between': isExpand,
           'flex-row-reverse': isReverse
         })}
       >
-        <div className="flex-center size-5">
+        <div className="flex-center size-5 mt-0.5">
           <CheckboxPrimitive.Root
             className={cn(
               'flex-center size-5 rounded border border-gray-500 transition-colors duration-200',
@@ -43,10 +43,10 @@ const Checkbox = forwardRef(
               }
             )}
             checked={checked}
-            id={inputId}
             ref={ref}
             onCheckedChange={onCheckedChange}
             {...props}
+            id={inputId}
           >
             <CheckboxPrimitive.Indicator
               className={cn('flex-center size-full opacity-0', {

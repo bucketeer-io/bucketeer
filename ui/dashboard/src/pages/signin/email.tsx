@@ -102,7 +102,9 @@ const SignInWithEmail = () => {
       >
         <Icon icon={IconBackspace} size="sm" />
       </Button>
-      <h1 className="text-gray-900 typo-head-bold-huge mt-8">{`Sign in`}</h1>
+      <h1 className="text-gray-900 typo-head-bold-huge mt-8">
+        {t('auth:sign-in-title')}
+      </h1>
       <p className="text-gray-600 typo-para-medium mt-4">
         {t(`sign-in.description`)}
       </p>
@@ -169,7 +171,7 @@ const SignInWithEmail = () => {
             loading={form.formState.isSubmitting}
             className="mt-8 w-full"
           >
-            {`Sign In`}
+            {t('auth:sign-in-title')}
           </Button>
         </Form>
       </FormProvider>

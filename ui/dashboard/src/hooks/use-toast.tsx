@@ -6,6 +6,7 @@ import ToastMessage from 'components/toast';
 
 type ToastType = 'toast' | 'info-message' | 'prerequisite-message';
 type MessageType = 'success' | 'info' | 'warning' | 'error';
+export type ServerErrorType = AxiosError<{ message?: string }>;
 
 export type NotifyProps = {
   toastType?: ToastType;
@@ -44,7 +45,7 @@ export const useToast = () => {
     );
 
   const errorNotify = (error?: unknown, message?: string) => {
-    const { message: _message, status } = (error as AxiosError) || {};
+    const { message: _message, status } = (error as ServerErrorType) || {};
     return notify({
       messageType: 'error',
       message:

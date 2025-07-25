@@ -14,15 +14,18 @@ import {
   AuthProvider,
   useAuth,
   getCurrentEnvironment,
-  hasEditable
+  hasEditable,
+  AuthDemoCallbackPage
 } from 'auth';
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import {
   PAGE_PATH_APIKEYS,
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_AUTH_CALLBACK,
+  PAGE_PATH_AUTH_DEMO_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_DEBUGGER,
+  PAGE_PATH_DEMO_SITE,
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
@@ -57,6 +60,8 @@ import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
+import AccessDemoPage from 'pages/demo';
+import CreateDemoPage from 'pages/demo/demo-create';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
@@ -103,8 +108,17 @@ function App() {
                 element={<AuthCallbackPage />}
               />
               <Route
+                path={PAGE_PATH_AUTH_DEMO_CALLBACK}
+                element={<AuthDemoCallbackPage />}
+              />
+              <Route
                 path={PAGE_PATH_AUTH_SIGNIN}
                 element={<SignInEmailPage />}
+              />
+              <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
+              <Route
+                path={`${PAGE_PATH_DEMO_SITE}/new`}
+                element={<CreateDemoPage />}
               />
               <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
             </Routes>

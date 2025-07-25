@@ -92,7 +92,8 @@ const EmptyStateActionButton = ({
   const { consoleAccount } = useAuth();
   const editable = hasEditable(consoleAccount!);
   const isOrganizationAdmin =
-    consoleAccount?.organizationRole === 'Organization_ADMIN';
+    consoleAccount?.organizationRole === 'Organization_ADMIN' ||
+    consoleAccount?.organizationRole === 'Organization_OWNER';
   const isRetry = type === 'retry';
 
   return (
