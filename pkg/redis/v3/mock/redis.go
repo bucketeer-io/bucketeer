@@ -317,6 +317,21 @@ func (mr *MockClientMockRecorder) SAdd(key any, members ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SAdd", reflect.TypeOf((*MockClient)(nil).SAdd), varargs...)
 }
 
+// SMembers mocks base method.
+func (m *MockClient) SMembers(key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SMembers", key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SMembers indicates an expected call of SMembers.
+func (mr *MockClientMockRecorder) SMembers(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SMembers", reflect.TypeOf((*MockClient)(nil).SMembers), key)
+}
+
 // Scan mocks base method.
 func (m *MockClient) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
 	m.ctrl.T.Helper()

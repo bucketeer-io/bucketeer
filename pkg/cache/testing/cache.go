@@ -59,6 +59,11 @@ func (c *inMemoryCache) Scan(cursor, key, count interface{}) (uint64, []string, 
 	return 0, nil, nil
 }
 
+func (c *inMemoryCache) SMembers(key string) ([]string, error) {
+	// TODO: implement
+	return nil, nil
+}
+
 func (c *inMemoryCache) Delete(key string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()

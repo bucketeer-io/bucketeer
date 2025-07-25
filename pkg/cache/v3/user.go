@@ -18,7 +18,6 @@ package v3
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -26,12 +25,13 @@ import (
 )
 
 const (
-	userAttributeKind     = "user_attr"
-	userAttributesMaxSize = int64(100)
+	userAttributeKind = "user_attr"
 )
 
 type UserAttributesCache interface {
-	GetUserAttributeKeyAll(environmentId string) ([]string, error)
+	// Returns all attribute keys for the given environment.
+	GetUserAttributeKeyAll(environmentID string) ([]string, error)
+	// Stores values for each attribute key under the given TTL.
 	Put(userAttributes *userproto.UserAttributes, ttl time.Duration) error
 }
 
@@ -43,68 +43,57 @@ func NewUserAttributesCache(c cache.MultiGetDeleteCountCache) UserAttributesCach
 	return &userAttributesCache{cache: c}
 }
 
-func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]string, error) {
-	scanKey := u.key(environmentId) + ":*"
-	var cursor uint64
-	var allKeys []string
-
-	for {
-		var keys []string
-		var err error
-		cursor, keys, err = u.cache.Scan(cursor, scanKey, userAttributesMaxSize)
-		if err != nil {
-			return nil, err
-		}
-		allKeys = append(allKeys, keys...)
-		if cursor == 0 {
-			break
-		}
-	}
-
-	// Extract UserAttributeKey from the full keys
-	// Key format: environmentId:user_attr:attributeKey
-	attributeKeys := u.extractAttributeKeys(allKeys)
-	return attributeKeys, nil
+// key returns the base prefix for all user_attr entries,
+// e.g. "env123:user_attr"
+func (u *userAttributesCache) key(environmentID string) string {
+	return fmt.Sprintf("%s:%s", environmentID, userAttributeKind)
 }
 
-func (u *userAttributesCache) extractAttributeKeys(fullKeys []string) []string {
-	attributeKeys := []string{}
-	for _, fullKey := range fullKeys {
-		// Split by ":" and get the last part which is the attribute key
-		parts := strings.Split(fullKey, ":")
-		for i, part := range parts {
-			// If userAttrKindIndex is found, use the next element as the key
-			if part == userAttributeKind && i+1 < len(parts) {
-				attributeKeys = append(attributeKeys, parts[i+1])
-				break
-			}
-		}
-	}
-	return attributeKeys
-}
-
-func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttl time.Duration) error {
+// Put writes each attribute's values into its own Set, and also
+// adds the attribute.Key to an index Set so we can list them later.
+func (u *userAttributesCache) Put(
+	userAttributes *userproto.UserAttributes,
+	ttl time.Duration,
+) error {
 	if userAttributes == nil {
-		return errors.New("user attributes is nil")
+		return errors.New("userAttributes cannot be nil")
 	}
+
 	pipe := u.cache.Pipeline(false)
+	// indexKey holds the list of all attribute keys
+	indexKey := u.key(userAttributes.EnvironmentId) + ":keys"
+
 	for _, attribute := range userAttributes.UserAttributes {
-		key := u.key(userAttributes.EnvironmentId) + ":" + attribute.Key
-		for _, value := range attribute.Values {
-			pipe.SAdd(key, value)
+		// 1) Store attribute values in their own set: env:user_attr:country -> ["US", "JP"]
+		attrKey := fmt.Sprintf("%s:%s", u.key(userAttributes.EnvironmentId), attribute.Key)
+		// convert []string → []interface{} for SAdd
+		members := make([]interface{}, len(attribute.Values))
+		for i, v := range attribute.Values {
+			members[i] = v
 		}
-		pipe.Expire(key, ttl)
+		// SAdd can add multiple values at once
+		pipe.SAdd(attrKey, members...)
+		pipe.Expire(attrKey, ttl)
+
+		// 2) Store attribute key in index set: env:user_attr:keys -> ["country", "plan_type"]
+		// This avoids scanning Redis keys and works efficiently with Redis clusters
+		pipe.SAdd(indexKey, attribute.Key)
+		pipe.Expire(indexKey, ttl)
 	}
+
 	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-// We use a Redis Cluster “hash tag” so all user_attr keys for an environment
-// live in the same slot. On standalone mode the `{…}` is just a literal.
-// The key format is: {environmentId}:user_attr:{attributeKey}
-func (u *userAttributesCache) key(environmentId string) string {
-	return fmt.Sprintf("{%s}:%s", environmentId, userAttributeKind)
+// GetUserAttributeKeyAll fetches the complete list of attribute keys
+// via a single SMEMBERS call on the index Set.
+func (u *userAttributesCache) GetUserAttributeKeyAll(
+	environmentID string,
+) ([]string, error) {
+	indexKey := u.key(environmentID) + ":keys"
+	keys, err := u.cache.SMembers(indexKey)
+	if err != nil {
+		return nil, err
+	}
+	return keys, nil
 }

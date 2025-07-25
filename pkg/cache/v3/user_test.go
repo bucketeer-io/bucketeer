@@ -37,14 +37,7 @@ func TestGetUserAttributeKeyAllCache(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	keyPrefix := fmt.Sprintf("%s:%s", testEnvironmentId, userAttributeKind)
-	key := keyPrefix + ":*"
-	var cursor uint64
-	// Redis keys in the format: environmentId:user_attr:attributeKey
-	redisKeys := []string{
-		fmt.Sprintf("%s:%s:key1", testEnvironmentId, userAttributeKind),
-		fmt.Sprintf("%s:%s:key2", testEnvironmentId, userAttributeKind),
-	}
+	indexKey := fmt.Sprintf("%s:%s:keys", testEnvironmentId, userAttributeKind)
 	expectedAttributeKeys := []string{"key1", "key2"}
 
 	patterns := []struct {
@@ -53,24 +46,23 @@ func TestGetUserAttributeKeyAllCache(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "error_scan",
+			desc: "error_smembers",
 			setup: func(uac *userAttributesCache) {
-				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(cursor, key, userAttributesMaxSize).Return(cursor, nil, errors.New("scan error"))
+				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return(nil, errors.New("smembers error"))
 			},
-			expectedErr: errors.New("scan error"),
+			expectedErr: errors.New("smembers error"),
 		},
 		{
 			desc: "success",
 			setup: func(uac *userAttributesCache) {
-				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(cursor, key, userAttributesMaxSize).Return(uint64(0), redisKeys, nil)
+				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return(expectedAttributeKeys, nil)
 			},
 			expectedErr: nil,
 		},
 		{
-			desc: "success: scan twice",
+			desc: "success_empty",
 			setup: func(uac *userAttributesCache) {
-				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(cursor, key, userAttributesMaxSize).Return(uint64(1), redisKeys[:1], nil)
-				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(1), key, userAttributesMaxSize).Return(uint64(0), redisKeys[1:], nil)
+				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return([]string{}, nil)
 			},
 			expectedErr: nil,
 		},
@@ -81,9 +73,13 @@ func TestGetUserAttributeKeyAllCache(t *testing.T) {
 			p.setup(uac)
 			attributeKeys, err := uac.GetUserAttributeKeyAll(testEnvironmentId)
 			if err == nil {
-				assert.Len(t, attributeKeys, len(expectedAttributeKeys))
-				for i, expectedKey := range expectedAttributeKeys {
-					assert.Equal(t, expectedKey, attributeKeys[i])
+				if p.desc == "success" {
+					assert.Len(t, attributeKeys, len(expectedAttributeKeys))
+					for i, expectedKey := range expectedAttributeKeys {
+						assert.Equal(t, expectedKey, attributeKeys[i])
+					}
+				} else if p.desc == "success_empty" {
+					assert.Len(t, attributeKeys, 0)
 				}
 			}
 			if p.expectedErr != nil {
@@ -112,62 +108,89 @@ func TestPutUserAttributesCache(t *testing.T) {
 		desc        string
 		setup       func(*userAttributesCache, *redismock.MockPipeClient)
 		input       *userproto.UserAttributes
-		ttlDay      time.Duration
+		ttl         time.Duration
 		expectedErr error
 	}{
 		{
 			desc:        "nil_input",
 			setup:       nil,
 			input:       nil,
-			ttlDay:      30,
-			expectedErr: errors.New("user attributes is nil"),
+			ttl:         30 * time.Second,
+			expectedErr: errors.New("userAttributes cannot be nil"),
 		},
 		{
 			desc: "success_with_custom_ttl",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
+				indexKey := fmt.Sprintf("%s:%s:keys", testEnvironmentId, userAttributeKind)
+
 				for _, attr := range userAttrs.UserAttributes {
-					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
-					for _, v := range attr.Values {
-						pipe.EXPECT().SAdd(key, v)
+					// 1) per-attribute value set
+					attrKey := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
+					members := make([]interface{}, len(attr.Values))
+					for i, v := range attr.Values {
+						members[i] = v
 					}
-					pipe.EXPECT().Expire(key, time.Duration(7))
+					pipe.EXPECT().SAdd(attrKey, members...)
+					pipe.EXPECT().Expire(attrKey, 7*time.Second)
+
+					// 2) record the attribute.Key in the index set
+					pipe.EXPECT().SAdd(indexKey, attr.Key)
+					pipe.EXPECT().Expire(indexKey, 7*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
 			input:       userAttrs,
-			ttlDay:      7,
+			ttl:         7 * time.Second,
 			expectedErr: nil,
 		},
 		{
-			desc: "success_with_negative_ttl_uses_default",
+			desc: "success_with_zero_ttl",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
+				indexKey := fmt.Sprintf("%s:%s:keys", testEnvironmentId, userAttributeKind)
+
 				for _, attr := range userAttrs.UserAttributes {
-					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
-					for _, v := range attr.Values {
-						pipe.EXPECT().SAdd(key, v)
+					// 1) per-attribute value set
+					attrKey := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
+					members := make([]interface{}, len(attr.Values))
+					for i, v := range attr.Values {
+						members[i] = v
 					}
-					pipe.EXPECT().Expire(key, time.Duration(-1))
+					pipe.EXPECT().SAdd(attrKey, members...)
+					pipe.EXPECT().Expire(attrKey, 0*time.Second)
+
+					// 2) record the attribute.Key in the index set
+					pipe.EXPECT().SAdd(indexKey, attr.Key)
+					pipe.EXPECT().Expire(indexKey, 0*time.Second)
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
 			input:       userAttrs,
-			ttlDay:      -1,
+			ttl:         0 * time.Second,
 			expectedErr: nil,
 		},
 		{
 			desc: "error_exec",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
+				indexKey := fmt.Sprintf("%s:%s:keys", testEnvironmentId, userAttributeKind)
+
 				for _, attr := range userAttrs.UserAttributes {
-					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
-					for _, v := range attr.Values {
-						pipe.EXPECT().SAdd(key, v)
+					// 1) per-attribute value set
+					attrKey := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
+					members := make([]interface{}, len(attr.Values))
+					for i, v := range attr.Values {
+						members[i] = v
 					}
-					pipe.EXPECT().Expire(key, 0*time.Second)
+					pipe.EXPECT().SAdd(attrKey, members...)
+					pipe.EXPECT().Expire(attrKey, 1*time.Hour)
+
+					// 2) record the attribute.Key in the index set
+					pipe.EXPECT().SAdd(indexKey, attr.Key)
+					pipe.EXPECT().Expire(indexKey, 1*time.Hour)
 				}
 				pipe.EXPECT().Exec().Return(nil, errors.New("exec error"))
 			},
 			input:       userAttrs,
-			ttlDay:      0,
+			ttl:         1 * time.Hour,
 			expectedErr: errors.New("exec error"),
 		},
 	}
@@ -175,16 +198,16 @@ func TestPutUserAttributesCache(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			uac := newUserAttributesCache(t, mockController)
 			if p.input == nil {
-				err := uac.Put(p.input, p.ttlDay)
+				err := uac.Put(p.input, p.ttl)
 				assert.Equal(t, p.expectedErr, err)
 				return
 			}
 			pipe := redismock.NewMockPipeClient(mockController)
-			uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline(true).Return(pipe)
+			uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline(false).Return(pipe)
 			if p.setup != nil {
 				p.setup(uac, pipe)
 			}
-			err := uac.Put(p.input, p.ttlDay)
+			err := uac.Put(p.input, p.ttl)
 			if p.expectedErr != nil {
 				assert.EqualError(t, err, p.expectedErr.Error())
 			} else {

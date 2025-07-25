@@ -48,6 +48,7 @@ const (
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
 	saddCmdName         = "SADD"
+	smembersCmdName     = "SMEMBERS"
 	xAddCmdName         = "XADD"
 	xGroupCreateCmdName = "XGROUP_CREATE"
 	xReadGroupCmdName   = "XREADGROUP"
@@ -94,6 +95,7 @@ type Client interface {
 	Del(key string) error
 	Incr(key string) (int64, error)
 	SAdd(key string, members ...interface{}) (int64, error)
+	SMembers(key string) ([]string, error)
 	Pipeline(tx bool) PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
@@ -468,6 +470,21 @@ func (c *client) SAdd(key string, members ...interface{}) (int64, error) {
 	}
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, saddCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return result, err
+}
+
+func (c *client) SMembers(key string) ([]string, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName).Inc()
+	result, err := c.rc.SMembers(context.TODO(), key).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, smembersCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return result, err
 }
