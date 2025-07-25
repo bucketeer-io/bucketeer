@@ -87,7 +87,7 @@ func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttl 
 	if userAttributes == nil {
 		return errors.New("user attributes is nil")
 	}
-	pipe := u.cache.Pipeline(true)
+	pipe := u.cache.Pipeline(false)
 	for _, attribute := range userAttributes.UserAttributes {
 		key := u.key(userAttributes.EnvironmentId) + ":" + attribute.Key
 		for _, value := range attribute.Values {
@@ -102,6 +102,9 @@ func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttl 
 	return nil
 }
 
+// We use a Redis Cluster “hash tag” so all user_attr keys for an environment
+// live in the same slot. On standalone mode the `{…}` is just a literal.
+// The key format is: {environmentId}:user_attr:{attributeKey}
 func (u *userAttributesCache) key(environmentId string) string {
-	return fmt.Sprintf("%s:%s", environmentId, userAttributeKind)
+	return fmt.Sprintf("{%s}:%s", environmentId, userAttributeKind)
 }
