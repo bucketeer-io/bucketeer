@@ -47,27 +47,30 @@ func NewUserAttributesCache(c cache.MultiGetDeleteCountCache) UserAttributesCach
 func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]string, error) {
 	scanKey := u.key(environmentId) + ":*"
 	var cursor uint64
-	var k []string
-	var err error
-	keys := []string{}
+	var allKeys []string
+
 	for {
-		cursor, k, err = u.cache.Scan(cursor, scanKey, userAttributesMaxSize)
+		var keys []string
+		var err error
+		cursor, keys, err = u.cache.Scan(cursor, scanKey, userAttributesMaxSize)
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, k...)
+		allKeys = append(allKeys, keys...)
 		if cursor == 0 {
 			break
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	// Extract UserAttributeKey from the full key
+	// Extract UserAttributeKey from the full keys
 	// Key format: environmentId:user_attr:attributeKey
+	attributeKeys := u.extractAttributeKeys(allKeys)
+	return attributeKeys, nil
+}
+
+func (u *userAttributesCache) extractAttributeKeys(fullKeys []string) []string {
 	attributeKeys := []string{}
-	for _, fullKey := range keys {
+	for _, fullKey := range fullKeys {
 		// Split by ":" and get the last part which is the attribute key
 		parts := strings.Split(fullKey, ":")
 		for i, part := range parts {
@@ -78,8 +81,7 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(environmentId string) ([]st
 			}
 		}
 	}
-
-	return attributeKeys, nil
+	return attributeKeys
 }
 
 func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) error {
