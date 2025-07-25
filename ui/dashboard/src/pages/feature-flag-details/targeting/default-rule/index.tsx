@@ -33,8 +33,7 @@ const DefaultRule = ({
 }) => {
   const { t } = useTranslation(['form']);
 
-  const { control, watch, setFocus, setValue } =
-    useFormContext<TargetingSchema>();
+  const { control, watch, setFocus } = useFormContext<TargetingSchema>();
 
   const commonName = 'defaultRule';
   const defaultRule = watch(commonName);
@@ -87,12 +86,6 @@ const DefaultRule = ({
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
-        defaultRolloutStrategy.forEach((_, index) =>
-          setValue(
-            `${commonName}.${isRollout ? 'rolloutStrategy' : 'manualStrategy'}.${index}.weight`,
-            0
-          )
-        );
         timerId = setTimeout(
           () =>
             setFocus(
