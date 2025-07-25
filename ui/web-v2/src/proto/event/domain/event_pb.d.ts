@@ -318,6 +318,7 @@ export namespace Event {
     CODE_REFERENCE_DELETED: 1802;
     TEAM_CREATED: 1900;
     TEAM_DELETED: 1901;
+    TEAM_UPDATED: 1902;
   }
 
   export const Type: TypeMap;
@@ -7839,6 +7840,53 @@ export namespace TeamCreatedEvent {
     description: string;
     organizationId: string;
     createdAt: number;
+    updatedAt: number;
+  };
+}
+
+export class TeamUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TeamUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TeamUpdatedEvent
+  ): TeamUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TeamUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TeamUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: TeamUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): TeamUpdatedEvent;
+}
+
+export namespace TeamUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
+    description: string;
+    organizationId: string;
     updatedAt: number;
   };
 }

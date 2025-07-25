@@ -102,7 +102,40 @@ func TestTeamService_CreateTeam(t *testing.T) {
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
-			desc: "success",
+			desc: "success: insert team",
+			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeamByName(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, storage.ErrTeamNotFound)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().UpsertTeam(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeamByName(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:   "team1",
+						Name: "test-team",
+					},
+				}, nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateTeamRequest{
+				OrganizationId: "ns0",
+				Name:           "test-team",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: team already exists",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
@@ -113,6 +146,14 @@ func TestTeamService_CreateTeam(t *testing.T) {
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().UpsertTeam(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeamByName(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:   "team1",
+						Name: "test-team",
+					},
+				}, nil).Times(2)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)

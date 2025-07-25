@@ -20999,6 +20999,10 @@
               {
                 "name": "TEAM_DELETED",
                 "integer": 1901
+              },
+              {
+                "name": "TEAM_UPDATED",
+                "integer": 1902
               }
             ],
             "reserved_ids": [
@@ -24691,6 +24695,36 @@
               },
               {
                 "id": 6,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "TeamUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
                 "name": "updated_at",
                 "type": "int64"
               }
