@@ -28,12 +28,11 @@ import (
 const (
 	userAttributeKind     = "user_attr"
 	userAttributesMaxSize = int64(100)
-	userAttributeTTL      = time.Duration(30 * 24 * time.Hour)
 )
 
 type UserAttributesCache interface {
 	GetUserAttributeKeyAll(environmentId string) ([]string, error)
-	Put(userAttributes *userproto.UserAttributes) error
+	Put(userAttributes *userproto.UserAttributes, ttl time.Duration) error
 }
 
 type userAttributesCache struct {
@@ -84,7 +83,7 @@ func (u *userAttributesCache) extractAttributeKeys(fullKeys []string) []string {
 	return attributeKeys
 }
 
-func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) error {
+func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes, ttl time.Duration) error {
 	if userAttributes == nil {
 		return errors.New("user attributes is nil")
 	}
@@ -94,7 +93,7 @@ func (u *userAttributesCache) Put(userAttributes *userproto.UserAttributes) erro
 		for _, value := range attribute.Values {
 			pipe.SAdd(key, value)
 		}
-		pipe.Expire(key, userAttributeTTL)
+		pipe.Expire(key, ttl)
 	}
 	_, err := pipe.Exec()
 	if err != nil {

@@ -489,6 +489,7 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       writeCacheInterval: 10
+      userAttributeKeyTtl: 3600 # 1 hour
     segmentUserPersister:
       domainEventProject: bucketeer-test
       domainEventTopic: domain

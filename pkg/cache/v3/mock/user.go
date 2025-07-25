@@ -11,6 +11,7 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 
@@ -56,15 +57,15 @@ func (mr *MockUserAttributesCacheMockRecorder) GetUserAttributeKeyAll(environmen
 }
 
 // Put mocks base method.
-func (m *MockUserAttributesCache) Put(userAttributes *user.UserAttributes) error {
+func (m *MockUserAttributesCache) Put(userAttributes *user.UserAttributes, ttl time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", userAttributes)
+	ret := m.ctrl.Call(m, "Put", userAttributes, ttl)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockUserAttributesCacheMockRecorder) Put(userAttributes any) *gomock.Call {
+func (mr *MockUserAttributesCacheMockRecorder) Put(userAttributes, ttl any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockUserAttributesCache)(nil).Put), userAttributes)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockUserAttributesCache)(nil).Put), userAttributes, ttl)
 }
