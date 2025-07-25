@@ -786,9 +786,6 @@ func (c *pipeClient) Expire(key string, expiration time.Duration) *goredis.BoolC
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	startTime := time.Now()
 	cmdName := pipelineExecCmdName
-	for _, cmd := range c.cmds {
-		cmdName += fmt.Sprintf("_%s", cmd)
-	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
 	v, err := c.pipe.Exec(c.ctx)
 	code := redis.CodeFail
