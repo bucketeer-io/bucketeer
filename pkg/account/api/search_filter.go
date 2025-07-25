@@ -26,6 +26,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -177,14 +178,7 @@ func (s *AccountService) UpdateSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.UpdateSearchFilterResponse{}, nil
 }
@@ -273,14 +267,7 @@ func (s *AccountService) DeleteSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	return &accountproto.DeleteSearchFilterResponse{}, nil
