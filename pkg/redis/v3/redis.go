@@ -376,22 +376,7 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 		return nil, 0, err
 	}
 
-	var nodeAddrs []string
-	for _, line := range strings.Split(clusterNodes, "\n") {
-		if line == "" {
-			continue
-		}
-		parts := strings.Fields(line)
-		if len(parts) >= 3 && strings.Contains(parts[2], "master") {
-			// parts[1] format: "ip:port@cluster_port" - we only want "ip:port"
-			addr := parts[1]
-			if atIndex := strings.Index(addr, "@"); atIndex != -1 {
-				addr = addr[:atIndex] // Remove @cluster_port suffix
-			}
-			nodeAddrs = append(nodeAddrs, addr)
-		}
-	}
-
+	nodeAddrs := parseClusterMasterAddresses(clusterNodes)
 	if len(nodeAddrs) == 0 {
 		return nil, 0, fmt.Errorf("no master nodes found in cluster")
 	}
@@ -435,6 +420,23 @@ func (c *client) scanClusterWithPagination(cursor uint64, key string, count int6
 	}
 
 	return keys, newCursor, nil
+}
+
+// parseClusterMasterAddresses extracts master node addresses from CLUSTER NODES output
+func parseClusterMasterAddresses(clusterNodesOutput string) []string {
+	nodeAddrs := []string{}
+	for _, line := range strings.Split(clusterNodesOutput, "\n") {
+		if line == "" {
+			continue
+		}
+		parts := strings.Fields(line)
+		if len(parts) >= 3 && strings.Contains(parts[2], "master") {
+			// parts[1] format: "ip:port@cluster_port" - we only want "ip:port"
+			addr, _, _ := strings.Cut(parts[1], "@") // Remove @cluster_port suffix
+			nodeAddrs = append(nodeAddrs, addr)
+		}
+	}
+	return nodeAddrs
 }
 
 func (c *client) Get(key string) ([]byte, error) {

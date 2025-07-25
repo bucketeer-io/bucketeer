@@ -82,49 +82,7 @@ func TestCursorEncodingDecoding(t *testing.T) {
 	}
 }
 
-func TestAddressParsing(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name         string
-		rawAddr      string
-		expectedAddr string
-	}{
-		{
-			name:         "address with cluster port",
-			rawAddr:      "127.0.0.1:6379@16379",
-			expectedAddr: "127.0.0.1:6379",
-		},
-		{
-			name:         "address without cluster port",
-			rawAddr:      "127.0.0.1:6379",
-			expectedAddr: "127.0.0.1:6379",
-		},
-		{
-			name:         "ipv6 address with cluster port",
-			rawAddr:      "[::1]:6379@16379",
-			expectedAddr: "[::1]:6379",
-		},
-		{
-			name:         "hostname with cluster port",
-			rawAddr:      "redis-node1.example.com:6379@16379",
-			expectedAddr: "redis-node1.example.com:6379",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			// Test the address parsing logic used in scanClusterWithPagination
-			addr := tt.rawAddr
-			if atIndex := strings.Index(addr, "@"); atIndex != -1 {
-				addr = addr[:atIndex] // Remove @cluster_port suffix
-			}
-			assert.Equal(t, tt.expectedAddr, addr)
-		})
-	}
-}
-
-func TestClusterNodesResponseParsing(t *testing.T) {
+func TestParseClusterMasterAddresses(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name                string
@@ -155,36 +113,45 @@ func TestClusterNodesResponseParsing(t *testing.T) {
 				node1 127.0.0.1:6379@16379 slave - 0 connected
 				node2 127.0.0.1:6380@16380 slave - 0 connected
 			`,
-			expectedMasterAddrs: nil,
+			expectedMasterAddrs: []string{},
 		},
 		{
 			name:                "empty response",
 			clusterNodesResp:    "",
-			expectedMasterAddrs: nil,
+			expectedMasterAddrs: []string{},
+		},
+		{
+			name: "addresses without cluster port",
+			clusterNodesResp: `
+				node1 127.0.0.1:6379 master - 0 connected 0-5460
+				node2 127.0.0.1:6380 master - 0 connected 5461-10922
+			`,
+			expectedMasterAddrs: []string{"127.0.0.1:6379", "127.0.0.1:6380"},
+		},
+		{
+			name: "mixed address formats",
+			clusterNodesResp: `
+				node1 127.0.0.1:6379@16379 master - 0 connected 0-5460
+				node2 127.0.0.1:6380 master - 0 connected 5461-10922
+				node3 redis-host.example.com:6381@16381 master - 0 connected 10923-16383
+			`,
+			expectedMasterAddrs: []string{"127.0.0.1:6379", "127.0.0.1:6380", "redis-host.example.com:6381"},
+		},
+		{
+			name: "ipv6 addresses",
+			clusterNodesResp: `
+				node1 [::1]:6379@16379 master - 0 connected 0-5460
+				node2 [2001:db8::1]:6380@16380 master - 0 connected 5461-10922
+			`,
+			expectedMasterAddrs: []string{"[::1]:6379", "[2001:db8::1]:6380"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// Test the cluster nodes parsing logic used in scanClusterWithPagination
-			var nodeAddrs []string
-
-			for _, line := range strings.Split(strings.TrimSpace(tt.clusterNodesResp), "\n") {
-				if line == "" {
-					continue
-				}
-				parts := strings.Fields(line)
-				if len(parts) >= 3 && strings.Contains(parts[2], "master") {
-					// parts[1] format: "ip:port@cluster_port" - we only want "ip:port"
-					addr := parts[1]
-					if atIndex := strings.Index(addr, "@"); atIndex != -1 {
-						addr = addr[:atIndex] // Remove @cluster_port suffix
-					}
-					nodeAddrs = append(nodeAddrs, addr)
-				}
-			}
-			assert.Equal(t, tt.expectedMasterAddrs, nodeAddrs)
+			result := parseClusterMasterAddresses(strings.TrimSpace(tt.clusterNodesResp))
+			assert.Equal(t, tt.expectedMasterAddrs, result)
 		})
 	}
 }
