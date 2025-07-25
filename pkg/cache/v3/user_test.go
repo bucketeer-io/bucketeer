@@ -125,13 +125,12 @@ func TestPutUserAttributesCache(t *testing.T) {
 		{
 			desc: "success_with_custom_ttl",
 			setup: func(uac *userAttributesCache, pipe *redismock.MockPipeClient) {
-				customTTL := 7
 				for _, attr := range userAttrs.UserAttributes {
 					key := fmt.Sprintf("%s:%s:%s", testEnvironmentId, userAttributeKind, attr.Key)
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, time.Duration(customTTL)*time.Second)
+					pipe.EXPECT().Expire(key, time.Duration(7))
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
@@ -147,7 +146,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 					for _, v := range attr.Values {
 						pipe.EXPECT().SAdd(key, v)
 					}
-					pipe.EXPECT().Expire(key, -1*time.Second)
+					pipe.EXPECT().Expire(key, time.Duration(-1))
 				}
 				pipe.EXPECT().Exec().Return(nil, nil)
 			},
