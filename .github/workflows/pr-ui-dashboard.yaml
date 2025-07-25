@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "22.1"
+  NODE_VERSION: "22.12.0"
   WEB_DIRECTORY: "ui/dashboard"
 
 jobs:
