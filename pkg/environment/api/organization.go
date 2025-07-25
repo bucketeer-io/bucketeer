@@ -90,6 +90,11 @@ func (s *EnvironmentService) getOrganization(
 ) (*domain.Organization, error) {
 	org, err := s.orgStorage.GetOrganization(ctx, id)
 	if err != nil {
+		s.logger.Error("failed to get organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("organizationId", id),
+				zap.Error(err),
+			)...)
 		if errors.Is(err, v2es.ErrOrganizationNotFound) {
 			dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
