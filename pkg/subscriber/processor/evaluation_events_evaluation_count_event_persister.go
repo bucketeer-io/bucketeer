@@ -603,7 +603,7 @@ func (p *evaluationCountEventPersister) upsertUserAttributes(
 ) error {
 	if err := p.userAttributesCacher.Put(
 		userAttributes,
-		p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL,
+		time.Duration(p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL)*time.Second,
 	); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),

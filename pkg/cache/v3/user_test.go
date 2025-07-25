@@ -112,7 +112,7 @@ func TestPutUserAttributesCache(t *testing.T) {
 		desc        string
 		setup       func(*userAttributesCache, *redismock.MockPipeClient)
 		input       *userproto.UserAttributes
-		ttlDay      int
+		ttlDay      time.Duration
 		expectedErr error
 	}{
 		{
