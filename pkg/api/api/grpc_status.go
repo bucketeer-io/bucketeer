@@ -32,30 +32,34 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	var bucketeerErr pkgErr.BucketeerError
 	var ok bool
 
+	if err == nil {
+		return status.New(codes.Unknown, "")
+	}
+
 	if bucketeerErr, ok = err.(pkgErr.BucketeerError); ok {
 		pkg = bucketeerErr.PackageName()
 		bucketeerErr.AddMetadata(anotherDetailData...)
 		var stCode codes.Code
 
-		if errors.Is(err, pkgErr.ErrorInvalidAugment{}) {
+		if errors.Is(bucketeerErr, &pkgErr.ErrorInvalidAugment{}) {
 			reason = "INVALID_AUGMENT"
 			stCode = codes.InvalidArgument
-		} else if errors.Is(err, pkgErr.ErrorNotFound{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorNotFound{}) {
 			reason = "NOT_FOUND"
 			stCode = codes.NotFound
-		} else if errors.Is(err, pkgErr.ErrorAlreadyExists{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorAlreadyExists{}) {
 			reason = "ALREADY_EXISTS"
 			stCode = codes.AlreadyExists
-		} else if errors.Is(err, pkgErr.ErrorUnauthenticated{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorUnauthenticated{}) {
 			reason = "UNAUTHENTICATED"
 			stCode = codes.Unauthenticated
-		} else if errors.Is(err, pkgErr.ErrorPermissionDenied{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorPermissionDenied{}) {
 			reason = "PERMISSION_DENIED"
 			stCode = codes.PermissionDenied
-		} else if errors.Is(err, pkgErr.ErrorUnexpectedAffectedRows{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorUnexpectedAffectedRows{}) {
 			reason = "UNEXPECTED_AFFECTED_ROWS"
 			stCode = codes.Internal
-		} else if errors.Is(err, pkgErr.ErrorInternal{}) {
+		} else if errors.Is(bucketeerErr, &pkgErr.ErrorInternal{}) {
 			reason = "INTERNAL"
 			stCode = codes.Internal
 		} else {
@@ -69,7 +73,9 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 		metadatas = append(metadatas, anotherDetailData...)
 		st = status.New(codes.Unknown, err.Error())
 	}
-	metadatas = append(metadatas, bucketeerErr.Metadatas()...)
+	if bucketeerErr != nil {
+		metadatas = append(metadatas, bucketeerErr.Metadatas()...)
+	}
 
 	for _, md := range metadatas {
 		st, err = st.WithDetails(&errdetails.ErrorInfo{

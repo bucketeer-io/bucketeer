@@ -14,8 +14,6 @@
 
 package error
 
-import "errors"
-
 const (
 	AccountPackageName = "account"
 )
@@ -32,18 +30,19 @@ type bucketeerError struct {
 	packageName string
 	message     string
 	metadatas   []map[string]string
+	err         error
 }
 
 func (e *bucketeerError) PackageName() string            { return e.packageName }
 func (e *bucketeerError) Message() string                { return e.message }
 func (e *bucketeerError) Metadatas() []map[string]string { return e.metadatas }
 func (e *bucketeerError) Error() string                  { return e.message }
-func (e *bucketeerError) Unwrap() error                  { return errors.New(e.message) }
+func (e *bucketeerError) Unwrap() error                  { return e.err }
 func (e *bucketeerError) AddMetadata(metadatas ...map[string]string) {
 	e.metadatas = append(e.metadatas, metadatas...)
 }
 
-func newError(pkg, errorType, defaultMessage string, args ...string) *bucketeerError {
+func newError(pkg, errorType, defaultMessage string, err error, args ...string) *bucketeerError {
 	msg := pkg + ":"
 	if defaultMessage != "" {
 		msg += defaultMessage
@@ -75,62 +74,96 @@ func newError(pkg, errorType, defaultMessage string, args ...string) *bucketeerE
 		packageName: pkg,
 		message:     msg,
 		metadatas:   metadatas,
+		err:         err,
 	}
 }
 
-// エラー構造体の定義
 type ErrorNotFound struct {
 	*bucketeerError
 }
 
-// エラー作成関数
-func NewErrorNotFound(pkg string, message string, args ...string) error {
-	return &ErrorNotFound{newError(pkg, "not_found", message, args...)}
+func (e *ErrorNotFound) Is(target error) bool {
+	_, ok := target.(*ErrorNotFound)
+	return ok
+}
+
+func NewErrorNotFound(pkg string, message string, err error, args ...string) error {
+	return &ErrorNotFound{newError(pkg, "not_found", message, err, args...)}
 }
 
 type ErrorAlreadyExists struct {
 	*bucketeerError
 }
 
-func NewErrorAlreadyExists(pkg string, message string, args ...string) error {
-	return &ErrorAlreadyExists{newError(pkg, "already_exists", message, args...)}
+func (e *ErrorAlreadyExists) Is(target error) bool {
+	_, ok := target.(*ErrorAlreadyExists)
+	return ok
+}
+
+func NewErrorAlreadyExists(pkg string, message string, err error, args ...string) error {
+	return &ErrorAlreadyExists{newError(pkg, "already_exists", message, err, args...)}
 }
 
 type ErrorUnauthenticated struct {
 	*bucketeerError
 }
 
-func NewErrorUnauthenticated(pkg string, message string, args ...string) error {
-	return &ErrorUnauthenticated{newError(pkg, "unauthenticated", message, args...)}
+func (e *ErrorUnauthenticated) Is(target error) bool {
+	_, ok := target.(*ErrorUnauthenticated)
+	return ok
+}
+
+func NewErrorUnauthenticated(pkg string, message string, err error, args ...string) error {
+	return &ErrorUnauthenticated{newError(pkg, "unauthenticated", message, err, args...)}
 }
 
 type ErrorPermissionDenied struct {
 	*bucketeerError
 }
 
-func NewErrorPermissionDenied(pkg string, message string, args ...string) error {
-	return &ErrorPermissionDenied{newError(pkg, "permission_denied", message, args...)}
+func (e *ErrorPermissionDenied) Is(target error) bool {
+	_, ok := target.(*ErrorPermissionDenied)
+	return ok
+}
+
+func NewErrorPermissionDenied(pkg string, message string, err error, args ...string) error {
+	return &ErrorPermissionDenied{newError(pkg, "permission_denied", message, err, args...)}
 }
 
 type ErrorUnexpectedAffectedRows struct {
 	*bucketeerError
 }
 
-func NewErrorUnexpectedAffectedRows(pkg string, message string, args ...string) error {
-	return &ErrorUnexpectedAffectedRows{newError(pkg, "unexpected_affected_rows", message, args...)}
+func (e *ErrorUnexpectedAffectedRows) Is(target error) bool {
+	_, ok := target.(*ErrorUnexpectedAffectedRows)
+	return ok
+}
+
+func NewErrorUnexpectedAffectedRows(pkg string, message string, err error, args ...string) error {
+	return &ErrorUnexpectedAffectedRows{newError(pkg, "unexpected_affected_rows", message, err, args...)}
 }
 
 type ErrorInternal struct {
 	*bucketeerError
 }
 
-func NewErrorInternal(pkg string, message string, args ...string) error {
-	return &ErrorInternal{newError(pkg, "internal", message, args...)}
+func (e *ErrorInternal) Is(target error) bool {
+	_, ok := target.(*ErrorInternal)
+	return ok
+}
+
+func NewErrorInternal(pkg string, message string, err error, args ...string) error {
+	return &ErrorInternal{newError(pkg, "internal", message, err, args...)}
 }
 
 type ErrorInvalidAugment struct {
 	*bucketeerError
 	invalidType InvalidType
+}
+
+func (e *ErrorInvalidAugment) Is(target error) bool {
+	_, ok := target.(*ErrorInvalidAugment)
+	return ok
 }
 
 type InvalidType string
@@ -141,15 +174,14 @@ const (
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
-func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, args ...string) error {
+func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, err error, args ...string) error {
 	return &ErrorInvalidAugment{
-		bucketeerError: newInvalidAugmentErrorBase(pkg, message, invalidType, args...),
+		bucketeerError: newInvalidAugmentErrorBase(pkg, message, invalidType, err, args...),
 		invalidType:    invalidType,
 	}
 }
 
-// newInvalidAugmentErrorBase はErrorInvalidAugment専用のエラー作成ロジックを提供します
-func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, args ...string) *bucketeerError {
+func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, err error, args ...string) *bucketeerError {
 	messageKey := pkg + ".invalid_augment"
 	if invalidType != "" {
 		messageKey = messageKey + "." + string(invalidType)
@@ -193,5 +225,6 @@ func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, ar
 		packageName: pkg,
 		message:     msg,
 		metadatas:   metadatas,
+		err:         err,
 	}
 }

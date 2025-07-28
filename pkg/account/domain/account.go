@@ -34,16 +34,16 @@ var (
 	maxAccountNameLength = 250
 	// nolint:lll
 	emailRegex                 = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	ErrSearchFilterNotFound    = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "search filter not found", "search_filter")
-	ErrTeamNotFound            = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "team not found", "team")
-	ErrMissingOrganizationID   = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "organization id must be specified", pkgErr.InvalidTypeEmpty, "organization_id")
-	ErrEmailIsEmpty            = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "email is empty", pkgErr.InvalidTypeEmpty, "email")
-	ErrEmailInvalidFormat      = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid email format", pkgErr.InvalidTypeNotMatchFormat, "email")
-	ErrFullNameIsEmpty         = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "full name is empty", pkgErr.InvalidTypeEmpty, "full_name")
-	ErrFirstNameInvalidFormat  = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid first name format", pkgErr.InvalidTypeNotMatchFormat, "first name")
-	ErrLastNameInvalidFormat   = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid last name format", pkgErr.InvalidTypeNotMatchFormat, "last_name")
-	ErrLanguageIsEmpty         = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "language is empty", pkgErr.InvalidTypeEmpty, "language")
-	ErrOrganizationRoleInvalid = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid organization role", pkgErr.InvalidTypeEmpty, "organization_role")
+	ErrSearchFilterNotFound    = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "search filter not found", nil, "search_filter")
+	ErrTeamNotFound            = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "team not found", nil, "team")
+	ErrMissingOrganizationID   = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "organization id must be specified", pkgErr.InvalidTypeEmpty, nil, "organization_id")
+	ErrEmailIsEmpty            = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "email is empty", pkgErr.InvalidTypeEmpty, nil, "email")
+	ErrEmailInvalidFormat      = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid email format", pkgErr.InvalidTypeNotMatchFormat, nil, "email")
+	ErrFullNameIsEmpty         = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "full name is empty", pkgErr.InvalidTypeEmpty, nil, "full_name")
+	ErrFirstNameInvalidFormat  = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid first name format", pkgErr.InvalidTypeNotMatchFormat, nil, "first name")
+	ErrLastNameInvalidFormat   = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid last name format", pkgErr.InvalidTypeNotMatchFormat, nil, "last_name")
+	ErrLanguageIsEmpty         = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "language is empty", pkgErr.InvalidTypeEmpty, nil, "language")
+	ErrOrganizationRoleInvalid = pkgErr.NewErrorInvalidAugment(pkgErr.AccountPackageName, "invalid organization role", pkgErr.InvalidTypeEmpty, nil, "organization_role")
 )
 
 type AccountV2 struct {

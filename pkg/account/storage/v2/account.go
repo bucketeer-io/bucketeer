@@ -49,9 +49,9 @@ var (
 
 // nolint:lll
 var (
-	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", "account")
-	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")
-	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows")
+	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", nil, "account")
+	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", nil, "account")
+	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows", nil)
 )
 
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
