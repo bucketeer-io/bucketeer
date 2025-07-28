@@ -29,49 +29,42 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	var reason string
 	var metadatas []map[string]string
 	var st *status.Status
-	var invalidAugmentError *pkgErr.ErrorInvalidAugment
-	var notFoundError *pkgErr.ErrorNotFound
-	var alreadyExistsError *pkgErr.ErrorAlreadyExists
-	var unauthenticatedError *pkgErr.ErrorUnauthenticated
-	var permissionDeniedError *pkgErr.ErrorPermissionDenied
-	var unexpectedAffectedRowsError *pkgErr.ErrorUnexpectedAffectedRows
-	var internalError *pkgErr.ErrorInternal
 
-	if errors.As(err, &invalidAugmentError) {
+	if invalidAugmentError := (*pkgErr.ErrorInvalidAugment)(nil); errors.As(err, &invalidAugmentError) {
 		pkg = invalidAugmentError.PackageName
 		st = status.New(codes.InvalidArgument, invalidAugmentError.Message)
 		reason = "INVALID_AUGMENT"
 		metadatas = append(metadatas, invalidAugmentError.Metadatas...)
-	} else if errors.As(err, &notFoundError) {
+	} else if notFoundError := (*pkgErr.ErrorNotFound)(nil); errors.As(err, &notFoundError) {
 		pkg = notFoundError.PackageName
 		st = status.New(codes.NotFound, notFoundError.Message)
 		reason = "NOT_FOUND"
 		metadatas = append(metadatas, notFoundError.Metadatas...)
-	} else if errors.As(err, &internalError) {
-		pkg = internalError.PackageName
-		st = status.New(codes.Internal, internalError.Message)
-		reason = "INTERNAL"
-		metadatas = append(metadatas, internalError.Metadatas...)
-	} else if errors.As(err, &alreadyExistsError) {
+	} else if alreadyExistsError := (*pkgErr.ErrorAlreadyExists)(nil); errors.As(err, &alreadyExistsError) {
 		pkg = alreadyExistsError.PackageName
 		st = status.New(codes.AlreadyExists, alreadyExistsError.Message)
 		reason = "ALREADY_EXISTS"
 		metadatas = append(metadatas, alreadyExistsError.Metadatas...)
-	} else if errors.As(err, &unauthenticatedError) {
+	} else if unauthenticatedError := (*pkgErr.ErrorUnauthenticated)(nil); errors.As(err, &unauthenticatedError) {
 		pkg = unauthenticatedError.PackageName
 		st = status.New(codes.Unauthenticated, unauthenticatedError.Message)
 		reason = "UNAUTHENTICATED"
 		metadatas = append(metadatas, unauthenticatedError.Metadatas...)
-	} else if errors.As(err, &permissionDeniedError) {
+	} else if permissionDeniedError := (*pkgErr.ErrorPermissionDenied)(nil); errors.As(err, &permissionDeniedError) {
 		pkg = permissionDeniedError.PackageName
 		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
 		reason = "PERMISSION_DENIED"
 		metadatas = append(metadatas, permissionDeniedError.Metadatas...)
-	} else if errors.As(err, &unexpectedAffectedRowsError) {
+	} else if unexpectedAffectedRowsError := (*pkgErr.ErrorUnexpectedAffectedRows)(nil); errors.As(err, &unexpectedAffectedRowsError) {
 		pkg = unexpectedAffectedRowsError.PackageName
 		st = status.New(codes.Internal, unexpectedAffectedRowsError.Message)
 		reason = "UNEXPECTED_AFFECTED_ROWS"
 		metadatas = append(metadatas, unexpectedAffectedRowsError.Metadatas...)
+	} else if internalError := (*pkgErr.ErrorInternal)(nil); errors.As(err, &internalError) {
+		pkg = internalError.PackageName
+		st = status.New(codes.Internal, internalError.Message)
+		reason = "INTERNAL"
+		metadatas = append(metadatas, internalError.Metadatas...)
 	} else {
 		pkg = "unknown"
 		st = status.New(codes.Unknown, err.Error())

@@ -53,69 +53,6 @@ func newErrorInfo(pkg, errorType, defaultMessage string, args ...string) Buckete
 	}
 }
 
-func newInvalidAugmentErrorInfo(pkg, message string, invalidType InvalidType, args ...string) BucketeerErrorInfo {
-	messageKey := pkg + ".invalid_augment"
-	if invalidType != "" {
-		messageKey = messageKey + "." + string(invalidType)
-	}
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "invalid augment"
-	}
-	metadatas := make([]map[string]string, 0, len(args))
-	for _, arg := range args {
-		if arg != "" {
-			msg += "[" + arg
-			if invalidType != "" {
-				msg += ":" + string(invalidType)
-			}
-			msg += "]"
-		}
-		metadatas = append(metadatas, map[string]string{
-			"messageKey": messageKey,
-			"field":      arg,
-		})
-	}
-
-	return BucketeerErrorInfo{
-		PackageName: pkg,
-		Message:     msg,
-		Metadatas:   metadatas,
-		arguments:   args,
-	}
-}
-
-type ErrorInvalidAugment struct {
-	BucketeerErrorInfo
-	invalidType InvalidType
-}
-
-type InvalidType string
-
-const (
-	InvalidTypeEmpty          InvalidType = "empty"
-	InvalidTypeNil            InvalidType = "nil"
-	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
-)
-
-func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, args ...string) error {
-	info := newInvalidAugmentErrorInfo(pkg, message, invalidType, args...)
-	return &ErrorInvalidAugment{
-		BucketeerErrorInfo: info,
-		invalidType:        invalidType,
-	}
-}
-
-func (e *ErrorInvalidAugment) Error() string {
-	return e.Message
-}
-
-func (e *ErrorInvalidAugment) Unwrap() error {
-	return errors.New(e.Message)
-}
-
 type ErrorNotFound struct {
 	BucketeerErrorInfo
 }
@@ -215,5 +152,68 @@ func (e *ErrorInternal) Error() string {
 }
 
 func (e *ErrorInternal) Unwrap() error {
+	return errors.New(e.Message)
+}
+
+type ErrorInvalidAugment struct {
+	BucketeerErrorInfo
+	invalidType InvalidType
+}
+
+type InvalidType string
+
+const (
+	InvalidTypeEmpty          InvalidType = "empty"
+	InvalidTypeNil            InvalidType = "nil"
+	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
+)
+
+func newInvalidAugmentErrorInfo(pkg, message string, invalidType InvalidType, args ...string) BucketeerErrorInfo {
+	messageKey := pkg + ".invalid_augment"
+	if invalidType != "" {
+		messageKey = messageKey + "." + string(invalidType)
+	}
+	msg := pkg + ":"
+	if message != "" {
+		msg += message
+	} else {
+		msg += "invalid augment"
+	}
+	metadatas := make([]map[string]string, 0, len(args))
+	for _, arg := range args {
+		if arg != "" {
+			msg += "[" + arg
+			if invalidType != "" {
+				msg += ":" + string(invalidType)
+			}
+			msg += "]"
+		}
+		metadatas = append(metadatas, map[string]string{
+			"messageKey": messageKey,
+			"field":      arg,
+		})
+	}
+
+	return BucketeerErrorInfo{
+		PackageName: pkg,
+		Message:     msg,
+		Metadatas:   metadatas,
+		arguments:   args,
+	}
+}
+
+func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, args ...string) error {
+	info := newInvalidAugmentErrorInfo(pkg, message, invalidType, args...)
+	return &ErrorInvalidAugment{
+		BucketeerErrorInfo: info,
+		invalidType:        invalidType,
+	}
+}
+
+func (e *ErrorInvalidAugment) Error() string {
+	return e.Message
+}
+
+func (e *ErrorInvalidAugment) Unwrap() error {
 	return errors.New(e.Message)
 }
