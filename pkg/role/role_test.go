@@ -327,7 +327,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			expectedErr: ErrUnauthenticated,
 		},
 		{
-			desc:          "success",
+			desc:          "success: environment role satisfied",
 			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
@@ -347,6 +347,26 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:          "success: organization role satisfied",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email:            "test@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+					Name:             "test",
+					Disabled:         false,
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email:            "test@example.com",
+				Name:             "test",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
 			},
 			expectedErr: nil,
 		},
