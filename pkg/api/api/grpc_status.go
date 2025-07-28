@@ -55,7 +55,8 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
 		reason = "PERMISSION_DENIED"
 		metadatas = append(metadatas, permissionDeniedError.Metadatas...)
-	} else if unexpectedAffectedRowsError := (*pkgErr.ErrorUnexpectedAffectedRows)(nil); errors.As(err, &unexpectedAffectedRowsError) {
+	} else if unexpectedAffectedRowsError :=
+		(*pkgErr.ErrorUnexpectedAffectedRows)(nil); errors.As(err, &unexpectedAffectedRowsError) {
 		pkg = unexpectedAffectedRowsError.PackageName
 		st = status.New(codes.Internal, unexpectedAffectedRowsError.Message)
 		reason = "UNEXPECTED_AFFECTED_ROWS"
