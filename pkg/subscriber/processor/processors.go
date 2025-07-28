@@ -33,6 +33,7 @@ const (
 	PushSenderName                       = "pushSender"
 	SegmentUserPersisterName             = "segmentUserPersister"
 	UserEventPersisterName               = "userEventPersister"
+	DemoOrganizationCreationNotifierName = "demoOrganizationCreationNotifier"
 )
 
 var (

@@ -44945,6 +44945,10 @@
               {
                 "name": "MauCount",
                 "integer": 3
+              },
+              {
+                "name": "DemoOrganizationCreation",
+                "integer": 4
               }
             ]
           }
@@ -44977,6 +44981,11 @@
                 "id": 5,
                 "name": "mau_count_notification",
                 "type": "MauCountNotification"
+              },
+              {
+                "id": 6,
+                "name": "demo_organization_creation_notification",
+                "type": "DemoOrganizationCreationNotification"
               }
             ]
           },
@@ -45106,6 +45115,36 @@
             "reserved_ids": [
               1
             ]
+          },
+          {
+            "name": "DemoOrganizationCreationNotification",
+            "fields": [
+              {
+                "id": 1,
+                "name": "owner_email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "owner_first_name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "owner_last_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_name",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -45117,6 +45156,9 @@
           },
           {
             "path": "proto/experiment/experiment.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {

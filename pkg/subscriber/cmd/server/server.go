@@ -532,6 +532,16 @@ func (s *server) registerPubSubProcessorMap(
 			processor.UserEventPersisterName,
 			userEventPersister,
 		)
+
+		demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
+			sender,
+			logger,
+		)
+		processors.RegisterProcessor(
+			processor.DemoOrganizationCreationNotifierName,
+			demoOrganizationCreationNotifier,
+		)
+
 		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
@@ -649,6 +659,7 @@ func (s *server) registerPubSubProcessorMap(
 			return nil, err
 		}
 		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
+
 	}
 
 	return processors, nil

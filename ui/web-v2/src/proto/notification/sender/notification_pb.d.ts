@@ -5,6 +5,7 @@ import * as jspb from 'google-protobuf';
 import * as proto_event_domain_event_pb from '../../../proto/event/domain/event_pb';
 import * as proto_feature_feature_pb from '../../../proto/feature/feature_pb';
 import * as proto_experiment_experiment_pb from '../../../proto/experiment/experiment_pb';
+import * as proto_environment_organization_pb from '../../../proto/environment/organization_pb';
 
 export class Notification extends jspb.Message {
   getType(): Notification.TypeMap[keyof Notification.TypeMap];
@@ -29,6 +30,15 @@ export class Notification extends jspb.Message {
   clearMauCountNotification(): void;
   getMauCountNotification(): MauCountNotification | undefined;
   setMauCountNotification(value?: MauCountNotification): void;
+
+  hasDemoOrganizationCreationNotification(): boolean;
+  clearDemoOrganizationCreationNotification(): void;
+  getDemoOrganizationCreationNotification():
+    | DemoOrganizationCreationNotification
+    | undefined;
+  setDemoOrganizationCreationNotification(
+    value?: DemoOrganizationCreationNotification
+  ): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Notification.AsObject;
@@ -58,6 +68,7 @@ export namespace Notification {
     featureStaleNotification?: FeatureStaleNotification.AsObject;
     experimentRunningNotification?: ExperimentRunningNotification.AsObject;
     mauCountNotification?: MauCountNotification.AsObject;
+    demoOrganizationCreationNotification?: DemoOrganizationCreationNotification.AsObject;
   };
 
   export interface TypeMap {
@@ -65,6 +76,7 @@ export namespace Notification {
     FEATURESTALE: 1;
     EXPERIMENTRUNNING: 2;
     MAUCOUNT: 3;
+    DEMOORGANIZATIONCREATION: 4;
   }
 
   export const Type: TypeMap;
@@ -265,5 +277,56 @@ export namespace MauCountNotification {
     month: number;
     environmentName: string;
     environmentUrlCode: string;
+  };
+}
+
+export class DemoOrganizationCreationNotification extends jspb.Message {
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
+  getOwnerFirstName(): string;
+  setOwnerFirstName(value: string): void;
+
+  getOwnerLastName(): string;
+  setOwnerLastName(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getOrganizationName(): string;
+  setOrganizationName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): DemoOrganizationCreationNotification.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DemoOrganizationCreationNotification
+  ): DemoOrganizationCreationNotification.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DemoOrganizationCreationNotification,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): DemoOrganizationCreationNotification;
+  static deserializeBinaryFromReader(
+    message: DemoOrganizationCreationNotification,
+    reader: jspb.BinaryReader
+  ): DemoOrganizationCreationNotification;
+}
+
+export namespace DemoOrganizationCreationNotification {
+  export type AsObject = {
+    ownerEmail: string;
+    ownerFirstName: string;
+    ownerLastName: string;
+    organizationId: string;
+    organizationName: string;
   };
 }
