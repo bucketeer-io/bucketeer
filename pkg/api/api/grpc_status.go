@@ -29,56 +29,47 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	var reason string
 	var metadatas []map[string]string
 	var st *status.Status
+	var bucketeerErr pkgErr.BucketeerError
+	var ok bool
 
-	if invalidAugmentError := (*pkgErr.ErrorInvalidAugment)(nil); errors.As(err, &invalidAugmentError) {
-		pkg = invalidAugmentError.PackageName
-		st = status.New(codes.InvalidArgument, invalidAugmentError.Message)
-		reason = "INVALID_AUGMENT"
-		metadatas = append(metadatas, invalidAugmentError.Metadatas...)
-	} else if notFoundError := (*pkgErr.ErrorNotFound)(nil); errors.As(err, &notFoundError) {
-		pkg = notFoundError.PackageName
-		st = status.New(codes.NotFound, notFoundError.Message)
-		reason = "NOT_FOUND"
-		metadatas = append(metadatas, notFoundError.Metadatas...)
-	} else if alreadyExistsError := (*pkgErr.ErrorAlreadyExists)(nil); errors.As(err, &alreadyExistsError) {
-		pkg = alreadyExistsError.PackageName
-		st = status.New(codes.AlreadyExists, alreadyExistsError.Message)
-		reason = "ALREADY_EXISTS"
-		metadatas = append(metadatas, alreadyExistsError.Metadatas...)
-	} else if unauthenticatedError := (*pkgErr.ErrorUnauthenticated)(nil); errors.As(err, &unauthenticatedError) {
-		pkg = unauthenticatedError.PackageName
-		st = status.New(codes.Unauthenticated, unauthenticatedError.Message)
-		reason = "UNAUTHENTICATED"
-		metadatas = append(metadatas, unauthenticatedError.Metadatas...)
-	} else if permissionDeniedError := (*pkgErr.ErrorPermissionDenied)(nil); errors.As(err, &permissionDeniedError) {
-		pkg = permissionDeniedError.PackageName
-		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
-		reason = "PERMISSION_DENIED"
-		metadatas = append(metadatas, permissionDeniedError.Metadatas...)
-	} else if unexpectedAffectedRowsError :=
-		(*pkgErr.ErrorUnexpectedAffectedRows)(nil); errors.As(err, &unexpectedAffectedRowsError) {
-		pkg = unexpectedAffectedRowsError.PackageName
-		st = status.New(codes.Internal, unexpectedAffectedRowsError.Message)
-		reason = "UNEXPECTED_AFFECTED_ROWS"
-		metadatas = append(metadatas, unexpectedAffectedRowsError.Metadatas...)
-	} else if internalError := (*pkgErr.ErrorInternal)(nil); errors.As(err, &internalError) {
-		pkg = internalError.PackageName
-		st = status.New(codes.Internal, internalError.Message)
-		reason = "INTERNAL"
-		metadatas = append(metadatas, internalError.Metadatas...)
+	if bucketeerErr, ok = err.(pkgErr.BucketeerError); ok {
+		pkg = bucketeerErr.PackageName()
+		bucketeerErr.AddMetadata(anotherDetailData...)
+		var stCode codes.Code
+
+		if errors.Is(err, pkgErr.ErrorInvalidAugment{}) {
+			reason = "INVALID_AUGMENT"
+			stCode = codes.InvalidArgument
+		} else if errors.Is(err, pkgErr.ErrorNotFound{}) {
+			reason = "NOT_FOUND"
+			stCode = codes.NotFound
+		} else if errors.Is(err, pkgErr.ErrorAlreadyExists{}) {
+			reason = "ALREADY_EXISTS"
+			stCode = codes.AlreadyExists
+		} else if errors.Is(err, pkgErr.ErrorUnauthenticated{}) {
+			reason = "UNAUTHENTICATED"
+			stCode = codes.Unauthenticated
+		} else if errors.Is(err, pkgErr.ErrorPermissionDenied{}) {
+			reason = "PERMISSION_DENIED"
+			stCode = codes.PermissionDenied
+		} else if errors.Is(err, pkgErr.ErrorUnexpectedAffectedRows{}) {
+			reason = "UNEXPECTED_AFFECTED_ROWS"
+			stCode = codes.Internal
+		} else if errors.Is(err, pkgErr.ErrorInternal{}) {
+			reason = "INTERNAL"
+			stCode = codes.Internal
+		} else {
+			reason = "UNKNOWN"
+			stCode = codes.Unknown
+		}
+		st = status.New(stCode, bucketeerErr.Message())
 	} else {
 		pkg = "unknown"
-		st = status.New(codes.Unknown, err.Error())
 		reason = "UNKNOWN"
+		metadatas = append(metadatas, anotherDetailData...)
+		st = status.New(codes.Unknown, err.Error())
 	}
-	// when adding multiple details
-	for _, md := range anotherDetailData {
-		for k, v := range md {
-			metadatas = append(metadatas, map[string]string{
-				k: v,
-			})
-		}
-	}
+	metadatas = append(metadatas, bucketeerErr.Metadatas()...)
 
 	for _, md := range metadatas {
 		st, err = st.WithDetails(&errdetails.ErrorInfo{
