@@ -27,7 +27,6 @@ import (
 func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.Status {
 	var pkg string
 	var reason string
-	var messageKey string
 	var metadatas []map[string]string
 	var st *status.Status
 	var invalidAugmentError *pkgErr.ErrorInvalidAugment
@@ -42,49 +41,47 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 		pkg = invalidAugmentError.PackageName
 		st = status.New(codes.InvalidArgument, invalidAugmentError.Message)
 		reason = "INVALID_AUGMENT"
-		metadatas = append(metadatas, invalidAugmentError.Metadata)
+		metadatas = append(metadatas, invalidAugmentError.Metadatas...)
 	} else if errors.As(err, &notFoundError) {
 		pkg = notFoundError.PackageName
 		st = status.New(codes.NotFound, notFoundError.Message)
 		reason = "NOT_FOUND"
-		metadatas = append(metadatas, notFoundError.Metadata)
+		metadatas = append(metadatas, notFoundError.Metadatas...)
 	} else if errors.As(err, &internalError) {
 		pkg = internalError.PackageName
 		st = status.New(codes.Internal, internalError.Message)
 		reason = "INTERNAL"
-		metadatas = append(metadatas, internalError.Metadata)
+		metadatas = append(metadatas, internalError.Metadatas...)
 	} else if errors.As(err, &alreadyExistsError) {
 		pkg = alreadyExistsError.PackageName
 		st = status.New(codes.AlreadyExists, alreadyExistsError.Message)
 		reason = "ALREADY_EXISTS"
-		metadatas = append(metadatas, alreadyExistsError.Metadata)
+		metadatas = append(metadatas, alreadyExistsError.Metadatas...)
 	} else if errors.As(err, &unauthenticatedError) {
 		pkg = unauthenticatedError.PackageName
 		st = status.New(codes.Unauthenticated, unauthenticatedError.Message)
 		reason = "UNAUTHENTICATED"
-		metadatas = append(metadatas, unauthenticatedError.Metadata)
+		metadatas = append(metadatas, unauthenticatedError.Metadatas...)
 	} else if errors.As(err, &permissionDeniedError) {
 		pkg = permissionDeniedError.PackageName
 		st = status.New(codes.PermissionDenied, permissionDeniedError.Message)
 		reason = "PERMISSION_DENIED"
-		metadatas = append(metadatas, permissionDeniedError.Metadata)
+		metadatas = append(metadatas, permissionDeniedError.Metadatas...)
 	} else if errors.As(err, &unexpectedAffectedRowsError) {
 		pkg = unexpectedAffectedRowsError.PackageName
 		st = status.New(codes.Internal, unexpectedAffectedRowsError.Message)
 		reason = "UNEXPECTED_AFFECTED_ROWS"
-		metadatas = append(metadatas, unexpectedAffectedRowsError.Metadata)
+		metadatas = append(metadatas, unexpectedAffectedRowsError.Metadatas...)
 	} else {
 		pkg = "unknown"
 		st = status.New(codes.Unknown, err.Error())
 		reason = "UNKNOWN"
-		messageKey = "unknown"
 	}
 	// when adding multiple details
 	for _, md := range anotherDetailData {
 		for k, v := range md {
 			metadatas = append(metadatas, map[string]string{
-				"messageKey": messageKey,
-				k:            v,
+				k: v,
 			})
 		}
 	}

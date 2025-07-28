@@ -20,11 +20,75 @@ const (
 	AccountPackageName = "account"
 )
 
-type ErrorInvalidAugment struct {
+type BucketeerErrorInfo struct {
 	PackageName string
 	Message     string
-	Metadata    map[string]string
-	argument    string
+	Metadatas   []map[string]string
+	arguments   []string
+}
+
+func newErrorInfo(pkg, errorType, defaultMessage string, args ...string) BucketeerErrorInfo {
+	msg := pkg + ":"
+	if defaultMessage != "" {
+		msg += defaultMessage
+	}
+
+	messageKey := pkg + "." + errorType
+	metadatas := make([]map[string]string, 0, len(args))
+	for _, arg := range args {
+		if arg != "" {
+			msg += ", " + arg
+		}
+		metadatas = append(metadatas, map[string]string{
+			"messageKey": messageKey,
+			"field":      arg,
+		})
+	}
+
+	return BucketeerErrorInfo{
+		PackageName: pkg,
+		Message:     msg,
+		Metadatas:   metadatas,
+		arguments:   args,
+	}
+}
+
+func newInvalidAugmentErrorInfo(pkg, message string, invalidType InvalidType, args ...string) BucketeerErrorInfo {
+	messageKey := pkg + ".invalid_augment"
+	if invalidType != "" {
+		messageKey = messageKey + "." + string(invalidType)
+	}
+	msg := pkg + ":"
+	if message != "" {
+		msg += message
+	} else {
+		msg += "invalid augment"
+	}
+	metadatas := make([]map[string]string, 0, len(args))
+	for _, arg := range args {
+		if arg != "" {
+			msg += "[" + arg
+			if invalidType != "" {
+				msg += ":" + string(invalidType)
+			}
+			msg += "]"
+		}
+		metadatas = append(metadatas, map[string]string{
+			"messageKey": messageKey,
+			"field":      arg,
+		})
+	}
+
+	return BucketeerErrorInfo{
+		PackageName: pkg,
+		Message:     msg,
+		Metadatas:   metadatas,
+		arguments:   args,
+	}
+}
+
+type ErrorInvalidAugment struct {
+	BucketeerErrorInfo
 	invalidType InvalidType
 }
 
@@ -36,37 +100,11 @@ const (
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
-func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, arg string) error {
-	//example: account:invalid augment[account_id:empty]
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "invalid augment"
-		if arg != "" {
-			msg += "[" + arg
-			if invalidType != "" {
-				msg += ":" + string(invalidType)
-			}
-			msg += "]"
-		}
-	}
-	messageKey := pkg + ".invalid_augment"
-	if invalidType != "" {
-		messageKey = messageKey + "." + string(invalidType)
-	}
-	//example: {"messageKey": "account.invalid_augment.empty", "field": "account_id"}
-	metadata := map[string]string{
-		"messageKey": messageKey,
-		"field":      arg,
-	}
-
+func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, args ...string) error {
+	info := newInvalidAugmentErrorInfo(pkg, message, invalidType, args...)
 	return &ErrorInvalidAugment{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-		argument:    arg,
-		invalidType: invalidType,
+		BucketeerErrorInfo: info,
+		invalidType:        invalidType,
 	}
 }
 
@@ -79,36 +117,12 @@ func (e *ErrorInvalidAugment) Unwrap() error {
 }
 
 type ErrorNotFound struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
-	argument    string
+	BucketeerErrorInfo
 }
 
-func NewErrorNotFound(pkg string, message string, arg string) error {
-	//example: account:account_id not found
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		if arg != "" {
-			msg += arg + " "
-		}
-		msg += "not found"
-	}
-
-	messageKey := pkg + ".not_found"
-	//example: {"messageKey": "account.not_found", "field": "account_id"}
-	metadata := map[string]string{
-		"messageKey": messageKey,
-		"field":      arg,
-	}
-	return &ErrorNotFound{
-		PackageName: pkg,
-		argument:    arg,
-		Message:     msg,
-		Metadata:    metadata,
-	}
+func NewErrorNotFound(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "not_found", message, args...)
+	return &ErrorNotFound{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorNotFound) Error() string {
@@ -120,31 +134,12 @@ func (e *ErrorNotFound) Unwrap() error {
 }
 
 type ErrorAlreadyExists struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
-	argument    string
+	BucketeerErrorInfo
 }
 
-func NewErrorAlreadyExists(pkg string, message string, arg string) error {
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "already exists"
-	}
-
-	messageKey := pkg + ".already_exists"
-	metadata := map[string]string{
-		"messageKey": messageKey,
-		"field":      arg,
-	}
-	return &ErrorAlreadyExists{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-		argument:    arg,
-	}
+func NewErrorAlreadyExists(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "already_exists", message, args...)
+	return &ErrorAlreadyExists{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorAlreadyExists) Error() string {
@@ -156,28 +151,12 @@ func (e *ErrorAlreadyExists) Unwrap() error {
 }
 
 type ErrorUnauthenticated struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
+	BucketeerErrorInfo
 }
 
-func NewErrorUnauthenticated(pkg string, message string) error {
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "unauthenticated"
-	}
-
-	messageKey := pkg + ".unauthenticated"
-	metadata := map[string]string{
-		"messageKey": messageKey,
-	}
-	return &ErrorUnauthenticated{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-	}
+func NewErrorUnauthenticated(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "unauthenticated", message, args...)
+	return &ErrorUnauthenticated{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorUnauthenticated) Error() string {
@@ -189,28 +168,12 @@ func (e *ErrorUnauthenticated) Unwrap() error {
 }
 
 type ErrorPermissionDenied struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
+	BucketeerErrorInfo
 }
 
-func NewErrorPermissionDenied(pkg string, message string) error {
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "permission denied"
-	}
-
-	messageKey := pkg + ".permission_denied"
-	metadata := map[string]string{
-		"messageKey": messageKey,
-	}
-	return &ErrorPermissionDenied{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-	}
+func NewErrorPermissionDenied(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "permission_denied", message, args...)
+	return &ErrorPermissionDenied{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorPermissionDenied) Error() string {
@@ -222,28 +185,12 @@ func (e *ErrorPermissionDenied) Unwrap() error {
 }
 
 type ErrorUnexpectedAffectedRows struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
+	BucketeerErrorInfo
 }
 
-func NewErrorUnexpectedAffectedRows(pkg string, message string) error {
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "unexpected affected rows"
-	}
-
-	messageKey := pkg + ".unexpected_affected_rows"
-	metadata := map[string]string{
-		"messageKey": messageKey,
-	}
-	return &ErrorUnexpectedAffectedRows{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-	}
+func NewErrorUnexpectedAffectedRows(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "unexpected_affected_rows", message, args...)
+	return &ErrorUnexpectedAffectedRows{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorUnexpectedAffectedRows) Error() string {
@@ -255,28 +202,12 @@ func (e *ErrorUnexpectedAffectedRows) Unwrap() error {
 }
 
 type ErrorInternal struct {
-	PackageName string
-	Message     string
-	Metadata    map[string]string
+	BucketeerErrorInfo
 }
 
-func NewErrorInternal(pkg string, message string) error {
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "internal"
-	}
-
-	messageKey := pkg + ".internal"
-	metadata := map[string]string{
-		"messageKey": messageKey,
-	}
-	return &ErrorInternal{
-		PackageName: pkg,
-		Message:     msg,
-		Metadata:    metadata,
-	}
+func NewErrorInternal(pkg string, message string, args ...string) error {
+	info := newErrorInfo(pkg, "internal", message, args...)
+	return &ErrorInternal{BucketeerErrorInfo: info}
 }
 
 func (e *ErrorInternal) Error() string {
