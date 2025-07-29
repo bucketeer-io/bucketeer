@@ -48,6 +48,8 @@ import (
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 const (
@@ -106,6 +108,8 @@ type authService struct {
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
+	credentialsStorage  storage.CredentialsStorage
+	emailService        email.EmailService
 	opts                *options
 	logger              *zap.Logger
 }
@@ -125,6 +129,20 @@ func NewAuthService(
 		opt(&options)
 	}
 	logger := options.logger.Named("api")
+
+	// Initialize email service if password auth and email are enabled
+	var emailService email.EmailService
+	if config.PasswordAuth.Enabled && config.PasswordAuth.EmailServiceEnabled {
+		var err error
+		emailService, err = email.NewEmailService(config.PasswordAuth.EmailServiceConfig, logger)
+		if err != nil {
+			logger.Warn("Failed to initialize email service", zap.Error(err))
+			emailService = email.NewNoOpEmailService(logger)
+		}
+	} else {
+		emailService = email.NewNoOpEmailService(logger)
+	}
+
 	service := &authService{
 		issuer:              issuer,
 		audience:            audience,
@@ -139,8 +157,10 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		opts:   &options,
-		logger: logger,
+		credentialsStorage: storage.NewCredentialsStorage(mysqlClient),
+		emailService:       emailService,
+		opts:               &options,
+		logger:             logger,
 	}
 	service.PrepareDemoUser()
 	return service
