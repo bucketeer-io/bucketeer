@@ -29,52 +29,83 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	var reason string
 	var metadatas []map[string]string
 	var st *status.Status
-	var bucketeerErr pkgErr.BucketeerError
-	var ok bool
-
+	var bucketeerErr *pkgErr.BucketeerError
 	if err == nil {
 		return status.New(codes.Unknown, "")
 	}
-
-	if bucketeerErr, ok = err.(pkgErr.BucketeerError); ok {
+	if errors.As(err, &bucketeerErr) {
 		pkg = bucketeerErr.PackageName()
 		bucketeerErr.AddMetadata(anotherDetailData...)
 		var stCode codes.Code
 
-		if errors.Is(bucketeerErr, &pkgErr.ErrorInvalidAugment{}) {
+		switch bucketeerErr.ErrorType() {
+		case pkgErr.ErrorTypeInvalidAugment:
 			reason = "INVALID_AUGMENT"
 			stCode = codes.InvalidArgument
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorNotFound{}) {
+		case pkgErr.ErrorTypeNotFound:
 			reason = "NOT_FOUND"
 			stCode = codes.NotFound
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorAlreadyExists{}) {
+		case pkgErr.ErrorTypeAlreadyExists:
 			reason = "ALREADY_EXISTS"
 			stCode = codes.AlreadyExists
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorUnauthenticated{}) {
+		case pkgErr.ErrorTypeUnauthenticated:
 			reason = "UNAUTHENTICATED"
 			stCode = codes.Unauthenticated
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorPermissionDenied{}) {
+		case pkgErr.ErrorTypePermissionDenied:
 			reason = "PERMISSION_DENIED"
 			stCode = codes.PermissionDenied
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorUnexpectedAffectedRows{}) {
+		case pkgErr.ErrorTypeUnexpectedAffectedRows:
 			reason = "UNEXPECTED_AFFECTED_ROWS"
 			stCode = codes.Internal
-		} else if errors.Is(bucketeerErr, &pkgErr.ErrorInternal{}) {
+		case pkgErr.ErrorTypeInternal:
 			reason = "INTERNAL"
 			stCode = codes.Internal
-		} else {
+		default:
 			reason = "UNKNOWN"
 			stCode = codes.Unknown
 		}
+
 		st = status.New(stCode, bucketeerErr.Message())
+		metadatas = append(metadatas, bucketeerErr.Metadatas()...)
+
+		//	if bucketeerErr, ok = err.(pkgErr.BucketeerError); ok {
+		// pkg = bucketeerErr.PackageName()
+		// bucketeerErr.AddMetadata(anotherDetailData...)
+		// var stCode codes.Code
+
+		// if errors.Is(bucketeerErr, &pkgErr.ErrorInvalidAugment{}) {
+		// 	reason = "INVALID_AUGMENT"
+		// 	stCode = codes.InvalidArgument
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorNotFound{}) {
+		// 	reason = "NOT_FOUND"
+		// 	stCode = codes.NotFound
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorAlreadyExists{}) {
+		// 	reason = "ALREADY_EXISTS"
+		// 	stCode = codes.AlreadyExists
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorUnauthenticated{}) {
+		// 	reason = "UNAUTHENTICATED"
+		// 	stCode = codes.Unauthenticated
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorPermissionDenied{}) {
+		// 	reason = "PERMISSION_DENIED"
+		// 	stCode = codes.PermissionDenied
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorUnexpectedAffectedRows{}) {
+		// 	reason = "UNEXPECTED_AFFECTED_ROWS"
+		// 	stCode = codes.Internal
+		// } else if errors.Is(bucketeerErr, &pkgErr.ErrorInternal{}) {
+		// 	reason = "INTERNAL"
+		// 	stCode = codes.Internal
+		// } else {
+		// 	reason = "UNKNOWN"
+		// 	stCode = codes.Unknown
+		// }
+		// st = status.New(stCode, bucketeerErr.Message())
 	} else {
 		pkg = "unknown"
 		reason = "UNKNOWN"
-		metadatas = append(metadatas, anotherDetailData...)
 		st = status.New(codes.Unknown, err.Error())
-	}
-	if bucketeerErr != nil {
-		metadatas = append(metadatas, bucketeerErr.Metadatas()...)
+		if len(anotherDetailData) > 0 {
+			metadatas = append(metadatas, anotherDetailData...)
+		}
 	}
 
 	for _, md := range metadatas {

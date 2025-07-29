@@ -40,7 +40,7 @@ func TestNewGRPCStatus(t *testing.T) {
 	}{
 		{
 			name:                "ErrorInvalidAugment",
-			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, errors.New("base error"), "field1"),
+			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
 			expectedReason:      "INVALID_AUGMENT",
@@ -49,7 +49,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorNotFound",
-			err:                 pkgErr.NewErrorNotFound("test", "not found", errors.New("base error"), "resource"),
+			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
@@ -58,7 +58,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorAlreadyExists",
-			err:                 pkgErr.NewErrorAlreadyExists("test", "already exists", errors.New("base error"), "resource"),
+			err:                 pkgErr.NewErrorAlreadyExists("test", "already exists", "resource"),
 			expectedCode:        codes.AlreadyExists,
 			expectedMessage:     "test:already exists, resource",
 			expectedReason:      "ALREADY_EXISTS",
@@ -67,7 +67,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorUnauthenticated",
-			err:                 pkgErr.NewErrorUnauthenticated("test", "unauthenticated", errors.New("base error")),
+			err:                 pkgErr.NewErrorUnauthenticated("test", "unauthenticated"),
 			expectedCode:        codes.Unauthenticated,
 			expectedMessage:     "test:unauthenticated",
 			expectedReason:      "UNAUTHENTICATED",
@@ -76,7 +76,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorPermissionDenied",
-			err:                 pkgErr.NewErrorPermissionDenied("test", "permission denied", errors.New("base error")),
+			err:                 pkgErr.NewErrorPermissionDenied("test", "permission denied"),
 			expectedCode:        codes.PermissionDenied,
 			expectedMessage:     "test:permission denied",
 			expectedReason:      "PERMISSION_DENIED",
@@ -85,7 +85,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorUnexpectedAffectedRows",
-			err:                 pkgErr.NewErrorUnexpectedAffectedRows("test", "unexpected affected rows", errors.New("base error")),
+			err:                 pkgErr.NewErrorUnexpectedAffectedRows("test", "unexpected affected rows"),
 			expectedCode:        codes.Internal,
 			expectedMessage:     "test:unexpected affected rows",
 			expectedReason:      "UNEXPECTED_AFFECTED_ROWS",
@@ -94,7 +94,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorInternal",
-			err:                 pkgErr.NewErrorInternal("test", "internal error", errors.New("base error")),
+			err:                 pkgErr.NewErrorInternal("test", "internal error"),
 			expectedCode:        codes.Internal,
 			expectedMessage:     "test:internal error",
 			expectedReason:      "INTERNAL",
@@ -112,7 +112,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorInvalidAugment with additional metadata",
-			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, errors.New("base error"), "field1"),
+			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
 			anotherDetailData:   []map[string]string{{"additional": "data"}},
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
@@ -122,7 +122,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:                "ErrorNotFound with multiple additional metadata",
-			err:                 pkgErr.NewErrorNotFound("test", "not found", errors.New("base error"), "resource"),
+			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
 			anotherDetailData:   []map[string]string{{"key1": "value1"}, {"key2": "value2"}},
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
@@ -138,6 +138,16 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage:     "standard error",
 			expectedReason:      "UNKNOWN",
 			expectedDomain:      "unknown.bucketeer.io",
+			expectedMetadataLen: 1,
+		},
+		{
+			name:                "annther metadata is nil",
+			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
+			anotherDetailData:   nil,
+			expectedCode:        codes.NotFound,
+			expectedMessage:     "test:not found, resource",
+			expectedReason:      "NOT_FOUND",
+			expectedDomain:      "test.bucketeer.io",
 			expectedMetadataLen: 1,
 		},
 	}
@@ -179,7 +189,7 @@ func TestNewGRPCStatus_NilError(t *testing.T) {
 func TestNewGRPCStatus_WithDetailsError(t *testing.T) {
 	t.Parallel()
 
-	err := pkgErr.NewErrorInternal("test", "internal error", errors.New("base error"))
+	err := pkgErr.NewErrorInternal("test", "internal error")
 
 	largeMetadata := make([]map[string]string, 1000)
 	for i := 0; i < 1000; i++ {
@@ -222,7 +232,7 @@ func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := pkgErr.NewErrorInvalidAugment("test", "invalid", tt.invalidType, errors.New("base error"), "field")
+			err := pkgErr.NewErrorInvalidAugment("test", "invalid", tt.invalidType, "field")
 			st := NewGRPCStatus(err)
 
 			assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -240,7 +250,7 @@ func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
 func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 	t.Parallel()
 
-	err := pkgErr.NewErrorInvalidAugment("test", "multiple fields invalid", pkgErr.InvalidTypeEmpty, errors.New("base error"), "field1", "field2", "field3")
+	err := pkgErr.NewErrorInvalidAugment("test", "multiple fields invalid", pkgErr.InvalidTypeEmpty, "field1", "field2", "field3")
 
 	st := NewGRPCStatus(err)
 
@@ -263,7 +273,7 @@ func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 func TestNewGRPCStatus_ActualMessageFormat(t *testing.T) {
 	t.Parallel()
 
-	err := pkgErr.NewErrorNotFound("test", "not found", errors.New("base error"), "resource")
+	err := pkgErr.NewErrorNotFound("test", "not found", "resource")
 	st := NewGRPCStatus(err)
 
 	t.Logf("Actual message: %s", st.Message())
@@ -280,41 +290,6 @@ func TestNewGRPCStatus_ActualMessageFormat(t *testing.T) {
 	// 基本的な検証
 	assert.Equal(t, codes.NotFound, st.Code())
 	assert.NotEmpty(t, st.Message())
-}
-
-func TestNewGRPCStatus_ErrorTypeComparison(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name        string
-		err         error
-		expectedErr error
-	}{
-		{
-			name:        "ErrorNotFound comparison",
-			err:         pkgErr.NewErrorNotFound("test", "not found", errors.New("base error")),
-			expectedErr: &pkgErr.ErrorNotFound{},
-		},
-		{
-			name:        "ErrorInternal comparison",
-			err:         pkgErr.NewErrorInternal("test", "internal error", errors.New("base error")),
-			expectedErr: &pkgErr.ErrorInternal{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result := errors.Is(tt.err, tt.expectedErr)
-			t.Logf("errors.Is(%T, %T) = %v", tt.err, tt.expectedErr, result)
-
-			st := NewGRPCStatus(tt.err)
-			t.Logf("NewGRPCStatus result - Code: %v, Message: %s", st.Code(), st.Message())
-
-			assert.True(t, result, "errors.Is should return true for correct error type comparison")
-		})
-	}
 }
 
 func TestNewGRPCStatus_EdgeCases(t *testing.T) {
@@ -347,14 +322,14 @@ func TestNewGRPCStatus_EdgeCases(t *testing.T) {
 		},
 		{
 			name:              "Empty metadata",
-			err:               pkgErr.NewErrorNotFound("test", "not found", errors.New("base error")),
+			err:               pkgErr.NewErrorNotFound("test", "not found"),
 			anotherDetailData: []map[string]string{},
 			expectedCode:      codes.NotFound,
 			expectedMessage:   "test:not found",
 		},
 		{
 			name:              "Nil metadata",
-			err:               pkgErr.NewErrorNotFound("test", "not found", errors.New("base error")),
+			err:               pkgErr.NewErrorNotFound("test", "not found"),
 			anotherDetailData: nil,
 			expectedCode:      codes.NotFound,
 			expectedMessage:   "test:not found",
@@ -402,7 +377,7 @@ func TestNewGRPCStatus_PackageNameHandling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := pkgErr.NewErrorNotFound(tt.packageName, "not found", errors.New("base error"))
+			err := pkgErr.NewErrorNotFound(tt.packageName, "not found")
 			st := NewGRPCStatus(err)
 
 			details := st.Details()
