@@ -40,6 +40,9 @@ CREATE TABLE `account_credentials` (
 
 -- Create index for password reset tokens
 CREATE INDEX `idx_password_reset_token` ON `account_credentials` (`password_reset_token`);
+
+-- Create index for email to improve lookup performance
+CREATE INDEX `idx_email` ON `account_credentials` (`email`);
 ```
 
 ### Configuration Changes
