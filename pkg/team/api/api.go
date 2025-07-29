@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -147,30 +148,66 @@ func (s *TeamService) CreateTeam(
 		}
 		return nil, dt.Err()
 	}
+
+	var event *eventproto.Event
+	var actualTeam *domain.Team
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		// Check if team exists before upsert to determine if it's create or update
+		existingTeam, err := s.teamStorage.GetTeamByName(ctxWithTx, team.Name, req.OrganizationId)
+		isCreate := err != nil && errors.Is(err, storage.ErrTeamNotFound)
+		if err != nil && !isCreate {
+			return err
+		}
+
 		if err := s.teamStorage.UpsertTeam(ctxWithTx, team); err != nil {
 			return err
 		}
-		// Publish event
-		event, err := domainevent.NewAdminEvent(
+
+		// Fetch the actual team from DB to get correct final state after upsert
+		actualTeam, err = s.teamStorage.GetTeamByName(ctxWithTx, team.Name, team.OrganizationId)
+		if err != nil {
+			return err
+		}
+
+		// Use appropriate event type with appropriate previous entity data based on whether it's create or update
+		var previousEntityData interface{}
+		var eventType eventproto.Event_Type
+		var eventData pb.Message
+		if isCreate {
+			previousEntityData = nil
+			eventType = eventproto.Event_TEAM_CREATED
+			eventData = &eventproto.TeamCreatedEvent{
+				Id:             actualTeam.Id,
+				Name:           actualTeam.Name,
+				Description:    actualTeam.Description,
+				CreatedAt:      actualTeam.CreatedAt,
+				UpdatedAt:      actualTeam.UpdatedAt,
+				OrganizationId: actualTeam.OrganizationId,
+			}
+		} else {
+			previousEntityData = existingTeam
+			eventType = eventproto.Event_TEAM_UPDATED
+			eventData = &eventproto.TeamUpdatedEvent{
+				Id:             actualTeam.Id,
+				Name:           actualTeam.Name,
+				Description:    actualTeam.Description,
+				UpdatedAt:      actualTeam.UpdatedAt,
+				OrganizationId: actualTeam.OrganizationId,
+			}
+		}
+		event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_TEAM,
-			team.Id,
-			eventproto.Event_TEAM_CREATED,
-			&eventproto.TeamCreatedEvent{
-				Id:          team.Id,
-				Name:        team.Name,
-				Description: team.Description,
-				CreatedAt:   team.CreatedAt,
-				UpdatedAt:   team.UpdatedAt,
-			},
-			team,
-			team,
+			actualTeam.Id,
+			eventType,
+			eventData,
+			actualTeam,
+			previousEntityData,
 		)
 		if err != nil {
 			return err
 		}
-		return s.publisher.Publish(ctx, event)
+		return nil
 	})
 	if err != nil {
 		s.logger.Error(
@@ -183,13 +220,19 @@ func (s *TeamService) CreateTeam(
 		)
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
 	}
+
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
+	}
+
 	return &proto.CreateTeamResponse{
 		Team: team.Team,
 	}, nil
 }
 
 func (s *TeamService) validateCreateTeamRequest(req *proto.CreateTeamRequest, localizer locale.Localizer) error {
-	if len(strings.TrimSpace(req.Name)) == 0 {
+	req.Name = strings.TrimSpace(req.Name)
+	if len(req.Name) == 0 {
 		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),

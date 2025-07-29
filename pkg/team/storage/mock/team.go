@@ -72,6 +72,21 @@ func (mr *MockTeamStorageMockRecorder) GetTeam(ctx, id, organizationID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeam", reflect.TypeOf((*MockTeamStorage)(nil).GetTeam), ctx, id, organizationID)
 }
 
+// GetTeamByName mocks base method.
+func (m *MockTeamStorage) GetTeamByName(ctx context.Context, name, organizationID string) (*domain.Team, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTeamByName", ctx, name, organizationID)
+	ret0, _ := ret[0].(*domain.Team)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTeamByName indicates an expected call of GetTeamByName.
+func (mr *MockTeamStorageMockRecorder) GetTeamByName(ctx, name, organizationID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTeamByName", reflect.TypeOf((*MockTeamStorage)(nil).GetTeamByName), ctx, name, organizationID)
+}
+
 // ListTeams mocks base method.
 func (m *MockTeamStorage) ListTeams(ctx context.Context, options *mysql.ListOptions) ([]*team.Team, int, int64, error) {
 	m.ctrl.T.Helper()

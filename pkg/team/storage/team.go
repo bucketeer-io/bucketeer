@@ -33,6 +33,8 @@ var (
 	insertTeamSQL string
 	//go:embed sql/select_team.sql
 	selectTeamSQL string
+	//go:embed sql/select_team_by_name.sql
+	selectTeamByNameSQL string
 	//go:embed sql/select_teams.sql
 	selectTeamsSQL string
 	//go:embed sql/count_teams.sql
@@ -44,6 +46,7 @@ var (
 type TeamStorage interface {
 	UpsertTeam(ctx context.Context, team *domain.Team) error
 	GetTeam(ctx context.Context, id, organizationID string) (*domain.Team, error)
+	GetTeamByName(ctx context.Context, name, organizationID string) (*domain.Team, error)
 	ListTeams(
 		ctx context.Context,
 		options *mysql.ListOptions,
@@ -84,6 +87,33 @@ func (t *teamStorage) GetTeam(ctx context.Context, id, organizationID string) (*
 		ctx,
 		selectTeamSQL,
 		id,
+		organizationID,
+	).Scan(
+		&team.Id,
+		&team.Name,
+		&team.Description,
+		&team.CreatedAt,
+		&team.UpdatedAt,
+		&team.OrganizationId,
+		&team.OrganizationName,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrTeamNotFound
+		}
+		return nil, err
+	}
+	return &domain.Team{
+		Team: &team,
+	}, nil
+}
+
+func (t *teamStorage) GetTeamByName(ctx context.Context, name, organizationID string) (*domain.Team, error) {
+	team := proto.Team{}
+	err := t.qe.QueryRowContext(
+		ctx,
+		selectTeamByNameSQL,
+		name,
 		organizationID,
 	).Scan(
 		&team.Id,

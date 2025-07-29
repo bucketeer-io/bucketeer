@@ -5129,6 +5129,7 @@ definitions:
       - CODE_REFERENCE_DELETED
       - TEAM_CREATED
       - TEAM_DELETED
+      - TEAM_UPDATED
     default: UNKNOWN
   domainLocalizedMessage:
     type: object

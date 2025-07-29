@@ -262,6 +262,7 @@ message Event {
     CODE_REFERENCE_DELETED = 1802;
     TEAM_CREATED = 1900;
     TEAM_DELETED = 1901;
+    TEAM_UPDATED = 1902;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -1356,6 +1357,14 @@ message TeamCreatedEvent {
   string organization_id = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+}
+
+message TeamUpdatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string organization_id = 4;
+  int64 updated_at = 5;
 }
 
 message TeamDeletedEvent {
