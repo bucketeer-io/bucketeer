@@ -418,6 +418,19 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
+    demoOrganizationCreationNotifier:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      project: ${global.pubsub.project}
+      topic: domain
+      subscription: demo-organization-creation-notifier
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
 
   onDemandSubscribers:
     evaluationCountEventDWHPersister:

@@ -68,7 +68,7 @@ func NewAccountV2(
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 ) *AccountV2 {
 	now := time.Now().Unix()
-	if organizationRole == proto.AccountV2_Role_Organization_ADMIN {
+	if organizationRole >= proto.AccountV2_Role_Organization_ADMIN {
 		environmentRoles = []*proto.AccountV2_EnvironmentRole{}
 	}
 	return &AccountV2{&proto.AccountV2{
@@ -144,8 +144,7 @@ func (a *AccountV2) Update(
 	if len(environmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
 	}
-	if updated.OrganizationRole == proto.AccountV2_Role_Organization_ADMIN ||
-		updated.OrganizationRole == proto.AccountV2_Role_Organization_OWNER {
+	if updated.OrganizationRole >= proto.AccountV2_Role_Organization_ADMIN {
 		updated.EnvironmentRoles = []*proto.AccountV2_EnvironmentRole{}
 	}
 	if isDisabled != nil {
@@ -221,7 +220,7 @@ func (a *AccountV2) ChangeTags(tags []string) error {
 
 func (a *AccountV2) ChangeOrganizationRole(role proto.AccountV2_Role_Organization) error {
 	a.AccountV2.OrganizationRole = role
-	if role == proto.AccountV2_Role_Organization_ADMIN {
+	if role >= proto.AccountV2_Role_Organization_ADMIN {
 		a.AccountV2.EnvironmentRoles = []*proto.AccountV2_EnvironmentRole{}
 	}
 	a.UpdatedAt = time.Now().Unix()

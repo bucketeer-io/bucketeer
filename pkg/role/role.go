@@ -128,7 +128,7 @@ func checkRole(
 	organizationRole accountproto.AccountV2_Role_Organization,
 	isAdmin bool,
 ) (*eventproto.Editor, error) {
-	if organizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+	if organizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 		return &eventproto.Editor{
 			Email:            email,
 			Name:             name,

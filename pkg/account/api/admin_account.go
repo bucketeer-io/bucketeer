@@ -420,8 +420,7 @@ func (s *AccountService) getMyOrganizations(
 		}
 		// Add the organization if the account is an admin or owner.
 		// Otherwise, we check if the account is enabled in any environment in this organization.
-		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN ||
-			accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_OWNER {
+		if accWithOrg.AccountV2.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 			myOrgs = append(myOrgs, accWithOrg.Organization)
 			continue
 		}

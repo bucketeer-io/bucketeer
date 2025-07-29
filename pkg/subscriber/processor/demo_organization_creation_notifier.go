@@ -2,7 +2,6 @@ package processor
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -36,7 +35,7 @@ func (d demoOrganizationCreationNotifier) Process(ctx context.Context, msgChan <
 		select {
 		case msg, ok := <-msgChan:
 			if !ok {
-				d.logger.Error("domainEventInformer: message channel closed")
+				d.logger.Error("demoOrganizationCreationNotifier: message channel closed")
 				return nil
 			}
 			subscriberReceivedCounter.WithLabelValues(subscriberDemoOrganizationEvent).Inc()
@@ -60,10 +59,35 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		msg.Ack()
 		return
 	}
-	_, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	fmt.Printf("Processing domain event: %s\n", domainEvent.Type)
+	if domainEvent.Type != domainevent.Event_DEMO_ORGANIZATION_CREATED {
+		msg.Ack()
+		return
+	}
+
+	err = d.SendSlackNotifier(ctx, domainEvent)
+	if err != nil {
+		d.logger.Error("Failed to send Slack notification",
+			zap.Error(err),
+			zap.String("eventID", domainEvent.Id),
+		)
+		subscriberHandledCounter.WithLabelValues(
+			subscriberDemoOrganizationEvent,
+			codes.NonRepeatableError.String(),
+		).Inc()
+		msg.Ack()
+		return
+	}
+	msg.Ack()
+}
+
+func (d demoOrganizationCreationNotifier) SendSlackNotifier(
+	ctx context.Context,
+	event *domainevent.Event,
+) error {
+
 }
 
 func (d demoOrganizationCreationNotifier) unmarshalMessage(msg *puller.Message) (*domainevent.Event, error) {
