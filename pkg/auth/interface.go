@@ -16,6 +16,7 @@ package auth
 
 import (
 	"context"
+	"time"
 )
 
 type Authenticator interface {
@@ -56,9 +57,37 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
+type EmailServiceConfig struct {
+	Provider       string `json:"provider"` // "smtp", "sendgrid", "ses"
+	SMTPHost       string `json:"smtpHost"`
+	SMTPPort       int    `json:"smtpPort"`
+	SMTPUsername   string `json:"smtpUsername"`
+	SMTPPassword   string `json:"smtpPassword"`
+	SendGridAPIKey string `json:"sendgridAPIKey"`
+	SESRegion      string `json:"sesRegion"`
+	SESAccessKey   string `json:"sesAccessKey"`
+	SESSecretKey   string `json:"sesSecretKey"`
+	FromEmail      string `json:"fromEmail"`
+	FromName       string `json:"fromName"`
+	BaseURL        string `json:"baseURL"` // For constructing reset URLs
+}
+
+type PasswordAuthConfig struct {
+	Enabled                  bool               `json:"enabled"`
+	PasswordMinLength        int                `json:"passwordMinLength"`
+	PasswordRequireUppercase bool               `json:"passwordRequireUppercase"`
+	PasswordRequireLowercase bool               `json:"passwordRequireLowercase"`
+	PasswordRequireNumbers   bool               `json:"passwordRequireNumbers"`
+	PasswordRequireSymbols   bool               `json:"passwordRequireSymbols"`
+	PasswordResetTokenTTL    time.Duration      `json:"passwordResetTokenTTL"`
+	EmailServiceEnabled      bool               `json:"emailServiceEnabled"`
+	EmailServiceConfig       EmailServiceConfig `json:"emailServiceConfig"`
+}
+
 type OAuthConfig struct {
-	Issuer       string           `json:"issuer"`
-	Audience     string           `json:"audience"`
-	GoogleConfig GoogleConfig     `json:"google"`
-	DemoSignIn   DemoSignInConfig `json:"demoSignIn"`
+	Issuer       string             `json:"issuer"`
+	Audience     string             `json:"audience"`
+	GoogleConfig GoogleConfig       `json:"google"`
+	DemoSignIn   DemoSignInConfig   `json:"demoSignIn"`
+	PasswordAuth PasswordAuthConfig `json:"passwordAuth"`
 }
