@@ -81,6 +81,45 @@ message GetDemoSiteStatusResponse {
   bool is_demo_site_enabled = 1;
 }
 
+// Password Management Messages
+message CreatePasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message CreatePasswordResponse {}
+
+message UpdatePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message UpdatePasswordResponse {}
+
+message InitiatePasswordResetRequest {
+  string email = 1;
+}
+
+message InitiatePasswordResetResponse {
+  string message = 1;
+}
+
+message ResetPasswordRequest {
+  string reset_token = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {}
+
+message ValidatePasswordResetTokenRequest {
+  string reset_token = 1;
+}
+
+message ValidatePasswordResetTokenResponse {
+  bool is_valid = 1;
+  string email = 2;
+}
+
 service AuthService {
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
     option (google.api.http) = {
@@ -266,6 +305,151 @@ service AuthService {
       description: "Get the status of the demo site.",
       tags: "Authentication",
       operation_id: "web.v1.auth.get_demo_site_status",
+    };
+  }
+
+  // Password Management APIs
+  rpc CreatePassword(CreatePasswordRequest) returns (CreatePasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Password",
+      description: "Create a password for an existing account.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.create_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "409"
+        value: {
+          description: "Returned when password already exists for the account."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 6, "message": "password already exists", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {
+    option (google.api.http) = {
+      put: "/v1/auth/password"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Password",
+      description: "Update the password for the authenticated user.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.update_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc InitiatePasswordReset(InitiatePasswordResetRequest)
+      returns (InitiatePasswordResetResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/initiate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Initiate Password Reset",
+      description: "Initiate password reset process by sending a reset email.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.initiate_password_reset",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reset Password",
+      description: "Reset password using a valid reset token.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.reset_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ValidatePasswordResetToken(ValidatePasswordResetTokenRequest)
+      returns (ValidatePasswordResetTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/validate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Validate Password Reset Token",
+      description: "Validate if a password reset token is valid and not expired.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.validate_password_reset_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
     };
   }
 }
