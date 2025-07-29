@@ -126,7 +126,6 @@ func TestBucketeerError_JoinError_MultipleErrors(t *testing.T) {
 
 	bucketeerErr := NewErrorNotFound("test", "not found", "resource")
 
-	// 複数のエラーを結合
 	err1 := errors.New("database error")
 	err2 := errors.New("network error")
 	err3 := errors.New("validation error")
@@ -135,12 +134,10 @@ func TestBucketeerError_JoinError_MultipleErrors(t *testing.T) {
 	bucketeerErr.JoinError(err2)
 	bucketeerErr.JoinError(err3)
 
-	// すべてのエラーが検知できることを確認
 	assert.ErrorIs(t, bucketeerErr, err1)
 	assert.ErrorIs(t, bucketeerErr, err2)
 	assert.ErrorIs(t, bucketeerErr, err3)
 
-	// 存在しないエラーは検知されないことを確認
 	nonExistentErr := errors.New("non-existent error")
 	assert.False(t, errors.Is(bucketeerErr, nonExistentErr))
 }
@@ -148,17 +145,14 @@ func TestBucketeerError_JoinError_MultipleErrors(t *testing.T) {
 func TestBucketeerError_JoinError_WithWrappedErrors(t *testing.T) {
 	t.Parallel()
 
-	// ラップされたエラーを作成
 	originalErr := errors.New("original error")
 	wrappedErr := fmt.Errorf("wrapped: %w", originalErr)
 
 	bucketeerErr := NewErrorNotFound("test", "not found", "resource")
 	bucketeerErr.JoinError(wrappedErr)
 
-	// ラップされたエラー自体が検知できることを確認
 	assert.ErrorIs(t, bucketeerErr, wrappedErr)
 
-	// 元のエラーも検知できることを確認
 	assert.ErrorIs(t, bucketeerErr, originalErr)
 }
 
@@ -167,7 +161,6 @@ func TestBucketeerError_JoinError_Chain(t *testing.T) {
 
 	bucketeerErr := NewErrorNotFound("test", "not found", "resource")
 
-	// エラーチェーンを作成
 	err1 := errors.New("level 1 error")
 	err2 := fmt.Errorf("level 2: %w", err1)
 	err3 := fmt.Errorf("level 3: %w", err2)

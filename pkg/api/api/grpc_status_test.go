@@ -287,7 +287,6 @@ func TestNewGRPCStatus_ActualMessageFormat(t *testing.T) {
 		}
 	}
 
-	// 基本的な検証
 	assert.Equal(t, codes.NotFound, st.Code())
 	assert.NotEmpty(t, st.Message())
 }
