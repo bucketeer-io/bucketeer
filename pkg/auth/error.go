@@ -45,4 +45,24 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "missing password", "password"))
 	StatusAccessDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
+
+	// Password-related errors
+	StatusPasswordTooWeak        = gstatus.New(codes.InvalidArgument, "auth: password too weak")
+	StatusPasswordMismatch       = gstatus.New(codes.InvalidArgument, "auth: password mismatch")
+	StatusPasswordAlreadyExists  = gstatus.New(codes.AlreadyExists, "auth: password already exists")
+	StatusPasswordNotFound       = gstatus.New(codes.NotFound, "auth: password not found")
+	StatusMissingCurrentPassword = gstatus.New(codes.InvalidArgument, "auth: current password must not be empty")
+	StatusMissingNewPassword     = gstatus.New(codes.InvalidArgument, "auth: new password must not be empty")
+
+	// Password reset errors
+	StatusInvalidResetToken  = gstatus.New(codes.InvalidArgument, "auth: invalid reset token")
+	StatusExpiredResetToken  = gstatus.New(codes.InvalidArgument, "auth: reset token expired")
+	StatusResetTokenNotFound = gstatus.New(codes.NotFound, "auth: reset token not found")
+	StatusMissingResetToken  = gstatus.New(codes.InvalidArgument, "auth: reset token must not be empty")
+
+	// Email service errors
+	StatusEmailServiceUnavailable = gstatus.New(codes.Unavailable, "auth: email service unavailable")
+	StatusTooManyEmailRequests    = gstatus.New(codes.ResourceExhausted, "auth: too many email requests")
+	StatusInvalidEmailConfig      = gstatus.New(codes.InvalidArgument, "auth: invalid email configuration")
+	StatusMissingEmail            = gstatus.New(codes.InvalidArgument, "auth: email must not be empty")
 )
