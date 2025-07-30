@@ -8,7 +8,13 @@ import {
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Feature, Rollout, StrategyType } from '@types';
-import { IconInfo, IconInfoFilled, IconPercentage } from '@icons';
+import {
+  IconCircleDashed,
+  IconInfo,
+  IconInfoFilled,
+  IconPercentage
+} from '@icons';
+import DefineAudienceAmount from 'pages/experiments/experiments-modal/experiment-create-update/define-audience/define-audience-amount';
 import Card from 'pages/feature-flag-details/elements/card';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -146,13 +152,22 @@ const DefaultRule = ({
                 }
                 isDisabled={waitingRunningRollouts.length > 0 || !editable}
               />
-              {defaultRule.type === StrategyType.ROLLOUT &&
+              {/* {defaultRule.type === StrategyType.ROLLOUT &&
                 defaultRule.currentOption === StrategyType.ROLLOUT && (
                   <DefaultRuleRollout />
-                )}
+                )} */}
             </Form.Item>
           );
         }}
+      />
+      <Form.Field
+        control={control}
+        name={`defaultRule.audienceRules`}
+        render={({ field }) => (
+          <Form.Item className="flex flex-col w-full py-2 gap-y-5">
+            <DefineAudienceAmount field={field} />
+          </Form.Item>
+        )}
       />
     </Card>
   );

@@ -89,7 +89,18 @@ export const rulesSchema = yup.object().shape({
 
 export type RuleSchema = yup.InferType<typeof rulesSchema>;
 
+const defaultAudienceRuleSchema = yup.object().shape({
+  rule: yup.string().required(requiredMessage),
+  inExperiment: yup.number().required(requiredMessage),
+  notInExperiment: yup.number().required(requiredMessage),
+  served: yup.boolean().required(requiredMessage),
+  variationReassignment: yup.boolean().required(requiredMessage)
+})
+
+export type DefaultAudienceRuleSchema = yup.InferType<typeof defaultAudienceRuleSchema>;
+
 export const defaultRuleSchema = yup.object().shape({
+  audienceRules: yup.array().of(defaultAudienceRuleSchema),
   currentOption: yup.string(),
   type: yup
     .string()
