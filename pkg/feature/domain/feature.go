@@ -700,6 +700,9 @@ func (f *Feature) RemoveVariation(id string) error {
 }
 
 func (f *Feature) validateRemoveVariation(id string) error {
+	if len(f.Variations) <= 2 {
+		return errVariationsMustHaveAtLeastTwoVariations
+	}
 	if f.OffVariation == id {
 		return errVariationInUse
 	}

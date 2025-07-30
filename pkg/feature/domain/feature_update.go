@@ -423,9 +423,6 @@ func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
 }
 
 func (f *Feature) updateRemoveVariation(id string) error {
-	if len(f.Variations) == 1 {
-		return errVariationInUse
-	}
 	idx, err := f.updateFindVariationIndex(id)
 	if err != nil {
 		return err
@@ -465,6 +462,9 @@ func (f *Feature) updateFindTarget(id string) (int, error) {
 
 // updateValidateRemoveVariation validates that a variation can be safely removed
 func (f *Feature) updateValidateRemoveVariation(id string) error {
+	if len(f.Variations) <= 2 {
+		return errVariationsMustHaveAtLeastTwoVariations
+	}
 	if f.OffVariation == id {
 		return errVariationInUse
 	}

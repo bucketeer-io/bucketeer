@@ -1732,6 +1732,18 @@ func TestUpdateRemoveVariationComprehensiveCleanup(t *testing.T) {
 			variationID: "variation-C", // Has users in target
 			expectedErr: errVariationInUse,
 		},
+		{
+			desc: "error - minimum variation constraint",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				// Remove one variation to get down to exactly 2 variations
+				f.Targets[2].Users = []string{}        // Remove users from variation-C
+				f.updateRemoveVariation("variation-C") // This should succeed, leaving 2 variations
+				return f
+			},
+			variationID: "variation-A", // Try to remove when only 2 variations remain
+			expectedErr: errVariationsMustHaveAtLeastTwoVariations,
+		},
 	}
 
 	for _, p := range patterns {
