@@ -113,6 +113,11 @@ func (s *FeatureService) GetFeature(
 		}
 		return nil, dt.Err()
 	}
+
+	// Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
+	feature.CleanupOrphanedVariationReferences()
+
 	if err := s.setLastUsedInfosToFeatureByChunk(
 		ctx,
 		[]*featureproto.Feature{feature.Feature},
@@ -185,6 +190,13 @@ func (s *FeatureService) GetFeatures(
 		}
 		return nil, dt.Err()
 	}
+
+	// Clean up any orphaned variation references before returning to UI
+	for _, f := range features {
+		domainFeature := &domain.Feature{Feature: f}
+		domainFeature.CleanupOrphanedVariationReferences()
+	}
+
 	return &featureproto.GetFeaturesResponse{Features: features}, nil
 }
 
@@ -252,6 +264,13 @@ func (s *FeatureService) ListFeatures(
 		)
 		return nil, statusInternal.Err()
 	}
+
+	// Clean up any orphaned variation references before returning to UI
+	for _, f := range features {
+		domainFeature := &domain.Feature{Feature: f}
+		domainFeature.CleanupOrphanedVariationReferences()
+	}
+
 	return &featureproto.ListFeaturesResponse{
 		Features:             features,
 		Cursor:               cursor,
