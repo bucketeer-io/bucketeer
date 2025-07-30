@@ -197,3 +197,124 @@ func (f *Feature) ValidateVariationReferences() []string {
 
 	return result
 }
+
+type VariationMigrationResult struct {
+	Changed           bool
+	AddedToRules      int
+	AddedToDefault    int
+	AddedVariationIDs []string
+}
+
+// EnsureVariationsInStrategies adds missing variations to rules and default strategy
+// This fixes data corruption from the historical AddVariation bug where variations
+// were added to the variations list and targets, but not to rollout strategies
+func (f *Feature) EnsureVariationsInStrategies() VariationMigrationResult {
+	result := VariationMigrationResult{
+		Changed:           false,
+		AddedToRules:      0,
+		AddedToDefault:    0,
+		AddedVariationIDs: []string{},
+	}
+
+	if len(f.Variations) == 0 {
+		return result
+	}
+
+	// Create a set of all valid variation IDs
+	validVariationIDs := make(map[string]bool)
+	for _, variation := range f.Variations {
+		validVariationIDs[variation.Id] = true
+	}
+
+	// 1. Add missing variations to rules with rollout strategies
+	for _, rule := range f.Rules {
+		if rule.Strategy != nil &&
+			rule.Strategy.Type == feature.Strategy_ROLLOUT &&
+			rule.Strategy.RolloutStrategy != nil {
+			// TODO: Remove this after updating all call sites to use detailed version
+			added := f.ensureVariationsInRolloutStrategy(rule.Strategy.RolloutStrategy, validVariationIDs)
+			result.AddedToRules += added
+			if added > 0 {
+				result.Changed = true
+			}
+		}
+	}
+
+	// 2. Add missing variations to default strategy
+	if f.DefaultStrategy != nil &&
+		f.DefaultStrategy.Type == feature.Strategy_ROLLOUT &&
+		f.DefaultStrategy.RolloutStrategy != nil {
+		added := f.ensureVariationsInRolloutStrategy(f.DefaultStrategy.RolloutStrategy, validVariationIDs)
+		result.AddedToDefault += added
+		if added > 0 {
+			result.Changed = true
+		}
+	}
+
+	// 3. Collect variation IDs that were processed (for logging)
+	if result.Changed {
+		for variationID := range validVariationIDs {
+			result.AddedVariationIDs = append(result.AddedVariationIDs, variationID)
+		}
+	}
+
+	return result
+}
+
+// ensureVariationsInRolloutStrategy adds missing variations to a rollout strategy
+// Returns the number of variations added
+func (f *Feature) ensureVariationsInRolloutStrategy(
+	strategy *feature.RolloutStrategy,
+	validVariationIDs map[string]bool,
+) int {
+	if strategy == nil {
+		return 0
+	}
+
+	// Create a map of existing weights to preserve them
+	existingWeights := make(map[string]int32)
+	for _, strategyVar := range strategy.Variations {
+		existingWeights[strategyVar.Variation] = strategyVar.Weight
+	}
+
+	// Check if we need to add any missing variations
+	missingVariations := []string{}
+	for _, variation := range f.Variations {
+		variationID := variation.Id
+		if validVariationIDs[variationID] {
+			if _, exists := existingWeights[variationID]; !exists {
+				missingVariations = append(missingVariations, variationID)
+			}
+		}
+	}
+
+	// If no missing variations, no changes needed
+	if len(missingVariations) == 0 {
+		return 0
+	}
+
+	// Reconstruct strategy.Variations to match f.Variations order exactly
+	// This ensures UI consistency and predictable ordering
+	originalCount := len(strategy.Variations)
+	newStrategyVariations := []*feature.RolloutStrategy_Variation{}
+
+	for _, variation := range f.Variations {
+		variationID := variation.Id
+		if validVariationIDs[variationID] {
+			weight := existingWeights[variationID] // Will be 0 for missing variations
+			newStrategyVariations = append(newStrategyVariations, &feature.RolloutStrategy_Variation{
+				Variation: variationID,
+				Weight:    weight,
+			})
+		}
+	}
+
+	strategy.Variations = newStrategyVariations
+	return len(strategy.Variations) - originalCount
+}
+
+// EnsureVariationsInStrategiesSimple is a convenience wrapper that returns only a boolean
+func (f *Feature) EnsureVariationsInStrategiesSimple() bool {
+	result := f.EnsureVariationsInStrategies()
+	return result.Changed
+}

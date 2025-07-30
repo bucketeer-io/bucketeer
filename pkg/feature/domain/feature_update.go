@@ -397,6 +397,8 @@ func (f *Feature) updateAddVariation(id, value, name, description string) error 
 		Description: description,
 	})
 	f.addTarget(id)
+	f.updateAddVariationToRules(id)
+	f.updateAddVariationToDefaultStrategy(id)
 	return nil
 }
 
@@ -695,4 +697,25 @@ func (f *Feature) findPrerequisiteIndex(featureID string) (int, error) {
 		}
 	}
 	return -1, errPrerequisiteNotFound
+}
+
+func (f *Feature) updateAddVariationToRules(variationID string) {
+	for _, rule := range f.Rules {
+		if rule.Strategy.Type == feature.Strategy_ROLLOUT {
+			f.updateAddVariationToRolloutStrategy(rule.Strategy.RolloutStrategy, variationID)
+		}
+	}
+}
+
+func (f *Feature) updateAddVariationToDefaultStrategy(variationID string) {
+	if f.DefaultStrategy != nil && f.DefaultStrategy.Type == feature.Strategy_ROLLOUT {
+		f.updateAddVariationToRolloutStrategy(f.DefaultStrategy.RolloutStrategy, variationID)
+	}
+}
+
+func (f *Feature) updateAddVariationToRolloutStrategy(strategy *feature.RolloutStrategy, variationID string) {
+	strategy.Variations = append(strategy.Variations, &feature.RolloutStrategy_Variation{
+		Variation: variationID,
+		Weight:    0,
+	})
 }

@@ -549,6 +549,158 @@ func TestUpdateAddVariation(t *testing.T) {
 	}
 }
 
+func TestUpdateAddVariationToDefaultStrategy(t *testing.T) {
+	t.Parallel()
+
+	newV, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	patterns := []struct {
+		desc         string
+		setupFunc    func() *Feature
+		id           string
+		value        string
+		name         string
+		description  string
+		expectedFunc func() *Feature
+		expectedErr  error
+	}{
+		{
+			desc: "success - add variation to rollout default strategy",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &feature.Strategy{
+					Type: feature.Strategy_ROLLOUT,
+					RolloutStrategy: &feature.RolloutStrategy{
+						Variations: []*feature.RolloutStrategy_Variation{
+							{Variation: "variation-A", Weight: 33000},
+							{Variation: "variation-B", Weight: 33000},
+							{Variation: "variation-C", Weight: 34000},
+						},
+					},
+				}
+				return f
+			},
+			id:          newV.String(),
+			value:       "new-value",
+			name:        "new-name",
+			description: "new-description",
+			expectedFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &feature.Strategy{
+					Type: feature.Strategy_ROLLOUT,
+					RolloutStrategy: &feature.RolloutStrategy{
+						Variations: []*feature.RolloutStrategy_Variation{
+							{Variation: "variation-A", Weight: 33000},
+							{Variation: "variation-B", Weight: 33000},
+							{Variation: "variation-C", Weight: 34000},
+							{Variation: newV.String(), Weight: 0},
+						},
+					},
+				}
+				f.Variations = append(f.Variations, &feature.Variation{
+					Id:          newV.String(),
+					Value:       "new-value",
+					Name:        "new-name",
+					Description: "new-description",
+				})
+				f.Targets = append(f.Targets, &feature.Target{
+					Variation: newV.String(),
+					Users:     []string{},
+				})
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success - add variation to fixed default strategy (no rollout strategy update)",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &feature.Strategy{
+					Type: feature.Strategy_FIXED,
+					FixedStrategy: &feature.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				return f
+			},
+			id:          newV.String(),
+			value:       "new-value",
+			name:        "new-name",
+			description: "new-description",
+			expectedFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &feature.Strategy{
+					Type: feature.Strategy_FIXED,
+					FixedStrategy: &feature.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Variations = append(f.Variations, &feature.Variation{
+					Id:          newV.String(),
+					Value:       "new-value",
+					Name:        "new-name",
+					Description: "new-description",
+				})
+				f.Targets = append(f.Targets, &feature.Target{
+					Variation: newV.String(),
+					Users:     []string{},
+				})
+				return f
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := p.setupFunc()
+			err := actual.updateAddVariation(p.id, p.value, p.name, p.description)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				expected := p.expectedFunc()
+
+				// Verify variations
+				assert.Equal(t, len(expected.Variations), len(actual.Variations))
+				if len(actual.Variations) > 0 {
+					lastVar := actual.Variations[len(actual.Variations)-1]
+					assert.Equal(t, p.id, lastVar.Id)
+					assert.Equal(t, p.value, lastVar.Value)
+					assert.Equal(t, p.name, lastVar.Name)
+					assert.Equal(t, p.description, lastVar.Description)
+				}
+
+				// Verify targets
+				assert.Equal(t, len(expected.Targets), len(actual.Targets))
+				if len(actual.Targets) > 0 {
+					lastTarget := actual.Targets[len(actual.Targets)-1]
+					assert.Equal(t, p.id, lastTarget.Variation)
+					assert.Empty(t, lastTarget.Users)
+				}
+
+				// Verify default strategy rollout variations if applicable
+				if expected.DefaultStrategy != nil && expected.DefaultStrategy.Type == feature.Strategy_ROLLOUT {
+					assert.Equal(t, len(expected.DefaultStrategy.RolloutStrategy.Variations),
+						len(actual.DefaultStrategy.RolloutStrategy.Variations))
+
+					// Find the new variation in the rollout strategy
+					found := false
+					for _, v := range actual.DefaultStrategy.RolloutStrategy.Variations {
+						if v.Variation == p.id {
+							found = true
+							assert.Equal(t, int32(0), v.Weight, "New variation should have weight 0")
+							break
+						}
+					}
+					assert.True(t, found, "New variation should be found in default strategy rollout")
+				}
+			}
+		})
+	}
+}
+
 func TestUpdateChangeVariation(t *testing.T) {
 	patterns := []struct {
 		desc         string

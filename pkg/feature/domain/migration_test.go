@@ -361,3 +361,187 @@ func TestCleanupOrphanedVariationReferences(t *testing.T) {
 		})
 	}
 }
+
+func TestEnsureVariationsInStrategies(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc           string
+		setupFunc      func() *Feature
+		expectedResult VariationMigrationResult
+	}{
+		{
+			desc: "no changes needed - all variations already in strategies",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{Variation: "variation-A", Weight: 50000},
+							{Variation: "variation-B", Weight: 30000},
+							{Variation: "variation-C", Weight: 20000},
+						},
+					},
+				}
+				return f
+			},
+			expectedResult: VariationMigrationResult{
+				Changed:           false,
+				AddedToRules:      0,
+				AddedToDefault:    0,
+				AddedVariationIDs: []string{},
+			},
+		},
+		{
+			desc: "add missing variations to default strategy",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{Variation: "variation-A", Weight: 100000},
+						},
+					},
+				}
+				return f
+			},
+			expectedResult: VariationMigrationResult{
+				Changed:           true,
+				AddedToRules:      0,
+				AddedToDefault:    2,
+				AddedVariationIDs: []string{"variation-A", "variation-B", "variation-C"},
+			},
+		},
+		{
+			desc: "no changes for fixed strategies",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				return f
+			},
+			expectedResult: VariationMigrationResult{
+				Changed:           false,
+				AddedToRules:      0,
+				AddedToDefault:    0,
+				AddedVariationIDs: []string{},
+			},
+		},
+		{
+			desc: "preserve variation order when adding to strategies",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{Variation: "variation-B", Weight: 100000},
+						},
+					},
+				}
+				return f
+			},
+			expectedResult: VariationMigrationResult{
+				Changed:           true,
+				AddedToRules:      0,
+				AddedToDefault:    2,
+				AddedVariationIDs: []string{"variation-A", "variation-B", "variation-C"},
+			},
+		},
+		{
+			desc: "preserve variation order when adding to rules",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				// Clear default rules and add our test rule
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-1",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_ROLLOUT,
+							RolloutStrategy: &ftproto.RolloutStrategy{
+								Variations: []*ftproto.RolloutStrategy_Variation{
+									{Variation: "variation-C", Weight: 50000},
+									{Variation: "variation-A", Weight: 50000},
+								},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedResult: VariationMigrationResult{
+				Changed:           true,
+				AddedToRules:      1,
+				AddedToDefault:    0,
+				AddedVariationIDs: []string{"variation-A", "variation-B", "variation-C"},
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := p.setupFunc()
+			result := actual.EnsureVariationsInStrategies()
+
+			// Verify the result
+			assert.Equal(t, p.expectedResult.Changed, result.Changed)
+			assert.Equal(t, p.expectedResult.AddedToRules, result.AddedToRules)
+			assert.Equal(t, p.expectedResult.AddedToDefault, result.AddedToDefault)
+
+			// Check that the expected variation IDs are present (order may vary)
+			assert.Equal(t, len(p.expectedResult.AddedVariationIDs), len(result.AddedVariationIDs))
+
+			// Special test for order preservation
+			if p.desc == "preserve variation order when adding to strategies" {
+				// Verify that strategy variations match f.Variations order exactly
+				// makeFeature creates variations in order: A, B, C
+				// Strategy should be reconstructed to match this order: A, B, C
+				expectedOrder := []string{"variation-A", "variation-B", "variation-C"}
+				actualOrder := make([]string, len(actual.DefaultStrategy.RolloutStrategy.Variations))
+				for i, v := range actual.DefaultStrategy.RolloutStrategy.Variations {
+					actualOrder[i] = v.Variation
+				}
+				assert.Equal(t, expectedOrder, actualOrder, "Strategy variations should match f.Variations order exactly")
+
+				// Verify weights are preserved for existing variations
+				for _, v := range actual.DefaultStrategy.RolloutStrategy.Variations {
+					if v.Variation == "variation-B" {
+						assert.Equal(t, int32(100000), v.Weight, "Existing variation weight should be preserved")
+					} else {
+						assert.Equal(t, int32(0), v.Weight, "New variations should have weight 0")
+					}
+				}
+			}
+
+			// Special test for rule order preservation
+			if p.desc == "preserve variation order when adding to rules" {
+				// Verify that rule strategy variations match f.Variations order exactly
+				// makeFeature creates variations in order: A, B, C
+				// Rule strategy should be reconstructed to match this order: A, B, C
+				expectedOrder := []string{"variation-A", "variation-B", "variation-C"}
+				actualOrder := make([]string, len(actual.Rules[0].Strategy.RolloutStrategy.Variations))
+				for i, v := range actual.Rules[0].Strategy.RolloutStrategy.Variations {
+					actualOrder[i] = v.Variation
+				}
+				assert.Equal(t, expectedOrder, actualOrder, "Rule strategy variations should match f.Variations order exactly")
+
+				// Verify weights are preserved for existing variations
+				for _, v := range actual.Rules[0].Strategy.RolloutStrategy.Variations {
+					if v.Variation == "variation-C" {
+						assert.Equal(t, int32(50000), v.Weight, "Existing variation weight should be preserved")
+					} else if v.Variation == "variation-A" {
+						assert.Equal(t, int32(50000), v.Weight, "Existing variation weight should be preserved")
+					} else {
+						assert.Equal(t, int32(0), v.Weight, "New variations should have weight 0")
+					}
+				}
+			}
+		})
+	}
+}
