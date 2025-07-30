@@ -1447,7 +1447,7 @@ func TestRemoveVariationMultipleInstancesInRollout(t *testing.T) {
 			Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: "variation-A",
-					Weight:    100000,
+					Weight:    50000,
 				},
 				{
 					Variation: expected,
