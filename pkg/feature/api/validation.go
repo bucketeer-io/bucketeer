@@ -1103,7 +1103,7 @@ func (s *FeatureService) validateFeatureVariationsCommand(
 		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
 		}
-		return validateVariationCommand(fs, f, localizer)
+		return validateRemoveVariationCommand(cmd.(*featureproto.RemoveVariationCommand), fs, f, localizer)
 	case *featureproto.ChangeVariationValueCommand:
 		return validateVariationCommand(fs, f, localizer)
 	default:
@@ -1178,6 +1178,65 @@ func validateVariationCommand(fs []*featureproto.Feature, tgt *featureproto.Feat
 		}
 		return dt.Err()
 	}
+	return nil
+}
+
+// validateRemoveVariationCommand validates that a specific variation can be safely removed
+func validateRemoveVariationCommand(cmd *featureproto.RemoveVariationCommand, fs []*featureproto.Feature, tgt *featureproto.Feature, localizer locale.Localizer) error {
+	// Find the variation being removed to get its value
+	var deletedVariationValue string
+	for _, variation := range tgt.Variations {
+		if variation.Id == cmd.Id {
+			deletedVariationValue = variation.Value
+			break
+		}
+	}
+
+	if deletedVariationValue == "" {
+		// Variation not found, let domain validation handle this
+		return nil
+	}
+
+	// Optimization: First check if ANY features depend on our target
+	// This reuses existing logic to quickly filter relevant features
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(fs))
+	for _, f := range fs {
+		allFeaturesMap[f.Id] = f
+	}
+
+	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets([]*featureproto.Feature{tgt}, allFeaturesMap)
+	delete(dependentFeatures, tgt.Id) // Remove the target itself
+
+	if len(dependentFeatures) == 0 {
+		// No features depend on our target, so variation deletion is safe
+		return nil
+	}
+
+	// Convert dependent features back to slice for ValidateVariationUsage
+	dependentFeaturesSlice := make([]*featureproto.Feature, 0, len(dependentFeatures))
+	for _, f := range dependentFeatures {
+		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
+	}
+
+	// Use our precise cross-feature validation only on dependent features
+	deletedVariations := map[string]string{
+		cmd.Id: deletedVariationValue,
+	}
+
+	if err := featuredomain.ValidateVariationUsage(dependentFeaturesSlice, tgt.Id, deletedVariations); err != nil {
+		if errors.Is(err, featuredomain.ErrVariationInUse) {
+			dt, err := statusVariationInUseByOtherFeatures.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -1865,8 +1924,47 @@ func validateVariationDeletion(
 		return nil // No variations being deleted
 	}
 
-	// Call domain validation
-	if err := featuredomain.ValidateVariationUsage(features, targetFeatureID, deletedVariations); err != nil {
+	// Find the target feature
+	var targetFeature *featureproto.Feature
+	for _, f := range features {
+		if f.Id == targetFeatureID {
+			targetFeature = f
+			break
+		}
+	}
+
+	if targetFeature == nil {
+		// Target feature not found in the list, cannot proceed with validation
+		return nil
+	}
+
+	// Optimization: First check if ANY features depend on our target
+	// This reuses existing logic to quickly filter relevant features
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(features))
+	for _, f := range features {
+		allFeaturesMap[f.Id] = f
+	}
+
+	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets([]*featureproto.Feature{targetFeature}, allFeaturesMap)
+	delete(dependentFeatures, targetFeatureID) // Remove the target itself
+
+	if len(dependentFeatures) == 0 {
+		// No features depend on our target, so variation deletion is safe
+		return nil
+	}
+
+	// Convert dependent features back to slice for ValidateVariationUsage
+	dependentFeaturesSlice := make([]*featureproto.Feature, 0, len(dependentFeatures))
+	for _, f := range dependentFeatures {
+		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
+	}
+
+	// Use our precise cross-feature validation only on dependent features
+	if err := featuredomain.ValidateVariationUsage(
+		dependentFeaturesSlice,
+		targetFeatureID,
+		deletedVariations,
+	); err != nil {
 		if errors.Is(err, featuredomain.ErrVariationInUse) {
 			dt, err := statusVariationInUseByOtherFeatures.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),

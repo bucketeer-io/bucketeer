@@ -2198,6 +2198,39 @@ func TestValidateVariationUsage(t *testing.T) {
 			},
 			expected: nil,
 		},
+		{
+			desc: "error: detailed FEATURE_FLAG rule test",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Variations: []*ftproto.Variation{
+						{Id: "var-true", Value: "true"},
+						{Id: "var-false", Value: "false"},
+					},
+				},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Id: "test-rule",
+							Clauses: []*ftproto.Clause{
+								{
+									Id:        "test-clause",
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-A",      // References feature being updated
+									Values:    []string{"true"}, // References the value we're deleting
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-A",
+			deletedVariations: map[string]string{
+				"var-true": "true", // Deleting variation with value "true"
+			},
+			expected: ErrVariationInUse,
+		},
 	}
 
 	for _, p := range patterns {
