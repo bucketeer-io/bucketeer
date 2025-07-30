@@ -1093,7 +1093,7 @@ func (s *FeatureService) validateFeatureVariationsCommand(
 	cmd command.Command,
 	localizer locale.Localizer,
 ) error {
-	switch cmd.(type) {
+	switch c := cmd.(type) {
 	case *featureproto.AddVariationCommand:
 		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
@@ -1103,7 +1103,7 @@ func (s *FeatureService) validateFeatureVariationsCommand(
 		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
 		}
-		return validateRemoveVariationCommand(cmd.(*featureproto.RemoveVariationCommand), fs, f, localizer)
+		return validateRemoveVariationCommand(c, fs, f, localizer)
 	case *featureproto.ChangeVariationValueCommand:
 		return validateVariationCommand(fs, f, localizer)
 	default:
@@ -1182,7 +1182,12 @@ func validateVariationCommand(fs []*featureproto.Feature, tgt *featureproto.Feat
 }
 
 // validateRemoveVariationCommand validates that a specific variation can be safely removed
-func validateRemoveVariationCommand(cmd *featureproto.RemoveVariationCommand, fs []*featureproto.Feature, tgt *featureproto.Feature, localizer locale.Localizer) error {
+func validateRemoveVariationCommand(
+	cmd *featureproto.RemoveVariationCommand,
+	fs []*featureproto.Feature,
+	tgt *featureproto.Feature,
+	localizer locale.Localizer,
+) error {
 	// Find the variation being removed to get its value
 	var deletedVariationValue string
 	for _, variation := range tgt.Variations {
