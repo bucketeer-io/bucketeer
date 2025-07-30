@@ -20,15 +20,30 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
+// VariationCleanupResult contains details about what was cleaned up
+type VariationCleanupResult struct {
+	Changed              bool
+	OrphanedTargets      int
+	OrphanedRules        int
+	OrphanedDefault      int
+	OrphanedOffVar       bool
+	OrphanedVariationIDs []string
+}
+
 // CleanupOrphanedVariationReferences removes references to variations that no longer exist.
 // This fixes data corruption caused by the incomplete variation deletion bug.
-func (f *Feature) CleanupOrphanedVariationReferences() bool {
-	if f == nil || f.Feature == nil {
-		return false
+// TODO: Remove this function after 6 months (around July 2025) when all corrupted data is cleaned up
+func (f *Feature) CleanupOrphanedVariationReferences() VariationCleanupResult {
+	result := VariationCleanupResult{
+		OrphanedVariationIDs: []string{},
 	}
 
-	changed := false
+	if f == nil || f.Feature == nil {
+		return result
+	}
+
 	validVariationIDs := make(map[string]bool)
+	orphanedVariationIDs := make(map[string]bool)
 
 	// Build map of valid variation IDs
 	for _, v := range f.Variations {
@@ -41,7 +56,9 @@ func (f *Feature) CleanupOrphanedVariationReferences() bool {
 		if validVariationIDs[target.Variation] {
 			validTargets = append(validTargets, target)
 		} else {
-			changed = true
+			result.Changed = true
+			result.OrphanedTargets++
+			orphanedVariationIDs[target.Variation] = true
 		}
 	}
 	f.Targets = validTargets
@@ -58,7 +75,9 @@ func (f *Feature) CleanupOrphanedVariationReferences() bool {
 				if validVariationIDs[v.Variation] {
 					validRolloutVariations = append(validRolloutVariations, v)
 				} else {
-					changed = true
+					result.Changed = true
+					result.OrphanedRules++
+					orphanedVariationIDs[v.Variation] = true
 				}
 			}
 			rule.Strategy.RolloutStrategy.Variations = validRolloutVariations
@@ -78,7 +97,9 @@ func (f *Feature) CleanupOrphanedVariationReferences() bool {
 			if validVariationIDs[v.Variation] {
 				validDefaultVariations = append(validDefaultVariations, v)
 			} else {
-				changed = true
+				result.Changed = true
+				result.OrphanedDefault++
+				orphanedVariationIDs[v.Variation] = true
 			}
 		}
 		f.DefaultStrategy.RolloutStrategy.Variations = validDefaultVariations
@@ -86,22 +107,37 @@ func (f *Feature) CleanupOrphanedVariationReferences() bool {
 
 	// 4. Check if OffVariation still exists
 	if f.OffVariation != "" && !validVariationIDs[f.OffVariation] {
+		result.OrphanedOffVar = true
+		orphanedVariationIDs[f.OffVariation] = true
+
 		// Reset to second available variation, fallback to first if only one exists
 		if len(f.Variations) > 1 {
 			f.OffVariation = f.Variations[1].Id
-			changed = true
+			result.Changed = true
 		} else if len(f.Variations) > 0 {
 			f.OffVariation = f.Variations[0].Id
-			changed = true
+			result.Changed = true
 		}
 	}
 
+	// Convert orphaned variation IDs to slice
+	for variationID := range orphanedVariationIDs {
+		result.OrphanedVariationIDs = append(result.OrphanedVariationIDs, variationID)
+	}
+
 	// Update timestamp if any changes were made
-	if changed {
+	if result.Changed {
 		f.UpdatedAt = time.Now().Unix()
 	}
 
-	return changed
+	return result
+}
+
+// CleanupOrphanedVariationReferencesSimple provides backward compatibility
+// TODO: Remove this after updating all call sites to use detailed version
+func (f *Feature) CleanupOrphanedVariationReferencesSimple() bool {
+	result := f.CleanupOrphanedVariationReferences()
+	return result.Changed
 }
 
 // ValidateVariationReferences checks if a feature has orphaned variation references.

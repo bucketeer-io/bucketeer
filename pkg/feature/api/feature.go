@@ -116,7 +116,21 @@ func (s *FeatureService) GetFeature(
 
 	// Clean up any orphaned variation references before returning to UI
 	// This prevents the UI from seeing corrupted data and sending it back in update requests
-	feature.CleanupOrphanedVariationReferences()
+	cleanupResult := feature.CleanupOrphanedVariationReferences()
+	if cleanupResult.Changed {
+		s.logger.Warn(
+			"Cleaned up orphaned variation references in feature during get",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+				zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+				zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+				zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+				zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+			)...,
+		)
+	}
 
 	if err := s.setLastUsedInfosToFeatureByChunk(
 		ctx,
@@ -194,7 +208,21 @@ func (s *FeatureService) GetFeatures(
 	// Clean up any orphaned variation references before returning to UI
 	for _, f := range features {
 		domainFeature := &domain.Feature{Feature: f}
-		domainFeature.CleanupOrphanedVariationReferences()
+		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during get multiple",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
 	}
 
 	return &featureproto.GetFeaturesResponse{Features: features}, nil
@@ -268,7 +296,21 @@ func (s *FeatureService) ListFeatures(
 	// Clean up any orphaned variation references before returning to UI
 	for _, f := range features {
 		domainFeature := &domain.Feature{Feature: f}
-		domainFeature.CleanupOrphanedVariationReferences()
+		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during list",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
 	}
 
 	return &featureproto.ListFeaturesResponse{
@@ -1079,7 +1121,21 @@ func (s *FeatureService) UpdateFeature(
 
 		// Clean up any orphaned variation references BEFORE validation
 		// This fixes data corruption from the historical variation deletion bug
-		feature.CleanupOrphanedVariationReferences()
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
 
 		updated, err := feature.Update(
 			req.Name,
@@ -1738,7 +1794,21 @@ func (s *FeatureService) updateFeature(
 
 		// Clean up any orphaned variation references BEFORE validation
 		// This fixes data corruption from the historical variation deletion bug
-		feature.CleanupOrphanedVariationReferences()
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during details update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", id),
+					zap.String("environmentId", environmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
 
 		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentId, comment)
 		if err != nil {
@@ -2124,7 +2194,21 @@ func (s *FeatureService) UpdateFeatureTargeting(
 
 		// Clean up any orphaned variation references BEFORE validation
 		// This fixes data corruption from the historical variation deletion bug
-		feature.CleanupOrphanedVariationReferences()
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during targeting update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
 
 		handler, err = command.NewFeatureCommandHandler(
 			editor,

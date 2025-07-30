@@ -347,11 +347,11 @@ func TestCleanupOrphanedVariationReferences(t *testing.T) {
 			f := p.setupFunc()
 
 			initialTime := f.UpdatedAt
-			changed := f.CleanupOrphanedVariationReferences()
+			result := f.CleanupOrphanedVariationReferences()
 
-			assert.Equal(t, p.expectedChanged, changed, "Changed flag doesn't match expected")
+			assert.Equal(t, p.expectedChanged, result.Changed, "Changed flag doesn't match expected")
 
-			if changed {
+			if result.Changed {
 				assert.Greater(t, f.UpdatedAt, initialTime, "UpdatedAt should be updated when changes are made")
 			} else {
 				assert.Equal(t, initialTime, f.UpdatedAt, "UpdatedAt should not change when no changes are made")
