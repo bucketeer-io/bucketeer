@@ -65,7 +65,7 @@ var (
 		"feature: invalid default off variation index. Index is out of range")
 	errTargetUsersRequired                        = errors.New("feature: target users required")
 	errTargetUserRequired                         = errors.New("feature: target user required")
-	errVariationInUse                             = errors.New("feature: variation in use")
+	ErrVariationInUse                             = errors.New("feature: variation in use")
 	errVariationNotFound                          = errors.New("feature: variation not found")
 	errVariationTypeUnmatched                     = errors.New("feature: variation value and type are unmatched")
 	errStrategyRequired                           = errors.New("feature: strategy required")
@@ -718,7 +718,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 		return errVariationsMustHaveAtLeastTwoVariations
 	}
 	if f.OffVariation == id {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	// Check if the individual targeting has any users
 	idx, err := f.findTarget(id)
@@ -726,13 +726,13 @@ func (f *Feature) validateRemoveVariation(id string) error {
 		return err
 	}
 	if len(f.Targets[idx].Users) > 0 {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	if f.rulesContainsVariation(id) {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	return nil
 }
@@ -1264,6 +1264,45 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 func ValidateFeatureDependencies(fs []*feature.Feature) error {
 	_, err := TopologicalSort(fs)
 	return err
+}
+
+// ValidateVariationUsage validates that the given variations are not used as cross-feature dependencies.
+func ValidateVariationUsage(
+	features []*feature.Feature,
+	targetFeatureID string,
+	deletedVariations map[string]string, // variationID -> variationValue
+) error {
+	for _, f := range features {
+		if f.Id == targetFeatureID {
+			continue // Skip the feature being updated
+		}
+
+		// Check if any deleted variations are used in prerequisites
+		for _, prerequisite := range f.Prerequisites {
+			if prerequisite.FeatureId == targetFeatureID {
+				if _, found := deletedVariations[prerequisite.VariationId]; found {
+					return ErrVariationInUse
+				}
+			}
+		}
+
+		// Check if any deleted variations are used in FEATURE_FLAG rules
+		for _, rule := range f.Rules {
+			for _, clause := range rule.Clauses {
+				if clause.Operator == feature.Clause_FEATURE_FLAG && clause.Attribute == targetFeatureID {
+					// Check if clause values match any deleted variation values
+					for _, clValue := range clause.Values {
+						for _, delValue := range deletedVariations {
+							if clValue == delValue {
+								return ErrVariationInUse
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.

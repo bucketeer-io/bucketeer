@@ -1845,3 +1845,40 @@ func validateListFlagTriggersRequest(req *featureproto.ListFlagTriggersRequest, 
 	}
 	return nil
 }
+
+// validateVariationDeletion validates that variations being deleted are not used as cross-feature dependencies.
+func validateVariationDeletion(
+	variationChanges []*featureproto.VariationChange,
+	features []*featureproto.Feature,
+	targetFeatureID string,
+	localizer locale.Localizer,
+) error {
+	// Extract variations being deleted (variationID -> variationValue)
+	deletedVariations := make(map[string]string)
+	for _, change := range variationChanges {
+		if change.ChangeType == featureproto.ChangeType_DELETE {
+			deletedVariations[change.Variation.Id] = change.Variation.Value
+		}
+	}
+
+	if len(deletedVariations) == 0 {
+		return nil // No variations being deleted
+	}
+
+	// Call domain validation
+	if err := featuredomain.ValidateVariationUsage(features, targetFeatureID, deletedVariations); err != nil {
+		if errors.Is(err, featuredomain.ErrVariationInUse) {
+			dt, err := statusVariationInUseByOtherFeatures.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return err
+	}
+
+	return nil
+}

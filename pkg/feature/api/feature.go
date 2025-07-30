@@ -1240,6 +1240,10 @@ func (s *FeatureService) UpdateFeature(
 		if err := domain.ValidateFeatureDependencies(tgts); err != nil {
 			return err
 		}
+		// Validate that variations being deleted are not used in other features
+		if err := validateVariationDeletion(req.VariationChanges, features, req.Id, localizer); err != nil {
+			return err
+		}
 		updatedpb = updated.Feature
 		event, err = domainevent.NewEvent(
 			editor,

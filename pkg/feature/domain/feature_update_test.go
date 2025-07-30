@@ -1883,7 +1883,7 @@ func TestUpdateRemoveVariationComprehensiveCleanup(t *testing.T) {
 				return makeFeature("test-feature")
 			},
 			variationID: "variation-C", // Has users in target
-			expectedErr: errVariationInUse,
+			expectedErr: ErrVariationInUse,
 		},
 		{
 			desc: "error - minimum variation constraint",
@@ -2021,7 +2021,7 @@ func TestUpdateRemoveVariationMultipleRulesCleanup(t *testing.T) {
 							Variations: []*ftproto.RolloutStrategy_Variation{
 								{
 									Variation: "variation-A",
-									Weight:    50000,
+									Weight:    100000,
 								},
 								{
 									Variation: expected,
@@ -2049,7 +2049,7 @@ func TestUpdateRemoveVariationMultipleRulesCleanup(t *testing.T) {
 							Variations: []*ftproto.RolloutStrategy_Variation{
 								{
 									Variation: "variation-B",
-									Weight:    70000,
+									Weight:    100000,
 								},
 								{
 									Variation: expected,

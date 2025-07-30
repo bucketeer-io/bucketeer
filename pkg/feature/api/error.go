@@ -127,6 +127,10 @@ var (
 		codes.FailedPrecondition,
 		"feature: can't change or remove this variation because it is used as a prerequsite",
 	)
+	statusVariationInUseByOtherFeatures = gstatus.New(
+		codes.FailedPrecondition,
+		"feature: can't remove this variation because it is used as a prerequisite or rule in other features",
+	)
 	statusInvalidPrerequisite                     = gstatus.New(codes.FailedPrecondition, "feature: invalid prerequisite")
 	statusProgressiveRolloutWaitingOrRunningState = gstatus.New(
 		codes.FailedPrecondition,

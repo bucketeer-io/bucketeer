@@ -89,6 +89,184 @@ func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {
 	}
 }
 
+func TestValidateVariationDeletion(t *testing.T) {
+	t.Parallel()
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+
+	variationID1 := "variation-1"
+	variationValue1 := "true"
+	variationValue2 := "false"
+
+	patterns := []struct {
+		desc             string
+		variationChanges []*featureproto.VariationChange
+		features         []*featureproto.Feature
+		targetFeatureID  string
+		expected         error
+	}{
+		{
+			desc:             "success: no variation changes",
+			variationChanges: []*featureproto.VariationChange{},
+			features:         []*featureproto.Feature{},
+			targetFeatureID:  "feature-1",
+			expected:         nil,
+		},
+		{
+			desc: "success: no deletion changes",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features:        []*featureproto.Feature{},
+			targetFeatureID: "feature-1",
+			expected:        nil,
+		},
+		{
+			desc: "success: no other features using deleted variation",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features:        []*featureproto.Feature{},
+			targetFeatureID: "feature-1",
+			expected:        nil,
+		},
+		{
+			desc: "error: other feature has prerequisite using deleted variation",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features: []*featureproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			expected: createError(t, statusVariationInUseByOtherFeatures,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"), localizer),
+		},
+		{
+			desc: "error: other feature has FEATURE_FLAG rule using deleted variation value",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features: []*featureproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*featureproto.Rule{
+						{
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationValue1},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			expected: createError(t, statusVariationInUseByOtherFeatures,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"), localizer),
+		},
+		{
+			desc: "success: target feature uses deleted variation (should be excluded)",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features: []*featureproto.Feature{
+				{
+					Id: "feature-1", // Same as targetFeatureID
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			expected:        nil,
+		},
+		{
+			desc: "success: different variation value in FEATURE_FLAG rule",
+			variationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id:    variationID1,
+						Value: variationValue1,
+					},
+				},
+			},
+			features: []*featureproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*featureproto.Rule{
+						{
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationValue2}, // Different value
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			expected:        nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			err := validateVariationDeletion(p.variationChanges, p.features, p.targetFeatureID, localizer)
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
 func createError(
 	t *testing.T,
 	status *gstatus.Status,

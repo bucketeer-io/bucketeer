@@ -1188,15 +1188,15 @@ func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse, // Used in default strategy
+			expected: ErrVariationInUse, // Used in default strategy
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse, // Used in default strategy
+			expected: ErrVariationInUse, // Used in default strategy
 		},
 		{
 			id:       "variation-C",
-			expected: errVariationInUse, // Has users in target
+			expected: ErrVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1251,15 +1251,15 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse, // Used in default strategy with weight > 0
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse, // Used in default strategy with weight > 0
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-C",
-			expected: errVariationInUse, // Has users in target
+			expected: ErrVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1299,7 +1299,7 @@ func TestRemoveVariationUsingOffVariation(t *testing.T) {
 		{
 			des:      "in use",
 			id:       "variation-C",
-			expected: errVariationInUse,
+			expected: ErrVariationInUse,
 		},
 		{
 			des:      "success",
@@ -1379,15 +1379,15 @@ func TestRemoveVariationComprehensiveCleanup(t *testing.T) {
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse, // Used in default strategy with weight > 0
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse, // Used in rule strategy with weight > 0
+			expected: ErrVariationInUse, // Used in rule strategy with weight > 0
 		},
 		{
 			id:       "variation-C",
-			expected: errVariationInUse, // Has users in target
+			expected: ErrVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -2050,6 +2050,167 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 	for _, p := range patterns {
 		f := &Feature{Feature: p.feature}
 		assert.Equal(t, p.expected, f.FeatureIDsDependsOn())
+	}
+}
+
+func TestValidateVariationUsage(t *testing.T) {
+	t.Parallel()
+
+	variationID1 := "variation-1"
+	variationValue1 := "true"
+	variationValue2 := "false"
+
+	patterns := []struct {
+		desc              string
+		features          []*ftproto.Feature
+		targetFeatureID   string
+		deletedVariations map[string]string // variationID -> variationValue
+		expected          error
+	}{
+		{
+			desc:            "success: no features using deleted variations",
+			features:        []*ftproto.Feature{},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: target feature uses variation (should be excluded)",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-1",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "error: other feature has prerequisite using deleted variation",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: ErrVariationInUse,
+		},
+		{
+			desc: "error: other feature has FEATURE_FLAG rule using deleted variation value",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationValue1},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: ErrVariationInUse,
+		},
+		{
+			desc: "success: no variations to delete",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID:   "feature-1",
+			deletedVariations: map[string]string{},
+			expected:          nil,
+		},
+		{
+			desc: "success: different feature ID in prerequisite",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-3", // Different feature
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: different variation value in FEATURE_FLAG rule",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationValue2}, // Different value
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			err := ValidateVariationUsage(p.features, p.targetFeatureID, p.deletedVariations)
+			if p.expected != nil {
+				assert.Error(t, err)
+				assert.Equal(t, p.expected, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
 
