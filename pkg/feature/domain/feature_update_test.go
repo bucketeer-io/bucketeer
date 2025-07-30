@@ -27,6 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
@@ -1656,4 +1657,267 @@ func TestUpdateWithActualChangesIncrementsVersionAndTimestamp(t *testing.T) {
 
 	// Verify the change took effect
 	assert.Equal(t, "Updated Name", updated.Name)
+}
+
+func TestUpdateRemoveVariationComprehensiveCleanup(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		setupFunc   func() *Feature
+		variationID string
+		expectedErr error
+	}{
+		{
+			desc: "success - comprehensive cleanup",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				expected := "variation-D"
+				f.AddVariation(expected, "D", "Variation D", "Thing does D")
+
+				// Set up rollout strategy in default strategy with the variation (weight=0 so it can be removed)
+				f.ChangeDefaultStrategy(&ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{
+								Variation: "variation-A",
+								Weight:    100000,
+							},
+							{
+								Variation: expected,
+								Weight:    0, // Weight 0 means not "in use" so can be removed
+							},
+						},
+					},
+				})
+
+				// Add a rule with rollout strategy containing the variation
+				rule := &ftproto.Rule{
+					Id: "test-rule-rollout",
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_ROLLOUT,
+						RolloutStrategy: &ftproto.RolloutStrategy{
+							Variations: []*ftproto.RolloutStrategy_Variation{
+								{
+									Variation: "variation-B",
+									Weight:    50000,
+								},
+								{
+									Variation: expected,
+									Weight:    0, // Weight 0 means not "in use" so can be removed
+								},
+							},
+						},
+					},
+					Clauses: []*ftproto.Clause{
+						{
+							Id:        "clause-1",
+							Attribute: "user_id",
+							Operator:  ftproto.Clause_EQUALS,
+							Values:    []string{"user-1"},
+						},
+					},
+				}
+				f.AddRule(rule)
+				return f
+			},
+			variationID: "variation-D",
+			expectedErr: nil,
+		},
+		{
+			desc: "error - variation in use",
+			setupFunc: func() *Feature {
+				return makeFeature("test-feature")
+			},
+			variationID: "variation-C", // Has users in target
+			expectedErr: errVariationInUse,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			f := p.setupFunc()
+			err := f.updateRemoveVariation(p.variationID)
+			assert.Equal(t, p.expectedErr, err)
+
+			if err == nil {
+				// Verify complete cleanup for successfully removed variation
+				if _, err := f.updateFindVariationIndex(p.variationID); err == nil {
+					t.Fatalf("Variation not deleted from Variations. Actual: %v", f.Variations)
+				}
+				if _, err := f.updateFindTarget(p.variationID); err == nil {
+					t.Fatalf("Target not deleted. Actual: %v", f.Targets)
+				}
+
+				// Verify variation removed from default strategy rollout
+				for _, v := range f.DefaultStrategy.RolloutStrategy.Variations {
+					if v.Variation == p.variationID {
+						t.Fatalf("Variation not removed from default strategy. Actual: %v", f.DefaultStrategy.RolloutStrategy.Variations)
+					}
+				}
+
+				// Verify variation removed from rule rollout strategy
+				for _, r := range f.Rules {
+					if r.Id == "test-rule-rollout" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+						for _, v := range r.Strategy.RolloutStrategy.Variations {
+							if v.Variation == p.variationID {
+								t.Fatalf("Variation not removed from rule strategy. Actual: %v", r.Strategy.RolloutStrategy.Variations)
+							}
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestUpdateRemoveVariationMultipleRulesCleanup(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		setupFunc   func() *Feature
+		variationID string
+		expectedErr error
+	}{
+		{
+			desc: "success - multiple rules cleanup",
+			setupFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				expected := "variation-D"
+				f.AddVariation(expected, "D", "Variation D", "Thing does D")
+
+				// Clear existing rules and add new ones with rollout strategies
+				f.Rules = []*ftproto.Rule{}
+
+				// Add multiple rules with rollout strategies containing the variation
+				rule1 := &ftproto.Rule{
+					Id: "test-rule-1",
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_ROLLOUT,
+						RolloutStrategy: &ftproto.RolloutStrategy{
+							Variations: []*ftproto.RolloutStrategy_Variation{
+								{
+									Variation: "variation-A",
+									Weight:    50000,
+								},
+								{
+									Variation: expected,
+									Weight:    0, // Weight 0 means not "in use"
+								},
+							},
+						},
+					},
+					Clauses: []*ftproto.Clause{
+						{
+							Id:        "0efe416e-2fd2-4996-b5c3-194f05444f1f",
+							Attribute: "user_id",
+							Operator:  ftproto.Clause_EQUALS,
+							Values:    []string{"user-1"},
+						},
+					},
+				}
+				f.AddRule(rule1)
+
+				rule2 := &ftproto.Rule{
+					Id: "test-rule-2",
+					Strategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_ROLLOUT,
+						RolloutStrategy: &ftproto.RolloutStrategy{
+							Variations: []*ftproto.RolloutStrategy_Variation{
+								{
+									Variation: "variation-B",
+									Weight:    70000,
+								},
+								{
+									Variation: expected,
+									Weight:    0, // Weight 0 means not "in use"
+								},
+							},
+						},
+					},
+					Clauses: []*ftproto.Clause{
+						{
+							Id:        "1efe416e-2fd2-4996-b5c3-194f05444f1f",
+							Attribute: "user_type",
+							Operator:  ftproto.Clause_EQUALS,
+							Values:    []string{"premium"},
+						},
+					},
+				}
+				f.AddRule(rule2)
+				return f
+			},
+			variationID: "variation-D",
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			f := p.setupFunc()
+
+			// Verify both rules have the variation before removal
+			rule1HasVariation := false
+			rule2HasVariation := false
+			for _, r := range f.Rules {
+				if r.Id == "test-rule-1" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+					for _, v := range r.Strategy.RolloutStrategy.Variations {
+						if v.Variation == p.variationID {
+							rule1HasVariation = true
+							break
+						}
+					}
+				}
+				if r.Id == "test-rule-2" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+					for _, v := range r.Strategy.RolloutStrategy.Variations {
+						if v.Variation == p.variationID {
+							rule2HasVariation = true
+							break
+						}
+					}
+				}
+			}
+			if !rule1HasVariation {
+				t.Fatalf("Rule 1 should have variation before removal. Looking for: %s", p.variationID)
+			}
+			if !rule2HasVariation {
+				t.Fatalf("Rule 2 should have variation before removal. Looking for: %s", p.variationID)
+			}
+
+			err := f.updateRemoveVariation(p.variationID)
+			assert.Equal(t, p.expectedErr, err)
+
+			if err == nil {
+				// Verify variation is removed from BOTH rules (this would fail with the early return bug)
+				rule1HasVariation = false
+				rule2HasVariation = false
+				for _, r := range f.Rules {
+					if r.Id == "test-rule-1" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+						for _, v := range r.Strategy.RolloutStrategy.Variations {
+							if v.Variation == p.variationID {
+								rule1HasVariation = true
+								break
+							}
+						}
+					}
+					if r.Id == "test-rule-2" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+						for _, v := range r.Strategy.RolloutStrategy.Variations {
+							if v.Variation == p.variationID {
+								rule2HasVariation = true
+								break
+							}
+						}
+					}
+				}
+				if rule1HasVariation {
+					t.Fatalf("Rule 1 should NOT have variation after removal")
+				}
+				if rule2HasVariation {
+					t.Fatalf("Rule 2 should NOT have variation after removal")
+				}
+			}
+		})
+	}
 }

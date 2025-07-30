@@ -700,6 +700,9 @@ func (f *Feature) RemoveVariation(id string) error {
 }
 
 func (f *Feature) validateRemoveVariation(id string) error {
+	if f.OffVariation == id {
+		return errVariationInUse
+	}
 	// Check if the individual targeting has any users
 	idx, err := f.findTarget(id)
 	if err != nil {
@@ -712,9 +715,6 @@ func (f *Feature) validateRemoveVariation(id string) error {
 		return errVariationInUse
 	}
 	if f.rulesContainsVariation(id) {
-		return errVariationInUse
-	}
-	if f.OffVariation == id {
 		return errVariationInUse
 	}
 	return nil
@@ -757,7 +757,6 @@ func (f *Feature) removeVariationFromRules(variationID string) {
 	for _, rule := range f.Rules {
 		if rule.Strategy.Type == feature.Strategy_ROLLOUT {
 			f.removeVariationFromRolloutStrategy(rule.Strategy.RolloutStrategy, variationID)
-			return
 		}
 	}
 }
@@ -769,12 +768,14 @@ func (f *Feature) removeVariationFromDefaultStrategy(variationID string) {
 }
 
 func (f *Feature) removeVariationFromRolloutStrategy(strategy *feature.RolloutStrategy, variationID string) {
-	for i, v := range strategy.Variations {
-		if v.Variation == variationID {
-			strategy.Variations = append(strategy.Variations[:i], strategy.Variations[i+1:]...)
-			return
+	// Remove all instances of the variation, regardless of weight
+	filteredVariations := make([]*feature.RolloutStrategy_Variation, 0, len(strategy.Variations))
+	for _, v := range strategy.Variations {
+		if v.Variation != variationID {
+			filteredVariations = append(filteredVariations, v)
 		}
 	}
+	strategy.Variations = filteredVariations
 }
 
 func (f *Feature) ChangeVariationValue(id string, value string) error {
