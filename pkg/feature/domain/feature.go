@@ -87,6 +87,11 @@ var (
 	ErrInvalidAudienceDefaultVariation = errors.New(
 		"feature: default variation required when audience percentage is between 1 and 99",
 	)
+	ErrInvalidVariationWeightTotal = errors.New("feature: variation weights must sum to 100%")
+)
+
+const (
+	totalVariationWeight = int32(100000)
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -454,6 +459,15 @@ func validateRolloutStrategy(strategy *feature.RolloutStrategy, variations []*fe
 		}
 	}
 
+	// Validate variation weights
+	totalWeight := int32(0)
+	for _, v := range strategy.Variations {
+		totalWeight += v.Weight
+	}
+	if totalWeight != totalVariationWeight {
+		return ErrInvalidVariationWeightTotal
+	}
+
 	return nil
 }
 
@@ -812,6 +826,9 @@ func (f *Feature) ChangeVariationDescription(id string, description string) erro
 }
 
 func (f *Feature) ChangeDefaultStrategy(s *feature.Strategy) error {
+	if err := validateStrategy(s, f.Variations); err != nil {
+		return err
+	}
 	f.DefaultStrategy = s
 	f.UpdatedAt = time.Now().Unix()
 	return nil
@@ -840,6 +857,12 @@ func (f *Feature) ChangeRolloutStrategy(ruleID string, strategy *feature.Rollout
 			return err
 		}
 	}
+
+	// Validate rollout strategy weights
+	if err := validateRolloutStrategy(strategy, f.Variations); err != nil {
+		return err
+	}
+
 	f.Rules[ruleIdx].Strategy.RolloutStrategy = strategy
 	f.UpdatedAt = time.Now().Unix()
 	return nil

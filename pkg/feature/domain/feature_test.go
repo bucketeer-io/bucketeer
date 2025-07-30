@@ -823,11 +823,11 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 			{
 				Variation: vID1,
-				Weight:    30,
+				Weight:    30000,
 			},
 			{
 				Variation: vID2,
-				Weight:    70,
+				Weight:    70000,
 			},
 		}},
 	}
@@ -1559,11 +1559,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	expected := &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 		{
 			Variation: vID1,
-			Weight:    30,
+			Weight:    30000,
 		},
 		{
 			Variation: vID2,
-			Weight:    70,
+			Weight:    70000,
 		},
 	}}
 	patterns := []*struct {
@@ -1581,11 +1581,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: "",
-					Weight:    30,
+					Weight:    30000,
 				},
 				{
 					Variation: vID2,
-					Weight:    70,
+					Weight:    70000,
 				},
 			}},
 			expected: errVariationNotFound,
@@ -1595,11 +1595,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: vID1,
-					Weight:    30,
+					Weight:    30000,
 				},
 				{
 					Variation: "",
-					Weight:    70,
+					Weight:    70000,
 				},
 			}},
 			expected: errVariationNotFound,
@@ -1613,6 +1613,50 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			ruleID:   rID,
 			strategy: expected,
 			expected: nil,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    30000, // 30%
+				},
+				{
+					Variation: vID2,
+					Weight:    40000, // 40%
+				},
+				// Total: 70000 (70%) - invalid!
+			}},
+			expected: ErrInvalidVariationWeightTotal,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    60000, // 60%
+				},
+				{
+					Variation: vID2,
+					Weight:    50000, // 50%
+				},
+				// Total: 110000 (110%) - invalid!
+			}},
+			expected: ErrInvalidVariationWeightTotal,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    30, // Old test format - invalid!
+				},
+				{
+					Variation: vID2,
+					Weight:    70, // Old test format - invalid!
+				},
+			}},
+			expected: ErrInvalidVariationWeightTotal,
 		},
 	}
 	for _, p := range patterns {
@@ -3363,7 +3407,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 				},
 			},
@@ -3442,8 +3486,8 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 50},
-						{Variation: id2.String(), Weight: 50},
+						{Variation: id1.String(), Weight: 50000},
+						{Variation: id2.String(), Weight: 50000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3460,7 +3504,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       0,
@@ -3477,7 +3521,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       100,
@@ -3494,7 +3538,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       -1,
@@ -3511,7 +3555,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       101,
@@ -3528,7 +3572,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3545,7 +3589,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3555,6 +3599,66 @@ func TestValidateStrategy(t *testing.T) {
 			},
 			variations:  variations,
 			expectedErr: ErrDefaultVariationNotFound,
+		},
+		{
+			desc: "fail: rollout strategy weights sum less than 100000",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 30000}, // 30%
+						{Variation: id2.String(), Weight: 40000}, // 40%
+						// Total: 70000 (70%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights sum more than 100000",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 60000}, // 60%
+						{Variation: id2.String(), Weight: 50000}, // 50%
+						// Total: 110000 (110%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights zero total",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 0},
+						{Variation: id2.String(), Weight: 0},
+						// Total: 0 (0%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights using old test values",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 30}, // Old test format
+						{Variation: id2.String(), Weight: 70}, // Old test format
+						// Total: 100 instead of 100000 - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
 		},
 	}
 	for _, tt := range tests {
