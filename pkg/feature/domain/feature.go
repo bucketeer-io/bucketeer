@@ -1290,12 +1290,11 @@ func ValidateVariationUsage(
 		for _, rule := range f.Rules {
 			for _, clause := range rule.Clauses {
 				if clause.Operator == feature.Clause_FEATURE_FLAG && clause.Attribute == targetFeatureID {
-					// Check if clause values match any deleted variation values
+					// FEATURE_FLAG clause values contain variation IDs, not values
+					// We should check if any clause values match deleted variation IDs
 					for _, clValue := range clause.Values {
-						for _, delValue := range deletedVariations {
-							if clValue == delValue {
-								return ErrVariationInUse
-							}
+						if _, found := deletedVariations[clValue]; found {
+							return ErrVariationInUse
 						}
 					}
 				}

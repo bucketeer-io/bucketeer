@@ -2057,8 +2057,8 @@ func TestValidateVariationUsage(t *testing.T) {
 	t.Parallel()
 
 	variationID1 := "variation-1"
+	variationID2 := "variation-2"
 	variationValue1 := "true"
-	variationValue2 := "false"
 
 	patterns := []struct {
 		desc              string
@@ -2115,7 +2115,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			expected: ErrVariationInUse,
 		},
 		{
-			desc: "error: other feature has FEATURE_FLAG rule using deleted variation value",
+			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
 			features: []*ftproto.Feature{
 				{
 					Id: "feature-2",
@@ -2125,7 +2125,7 @@ func TestValidateVariationUsage(t *testing.T) {
 								{
 									Operator:  ftproto.Clause_FEATURE_FLAG,
 									Attribute: "feature-1",
-									Values:    []string{variationValue1},
+									Values:    []string{variationID1}, // Fixed: Use variation ID, not value
 								},
 							},
 						},
@@ -2175,7 +2175,7 @@ func TestValidateVariationUsage(t *testing.T) {
 			expected: nil,
 		},
 		{
-			desc: "success: different variation value in FEATURE_FLAG rule",
+			desc: "success: different variation ID in FEATURE_FLAG rule",
 			features: []*ftproto.Feature{
 				{
 					Id: "feature-2",
@@ -2185,7 +2185,7 @@ func TestValidateVariationUsage(t *testing.T) {
 								{
 									Operator:  ftproto.Clause_FEATURE_FLAG,
 									Attribute: "feature-1",
-									Values:    []string{variationValue2}, // Different value
+									Values:    []string{variationID2}, // Fixed: Different variation ID
 								},
 							},
 						},
@@ -2217,8 +2217,8 @@ func TestValidateVariationUsage(t *testing.T) {
 								{
 									Id:        "test-clause",
 									Operator:  ftproto.Clause_FEATURE_FLAG,
-									Attribute: "feature-A",      // References feature being updated
-									Values:    []string{"true"}, // References the value we're deleting
+									Attribute: "feature-A",          // References feature being updated
+									Values:    []string{"var-true"}, // Fixed: Use variation ID, not value
 								},
 							},
 						},

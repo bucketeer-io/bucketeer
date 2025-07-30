@@ -98,8 +98,8 @@ func TestValidateVariationDeletion(t *testing.T) {
 	localizer := locale.NewLocalizer(ctx)
 
 	variationID1 := "variation-1"
+	variationID2 := "variation-2"
 	variationValue1 := "true"
-	variationValue2 := "false"
 
 	patterns := []struct {
 		desc             string
@@ -158,7 +158,16 @@ func TestValidateVariationDeletion(t *testing.T) {
 			},
 			features: []*featureproto.Feature{
 				{
-					Id: "feature-2",
+					Id: "feature-1", // Target feature (must be included)
+					Variations: []*featureproto.Variation{
+						{
+							Id:    variationID1,
+							Value: variationValue1,
+						},
+					},
+				},
+				{
+					Id: "feature-2", // Dependent feature
 					Prerequisites: []*featureproto.Prerequisite{
 						{
 							FeatureId:   "feature-1",
@@ -172,7 +181,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"), localizer),
 		},
 		{
-			desc: "error: other feature has FEATURE_FLAG rule using deleted variation value",
+			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
 			variationChanges: []*featureproto.VariationChange{
 				{
 					ChangeType: featureproto.ChangeType_DELETE,
@@ -184,14 +193,23 @@ func TestValidateVariationDeletion(t *testing.T) {
 			},
 			features: []*featureproto.Feature{
 				{
-					Id: "feature-2",
+					Id: "feature-1", // Target feature (must be included)
+					Variations: []*featureproto.Variation{
+						{
+							Id:    variationID1,
+							Value: variationValue1,
+						},
+					},
+				},
+				{
+					Id: "feature-2", // Dependent feature
 					Rules: []*featureproto.Rule{
 						{
 							Clauses: []*featureproto.Clause{
 								{
 									Operator:  featureproto.Clause_FEATURE_FLAG,
 									Attribute: "feature-1",
-									Values:    []string{variationValue1},
+									Values:    []string{variationID1}, // Fixed: Use variation ID, not value
 								},
 							},
 						},
@@ -228,7 +246,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 			expected:        nil,
 		},
 		{
-			desc: "success: different variation value in FEATURE_FLAG rule",
+			desc: "success: different variation ID in FEATURE_FLAG rule",
 			variationChanges: []*featureproto.VariationChange{
 				{
 					ChangeType: featureproto.ChangeType_DELETE,
@@ -247,7 +265,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 								{
 									Operator:  featureproto.Clause_FEATURE_FLAG,
 									Attribute: "feature-1",
-									Values:    []string{variationValue2}, // Different value
+									Values:    []string{variationID2}, // Fixed: Different variation ID
 								},
 							},
 						},

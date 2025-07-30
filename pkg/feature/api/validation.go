@@ -1192,10 +1192,8 @@ func validateRemoveVariationCommand(cmd *featureproto.RemoveVariationCommand, fs
 		}
 	}
 
-	if deletedVariationValue == "" {
-		// Variation not found, let domain validation handle this
-		return nil
-	}
+	// Even if we can't find the variation value, we should still check for prerequisites
+	// since they reference variation IDs, not values
 
 	// Optimization: First check if ANY features depend on our target
 	// This reuses existing logic to quickly filter relevant features
@@ -1219,13 +1217,19 @@ func validateRemoveVariationCommand(cmd *featureproto.RemoveVariationCommand, fs
 	}
 
 	// Use our precise cross-feature validation only on dependent features
-	deletedVariations := map[string]string{
-		cmd.Id: deletedVariationValue,
+	deletedVariations := map[string]string{}
+	if deletedVariationValue != "" {
+		deletedVariations[cmd.Id] = deletedVariationValue
+	} else {
+		// We don't have the variation value, but we still need to check prerequisites
+		// For prerequisites, we only need the variation ID (key), not the value
+		deletedVariations[cmd.Id] = "" // Empty value, but we'll check keys for prerequisites
 	}
 
 	if err := featuredomain.ValidateVariationUsage(dependentFeaturesSlice, tgt.Id, deletedVariations); err != nil {
 		if errors.Is(err, featuredomain.ErrVariationInUse) {
-			dt, err := statusVariationInUseByOtherFeatures.WithDetails(&errdetails.LocalizedMessage{
+			// Use the legacy error status for RemoveVariationCommand for backward compatibility
+			dt, err := statusInvalidChangingVariation.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
 			})
@@ -1945,7 +1949,10 @@ func validateVariationDeletion(
 		allFeaturesMap[f.Id] = f
 	}
 
-	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets([]*featureproto.Feature{targetFeature}, allFeaturesMap)
+	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets(
+		[]*featureproto.Feature{targetFeature},
+		allFeaturesMap,
+	)
 	delete(dependentFeatures, targetFeatureID) // Remove the target itself
 
 	if len(dependentFeatures) == 0 {
@@ -1959,7 +1966,7 @@ func validateVariationDeletion(
 		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
 	}
 
-	// Use our precise cross-feature validation only on dependent features
+	// Check if the deleted variation is used as a prerequisite or rule in other features
 	if err := featuredomain.ValidateVariationUsage(
 		dependentFeaturesSlice,
 		targetFeatureID,
