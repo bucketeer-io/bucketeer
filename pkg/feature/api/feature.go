@@ -1057,6 +1057,11 @@ func (s *FeatureService) UpdateFeature(
 			)
 			return dt.Err()
 		}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		feature.CleanupOrphanedVariationReferences()
+
 		updated, err := feature.Update(
 			req.Name,
 			req.Description,
@@ -1711,6 +1716,11 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		feature.CleanupOrphanedVariationReferences()
+
 		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentId, comment)
 		if err != nil {
 			return err
@@ -2092,6 +2102,11 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			}
 		}
 		feature := &domain.Feature{Feature: f}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		feature.CleanupOrphanedVariationReferences()
+
 		handler, err = command.NewFeatureCommandHandler(
 			editor,
 			feature,

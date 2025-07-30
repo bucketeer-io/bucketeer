@@ -3569,3 +3569,58 @@ func TestValidateStrategy(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveVariationMinimumVariationConstraint(t *testing.T) {
+	// Test case 1: Feature with exactly 3 variations - should allow removal (leaves 2)
+	f := makeFeature("test-feature")
+	// makeFeature creates 3 variations: A, B, C
+	// Remove variation-C (which has users, so we need to remove them first)
+	f.Targets[2].Users = []string{} // Remove users from variation-C
+
+	patterns := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       "variation-C",
+			expected: nil, // Should succeed - leaves 2 variations
+		},
+	}
+
+	for i, p := range patterns {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify we now have 2 variations
+	if len(f.Variations) != 2 {
+		t.Fatalf("Expected 2 variations after removal, got %d", len(f.Variations))
+	}
+
+	// Test case 2: Now try to remove another variation - should fail (would leave 1)
+	patterns2 := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       "variation-A",
+			expected: errVariationsMustHaveAtLeastTwoVariations, // Should fail - would leave 1 variation
+		},
+		{
+			id:       "variation-B",
+			expected: errVariationsMustHaveAtLeastTwoVariations, // Should fail - would leave 1 variation
+		},
+	}
+
+	for i, p := range patterns2 {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("constraint_test_index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify we still have 2 variations (removal should have failed)
+	if len(f.Variations) != 2 {
+		t.Fatalf("Expected 2 variations after failed removal attempts, got %d", len(f.Variations))
+	}
+}
