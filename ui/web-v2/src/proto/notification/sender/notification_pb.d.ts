@@ -5,7 +5,6 @@ import * as jspb from 'google-protobuf';
 import * as proto_event_domain_event_pb from '../../../proto/event/domain/event_pb';
 import * as proto_feature_feature_pb from '../../../proto/feature/feature_pb';
 import * as proto_experiment_experiment_pb from '../../../proto/experiment/experiment_pb';
-import * as proto_environment_organization_pb from '../../../proto/environment/organization_pb';
 
 export class Notification extends jspb.Message {
   getType(): Notification.TypeMap[keyof Notification.TypeMap];
@@ -284,12 +283,6 @@ export class DemoOrganizationCreationNotification extends jspb.Message {
   getOwnerEmail(): string;
   setOwnerEmail(value: string): void;
 
-  getOwnerFirstName(): string;
-  setOwnerFirstName(value: string): void;
-
-  getOwnerLastName(): string;
-  setOwnerLastName(value: string): void;
-
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
@@ -324,8 +317,6 @@ export class DemoOrganizationCreationNotification extends jspb.Message {
 export namespace DemoOrganizationCreationNotification {
   export type AsObject = {
     ownerEmail: string;
-    ownerFirstName: string;
-    ownerLastName: string;
     organizationId: string;
     organizationName: string;
   };

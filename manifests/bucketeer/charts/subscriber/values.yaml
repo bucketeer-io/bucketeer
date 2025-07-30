@@ -251,6 +251,9 @@ processors:
   userEventPersister:
     flushSize: 200
     flushInterval: 5
+  demoOrganizationCreationNotifier:
+    webURL: ""
+    slackWebhookURL: ""
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:

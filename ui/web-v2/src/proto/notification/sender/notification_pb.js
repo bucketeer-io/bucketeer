@@ -29,8 +29,6 @@ var proto_feature_feature_pb = require('../../../proto/feature/feature_pb.js');
 goog.object.extend(proto, proto_feature_feature_pb);
 var proto_experiment_experiment_pb = require('../../../proto/experiment/experiment_pb.js');
 goog.object.extend(proto, proto_experiment_experiment_pb);
-var proto_environment_organization_pb = require('../../../proto/environment/organization_pb.js');
-goog.object.extend(proto, proto_environment_organization_pb);
 goog.exportSymbol(
   'proto.bucketeer.notification.sender.DemoOrganizationCreationNotification',
   null,
@@ -1843,10 +1841,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       var f,
         obj = {
           ownerEmail: jspb.Message.getFieldWithDefault(msg, 1, ''),
-          ownerFirstName: jspb.Message.getFieldWithDefault(msg, 2, ''),
-          ownerLastName: jspb.Message.getFieldWithDefault(msg, 3, ''),
-          organizationId: jspb.Message.getFieldWithDefault(msg, 4, ''),
-          organizationName: jspb.Message.getFieldWithDefault(msg, 5, '')
+          organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+          organizationName: jspb.Message.getFieldWithDefault(msg, 3, '')
         };
 
       if (includeInstance) {
@@ -1893,17 +1889,9 @@ proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.deseria
           break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
-          msg.setOwnerFirstName(value);
-          break;
-        case 3:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setOwnerLastName(value);
-          break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
           msg.setOrganizationId(value);
           break;
-        case 5:
+        case 3:
           var value = /** @type {string} */ (reader.readString());
           msg.setOrganizationName(value);
           break;
@@ -1943,21 +1931,13 @@ proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.seriali
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getOwnerFirstName();
+    f = message.getOrganizationId();
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getOwnerLastName();
-    if (f.length > 0) {
-      writer.writeString(3, f);
-    }
-    f = message.getOrganizationId();
-    if (f.length > 0) {
-      writer.writeString(4, f);
-    }
     f = message.getOrganizationName();
     if (f.length > 0) {
-      writer.writeString(5, f);
+      writer.writeString(3, f);
     }
   };
 
@@ -1982,10 +1962,10 @@ proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototy
   };
 
 /**
- * optional string owner_first_name = 2;
+ * optional string organization_id = 2;
  * @return {string}
  */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOwnerFirstName =
+proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOrganizationId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 2, '')
@@ -1996,16 +1976,16 @@ proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototy
  * @param {string} value
  * @return {!proto.bucketeer.notification.sender.DemoOrganizationCreationNotification} returns this
  */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.setOwnerFirstName =
+proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.setOrganizationId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 /**
- * optional string owner_last_name = 3;
+ * optional string organization_name = 3;
  * @return {string}
  */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOwnerLastName =
+proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOrganizationName =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -2016,49 +1996,9 @@ proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototy
  * @param {string} value
  * @return {!proto.bucketeer.notification.sender.DemoOrganizationCreationNotification} returns this
  */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.setOwnerLastName =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
-
-/**
- * optional string organization_id = 4;
- * @return {string}
- */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOrganizationId =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.DemoOrganizationCreationNotification} returns this
- */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.setOrganizationId =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
-  };
-
-/**
- * optional string organization_name = 5;
- * @return {string}
- */
-proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.getOrganizationName =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 5, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.DemoOrganizationCreationNotification} returns this
- */
 proto.bucketeer.notification.sender.DemoOrganizationCreationNotification.prototype.setOrganizationName =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 5, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.notification.sender);

@@ -511,6 +511,9 @@ subscriber:
     userEventPersister:
       flushSize: 10
       flushInterval: 5
+    demoOrganizationCreationNotifier:
+      webURL: "https://localhost:9003"
+      slackWebhookURL: ""
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:

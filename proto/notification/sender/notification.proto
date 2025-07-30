@@ -20,7 +20,6 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/notification/sender
 import "proto/event/domain/event.proto";
 import "proto/feature/feature.proto";
 import "proto/experiment/experiment.proto";
-import "proto/environment/organization.proto";
 
 message Notification {
   enum Type {
@@ -35,8 +34,8 @@ message Notification {
   FeatureStaleNotification feature_stale_notification = 3;
   ExperimentRunningNotification experiment_running_notification = 4;
   MauCountNotification mau_count_notification = 5;
-  DemoOrganizationCreationNotification
-      demo_organization_creation_notification = 6;
+  DemoOrganizationCreationNotification demo_organization_creation_notification =
+      6;
 }
 
 message DomainEventNotification {
@@ -78,8 +77,6 @@ message MauCountNotification {
 
 message DemoOrganizationCreationNotification {
   string owner_email = 1;
-  string owner_first_name = 2;
-  string owner_last_name = 3;
-  string organization_id = 4;
-  string organization_name = 5;
+  string organization_id = 2;
+  string organization_name = 3;
 }

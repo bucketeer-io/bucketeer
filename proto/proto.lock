@@ -45126,21 +45126,11 @@
               },
               {
                 "id": 2,
-                "name": "owner_first_name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "owner_last_name",
-                "type": "string"
-              },
-              {
-                "id": 4,
                 "name": "organization_id",
                 "type": "string"
               },
               {
-                "id": 5,
+                "id": 3,
                 "name": "organization_name",
                 "type": "string"
               }
@@ -45156,9 +45146,6 @@
           },
           {
             "path": "proto/experiment/experiment.proto"
-          },
-          {
-            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
@@ -46890,6 +46877,10 @@
               {
                 "name": "DOMAIN_EVENT_TEAM",
                 "integer": 19
+              },
+              {
+                "name": "DOMAIN_EVENT_DEMO_ORGANIZATION",
+                "integer": 20
               },
               {
                 "name": "FEATURE_STALE",

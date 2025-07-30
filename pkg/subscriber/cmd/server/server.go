@@ -534,7 +534,7 @@ func (s *server) registerPubSubProcessorMap(
 		)
 
 		demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
-			sender,
+			processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
 			logger,
 		)
 		processors.RegisterProcessor(
@@ -659,7 +659,6 @@ func (s *server) registerPubSubProcessorMap(
 			return nil, err
 		}
 		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
-
 	}
 
 	return processors, nil
