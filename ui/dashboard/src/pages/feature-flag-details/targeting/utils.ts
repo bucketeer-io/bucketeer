@@ -151,7 +151,10 @@ export const handleCreateDefaultValues = (feature: Feature) => {
     segmentRules,
     defaultRule: {
       ..._defaultStrategy,
-      type: defaultStrategy?.type,
+      type:
+        defaultStrategy?.type === StrategyType.FIXED
+          ? StrategyType.FIXED
+          : StrategyType.MANUAL,
       currentOption:
         defaultStrategy?.type === StrategyType.FIXED
           ? defaultStrategy?.fixedStrategy?.variation

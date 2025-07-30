@@ -17,7 +17,6 @@ import VariationLabel from 'elements/variation-label';
 import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
-import { getDefaultRolloutStrategy } from '../utils';
 import DefaultRuleRollout from './rollout';
 
 const DefaultRule = ({
@@ -33,13 +32,11 @@ const DefaultRule = ({
 }) => {
   const { t } = useTranslation(['form']);
 
-  const { control, watch, setFocus, setValue } =
-    useFormContext<TargetingSchema>();
+  const { control, watch, setFocus } = useFormContext<TargetingSchema>();
 
   const commonName = 'defaultRule';
   const defaultRule = watch(commonName);
   const manualStrategy = watch('defaultRule.manualStrategy');
-  const defaultRolloutStrategy = getDefaultRolloutStrategy(feature);
 
   const variationOptions: VariationOption[] = useMemo(() => {
     const variations = feature.variations.map((item, index) => ({
@@ -56,12 +53,6 @@ const DefaultRule = ({
         type: StrategyType.MANUAL,
         icon: IconPercentage
       }
-      // {
-      //   label: t('common:source-type.progressive-rollout'),
-      //   value: StrategyType.ROLLOUT,
-      //   type: StrategyType.ROLLOUT,
-      //   icon: IconCircleDashed
-      // }
     ];
   }, [feature]);
 
@@ -81,18 +72,12 @@ const DefaultRule = ({
         currentOption: value,
         fixedStrategy: {
           variation: isFixed ? value : ''
-        },
-        rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
+        }
+        // rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
       });
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
-        defaultRolloutStrategy.forEach((_, index) =>
-          setValue(
-            `${commonName}.${isRollout ? 'rolloutStrategy' : 'manualStrategy'}.${index}.weight`,
-            0
-          )
-        );
         timerId = setTimeout(
           () =>
             setFocus(
