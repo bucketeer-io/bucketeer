@@ -135,7 +135,7 @@ func (s *FeatureService) GetFeature(
 
 	// TEMPORARY: Ensure all variations are present in rollout strategies during reads
 	// This fixes existing data corruption from the historical AddVariation bug
-	// TODO: Remove this after most existing corrupted data is fixed (estimated 2-3 months)
+	// TODO: Remove this after DB migration is complete
 	migrationResult := feature.EnsureVariationsInStrategies()
 	if migrationResult.Changed {
 		s.logger.Warn(
@@ -246,7 +246,7 @@ func (s *FeatureService) GetFeatures(
 
 		// TEMPORARY: Ensure all variations are present in rollout strategies during reads
 		// This fixes existing data corruption from the historical AddVariation bug
-		// TODO: Remove this after most existing corrupted data is fixed (estimated 2-3 months)
+		// TODO: Remove this after DB migration is complete
 		migrationResult := domainFeature.EnsureVariationsInStrategies()
 		if migrationResult.Changed {
 			s.logger.Warn(
@@ -352,7 +352,7 @@ func (s *FeatureService) ListFeatures(
 
 		// TEMPORARY: Ensure all variations are present in rollout strategies during reads
 		// This fixes existing data corruption from the historical AddVariation bug
-		// TODO: Remove this after most existing corrupted data is fixed (estimated 2-3 months)
+		// TODO: Remove this after DB migration is complete
 		migrationResult := domainFeature.EnsureVariationsInStrategies()
 		if migrationResult.Changed {
 			s.logger.Warn(

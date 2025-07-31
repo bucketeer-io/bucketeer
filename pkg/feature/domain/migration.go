@@ -32,7 +32,7 @@ type VariationCleanupResult struct {
 
 // CleanupOrphanedVariationReferences removes references to variations that no longer exist.
 // This fixes data corruption caused by the incomplete variation deletion bug.
-// TODO: Remove this function after 6 months (around July 2025) when all corrupted data is cleaned up
+// TODO: Remove this after the DB migration is complete
 func (f *Feature) CleanupOrphanedVariationReferences() VariationCleanupResult {
 	result := VariationCleanupResult{
 		OrphanedVariationIDs: []string{},
@@ -134,7 +134,7 @@ func (f *Feature) CleanupOrphanedVariationReferences() VariationCleanupResult {
 }
 
 // CleanupOrphanedVariationReferencesSimple provides backward compatibility
-// TODO: Remove this after updating all call sites to use detailed version
+// TODO: Remove this after ensuring all call sites use the detailed version of
 func (f *Feature) CleanupOrphanedVariationReferencesSimple() bool {
 	result := f.CleanupOrphanedVariationReferences()
 	return result.Changed
@@ -231,7 +231,7 @@ func (f *Feature) EnsureVariationsInStrategies() VariationMigrationResult {
 		if rule.Strategy != nil &&
 			rule.Strategy.Type == feature.Strategy_ROLLOUT &&
 			rule.Strategy.RolloutStrategy != nil {
-			// TODO: Remove this after updating all call sites to use detailed version
+			// TODO: Remove this after ensuring all call sites use the detailed version of
 			added := f.ensureVariationsInRolloutStrategy(rule.Strategy.RolloutStrategy, validVariationIDs)
 			result.AddedToRules += added
 			if added > 0 {
