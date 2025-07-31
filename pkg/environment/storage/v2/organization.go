@@ -136,6 +136,9 @@ func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*
 		&organization.SystemAdmin,
 		&organization.CreatedAt,
 		&organization.UpdatedAt,
+		&organization.ProjectCount,
+		&organization.EnvironmentCount,
+		&organization.UserCount,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
