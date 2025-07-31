@@ -25,15 +25,17 @@ import (
 
 // SendGridEmailService implements EmailService using SendGrid
 type SendGridEmailService struct {
-	config auth.EmailServiceConfig
-	logger *zap.Logger
+	config   auth.EmailServiceConfig
+	logger   *zap.Logger
+	renderer *TemplateRenderer
 }
 
 // NewSendGridEmailService creates a new SendGrid email service
 func NewSendGridEmailService(config auth.EmailServiceConfig, logger *zap.Logger) EmailService {
 	return &SendGridEmailService{
-		config: config,
-		logger: logger,
+		config:   config,
+		logger:   logger,
+		renderer: NewTemplateRenderer(config),
 	}
 }
 
