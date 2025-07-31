@@ -1,0 +1,147 @@
+# Example configuration for customizing email templates in Bucketeer
+# This shows how you can override the default email templates for password authentication
+
+auth:
+  passwordAuth:
+    enabled: true
+    passwordMinLength: 8
+    passwordRequireUppercase: true
+    passwordRequireLowercase: true
+    passwordRequireNumbers: true
+    passwordRequireSymbols: false
+    passwordResetTokenTTL: "1h"
+    emailServiceEnabled: true
+    emailServiceConfig:
+      provider: "smtp"
+      smtpHost: "smtp.example.com"
+      smtpPort: 587
+      smtpUsername: "noreply@example.com"
+      smtpPassword: "${SMTP_PASSWORD}"
+      fromEmail: "noreply@example.com"
+      fromName: "Your Company Name"
+      baseURL: "https://bucketeer.example.com"
+      
+      # Custom email templates with variable substitution
+      templates:
+        passwordReset:
+          subject: "Reset Your Password - {{baseURL}}"
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Password Reset</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; color: #333; }
+                    .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px; }
+                    .content { background: #f8f9fa; padding: 30px; border-radius: 8px; margin-top: 20px; }
+                    .button { display: inline-block; background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                    .footer { font-size: 12px; color: #666; margin-top: 30px; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔐 Password Reset Request</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hello,</p>
+                        <p>We received a request to reset your password. Click the button below to proceed:</p>
+                        <p style="text-align: center;">
+                            <a href="{{resetURL}}" class="button">Reset My Password</a>
+                        </p>
+                        <p><strong>Security reminder:</strong> This link expires in 1 hour.</p>
+                        <p>If you didn't request this, you can safely ignore this email.</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 Your Company Name. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            
+        passwordChanged:
+          subject: "✅ Password Updated Successfully"
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Password Changed</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; color: #333; }
+                    .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%); color: white; padding: 30px; text-align: center; border-radius: 8px; }
+                    .content { background: #f8f9fa; padding: 30px; border-radius: 8px; margin-top: 20px; }
+                    .alert { background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Password Updated!</h1>
+                    </div>
+                    <div class="content">
+                        <p>Great news! Your password has been successfully updated.</p>
+                        <div class="alert">
+                            <strong>Security Notice:</strong> If you didn't make this change, please contact our support team immediately.
+                        </div>
+                        <p>Your account security is our priority. Thank you for keeping your credentials up to date!</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            
+        welcome:
+          subject: "🎉 Welcome to Your Company - Get Started!"
+          body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Welcome</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; color: #333; }
+                    .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px; }
+                    .content { background: #f8f9fa; padding: 30px; border-radius: 8px; margin-top: 20px; }
+                    .temp-password { background: #e9ecef; padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 18px; text-align: center; margin: 20px 0; }
+                    .warning { background: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545; color: #721c24; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🚀 Welcome Aboard!</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hello and welcome to Your Company!</p>
+                        <p>Your account has been created. Here's your temporary password:</p>
+                        <div class="temp-password">{{tempPassword}}</div>
+                        <div class="warning">
+                            <strong>Important:</strong> Please change this password immediately after your first login.
+                        </div>
+                        <p>Sign in at: <a href="{{baseURL}}">{{baseURL}}</a></p>
+                        <p>We're excited to have you on the team! 🎉</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+
+# Alternative: Minimal template configuration (uses default templates with custom subjects only)
+# auth:
+#   passwordAuth:
+#     emailServiceConfig:
+#       templates:
+#         passwordReset:
+#           subject: "🔐 Password Reset - MyApp"
+#         passwordChanged:
+#           subject: "✅ Password Updated - MyApp"
+#         welcome:
+#           subject: "🎉 Welcome to MyApp!"
+
+# Available template variables:
+# Password Reset: {{resetURL}}, {{resetToken}}, {{baseURL}}
+# Password Changed: {{baseURL}}
+# Welcome: {{tempPassword}}, {{baseURL}}
