@@ -268,7 +268,7 @@ import (
 
 const (
     // bcrypt cost factor - balance between security and performance
-    BcryptCost = 12
+    BcryptCost = 14
 )
 
 func HashPassword(password string) (string, error) {
