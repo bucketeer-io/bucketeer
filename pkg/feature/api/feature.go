@@ -114,12 +114,13 @@ func (s *FeatureService) GetFeature(
 		return nil, dt.Err()
 	}
 
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
 	// Clean up any orphaned variation references before returning to UI
 	// This prevents the UI from seeing corrupted data and sending it back in update requests
 	cleanupResult := feature.CleanupOrphanedVariationReferences()
 	if cleanupResult.Changed {
 		s.logger.Warn(
-			"Cleaned up orphaned variation references in feature during get",
+			"Cleaned up orphaned variation references in feature during get (temporary migration)",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("featureId", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -222,13 +223,15 @@ func (s *FeatureService) GetFeatures(
 		return nil, dt.Err()
 	}
 
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
 	// Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
 	for _, f := range features {
 		domainFeature := &domain.Feature{Feature: f}
 		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
 		if cleanupResult.Changed {
 			s.logger.Warn(
-				"Cleaned up orphaned variation references in feature during get multiple",
+				"Cleaned up orphaned variation references in feature during get multiple (temporary migration)",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -327,13 +330,14 @@ func (s *FeatureService) ListFeatures(
 		return nil, statusInternal.Err()
 	}
 
-	// Clean up any orphaned variation references before returning to UI
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
 	for _, f := range features {
 		domainFeature := &domain.Feature{Feature: f}
 		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
 		if cleanupResult.Changed {
 			s.logger.Warn(
-				"Cleaned up orphaned variation references in feature during list",
+				"Cleaned up orphaned variation references in feature during list (temporary migration)",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
