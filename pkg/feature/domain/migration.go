@@ -133,13 +133,6 @@ func (f *Feature) CleanupOrphanedVariationReferences() VariationCleanupResult {
 	return result
 }
 
-// CleanupOrphanedVariationReferencesSimple provides backward compatibility
-// TODO: Remove this after ensuring all call sites use the detailed version of
-func (f *Feature) CleanupOrphanedVariationReferencesSimple() bool {
-	result := f.CleanupOrphanedVariationReferences()
-	return result.Changed
-}
-
 // ValidateVariationReferences checks if a feature has orphaned variation references.
 // Returns a list of orphaned variation IDs found.
 func (f *Feature) ValidateVariationReferences() []string {
@@ -311,10 +304,4 @@ func (f *Feature) ensureVariationsInRolloutStrategy(
 
 	strategy.Variations = newStrategyVariations
 	return len(strategy.Variations) - originalCount
-}
-
-// EnsureVariationsInStrategiesSimple is a convenience wrapper that returns only a boolean
-func (f *Feature) EnsureVariationsInStrategiesSimple() bool {
-	result := f.EnsureVariationsInStrategies()
-	return result.Changed
 }
