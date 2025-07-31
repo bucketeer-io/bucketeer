@@ -57,19 +57,31 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
+type EmailTemplate struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
+type EmailTemplatesConfig struct {
+	PasswordReset   EmailTemplate `json:"passwordReset"`
+	PasswordChanged EmailTemplate `json:"passwordChanged"`
+	Welcome         EmailTemplate `json:"welcome"`
+}
+
 type EmailServiceConfig struct {
-	Provider       string `json:"provider"` // "smtp", "sendgrid", "ses"
-	SMTPHost       string `json:"smtpHost"`
-	SMTPPort       int    `json:"smtpPort"`
-	SMTPUsername   string `json:"smtpUsername"`
-	SMTPPassword   string `json:"smtpPassword"`
-	SendGridAPIKey string `json:"sendgridAPIKey"`
-	SESRegion      string `json:"sesRegion"`
-	SESAccessKey   string `json:"sesAccessKey"`
-	SESSecretKey   string `json:"sesSecretKey"`
-	FromEmail      string `json:"fromEmail"`
-	FromName       string `json:"fromName"`
-	BaseURL        string `json:"baseURL"` // For constructing reset URLs
+	Provider       string               `json:"provider"` // "smtp", "sendgrid", "ses"
+	SMTPHost       string               `json:"smtpHost"`
+	SMTPPort       int                  `json:"smtpPort"`
+	SMTPUsername   string               `json:"smtpUsername"`
+	SMTPPassword   string               `json:"smtpPassword"`
+	SendGridAPIKey string               `json:"sendgridAPIKey"`
+	SESRegion      string               `json:"sesRegion"`
+	SESAccessKey   string               `json:"sesAccessKey"`
+	SESSecretKey   string               `json:"sesSecretKey"`
+	FromEmail      string               `json:"fromEmail"`
+	FromName       string               `json:"fromName"`
+	BaseURL        string               `json:"baseURL"` // For constructing reset URLs
+	Templates      EmailTemplatesConfig `json:"templates"`
 }
 
 type PasswordAuthConfig struct {
