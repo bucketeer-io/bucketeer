@@ -25,15 +25,17 @@ import (
 
 // SESEmailService implements EmailService using Amazon SES
 type SESEmailService struct {
-	config auth.EmailServiceConfig
-	logger *zap.Logger
+	config   auth.EmailServiceConfig
+	logger   *zap.Logger
+	renderer *TemplateRenderer
 }
 
 // NewSESEmailService creates a new SES email service
 func NewSESEmailService(config auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
 	return &SESEmailService{
-		config: config,
-		logger: logger,
+		config:   config,
+		logger:   logger,
+		renderer: NewTemplateRenderer(config),
 	}, nil
 }
 
