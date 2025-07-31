@@ -73,7 +73,6 @@ const DefaultRule = ({
         fixedStrategy: {
           variation: isFixed ? value : ''
         }
-        // rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
       });
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
