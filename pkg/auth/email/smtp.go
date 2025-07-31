@@ -26,21 +26,22 @@ import (
 
 // SMTPEmailService implements EmailService using SMTP
 type SMTPEmailService struct {
-	config auth.EmailServiceConfig
-	logger *zap.Logger
+	config   auth.EmailServiceConfig
+	logger   *zap.Logger
+	renderer *TemplateRenderer
 }
 
 // NewSMTPEmailService creates a new SMTP email service
 func NewSMTPEmailService(config auth.EmailServiceConfig, logger *zap.Logger) EmailService {
 	return &SMTPEmailService{
-		config: config,
-		logger: logger,
+		config:   config,
+		logger:   logger,
+		renderer: NewTemplateRenderer(config),
 	}
 }
 
 func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error {
-	subject := "Reset Your Bucketeer Password"
-	body := s.renderPasswordResetTemplate(resetURL, resetToken)
+	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, resetToken)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -58,8 +59,7 @@ func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, reset
 }
 
 func (s *SMTPEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
-	subject := "Password Changed Successfully"
-	body := s.renderPasswordChangedTemplate()
+	subject, body := s.renderer.RenderPasswordChangedEmail()
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -77,8 +77,7 @@ func (s *SMTPEmailService) SendPasswordChangedNotification(ctx context.Context, 
 }
 
 func (s *SMTPEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
-	subject := "Welcome to Bucketeer"
-	body := s.renderWelcomeTemplate(tempPassword)
+	subject, body := s.renderer.RenderWelcomeEmail(tempPassword)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -108,138 +107,4 @@ func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body stri
 
 	addr := fmt.Sprintf("%s:%d", s.config.SMTPHost, s.config.SMTPPort)
 	return smtp.SendMail(addr, auth, s.config.FromEmail, []string{to}, msg)
-}
-
-func (s *SMTPEmailService) renderPasswordResetTemplate(resetURL, token string) string {
-	return fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Bucketeer Password</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-        .warning { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .footer { font-size: 12px; color: #666; margin-top: 30px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Reset Your Bucketeer Password</h1>
-        </div>
-        
-        <p>Hello,</p>
-        
-        <p>We received a request to reset your Bucketeer password. If you made this request, click the button below to reset your password:</p>
-        
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="%s" class="button">Reset Password</a>
-        </p>
-        
-        <p>Or copy and paste this link into your browser:</p>
-        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">%s</p>
-        
-        <div class="warning">
-            <strong>Security Note:</strong>
-            <ul>
-                <li>This link will expire in 1 hour for security reasons</li>
-                <li>If you didn't request this password reset, please ignore this email</li>
-                <li>Never share this link with anyone</li>
-            </ul>
-        </div>
-        
-        <div class="footer">
-            <p>This is an automated message from Bucketeer. Please do not reply to this email.</p>
-            <p>If you have any questions, please contact your system administrator.</p>
-        </div>
-    </div>
-</body>
-</html>`, resetURL, resetURL)
-}
-
-func (s *SMTPEmailService) renderPasswordChangedTemplate() string {
-	return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Password Changed Successfully</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #d4edda; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .alert { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>✅ Password Changed Successfully</h1>
-        </div>
-        
-        <p>Hello,</p>
-        
-        <p>This email confirms that your Bucketeer password has been successfully changed.</p>
-        
-        <div class="alert">
-            <strong>Security Notice:</strong>
-            If you did not make this change, please contact your system administrator immediately.
-        </div>
-        
-        <p>For your security:</p>
-        <ul>
-            <li>Always use a strong, unique password</li>
-            <li>Never share your password with anyone</li>
-            <li>Consider using a password manager</li>
-        </ul>
-        
-        <p>Thank you for keeping your account secure.</p>
-    </div>
-</body>
-</html>`
-}
-
-func (s *SMTPEmailService) renderWelcomeTemplate(tempPassword string) string {
-	return fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Welcome to Bucketeer</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #007bff; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .temp-password { background-color: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; }
-        .warning { background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Welcome to Bucketeer!</h1>
-        </div>
-        
-        <p>Hello,</p>
-        
-        <p>Your Bucketeer account has been created. Here are your login credentials:</p>
-        
-        <p><strong>Temporary Password:</strong></p>
-        <div class="temp-password">%s</div>
-        
-        <div class="warning">
-            <strong>Important:</strong> Please change this temporary password immediately after your first login for security reasons.
-        </div>
-        
-        <p>You can sign in at: %s</p>
-        
-        <p>Welcome to the team!</p>
-    </div>
-</body>
-</html>`, tempPassword, s.config.BaseURL)
 }
