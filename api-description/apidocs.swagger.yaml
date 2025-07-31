@@ -1856,6 +1856,271 @@ paths:
           default: ASC
       tags:
         - Feature Flags
+  /v1/flag_trigger:
+    get:
+      summary: Get Flag Trigger
+      description: Get a Flag Trigger by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.flag_triggers.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Flag Triggers
+    delete:
+      summary: Delete Flag Trigger
+      description: Delete a Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.flag_triggers.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Flag Triggers
+    post:
+      summary: Create Flag Trigger
+      description: Create a new Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.flag_triggers.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateFlagTriggerRequest'
+      tags:
+        - Flag Triggers
+    patch:
+      summary: Update Flag Trigger
+      description: Update a Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.flag_triggers.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateFlagTriggerRequest'
+      tags:
+        - Flag Triggers
+  /v1/flag_triggers:
+    get:
+      summary: List Flag Triggers
+      description: List Flag Triggers. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.flag_triggers.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListFlagTriggersResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+      tags:
+        - Flag Triggers
   /v1/progressive_rollout:
     get:
       summary: Get Progressive Rollout
@@ -3452,6 +3717,13 @@ definitions:
       - NUMBER
       - JSON
     default: STRING
+  FlagTriggerAction:
+    type: string
+    enum:
+      - Action_UNKNOWN
+      - Action_ON
+      - Action_OFF
+    default: Action_UNKNOWN
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
     properties:
@@ -3460,6 +3732,13 @@ definitions:
         format: int64
       userAttributesUpdated:
         type: boolean
+  ListFlagTriggersResponseFlagTriggerWithUrl:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
   ProgressiveRolloutStoppedBy:
     type: string
     enum:
@@ -4179,6 +4458,28 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayCreateFlagTriggerRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      type:
+        $ref: '#/definitions/featureFlagTriggerType'
+      action:
+        $ref: '#/definitions/FlagTriggerAction'
+      description:
+        type: string
+    required:
+      - featureId
+      - type
+      - action
+  bucketeergatewayCreateFlagTriggerResponse:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
   bucketeergatewayCreateProgressiveRolloutRequest:
     type: object
     properties:
@@ -4310,6 +4611,8 @@ definitions:
     type: object
   bucketeergatewayDeleteCodeReferenceResponse:
     type: object
+  bucketeergatewayDeleteFlagTriggerResponse:
+    type: object
   bucketeergatewayDeleteProgressiveRolloutResponse:
     type: object
   bucketeergatewayDeleteSegmentResponse:
@@ -4374,6 +4677,13 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayGetFlagTriggerResponse:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
   bucketeergatewayGetMeResponse:
     type: object
     properties:
@@ -4469,6 +4779,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureFeature'
+  bucketeergatewayListFlagTriggersResponse:
+    type: object
+    properties:
+      flagTriggers:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ListFlagTriggersResponseFlagTriggerWithUrl'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeergatewayListProgressiveRolloutsResponse:
     type: object
     properties:
@@ -4710,6 +5033,27 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayUpdateFlagTriggerRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      description:
+        type: string
+      reset:
+        type: boolean
+        description: If true, reset the trigger hook URL.
+      disabled:
+        type: boolean
+        description: If true, disable the trigger.
+    required:
+      - id
+  bucketeergatewayUpdateFlagTriggerResponse:
+    type: object
+    properties:
+      url:
+        type: string
+        description: If reset is true, new generated trigger hook URL will be returned.
   bucketeergatewayUpdatePushRequest:
     type: object
     properties:
@@ -5373,6 +5717,43 @@ definitions:
     properties:
       variation:
         type: string
+  featureFlagTrigger:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      type:
+        $ref: '#/definitions/featureFlagTriggerType'
+      action:
+        $ref: '#/definitions/FlagTriggerAction'
+      description:
+        type: string
+      triggerCount:
+        type: integer
+        format: int32
+      lastTriggeredAt:
+        type: string
+        format: int64
+      token:
+        type: string
+      disabled:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      environmentId:
+        type: string
+  featureFlagTriggerType:
+    type: string
+    enum:
+      - Type_UNKNOWN
+      - Type_WEBHOOK
+    default: Type_UNKNOWN
   featureListFeaturesRequestOrderBy:
     type: string
     enum:
@@ -5385,6 +5766,19 @@ definitions:
       - AUTO_OPS
     default: DEFAULT
   featureListFeaturesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListFlagTriggersRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  featureListFlagTriggersRequestOrderDirection:
     type: string
     enum:
       - ASC

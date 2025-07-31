@@ -42051,6 +42051,233 @@
           },
           {
             "name": "UpdateSubscriptionResponse"
+          },
+          {
+            "name": "CreateFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "type",
+                "type": "feature.FlagTrigger.Type",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "action",
+                "type": "feature.FlagTrigger.Action",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_trigger",
+                "type": "feature.FlagTrigger"
+              },
+              {
+                "id": 2,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteFlagTriggerResponse"
+          },
+          {
+            "name": "UpdateFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "reset",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If true, reset the trigger hook URL."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If true, disable the trigger."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "UpdateFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If reset is true, new generated trigger hook URL will be returned."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_trigger",
+                "type": "feature.FlagTrigger"
+              },
+              {
+                "id": 2,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "page_size",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "feature.ListFlagTriggersRequest.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "feature.ListFlagTriggersRequest.OrderDirection"
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_triggers",
+                "type": "feature.ListFlagTriggersResponse.FlagTriggerWithUrl",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -44391,6 +44618,199 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateFlagTrigger",
+                "in_type": "CreateFlagTriggerRequest",
+                "out_type": "CreateFlagTriggerResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/flag_trigger"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Flag Trigger"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Flag Triggers"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.flag_triggers.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteFlagTrigger",
+                "in_type": "DeleteFlagTriggerRequest",
+                "out_type": "DeleteFlagTriggerResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/flag_trigger"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Flag Trigger"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Flag Triggers"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.flag_triggers.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateFlagTrigger",
+                "in_type": "UpdateFlagTriggerRequest",
+                "out_type": "UpdateFlagTriggerResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/flag_trigger"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Flag Trigger"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a Flag Trigger. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Flag Triggers"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.flag_triggers.update"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetFlagTrigger",
+                "in_type": "GetFlagTriggerRequest",
+                "out_type": "GetFlagTriggerResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/flag_trigger"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Flag Trigger"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Flag Trigger by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Flag Triggers"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.flag_triggers.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListFlagTriggers",
+                "in_type": "ListFlagTriggersRequest",
+                "out_type": "ListFlagTriggersResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/flag_triggers"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Flag Triggers"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Flag Triggers. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Flag Triggers"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.flag_triggers.list"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -44491,6 +44911,9 @@
           },
           {
             "path": "proto/notification/recipient.proto"
+          },
+          {
+            "path": "proto/feature/flag_trigger.proto"
           }
         ],
         "package": {
