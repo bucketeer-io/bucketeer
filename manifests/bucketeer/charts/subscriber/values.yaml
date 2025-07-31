@@ -252,8 +252,10 @@ processors:
     flushSize: 200
     flushInterval: 5
   demoOrganizationCreationNotifier:
-    webURL: ""
-    slackWebhookURL: ""
+    webEndpoint: ""
+    notifier:
+      slack:
+        webhookURL: ""
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:

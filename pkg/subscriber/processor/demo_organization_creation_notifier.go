@@ -34,8 +34,16 @@ import (
 )
 
 type DemoOrganizationCreationNotifierConfig struct {
-	WebURL          string `json:"webURL"`
-	SlackWebhookURL string `json:"slackWebhookURL"`
+	WebEndpoint string         `json:"webEndpoint"`
+	Notifier    NotifierConfig `json:"notifier"`
+}
+
+type NotifierConfig struct {
+	Slack SlackNotifierConfig `json:"slack"`
+}
+
+type SlackNotifierConfig struct {
+	WebHookURL string `json:"webHookURL"`
 }
 
 type demoOrganizationCreationNotifier struct {
@@ -63,7 +71,7 @@ func NewDemoOrganizationCreationNotifier(
 		logger.Error("demoOrganizationCreationNotifier: failed to unmarshal config", zap.Error(err))
 		return nil
 	}
-	slackNotifier := notifier.NewSlackNotifier(notifierConfig.WebURL)
+	slackNotifier := notifier.NewSlackNotifier(notifierConfig.WebEndpoint)
 
 	return &demoOrganizationCreationNotifier{
 		slackNotifier:                          slackNotifier,
@@ -132,10 +140,10 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		Type:     notificationproto.Recipient_SlackChannel,
 		Language: notificationproto.Recipient_ENGLISH,
 		SlackChannelRecipient: &notificationproto.SlackChannelRecipient{
-			WebhookUrl: d.demoOrganizationCreationNotifierConfig.SlackWebhookURL,
+			WebhookUrl: d.demoOrganizationCreationNotifierConfig.Notifier.Slack.WebHookURL,
 		},
 	}
-	fmt.Printf("?%+v\n", recipient)
+
 	err = d.slackNotifier.Notify(ctx, &senderproto.Notification{
 		Type: senderproto.Notification_DemoOrganizationCreation,
 		DemoOrganizationCreationNotification: &senderproto.DemoOrganizationCreationNotification{
@@ -148,7 +156,7 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		d.logger.Error("Failed to send notification",
 			zap.Error(err),
 			zap.String("event id", domainEvent.Id),
-			zap.String("webhookURL", d.demoOrganizationCreationNotifierConfig.SlackWebhookURL),
+			zap.String("webhookURL", d.demoOrganizationCreationNotifierConfig.Notifier.Slack.WebHookURL),
 			zap.String("organizationId", organizationCreatedEvent.Id),
 		)
 		subscriberHandledCounter.WithLabelValues(
@@ -158,7 +166,7 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		msg.Ack()
 		return
 	}
-	fmt.Printf("?2")
+
 	subscriberHandledCounter.WithLabelValues(
 		subscriberDemoOrganizationEvent,
 		codes.OK.String(),
