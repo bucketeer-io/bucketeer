@@ -24,10 +24,10 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
-func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.Status {
+func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
 	var pkg string
 	var reason string
-	var metadatas []map[string]string
+	var allMetadatas []map[string]string
 	var st *status.Status
 	var bucketeerErr *pkgErr.BucketeerError
 	if err == nil {
@@ -35,12 +35,12 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 	}
 	if errors.As(err, &bucketeerErr) {
 		pkg = bucketeerErr.PackageName()
-		bucketeerErr.AddMetadata(anotherDetailData...)
+		bucketeerErr.AddMetadata(metadatas...)
 		var stCode codes.Code
 
 		switch bucketeerErr.ErrorType() {
-		case pkgErr.ErrorTypeInvalidAugment:
-			reason = "INVALID_AUGMENT"
+		case pkgErr.ErrorTypeInvalidArgument:
+			reason = "INVALID_ARGUMENT"
 			stCode = codes.InvalidArgument
 		case pkgErr.ErrorTypeNotFound:
 			reason = "NOT_FOUND"
@@ -66,18 +66,18 @@ func NewGRPCStatus(err error, anotherDetailData ...map[string]string) *status.St
 		}
 
 		st = status.New(stCode, bucketeerErr.Message())
-		metadatas = append(metadatas, bucketeerErr.Metadatas()...)
+		allMetadatas = append(allMetadatas, bucketeerErr.Metadatas()...)
 
 	} else {
 		pkg = "unknown"
 		reason = "UNKNOWN"
 		st = status.New(codes.Unknown, err.Error())
-		if len(anotherDetailData) > 0 {
-			metadatas = append(metadatas, anotherDetailData...)
+		if len(metadatas) > 0 {
+			allMetadatas = append(allMetadatas, metadatas...)
 		}
 	}
 
-	for _, md := range metadatas {
+	for _, md := range allMetadatas {
 		st, err = st.WithDetails(&errdetails.ErrorInfo{
 			Reason:   reason,
 			Domain:   pkg + ".bucketeer.io",

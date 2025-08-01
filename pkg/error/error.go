@@ -37,7 +37,7 @@ const (
 	ErrorTypePermissionDenied       ErrorType = "permission_denied"
 	ErrorTypeUnexpectedAffectedRows ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal               ErrorType = "internal"
-	ErrorTypeInvalidAugment         ErrorType = "invalid_augment"
+	ErrorTypeInvalidArgument        ErrorType = "invalid_argument"
 )
 
 func (e *BucketeerError) PackageName() string            { return e.packageName }
@@ -122,12 +122,12 @@ const (
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
-func NewErrorInvalidAugment(pkg string, message string, invalidType InvalidType, args ...string) *BucketeerError {
-	return newInvalidAugmentErrorBase(pkg, message, invalidType, args...)
+func NewErrorInvalidArgument(pkg string, message string, invalidType InvalidType, args ...string) *BucketeerError {
+	return newInvalidArgumentErrorBase(pkg, message, invalidType, args...)
 }
 
-func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, args ...string) *BucketeerError {
-	errorType := ErrorTypeInvalidAugment
+func newInvalidArgumentErrorBase(pkg, message string, invalidType InvalidType, args ...string) *BucketeerError {
+	errorType := ErrorTypeInvalidArgument
 	messageKey := pkg + "." + string(errorType)
 	if invalidType == "" {
 		invalidType = invalidTypeUnknown
@@ -137,7 +137,7 @@ func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, ar
 	if message != "" {
 		msg += message
 	} else {
-		msg += "invalid augment"
+		msg += "invalid argument"
 	}
 	metadatas := make([]map[string]string, 0, len(args))
 	for _, arg := range args {
@@ -154,16 +154,16 @@ func newInvalidAugmentErrorBase(pkg, message string, invalidType InvalidType, ar
 		})
 	}
 
-	// example: two invalid extensions found {
+	// example: two invalid arguments found {
 	// 	packageName: "account",
-	// 	message:     "account invalid augment, user_id[empty], name[empty]",
+	// 	message:     "account invalid argument, user_id[empty], name[empty]",
 	//  metadatas:  []map[string]string{
 	// 		{
-	// 			"messageKey": "account.invalid_augment.empty",
+	// 			"messageKey": "account.invalid_argument.empty",
 	// 			"field":      "user_id",
 	// 		},
 	// 		{
-	// 			"messageKey": "account.invalid_augment.empty",
+	// 			"messageKey": "account.invalid_argument.empty",
 	// 			"field":      "name",
 	// 		},
 	// 	},

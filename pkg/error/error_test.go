@@ -300,7 +300,7 @@ func TestNewErrorInternal(t *testing.T) {
 	assert.Len(t, metadatas, 0)
 }
 
-func TestNewErrorInvalidAugment(t *testing.T) {
+func TestNewErrorInvalidArgument(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -354,7 +354,7 @@ func TestNewErrorInvalidAugment(t *testing.T) {
 			message:        "",
 			invalidType:    InvalidTypeEmpty,
 			args:           []string{"field"},
-			expectedMsg:    "test:invalid augment[field:empty]",
+			expectedMsg:    "test:invalid argument[field:empty]",
 			expectedFields: []string{"field"},
 		},
 	}
@@ -363,16 +363,16 @@ func TestNewErrorInvalidAugment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := NewErrorInvalidAugment(tt.pkg, tt.message, tt.invalidType, tt.args...)
+			err := NewErrorInvalidArgument(tt.pkg, tt.message, tt.invalidType, tt.args...)
 
 			assert.Equal(t, tt.pkg, err.PackageName())
-			assert.Equal(t, ErrorTypeInvalidAugment, err.ErrorType())
+			assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
 			assert.Equal(t, tt.expectedMsg, err.Message())
 
 			metadatas := err.Metadatas()
 			assert.Len(t, metadatas, len(tt.expectedFields))
 
-			expectedMessageKey := tt.pkg + ".invalid_augment." + string(tt.invalidType)
+			expectedMessageKey := tt.pkg + ".invalid_argument." + string(tt.invalidType)
 			for i, field := range tt.expectedFields {
 				assert.Equal(t, field, metadatas[i]["field"])
 				assert.Equal(t, expectedMessageKey, metadatas[i]["messageKey"])
@@ -381,19 +381,19 @@ func TestNewErrorInvalidAugment(t *testing.T) {
 	}
 }
 
-func TestNewErrorInvalidAugment_EmptyInvalidType(t *testing.T) {
+func TestNewErrorInvalidArgument_EmptyInvalidType(t *testing.T) {
 	t.Parallel()
 
-	err := NewErrorInvalidAugment("test", "invalid", "", "field")
+	err := NewErrorInvalidArgument("test", "invalid", "", "field")
 
 	assert.Equal(t, "test", err.PackageName())
-	assert.Equal(t, ErrorTypeInvalidAugment, err.ErrorType())
+	assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
 	assert.Equal(t, "test:invalid[field:unknown]", err.Message())
 
 	metadatas := err.Metadatas()
 	assert.Len(t, metadatas, 1)
 	assert.Equal(t, "field", metadatas[0]["field"])
-	assert.Equal(t, "test.invalid_augment.unknown", metadatas[0]["messageKey"])
+	assert.Equal(t, "test.invalid_argument.unknown", metadatas[0]["messageKey"])
 }
 
 func TestBucketeerError_Unwrap(t *testing.T) {
@@ -450,7 +450,7 @@ func TestErrorType_String(t *testing.T) {
 		{ErrorTypePermissionDenied, "permission_denied"},
 		{ErrorTypeUnexpectedAffectedRows, "unexpected_affected_rows"},
 		{ErrorTypeInternal, "internal"},
-		{ErrorTypeInvalidAugment, "invalid_augment"},
+		{ErrorTypeInvalidArgument, "invalid_argument"},
 	}
 
 	for _, tt := range tests {

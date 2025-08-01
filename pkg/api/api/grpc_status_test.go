@@ -39,11 +39,11 @@ func TestNewGRPCStatus(t *testing.T) {
 		expectedMetadataLen int
 	}{
 		{
-			name:                "ErrorInvalidAugment",
-			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
+			name:                "ErrorInvalidArgument",
+			err:                 pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
-			expectedReason:      "INVALID_AUGMENT",
+			expectedReason:      "INVALID_ARGUMENT",
 			expectedDomain:      "test.bucketeer.io",
 			expectedMetadataLen: 1,
 		},
@@ -111,12 +111,12 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMetadataLen: 0,
 		},
 		{
-			name:                "ErrorInvalidAugment with additional metadata",
-			err:                 pkgErr.NewErrorInvalidAugment("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
+			name:                "ErrorInvalidArgument with additional metadata",
+			err:                 pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
 			anotherDetailData:   []map[string]string{{"additional": "data"}},
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
-			expectedReason:      "INVALID_AUGMENT",
+			expectedReason:      "INVALID_ARGUMENT",
 			expectedDomain:      "test.bucketeer.io",
 			expectedMetadataLen: 2,
 		},
@@ -203,7 +203,7 @@ func TestNewGRPCStatus_WithDetailsError(t *testing.T) {
 	assert.Equal(t, codes.Internal, st.Code())
 }
 
-func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
+func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -214,17 +214,17 @@ func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
 		{
 			name:           "InvalidTypeEmpty",
 			invalidType:    pkgErr.InvalidTypeEmpty,
-			expectedReason: "INVALID_AUGMENT",
+			expectedReason: "INVALID_ARGUMENT",
 		},
 		{
 			name:           "InvalidTypeNil",
 			invalidType:    pkgErr.InvalidTypeNil,
-			expectedReason: "INVALID_AUGMENT",
+			expectedReason: "INVALID_ARGUMENT",
 		},
 		{
 			name:           "InvalidTypeNotMatchFormat",
 			invalidType:    pkgErr.InvalidTypeNotMatchFormat,
-			expectedReason: "INVALID_AUGMENT",
+			expectedReason: "INVALID_ARGUMENT",
 		},
 	}
 
@@ -232,7 +232,7 @@ func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := pkgErr.NewErrorInvalidAugment("test", "invalid", tt.invalidType, "field")
+			err := pkgErr.NewErrorInvalidArgument("test", "invalid", tt.invalidType, "field")
 			st := NewGRPCStatus(err)
 
 			assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -250,7 +250,7 @@ func TestNewGRPCStatus_ErrorInvalidAugmentTypes(t *testing.T) {
 func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 	t.Parallel()
 
-	err := pkgErr.NewErrorInvalidAugment("test", "multiple fields invalid", pkgErr.InvalidTypeEmpty, "field1", "field2", "field3")
+	err := pkgErr.NewErrorInvalidArgument("test", "multiple fields invalid", pkgErr.InvalidTypeEmpty, "field1", "field2", "field3")
 
 	st := NewGRPCStatus(err)
 
@@ -263,10 +263,10 @@ func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 	for i, detail := range details {
 		errorInfo, ok := detail.(*errdetails.ErrorInfo)
 		assert.True(t, ok)
-		assert.Equal(t, "INVALID_AUGMENT", errorInfo.Reason)
+		assert.Equal(t, "INVALID_ARGUMENT", errorInfo.Reason)
 		assert.Equal(t, "test.bucketeer.io", errorInfo.Domain)
 		assert.Equal(t, expectedFields[i], errorInfo.Metadata["field"])
-		assert.Equal(t, "test.invalid_augment.empty", errorInfo.Metadata["messageKey"])
+		assert.Equal(t, "test.invalid_argument.empty", errorInfo.Metadata["messageKey"])
 	}
 }
 
