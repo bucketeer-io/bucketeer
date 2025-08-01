@@ -252,7 +252,7 @@ processors:
     flushSize: 200
     flushInterval: 5
   demoOrganizationCreationNotifier:
-    webEndpoint: ""
+    consoleEndpoint: ""
     notifier:
       slack:
         webhookURL: ""

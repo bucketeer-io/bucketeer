@@ -514,6 +514,10 @@ subscriber:
     demoOrganizationCreationNotifier:
       webURL: "https://localhost:9003"
       slackWebhookURL: ""
+      consoleEndpoint: "https://localhost:9003"
+      notifier:
+        slack:
+          webhookURL: ""
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:

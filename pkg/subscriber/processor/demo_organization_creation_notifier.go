@@ -34,7 +34,7 @@ import (
 )
 
 type DemoOrganizationCreationNotifierConfig struct {
-	WebEndpoint string         `json:"webEndpoint"`
+	WebEndpoint string         `json:"consoleEndpoint"`
 	Notifier    NotifierConfig `json:"notifier"`
 }
 
