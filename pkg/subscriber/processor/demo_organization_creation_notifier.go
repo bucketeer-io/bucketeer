@@ -100,7 +100,7 @@ func (d demoOrganizationCreationNotifier) Process(ctx context.Context, msgChan <
 func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
-		subscriberHandledCounter.WithLabelValues(subscriberDemoOrganizationEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberDemoOrganizationEvent, codes.MissingID.String()).Inc()
 		return
 	}
 	domainEvent, err := d.unmarshalMessage(msg)
@@ -118,6 +118,7 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 	defer cancel()
 
 	if domainEvent.Type != domainevent.Event_DEMO_ORGANIZATION_CREATED {
+		subscriberHandledCounter.WithLabelValues(subscriberDemoOrganizationEvent, codes.OK.String()).Inc()
 		msg.Ack()
 		return
 	}
