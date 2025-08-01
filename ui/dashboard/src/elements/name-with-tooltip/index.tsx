@@ -118,7 +118,7 @@ const NameWithTooltip = ({
       content={content}
       hidden={!isTruncate}
       trigger={trigger}
-      triggerCls={'relative cursor-default'}
+      triggerCls={'relative cursor-default select-text'}
     />
   );
 };

@@ -83,7 +83,7 @@ const Variations = ({
     []
   );
 
-  const ongetRuleVariationIds = useCallback((rules: Feature['rules']) => {
+  const onGetRuleVariationIds = useCallback((rules: Feature['rules']) => {
     const arr: string[] = [];
     rules.forEach(rule => {
       const { strategy } = rule;
@@ -98,22 +98,22 @@ const Variations = ({
     return [...new Set(arr)];
   }, []);
 
-  const anotherPrerequisiteVariationIds = useMemo(() => {
+  const prerequisiteVariationIdsInOtherFlags = useMemo(() => {
     return uniqBy(
       flatmap(features.map(item => item.prerequisites)),
       'variationId'
     ).map(item => item.variationId);
   }, [features]);
 
-  const anotherRuleVariationIds = useMemo(() => {
+  const ruleVariationIdsInOtherFlags = useMemo(() => {
     const featureRules = flatmap(features.map(item => item.rules));
-    const variationIds = ongetRuleVariationIds(featureRules);
+    const variationIds = onGetRuleVariationIds(featureRules);
     return [...new Set(variationIds)];
   }, [feature]);
 
-  const ruleVariationIds = useMemo(() => {
+  const currentFeatureRuleVariationIds = useMemo(() => {
     if (feature?.rules?.length) {
-      return ongetRuleVariationIds(feature.rules);
+      return onGetRuleVariationIds(feature.rules);
     }
     return [];
   }, [feature]);
@@ -173,15 +173,15 @@ const Variations = ({
             // variatiions in current feature
             offVariation,
             ...onVariationIds,
-            ...ruleVariationIds,
+            ...currentFeatureRuleVariationIds,
             ...targetVariationIds,
             ...prerequisiteVariationIds,
             ...rolloutVariationIds,
             ...eventRateVariationIds,
 
             // variations in another feature
-            ...anotherPrerequisiteVariationIds,
-            ...anotherRuleVariationIds
+            ...prerequisiteVariationIdsInOtherFlags,
+            ...ruleVariationIdsInOtherFlags
           ])
         ].includes(variationId)
       );
@@ -192,14 +192,14 @@ const Variations = ({
       fields,
       isRunningExperiment,
       onVariationIds,
-      ruleVariationIds,
+      currentFeatureRuleVariationIds,
       offVariation,
       targetVariationIds,
       prerequisiteVariationIds,
       rolloutVariationIds,
       eventRateVariationIds,
-      anotherPrerequisiteVariationIds,
-      anotherRuleVariationIds
+      prerequisiteVariationIdsInOtherFlags,
+      ruleVariationIdsInOtherFlags
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -232,15 +232,15 @@ const Variations = ({
         return t('table:feature-flags.off-variation-disabled-delete');
       } else if (
         [
-          ...ruleVariationIds,
+          ...currentFeatureRuleVariationIds,
           ...targetVariationIds,
           ...prerequisiteVariationIds
         ].includes(variationId)
       ) {
         return t('table:feature-flags.in-used-variation-disabled-delete');
       } else if (
-        anotherPrerequisiteVariationIds.includes(variationId) ||
-        anotherRuleVariationIds.includes(variationId)
+        prerequisiteVariationIdsInOtherFlags.includes(variationId) ||
+        ruleVariationIdsInOtherFlags.includes(variationId)
       ) {
         return t('table:feature-flags.in-used-another-flag-disabled-delete');
       }
@@ -249,11 +249,11 @@ const Variations = ({
     [
       offVariation,
       onVariationIds,
-      ruleVariationIds,
+      currentFeatureRuleVariationIds,
       targetVariationIds,
       prerequisiteVariationIds,
-      anotherRuleVariationIds,
-      anotherPrerequisiteVariationIds
+      ruleVariationIdsInOtherFlags,
+      prerequisiteVariationIdsInOtherFlags
     ]
   );
 
