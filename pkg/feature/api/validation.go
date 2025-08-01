@@ -1231,6 +1231,10 @@ func validateRemoveVariationCommand(
 		deletedVariations[cmd.Id] = "" // Empty value, but we'll check keys for prerequisites
 	}
 
+	if len(deletedVariations) == 0 {
+		return nil // No variations being deleted
+	}
+
 	if err := featuredomain.ValidateVariationUsage(dependentFeaturesSlice, tgt.Id, deletedVariations); err != nil {
 		if errors.Is(err, featuredomain.ErrVariationInUse) {
 			// Use the legacy error status for RemoveVariationCommand for backward compatibility
