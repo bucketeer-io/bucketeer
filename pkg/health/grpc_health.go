@@ -53,3 +53,22 @@ func (hc *grpcChecker) Watch(*pb.HealthCheckRequest, pb.Health_WatchServer) erro
 	// TODO: Implements here when needed.
 	return status.Errorf(codes.Unimplemented, "unsupported method")
 }
+
+func (hc *grpcChecker) List(ctx context.Context, req *pb.HealthListRequest) (*pb.HealthListResponse, error) {
+	statuses := make(map[string]*pb.HealthCheckResponse)
+
+	// Add overall server health status
+	if hc.getStatus() == Unhealthy {
+		statuses[""] = &pb.HealthCheckResponse{
+			Status: pb.HealthCheckResponse_NOT_SERVING,
+		}
+	} else {
+		statuses[""] = &pb.HealthCheckResponse{
+			Status: pb.HealthCheckResponse_SERVING,
+		}
+	}
+
+	return &pb.HealthListResponse{
+		Statuses: statuses,
+	}, nil
+}
