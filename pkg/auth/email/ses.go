@@ -18,6 +18,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
@@ -28,34 +33,114 @@ type SESEmailService struct {
 	config   auth.EmailServiceConfig
 	logger   *zap.Logger
 	renderer *TemplateRenderer
+	client   *sesv2.Client
 }
 
 // NewSESEmailService creates a new SES email service
-func NewSESEmailService(config auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
+func NewSESEmailService(emailConfig auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
+	// Create AWS config with explicit credentials
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(emailConfig.SESRegion),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			emailConfig.SESAccessKey,
+			emailConfig.SESSecretKey,
+			"",
+		)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := sesv2.NewFromConfig(cfg)
+
 	return &SESEmailService{
-		config:   config,
+		config:   emailConfig,
 		logger:   logger,
-		renderer: NewTemplateRenderer(config),
+		renderer: NewTemplateRenderer(emailConfig),
+		client:   client,
 	}, nil
 }
 
 func (s *SESEmailService) SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error {
-	s.logger.Warn("SES email service not implemented",
+	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, resetToken)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password reset email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+
+	s.logger.Info("Password reset email sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SES email service not implemented")
+	return nil
 }
 
 func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
-	s.logger.Warn("SES email service not implemented",
+	subject, body := s.renderer.RenderPasswordChangedEmail()
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password changed notification",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password changed notification: %w", err)
+	}
+
+	s.logger.Info("Password changed notification sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SES email service not implemented")
+	return nil
 }
 
 func (s *SESEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
-	s.logger.Warn("SES email service not implemented",
+	subject, body := s.renderer.RenderWelcomeEmail(tempPassword)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SES email service not implemented")
+	return nil
+}
+
+func (s *SESEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
+	input := &sesv2.SendEmailInput{
+		FromEmailAddress: aws.String(s.config.FromEmail),
+		Destination: &types.Destination{
+			ToAddresses: []string{to},
+		},
+		Content: &types.EmailContent{
+			Simple: &types.Message{
+				Subject: &types.Content{
+					Data:    aws.String(subject),
+					Charset: aws.String("UTF-8"),
+				},
+				Body: &types.Body{
+					Html: &types.Content{
+						Data:    aws.String(body),
+						Charset: aws.String("UTF-8"),
+					},
+				},
+			},
+		},
+	}
+
+	_, err := s.client.SendEmail(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to send email via SES: %w", err)
+	}
+
+	return nil
 }
