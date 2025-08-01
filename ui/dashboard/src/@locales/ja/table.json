@@ -212,6 +212,7 @@
     "off-variation-disabled-delete": "このバリエーションはオフバリエーション設定で使用されているため削除できません。",
     "default-variation-disabled-delete": "このバリエーションはデフォルトバリエーション設定で使用されているため削除できません。",
     "in-used-variation-disabled-delete": "このバリエーションはターゲティングルールで使用されているか、個別ターゲティングに割り当てられたユーザーがいるため削除できません。",
+    "in-used-another-flag-disabled-delete": "このバリエーションは、他のフラグで前提条件またはルールとして使用されているため、削除できません。",
     "operations-desc": "自動オペレーションでリリースを自動化し、リスクを軽減",
     "operations-schedule-desc": "フラグのオン/オフをスケジュール",
     "operations-event-rate-desc": "KPIイベントに基づいてフラグを自動的にオフにする",

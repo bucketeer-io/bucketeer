@@ -212,6 +212,7 @@
     "off-variation-disabled-delete": "This variation cannot be deleted because it is used in the off-variation settings.",
     "default-variation-disabled-delete": "This variation cannot be deleted because it is used in the default variation settings.",
     "in-used-variation-disabled-delete": "This variation cannot be deleted because it is used in targeting rules or has users assigned to the individual targeting.",
+    "in-used-another-flag-disabled-delete": "This variation cannot be deleted because it is used as a prerequisite or in a rule of another flag.",
     "operations-desc": "Automate your release and reduce risks with auto operations",
     "operations-schedule-desc": "Schedule a flag to turn on or off",
     "operations-event-rate-desc": "Turn off automatically a flag based on KPI events",

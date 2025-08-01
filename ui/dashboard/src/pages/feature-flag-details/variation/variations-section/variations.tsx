@@ -3,6 +3,8 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
+import flatmap from 'lodash/flatMap';
+import uniqBy from 'lodash/uniqBy';
 import { v4 as uuid } from 'uuid';
 import {
   AutoOpsRule,
@@ -48,13 +50,15 @@ const Variations = ({
   rollouts,
   isRunningExperiment,
   eventRateOperations,
-  editable
+  editable,
+  features
 }: {
   feature: Feature;
   rollouts: Rollout[];
   isRunningExperiment?: boolean;
   eventRateOperations: AutoOpsRule[];
   editable: boolean;
+  features: Feature[];
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
@@ -79,22 +83,30 @@ const Variations = ({
     []
   );
 
-  const onVariationIds = useMemo(() => {
-    if (feature?.defaultStrategy) {
-      const { fixedStrategy, rolloutStrategy, type } = feature.defaultStrategy;
-      if (type === StrategyType.FIXED) return [fixedStrategy.variation];
-      if (type === StrategyType.ROLLOUT)
-        return rolloutStrategy.variations
-          .filter(v => v.weight > 0)
-          ?.map(item => item?.variation);
-    }
-    return [];
-  }, [feature]);
+  const prerequisiteVariationIdsInOtherFlags = useMemo(() => {
+    return uniqBy(
+      flatmap(features.map(item => item.prerequisites)),
+      'variationId'
+    ).map(item => item.variationId);
+  }, [features]);
 
-  const ruleVariationIds = useMemo(() => {
+  const ruleVariationIdsInOtherFlags = useMemo(() => {
+    const featureRules = flatmap(features.map(item => item.rules));
+    const variationIds: string[] = [];
+    featureRules.forEach(rule => {
+      rule.clauses.filter(item => {
+        if (item.operator === 'FEATURE_FLAG' && item.attribute === feature.id) {
+          variationIds.push(...item.values);
+        }
+      });
+    });
+    return [...new Set(variationIds)];
+  }, [features]);
+
+  const currentFeatureRuleVariationIds = useMemo(() => {
     if (feature?.rules?.length) {
       const arr: string[] = [];
-      feature.rules.forEach(rule => {
+      feature?.rules.forEach(rule => {
         const { strategy } = rule;
         if (strategy.type === StrategyType.FIXED) {
           arr.push(strategy.fixedStrategy.variation);
@@ -105,6 +117,18 @@ const Variations = ({
         }
       });
       return [...new Set(arr)];
+    }
+    return [];
+  }, [feature]);
+
+  const onVariationIds = useMemo(() => {
+    if (feature?.defaultStrategy) {
+      const { fixedStrategy, rolloutStrategy, type } = feature.defaultStrategy;
+      if (type === StrategyType.FIXED) return [fixedStrategy.variation];
+      if (type === StrategyType.ROLLOUT)
+        return rolloutStrategy.variations
+          .filter(v => v.weight > 0)
+          ?.map(item => item?.variation);
     }
     return [];
   }, [feature]);
@@ -149,29 +173,36 @@ const Variations = ({
         fields.length <= 2 ||
         [
           ...new Set([
+            // variatiions in current feature
             offVariation,
             ...onVariationIds,
-            ...ruleVariationIds,
+            ...currentFeatureRuleVariationIds,
             ...targetVariationIds,
             ...prerequisiteVariationIds,
             ...rolloutVariationIds,
-            ...eventRateVariationIds
+            ...eventRateVariationIds,
+
+            // variations in another feature
+            ...prerequisiteVariationIdsInOtherFlags,
+            ...ruleVariationIdsInOtherFlags
           ])
         ].includes(variationId)
       );
     },
     [
+      editable,
       isBoolean,
-      onVariationIds,
-      ruleVariationIds,
-      offVariation,
       fields,
+      isRunningExperiment,
+      onVariationIds,
+      currentFeatureRuleVariationIds,
+      offVariation,
       targetVariationIds,
       prerequisiteVariationIds,
-      isRunningExperiment,
       rolloutVariationIds,
       eventRateVariationIds,
-      editable
+      prerequisiteVariationIdsInOtherFlags,
+      ruleVariationIdsInOtherFlags
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -198,26 +229,34 @@ const Variations = ({
 
   const getTooltipContent = useCallback(
     (variationId: string) => {
-      if (onVariationIds.includes(variationId))
+      if (onVariationIds.includes(variationId)) {
         return t('table:feature-flags.default-variation-disabled-delete');
-      if (offVariation === variationId)
+      } else if (offVariation === variationId) {
         return t('table:feature-flags.off-variation-disabled-delete');
-      if (
+      } else if (
         [
-          ...ruleVariationIds,
+          ...currentFeatureRuleVariationIds,
           ...targetVariationIds,
           ...prerequisiteVariationIds
         ].includes(variationId)
-      )
+      ) {
         return t('table:feature-flags.in-used-variation-disabled-delete');
+      } else if (
+        prerequisiteVariationIdsInOtherFlags.includes(variationId) ||
+        ruleVariationIdsInOtherFlags.includes(variationId)
+      ) {
+        return t('table:feature-flags.in-used-another-flag-disabled-delete');
+      }
       return '';
     },
     [
       offVariation,
       onVariationIds,
-      ruleVariationIds,
+      currentFeatureRuleVariationIds,
       targetVariationIds,
-      prerequisiteVariationIds
+      prerequisiteVariationIds,
+      ruleVariationIdsInOtherFlags,
+      prerequisiteVariationIdsInOtherFlags
     ]
   );
 
