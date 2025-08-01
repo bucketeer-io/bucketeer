@@ -58,6 +58,7 @@ const PageContent = ({
 
   const onChangeFilters = useCallback(
     (values: Partial<UserSegmentsFilters>) => {
+      values.page = values?.page || 1;
       const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
       onChangSearchParams(options);
       setFilters({ ...values });

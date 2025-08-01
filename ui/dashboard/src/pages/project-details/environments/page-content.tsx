@@ -42,6 +42,7 @@ const PageContent = ({
 
   const onChangeFilters = useCallback(
     (values: Partial<EnvironmentFilters>) => {
+      values.page = values?.page || 1;
       const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
       onChangSearchParams(
         options,

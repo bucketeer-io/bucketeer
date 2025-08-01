@@ -44,6 +44,7 @@ const PageContent = ({
   const [filters, setFilters] = usePartialState<GoalFilters>(defaultFilters);
 
   const onChangeFilters = (values: Partial<GoalFilters>) => {
+    values.page = values?.page || 1;
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
