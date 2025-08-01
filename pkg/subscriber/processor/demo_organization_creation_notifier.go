@@ -34,8 +34,7 @@ import (
 )
 
 type DemoOrganizationCreationNotifierConfig struct {
-	WebEndpoint string         `json:"consoleEndpoint"`
-	Notifier    NotifierConfig `json:"notifier"`
+	Notifier NotifierConfig `json:"notifier"`
 }
 
 type NotifierConfig struct {
@@ -54,6 +53,7 @@ type demoOrganizationCreationNotifier struct {
 
 func NewDemoOrganizationCreationNotifier(
 	config interface{},
+	webURL string,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
 	jsonConfigMap, ok := config.(map[string]interface{})
@@ -71,7 +71,7 @@ func NewDemoOrganizationCreationNotifier(
 		logger.Error("demoOrganizationCreationNotifier: failed to unmarshal config", zap.Error(err))
 		return nil
 	}
-	slackNotifier := notifier.NewSlackNotifier(notifierConfig.WebEndpoint)
+	slackNotifier := notifier.NewSlackNotifier(webURL)
 
 	return &demoOrganizationCreationNotifier{
 		slackNotifier:                          slackNotifier,

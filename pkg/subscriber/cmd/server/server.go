@@ -535,6 +535,7 @@ func (s *server) registerPubSubProcessorMap(
 
 		demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
 			processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
+			*s.webURL,
 			logger,
 		)
 		processors.RegisterProcessor(
