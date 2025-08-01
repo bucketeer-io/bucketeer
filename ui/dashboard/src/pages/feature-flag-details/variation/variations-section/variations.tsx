@@ -83,21 +83,6 @@ const Variations = ({
     []
   );
 
-  const onGetRuleVariationIds = useCallback((rules: Feature['rules']) => {
-    const arr: string[] = [];
-    rules.forEach(rule => {
-      const { strategy } = rule;
-      if (strategy.type === StrategyType.FIXED) {
-        arr.push(strategy.fixedStrategy.variation);
-      } else if (strategy.type === StrategyType.ROLLOUT) {
-        strategy.rolloutStrategy.variations.filter(item => {
-          if (item.weight > 0) arr.push(item.variation);
-        });
-      }
-    });
-    return [...new Set(arr)];
-  }, []);
-
   const prerequisiteVariationIdsInOtherFlags = useMemo(() => {
     return uniqBy(
       flatmap(features.map(item => item.prerequisites)),
@@ -107,13 +92,31 @@ const Variations = ({
 
   const ruleVariationIdsInOtherFlags = useMemo(() => {
     const featureRules = flatmap(features.map(item => item.rules));
-    const variationIds = onGetRuleVariationIds(featureRules);
+    const variationIds: string[] = [];
+    featureRules.forEach(rule => {
+      rule.clauses.filter(item => {
+        if (item.operator === 'FEATURE_FLAG' && item.attribute === feature.id) {
+          variationIds.push(...item.values);
+        }
+      });
+    });
     return [...new Set(variationIds)];
-  }, [feature]);
+  }, [features]);
 
   const currentFeatureRuleVariationIds = useMemo(() => {
     if (feature?.rules?.length) {
-      return onGetRuleVariationIds(feature.rules);
+      const arr: string[] = [];
+      feature?.rules.forEach(rule => {
+        const { strategy } = rule;
+        if (strategy.type === StrategyType.FIXED) {
+          arr.push(strategy.fixedStrategy.variation);
+        } else if (strategy.type === StrategyType.ROLLOUT) {
+          strategy.rolloutStrategy.variations.filter(item => {
+            if (item.weight > 0) arr.push(item.variation);
+          });
+        }
+      });
+      return [...new Set(arr)];
     }
     return [];
   }, [feature]);
