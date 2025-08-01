@@ -29,7 +29,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 
-	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
@@ -198,7 +197,7 @@ func TestGetMeMySQL(t *testing.T) {
 				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, v2.ErrAccountNotFound)
+				).Return(nil, v2as.ErrAccountNotFound)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
