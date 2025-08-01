@@ -81,8 +81,12 @@ const PageContent = ({
 
   const onChangeFilters = useCallback(
     (values: Partial<ExperimentFilters>, isChangeParams = true) => {
+      values.page = values?.page || 1;
       const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-      if (isChangeParams) onChangSearchParams(options);
+
+      if (isChangeParams) {
+        onChangSearchParams(options);
+      }
       setFilters({ ...values });
     },
     [filters]
