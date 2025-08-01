@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
@@ -40,22 +42,73 @@ func NewSendGridEmailService(config auth.EmailServiceConfig, logger *zap.Logger)
 }
 
 func (s *SendGridEmailService) SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error {
-	s.logger.Warn("SendGrid email service not implemented",
+	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, resetToken)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password reset email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+
+	s.logger.Info("Password reset email sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SendGrid email service not implemented")
+	return nil
 }
 
 func (s *SendGridEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
-	s.logger.Warn("SendGrid email service not implemented",
+	subject, body := s.renderer.RenderPasswordChangedEmail()
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password changed notification",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password changed notification: %w", err)
+	}
+
+	s.logger.Info("Password changed notification sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SendGrid email service not implemented")
+	return nil
 }
 
 func (s *SendGridEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
-	s.logger.Warn("SendGrid email service not implemented",
+	subject, body := s.renderer.RenderWelcomeEmail(tempPassword)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
 		zap.String("to", to),
 	)
-	return fmt.Errorf("SendGrid email service not implemented")
+	return nil
+}
+
+func (s *SendGridEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
+	from := mail.NewEmail(s.config.FromName, s.config.FromEmail)
+	toEmail := mail.NewEmail("", to)
+	message := mail.NewSingleEmail(from, subject, toEmail, "", body)
+
+	client := sendgrid.NewSendClient(s.config.SendGridAPIKey)
+	response, err := client.SendWithContext(ctx, message)
+	if err != nil {
+		return fmt.Errorf("failed to send email via SendGrid: %w", err)
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("SendGrid API error: status code %d, body: %s", response.StatusCode, response.Body)
+	}
+
+	return nil
 }
