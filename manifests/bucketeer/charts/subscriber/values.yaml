@@ -173,6 +173,16 @@ subscribers:
     pullerMaxOutstandingBytes: 100000000
     maxMps: 1000
     workerNum: 5
+  demoOrganizationCreationNotifier:
+    pubSubType: google
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
 
 onDemandSubscribers:
   evaluationCountEventDWHPersister:
@@ -241,6 +251,10 @@ processors:
   userEventPersister:
     flushSize: 200
     flushInterval: 5
+  demoOrganizationCreationNotifier:
+    notifier:
+      slack:
+        webhookURL: ""
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:

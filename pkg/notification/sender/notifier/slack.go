@@ -180,8 +180,40 @@ func (n *slackNotifier) createAttachment(
 		return n.createExperimentRunningAttachment(notification.ExperimentRunningNotification)
 	case sender.Notification_MauCount:
 		return n.createMAUCountAttachment(notification.MauCountNotification)
+	case sender.Notification_DemoOrganizationCreation:
+		return n.createDemoOrganizationCreationAttachment(notification.DemoOrganizationCreationNotification)
 	}
 	return nil, ErrUnknownNotification
+}
+
+func (n *slackNotifier) createDemoOrganizationCreationAttachment(
+	notification *senderproto.DemoOrganizationCreationNotification,
+) (*slack.Attachment, error) {
+	url, err := domainevent.URL(
+		domainproto.Event_ORGANIZATION,
+		n.webURL,
+		"",
+		notification.OrganizationId,
+	)
+	if err != nil {
+		n.logger.Error("Failed to create URL for demo organization",
+			zap.Error(err),
+			zap.String("organizationId", notification.OrganizationId),
+		)
+		return nil, err
+	}
+
+	attachment := &slack.Attachment{
+		Color:      "#36a64f",
+		AuthorName: notification.OwnerEmail,
+		Text: "A new demo organization has been created.\n\n" +
+			"Organization ID: " + notification.OrganizationId + "\n" +
+			"Organization Name: " + notification.OrganizationName + "\n" +
+			"Owner Email: " + notification.OwnerEmail + "\n" +
+			"URL: " + fmt.Sprintf(linkTemplate, url, notification.OrganizationName),
+	}
+
+	return attachment, nil
 }
 
 func (n *slackNotifier) createDomainEventAttachment(

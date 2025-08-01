@@ -44979,6 +44979,10 @@
               {
                 "name": "MauCount",
                 "integer": 3
+              },
+              {
+                "name": "DemoOrganizationCreation",
+                "integer": 4
               }
             ]
           }
@@ -45011,6 +45015,11 @@
                 "id": 5,
                 "name": "mau_count_notification",
                 "type": "MauCountNotification"
+              },
+              {
+                "id": 6,
+                "name": "demo_organization_creation_notification",
+                "type": "DemoOrganizationCreationNotification"
               }
             ]
           },
@@ -45139,6 +45148,26 @@
             ],
             "reserved_ids": [
               1
+            ]
+          },
+          {
+            "name": "DemoOrganizationCreationNotification",
+            "fields": [
+              {
+                "id": 1,
+                "name": "owner_email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_name",
+                "type": "string"
+              }
             ]
           }
         ],
@@ -46882,6 +46911,10 @@
               {
                 "name": "DOMAIN_EVENT_TEAM",
                 "integer": 19
+              },
+              {
+                "name": "DOMAIN_EVENT_DEMO_ORGANIZATION",
+                "integer": 20
               },
               {
                 "name": "FEATURE_STALE",

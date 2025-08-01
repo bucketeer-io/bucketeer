@@ -27,12 +27,15 @@ message Notification {
     FeatureStale = 1;
     ExperimentRunning = 2;
     MauCount = 3;
+    DemoOrganizationCreation = 4;
   }
   Type type = 1;
   DomainEventNotification domain_event_notification = 2;
   FeatureStaleNotification feature_stale_notification = 3;
   ExperimentRunningNotification experiment_running_notification = 4;
   MauCountNotification mau_count_notification = 5;
+  DemoOrganizationCreationNotification demo_organization_creation_notification =
+      6;
 }
 
 message DomainEventNotification {
@@ -70,4 +73,10 @@ message MauCountNotification {
   int32 month = 4;
   string environment_name = 5;
   string environment_url_code = 6;
+}
+
+message DemoOrganizationCreationNotification {
+  string owner_email = 1;
+  string organization_id = 2;
+  string organization_name = 3;
 }

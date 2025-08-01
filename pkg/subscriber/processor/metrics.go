@@ -21,17 +21,18 @@ import (
 )
 
 const (
-	subscriberAuditLog           = "AuditLog"
-	subscriberDomainEvent        = "DomainEvent"
-	subscriberEvaluationCount    = "EvaluationCount"
-	subscriberEvaluationEventDWH = "EvaluationEventDWH"
-	subscriberEvaluationEventOPS = "EvaluationEventOPS"
-	subscriberGoalEventDWH       = "GoalEventDWH"
-	subscriberGoalEventOPS       = "GoalEventOPS"
-	subscriberMetricsEvent       = "MetricsEvent"
-	subscriberPushSender         = "PushSender"
-	subscriberSegmentUser        = "SegmentUser"
-	subscriberUserEvent          = "UserEvent"
+	subscriberAuditLog              = "AuditLog"
+	subscriberDomainEvent           = "DomainEvent"
+	subscriberEvaluationCount       = "EvaluationCount"
+	subscriberEvaluationEventDWH    = "EvaluationEventDWH"
+	subscriberEvaluationEventOPS    = "EvaluationEventOPS"
+	subscriberGoalEventDWH          = "GoalEventDWH"
+	subscriberGoalEventOPS          = "GoalEventOPS"
+	subscriberMetricsEvent          = "MetricsEvent"
+	subscriberPushSender            = "PushSender"
+	subscriberSegmentUser           = "SegmentUser"
+	subscriberUserEvent             = "UserEvent"
+	subscriberDemoOrganizationEvent = "DemoOrganizationEvent"
 )
 
 const (
