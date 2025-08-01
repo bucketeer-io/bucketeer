@@ -3,10 +3,17 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import flatmap from 'lodash/flatmap';
+import flatmap from 'lodash/flatMap';
 import uniqBy from 'lodash/uniqBy';
 import { v4 as uuid } from 'uuid';
-import { Feature, OperationStatus, Rollout, StrategyType } from '@types';
+import {
+  AutoOpsRule,
+  Feature,
+  OperationStatus,
+  OpsEventRateClause,
+  Rollout,
+  StrategyType
+} from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -42,24 +49,28 @@ const Variations = ({
   feature,
   rollouts,
   isRunningExperiment,
+  eventRateOperations,
   editable,
   features
 }: {
   feature: Feature;
   rollouts: Rollout[];
   isRunningExperiment?: boolean;
+  eventRateOperations: AutoOpsRule[];
   editable: boolean;
   features: Feature[];
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
-  const { control } = useFormContext<VariationForm>();
+  const { control, watch } = useFormContext<VariationForm>();
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'variations',
     keyName: 'variationField'
   });
+
+  const offVariation = watch('offVariation');
 
   const isBoolean = useMemo(
     () => feature.variationType === 'BOOLEAN',
@@ -72,29 +83,83 @@ const Variations = ({
     []
   );
 
-  const prerequisiteVariationIds = useMemo(() => {
+  const ongetRuleVariationIds = useCallback((rules: Feature['rules']) => {
+    const arr: string[] = [];
+    rules.forEach(rule => {
+      const { strategy } = rule;
+      if (strategy.type === StrategyType.FIXED) {
+        arr.push(strategy.fixedStrategy.variation);
+      } else if (strategy.type === StrategyType.ROLLOUT) {
+        strategy.rolloutStrategy.variations.filter(item => {
+          if (item.weight > 0) arr.push(item.variation);
+        });
+      }
+    });
+    return [...new Set(arr)];
+  }, []);
+
+  const anotherPrerequisiteVariationIds = useMemo(() => {
     return uniqBy(
       flatmap(features.map(item => item.prerequisites)),
       'variationId'
     ).map(item => item.variationId);
   }, [features]);
 
-  const ruleVariationIds = useMemo(() => {
+  const anotherRuleVariationIds = useMemo(() => {
     const featureRules = flatmap(features.map(item => item.rules));
-    const variationIds: string[] = [];
-
-    featureRules.forEach(rule => {
-      const { strategy } = rule;
-      if (strategy.type === StrategyType.FIXED) {
-        variationIds.push(strategy.fixedStrategy.variation);
-      } else if (strategy.type === StrategyType.ROLLOUT) {
-        strategy.rolloutStrategy.variations.filter(item => {
-          if (item.weight > 0) variationIds.push(item.variation);
-        });
-      }
-    });
+    const variationIds = ongetRuleVariationIds(featureRules);
     return [...new Set(variationIds)];
   }, [feature]);
+
+  const ruleVariationIds = useMemo(() => {
+    if (feature?.rules?.length) {
+      return ongetRuleVariationIds(feature.rules);
+    }
+    return [];
+  }, [feature]);
+
+  const onVariationIds = useMemo(() => {
+    if (feature?.defaultStrategy) {
+      const { fixedStrategy, rolloutStrategy, type } = feature.defaultStrategy;
+      if (type === StrategyType.FIXED) return [fixedStrategy.variation];
+      if (type === StrategyType.ROLLOUT)
+        return rolloutStrategy.variations
+          .filter(v => v.weight > 0)
+          ?.map(item => item?.variation);
+    }
+    return [];
+  }, [feature]);
+
+  const targetVariationIds = useMemo(() => {
+    if (feature?.targets?.length) {
+      const ids = feature.targets
+        .filter(target => target.users?.length > 0)
+        ?.map(item => item.variation);
+      return [...new Set(ids)];
+    }
+    return [];
+  }, [feature]);
+
+  const prerequisiteVariationIds = useMemo(() => {
+    if (feature?.prerequisites?.length) {
+      const ids = feature.prerequisites.map(pre => pre.variationId);
+      return [...new Set(ids)];
+    }
+    return [];
+  }, [feature]);
+
+  const rolloutVariationIds = useMemo(
+    () => rollouts?.map(item => item.clause.variationId),
+    [rollouts]
+  );
+
+  const eventRateVariationIds = useMemo(
+    () =>
+      eventRateOperations
+        ?.flatMap(item => item.clauses)
+        ?.map(item => (item?.clause as OpsEventRateClause)?.variationId),
+    [eventRateOperations]
+  );
 
   const isDisableRemoveBtn = useCallback(
     (variationId: string) => {
@@ -103,7 +168,22 @@ const Variations = ({
         isBoolean ||
         isRunningExperiment ||
         fields.length <= 2 ||
-        [...prerequisiteVariationIds, ...ruleVariationIds].includes(variationId)
+        [
+          ...new Set([
+            // variatiions in current feature
+            offVariation,
+            ...onVariationIds,
+            ...ruleVariationIds,
+            ...targetVariationIds,
+            ...prerequisiteVariationIds,
+            ...rolloutVariationIds,
+            ...eventRateVariationIds,
+
+            // variations in another feature
+            ...anotherPrerequisiteVariationIds,
+            ...anotherRuleVariationIds
+          ])
+        ].includes(variationId)
       );
     },
     [
@@ -111,8 +191,15 @@ const Variations = ({
       isBoolean,
       fields,
       isRunningExperiment,
+      onVariationIds,
       ruleVariationIds,
-      prerequisiteVariationIds
+      offVariation,
+      targetVariationIds,
+      prerequisiteVariationIds,
+      rolloutVariationIds,
+      eventRateVariationIds,
+      anotherPrerequisiteVariationIds,
+      anotherRuleVariationIds
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -136,6 +223,39 @@ const Variations = ({
       description: ''
     });
   };
+
+  const getTooltipContent = useCallback(
+    (variationId: string) => {
+      if (onVariationIds.includes(variationId)) {
+        return t('table:feature-flags.default-variation-disabled-delete');
+      } else if (offVariation === variationId) {
+        return t('table:feature-flags.off-variation-disabled-delete');
+      } else if (
+        [
+          ...ruleVariationIds,
+          ...targetVariationIds,
+          ...prerequisiteVariationIds
+        ].includes(variationId)
+      ) {
+        return t('table:feature-flags.in-used-variation-disabled-delete');
+      } else if (
+        anotherPrerequisiteVariationIds.includes(variationId) ||
+        anotherRuleVariationIds.includes(variationId)
+      ) {
+        return t('table:feature-flags.in-used-another-flag-disabled-delete');
+      }
+      return '';
+    },
+    [
+      offVariation,
+      onVariationIds,
+      ruleVariationIds,
+      targetVariationIds,
+      prerequisiteVariationIds,
+      anotherRuleVariationIds,
+      anotherPrerequisiteVariationIds
+    ]
+  );
 
   return (
     <div className="flex flex-col w-full gap-y-6">
@@ -235,7 +355,7 @@ const Variations = ({
           <Tooltip
             align="end"
             alignOffset={-20}
-            content={t('table:feature-flags.default-variation-disabled-delete')}
+            content={getTooltipContent(variation.id)}
             trigger={
               <Button
                 variant="grey"

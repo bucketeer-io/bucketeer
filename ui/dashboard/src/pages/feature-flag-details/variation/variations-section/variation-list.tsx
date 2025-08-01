@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -41,6 +42,14 @@ const VariationList = ({
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
 
+  const { data: operationCollection } = useQueryAutoOpsRules({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment?.id,
+      featureIds: [feature?.id]
+    }
+  });
+
   const { data: collection } = useQueryFeatures({
     params: {
       cursor: String(0),
@@ -48,6 +57,13 @@ const VariationList = ({
     },
     enabled: !!currentEnvironment
   });
+
+  const autoOps = operationCollection?.autoOpsRules || [];
+  const eventRateOperations = autoOps?.filter(
+    item =>
+      item.opsType === 'EVENT_RATE' &&
+      ['WAITING', 'RUNNING'].includes(item.autoOpsStatus)
+  );
 
   const { control, watch } = useFormContext<VariationForm>();
 
@@ -76,6 +92,7 @@ const VariationList = ({
                 feature={feature}
                 rollouts={rollouts}
                 isRunningExperiment={isRunningExperiment}
+                eventRateOperations={eventRateOperations}
                 editable={editable}
                 features={collection?.features || []}
               />
