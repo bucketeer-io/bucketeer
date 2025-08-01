@@ -141,7 +141,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMetadataLen: 1,
 		},
 		{
-			name:                "annther metadata is nil",
+			name:                "another metadata is nil",
 			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
 			anotherDetailData:   nil,
 			expectedCode:        codes.NotFound,
