@@ -1093,7 +1093,7 @@ func (s *FeatureService) validateFeatureVariationsCommand(
 	cmd command.Command,
 	localizer locale.Localizer,
 ) error {
-	switch cmd.(type) {
+	switch c := cmd.(type) {
 	case *featureproto.AddVariationCommand:
 		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
@@ -1103,7 +1103,7 @@ func (s *FeatureService) validateFeatureVariationsCommand(
 		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
 		}
-		return validateVariationCommand(fs, f, localizer)
+		return validateRemoveVariationCommand(c, fs, f, localizer)
 	case *featureproto.ChangeVariationValueCommand:
 		return validateVariationCommand(fs, f, localizer)
 	default:
@@ -1178,6 +1178,78 @@ func validateVariationCommand(fs []*featureproto.Feature, tgt *featureproto.Feat
 		}
 		return dt.Err()
 	}
+	return nil
+}
+
+// validateRemoveVariationCommand validates that a specific variation can be safely removed
+func validateRemoveVariationCommand(
+	cmd *featureproto.RemoveVariationCommand,
+	fs []*featureproto.Feature,
+	tgt *featureproto.Feature,
+	localizer locale.Localizer,
+) error {
+	// Find the variation being removed to get its value
+	var deletedVariationValue string
+	for _, variation := range tgt.Variations {
+		if variation.Id == cmd.Id {
+			deletedVariationValue = variation.Value
+			break
+		}
+	}
+
+	// Even if we can't find the variation value, we should still check for prerequisites
+	// since they reference variation IDs, not values
+
+	// Optimization: First check if ANY features depend on our target
+	// This reuses existing logic to quickly filter relevant features
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(fs))
+	for _, f := range fs {
+		allFeaturesMap[f.Id] = f
+	}
+
+	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets([]*featureproto.Feature{tgt}, allFeaturesMap)
+	delete(dependentFeatures, tgt.Id) // Remove the target itself
+
+	if len(dependentFeatures) == 0 {
+		// No features depend on our target, so variation deletion is safe
+		return nil
+	}
+
+	// Convert dependent features back to slice for ValidateVariationUsage
+	dependentFeaturesSlice := make([]*featureproto.Feature, 0, len(dependentFeatures))
+	for _, f := range dependentFeatures {
+		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
+	}
+
+	// Use our precise cross-feature validation only on dependent features
+	deletedVariations := map[string]string{}
+	if deletedVariationValue != "" {
+		deletedVariations[cmd.Id] = deletedVariationValue
+	} else {
+		// We don't have the variation value, but we still need to check prerequisites
+		// For prerequisites, we only need the variation ID (key), not the value
+		deletedVariations[cmd.Id] = "" // Empty value, but we'll check keys for prerequisites
+	}
+
+	if len(deletedVariations) == 0 {
+		return nil // No variations being deleted
+	}
+
+	if err := featuredomain.ValidateVariationUsage(dependentFeaturesSlice, tgt.Id, deletedVariations); err != nil {
+		if errors.Is(err, featuredomain.ErrVariationInUse) {
+			// Use the legacy error status for RemoveVariationCommand for backward compatibility
+			dt, err := statusInvalidChangingVariation.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -1843,5 +1915,84 @@ func validateListFlagTriggersRequest(req *featureproto.ListFlagTriggersRequest, 
 		}
 		return dt.Err()
 	}
+	return nil
+}
+
+// validateVariationDeletion validates that variations being deleted are not used as cross-feature dependencies.
+func validateVariationDeletion(
+	variationChanges []*featureproto.VariationChange,
+	features []*featureproto.Feature,
+	targetFeatureID string,
+	localizer locale.Localizer,
+) error {
+	// Extract variations being deleted (variationID -> variationValue)
+	deletedVariations := make(map[string]string)
+	for _, change := range variationChanges {
+		if change.ChangeType == featureproto.ChangeType_DELETE {
+			deletedVariations[change.Variation.Id] = change.Variation.Value
+		}
+	}
+
+	if len(deletedVariations) == 0 {
+		return nil // No variations being deleted
+	}
+
+	// Find the target feature
+	var targetFeature *featureproto.Feature
+	for _, f := range features {
+		if f.Id == targetFeatureID {
+			targetFeature = f
+			break
+		}
+	}
+
+	if targetFeature == nil {
+		// Target feature not found in the list, cannot proceed with validation
+		return nil
+	}
+
+	// Optimization: First check if ANY features depend on our target
+	// This reuses existing logic to quickly filter relevant features
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(features))
+	for _, f := range features {
+		allFeaturesMap[f.Id] = f
+	}
+
+	dependentFeatures := featuredomain.GetFeaturesDependsOnTargets(
+		[]*featureproto.Feature{targetFeature},
+		allFeaturesMap,
+	)
+	delete(dependentFeatures, targetFeatureID) // Remove the target itself
+
+	if len(dependentFeatures) == 0 {
+		// No features depend on our target, so variation deletion is safe
+		return nil
+	}
+
+	// Convert dependent features back to slice for ValidateVariationUsage
+	dependentFeaturesSlice := make([]*featureproto.Feature, 0, len(dependentFeatures))
+	for _, f := range dependentFeatures {
+		dependentFeaturesSlice = append(dependentFeaturesSlice, f)
+	}
+
+	// Check if the deleted variation is used as a prerequisite or rule in other features
+	if err := featuredomain.ValidateVariationUsage(
+		dependentFeaturesSlice,
+		targetFeatureID,
+		deletedVariations,
+	); err != nil {
+		if errors.Is(err, featuredomain.ErrVariationInUse) {
+			dt, err := statusVariationInUseByOtherFeatures.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return err
+	}
+
 	return nil
 }

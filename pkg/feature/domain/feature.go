@@ -65,7 +65,7 @@ var (
 		"feature: invalid default off variation index. Index is out of range")
 	errTargetUsersRequired                        = errors.New("feature: target users required")
 	errTargetUserRequired                         = errors.New("feature: target user required")
-	errVariationInUse                             = errors.New("feature: variation in use")
+	ErrVariationInUse                             = errors.New("feature: variation in use")
 	errVariationNotFound                          = errors.New("feature: variation not found")
 	errVariationTypeUnmatched                     = errors.New("feature: variation value and type are unmatched")
 	errStrategyRequired                           = errors.New("feature: strategy required")
@@ -87,6 +87,11 @@ var (
 	ErrInvalidAudienceDefaultVariation = errors.New(
 		"feature: default variation required when audience percentage is between 1 and 99",
 	)
+	ErrInvalidVariationWeightTotal = errors.New("feature: variation weights must sum to 100%")
+)
+
+const (
+	totalVariationWeight = int32(100000)
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -454,6 +459,15 @@ func validateRolloutStrategy(strategy *feature.RolloutStrategy, variations []*fe
 		}
 	}
 
+	// Validate variation weights
+	totalWeight := int32(0)
+	for _, v := range strategy.Variations {
+		totalWeight += v.Weight
+	}
+	if totalWeight != totalVariationWeight {
+		return ErrInvalidVariationWeightTotal
+	}
+
 	return nil
 }
 
@@ -700,22 +714,25 @@ func (f *Feature) RemoveVariation(id string) error {
 }
 
 func (f *Feature) validateRemoveVariation(id string) error {
+	if len(f.Variations) <= 2 {
+		return errVariationsMustHaveAtLeastTwoVariations
+	}
+	if f.OffVariation == id {
+		return ErrVariationInUse
+	}
 	// Check if the individual targeting has any users
 	idx, err := f.findTarget(id)
 	if err != nil {
 		return err
 	}
 	if len(f.Targets[idx].Users) > 0 {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	if f.rulesContainsVariation(id) {
-		return errVariationInUse
-	}
-	if f.OffVariation == id {
-		return errVariationInUse
+		return ErrVariationInUse
 	}
 	return nil
 }
@@ -757,7 +774,6 @@ func (f *Feature) removeVariationFromRules(variationID string) {
 	for _, rule := range f.Rules {
 		if rule.Strategy.Type == feature.Strategy_ROLLOUT {
 			f.removeVariationFromRolloutStrategy(rule.Strategy.RolloutStrategy, variationID)
-			return
 		}
 	}
 }
@@ -769,12 +785,14 @@ func (f *Feature) removeVariationFromDefaultStrategy(variationID string) {
 }
 
 func (f *Feature) removeVariationFromRolloutStrategy(strategy *feature.RolloutStrategy, variationID string) {
-	for i, v := range strategy.Variations {
-		if v.Variation == variationID {
-			strategy.Variations = append(strategy.Variations[:i], strategy.Variations[i+1:]...)
-			return
+	// Remove all instances of the variation, regardless of weight
+	filteredVariations := make([]*feature.RolloutStrategy_Variation, 0, len(strategy.Variations))
+	for _, v := range strategy.Variations {
+		if v.Variation != variationID {
+			filteredVariations = append(filteredVariations, v)
 		}
 	}
+	strategy.Variations = filteredVariations
 }
 
 func (f *Feature) ChangeVariationValue(id string, value string) error {
@@ -808,6 +826,9 @@ func (f *Feature) ChangeVariationDescription(id string, description string) erro
 }
 
 func (f *Feature) ChangeDefaultStrategy(s *feature.Strategy) error {
+	if err := validateStrategy(s, f.Variations); err != nil {
+		return err
+	}
 	f.DefaultStrategy = s
 	f.UpdatedAt = time.Now().Unix()
 	return nil
@@ -836,6 +857,12 @@ func (f *Feature) ChangeRolloutStrategy(ruleID string, strategy *feature.Rollout
 			return err
 		}
 	}
+
+	// Validate rollout strategy weights
+	if err := validateRolloutStrategy(strategy, f.Variations); err != nil {
+		return err
+	}
+
 	f.Rules[ruleIdx].Strategy.RolloutStrategy = strategy
 	f.UpdatedAt = time.Now().Unix()
 	return nil
@@ -1237,6 +1264,44 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 func ValidateFeatureDependencies(fs []*feature.Feature) error {
 	_, err := TopologicalSort(fs)
 	return err
+}
+
+// ValidateVariationUsage validates that the given variations are not used as cross-feature dependencies.
+func ValidateVariationUsage(
+	features []*feature.Feature,
+	targetFeatureID string,
+	deletedVariations map[string]string, // variationID -> variationValue
+) error {
+	for _, f := range features {
+		if f.Id == targetFeatureID {
+			continue // Skip the feature being updated
+		}
+
+		// Check if any deleted variations are used in prerequisites
+		for _, prerequisite := range f.Prerequisites {
+			if prerequisite.FeatureId == targetFeatureID {
+				if _, found := deletedVariations[prerequisite.VariationId]; found {
+					return ErrVariationInUse
+				}
+			}
+		}
+
+		// Check if any deleted variations are used in FEATURE_FLAG rules
+		for _, rule := range f.Rules {
+			for _, clause := range rule.Clauses {
+				if clause.Operator == feature.Clause_FEATURE_FLAG && clause.Attribute == targetFeatureID {
+					// FEATURE_FLAG clause values contain variation IDs, not values
+					// We should check if any clause values match deleted variation IDs
+					for _, clValue := range clause.Values {
+						if _, found := deletedVariations[clValue]; found {
+							return ErrVariationInUse
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.

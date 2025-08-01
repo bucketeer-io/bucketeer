@@ -113,6 +113,43 @@ func (s *FeatureService) GetFeature(
 		}
 		return nil, dt.Err()
 	}
+
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
+	// Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
+	cleanupResult := feature.CleanupOrphanedVariationReferences()
+	if cleanupResult.Changed {
+		s.logger.Warn(
+			"Cleaned up orphaned variation references in feature during get (temporary migration)",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+				zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+				zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+				zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+				zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+			)...,
+		)
+	}
+
+	// TEMPORARY: Ensure all variations are present in rollout strategies during reads
+	// This fixes existing data corruption from the historical AddVariation bug
+	// TODO: Remove this after DB migration is complete
+	migrationResult := feature.EnsureVariationsInStrategies()
+	if migrationResult.Changed {
+		s.logger.Warn(
+			"Added missing variations to rollout strategies in feature during get (temporary migration)",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("addedToRules", migrationResult.AddedToRules),
+				zap.Int("addedToDefault", migrationResult.AddedToDefault),
+				zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+			)...,
+		)
+	}
+
 	if err := s.setLastUsedInfosToFeatureByChunk(
 		ctx,
 		[]*featureproto.Feature{feature.Feature},
@@ -185,6 +222,46 @@ func (s *FeatureService) GetFeatures(
 		}
 		return nil, dt.Err()
 	}
+
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
+	// Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
+	for _, f := range features {
+		domainFeature := &domain.Feature{Feature: f}
+		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during get multiple (temporary migration)",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
+
+		// TEMPORARY: Ensure all variations are present in rollout strategies during reads
+		// This fixes existing data corruption from the historical AddVariation bug
+		// TODO: Remove this after DB migration is complete
+		migrationResult := domainFeature.EnsureVariationsInStrategies()
+		if migrationResult.Changed {
+			s.logger.Warn(
+				"Added missing variations to rollout strategies in feature during get multiple (temporary migration)",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("addedToRules", migrationResult.AddedToRules),
+					zap.Int("addedToDefault", migrationResult.AddedToDefault),
+					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+				)...,
+			)
+		}
+	}
+
 	return &featureproto.GetFeaturesResponse{Features: features}, nil
 }
 
@@ -252,6 +329,45 @@ func (s *FeatureService) ListFeatures(
 		)
 		return nil, statusInternal.Err()
 	}
+
+	// TEMPORARY: Clean up any orphaned variation references before returning to UI
+	// This prevents the UI from seeing corrupted data and sending it back in update requests
+	for _, f := range features {
+		domainFeature := &domain.Feature{Feature: f}
+		cleanupResult := domainFeature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during list (temporary migration)",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
+
+		// TEMPORARY: Ensure all variations are present in rollout strategies during reads
+		// This fixes existing data corruption from the historical AddVariation bug
+		// TODO: Remove this after DB migration is complete
+		migrationResult := domainFeature.EnsureVariationsInStrategies()
+		if migrationResult.Changed {
+			s.logger.Warn(
+				"Added missing variations to rollout strategies in feature during list (temporary migration)",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", f.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("addedToRules", migrationResult.AddedToRules),
+					zap.Int("addedToDefault", migrationResult.AddedToDefault),
+					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+				)...,
+			)
+		}
+	}
+
 	return &featureproto.ListFeaturesResponse{
 		Features:             features,
 		Cursor:               cursor,
@@ -1057,6 +1173,41 @@ func (s *FeatureService) UpdateFeature(
 			)
 			return dt.Err()
 		}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
+
+		// Ensure all variations are present in rollout strategies BEFORE validation
+		// This fixes data corruption from the historical AddVariation bug
+		migrationResult := feature.EnsureVariationsInStrategies()
+		if migrationResult.Changed {
+			s.logger.Warn(
+				"Added missing variations to rollout strategies in feature during update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("addedToRules", migrationResult.AddedToRules),
+					zap.Int("addedToDefault", migrationResult.AddedToDefault),
+					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+				)...,
+			)
+		}
+
 		updated, err := feature.Update(
 			req.Name,
 			req.Description,
@@ -1091,6 +1242,10 @@ func (s *FeatureService) UpdateFeature(
 			tgts = append(tgts, f)
 		}
 		if err := domain.ValidateFeatureDependencies(tgts); err != nil {
+			return err
+		}
+		// Validate that variations being deleted are not used in other features
+		if err := validateVariationDeletion(req.VariationChanges, features, req.Id, localizer); err != nil {
 			return err
 		}
 		updatedpb = updated.Feature
@@ -1711,6 +1866,41 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during details update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", id),
+					zap.String("environmentId", environmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
+
+		// Ensure all variations are present in rollout strategies BEFORE validation
+		// This fixes data corruption from the historical AddVariation bug
+		migrationResult := feature.EnsureVariationsInStrategies()
+		if migrationResult.Changed {
+			s.logger.Warn(
+				"Added missing variations to rollout strategies in feature during details update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", id),
+					zap.String("environmentId", environmentId),
+					zap.Int("addedToRules", migrationResult.AddedToRules),
+					zap.Int("addedToDefault", migrationResult.AddedToDefault),
+					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+				)...,
+			)
+		}
+
 		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentId, comment)
 		if err != nil {
 			return err
@@ -2092,6 +2282,41 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			}
 		}
 		feature := &domain.Feature{Feature: f}
+
+		// Clean up any orphaned variation references BEFORE validation
+		// This fixes data corruption from the historical variation deletion bug
+		cleanupResult := feature.CleanupOrphanedVariationReferences()
+		if cleanupResult.Changed {
+			s.logger.Warn(
+				"Cleaned up orphaned variation references in feature during targeting update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+				)...,
+			)
+		}
+
+		// Ensure all variations are present in rollout strategies BEFORE validation
+		// This fixes data corruption from the historical AddVariation bug
+		migrationResult := feature.EnsureVariationsInStrategies()
+		if migrationResult.Changed {
+			s.logger.Warn(
+				"Added missing variations to rollout strategies in feature during targeting update",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.Int("addedToRules", migrationResult.AddedToRules),
+					zap.Int("addedToDefault", migrationResult.AddedToDefault),
+					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+				)...,
+			)
+		}
+
 		handler, err = command.NewFeatureCommandHandler(
 			editor,
 			feature,

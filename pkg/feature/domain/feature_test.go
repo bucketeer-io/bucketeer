@@ -823,11 +823,11 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		RolloutStrategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 			{
 				Variation: vID1,
-				Weight:    30,
+				Weight:    30000,
 			},
 			{
 				Variation: vID2,
-				Weight:    70,
+				Weight:    70000,
 			},
 		}},
 	}
@@ -1188,15 +1188,15 @@ func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse, // Used in default strategy
+			expected: ErrVariationInUse, // Used in default strategy
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse, // Used in default strategy
+			expected: ErrVariationInUse, // Used in default strategy
 		},
 		{
 			id:       "variation-C",
-			expected: errVariationInUse, // Has users in target
+			expected: ErrVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1251,15 +1251,15 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse, // Used in default strategy with weight > 0
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse, // Used in default strategy with weight > 0
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-C",
-			expected: errVariationInUse, // Has users in target
+			expected: ErrVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1299,7 +1299,7 @@ func TestRemoveVariationUsingOffVariation(t *testing.T) {
 		{
 			des:      "in use",
 			id:       "variation-C",
-			expected: errVariationInUse,
+			expected: ErrVariationInUse,
 		},
 		{
 			des:      "success",
@@ -1318,6 +1318,196 @@ func TestRemoveVariationUsingOffVariation(t *testing.T) {
 	expectedSize := 3
 	if expectedSize != actualSize {
 		t.Fatalf("Different sizes. Expected: %d, actual: %d", expectedSize, actualSize)
+	}
+}
+
+func TestRemoveVariationComprehensiveCleanup(t *testing.T) {
+	t.Parallel()
+	f := makeFeature("test-feature")
+	expected := "variation-D"
+	f.AddVariation(expected, "D", "Variation D", "Thing does D")
+
+	// Set up rollout strategy in default strategy with the variation (weight=0 so it can be removed)
+	f.ChangeDefaultStrategy(&ftproto.Strategy{
+		Type: ftproto.Strategy_ROLLOUT,
+		RolloutStrategy: &ftproto.RolloutStrategy{
+			Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: "variation-A",
+					Weight:    100000,
+				},
+				{
+					Variation: expected,
+					Weight:    0, // Weight 0 means not "in use" so can be removed
+				},
+			},
+		},
+	})
+
+	// Add a rule with rollout strategy containing the variation
+	rule := &ftproto.Rule{
+		Id: "test-rule-rollout",
+		Strategy: &ftproto.Strategy{
+			Type: ftproto.Strategy_ROLLOUT,
+			RolloutStrategy: &ftproto.RolloutStrategy{
+				Variations: []*ftproto.RolloutStrategy_Variation{
+					{
+						Variation: "variation-B",
+						Weight:    50000,
+					},
+					{
+						Variation: expected,
+						Weight:    0, // Weight 0 means not "in use" so can be removed
+					},
+				},
+			},
+		},
+		Clauses: []*ftproto.Clause{
+			{
+				Id:        "clause-1",
+				Attribute: "user_id",
+				Operator:  ftproto.Clause_EQUALS,
+				Values:    []string{"user-1"},
+			},
+		},
+	}
+	f.AddRule(rule)
+
+	patterns := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       "variation-A",
+			expected: ErrVariationInUse, // Used in default strategy with weight > 0
+		},
+		{
+			id:       "variation-B",
+			expected: ErrVariationInUse, // Used in rule strategy with weight > 0
+		},
+		{
+			id:       "variation-C",
+			expected: ErrVariationInUse, // Has users in target
+		},
+		{
+			id:       expected,
+			expected: nil, // Can be removed (weight=0 in all strategies)
+		},
+	}
+
+	for i, p := range patterns {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify complete cleanup for successfully removed variation
+	if _, err := f.findVariationIndex(expected); err == nil {
+		t.Fatalf("Variation not deleted from Variations. Actual: %v", f.Variations)
+	}
+	if _, err := f.findTarget(expected); err == nil {
+		t.Fatalf("Target not deleted. Actual: %v", f.Targets)
+	}
+
+	// Verify variation removed from default strategy rollout
+	for _, v := range f.DefaultStrategy.RolloutStrategy.Variations {
+		if v.Variation == expected {
+			t.Fatalf("Variation not removed from default strategy. Actual: %v", f.DefaultStrategy.RolloutStrategy.Variations)
+		}
+	}
+
+	// Verify variation removed from rule rollout strategy
+	for _, r := range f.Rules {
+		if r.Id == "test-rule-rollout" && r.Strategy.Type == ftproto.Strategy_ROLLOUT {
+			for _, v := range r.Strategy.RolloutStrategy.Variations {
+				if v.Variation == expected {
+					t.Fatalf("Variation not removed from rule strategy. Actual: %v", r.Strategy.RolloutStrategy.Variations)
+				}
+			}
+		}
+	}
+
+	actualSize := len(f.Variations)
+	expectedSize := 3
+	if expectedSize != actualSize {
+		t.Fatalf("Different sizes. Expected: %d, actual: %d", expectedSize, actualSize)
+	}
+}
+
+func TestRemoveVariationMultipleInstancesInRollout(t *testing.T) {
+	t.Parallel()
+	f := makeFeature("test-feature")
+	expected := "variation-D"
+	f.AddVariation(expected, "D", "Variation D", "Thing does D")
+
+	// Create a rollout strategy with MULTIPLE instances of the same variation (edge case)
+	f.ChangeDefaultStrategy(&ftproto.Strategy{
+		Type: ftproto.Strategy_ROLLOUT,
+		RolloutStrategy: &ftproto.RolloutStrategy{
+			Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: "variation-A",
+					Weight:    50000,
+				},
+				{
+					Variation: expected,
+					Weight:    0, // First instance with weight 0
+				},
+				{
+					Variation: "variation-B",
+					Weight:    50000,
+				},
+				{
+					Variation: expected,
+					Weight:    0, // Second instance with weight 0
+				},
+			},
+		},
+	})
+
+	patterns := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       expected,
+			expected: nil, // Can be removed (all instances have weight=0)
+		},
+	}
+
+	// Verify multiple instances exist before removal
+	instanceCount := 0
+	for _, v := range f.DefaultStrategy.RolloutStrategy.Variations {
+		if v.Variation == expected {
+			instanceCount++
+		}
+	}
+	if instanceCount != 2 {
+		t.Fatalf("Expected 2 instances before removal, got %d", instanceCount)
+	}
+
+	for i, p := range patterns {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify ALL instances are removed (this would fail with the old single-remove bug)
+	instanceCount = 0
+	for _, v := range f.DefaultStrategy.RolloutStrategy.Variations {
+		if v.Variation == expected {
+			instanceCount++
+		}
+	}
+	if instanceCount != 0 {
+		t.Fatalf("Expected 0 instances after removal, got %d", instanceCount)
+	}
+
+	// Verify other variations are still present
+	actualRolloutSize := len(f.DefaultStrategy.RolloutStrategy.Variations)
+	expectedRolloutSize := 2
+	if expectedRolloutSize != actualRolloutSize {
+		t.Fatalf("Different rollout sizes. Expected: %d, actual: %d", expectedRolloutSize, actualRolloutSize)
 	}
 }
 
@@ -1369,11 +1559,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	expected := &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 		{
 			Variation: vID1,
-			Weight:    30,
+			Weight:    30000,
 		},
 		{
 			Variation: vID2,
-			Weight:    70,
+			Weight:    70000,
 		},
 	}}
 	patterns := []*struct {
@@ -1391,11 +1581,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: "",
-					Weight:    30,
+					Weight:    30000,
 				},
 				{
 					Variation: vID2,
-					Weight:    70,
+					Weight:    70000,
 				},
 			}},
 			expected: errVariationNotFound,
@@ -1405,11 +1595,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
 				{
 					Variation: vID1,
-					Weight:    30,
+					Weight:    30000,
 				},
 				{
 					Variation: "",
-					Weight:    70,
+					Weight:    70000,
 				},
 			}},
 			expected: errVariationNotFound,
@@ -1423,6 +1613,50 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			ruleID:   rID,
 			strategy: expected,
 			expected: nil,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    30000, // 30%
+				},
+				{
+					Variation: vID2,
+					Weight:    40000, // 40%
+				},
+				// Total: 70000 (70%) - invalid!
+			}},
+			expected: ErrInvalidVariationWeightTotal,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    60000, // 60%
+				},
+				{
+					Variation: vID2,
+					Weight:    50000, // 50%
+				},
+				// Total: 110000 (110%) - invalid!
+			}},
+			expected: ErrInvalidVariationWeightTotal,
+		},
+		{
+			ruleID: rID,
+			strategy: &ftproto.RolloutStrategy{Variations: []*ftproto.RolloutStrategy_Variation{
+				{
+					Variation: vID1,
+					Weight:    30, // Old test format - invalid!
+				},
+				{
+					Variation: vID2,
+					Weight:    70, // Old test format - invalid!
+				},
+			}},
+			expected: ErrInvalidVariationWeightTotal,
 		},
 	}
 	for _, p := range patterns {
@@ -1816,6 +2050,200 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 	for _, p := range patterns {
 		f := &Feature{Feature: p.feature}
 		assert.Equal(t, p.expected, f.FeatureIDsDependsOn())
+	}
+}
+
+func TestValidateVariationUsage(t *testing.T) {
+	t.Parallel()
+
+	variationID1 := "variation-1"
+	variationID2 := "variation-2"
+	variationValue1 := "true"
+
+	patterns := []struct {
+		desc              string
+		features          []*ftproto.Feature
+		targetFeatureID   string
+		deletedVariations map[string]string // variationID -> variationValue
+		expected          error
+	}{
+		{
+			desc:            "success: no features using deleted variations",
+			features:        []*ftproto.Feature{},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: target feature uses variation (should be excluded)",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-1",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "error: other feature has prerequisite using deleted variation",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: ErrVariationInUse,
+		},
+		{
+			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationID1}, // Fixed: Use variation ID, not value
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: ErrVariationInUse,
+		},
+		{
+			desc: "success: no variations to delete",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-1",
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID:   "feature-1",
+			deletedVariations: map[string]string{},
+			expected:          nil,
+		},
+		{
+			desc: "success: different feature ID in prerequisite",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Prerequisites: []*ftproto.Prerequisite{
+						{
+							FeatureId:   "feature-3", // Different feature
+							VariationId: variationID1,
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: different variation ID in FEATURE_FLAG rule",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-2",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-1",
+									Values:    []string{variationID2}, // Fixed: Different variation ID
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-1",
+			deletedVariations: map[string]string{
+				variationID1: variationValue1,
+			},
+			expected: nil,
+		},
+		{
+			desc: "error: detailed FEATURE_FLAG rule test",
+			features: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Variations: []*ftproto.Variation{
+						{Id: "var-true", Value: "true"},
+						{Id: "var-false", Value: "false"},
+					},
+				},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Id: "test-rule",
+							Clauses: []*ftproto.Clause{
+								{
+									Id:        "test-clause",
+									Operator:  ftproto.Clause_FEATURE_FLAG,
+									Attribute: "feature-A",          // References feature being updated
+									Values:    []string{"var-true"}, // Fixed: Use variation ID, not value
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFeatureID: "feature-A",
+			deletedVariations: map[string]string{
+				"var-true": "true", // Deleting variation with value "true"
+			},
+			expected: ErrVariationInUse,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			err := ValidateVariationUsage(p.features, p.targetFeatureID, p.deletedVariations)
+			if p.expected != nil {
+				assert.Error(t, err)
+				assert.Equal(t, p.expected, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
 
@@ -3173,7 +3601,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 				},
 			},
@@ -3252,8 +3680,8 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 50},
-						{Variation: id2.String(), Weight: 50},
+						{Variation: id1.String(), Weight: 50000},
+						{Variation: id2.String(), Weight: 50000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3270,7 +3698,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       0,
@@ -3287,7 +3715,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       100,
@@ -3304,7 +3732,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       -1,
@@ -3321,7 +3749,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       101,
@@ -3338,7 +3766,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3355,7 +3783,7 @@ func TestValidateStrategy(t *testing.T) {
 				Type: ftproto.Strategy_ROLLOUT,
 				RolloutStrategy: &ftproto.RolloutStrategy{
 					Variations: []*ftproto.RolloutStrategy_Variation{
-						{Variation: id1.String(), Weight: 100},
+						{Variation: id1.String(), Weight: 100000},
 					},
 					Audience: &ftproto.Audience{
 						Percentage:       50,
@@ -3365,6 +3793,66 @@ func TestValidateStrategy(t *testing.T) {
 			},
 			variations:  variations,
 			expectedErr: ErrDefaultVariationNotFound,
+		},
+		{
+			desc: "fail: rollout strategy weights sum less than 100000",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 30000}, // 30%
+						{Variation: id2.String(), Weight: 40000}, // 40%
+						// Total: 70000 (70%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights sum more than 100000",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 60000}, // 60%
+						{Variation: id2.String(), Weight: 50000}, // 50%
+						// Total: 110000 (110%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights zero total",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 0},
+						{Variation: id2.String(), Weight: 0},
+						// Total: 0 (0%) - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
+		},
+		{
+			desc: "fail: rollout strategy weights using old test values",
+			strategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_ROLLOUT,
+				RolloutStrategy: &ftproto.RolloutStrategy{
+					Variations: []*ftproto.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 30}, // Old test format
+						{Variation: id2.String(), Weight: 70}, // Old test format
+						// Total: 100 instead of 100000 - invalid!
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidVariationWeightTotal,
 		},
 	}
 	for _, tt := range tests {
@@ -3377,5 +3865,60 @@ func TestValidateStrategy(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+func TestRemoveVariationMinimumVariationConstraint(t *testing.T) {
+	// Test case 1: Feature with exactly 3 variations - should allow removal (leaves 2)
+	f := makeFeature("test-feature")
+	// makeFeature creates 3 variations: A, B, C
+	// Remove variation-C (which has users, so we need to remove them first)
+	f.Targets[2].Users = []string{} // Remove users from variation-C
+
+	patterns := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       "variation-C",
+			expected: nil, // Should succeed - leaves 2 variations
+		},
+	}
+
+	for i, p := range patterns {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify we now have 2 variations
+	if len(f.Variations) != 2 {
+		t.Fatalf("Expected 2 variations after removal, got %d", len(f.Variations))
+	}
+
+	// Test case 2: Now try to remove another variation - should fail (would leave 1)
+	patterns2 := []*struct {
+		id       string
+		expected error
+	}{
+		{
+			id:       "variation-A",
+			expected: errVariationsMustHaveAtLeastTwoVariations, // Should fail - would leave 1 variation
+		},
+		{
+			id:       "variation-B",
+			expected: errVariationsMustHaveAtLeastTwoVariations, // Should fail - would leave 1 variation
+		},
+	}
+
+	for i, p := range patterns2 {
+		err := f.RemoveVariation(p.id)
+		des := fmt.Sprintf("constraint_test_index: %d", i)
+		assert.Equal(t, p.expected, err, des)
+	}
+
+	// Verify we still have 2 variations (removal should have failed)
+	if len(f.Variations) != 2 {
+		t.Fatalf("Expected 2 variations after failed removal attempts, got %d", len(f.Variations))
 	}
 }

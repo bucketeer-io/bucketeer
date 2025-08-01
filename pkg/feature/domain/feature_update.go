@@ -397,6 +397,8 @@ func (f *Feature) updateAddVariation(id, value, name, description string) error 
 		Description: description,
 	})
 	f.addTarget(id)
+	f.updateAddVariationToRules(id)
+	f.updateAddVariationToDefaultStrategy(id)
 	return nil
 }
 
@@ -423,18 +425,114 @@ func (f *Feature) updateChangeVariation(variation *feature.Variation) error {
 }
 
 func (f *Feature) updateRemoveVariation(id string) error {
-	if len(f.Variations) == 1 {
-		return errVariationInUse
-	}
-	idx, err := f.findVariationIndex(id)
+	idx, err := f.updateFindVariationIndex(id)
 	if err != nil {
 		return err
 	}
-	if err := f.validateRemoveVariation(id); err != nil {
+	if err := f.updateValidateRemoveVariation(id); err != nil {
 		return err
 	}
+	// Clean up references to this variation before removing it
+	if err = f.updateRemoveTarget(id); err != nil {
+		return err
+	}
+	f.updateRemoveVariationFromRules(id)
+	f.updateRemoveVariationFromDefaultStrategy(id)
 	f.Variations = slices.Delete(f.Variations, idx, idx+1)
 	return nil
+}
+
+// updateFindVariationIndex finds the index of the variation with the specified ID
+func (f *Feature) updateFindVariationIndex(id string) (int, error) {
+	for i := range f.Variations {
+		if f.Variations[i].Id == id {
+			return i, nil
+		}
+	}
+	return -1, errVariationNotFound
+}
+
+// updateFindTarget finds the index of the target with the specified variation ID
+func (f *Feature) updateFindTarget(id string) (int, error) {
+	for i := range f.Targets {
+		if f.Targets[i].Variation == id {
+			return i, nil
+		}
+	}
+	return -1, errTargetNotFound
+}
+
+// updateValidateRemoveVariation validates that a variation can be safely removed
+func (f *Feature) updateValidateRemoveVariation(id string) error {
+	if len(f.Variations) <= 2 {
+		return errVariationsMustHaveAtLeastTwoVariations
+	}
+	if f.OffVariation == id {
+		return ErrVariationInUse
+	}
+	// Check if the individual targeting has any users
+	idx, err := f.updateFindTarget(id)
+	if err != nil {
+		return err
+	}
+	if len(f.Targets[idx].Users) > 0 {
+		return ErrVariationInUse
+	}
+	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
+		return ErrVariationInUse
+	}
+	if f.updateRulesContainsVariation(id) {
+		return ErrVariationInUse
+	}
+	return nil
+}
+
+// updateRulesContainsVariation checks if any rule contains the specified variation
+func (f *Feature) updateRulesContainsVariation(id string) bool {
+	for _, r := range f.Feature.Rules {
+		if ok := strategyContainsVariation(id, r.Strategy); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// updateRemoveTarget removes the target entry for the specified variation
+func (f *Feature) updateRemoveTarget(variationID string) error {
+	idx, err := f.updateFindTarget(variationID)
+	if err != nil {
+		return err
+	}
+	f.Targets = slices.Delete(f.Targets, idx, idx+1)
+	return nil
+}
+
+// updateRemoveVariationFromRules removes the variation from all rollout strategies in rules
+func (f *Feature) updateRemoveVariationFromRules(variationID string) {
+	for _, rule := range f.Rules {
+		if rule.Strategy.Type == feature.Strategy_ROLLOUT {
+			f.updateRemoveVariationFromRolloutStrategy(rule.Strategy.RolloutStrategy, variationID)
+		}
+	}
+}
+
+// updateRemoveVariationFromDefaultStrategy removes the variation from the default strategy if it's a rollout
+func (f *Feature) updateRemoveVariationFromDefaultStrategy(variationID string) {
+	if f.DefaultStrategy != nil && f.DefaultStrategy.Type == feature.Strategy_ROLLOUT {
+		f.updateRemoveVariationFromRolloutStrategy(f.DefaultStrategy.RolloutStrategy, variationID)
+	}
+}
+
+// updateRemoveVariationFromRolloutStrategy removes all instances of the variation from a rollout strategy
+func (f *Feature) updateRemoveVariationFromRolloutStrategy(strategy *feature.RolloutStrategy, variationID string) {
+	// Remove all instances of the variation, regardless of weight
+	filteredVariations := make([]*feature.RolloutStrategy_Variation, 0, len(strategy.Variations))
+	for _, v := range strategy.Variations {
+		if v.Variation != variationID {
+			filteredVariations = append(filteredVariations, v)
+		}
+	}
+	strategy.Variations = filteredVariations
 }
 
 func (f *Feature) updateAddPrerequisite(featureID, variationID string) error {
@@ -599,4 +697,25 @@ func (f *Feature) findPrerequisiteIndex(featureID string) (int, error) {
 		}
 	}
 	return -1, errPrerequisiteNotFound
+}
+
+func (f *Feature) updateAddVariationToRules(variationID string) {
+	for _, rule := range f.Rules {
+		if rule.Strategy.Type == feature.Strategy_ROLLOUT {
+			f.updateAddVariationToRolloutStrategy(rule.Strategy.RolloutStrategy, variationID)
+		}
+	}
+}
+
+func (f *Feature) updateAddVariationToDefaultStrategy(variationID string) {
+	if f.DefaultStrategy != nil && f.DefaultStrategy.Type == feature.Strategy_ROLLOUT {
+		f.updateAddVariationToRolloutStrategy(f.DefaultStrategy.RolloutStrategy, variationID)
+	}
+}
+
+func (f *Feature) updateAddVariationToRolloutStrategy(strategy *feature.RolloutStrategy, variationID string) {
+	strategy.Variations = append(strategy.Variations, &feature.RolloutStrategy_Variation{
+		Variation: variationID,
+		Weight:    0,
+	})
 }
