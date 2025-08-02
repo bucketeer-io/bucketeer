@@ -248,6 +248,14 @@ processors:
     domainEventTopic:
     flushSize: 100
     flushInterval: 10
+    # PubSub configuration  
+    pubSubType: google
+    redisServerName: ""
+    redisAddr: ""
+    redisPoolSize: 25
+    redisMinIdle: 25
+    redisPartitionCount: 16
+    project: ""
   userEventPersister:
     flushSize: 200
     flushInterval: 5

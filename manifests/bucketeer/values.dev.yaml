@@ -508,6 +508,14 @@ subscriber:
       domainEventTopic: domain
       flushSize: 10
       flushInterval: 5
+      # PubSub configuration  
+      pubSubType: ${global.pubsub.type}
+      redisServerName: ${global.pubsub.redis.serverName}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisPartitionCount: ${global.pubsub.redis.partitionCount}
+      project: ${global.pubsub.project}
     userEventPersister:
       flushSize: 10
       flushInterval: 5
