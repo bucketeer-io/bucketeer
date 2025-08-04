@@ -1,11 +1,10 @@
 # Summary
 
-We will implement password authentication for Bucketeer to provide a complete authentication solution alongside the existing Google OAuth integration. Currently, the system only supports demo sign-in with hardcoded credentials, which is not suitable for production deployments. This RFC proposes implementing real password-based authentication with secure password storage, password recovery via email, and proper user management.
+We will implement password authentication for Bucketeer to provide a complete authentication solution alongside the existing Google OAuth integration. This RFC proposes implementing real password-based authentication with secure password storage, password recovery via email, and proper user management.
 
 ## Background
 
 The current authentication system in Bucketeer supports:
-- **Demo Sign-In**: Hardcoded email/password for demonstration purposes only
 - **Google OAuth**: OAuth2 integration for Google authentication
 
 However, for production deployments, especially in self-hosted environments, organizations need a native password authentication system that doesn't rely on external OAuth providers.
@@ -15,7 +14,7 @@ However, for production deployments, especially in self-hosted environments, org
 - Implement secure password authentication with proper password hashing
 - Add password recovery functionality via email
 - Extend the existing `SignIn` API to support real password authentication
-- Maintain backward compatibility with existing demo and OAuth authentication
+- Maintain backward compatibility with existing OAuth authentication
 - Ensure security best practices for password storage and validation
 - Support password complexity requirements
 
@@ -35,14 +34,10 @@ CREATE TABLE `account_credentials` (
   `created_at` bigint NOT NULL,
   `updated_at` bigint NOT NULL,
   PRIMARY KEY (`email`),
-  UNIQUE INDEX `unique_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- Create index for password reset tokens
 CREATE INDEX `idx_password_reset_token` ON `account_credentials` (`password_reset_token`);
-
--- Create index for email to improve lookup performance
-CREATE INDEX `idx_email` ON `account_credentials` (`email`);
 ```
 
 ### Configuration Changes
@@ -67,7 +62,6 @@ type OAuthConfig struct {
     Issuer           string               `json:"issuer"`
     Audience         string               `json:"audience"`
     GoogleConfig     GoogleConfig         `json:"google"`
-    DemoSignIn       DemoSignInConfig     `json:"demoSignIn"`
     PasswordAuth     PasswordAuthConfig   `json:"passwordAuth"`
 }
 ```
@@ -174,19 +168,12 @@ func (s *authService) SignIn(
         return nil, err
     }
 
-    // First, try demo authentication if enabled
-    if s.config.DemoSignIn.Enabled &&
-       request.Email == s.config.DemoSignIn.Email &&
-       request.Password == s.config.DemoSignIn.Password {
-        return s.handleDemoSignIn(ctx, request, localizer)
-    }
-
-    // Then, try password authentication if enabled
+    // Try password authentication if enabled
     if s.config.PasswordAuth.Enabled {
         return s.handlePasswordSignIn(ctx, request, localizer)
     }
 
-    // If neither is enabled or credentials don't match, deny access
+    // If password authentication is not enabled or credentials don't match, deny access
     s.logger.Error("Sign in failed - no valid authentication method",
         zap.String("email", request.Email),
     )
