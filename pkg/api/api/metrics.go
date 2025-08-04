@@ -25,10 +25,19 @@ import (
 const (
 	callerGatewayService = "GatewayService"
 
-	methodGetEvaluations = "GetEvaluations"
-	methodGetEvaluation  = "GetEvaluation"
-	methodRegisterEvents = "RegisterEvent"
-	methodTrack          = "Track"
+	methodGetEvaluations   = "GetEvaluations"
+	methodGetEvaluation    = "GetEvaluation"
+	methodRegisterEvents   = "RegisterEvent"
+	methodTrack            = "Track"
+	methodGetGoal          = "Goal"
+	methodListGoals        = "ListGoals"
+	methodCreateGoal       = "CreateGoal"
+	methodUpdateGoal       = "UpdateGoal"
+	methodDeleteGoal       = "DeleteGoal"
+	methodGetExperiment    = "Experiment"
+	methodListExperiments  = "ListExperiments"
+	methodCreateExperiment = "CreateExperiment"
+	methodUpdateExperiment = "UpdateExperiment"
 
 	typeFeatures      = "Features"
 	typeSegmentUsers  = "SegmentUsers"
