@@ -161,11 +161,15 @@ The subscriber service uses JSON configuration files located in the `docker-comp
 # Clean up all containers, networks, and volumes
 make docker-compose-clean
 
-# View logs for specific service
-docker-compose -f docker-compose/docker-compose.yml logs -f web
+# View logs for specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml logs -f web
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml logs -f web
 
-# Restart a specific service
-docker-compose -f docker-compose/docker-compose.yml restart api
+# Restart a specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml restart api
+# Or for Docker Compose v1  
+docker-compose -f docker-compose/compose.yml restart api
 ```
 
 # Running E2E Tests

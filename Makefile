@@ -428,8 +428,29 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 # Docker Compose
 #############################
 
+# Detect Docker Compose version and set variables
+define detect_docker_compose
+	$(eval DOCKER_COMPOSE_CMD := $(shell \
+		if docker compose version >/dev/null 2>&1; then \
+			echo "docker compose"; \
+		elif docker-compose --version >/dev/null 2>&1; then \
+			echo "docker-compose"; \
+		else \
+			echo ""; \
+		fi \
+	))
+	$(eval COMPOSE_FILE := docker-compose/compose.yml)
+	@if [ -z "$(DOCKER_COMPOSE_CMD)" ]; then \
+		echo "❌ Error: Neither 'docker compose' (v2) nor 'docker-compose' (v1) found"; \
+		echo "Please install Docker Compose: https://docs.docker.com/compose/install/"; \
+		exit 1; \
+	fi
+	@echo "🐳 Using Docker Compose command: $(DOCKER_COMPOSE_CMD)"
+endef
+
 .PHONY: docker-compose-setup
 docker-compose-setup:
+	$(call detect_docker_compose)
 	@echo "Setting up Docker Compose environment..."
 	@if [ ! -d "docker-compose/init-db" ]; then \
 		echo "Creating docker-compose/init-db directory..."; \
@@ -466,6 +487,7 @@ docker-compose-build:
 # make docker-compose-up SKIP_BUILD=true
 .PHONY: docker-compose-up
 docker-compose-up: docker-compose-setup docker-compose-init-env
+	$(call detect_docker_compose)
 	@if [ "$(SKIP_BUILD)" = "true" ]; then \
 		echo "⏭️  Skipping build step as requested (SKIP_BUILD=true)."; \
 	else \
@@ -473,26 +495,30 @@ docker-compose-up: docker-compose-setup docker-compose-init-env
 	fi
 	@echo "🚀 Starting Bucketeer services with Docker Compose..."
 	@set -a && . docker-compose/.env && set +a && \
-	docker-compose -f docker-compose/docker-compose.yml up -d
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) up -d
 
 
 .PHONY: docker-compose-down
 docker-compose-down:
+	$(call detect_docker_compose)
 	@echo "Stopping Bucketeer services..."
-	docker-compose -f docker-compose/docker-compose.yml down
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) down
 
 .PHONY: docker-compose-logs
 docker-compose-logs:
-	docker-compose -f docker-compose/docker-compose.yml logs -f
+	$(call detect_docker_compose)
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) logs -f
 
 .PHONY: docker-compose-status
 docker-compose-status:
-	docker-compose -f docker-compose/docker-compose.yml ps
+	$(call detect_docker_compose)
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) ps
 
 .PHONY: docker-compose-clean
 docker-compose-clean:
+	$(call detect_docker_compose)
 	@echo "Stopping and removing all containers, networks, and volumes..."
-	docker-compose -f docker-compose/docker-compose.yml down -v
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) down -v
 	docker system prune -f
 
 .PHONY: docker-compose-delete-data

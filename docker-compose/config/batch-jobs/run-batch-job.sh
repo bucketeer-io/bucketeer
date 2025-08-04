@@ -41,7 +41,7 @@ echo "$(date): Starting batch job: $JOB_ID"
 RES=$(curl -X POST \
     -m 3600 \
     --cacert "$CERT_FILE" \
-    -d "{\"job\": \"$JOB_ID\"}" \
+    -d '{"job":"'$JOB_ID'"}' \
     -H "authorization: bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -s -o /dev/null -w '%{http_code}\n' \

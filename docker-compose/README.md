@@ -111,7 +111,7 @@ You can customize the Docker image versions used by setting environment variable
 
 #### Using Default Versions
 ```shell
-# Use the default versions specified in docker-compose.yml
+# Use the default versions specified in compose.yml
 make docker-compose-up
 ```
 
@@ -253,14 +253,20 @@ make docker-compose-create-mysql-event-tables
 
 ### Individual Service Management
 ```shell
-# View logs for specific service
-docker-compose -f docker-compose/docker-compose.yml logs -f web
+# View logs for specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml logs -f web
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml logs -f web
 
-# Restart a specific service
-docker-compose -f docker-compose/docker-compose.yml restart api
+# Restart a specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml restart api
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml restart api
 
-# Scale a service (if supported)
-docker-compose -f docker-compose/docker-compose.yml up -d --scale batch=2
+# Scale a service (if supported) - Docker Compose v2
+docker compose -f docker-compose/compose.yml up -d --scale batch=2
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml up -d --scale batch=2
 ```
 
 ## Running E2E Tests
@@ -318,11 +324,15 @@ make e2e
 ### Debugging Commands
 
 ```shell
-# Check service health
-docker-compose -f docker-compose/docker-compose.yml ps
+# Check service health (Docker Compose v2)
+docker compose -f docker-compose/compose.yml ps
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml ps
 
-# View detailed logs for a service
-docker-compose -f docker-compose/docker-compose.yml logs -f --tail=100 web
+# View detailed logs for a service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml logs -f --tail=100 web
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml logs -f --tail=100 web
 
 ```
 
@@ -348,7 +358,7 @@ make start-docker-compose
 ```
 docker-compose/
 ├── README.md                 # This file
-├── docker-compose.yml        # Main Docker Compose configuration
+├── compose.yml               # Main Docker Compose configuration
 ├── env.default               # Default environment variables
 ├── .gitignore                # Git ignore rules
 └── config/
