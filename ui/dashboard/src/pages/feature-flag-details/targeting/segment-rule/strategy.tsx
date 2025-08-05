@@ -35,7 +35,7 @@ interface Props {
   handleSelectStrategy: (item: VariationOption) => void;
 }
 
-type SplitOptionType = 'equally' | 'percentage';
+type SplitOptionType = 'equally' | 'percentage' | 'default';
 type StrategyVariation = StrategySchema['rolloutStrategy']['variations'];
 
 const Strategy = ({
@@ -60,7 +60,8 @@ const Strategy = ({
   const variations = (rolloutStrategy?.variations as StrategyVariation) || [];
 
   const [isCustomExperiment, setIsCustomExperiment] = useState(false);
-  const [splitOptionType, setSplitOptionType] = useState<SplitOptionType>();
+  const [splitOptionType, setSplitOptionType] =
+    useState<SplitOptionType>('default');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCheckError = (values: StrategyVariation) => {
@@ -92,9 +93,17 @@ const Strategy = ({
       setValue(`${rootName}.${strategyName}.audience.percentage`, '');
     } else {
       setIsCustomExperiment(false);
-      setValue(`${rootName}.${strategyName}.audience.percentage`, value, {
-        shouldDirty: true
-      });
+      setValue(
+        `${rootName}.${strategyName}.audience`,
+        {
+          percentage: value,
+          defaultVariation:
+            value === 100 ? '' : rolloutStrategy.audience?.defaultVariation
+        },
+        {
+          shouldDirty: true
+        }
+      );
     }
   };
 
@@ -262,7 +271,8 @@ const Strategy = ({
                             isActive={
                               item.value === 'custom'
                                 ? isCustomExperiment
-                                : field.value === item.value
+                                : !isCustomExperiment &&
+                                  field.value === item.value
                             }
                             onSelect={handleSelectExperiment}
                           />
@@ -295,86 +305,92 @@ const Strategy = ({
               );
             }}
           />
+          {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
+            <>
+              <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+                <Trans
+                  i18nKey={
+                    'form:experiments.define-audience.not-in-experiment-served'
+                  }
+                  values={{
+                    percent: `${100 - experimentPercentage}%`
+                  }}
+                  components={{
+                    highlight: (
+                      <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
+                    )
+                  }}
+                />
+                <div className="flex-1">
+                  <Form.Field
+                    control={control}
+                    name={`${rootName}.${strategyName}.audience.defaultVariation`}
+                    render={({ field }) => {
+                      const options = variationOptions.slice(0, -1);
+                      const option = options.find(
+                        item => item.value === field.value
+                      );
 
-          <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
-            <Trans
-              i18nKey={
-                'form:experiments.define-audience.not-in-experiment-served'
-              }
-              values={{
-                percent: `${100 - experimentPercentage}%`
-              }}
-              components={{
-                highlight: (
-                  <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
-                )
-              }}
-            />
-            <div className="flex-1">
-              <Form.Field
-                control={control}
-                name={`${rootName}.${strategyName}.audience.defaultVariation`}
-                render={({ field }) => {
-                  const options = variationOptions.slice(0, -1);
-                  const option = options.find(
-                    item => item.value === field.value
-                  );
+                      return (
+                        <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                          <Form.Control>
+                            <DropdownMenu>
+                              <div className="flex flex-col gap-y-2 w-full">
+                                <DropdownMenuTrigger
+                                  trigger={
+                                    <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
+                                      {option?.icon && (
+                                        <Icon icon={option.icon} size={'sm'} />
+                                      )}
+                                      {option?.label || ''}
+                                    </div>
+                                  }
+                                  isExpand
+                                  disabled={isDisabled}
+                                  className="w-full"
+                                />
+                              </div>
+                              <DropdownMenuContent align="start">
+                                {options.map((item, index) => (
+                                  <DropdownMenuItem
+                                    {...field}
+                                    key={index}
+                                    label={item.label}
+                                    value={item.value}
+                                    icon={item?.icon}
+                                    onSelectOption={() => {
+                                      field.onChange(item.value);
+                                    }}
+                                  />
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </Form.Control>
+                          <Form.Message />
+                        </Form.Item>
+                      );
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+                <Trans
+                  i18nKey={
+                    'form:experiments.define-audience.in-experiment-target'
+                  }
+                  values={{
+                    percent: `${experimentPercentage}%`
+                  }}
+                  components={{
+                    highlight: (
+                      <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
+                    )
+                  }}
+                />
+              </div>
+            </>
+          )}
 
-                  return (
-                    <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                      <Form.Control>
-                        <DropdownMenu>
-                          <div className="flex flex-col gap-y-2 w-full">
-                            <DropdownMenuTrigger
-                              trigger={
-                                <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
-                                  {option?.icon && (
-                                    <Icon icon={option.icon} size={'sm'} />
-                                  )}
-                                  {option?.label || ''}
-                                </div>
-                              }
-                              isExpand
-                              disabled={isDisabled}
-                              className="w-full"
-                            />
-                          </div>
-                          <DropdownMenuContent align="start">
-                            {options.map((item, index) => (
-                              <DropdownMenuItem
-                                {...field}
-                                key={index}
-                                label={item.label}
-                                value={item.value}
-                                icon={item?.icon}
-                                onSelectOption={() => {
-                                  field.onChange(item.value);
-                                }}
-                              />
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  );
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
-            <Trans
-              i18nKey={'form:experiments.define-audience.in-experiment-target'}
-              values={{
-                percent: `${experimentPercentage}%`
-              }}
-              components={{
-                highlight: (
-                  <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
-                )
-              }}
-            />
-          </div>
           <Divider className="my-5 border-gray-300" />
           <p className="typo-para-medium text-gray-700">
             {t('form:experiments.define-audience.split-experiment-audience')}
@@ -426,15 +442,21 @@ const Strategy = ({
                         </div>
                       )}
                       <div className="flex items-center w-full mb-3 mt-5 px-2">
-                        <div className="typo-para-small text-gray-500 uppercase flex-1">{`Name`}</div>
-                        <div className="typo-para-small text-gray-500 uppercase flex-1">{`Percentage`}</div>
+                        <div className="typo-para-small text-gray-500 uppercase flex-1">
+                          {t('common:name')}
+                        </div>
+                        <div className="typo-para-small text-gray-500 uppercase flex-1">
+                          {t(`common:percentage`)}
+                        </div>
                       </div>
                       <div className="flex flex-col gap-y-3 px-2">
                         {field.value?.map(
                           (rollout: RuleStrategyVariation, index: number) => (
                             <PercentageInput
                               key={index}
-                              isDisabled={isDisabled || !splitOptionType}
+                              isDisabled={
+                                isDisabled || splitOptionType === 'default'
+                              }
                               variationOptions={variationOptions}
                               name={`${rootName}.${strategyName}.variations.${index}.weight`}
                               variationId={rollout.variation}
@@ -454,7 +476,7 @@ const Strategy = ({
                       </div>
                     </>
                   </Form.Control>
-                  {splitOptionType && <Form.Message />}
+                  {splitOptionType !== 'default' && <Form.Message />}
                 </Form.Item>
               );
             }}

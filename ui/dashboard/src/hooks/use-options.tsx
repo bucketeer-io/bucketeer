@@ -446,8 +446,8 @@ const useOptions = () => {
         value: 50
       },
       {
-        label: '90%',
-        value: 90
+        label: '100%',
+        value: 100
       },
       {
         label: translation('custom', 'form'),

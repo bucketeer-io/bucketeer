@@ -63,10 +63,15 @@ export const getDefaultStrategy = (
             weight: item.weight / 1000 || 0
           }))
         : getDefaultRolloutStrategy(feature),
-      audience: {
-        percentage: rolloutStrategy?.audience?.percentage || 0,
-        defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
-      }
+      audience: rolloutStrategy?.audience
+        ? {
+            percentage: rolloutStrategy?.audience?.percentage || 0,
+            defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
+          }
+        : {
+            percentage: 100,
+            defaultVariation: ''
+          }
     },
     currentOption:
       type === StrategyType.FIXED
@@ -85,8 +90,8 @@ export const getDefaultRule = (feature: Feature) => ({
     rolloutStrategy: {
       variations: getDefaultRolloutStrategy(feature),
       audience: {
-        percentage: 0,
-        defaultVariation: feature?.variations[0]?.id || ''
+        percentage: 100,
+        defaultVariation: ''
       }
     },
     type: StrategyType.FIXED
@@ -220,10 +225,16 @@ const handleGetStrategy = (
             ...item,
             weight: item.weight * 1000
           })) || [],
-        audience: {
-          percentage: rolloutStrategy?.audience?.percentage || 0,
-          defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
-        }
+        audience: rolloutStrategy?.audience
+          ? {
+              percentage: rolloutStrategy?.audience?.percentage || 0,
+              defaultVariation:
+                rolloutStrategy?.audience?.defaultVariation || ''
+            }
+          : {
+              percentage: 100,
+              defaultVariation: ''
+            }
       }
     };
   }
@@ -242,10 +253,16 @@ export const handleGetDefaultRuleStrategy = (
             ...item,
             weight: item.weight * 1000
           })) || [],
-        audience: {
-          percentage: rolloutStrategy?.audience?.percentage || 0,
-          defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
-        }
+        audience: rolloutStrategy?.audience
+          ? {
+              percentage: rolloutStrategy?.audience?.percentage || 0,
+              defaultVariation:
+                rolloutStrategy?.audience?.defaultVariation || ''
+            }
+          : {
+              percentage: 100,
+              defaultVariation: ''
+            }
       }
     };
   }
