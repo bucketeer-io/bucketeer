@@ -31,6 +31,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -71,6 +72,7 @@ type server struct {
 	tagService             *string
 	teamService            *string
 	notificationService    *string
+	experimentService      *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -152,6 +154,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"notification-service",
 			"bucketeer-notification-service address.",
 		).Default("notification:9090").String(),
+		experimentService: cmd.Flag(
+			"experiment-service",
+			"bucketeer-experiment-service address.",
+		).Default("experiment:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -395,6 +401,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer notificationClient.Close()
 
+	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer experimentClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -419,6 +437,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagClient,
 		teamClient,
 		notificationClient,
+		experimentClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,

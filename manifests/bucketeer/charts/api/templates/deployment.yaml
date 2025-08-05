@@ -97,6 +97,8 @@ spec:
               value: "{{ .Values.env.teamService }}"
             - name: BUCKETEER_API_NOTIFICATION_SERVICE
               value: "{{ .Values.env.notificationService }}"
+            - name: BUCKETEER_API_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_API_GRPC_GATEWAY_PORT
               value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_API_PORT
