@@ -48,32 +48,38 @@ const strategySchema = yup.object().shape({
       otherwise: schema => schema.required(requiredMessage)
     }),
   rolloutStrategy: yup
-    .array()
-    .of(
-      yup.object().shape({
-        variation: yup.string().required(requiredMessage),
-        weight: yup.number().required(requiredMessage)
-      })
-    )
-    .when('type', {
-      is: (type: string) => type !== StrategyType.ROLLOUT,
-      then: schema => schema,
-      otherwise: schema => schema.required(requiredMessage)
+    .object()
+    .shape({
+      audience: yup.object().shape({
+        percentage: yup
+          .number()
+          .transform(value => (isNaN(value) ? undefined : value))
+          .min(0)
+          .max(100, translation('message:validation.percentage-less-than-100')),
+        defaultVariation: yup.string()
+      }),
+      variations: yup.array().of(
+        yup.object().shape({
+          variation: yup.string().required(requiredMessage),
+          weight: yup.number().required(requiredMessage)
+        })
+      )
     })
-    .test('sum', (value, context) => {
-      if (context.parent?.type !== StrategyType.ROLLOUT) {
+    .test('sum', function (value) {
+      const { type } = this.parent || {};
+      if (type !== StrategyType.ROLLOUT) {
         return true;
       }
-      if (value) {
-        const total = value
+      if (value.variations) {
+        const total = value.variations
           .map(v => Number(v.weight))
           .reduce((total, current) => {
             return total + (current || 0);
           }, 0);
         if (total !== 100)
-          return context.createError({
+          return this.createError({
             message: translation('message:validation.should-be-percent'),
-            path: context.path
+            path: `${this.path}.variations`
           });
       }
       return true;
@@ -95,9 +101,11 @@ const defaultAudienceRuleSchema = yup.object().shape({
   notInExperiment: yup.number().required(requiredMessage),
   served: yup.boolean().required(requiredMessage),
   variationReassignment: yup.boolean().required(requiredMessage)
-})
+});
 
-export type DefaultAudienceRuleSchema = yup.InferType<typeof defaultAudienceRuleSchema>;
+export type DefaultAudienceRuleSchema = yup.InferType<
+  typeof defaultAudienceRuleSchema
+>;
 
 export const defaultRuleSchema = yup.object().shape({
   audienceRules: yup.array().of(defaultAudienceRuleSchema),
@@ -116,64 +124,39 @@ export const defaultRuleSchema = yup.object().shape({
       then: schema => schema,
       otherwise: schema => schema.required(requiredMessage)
     }),
-  manualStrategy: yup
-    .array()
-    .of(
-      yup.object().shape({
-        variation: yup.string().required(requiredMessage),
-        weight: yup.number().required(requiredMessage)
-      })
-    )
-    .when('type', {
-      is: (type: string) => type !== StrategyType.MANUAL,
-      then: schema => schema,
-      otherwise: schema => schema.required(requiredMessage)
-    })
-    .test('sum', (value, context) => {
-      if (context.parent?.type !== StrategyType.MANUAL) {
-        return true;
-      }
-      if (value) {
-        const total = value
-          .map(v => Number(v.weight))
-          .reduce((total, current) => {
-            return total + (current || 0);
-          }, 0);
-        if (total !== 100)
-          return context.createError({
-            message: translation('message:validation.should-be-percent'),
-            path: context.path
-          });
-      }
-      return true;
-    }),
   rolloutStrategy: yup
-    .array()
-    .of(
-      yup.object().shape({
-        variation: yup.string().required(requiredMessage),
-        weight: yup.number().required(requiredMessage)
-      })
-    )
-    .when('type', {
-      is: (type: string) => type !== StrategyType.ROLLOUT,
-      then: schema => schema,
-      otherwise: schema => schema.required(requiredMessage)
+    .object()
+    .shape({
+      audience: yup.object().shape({
+        percentage: yup
+          .number()
+          .transform(value => (isNaN(value) ? undefined : value))
+          .min(0)
+          .max(100, translation('message:validation.percentage-less-than-100')),
+        defaultVariation: yup.string()
+      }),
+      variations: yup.array().of(
+        yup.object().shape({
+          variation: yup.string().required(requiredMessage),
+          weight: yup.number().required(requiredMessage)
+        })
+      )
     })
-    .test('sum', (value, context) => {
-      if (context.parent?.type !== StrategyType.ROLLOUT) {
+    .test('sum', function (value) {
+      const { type } = this.parent || {};
+      if (type !== StrategyType.MANUAL) {
         return true;
       }
-      if (value) {
-        const total = value
+      if (value.variations) {
+        const total = value.variations
           .map(v => Number(v.weight))
           .reduce((total, current) => {
             return total + (current || 0);
           }, 0);
         if (total !== 100)
-          return context.createError({
+          return this.createError({
             message: translation('message:validation.should-be-percent'),
-            path: context.path
+            path: `${this.path}.variations`
           });
       }
       return true;

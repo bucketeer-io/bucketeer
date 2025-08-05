@@ -21,7 +21,7 @@ const PercentageInput = ({
   isDisabled,
   handleChangeRolloutWeight
 }: Props) => {
-  const { control } = useFormContext();
+  const { control, watch } = useFormContext();
   const currentOption = variationOptions?.find(
     item => item.value === variationId
   );
@@ -31,39 +31,42 @@ const PercentageInput = ({
       control={control}
       name={name}
       render={({ field }) => {
-        let value = String(field.value);
+        let value = String(watch(name));
+
         value =
           value.startsWith('0') && value.length > 1
             ? value.toString().slice(1)
             : value;
         return (
-          <Form.Item className="flex flex-col w-fit gap-y-2 py-0">
+          <Form.Item className="flex flex-col gap-y-2 py-0">
             <Form.Control>
               <div className="flex items-center gap-x-2">
-                <InputGroup
-                  addon={'%'}
-                  addonSlot="right"
-                  className="w-[82px] overflow-hidden"
-                  addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 w-[29px] typo-para-medium text-gray-700"
-                >
-                  <Input
-                    {...field}
-                    disabled={isDisabled}
-                    value={value}
-                    onChange={value => {
-                      field.onChange(+value);
-                      handleChangeRolloutWeight(+value);
-                    }}
-                    onWheel={e => e.currentTarget.blur()}
-                    type="number"
-                    className="text-right pl-[5px]"
-                  />
-                </InputGroup>
                 {showVariationName && (
-                  <div className="flex items-center gap-x-2 typo-para-small text-gray-600">
+                  <div className="flex items-center flex-1 gap-x-2 typo-para-small text-gray-600">
                     {currentOption?.label}
                   </div>
                 )}
+                <div className="flex-1">
+                  <InputGroup
+                    addon={'%'}
+                    addonSlot="right"
+                    className="w-[82px] overflow-hidden"
+                    addonClassName="top-[1px] bottom-[1px] right-[1px] translate-x-0 translate-y-0 !flex-center rounded-r-lg bg-gray-200 w-[29px] typo-para-medium text-gray-700"
+                  >
+                    <Input
+                      {...field}
+                      disabled={isDisabled}
+                      value={value}
+                      onChange={value => {
+                        field.onChange(+value);
+                        handleChangeRolloutWeight(+value);
+                      }}
+                      onWheel={e => e.currentTarget.blur()}
+                      type="number"
+                      className="text-right pl-[5px]"
+                    />
+                  </InputGroup>
+                </div>
               </div>
             </Form.Control>
             <Form.Message />

@@ -227,7 +227,7 @@ const TargetingPage = ({
 
           const { comment, resetSampling, scheduleType, scheduleAt } =
             additionalValues || {};
- 
+
           const {
             id,
             rules,

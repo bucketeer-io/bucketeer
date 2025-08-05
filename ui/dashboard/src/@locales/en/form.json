@@ -71,6 +71,8 @@
     },
     "define-audience": {
       "title": "Define Audience",
+      "split-experiment": "Split Experiment Audience",
+      "split-experiment-desc": "Customize the audience split of your variations.",
       "rule-defines": "defines your experiment audience from the selected flag.",
       "any-traffic": "Any traffic that does not match other targeting rules for the feature flag",
       "audience-amount": "Set the audience amount to be included in the experiment",
