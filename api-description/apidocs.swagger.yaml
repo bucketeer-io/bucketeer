@@ -1534,6 +1534,268 @@ paths:
             $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesRequest'
       tags:
         - Feature Flags
+  /v1/experiment:
+    get:
+      summary: Get Experiment
+      description: Get an Experiment by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.experiments.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Experiments
+    post:
+      summary: Create Experiment
+      description: Create a new Experiment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.experiments.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateExperimentRequest'
+      tags:
+        - Experiments
+    patch:
+      summary: Update Experiment
+      description: Update an Experiment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.experiments.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateExperimentRequest'
+      tags:
+        - Experiments
+  /v1/experiments:
+    get:
+      summary: List Experiments
+      description: List Experiments. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.experiments.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListExperimentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: startAt
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: stopAt
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: maintainer
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - START_AT
+            - STOP_AT
+            - STATUS
+            - GOALS_COUNT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: statuses
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - WAITING
+              - RUNNING
+              - STOPPED
+              - FORCE_STOPPED
+          collectionFormat: multi
+      tags:
+        - Experiments
   /v1/feature:
     get:
       summary: Get
@@ -2121,6 +2383,290 @@ paths:
           default: ASC
       tags:
         - Flag Triggers
+  /v1/goal:
+    get:
+      summary: Get Goal
+      description: Get a Goal by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.goals.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Goals
+    delete:
+      summary: Delete Goal
+      description: Delete a Goal. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.goals.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Goals
+    post:
+      summary: Create Goal
+      description: Create a new Goal. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.goals.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateGoalRequest'
+      tags:
+        - Goals
+    patch:
+      summary: Update Goal
+      description: Update a Goal. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.goals.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateGoalRequest'
+      tags:
+        - Goals
+  /v1/goals:
+    get:
+      summary: List Goals
+      description: List Goals. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.goals.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListGoalsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - CONNECTION_TYPE
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: isInUseStatus
+          in: query
+          required: false
+          type: boolean
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: connectionType
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNKNOWN
+            - EXPERIMENT
+            - OPERATION
+          default: UNKNOWN
+      tags:
+        - Goals
   /v1/progressive_rollout:
     get:
       summary: Get Progressive Rollout
@@ -3710,6 +4256,13 @@ definitions:
       avatarFileType:
         type: string
         title: this is not saved in the auditlog table
+  ExperimentGoalReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
   FeatureVariationType:
     type: string
     enum:
@@ -3733,6 +4286,49 @@ definitions:
         format: int64
       userAttributesUpdated:
         type: boolean
+  GoalAutoOpsRuleReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      featureName:
+        type: string
+      autoOpsStatus:
+        $ref: '#/definitions/autoopsAutoOpsStatus'
+  GoalConnectionType:
+    type: string
+    enum:
+      - UNKNOWN
+      - EXPERIMENT
+      - OPERATION
+    default: UNKNOWN
+  GoalExperimentReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      featureId:
+        type: string
+      featureName:
+        type: string
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
+  ListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -3817,6 +4413,11 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  UpdateExperimentRequestUpdatedStatus:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
   UserData:
     type: object
     properties:
@@ -4429,6 +5030,39 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayCreateExperimentRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      goalIds:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      description:
+        type: string
+      baseVariationId:
+        type: string
+    required:
+      - featureId
+      - startAt
+      - stopAt
+      - goalIds
+      - name
+      - baseVariationId
+  bucketeergatewayCreateExperimentResponse:
+    type: object
+    properties:
+      experiment:
+        $ref: '#/definitions/experimentExperiment'
   bucketeergatewayCreateFeatureRequest:
     type: object
     properties:
@@ -4482,6 +5116,25 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  bucketeergatewayCreateGoalRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
+    required:
+      - id
+      - name
+  bucketeergatewayCreateGoalResponse:
+    type: object
+    properties:
+      goal:
+        $ref: '#/definitions/experimentGoal'
   bucketeergatewayCreateProgressiveRolloutRequest:
     type: object
     properties:
@@ -4615,6 +5268,8 @@ definitions:
     type: object
   bucketeergatewayDeleteFlagTriggerResponse:
     type: object
+  bucketeergatewayDeleteGoalResponse:
+    type: object
   bucketeergatewayDeleteProgressiveRolloutResponse:
     type: object
   bucketeergatewayDeleteSegmentResponse:
@@ -4674,6 +5329,11 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayGetExperimentResponse:
+    type: object
+    properties:
+      experiment:
+        $ref: '#/definitions/experimentExperiment'
   bucketeergatewayGetFeatureResponse:
     type: object
     properties:
@@ -4686,6 +5346,11 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  bucketeergatewayGetGoalResponse:
+    type: object
+    properties:
+      goal:
+        $ref: '#/definitions/experimentGoal'
   bucketeergatewayGetMeResponse:
     type: object
     properties:
@@ -4760,6 +5425,21 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayListExperimentsResponse:
+    type: object
+    properties:
+      experiments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/experimentExperiment'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+      summary:
+        $ref: '#/definitions/ListExperimentsResponseSummary'
   bucketeergatewayListFeatureHistoryResponse:
     type: object
     properties:
@@ -4789,6 +5469,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/ListFlagTriggersResponseFlagTriggerWithUrl'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListGoalsResponse:
+    type: object
+    properties:
+      goals:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/experimentGoal'
       cursor:
         type: string
       totalCount:
@@ -4980,6 +5673,33 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayUpdateExperimentRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      archived:
+        type: boolean
+        description: if true, the experiment will be archived
+      status:
+        $ref: '#/definitions/UpdateExperimentRequestUpdatedStatus'
+    required:
+      - id
+  bucketeergatewayUpdateExperimentResponse:
+    type: object
+    properties:
+      experiment:
+        $ref: '#/definitions/experimentExperiment'
   bucketeergatewayUpdateFeatureRequest:
     type: object
     properties:
@@ -5056,6 +5776,25 @@ definitions:
       url:
         type: string
         description: If reset is true, new generated trigger hook URL will be returned.
+  bucketeergatewayUpdateGoalRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      archived:
+        type: boolean
+        description: if true, the goal will be archived
+    required:
+      - id
+  bucketeergatewayUpdateGoalResponse:
+    type: object
+    properties:
+      goal:
+        $ref: '#/definitions/experimentGoal'
   bucketeergatewayUpdatePushRequest:
     type: object
     properties:
@@ -5567,6 +6306,138 @@ definitions:
       environmentId:
         type: string
         description: service.
+  experimentExperiment:
+    type: object
+    properties:
+      id:
+        type: string
+      goalId:
+        type: string
+      featureId:
+        type: string
+      featureVersion:
+        type: integer
+        format: int32
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      stopped:
+        type: boolean
+      stoppedAt:
+        type: string
+        format: int64
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      deleted:
+        type: boolean
+      goalIds:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      description:
+        type: string
+      baseVariationId:
+        type: string
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
+      maintainer:
+        type: string
+      archived:
+        type: boolean
+      goals:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ExperimentGoalReference'
+  experimentExperimentStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - STOPPED
+      - FORCE_STOPPED
+    default: WAITING
+  experimentGoal:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      deleted:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      isInUseStatus:
+        type: boolean
+        description: This field is set only when APIs return.
+      archived:
+        type: boolean
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
+      experiments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/GoalExperimentReference'
+      autoOpsRules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/GoalAutoOpsRuleReference'
+  experimentListExperimentsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - START_AT
+      - STOP_AT
+      - STATUS
+      - GOALS_COUNT
+    default: DEFAULT
+  experimentListExperimentsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  experimentListGoalsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - CONNECTION_TYPE
+    default: DEFAULT
+  experimentListGoalsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   featureAudience:
     type: object
     properties:
