@@ -306,91 +306,76 @@ const Strategy = ({
             }}
           />
           {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
-            <>
-              <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
-                <Trans
-                  i18nKey={
-                    'form:experiments.define-audience.not-in-experiment-served'
-                  }
-                  values={{
-                    percent: `${100 - experimentPercentage}%`
-                  }}
-                  components={{
-                    highlight: (
-                      <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
-                    )
-                  }}
-                />
-                <div className="flex-1">
-                  <Form.Field
-                    control={control}
-                    name={`${rootName}.${strategyName}.audience.defaultVariation`}
-                    render={({ field }) => {
-                      const options = variationOptions.slice(0, -1);
-                      const option = options.find(
-                        item => item.value === field.value
-                      );
+            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+              <Trans
+                i18nKey={
+                  'form:experiments.define-audience.not-in-experiment-served'
+                }
+                values={{
+                  percent: `${100 - experimentPercentage}%`
+                }}
+                components={{
+                  highlight: (
+                    <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
+                  ),
+                  select: (
+                    <Form.Field
+                      control={control}
+                      name={`${rootName}.${strategyName}.audience.defaultVariation`}
+                      render={({ field }) => {
+                        const options = variationOptions.slice(0, -1);
+                        const option = options.find(
+                          item => item.value === field.value
+                        );
 
-                      return (
-                        <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                          <Form.Control>
-                            <DropdownMenu>
-                              <div className="flex flex-col gap-y-2 w-full">
-                                <DropdownMenuTrigger
-                                  trigger={
-                                    <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
-                                      {option?.icon && (
-                                        <Icon icon={option.icon} size={'sm'} />
-                                      )}
-                                      {option?.label || ''}
-                                    </div>
-                                  }
-                                  isExpand
-                                  disabled={isDisabled}
-                                  className="w-full"
-                                />
-                              </div>
-                              <DropdownMenuContent align="start">
-                                {options.map((item, index) => (
-                                  <DropdownMenuItem
-                                    {...field}
-                                    key={index}
-                                    label={item.label}
-                                    value={item.value}
-                                    icon={item?.icon}
-                                    onSelectOption={() => {
-                                      field.onChange(item.value);
-                                    }}
+                        return (
+                          <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                            <Form.Control>
+                              <DropdownMenu>
+                                <div className="flex flex-col gap-y-2 w-full">
+                                  <DropdownMenuTrigger
+                                    trigger={
+                                      <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
+                                        {option?.icon && (
+                                          <Icon
+                                            icon={option.icon}
+                                            size={'sm'}
+                                          />
+                                        )}
+                                        {option?.label || ''}
+                                      </div>
+                                    }
+                                    isExpand
+                                    disabled={isDisabled}
+                                    className="w-full"
                                   />
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      );
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
-                <Trans
-                  i18nKey={
-                    'form:experiments.define-audience.in-experiment-target'
-                  }
-                  values={{
-                    percent: `${experimentPercentage}%`
-                  }}
-                  components={{
-                    highlight: (
-                      <div className="flex-center size-fit p-3 rounded-lg typo-para-medium leading-5 text-gray-700 bg-gray-additional-2" />
-                    )
-                  }}
-                />
-              </div>
-            </>
+                                </div>
+                                <DropdownMenuContent align="start">
+                                  {options.map((item, index) => (
+                                    <DropdownMenuItem
+                                      {...field}
+                                      key={index}
+                                      label={item.label}
+                                      value={item.value}
+                                      icon={item?.icon}
+                                      onSelectOption={() => {
+                                        field.onChange(item.value);
+                                      }}
+                                    />
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </Form.Control>
+                            <Form.Message />
+                          </Form.Item>
+                        );
+                      }}
+                    />
+                  )
+                }}
+              />
+            </div>
           )}
-
           <Divider className="my-5 border-gray-300" />
           <p className="typo-para-medium text-gray-700">
             {t('form:experiments.define-audience.split-experiment-audience')}

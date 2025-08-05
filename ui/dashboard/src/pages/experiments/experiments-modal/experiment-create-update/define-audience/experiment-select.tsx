@@ -14,7 +14,7 @@ const ExperimentSelect = ({
   return (
     <div
       className={cn(
-        'flex-center size-fit min-w-[50px] py-[14px] px-3 border border-gray-400 rounded-lg typo-para-medium leading-5 text-gray-700 capitalize cursor-pointer',
+        'flex-center size-fit min-w-20 py-[14px] px-3 border border-gray-400 rounded-lg typo-para-medium leading-5 text-gray-700 capitalize cursor-pointer',
         {
           'text-primary-500 border-primary-500': isActive
         }

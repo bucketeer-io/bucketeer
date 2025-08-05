@@ -83,8 +83,7 @@
       "in-this-experiment": "In this experiment",
       "not-in-experiment": "Not in this experiment",
       "unused-traffic": "Unused traffic",
-      "not-in-experiment-served": "Not in this experiment: <highlight>{{percent}}</highlight> will be served",
-      "in-experiment-target": "<highlight>{{percent}}</highlight> of the target audience will be in this experiment",
+      "not-in-experiment-served": "Not in this experiment: <highlight>{{percent}}</highlight> will be served <select></select>",
       "advanced-prevent-variation": "Prevent variation reassignment when traffic increases",
       "advanced-context-remain": "User contexts remain assigned to their experiment variations during an iteration."
     },

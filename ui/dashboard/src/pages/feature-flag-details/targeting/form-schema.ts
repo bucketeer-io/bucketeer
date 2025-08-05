@@ -56,7 +56,11 @@ const strategySchema = yup.object().shape({
           .transform(value => (isNaN(value) ? undefined : value))
           .min(0)
           .max(100, translation('message:validation.percentage-less-than-100')),
-        defaultVariation: yup.string()
+        defaultVariation: yup.string().when('percentage', {
+          is: (percentage: number) => percentage > 0 && percentage !== 100,
+          then: schema => schema.required(requiredMessage),
+          otherwise: schema => schema
+        })
       }),
       variations: yup.array().of(
         yup.object().shape({
@@ -133,7 +137,11 @@ export const defaultRuleSchema = yup.object().shape({
           .transform(value => (isNaN(value) ? undefined : value))
           .min(0)
           .max(100, translation('message:validation.percentage-less-than-100')),
-        defaultVariation: yup.string()
+        defaultVariation: yup.string().when('percentage', {
+          is: (percentage: number) => percentage > 0 && percentage !== 100,
+          then: schema => schema.required(requiredMessage),
+          otherwise: schema => schema
+        })
       }),
       variations: yup.array().of(
         yup.object().shape({
