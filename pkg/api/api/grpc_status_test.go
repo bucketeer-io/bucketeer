@@ -43,7 +43,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
 			expectedReason:      "INVALID_ARGUMENT",
-			expectedMetadataLen: 2,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorNotFound",
@@ -51,7 +51,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 2,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorAlreadyExists",
@@ -59,7 +59,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.AlreadyExists,
 			expectedMessage:     "test:already exists, resource",
 			expectedReason:      "ALREADY_EXISTS",
-			expectedMetadataLen: 2,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorUnauthenticated",
@@ -108,7 +108,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
 			expectedReason:      "INVALID_ARGUMENT",
-			expectedMetadataLen: 3,
+			expectedMetadataLen: 2,
 		},
 		{
 			name:                "ErrorNotFound with multiple additional metadata",
@@ -117,7 +117,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 4,
+			expectedMetadataLen: 3,
 		},
 		{
 			name:                "Non-BucketeerError with additional metadata",
@@ -135,7 +135,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 2,
+			expectedMetadataLen: 1,
 		},
 	}
 
@@ -227,7 +227,7 @@ func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
 			assert.Equal(t, codes.InvalidArgument, st.Code())
 
 			details := st.Details()
-			assert.Len(t, details, 2)
+			assert.Len(t, details, 1)
 			for _, detail := range details {
 				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
 					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
@@ -247,7 +247,7 @@ func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 	assert.Equal(t, codes.InvalidArgument, st.Code())
 
 	details := st.Details()
-	assert.Len(t, details, 4)
+	assert.Len(t, details, 3)
 
 	for _, detail := range details {
 		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {

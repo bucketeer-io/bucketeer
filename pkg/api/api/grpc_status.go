@@ -65,14 +65,6 @@ func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
 
 		st = status.New(stCode, bucketeerErr.Message())
 		allMetadatas = append(allMetadatas, bucketeerErr.Metadatas()...)
-
-		// ToDo: Once the frontend is multilingual, delete it.
-		if bucketeerErr.Message() != "" {
-			st, _ = st.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  "en",
-				Message: bucketeerErr.Message(),
-			})
-		}
 	} else {
 		reason = "UNKNOWN"
 		st = status.New(codes.Unknown, err.Error())
