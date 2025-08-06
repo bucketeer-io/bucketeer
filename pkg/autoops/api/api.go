@@ -1666,6 +1666,8 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			feature,
 			s.logger,
 			localizer,
+			s.publisher,
+			editor,
 		); err != nil {
 			s.logger.Error(
 				"Failed to execute auto ops rule operation",
@@ -1824,6 +1826,8 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 			feature,
 			s.logger,
 			localizer,
+			s.publisher,
+			editor,
 		); err != nil {
 			s.logger.Error(
 				"Failed to execute auto ops rule operation",
