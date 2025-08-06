@@ -35,7 +35,6 @@ func TestNewGRPCStatus(t *testing.T) {
 		expectedCode        codes.Code
 		expectedMessage     string
 		expectedReason      string
-		expectedDomain      string
 		expectedMetadataLen int
 	}{
 		{
@@ -44,8 +43,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
 			expectedReason:      "INVALID_ARGUMENT",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 1,
+			expectedMetadataLen: 2,
 		},
 		{
 			name:                "ErrorNotFound",
@@ -53,8 +51,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 1,
+			expectedMetadataLen: 2,
 		},
 		{
 			name:                "ErrorAlreadyExists",
@@ -62,8 +59,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.AlreadyExists,
 			expectedMessage:     "test:already exists, resource",
 			expectedReason:      "ALREADY_EXISTS",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 1,
+			expectedMetadataLen: 2,
 		},
 		{
 			name:                "ErrorUnauthenticated",
@@ -71,8 +67,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.Unauthenticated,
 			expectedMessage:     "test:unauthenticated",
 			expectedReason:      "UNAUTHENTICATED",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 0,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorPermissionDenied",
@@ -80,8 +75,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.PermissionDenied,
 			expectedMessage:     "test:permission denied",
 			expectedReason:      "PERMISSION_DENIED",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 0,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorUnexpectedAffectedRows",
@@ -89,8 +83,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.Internal,
 			expectedMessage:     "test:unexpected affected rows",
 			expectedReason:      "UNEXPECTED_AFFECTED_ROWS",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 0,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "ErrorInternal",
@@ -98,8 +91,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.Internal,
 			expectedMessage:     "test:internal error",
 			expectedReason:      "INTERNAL",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 0,
+			expectedMetadataLen: 1,
 		},
 		{
 			name:                "Non-BucketeerError",
@@ -107,7 +99,6 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.Unknown,
 			expectedMessage:     "standard error",
 			expectedReason:      "UNKNOWN",
-			expectedDomain:      "unknown.bucketeer.io",
 			expectedMetadataLen: 0,
 		},
 		{
@@ -117,8 +108,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.InvalidArgument,
 			expectedMessage:     "test:invalid argument[field1:empty]",
 			expectedReason:      "INVALID_ARGUMENT",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 2,
+			expectedMetadataLen: 3,
 		},
 		{
 			name:                "ErrorNotFound with multiple additional metadata",
@@ -127,8 +117,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 3,
+			expectedMetadataLen: 4,
 		},
 		{
 			name:                "Non-BucketeerError with additional metadata",
@@ -137,7 +126,6 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.Unknown,
 			expectedMessage:     "standard error",
 			expectedReason:      "UNKNOWN",
-			expectedDomain:      "unknown.bucketeer.io",
 			expectedMetadataLen: 1,
 		},
 		{
@@ -147,8 +135,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedCode:        codes.NotFound,
 			expectedMessage:     "test:not found, resource",
 			expectedReason:      "NOT_FOUND",
-			expectedDomain:      "test.bucketeer.io",
-			expectedMetadataLen: 1,
+			expectedMetadataLen: 2,
 		},
 	}
 
@@ -166,11 +153,13 @@ func TestNewGRPCStatus(t *testing.T) {
 			assert.Len(t, details, tt.expectedMetadataLen)
 
 			for _, detail := range details {
-				errorInfo, ok := detail.(*errdetails.ErrorInfo)
-				assert.True(t, ok, "Detail should be ErrorInfo")
-				assert.Equal(t, tt.expectedReason, errorInfo.Reason)
-				assert.Equal(t, tt.expectedDomain, errorInfo.Domain)
-				assert.NotEmpty(t, errorInfo.Metadata)
+				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
+					assert.NotEmpty(t, errorInfo.Metadata)
+				} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
+					assert.Equal(t, "en", localizedMessage.Locale)
+					assert.Equal(t, st.Message(), localizedMessage.Message)
+				}
 			}
 		})
 	}
@@ -238,11 +227,12 @@ func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
 			assert.Equal(t, codes.InvalidArgument, st.Code())
 
 			details := st.Details()
-			assert.Len(t, details, 1)
-
-			errorInfo, ok := details[0].(*errdetails.ErrorInfo)
-			assert.True(t, ok)
-			assert.Equal(t, tt.expectedReason, errorInfo.Reason)
+			assert.Len(t, details, 2)
+			for _, detail := range details {
+				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
+				}
+			}
 		})
 	}
 }
@@ -257,16 +247,19 @@ func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
 	assert.Equal(t, codes.InvalidArgument, st.Code())
 
 	details := st.Details()
-	assert.Len(t, details, 3)
+	assert.Len(t, details, 4)
 
-	expectedFields := []string{"field1", "field2", "field3"}
-	for i, detail := range details {
-		errorInfo, ok := detail.(*errdetails.ErrorInfo)
-		assert.True(t, ok)
-		assert.Equal(t, "INVALID_ARGUMENT", errorInfo.Reason)
-		assert.Equal(t, "test.bucketeer.io", errorInfo.Domain)
-		assert.Equal(t, expectedFields[i], errorInfo.Metadata["field"])
-		assert.Equal(t, "test.invalid_argument.empty", errorInfo.Metadata["messageKey"])
+	for _, detail := range details {
+		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
+			assert.True(t, ok)
+			assert.Equal(t, "INVALID_ARGUMENT", errorInfo.Reason)
+			assert.Equal(t, "test.invalid_argument.empty", errorInfo.Metadata["messageKey"])
+		} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
+			assert.Equal(t, "en", localizedMessage.Locale)
+			assert.Equal(t, st.Message(), localizedMessage.Message)
+		} else {
+			assert.Fail(t, "unexpected detail type")
+		}
 	}
 }
 
@@ -343,48 +336,6 @@ func TestNewGRPCStatus_EdgeCases(t *testing.T) {
 
 			assert.Equal(t, tt.expectedCode, st.Code())
 			assert.Equal(t, tt.expectedMessage, st.Message())
-		})
-	}
-}
-
-func TestNewGRPCStatus_PackageNameHandling(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name           string
-		packageName    string
-		expectedDomain string
-	}{
-		{
-			name:           "Simple package name",
-			packageName:    "test",
-			expectedDomain: "test.bucketeer.io",
-		},
-		{
-			name:           "Package name with dots",
-			packageName:    "test.subpackage",
-			expectedDomain: "test.subpackage.bucketeer.io",
-		},
-		{
-			name:           "Empty package name",
-			packageName:    "",
-			expectedDomain: ".bucketeer.io",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := pkgErr.NewErrorNotFound(tt.packageName, "not found")
-			st := NewGRPCStatus(err)
-
-			details := st.Details()
-			if len(details) > 0 {
-				errorInfo, ok := details[0].(*errdetails.ErrorInfo)
-				assert.True(t, ok)
-				assert.Equal(t, tt.expectedDomain, errorInfo.Domain)
-			}
 		})
 	}
 }

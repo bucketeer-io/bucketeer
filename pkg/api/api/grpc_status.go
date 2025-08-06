@@ -25,7 +25,6 @@ import (
 )
 
 func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
-	var pkg string
 	var reason string
 	var allMetadatas []map[string]string
 	var st *status.Status
@@ -34,7 +33,6 @@ func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
 		return status.New(codes.Unknown, "")
 	}
 	if errors.As(err, &bucketeerErr) {
-		pkg = bucketeerErr.PackageName()
 		bucketeerErr.AddMetadata(metadatas...)
 		var stCode codes.Code
 
@@ -68,8 +66,14 @@ func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
 		st = status.New(stCode, bucketeerErr.Message())
 		allMetadatas = append(allMetadatas, bucketeerErr.Metadatas()...)
 
+		// ToDo: Once the frontend is multilingual, delete it.
+		if bucketeerErr.Message() != "" {
+			st, _ = st.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  "en",
+				Message: bucketeerErr.Message(),
+			})
+		}
 	} else {
-		pkg = "unknown"
 		reason = "UNKNOWN"
 		st = status.New(codes.Unknown, err.Error())
 		if len(metadatas) > 0 {
@@ -80,7 +84,6 @@ func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
 	for _, md := range allMetadatas {
 		st, err = st.WithDetails(&errdetails.ErrorInfo{
 			Reason:   reason,
-			Domain:   pkg + ".bucketeer.io",
 			Metadata: md,
 		})
 		if err != nil {
