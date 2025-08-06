@@ -71,6 +71,11 @@ func newError(pkg string, errorType ErrorType, defaultMessage string, args ...st
 		})
 	}
 
+	if len(metadatas) == 0 {
+		// If no metadata is provided, there must still be a message key to determine the nature of the error.
+		metadatas = []map[string]string{{"messageKey": messageKey}}
+	}
+
 	// example: NotFound {
 	// 	packageName: "account",
 	// 	message:     "account not found, user_id",

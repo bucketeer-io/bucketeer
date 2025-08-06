@@ -177,36 +177,43 @@ func TestNewErrorNotFound(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		pkg            string
-		message        string
-		args           []string
-		expectedMsg    string
-		expectedFields []string
+		name             string
+		pkg              string
+		message          string
+		args             []string
+		expectedMsg      string
+		expectedMetadata []map[string]string
 	}{
 		{
-			name:           "basic not found error",
-			pkg:            "account",
-			message:        "user not found",
-			args:           []string{"user_id"},
-			expectedMsg:    "account:user not found, user_id",
-			expectedFields: []string{"user_id"},
+			name:        "basic not found error",
+			pkg:         "account",
+			message:     "user not found",
+			args:        []string{"user_id"},
+			expectedMsg: "account:user not found, user_id",
+			expectedMetadata: []map[string]string{
+				{"messageKey": "account.not_found", "field": "user_id"},
+			},
 		},
 		{
-			name:           "not found error with multiple fields",
-			pkg:            "feature",
-			message:        "feature not found",
-			args:           []string{"feature_id", "environment_id"},
-			expectedMsg:    "feature:feature not found, feature_id, environment_id",
-			expectedFields: []string{"feature_id", "environment_id"},
+			name:        "not found error with multiple fields",
+			pkg:         "feature",
+			message:     "feature not found",
+			args:        []string{"feature_id", "environment_id"},
+			expectedMsg: "feature:feature not found, feature_id, environment_id",
+			expectedMetadata: []map[string]string{
+				{"messageKey": "feature.not_found", "field": "feature_id"},
+				{"messageKey": "feature.not_found", "field": "environment_id"},
+			},
 		},
 		{
-			name:           "not found error without args",
-			pkg:            "test",
-			message:        "resource not found",
-			args:           []string{},
-			expectedMsg:    "test:resource not found",
-			expectedFields: []string{},
+			name:        "not found error without args",
+			pkg:         "test",
+			message:     "resource not found",
+			args:        []string{},
+			expectedMsg: "test:resource not found",
+			expectedMetadata: []map[string]string{
+				{"messageKey": "test.not_found"},
+			},
 		},
 	}
 
@@ -221,11 +228,10 @@ func TestNewErrorNotFound(t *testing.T) {
 			assert.Equal(t, tt.expectedMsg, err.Message())
 
 			metadatas := err.Metadatas()
-			assert.Len(t, metadatas, len(tt.expectedFields))
-
-			for i, field := range tt.expectedFields {
-				assert.Equal(t, field, metadatas[i]["field"])
-				assert.Equal(t, tt.pkg+".not_found", metadatas[i]["messageKey"])
+			assert.Len(t, metadatas, len(tt.expectedMetadata))
+			for i, expected := range tt.expectedMetadata {
+				assert.Equal(t, expected["messageKey"], metadatas[i]["messageKey"])
+				assert.Equal(t, expected["field"], metadatas[i]["field"])
 			}
 		})
 	}
@@ -256,7 +262,8 @@ func TestNewErrorUnauthenticated(t *testing.T) {
 	assert.Equal(t, "auth:invalid token", err.Message())
 
 	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
+	assert.Len(t, metadatas, 1)
+	assert.Equal(t, "auth.unauthenticated", metadatas[0]["messageKey"])
 }
 
 func TestNewErrorPermissionDenied(t *testing.T) {
@@ -284,7 +291,8 @@ func TestNewErrorUnexpectedAffectedRows(t *testing.T) {
 	assert.Equal(t, "database:unexpected affected rows", err.Message())
 
 	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
+	assert.Len(t, metadatas, 1)
+	assert.Equal(t, "database.unexpected_affected_rows", metadatas[0]["messageKey"])
 }
 
 func TestNewErrorInternal(t *testing.T) {
@@ -297,7 +305,8 @@ func TestNewErrorInternal(t *testing.T) {
 	assert.Equal(t, "system:internal server error", err.Message())
 
 	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
+	assert.Len(t, metadatas, 1)
+	assert.Equal(t, "system.internal", metadatas[0]["messageKey"])
 }
 
 func TestNewErrorInvalidArgument(t *testing.T) {
