@@ -6,6 +6,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
+import compact from 'lodash/compact';
 import omit from 'lodash/omit';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
@@ -13,6 +14,7 @@ import { truncateBySide } from 'utils/converts';
 import { isNotEmptyObject } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
+import AutocompleteInput from 'components/autocomplete-input';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -38,9 +40,16 @@ interface Props {
   features: Feature[];
   segmentIndex: number;
   userSegments?: UserSegment[];
+  attributeKeys: string[];
 }
 
-const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
+const RuleForm = ({
+  feature,
+  features,
+  segmentIndex,
+  userSegments,
+  attributeKeys
+}: Props) => {
   const { t } = useTranslation(['form', 'common', 'table']);
   const {
     conditionerCompareOptions,
@@ -133,6 +142,13 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
     },
     [clauses]
   );
+
+  const formAttributes: string[] = compact(
+    feature.rules
+      ?.flatMap(item => item.clauses)
+      .map(clause => clause.attribute && clause.attribute)
+  );
+  const attributeKeyOptions = [...formAttributes, ...attributeKeys];
 
   return (
     <>
@@ -294,7 +310,10 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                     contentClassName="!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
-                                  <Input {...field} />
+                                  <AutocompleteInput
+                                    {...field}
+                                    options={attributeKeyOptions}
+                                  />
                                 )}
                               </Form.Control>
                               <Form.Message />
