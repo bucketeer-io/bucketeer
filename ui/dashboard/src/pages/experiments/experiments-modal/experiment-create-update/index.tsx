@@ -700,23 +700,6 @@ const ExperimentCreateUpdateModal = ({
                   </Form.Item>
                 )}
               />
-
-              {/* <Divider className="mt-4 mb-5" />
-              <div>
-                <p className="text-gray-800 typo-head-bold-small mb-3">
-                  {t('experiments.define-audience.title')}
-                </p>
-                <Form.Field
-                  control={form.control}
-                  name={`audience`}
-                  render={({ field }) => (
-                    <Form.Item className="flex flex-col w-full py-2 gap-y-5">
-                      <DefineAudience field={field as DefineAudienceField} />
-                    </Form.Item>
-                  )}
-                />
-              </div> */}
-
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={

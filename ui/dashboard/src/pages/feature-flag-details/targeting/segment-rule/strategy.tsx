@@ -6,7 +6,6 @@ import { useTranslation } from 'i18n';
 import { RuleStrategyVariation, StrategyType } from '@types';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
-import ExperimentSelect from 'pages/experiments/experiments-modal/experiment-create-update/define-audience/experiment-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -22,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from 'components/radio';
 import { Tooltip } from 'components/tooltip';
 import { StrategySchema } from '../form-schema';
 import { isEquallyVariations } from '../utils';
+import AudienceSelect from './audience-select';
 import PercentageBar from './percentage-bar';
 import PercentageInput from './percentage-input';
 import { VariationOption } from './variation';
@@ -37,7 +37,7 @@ interface Props {
   handleSelectStrategy: (item: VariationOption) => void;
 }
 
-type SplitOptionType = 'equally' | 'percentage' | 'default';
+type SplitOptionType = 'equally' | 'percentage';
 type StrategyVariation = StrategySchema['rolloutStrategy']['variations'];
 
 const Strategy = ({
@@ -62,8 +62,7 @@ const Strategy = ({
   const variations = (rolloutStrategy?.variations as StrategyVariation) || [];
 
   const [isCustomExperiment, setIsCustomExperiment] = useState(false);
-  const [splitOptionType, setSplitOptionType] =
-    useState<SplitOptionType>('default');
+  const [splitOptionType, setSplitOptionType] = useState<SplitOptionType>();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCheckError = (values: StrategyVariation) => {
@@ -248,7 +247,7 @@ const Strategy = ({
                     <div>
                       <div className="flex items-center w-full gap-x-2">
                         {audienceTrafficOptions.map((item, index) => (
-                          <ExperimentSelect
+                          <AudienceSelect
                             key={index}
                             label={item.label}
                             value={item.value}
@@ -458,9 +457,7 @@ const Strategy = ({
                           (rollout: RuleStrategyVariation, index: number) => (
                             <PercentageInput
                               key={index}
-                              isDisabled={
-                                isDisabled || splitOptionType === 'default'
-                              }
+                              isDisabled={isDisabled || !splitOptionType}
                               variationOptions={variationOptions}
                               name={`${rootName}.${strategyName}.variations.${index}.weight`}
                               variationId={rollout.variation}
@@ -480,7 +477,7 @@ const Strategy = ({
                       </div>
                     </>
                   </Form.Control>
-                  {splitOptionType !== 'default' && <Form.Message />}
+                  {splitOptionType && <Form.Message />}
                 </Form.Item>
               );
             }}

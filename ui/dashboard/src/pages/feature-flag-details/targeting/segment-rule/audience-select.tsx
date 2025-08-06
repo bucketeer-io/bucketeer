@@ -1,6 +1,6 @@
 import { cn } from 'utils/style';
 
-const ExperimentSelect = ({
+const AudienceSelect = ({
   label,
   value,
   isActive,
@@ -26,4 +26,4 @@ const ExperimentSelect = ({
   );
 };
 
-export default ExperimentSelect;
+export default AudienceSelect;
