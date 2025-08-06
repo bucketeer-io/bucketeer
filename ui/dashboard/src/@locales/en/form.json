@@ -71,9 +71,12 @@
     },
     "define-audience": {
       "title": "Define Audience",
-      "split-experiment-audience": "Split Experiment Audience",
-      "split-experiment-traffic": "Split Audience Traffic",
-      "split-experiment-desc": "Set how the audience is split between flag variations",
+      "audience-traffic": "Audience Traffic Allocation",
+      "variation-allocation": "Variation Allocation",
+      "audience-traffic-desc": "Choose the percentage of the total audience to include in this allocation. The rest will be served the selected variation.",
+      "variation-allocation-desc": "Split the included audience among the variations.",
+      "included": "Included",
+      "excluded": "Excluded",
       "rule-defines": "defines your experiment audience from the selected flag.",
       "split-audience-equally": "Split equally between all variations",
       "split-audience-custom": "Split by custom percentage",
@@ -83,6 +86,7 @@
       "in-this-experiment": "In this experiment",
       "not-in-experiment": "Not in this experiment",
       "unused-traffic": "Unused traffic",
+      "not-included-allocation": "Not included in this allocation <highlight>{{percent}}</highlight> will be served <select></select>",
       "not-in-experiment-served": "Not in this experiment: <highlight>{{percent}}</highlight> will be served <select></select>",
       "advanced-prevent-variation": "Prevent variation reassignment when traffic increases",
       "advanced-context-remain": "User contexts remain assigned to their experiment variations during an iteration."
