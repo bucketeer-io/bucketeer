@@ -354,7 +354,14 @@ func (s *auditlogService) ListAdminAuditLogs(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{}
+	// Filter by empty environment_id for organization-scoped logs
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    "", // Empty string for organization-scoped logs
+		},
+	}
 	if req.From != 0 {
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "timestamp",
@@ -423,7 +430,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 		InFilters:   nil,
 		JSONFilters: nil,
 	}
-	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(ctx, options)
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list admin auditlogs",
