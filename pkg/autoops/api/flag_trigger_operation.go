@@ -17,13 +17,18 @@ package api
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 func executeAutoOpsRuleOperation(
@@ -34,12 +39,14 @@ func executeAutoOpsRuleOperation(
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 	localizer locale.Localizer,
+	publisher publisher.Publisher,
+	editor *eventproto.Editor,
 ) error {
 	switch actionType {
 	case autoopsproto.ActionType_ENABLE:
-		return enableFeature(ctx, ftStorage, environmentId, feature, logger)
+		return enableFeature(ctx, ftStorage, environmentId, feature, logger, publisher, editor)
 	case autoopsproto.ActionType_DISABLE:
-		return disableFeature(ctx, ftStorage, environmentId, feature, logger)
+		return disableFeature(ctx, ftStorage, environmentId, feature, logger, publisher, editor)
 	}
 	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
@@ -60,14 +67,51 @@ func enableFeature(
 	environmentId string,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
+	publisher publisher.Publisher,
+	editor *eventproto.Editor,
 ) error {
-	if err := feature.Enable(); err != nil {
-		// If the flag is already disabled, we skip the updating
-		return nil
-	}
-	if err := ftStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
+	// Use domain layer Update method which handles validation and version incrementing
+	updatedFeature, err := feature.Update(
+		nil,                                // name
+		nil,                                // description
+		nil,                                // tags
+		&wrapperspb.BoolValue{Value: true}, // enabled
+		nil,                                // archived
+		nil,                                // defaultStrategy
+		nil,                                // offVariation
+		false,                              // resetSamplingSeed
+		nil,                                // prerequisiteChanges
+		nil,                                // targetChanges
+		nil,                                // ruleChanges
+		nil,                                // variationChanges
+		nil,                                // tagChanges
+	)
+	if err != nil {
 		return err
 	}
+
+	// Only update storage if there were actual changes
+	if updatedFeature.Version > feature.Version {
+		// Update storage first
+		if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
+			return err
+		}
+
+		// Publish feature domain event
+		publishFeatureEvent(
+			ctx,
+			publisher,
+			editor,
+			feature,
+			environmentId,
+			updatedFeature,
+			eventproto.Event_FEATURE_ENABLED,
+			&eventproto.FeatureEnabledEvent{Id: feature.Id},
+			"Enabled by auto operation",
+			logger,
+		)
+	}
+
 	return nil
 }
 
@@ -80,13 +124,86 @@ func disableFeature(
 	environmentId string,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
+	publisher publisher.Publisher,
+	editor *eventproto.Editor,
 ) error {
-	if err := feature.Disable(); err != nil {
-		// If the flag is already disabled, we skip the updating
-		return nil
-	}
-	if err := ftStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
+	// Use domain layer Update method which handles validation and version incrementing
+	updatedFeature, err := feature.Update(
+		nil,                                 // name
+		nil,                                 // description
+		nil,                                 // tags
+		&wrapperspb.BoolValue{Value: false}, // enabled
+		nil,                                 // archived
+		nil,                                 // defaultStrategy
+		nil,                                 // offVariation
+		false,                               // resetSamplingSeed
+		nil,                                 // prerequisiteChanges
+		nil,                                 // targetChanges
+		nil,                                 // ruleChanges
+		nil,                                 // variationChanges
+		nil,                                 // tagChanges
+	)
+	if err != nil {
 		return err
 	}
+
+	// Only update storage if there were actual changes
+	if updatedFeature.Version > feature.Version {
+		// Update storage first
+		if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
+			return err
+		}
+
+		// Publish feature domain event
+		publishFeatureEvent(
+			ctx,
+			publisher,
+			editor,
+			feature,
+			environmentId,
+			updatedFeature,
+			eventproto.Event_FEATURE_DISABLED,
+			&eventproto.FeatureDisabledEvent{Id: feature.Id},
+			"Disabled by auto operation",
+			logger,
+		)
+	}
+
 	return nil
+}
+
+func publishFeatureEvent(
+	ctx context.Context,
+	publisher publisher.Publisher,
+	editor *eventproto.Editor,
+	feature *ftdomain.Feature,
+	environmentId string,
+	updatedFeature *ftdomain.Feature,
+	eventType eventproto.Event_Type,
+	eventData proto.Message,
+	comment string,
+	logger *zap.Logger,
+) {
+	featureEvent, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_FEATURE,
+		feature.Id,
+		eventType,
+		eventData,
+		environmentId,
+		updatedFeature.Feature, // current state (after)
+		feature.Feature,        // previous state (before)
+		domainevent.WithComment(comment),
+		domainevent.WithNewVersion(updatedFeature.Version),
+	)
+	if err != nil {
+		logger.Error("Failed to create feature domain event", zap.Error(err))
+		// Don't return error to avoid breaking auto ops execution
+	} else {
+		// Publish feature domain event
+		if err := publisher.Publish(ctx, featureEvent); err != nil {
+			logger.Error("Failed to publish feature domain event", zap.Error(err))
+			// Don't return error to avoid breaking auto ops execution
+		}
+	}
 }
