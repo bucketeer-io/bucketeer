@@ -7,3 +7,4 @@ export * from './schedule-flag-creator';
 export * from './schedule-flag-updater';
 export * from './schedule-flags-fetch';
 export * from './schedule-flag-delete';
+export * from './attribute-keys-fetcher';

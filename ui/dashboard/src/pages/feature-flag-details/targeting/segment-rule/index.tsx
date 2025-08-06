@@ -6,6 +6,7 @@ import {
   IconArrowUpwardFilled
 } from 'react-icons-material-design';
 import { Fragment } from 'react/jsx-runtime';
+import { useQueryAttributeKeys } from '@queries/attribute-keys';
 import { useQueryUserSegments } from '@queries/user-segments';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
@@ -52,6 +53,9 @@ const TargetSegmentRule = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const methods = useFormContext<TargetingSchema>();
+  const { watch } = methods;
+
   const { data: segmentCollection } = useQueryUserSegments({
     params: {
       cursor: String(0),
@@ -60,13 +64,15 @@ const TargetSegmentRule = ({
     }
   });
 
-  const userSegments = segmentCollection?.segments || [];
-
-  const methods = useFormContext<TargetingSchema>();
-
-  const { watch } = methods;
+  const { data: keysCollection } = useQueryAttributeKeys({
+    params: {
+      environmentId: currentEnvironment.id
+    }
+  });
 
   const segmentRulesWatch = watch('segmentRules');
+  const userSegments = segmentCollection?.segments || [];
+  const attributeKeys = keysCollection?.userAttributeKeys || [];
 
   const handleChangeIndexRule = useCallback(
     (type: 'increase' | 'decrease', currentIndex: number) => {
@@ -170,6 +176,7 @@ const TargetSegmentRule = ({
                   features={features}
                   segmentIndex={segmentIndex}
                   userSegments={userSegments}
+                  attributeKeys={attributeKeys}
                 />
                 <SegmentVariation
                   feature={feature}
