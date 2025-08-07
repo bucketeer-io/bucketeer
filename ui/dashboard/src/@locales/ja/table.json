@@ -118,6 +118,8 @@
     "confirm-unarchive-desc": "ゴール「<bold>{{name}}</bold>」のアーカイブが解除されます。続行してもよろしいですか？"
   },
   "user-segment": {
+    "segment-uploading-title": "アップロード中",
+    "segment-uploading-desc": "ユーザー一覧はアップロード中のため、セグメントユーザーの更新ができません。",
     "delete-user-segment-desc": "<bold>{{name}}</bold>は完全に削除されます。続行してもよろしいですか？"
   },
   "experiment": {

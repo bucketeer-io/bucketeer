@@ -6,6 +6,7 @@ import {
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
+import compact from 'lodash/compact';
 import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
@@ -41,10 +42,13 @@ export const useColumns = ({
       cell: ({ row }) => {
         const segment = row.original;
         const { id, name } = segment;
+        const isUploading = getUploadingStatus(segment);
 
         return (
           <div
-            onClick={() => onActionHandler(segment, 'EDIT')}
+            onClick={() =>
+              onActionHandler(segment, isUploading ? 'UPLOADING' : 'EDIT')
+            }
             className="flex items-center gap-x-2 cursor-pointer min-w-[300px]"
           >
             <NameWithTooltip
@@ -52,7 +56,7 @@ export const useColumns = ({
               content={<NameWithTooltip.Content content={name} id={id} />}
               trigger={<NameWithTooltip.Trigger id={id} name={name} />}
             />
-            {getUploadingStatus(segment) && <Spinner />}
+            {isUploading && <Spinner />}
           </div>
         );
       }
@@ -157,14 +161,14 @@ export const useColumns = ({
 
         return (
           <DisabledPopoverTooltip
-            options={[
+            options={compact([
               {
                 label: `${t('table:popover.download-segment')}`,
                 icon: IconCloudDownloadOutlined,
                 value: 'DOWNLOAD',
                 disabled: !Number(segment.includedUserCount)
               },
-              {
+              !getUploadingStatus(segment) && {
                 label: `${t('table:popover.edit-segment')}`,
                 icon: IconEditOutlined,
                 value: 'EDIT'
@@ -174,7 +178,7 @@ export const useColumns = ({
                 icon: IconDeleteOutlined,
                 value: 'DELETE'
               }
-            ]}
+            ])}
             onClick={value =>
               onActionHandler(segment, value as UserSegmentsActionsType)
             }
