@@ -458,6 +458,17 @@ docker-compose-setup:
 	else \
 		echo "docker-compose/init-db directory already exists"; \
 	fi
+	@if [ ! -d "docker-compose/secrets" ]; then \
+		echo "Creating docker-compose/secrets directory..."; \
+		mkdir -p docker-compose/secrets; \
+		echo "Generating MySQL secret files..."; \
+		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
+		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
+		chmod 600 docker-compose/secrets/*.txt; \
+		echo "✅ MySQL secrets created"; \
+	else \
+		echo "docker-compose/secrets directory already exists"; \
+	fi
 	@echo "✅ Docker Compose setup complete"
 
 .PHONY: docker-compose-init-env
@@ -520,6 +531,16 @@ docker-compose-clean:
 	@echo "Stopping and removing all containers, networks, and volumes..."
 	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) down -v
 	docker system prune -f
+
+.PHONY: docker-compose-regenerate-secrets
+docker-compose-regenerate-secrets:
+	@echo "Regenerating MySQL secrets..."
+	@rm -rf docker-compose/secrets
+	@mkdir -p docker-compose/secrets
+	@echo "root" > docker-compose/secrets/mysql_root_password.txt
+	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
+	@chmod 600 docker-compose/secrets/*.txt
+	@echo "✅ MySQL secrets regenerated"
 
 .PHONY: docker-compose-delete-data
 docker-compose-delete-data:

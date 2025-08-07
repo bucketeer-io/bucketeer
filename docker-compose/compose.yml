@@ -1,13 +1,22 @@
+secrets:
+  mysql_password:
+    file: ./secrets/mysql_password.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+
 services:
   mysql:
     image: mysql:${MYSQL_VERSION:-8.0}
     container_name: bucketeer-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: bucketeer
       MYSQL_USER: bucketeer
-      MYSQL_PASSWORD: bucketeer
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    secrets:
+      - mysql_password
+      - mysql_root_password
     ports:
       - "3306:3306"
     volumes:

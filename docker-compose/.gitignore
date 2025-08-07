@@ -2,6 +2,9 @@
 logs/
 nginx-logs/
 
+# Ignore secrets directory (contains sensitive data)
+secrets/
+
 # Ignore any local environment overrides
 docker-compose.override.yml
 .env

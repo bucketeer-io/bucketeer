@@ -83,6 +83,25 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
    
    **Note**: The API service also supports access via `localhost` for local development (no hosts file entry needed).
 
+## Security Features
+
+### Docker Secrets for MySQL
+
+The setup uses Docker Compose secrets to securely manage MySQL passwords instead of plain text environment variables:
+
+- **Root Password**: Stored in `./secrets/mysql_root_password.txt`
+- **User Password**: Stored in `./secrets/mysql_password.txt`
+- **Automatic Setup**: The `make docker-compose-setup` command automatically creates these secret files
+- **File Permissions**: Secret files are created with `600` permissions (read/write for owner only)
+- **Git Ignored**: The `secrets/` directory is automatically excluded from version control
+
+To regenerate secrets (if needed):
+```shell
+make docker-compose-regenerate-secrets
+```
+
+**Note**: The secrets directory is automatically created during setup and is excluded from Git to prevent accidental credential commits.
+
 ## Quick Start
 
 1. **Start all services**:
@@ -385,6 +404,9 @@ docker-compose/
 ├── compose.yml               # Main Docker Compose configuration
 ├── env.default               # Default environment variables
 ├── .gitignore                # Git ignore rules
+├── secrets/                  # MySQL passwords (auto-generated, git-ignored)
+│   ├── mysql_root_password.txt
+│   └── mysql_password.txt
 └── config/
     ├── nginx/                # Nginx configuration
     │   ├── nginx.conf
