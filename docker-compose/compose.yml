@@ -361,7 +361,7 @@ services:
 
   # Batch job scheduler
   batch-cron:
-    image: alpine:latest
+    image: alpine:3.22.1
     container_name: bucketeer-batch-cron
     depends_on:
       batch:
