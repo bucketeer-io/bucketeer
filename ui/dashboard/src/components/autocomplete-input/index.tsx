@@ -3,7 +3,9 @@ import React, {
   ChangeEvent,
   InputHTMLAttributes,
   forwardRef,
-  Ref
+  Ref,
+  useRef,
+  useImperativeHandle
 } from 'react';
 import { cn } from 'utils/style';
 
@@ -19,6 +21,9 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = forwardRef(
 
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
     const filterSuggestions = (input: string) => {
       return input.trim() === ''
@@ -53,26 +58,29 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = forwardRef(
         setUncontrolledValue(selected);
       }
 
-      if (isControlled && onChange) {
-        const syntheticEvent = {
-          ...new Event('change'),
-          target: { value: selected }
-        } as unknown as ChangeEvent<HTMLInputElement>;
-        onChange(syntheticEvent);
+      if (inputRef.current) {
+        const nativeInput = inputRef.current;
+        nativeInput.value = selected;
+
+        if (onChange) {
+          const event = {
+            target: nativeInput
+          } as ChangeEvent<HTMLInputElement>;
+
+          onChange(event);
+        }
       }
 
       setSuggestions([]);
       setShowSuggestions(false);
     };
 
-    const handleBlur = () => {
-      setTimeout(() => setShowSuggestions(false), 100);
-    };
+    const handleBlur = () => setShowSuggestions(false);
 
     return (
-      <div className={cn('relative w-ful', className)}>
+      <div className={cn('relative w-full', className)}>
         <input
-          ref={ref}
+          ref={inputRef}
           type="text"
           value={inputValue}
           onChange={handleChange}
@@ -85,7 +93,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = forwardRef(
             {suggestions.map((suggestion, index) => (
               <li
                 key={index}
-                onClick={() => handleSelect(suggestion)}
+                onMouseDown={() => handleSelect(suggestion)}
                 className="p-2 hover:bg-gray-100 cursor-pointer rounded-md typo-para-medium text-gray-700"
               >
                 {suggestion}

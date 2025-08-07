@@ -143,10 +143,14 @@ const RuleForm = ({
     [clauses]
   );
 
-  const formAttributes: string[] = compact(
-    feature.rules
-      ?.flatMap(item => item.clauses)
-      .map(clause => clause.attribute && clause.attribute)
+  const formAttributes: string[] = useMemo(
+    () =>
+      compact(
+        feature.rules
+          ?.flatMap(item => item.clauses)
+          .map(clause => clause.attribute && clause.attribute)
+      ),
+    [feature.rules]
   );
   const attributeKeyOptions = [...formAttributes, ...attributeKeys];
 
@@ -503,6 +507,13 @@ const RuleForm = ({
                                       );
                                       field.onChange(values);
                                     }}
+                                    formatCreateLabel={value => (
+                                      <p>
+                                        {`${t('create-option', {
+                                          option: value
+                                        })}`}
+                                      </p>
+                                    )}
                                     noOptionsMessage={() => (
                                       <UserMessage
                                         message={t('no-opts-type-to-create')}
