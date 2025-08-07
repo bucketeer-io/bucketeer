@@ -1534,6 +1534,65 @@ paths:
             $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesRequest'
       tags:
         - Feature Flags
+  /v1/evaluation_timeseries_count:
+    get:
+      summary: Get Evaluation Timeseries Count
+      description: Get the evaluation timeseries count for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.evaluation_timeseries_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetEvaluationTimeseriesCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: timeRange
+          in: query
+          required: true
+          type: string
+          enum:
+            - UNKNOWN
+            - TWENTY_FOUR_HOURS
+            - SEVEN_DAYS
+            - FOURTEEN_DAYS
+            - THIRTY_DAYS
+          default: UNKNOWN
+      tags:
+        - Experiments
   /v1/experiment:
     get:
       summary: Get Experiment
@@ -1676,6 +1735,251 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateExperimentRequest'
+      tags:
+        - Experiments
+  /v1/experiment_evaluation_count:
+    get:
+      summary: Get Experiment Evaluation Count
+      description: Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.evaluation_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentEvaluationCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+      tags:
+        - Experiments
+  /v1/experiment_goal_count:
+    get:
+      summary: Get Experiment Goal Count
+      description: Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.get_goal_count
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentGoalCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: goalId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+      tags:
+        - Experiments
+  /v1/experiment_result:
+    get:
+      summary: Get Experiment Result
+      description: Get the result for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.result.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentResultResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: experimentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Experiments
+  /v1/experiment_results:
+    get:
+      summary: List Experiment Results
+      description: List the results for Experiments. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.results.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListExperimentResultsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
       tags:
         - Experiments
   /v1/experiments:
@@ -2667,6 +2971,136 @@ paths:
           default: UNKNOWN
       tags:
         - Goals
+  /v1/ops_evaluation_user_count:
+    get:
+      summary: Get Ops Evaluation User Count
+      description: Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.get_ops_evaluation_user_count
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetOpsEvaluationUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Experiments
+  /v1/ops_goal_user_count:
+    get:
+      summary: Get Ops Goal User Count
+      description: Get the user count for an Ops Goal. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.get_ops_goal_user_count
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetOpsGoalUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Event Counter
   /v1/progressive_rollout:
     get:
       summary: Get Progressive Rollout
@@ -4278,6 +4712,15 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
+  GetEvaluationTimeseriesCountRequestTimeRange:
+    type: string
+    enum:
+      - UNKNOWN
+      - TWENTY_FOUR_HOURS
+      - SEVEN_DAYS
+      - FOURTEEN_DAYS
+      - THIRTY_DAYS
+    default: UNKNOWN
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
     properties:
@@ -4317,18 +4760,6 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'
-  ListExperimentsResponseSummary:
-    type: object
-    properties:
-      totalWaitingCount:
-        type: string
-        format: int64
-      totalRunningCount:
-        type: string
-        format: int64
-      totalStoppedCount:
-        type: string
-        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -4400,6 +4831,12 @@ definitions:
       - EXPERIMENT_RUNNING
       - MAU_COUNT
     default: DOMAIN_EVENT_FEATURE
+  TimeseriesUnit:
+    type: string
+    enum:
+      - HOUR
+      - DAY
+    default: HOUR
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -4882,6 +5319,17 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeereventcounterSummary:
+    type: object
+    properties:
+      bestVariations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterSummaryVariation'
+      goalUserCount:
+        type: string
+        format: int64
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -5329,11 +5777,52 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayGetEvaluationTimeseriesCountResponse:
+    type: object
+    properties:
+      userCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationTimeseries'
+      eventCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationTimeseries'
+  bucketeergatewayGetExperimentEvaluationCountResponse:
+    type: object
+    properties:
+      featureId:
+        type: string
+      featureVersion:
+        type: integer
+        format: int32
+      variationCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationCount'
+  bucketeergatewayGetExperimentGoalCountResponse:
+    type: object
+    properties:
+      goalId:
+        type: string
+      variationCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationCount'
   bucketeergatewayGetExperimentResponse:
     type: object
     properties:
       experiment:
         $ref: '#/definitions/experimentExperiment'
+  bucketeergatewayGetExperimentResultResponse:
+    type: object
+    properties:
+      experimentResult:
+        $ref: '#/definitions/eventcounterExperimentResult'
   bucketeergatewayGetFeatureResponse:
     type: object
     properties:
@@ -5356,6 +5845,26 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountConsoleAccount'
+  bucketeergatewayGetOpsEvaluationUserCountResponse:
+    type: object
+    properties:
+      opsRuleId:
+        type: string
+      clauseId:
+        type: string
+      count:
+        type: string
+        format: int64
+  bucketeergatewayGetOpsGoalUserCountResponse:
+    type: object
+    properties:
+      opsRuleId:
+        type: string
+      clauseId:
+        type: string
+      count:
+        type: string
+        format: int64
   bucketeergatewayGetProgressiveRolloutResponse:
     type: object
     properties:
@@ -5425,6 +5934,13 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayListExperimentResultsResponse:
+    type: object
+    properties:
+      results:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/eventcounterExperimentResult'
   bucketeergatewayListExperimentsResponse:
     type: object
     properties:
@@ -5439,7 +5955,7 @@ definitions:
         type: string
         format: int64
       summary:
-        $ref: '#/definitions/ListExperimentsResponseSummary'
+        $ref: '#/definitions/experimentListExperimentsResponseSummary'
   bucketeergatewayListFeatureHistoryResponse:
     type: object
     properties:
@@ -6306,6 +6822,195 @@ definitions:
       environmentId:
         type: string
         description: service.
+  eventcounterDistributionSummary:
+    type: object
+    properties:
+      mean:
+        type: number
+        format: double
+      sd:
+        type: number
+        format: double
+      rhat:
+        type: number
+        format: double
+      histogram:
+        $ref: '#/definitions/eventcounterHistogram'
+      median:
+        type: number
+        format: double
+      percentile025:
+        type: number
+        format: double
+        title: Remove "_" because python should generate same
+      percentile975:
+        type: number
+        format: double
+        description: |-
+          field name for Datasource.
+
+          Remove "_" because python should generate same
+  eventcounterExperimentResult:
+    type: object
+    properties:
+      id:
+        type: string
+      experimentId:
+        type: string
+      updatedAt:
+        type: string
+        format: int64
+      goalResults:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterGoalResult'
+      totalEvaluationUserCount:
+        type: string
+        format: int64
+  eventcounterGoalResult:
+    type: object
+    properties:
+      goalId:
+        type: string
+      variationResults:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationResult'
+      summary:
+        $ref: '#/definitions/bucketeereventcounterSummary'
+  eventcounterHistogram:
+    type: object
+    properties:
+      hist:
+        type: array
+        items:
+          type: string
+          format: int64
+      bins:
+        type: array
+        items:
+          type: number
+          format: double
+  eventcounterSummaryVariation:
+    type: object
+    properties:
+      id:
+        type: string
+      probability:
+        type: number
+        format: double
+      isBest:
+        type: boolean
+  eventcounterTimeseries:
+    type: object
+    properties:
+      timestamps:
+        type: array
+        items:
+          type: string
+          format: int64
+      values:
+        type: array
+        items:
+          type: number
+          format: double
+      unit:
+        $ref: '#/definitions/TimeseriesUnit'
+      totalCounts:
+        type: string
+        format: int64
+  eventcounterVariationCount:
+    type: object
+    properties:
+      variationId:
+        type: string
+      userCount:
+        type: string
+        format: int64
+      eventCount:
+        type: string
+        format: int64
+      valueSum:
+        type: number
+        format: double
+      createdAt:
+        type: string
+        format: int64
+      variationValue:
+        type: string
+      valueSumPerUserMean:
+        type: number
+        format: double
+      valueSumPerUserVariance:
+        type: number
+        format: double
+  eventcounterVariationResult:
+    type: object
+    properties:
+      variationId:
+        type: string
+      experimentCount:
+        $ref: '#/definitions/eventcounterVariationCount'
+      evaluationCount:
+        $ref: '#/definitions/eventcounterVariationCount'
+      cvrProbBest:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      cvrProbBeatBaseline:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      cvrProb:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      evaluationUserCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      evaluationEventCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalUserCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalEventCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrMedianTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrPercentile025Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrPercentile975Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserProb:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserProbBest:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserProbBeatBaseline:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserMedianTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserPercentile025Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserPercentile975Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      conversionRate:
+        type: number
+        format: double
+      expectedLoss:
+        type: number
+        format: double
+      cvrSamples:
+        type: array
+        items:
+          type: number
+          format: double
+  eventcounterVariationTimeseries:
+    type: object
+    properties:
+      variationId:
+        type: string
+      timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
   experimentExperiment:
     type: object
     properties:
@@ -6423,6 +7128,18 @@ definitions:
       - ASC
       - DESC
     default: ASC
+  experimentListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   experimentListGoalsRequestOrderBy:
     type: string
     enum:

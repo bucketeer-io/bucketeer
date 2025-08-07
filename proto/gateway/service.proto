@@ -54,6 +54,10 @@ import "proto/feature/flag_trigger.proto";
 import "proto/experiment/experiment.proto";
 import "proto/experiment/goal.proto";
 import "proto/experiment/service.proto";
+import "proto/eventcounter/service.proto";
+import "proto/eventcounter/experiment_result.proto";
+import "proto/eventcounter/timeseries.proto";
+import "proto/eventcounter/variation_count.proto";
 
 message PingRequest {}
 
@@ -948,6 +952,90 @@ message UpdateExperimentRequest {
 
 message UpdateExperimentResponse {
   experiment.Experiment experiment = 1;
+}
+
+message GetExperimentEvaluationCountRequest {
+  int64 start_at = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 end_at = 2 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated string variation_ids = 5;
+}
+
+message GetExperimentEvaluationCountResponse {
+  string feature_id = 1;
+  int32 feature_version = 2;
+  repeated eventcounter.VariationCount variation_counts = 3;
+}
+
+message GetEvaluationTimeseriesCountRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  eventcounter.GetEvaluationTimeseriesCountRequest.TimeRange time_range = 2
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetEvaluationTimeseriesCountResponse {
+  repeated eventcounter.VariationTimeseries user_counts = 1;
+  repeated eventcounter.VariationTimeseries event_counts = 2;
+}
+
+message GetExperimentResultRequest {
+  string experiment_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetExperimentResultResponse {
+  eventcounter.ExperimentResult experiment_result = 1;
+}
+
+message ListExperimentResultsRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Int32Value feature_version = 2;
+}
+
+message ListExperimentResultsResponse {
+  map<string, eventcounter.ExperimentResult> results = 1;
+}
+
+message GetExperimentGoalCountRequest {
+  int64 start_at = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 end_at = 2 [(google.api.field_behavior) = REQUIRED];
+  string goal_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 5 [(google.api.field_behavior) = REQUIRED];
+  repeated string variation_ids = 6;
+}
+
+message GetExperimentGoalCountResponse {
+  string goal_id = 1;
+  repeated eventcounter.VariationCount variation_counts = 2;
+}
+
+message GetOpsEvaluationUserCountRequest {
+  string ops_rule_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 4 [(google.api.field_behavior) = REQUIRED];
+  string variation_id = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetOpsEvaluationUserCountResponse {
+  string ops_rule_id = 1;
+  string clause_id = 2;
+  int64 count = 3;
+}
+
+message GetOpsGoalUserCountRequest {
+  string ops_rule_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 4 [(google.api.field_behavior) = REQUIRED];
+  string variation_id = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetOpsGoalUserCountResponse {
+  string ops_rule_id = 1;
+  string clause_id = 2;
+  int64 count = 3;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -1892,6 +1980,91 @@ service Gateway {
       description: "Update a Goal. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Goals",
       operation_id: "api.gateway.v1.goals.update"
+    };
+  }
+
+  rpc GetExperimentEvaluationCount(GetExperimentEvaluationCountRequest)
+      returns (GetExperimentEvaluationCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_evaluation_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Experiment Evaluation Count",
+      description: "Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.evaluation_count.get"
+    };
+  }
+  rpc GetEvaluationTimeseriesCount(GetEvaluationTimeseriesCountRequest)
+      returns (GetEvaluationTimeseriesCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/evaluation_timeseries_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Evaluation Timeseries Count",
+      description: "Get the evaluation timeseries count for an Experiment. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.evaluation_timeseries_count.get"
+    };
+  }
+  rpc GetExperimentResult(GetExperimentResultRequest)
+      returns (GetExperimentResultResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_result"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Experiment Result",
+      description: "Get the result for an Experiment. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.result.get"
+    };
+  }
+  rpc ListExperimentResults(ListExperimentResultsRequest)
+      returns (ListExperimentResultsResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_results"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Experiment Results",
+      description: "List the results for Experiments. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.results.list"
+    };
+  }
+  rpc GetExperimentGoalCount(GetExperimentGoalCountRequest)
+      returns (GetExperimentGoalCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_goal_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Experiment Goal Count",
+      description: "Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.get_goal_count"
+    };
+  }
+  rpc GetOpsEvaluationUserCount(GetOpsEvaluationUserCountRequest)
+      returns (GetOpsEvaluationUserCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/ops_evaluation_user_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Ops Evaluation User Count",
+      description: "Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.",
+      tags: "Experiments",
+      operation_id: "api.gateway.v1.event_counter.get_ops_evaluation_user_count"
+    };
+  }
+  rpc GetOpsGoalUserCount(GetOpsGoalUserCountRequest)
+      returns (GetOpsGoalUserCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/ops_goal_user_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Ops Goal User Count",
+      description: "Get the user count for an Ops Goal. To call this API, you need a `READ` API Key role.",
+      tags: "Event Counter",
+      operation_id: "api.gateway.v1.event_counter.get_ops_goal_user_count"
     };
   }
 }
