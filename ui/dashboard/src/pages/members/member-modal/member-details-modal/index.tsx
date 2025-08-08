@@ -1,4 +1,4 @@
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
@@ -22,6 +22,7 @@ const MemberDetailsModal = ({
 }: MemberDetailsModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { isOrganizationAdmin } = useAuthAccess();
   const { t } = useTranslation(['common', 'form']);
 
   const { data: collection, isLoading } = useFetchEnvironments({
@@ -64,23 +65,35 @@ const MemberDetailsModal = ({
               </p>
             </div>
           </div>
-          <div className="flex flex-col w-full gap-y-1">
-            <p className="typo-para-small text-gray-600">{t('tags')}</p>
-            <div className="flex items-center flex-wrap w-full max-w-full gap-2">
-              {member?.tags.map(tagId => (
-                <Tag
-                  key={tagId}
-                  tooltipCls={'!max-w-[450px]'}
-                  tagId={tagId}
-                  maxSize={487}
-                  value={tagList?.find(tag => tag.id === tagId)?.name || tagId}
-                />
-              ))}
+          <div className="flex items-start w-full gap-x-4">
+            <div className="flex flex-col w-full gap-y-1 flex-1">
+              <p className="typo-para-small text-gray-600">{t('teams')}</p>
+              <div className="flex items-center flex-wrap w-full max-w-full gap-2">
+                {member?.teams.map(item => (
+                  <Tag
+                    key={item}
+                    tooltipCls={'!max-w-[450px]'}
+                    tagId={item}
+                    maxSize={487}
+                    value={tagList?.find(tag => tag.id === item)?.name || item}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="typo-para-small text-gray-600">{t('role')}</p>
+              <p className="text-gray-700 mt-1 typo-para-medium break-all">
+                {t(
+                  String(member.organizationRole).split('_')[1]?.toLowerCase()
+                )}
+              </p>
             </div>
           </div>
           <Divider />
           <h3 className="typo-head-bold-small text-gray-800">
-            {t(`form:env-access`)}
+            {t(
+              isOrganizationAdmin ? `form:env-admin-access` : `form:env-access`
+            )}
           </h3>
           {(member.environmentRoles || []).map((env, index) => (
             <div className="flex items-start w-full gap-x-4" key={index}>
