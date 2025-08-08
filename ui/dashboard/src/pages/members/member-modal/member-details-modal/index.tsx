@@ -69,15 +69,13 @@ const MemberDetailsModal = ({
             <div className="flex flex-col w-full gap-y-1 flex-1">
               <p className="typo-para-small text-gray-600">{t('teams')}</p>
               <div className="flex items-center flex-wrap w-full max-w-full gap-2">
-                {member?.tags.map(tagId => (
+                {member?.teams.map(item => (
                   <Tag
-                    key={tagId}
+                    key={item}
                     tooltipCls={'!max-w-[450px]'}
-                    tagId={tagId}
+                    tagId={item}
                     maxSize={487}
-                    value={
-                      tagList?.find(tag => tag.id === tagId)?.name || tagId
-                    }
+                    value={tagList?.find(tag => tag.id === item)?.name || item}
                   />
                 ))}
               </div>
