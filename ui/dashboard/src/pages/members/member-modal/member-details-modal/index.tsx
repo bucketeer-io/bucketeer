@@ -1,4 +1,4 @@
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
@@ -22,6 +22,7 @@ const MemberDetailsModal = ({
 }: MemberDetailsModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { isOrganizationAdmin } = useAuthAccess();
   const { t } = useTranslation(['common', 'form']);
 
   const { data: collection, isLoading } = useFetchEnvironments({
@@ -92,7 +93,9 @@ const MemberDetailsModal = ({
           </div>
           <Divider />
           <h3 className="typo-head-bold-small text-gray-800">
-            {t(`form:env-access`)}
+            {t(
+              isOrganizationAdmin ? `form:env-admin-access` : `form:env-access`
+            )}
           </h3>
           {(member.environmentRoles || []).map((env, index) => (
             <div className="flex items-start w-full gap-x-4" key={index}>

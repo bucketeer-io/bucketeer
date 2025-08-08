@@ -35,6 +35,7 @@ export const useColumns = ({
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const isAccountOwnerRole =
     consoleAccount?.organizationRole === 'Organization_OWNER';
+  const isSystemAdmin = consoleAccount?.isSystemAdmin;
 
   const handleFilterTeams = useCallback(
     (team: string) => {
@@ -49,14 +50,18 @@ export const useColumns = ({
     [filters]
   );
 
-  const onGetActionsType = (account: Account): MemberActionsType => {
-    const isUserOwner = account.organizationRole === 'Organization_OWNER';
-    const canEditUser =
-      (isUserOwner && isAccountOwnerRole) ||
-      (!isUserOwner && isOrganizationAdmin);
+  const onGetActionsType = useCallback(
+    (account: Account): MemberActionsType => {
+      const isUserOwner = account.organizationRole === 'Organization_OWNER';
+      const canEditMember =
+        isSystemAdmin ||
+        (isUserOwner && isAccountOwnerRole) ||
+        (!isUserOwner && isOrganizationAdmin);
 
-    return canEditUser ? 'EDIT' : 'DETAILS';
-  };
+      return canEditMember ? 'EDIT' : 'DETAILS';
+    },
+    [isAccountOwnerRole, isOrganizationAdmin, isSystemAdmin]
+  );
 
   return compact([
     {
@@ -216,16 +221,18 @@ export const useColumns = ({
       enableSorting: false,
       cell: ({ row }) => {
         const account = row.original;
+        const hasEnableEdit = onGetActionsType(account) === 'EDIT';
 
         return (
           <DisabledPopoverTooltip
             isNeedAdminAccess
             options={compact([
-              Number(account.lastSeen) > 0 && {
-                label: `${t('table:popover.edit-member')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              },
+              Number(account.lastSeen) > 0 &&
+                hasEnableEdit && {
+                  label: `${t('table:popover.edit-member')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                },
               {
                 label: `${t('table:popover.delete-member')}`,
                 icon: IconTrash,

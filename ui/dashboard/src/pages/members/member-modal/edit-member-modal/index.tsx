@@ -421,7 +421,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 </Form.Item>
               )}
             />
-            {!isAdminRole && !!roleWatch && (
+            {!isAdminRole && !isOwnerRole && !!roleWatch && (
               <>
                 <Divider className="mt-1 mb-3" />
                 <EnvironmentRoles environments={formattedEnvironments} />
