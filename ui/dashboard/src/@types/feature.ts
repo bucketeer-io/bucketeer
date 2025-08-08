@@ -172,3 +172,7 @@ export interface FeatureUpdaterParams {
   targetChanges: TargetChange[];
   tagChanges: TagChange[];
 }
+
+export interface AttributeKeysResponse {
+  userAttributeKeys: string[];
+}
