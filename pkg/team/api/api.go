@@ -117,7 +117,7 @@ func (s *TeamService) CreateTeam(
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate create team request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", req.OrganizationId),
 				zap.String("name", req.Name),
@@ -133,7 +133,7 @@ func (s *TeamService) CreateTeam(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create new team",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", req.OrganizationId),
 				zap.String("name", req.Name),
@@ -212,7 +212,7 @@ func (s *TeamService) CreateTeam(
 	if err != nil {
 		s.logger.Error(
 			"Failed to upsert team",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", req.OrganizationId),
 				zap.String("name", req.Name),
@@ -260,7 +260,7 @@ func (s *TeamService) DeleteTeam(
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate delete team request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", req.OrganizationId),
 				zap.String("teamId", req.Id),
@@ -289,7 +289,7 @@ func (s *TeamService) DeleteTeam(
 		if inUsed {
 			s.logger.Error(
 				"Failed to delete the team because it is in use by an account",
-				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTx).AddFields(
 					zap.String("organizationID", req.OrganizationId),
 					zap.Any("team", team),
 				)...,
@@ -353,7 +353,7 @@ func (s *TeamService) listAccountsFromOrganization(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list accounts from organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", organizationID),
 			)...,
@@ -363,7 +363,7 @@ func (s *TeamService) listAccountsFromOrganization(
 	if resp == nil || resp.Accounts == nil {
 		s.logger.Warn(
 			"No accounts found in organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("organizationId", organizationID),
 			)...,
 		)
@@ -420,7 +420,7 @@ func (s *TeamService) ListTeams(
 	if err != nil {
 		s.logger.Error(
 			"Failed to valid list teams API. Invalid argument.",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,
@@ -459,7 +459,7 @@ func (s *TeamService) ListTeams(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list teams",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,
@@ -527,7 +527,7 @@ func (s *TeamService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -540,7 +540,7 @@ func (s *TeamService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -553,7 +553,7 @@ func (s *TeamService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -576,7 +576,7 @@ func (s *TeamService) reportInternalServerError(
 ) error {
 	s.logger.Error(
 		"Internal server error",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("organizationID", organizationID),
 		)...,

@@ -37,7 +37,7 @@ func (s *grpcGatewayService) CreateFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check create flag trigger request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureID", req.FeatureId),
 			)...,
@@ -60,7 +60,7 @@ func (s *grpcGatewayService) CreateFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to create flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureID", req.FeatureId),
 			)...,
@@ -69,7 +69,7 @@ func (s *grpcGatewayService) CreateFlagTrigger(
 	}
 	if resp == nil {
 		s.logger.Error("CreateFlagTrigger returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureID", req.FeatureId),
 			)...,
 		)
@@ -90,7 +90,7 @@ func (s *grpcGatewayService) DeleteFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check delete flag trigger request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -110,7 +110,7 @@ func (s *grpcGatewayService) DeleteFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to delete flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -130,7 +130,7 @@ func (s *grpcGatewayService) UpdateFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check update flag trigger request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -153,7 +153,7 @@ func (s *grpcGatewayService) UpdateFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to update flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -162,7 +162,7 @@ func (s *grpcGatewayService) UpdateFlagTrigger(
 	}
 	if resp == nil {
 		s.logger.Error("UpdateFlagTrigger returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("ID", req.Id),
 			)...,
 		)
@@ -184,7 +184,7 @@ func (s *grpcGatewayService) GetFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check get flag trigger request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -198,7 +198,7 @@ func (s *grpcGatewayService) GetFlagTrigger(
 	})
 	if err != nil {
 		s.logger.Error("Failed to get flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", req.Id),
 			)...,
@@ -207,7 +207,7 @@ func (s *grpcGatewayService) GetFlagTrigger(
 	}
 	if resp == nil {
 		s.logger.Error("GetFlagTrigger returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("ID", req.Id),
 			)...,
 		)
@@ -229,7 +229,7 @@ func (s *grpcGatewayService) ListFlagTriggers(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check list flag triggers request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -246,7 +246,7 @@ func (s *grpcGatewayService) ListFlagTriggers(
 	})
 	if err != nil {
 		s.logger.Error("Failed to list flag triggers",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -254,7 +254,7 @@ func (s *grpcGatewayService) ListFlagTriggers(
 	}
 	if resp == nil {
 		s.logger.Error("ListFlagTriggers returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields()...,
+			log.FieldsFromIncomingContext(ctx).AddFields()...,
 		)
 		return nil, ErrInternal
 	}

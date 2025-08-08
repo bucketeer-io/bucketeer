@@ -73,7 +73,7 @@ func (es *mysqlEventStorage) QueryEvaluationCount(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query evaluation count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.Time("startAt", startAt),
@@ -92,7 +92,7 @@ func (es *mysqlEventStorage) QueryEvaluationCount(
 		if err := rows.Scan(&ec.VariationID, &ec.EvaluationUser, &ec.EvaluationTotal); err != nil {
 			es.logger.Error(
 				"Failed to scan evaluation event count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -104,7 +104,7 @@ func (es *mysqlEventStorage) QueryEvaluationCount(
 	if err := rows.Err(); err != nil {
 		es.logger.Error(
 			"Error after scanning evaluation event counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -134,7 +134,7 @@ func (es *mysqlEventStorage) QueryGoalCount(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query goal count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.Time("startAt", startAt),
@@ -161,7 +161,7 @@ func (es *mysqlEventStorage) QueryGoalCount(
 		); err != nil {
 			es.logger.Error(
 				"Failed to scan goal event count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -173,7 +173,7 @@ func (es *mysqlEventStorage) QueryGoalCount(
 	if err := rows.Err(); err != nil {
 		es.logger.Error(
 			"Error after scanning goal event counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -202,7 +202,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query user evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentID),
 				zap.String("userId", userID),
@@ -231,7 +231,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	); err != nil {
 		es.logger.Error(
 			"Failed to scan user evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -245,7 +245,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	if err := rows.Err(); err != nil {
 		es.logger.Error(
 			"Error after scanning user evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

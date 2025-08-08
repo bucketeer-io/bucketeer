@@ -149,7 +149,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query evaluation count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("query", query),
 				zap.Any("params", params),
@@ -167,7 +167,7 @@ func (es *eventStorage) QueryEvaluationCount(
 		if err != nil {
 			es.logger.Error(
 				"Failed to convert evaluation event count from the query result",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("query", query),
 					zap.Any("params", params),
@@ -223,7 +223,7 @@ func (es *eventStorage) QueryGoalCount(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query goal count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("query", query),
 				zap.Any("params", params),
@@ -241,7 +241,7 @@ func (es *eventStorage) QueryGoalCount(
 		if err != nil {
 			es.logger.Error(
 				"Failed to convert goal event count from the query result",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("query", query),
 					zap.Any("params", params),
@@ -296,7 +296,7 @@ func (es *eventStorage) QueryUserEvaluation(
 	if err != nil {
 		es.logger.Error(
 			"Failed to query user evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("query", query),
 				zap.Any("params", params),
@@ -316,7 +316,7 @@ func (es *eventStorage) QueryUserEvaluation(
 	if err == iterator.Done {
 		es.logger.Error(
 			"User evaluation not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("query", query),
 				zap.Any("params", params),
@@ -327,7 +327,7 @@ func (es *eventStorage) QueryUserEvaluation(
 	if err != nil {
 		es.logger.Error(
 			"Failed to convert user evaluation from the query result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("query", query),
 				zap.Any("params", params),

@@ -144,7 +144,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list environments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -369,7 +369,7 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 		}
 		s.logger.Error(
 			"Failed to create environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -534,7 +534,7 @@ func (s *EnvironmentService) createEnvironmentV2(
 		}
 		s.logger.Error(
 			"Failed to create environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -631,7 +631,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		}
 		s.logger.Error(
 			"Failed to update environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -681,7 +681,7 @@ func (s *EnvironmentService) updateEnvironmentV2(
 		}
 		s.logger.Error(
 			"Failed to update environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -813,7 +813,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 		}
 		s.logger.Error(
 			"Failed to archive environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -889,7 +889,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 		}
 		s.logger.Error(
 			"Failed to unarchive environment",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

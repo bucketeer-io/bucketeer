@@ -105,7 +105,7 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Info(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 				)...,
@@ -121,7 +121,7 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Info(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 				)...,
@@ -137,7 +137,7 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 				)...,

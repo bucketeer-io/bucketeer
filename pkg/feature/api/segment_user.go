@@ -55,7 +55,7 @@ func (s *FeatureService) AddSegmentUser(
 	if err := validateAddSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -65,7 +65,7 @@ func (s *FeatureService) AddSegmentUser(
 	if err := validateAddSegmentUserCommand(req.Command, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -102,7 +102,7 @@ func (s *FeatureService) DeleteSegmentUser(
 	if err := validateDeleteSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -112,7 +112,7 @@ func (s *FeatureService) DeleteSegmentUser(
 	if err := validateDeleteSegmentUserCommand(req.Command, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -157,7 +157,7 @@ func (s *FeatureService) updateSegmentUser(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -167,7 +167,7 @@ func (s *FeatureService) updateSegmentUser(
 		if err := s.segmentUserStorage.UpsertSegmentUsers(contextWithTx, segmentUsers, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment user",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -186,7 +186,7 @@ func (s *FeatureService) updateSegmentUser(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -211,7 +211,7 @@ func (s *FeatureService) updateSegmentUser(
 		}
 		s.logger.Error(
 			"Failed to upsert segment user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -242,7 +242,7 @@ func (s *FeatureService) GetSegmentUser(
 	if err := validateGetSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -264,7 +264,7 @@ func (s *FeatureService) GetSegmentUser(
 		}
 		s.logger.Error(
 			"Failed to get segment user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -297,7 +297,7 @@ func (s *FeatureService) ListSegmentUsers(
 	if err := validateListSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -341,7 +341,7 @@ func (s *FeatureService) ListSegmentUsers(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segment users",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -378,7 +378,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	if err := validateBulkUploadSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -388,7 +388,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	if err := validateBulkUploadSegmentUsersCommand(req.Command, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -422,7 +422,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -457,7 +457,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		}
 		s.logger.Error(
 			"Failed to bulk upload segment users",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -483,7 +483,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 	if err := validateBulkUploadSegmentUsersNoCommandRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -559,7 +559,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 		}
 		s.logger.Error(
 			"Failed to bulk upload segment users",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -613,7 +613,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	if err := validateBulkDownloadSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -634,7 +634,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		}
 		s.logger.Error(
 			"Failed to get segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -674,7 +674,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segment users",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,

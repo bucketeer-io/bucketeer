@@ -153,7 +153,7 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list projects",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -294,7 +294,7 @@ func (s *EnvironmentService) CreateProject(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create project",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -402,7 +402,7 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 ) error {
 	s.logger.Error(
 		"Failed to create project",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("organizationId", req.OrganizationId),
 			zap.Any("name", req.Name),
@@ -533,7 +533,7 @@ func (s *EnvironmentService) createProject(
 		}
 		s.logger.Error(
 			"Failed to create project",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -600,7 +600,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -615,7 +615,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
 		s.logger.Error(
 			"Failed to save organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -632,7 +632,7 @@ This is a temporary implementation during the transition period.`,
 	if err != nil {
 		s.logger.Error(
 			"Failed to create trial project",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -986,7 +986,7 @@ func (s *EnvironmentService) reportUpdateProjectRequestError(
 ) error {
 	s.logger.Error(
 		"Failed to update project",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("organizationId", req.OrganizationId),
 			zap.String("projectId", req.Id),
@@ -1073,7 +1073,7 @@ func (s *EnvironmentService) updateProject(
 		}
 		s.logger.Error(
 			"Failed to update project",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1258,7 +1258,7 @@ func (s *EnvironmentService) ListProjectsV2(
 	if err != nil {
 		s.logger.Error(
 			"Failed to check organization role",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,
@@ -1291,7 +1291,7 @@ func (s *EnvironmentService) ListProjectsV2(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -1328,7 +1328,7 @@ func (s *EnvironmentService) ListProjectsV2(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list projects",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

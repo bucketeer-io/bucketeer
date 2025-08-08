@@ -200,7 +200,7 @@ func (s *experimentService) ListExperiments(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (s *experimentService) ListExperiments(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list experiments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -256,7 +256,7 @@ func (s *experimentService) ListExperiments(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get experiment summary",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId",
 					req.EnvironmentId),
@@ -356,7 +356,7 @@ func (s *experimentService) CreateExperiment(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -408,7 +408,7 @@ func (s *experimentService) CreateExperiment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", resp.Feature.Id),
@@ -453,7 +453,7 @@ func (s *experimentService) CreateExperiment(
 		}
 		s.logger.Error(
 			"Failed to create experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -499,7 +499,7 @@ func (s *experimentService) createExperimentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -528,7 +528,7 @@ func (s *experimentService) createExperimentNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", getFeatureResp.Feature.Id),
@@ -621,7 +621,7 @@ func (s *experimentService) createExperimentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -785,7 +785,7 @@ func (s *experimentService) UpdateExperiment(
 			if err = handler.Handle(ctx, req.ChangeExperimentPeriodCommand); err != nil {
 				s.logger.Error(
 					"Failed to change period",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -798,7 +798,7 @@ func (s *experimentService) UpdateExperiment(
 			if err = handler.Handle(ctx, req.ChangeNameCommand); err != nil {
 				s.logger.Error(
 					"Failed to change Name",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -810,7 +810,7 @@ func (s *experimentService) UpdateExperiment(
 			if err = handler.Handle(ctx, req.ChangeDescriptionCommand); err != nil {
 				s.logger.Error(
 					"Failed to change Description",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -834,7 +834,7 @@ func (s *experimentService) UpdateExperiment(
 		}
 		s.logger.Error(
 			"Failed to update experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -863,7 +863,7 @@ func (s *experimentService) updateExperimentNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed validate update experiment no command req",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -940,7 +940,7 @@ func (s *experimentService) updateExperimentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to update experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1203,7 +1203,7 @@ func (s *experimentService) ArchiveExperiment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to archive experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1269,7 +1269,7 @@ func (s *experimentService) updateExperiment(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get experiment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1283,7 +1283,7 @@ func (s *experimentService) updateExperiment(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1305,7 +1305,7 @@ func (s *experimentService) updateExperiment(
 		}
 		s.logger.Error(
 			"Failed to update experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,

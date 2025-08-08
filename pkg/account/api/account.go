@@ -63,7 +63,7 @@ func (s *AccountService) CreateAccountV2(
 	if err := validateCreateAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,
@@ -126,7 +126,7 @@ func (s *AccountService) CreateAccountV2(
 		}
 		s.logger.Error(
 			"Failed to create account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.Any("environmentRoles", req.Command.EnvironmentRoles),
@@ -148,7 +148,7 @@ func (s *AccountService) CreateAccountV2(
 		if err := s.upsertTags(ctx, req.Command.Tags, envRole.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to upsert account tags",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationId", req.OrganizationId),
 					zap.String("environmentId", envRole.EnvironmentId),
@@ -172,7 +172,7 @@ func (s *AccountService) createAccountV2NoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,
@@ -256,7 +256,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		}
 		s.logger.Error(
 			"Failed to create account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -275,7 +275,7 @@ func (s *AccountService) createAccountV2NoCommand(
 	if err = s.publisher.Publish(ctx, createAccountEvent); err != nil {
 		s.logger.Error(
 			"Failed to publish create account event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -288,7 +288,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to upsert account tags",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationId", req.OrganizationId),
 					zap.String("environmentId", envRole.EnvironmentId),
@@ -303,7 +303,7 @@ func (s *AccountService) createAccountV2NoCommand(
 	if err := s.upsertTeams(ctx, req.Teams, req.OrganizationId); err != nil {
 		s.logger.Error(
 			"Failed to upsert account teams",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationId", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -346,7 +346,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create update account event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", req.Email),
 			)...,
@@ -381,7 +381,7 @@ func (s *AccountService) upsertTags(
 		if err != nil {
 			s.logger.Error(
 				"Failed to create domain tag",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 					zap.String("tagId", tag),
@@ -410,7 +410,7 @@ func (s *AccountService) upsertTeams(
 		if err != nil {
 			s.logger.Error(
 				"Failed to create domain team",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationId", organizationID),
 					zap.String("teamId", team),
@@ -466,7 +466,7 @@ func (s *AccountService) UpdateAccountV2(
 		if err := s.checkRestrictedCommands(req, localizer); err != nil {
 			s.logger.Error(
 				"Member user is not allowed to update organization role or environment roles",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", req.OrganizationId),
 					zap.String("email", req.Email),
@@ -483,7 +483,7 @@ func (s *AccountService) UpdateAccountV2(
 	if err := validateUpdateAccountV2Request(req, commands, localizer); err != nil {
 		s.logger.Error(
 			"Failed to update account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -505,7 +505,7 @@ func (s *AccountService) UpdateAccountV2(
 		}
 		s.logger.Error(
 			"Failed to update account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -526,7 +526,7 @@ func (s *AccountService) UpdateAccountV2(
 			if err := s.upsertTags(ctx, req.ChangeTagsCommand.Tags, envRole.EnvironmentId); err != nil {
 				s.logger.Error(
 					"Failed to upsert account tags",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("organizationId", req.OrganizationId),
 						zap.String("environmentId", envRole.EnvironmentId),
@@ -603,7 +603,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		}
 		s.logger.Error(
 			"Failed to update account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -627,7 +627,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 			if err := s.upsertTags(ctx, req.Tags.Values, envRole.EnvironmentId); err != nil {
 				s.logger.Error(
 					"Failed to upsert account tags",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("organizationId", req.OrganizationId),
 						zap.String("environmentId", envRole.EnvironmentId),
@@ -643,7 +643,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		if err := s.upsertTeams(ctx, updatedAccountPb.Teams, req.OrganizationId); err != nil {
 			s.logger.Error(
 				"Failed to upsert account teams",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationId", req.OrganizationId),
 					zap.String("email", req.Email),
@@ -723,7 +723,7 @@ func (s *AccountService) EnableAccountV2(
 	if err := validateEnableAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to enable account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -761,7 +761,7 @@ func (s *AccountService) EnableAccountV2(
 		}
 		s.logger.Error(
 			"Failed to enable account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -798,7 +798,7 @@ func (s *AccountService) DisableAccountV2(
 	if err := validateDisableAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to disable account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -836,7 +836,7 @@ func (s *AccountService) DisableAccountV2(
 		}
 		s.logger.Error(
 			"Failed to disable account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -950,7 +950,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
 		s.logger.Error(
 			"Failed to publish update account event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", organizationID),
 				zap.String("email", email),
@@ -978,7 +978,7 @@ func (s *AccountService) DeleteAccountV2(
 	if err := validateDeleteAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to delete account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -1024,7 +1024,7 @@ func (s *AccountService) DeleteAccountV2(
 		}
 		s.logger.Error(
 			"Failed to delete account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -1059,7 +1059,7 @@ func (s *AccountService) GetAccountV2(
 	if err := validateGetAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to get account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
@@ -1093,7 +1093,7 @@ func (s *AccountService) getAccountV2(
 		}
 		s.logger.Error(
 			"Failed to get account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", organizationID),
 				zap.String("email", email),
@@ -1128,7 +1128,7 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 	if err := validateGetAccountV2ByEnvironmentIDRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to get account by environment id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("EnvironmentId", req.EnvironmentId),
 				zap.String("email", req.Email),
@@ -1162,7 +1162,7 @@ func (s *AccountService) getAccountV2ByEnvironmentID(
 		}
 		s.logger.Error(
 			"Failed to get account by environment id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentID),
 				zap.String("email", email),
@@ -1273,7 +1273,7 @@ func (s *AccountService) ListAccountsV2(
 		if err != nil {
 			s.logger.Error(
 				"Failed to marshal environment role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1306,7 +1306,7 @@ func (s *AccountService) ListAccountsV2(
 			if err != nil {
 				s.logger.Error(
 					"Failed to marshal environment role",
-					log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+					log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 				)
 				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
@@ -1339,7 +1339,7 @@ func (s *AccountService) ListAccountsV2(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -1374,7 +1374,7 @@ func (s *AccountService) ListAccountsV2(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list accounts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 			)...,

@@ -37,7 +37,7 @@ func (s *grpcGatewayService) CreateTeam(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreatePush request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -61,7 +61,7 @@ func (s *grpcGatewayService) CreateTeam(
 	)
 	if err != nil {
 		s.logger.Error("Failed to create team",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -70,7 +70,7 @@ func (s *grpcGatewayService) CreateTeam(
 	}
 	if res == nil {
 		s.logger.Error("Failed to create team: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("name", req.Name),
 			)...,
 		)
@@ -91,7 +91,7 @@ func (s *grpcGatewayService) DeleteTeam(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteTeam request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -114,7 +114,7 @@ func (s *grpcGatewayService) DeleteTeam(
 	)
 	if err != nil {
 		s.logger.Error("Failed to delete team",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -135,7 +135,7 @@ func (s *grpcGatewayService) ListTeams(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListTeams request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -154,7 +154,7 @@ func (s *grpcGatewayService) ListTeams(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list teams",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,
@@ -163,7 +163,7 @@ func (s *grpcGatewayService) ListTeams(
 	}
 	if res == nil {
 		s.logger.Error("Failed to list teams: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,

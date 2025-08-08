@@ -71,7 +71,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -88,7 +88,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -105,14 +105,14 @@ func (s *FeatureService) CreateFlagTrigger(
 		if err := handler.Handle(ctx, request.CreateFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
 		if err := s.flagTriggerStorage.CreateFlagTrigger(contextWithTx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -158,7 +158,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 	if err := validateCreateFlagTriggerNoCommand(req, localizer); err != nil {
 		s.logger.Error(
 			"Error validating create flag trigger request",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Error creating flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 		if err := s.flagTriggerStorage.CreateFlagTrigger(contextWithTx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -282,7 +282,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -301,7 +301,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		if err := handler.Handle(ctx, request.ChangeFlagTriggerDescriptionCommand); err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
@@ -311,7 +311,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		); err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -397,7 +397,7 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 		); err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -460,7 +460,7 @@ func (s *FeatureService) EnableFlagTrigger(
 	if err := validateEnableFlagTriggerCommand(request.EnableFlagTriggerCommand, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -476,7 +476,7 @@ func (s *FeatureService) EnableFlagTrigger(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -495,7 +495,7 @@ func (s *FeatureService) EnableFlagTrigger(
 		if err := handler.Handle(ctx, request.EnableFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
@@ -505,7 +505,7 @@ func (s *FeatureService) EnableFlagTrigger(
 		); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -554,7 +554,7 @@ func (s *FeatureService) DisableFlagTrigger(
 	if err := validateDisableFlagTriggerCommand(request.DisableFlagTriggerCommand, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -570,7 +570,7 @@ func (s *FeatureService) DisableFlagTrigger(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -589,14 +589,14 @@ func (s *FeatureService) DisableFlagTrigger(
 		if err := handler.Handle(ctx, request.DisableFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
 		if err := s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to disable flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -645,7 +645,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	if err := validateResetFlagTriggerCommand(request.ResetFlagTriggerCommand, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -679,7 +679,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		if err := handler.Handle(ctx, request.ResetFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
@@ -687,7 +687,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		if err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
@@ -745,7 +745,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", request.EnvironmentId),
 				)...,
@@ -776,7 +776,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		); err != nil {
 			s.logger.Error(
 				"Failed to delete flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			return err
 		}
@@ -831,7 +831,7 @@ func (s *FeatureService) GetFlagTrigger(
 	if err := validateGetFlagTriggerRequest(request, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -879,7 +879,7 @@ func (s *FeatureService) ListFlagTriggers(
 	if err := validateListFlagTriggersRequest(request, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -899,7 +899,7 @@ func (s *FeatureService) ListFlagTriggers(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create order",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -986,7 +986,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if token == "" {
 		s.logger.Error(
 			"Failed to get secret from query",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		dt, err := statusSecretRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1001,7 +1001,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get flag trigger",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusTriggerNotFound.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1015,7 +1015,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if trigger.GetDisabled() {
 		s.logger.Error(
 			"Flag trigger is disabled",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusTriggerAlreadyDisabled.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1040,7 +1040,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", trigger.FeatureId),
 				zap.String("environmentId", trigger.EnvironmentId),
@@ -1088,7 +1088,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	} else {
 		s.logger.Error(
 			"Invalid action",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusTriggerActionInvalid.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1151,7 +1151,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger usage",
-				log.FieldsFromImcomingContext(ctx).
+				log.FieldsFromIncomingContext(ctx).
 					AddFields(zap.Error(err))...,
 			)
 			return err
@@ -1161,7 +1161,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	if err != nil {
 		s.logger.Error(
 			"Failed to update flag trigger usage",
-			log.FieldsFromImcomingContext(ctx).
+			log.FieldsFromIncomingContext(ctx).
 				AddFields(zap.Error(err))...,
 		)
 		return err
@@ -1170,7 +1170,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).
+			log.FieldsFromIncomingContext(ctx).
 				AddFields(zap.Error(err))...,
 		)
 		return err
@@ -1195,7 +1195,7 @@ func (s *FeatureService) enableFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1223,7 +1223,7 @@ func (s *FeatureService) disableFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,

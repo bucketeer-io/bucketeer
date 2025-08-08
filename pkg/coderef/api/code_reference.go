@@ -118,7 +118,7 @@ func (s *CodeReferenceService) GetCodeReference(
 		}
 		s.logger.Error(
 			"Failed to get code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -208,7 +208,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list code references",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -270,7 +270,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -287,7 +287,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
 		s.logger.Error(
 			"Failed to create code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", codeRef.Id),
 			)...,
@@ -330,7 +330,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -346,7 +346,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	if err := s.publisher.Publish(ctx, createEvent); err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -398,7 +398,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 			}
 			s.logger.Error(
 				"Failed to get code reference",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -426,7 +426,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update code reference domain object",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 				)...,
@@ -443,7 +443,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
 			s.logger.Error(
 				"Failed to update code reference",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 				)...,
@@ -486,7 +486,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -502,7 +502,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err := s.publisher.Publish(ctx, updateEvent); err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -550,7 +550,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		s.logger.Error(
 			"Failed to get code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -568,7 +568,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
 		s.logger.Error(
 			"Failed to delete code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -598,7 +598,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -614,7 +614,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := s.publisher.Publish(ctx, deleteEvent); err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

@@ -40,7 +40,7 @@ func (s *grpcGatewayService) GetCodeReference(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetCodeReference request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -83,7 +83,7 @@ func (s *grpcGatewayService) ListCodeReferences(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListCodeReferences request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -121,7 +121,7 @@ func (s *grpcGatewayService) CreateCodeReference(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateCodeReference request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -172,7 +172,7 @@ func (s *grpcGatewayService) UpdateCodeReference(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateCodeReference request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -230,7 +230,7 @@ func (s *grpcGatewayService) DeleteCodeReference(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteCodeReference request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,

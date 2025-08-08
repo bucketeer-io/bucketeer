@@ -49,7 +49,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new admin subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("sourceType", req.Command.SourceTypes),
 				zap.Any("recipient", req.Command.Recipient),
@@ -91,7 +91,7 @@ func (s *NotificationService) CreateAdminSubscription(
 		}
 		s.logger.Error(
 			"Failed to create admin subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -107,7 +107,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 			)...,
 		)
@@ -180,7 +180,7 @@ func (s *NotificationService) UpdateAdminSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 				)...,
@@ -272,7 +272,7 @@ func (s *NotificationService) EnableAdminSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -325,7 +325,7 @@ func (s *NotificationService) DisableAdminSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -402,7 +402,7 @@ func (s *NotificationService) updateAdminSubscription(
 		}
 		s.logger.Error(
 			"Failed to update admin subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", id),
 			)...,
@@ -419,7 +419,7 @@ func (s *NotificationService) updateAdminSubscription(
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("id", id),
 			)...,
@@ -479,7 +479,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 		}
 		s.logger.Error(
 			"Failed to delete admin subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -496,7 +496,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("id", req.Id),
 			)...,
@@ -582,7 +582,7 @@ func (s *NotificationService) GetAdminSubscription(
 		}
 		s.logger.Error(
 			"Failed to get admin subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -633,7 +633,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -790,7 +790,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list admin subscriptions",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

@@ -95,7 +95,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 	experimentResult, calculationErr := e.createExperimentResult(ctx, request.EnvironmentId, request.Experiment)
 	if calculationErr != nil {
 		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentId", request.EnvironmentId),
 				zap.Any("experiment", request.Experiment),
 				zap.Error(calculationErr),
@@ -108,7 +108,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 			ExperimentResult: experimentResult,
 		}); err != nil {
 		e.logger.Error("ExperimentCalculator failed to update experiment result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentId", request.EnvironmentId),
 				zap.Any("experiment", request.Experiment),
 				zap.Any("experimentResult", experimentResult),
@@ -118,7 +118,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 		return err
 	}
 	e.logger.Info("ExperimentCalculator calculated successfully",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.String("environmentId", request.EnvironmentId),
 			zap.Any("experiment", request.Experiment),
 			zap.Duration("elapsedTime", time.Since(startTime)),
@@ -163,7 +163,7 @@ func (e ExperimentCalculator) createExperimentResult(
 			})
 			if evalErr != nil {
 				e.logger.Error("ExperimentCalculator failed to get evaluation count",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
 						zap.Any("experiment", experiment),
 						zap.Error(evalErr),
@@ -182,7 +182,7 @@ func (e ExperimentCalculator) createExperimentResult(
 			})
 			if goalErr != nil {
 				e.logger.Error("ExperimentCalculator failed to get goal count",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
 						zap.Any("experiment", experiment),
 						zap.Error(goalErr),
@@ -284,7 +284,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		if _, ok := evalVariationCounts[vid]; !ok {
 			calculationExceptionCounter.WithLabelValues(evalVariationCountNotFound).Inc()
 			e.logger.Error("Variation not found in evaluation count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("variation_id", vid),
 					zap.Any("experiment", experiment),
 				)...,
@@ -315,7 +315,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		if evalUc[i] < goalUc[i] {
 			calculationExceptionCounter.WithLabelValues(evaluationCountLessThanGoalEvent).Inc()
 			e.logger.Error("Evaluation count is less than goal count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("variation_id", vids[i]),
 					zap.Int64("evaluation_count", evalUc[i]),
 					zap.Int64("goal_count", goalUc[i]),
@@ -330,7 +330,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	if sampleErr != nil {
 		calculationCounter.WithLabelValues(calculationFail).Inc()
 		e.logger.Error("BinomialModelSample error",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(sampleErr),
 				zap.Any("experiment", experiment),
 				zap.Strings("variation_ids", vids),
@@ -379,7 +379,7 @@ func (e ExperimentCalculator) appendVariationResult(
 		variationResult := getVariationResult(srcVrs, goalResult.VariationResults[i].VariationId)
 		if variationResult == nil {
 			e.logger.Error("Variation result not found",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("variation_id", goalResult.VariationResults[i].VariationId),
 				)...,
 			)
@@ -564,7 +564,7 @@ func (e ExperimentCalculator) binomialModelSample(
 			fitResp, err := e.httpStan.CreateFit(ctx, e.stanModelID, req)
 			if err != nil {
 				e.logger.Error("Failed to create fit",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.String("modelId", e.stanModelID),
 						zap.Error(err),
 						zap.Any("experiment", experiment),
@@ -580,7 +580,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				details, err := e.httpStan.GetOperationDetails(ctx, fitId)
 				if err != nil {
 					e.logger.Error("Failed to get operation details",
-						log.FieldsFromImcomingContext(ctx).AddFields(
+						log.FieldsFromIncomingContext(ctx).AddFields(
 							zap.String("fitId", fitId),
 							zap.Error(err),
 							zap.Any("experiment", experiment),
@@ -599,7 +599,7 @@ func (e ExperimentCalculator) binomialModelSample(
 			result, err := e.httpStan.GetFitResult(ctx, e.stanModelID, fitId)
 			if err != nil {
 				e.logger.Error("Failed to get fit result",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.String("fitId", fitId),
 						zap.Error(err),
 						zap.Any("experiment", experiment),
@@ -627,7 +627,7 @@ func (e ExperimentCalculator) binomialModelSample(
 
 	if len(samples) != numOfChains {
 		e.logger.Error("Failed to get all samples",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Int("numOfChains", numOfChains),
 				zap.Int("numOfSamples", len(samples)),
 				zap.Any("experiment", experiment),
@@ -687,7 +687,7 @@ func (e ExperimentCalculator) convertFitSamples(
 		} else {
 			// Log warning if column not found
 			e.logger.Warn("Column not found in Stan samples",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("columnName", name),
 					zap.String("variationId", vids[i]),
 				)...,

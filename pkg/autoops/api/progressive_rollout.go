@@ -72,7 +72,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create domain ProgressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -114,7 +114,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		}
 		s.logger.Error(
 			"Failed to create ProgressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -189,7 +189,7 @@ func (s *AutoOpsService) createProgressiveRolloutNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create ProgressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -226,7 +226,7 @@ func (s *AutoOpsService) GetProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -333,7 +333,7 @@ func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to stop the progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -363,7 +363,7 @@ func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to push stop progressive rollout event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -410,7 +410,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to stop the progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", progressiveRolloutID),
 				zap.String("environmentId", environmentId),
@@ -480,7 +480,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to delete ProgressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -509,7 +509,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to push delete progressive rollout event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -596,7 +596,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if triggered {
 			s.logger.Warn(
 				"Progressive Rollout is already triggered",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("ruleID", req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId),
 					zap.String("environmentId", req.EnvironmentId),
@@ -653,7 +653,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", progressiveRollout.Id),
@@ -684,7 +684,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to execute progressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -713,7 +713,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
 			s.logger.Error(
 				"Failed to publish events",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Any("errors", errs),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -741,7 +741,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate execute progressive rollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -772,7 +772,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if triggered {
 			s.logger.Warn(
 				"Progressive Rollout is already triggered",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("ruleID", req.ScheduleId),
 					zap.String("environmentId", req.EnvironmentId),
@@ -825,7 +825,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", progressiveRollout.Id),
@@ -872,7 +872,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to execute progressiveRollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -901,7 +901,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if errs := s.publisher.PublishMulti(ctx, events); len(errs) > 0 {
 			s.logger.Error(
 				"Failed to publish events",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Any("errors", errs),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -988,7 +988,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1016,7 +1016,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressive rollouts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,

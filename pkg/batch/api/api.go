@@ -128,7 +128,7 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.tagDeleter.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("job_name", req.Job.String()),
 			)...,
 		)
@@ -136,7 +136,7 @@ func (s *batchService) ExecuteBatchJob(
 	}
 	if err != nil {
 		s.logger.Error("Failed to run the job",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("job_name", req.Job.String()),
 				zap.Error(err),
 			)...,

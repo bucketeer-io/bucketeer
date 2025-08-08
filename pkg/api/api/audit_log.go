@@ -36,7 +36,7 @@ func (s *grpcGatewayService) GetAuditLog(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check get auditlog request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -51,7 +51,7 @@ func (s *grpcGatewayService) GetAuditLog(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get audit log",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -60,7 +60,7 @@ func (s *grpcGatewayService) GetAuditLog(
 	}
 	if res == nil {
 		s.logger.Error("Get audit log response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", request.Id),
 			)...,
 		)
@@ -82,7 +82,7 @@ func (s *grpcGatewayService) ListAuditLogs(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListAuditLogs request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -104,7 +104,7 @@ func (s *grpcGatewayService) ListAuditLogs(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list audit logs",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -132,7 +132,7 @@ func (s *grpcGatewayService) ListFeatureHistory(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListFeatureHistory request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -154,7 +154,7 @@ func (s *grpcGatewayService) ListFeatureHistory(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list feature history",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

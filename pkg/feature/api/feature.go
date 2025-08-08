@@ -98,7 +98,7 @@ func (s *FeatureService) GetFeature(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -121,7 +121,7 @@ func (s *FeatureService) GetFeature(
 	if cleanupResult.Changed {
 		s.logger.Warn(
 			"Cleaned up orphaned variation references in feature during get (temporary migration)",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -140,7 +140,7 @@ func (s *FeatureService) GetFeature(
 	if migrationResult.Changed {
 		s.logger.Warn(
 			"Added missing variations to rollout strategies in feature during get (temporary migration)",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -208,7 +208,7 @@ func (s *FeatureService) GetFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -232,7 +232,7 @@ func (s *FeatureService) GetFeatures(
 		if cleanupResult.Changed {
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during get multiple (temporary migration)",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -251,7 +251,7 @@ func (s *FeatureService) GetFeatures(
 		if migrationResult.Changed {
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during get multiple (temporary migration)",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -322,7 +322,7 @@ func (s *FeatureService) ListFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to count features by status",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -338,7 +338,7 @@ func (s *FeatureService) ListFeatures(
 		if cleanupResult.Changed {
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during list (temporary migration)",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -357,7 +357,7 @@ func (s *FeatureService) ListFeatures(
 		if migrationResult.Changed {
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during list (temporary migration)",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", f.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -501,7 +501,7 @@ func (s *FeatureService) listFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -537,7 +537,7 @@ func (s *FeatureService) listFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -678,7 +678,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -715,7 +715,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features filtered by experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -840,7 +840,7 @@ func (s *FeatureService) ListEnabledFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list enabled features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -896,7 +896,7 @@ func (s *FeatureService) CreateFeature(
 		if err := s.featureStorage.CreateFeature(contextWithTx, feature, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -910,7 +910,7 @@ func (s *FeatureService) CreateFeature(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to create feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -932,7 +932,7 @@ func (s *FeatureService) CreateFeature(
 		}
 		s.logger.Error(
 			"Failed to create feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -949,7 +949,7 @@ func (s *FeatureService) CreateFeature(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -991,7 +991,7 @@ func (s *FeatureService) createFeatureNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1044,7 +1044,7 @@ func (s *FeatureService) createFeatureNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1062,7 +1062,7 @@ func (s *FeatureService) createFeatureNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1136,7 +1136,7 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			s.logger.Error(
 				"Failed to list features",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1160,7 +1160,7 @@ func (s *FeatureService) UpdateFeature(
 			}
 			s.logger.Error(
 				"Failed to find feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(dt.Err()),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -1175,7 +1175,7 @@ func (s *FeatureService) UpdateFeature(
 		if cleanupResult.Changed {
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -1193,7 +1193,7 @@ func (s *FeatureService) UpdateFeature(
 		if migrationResult.Changed {
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -1266,7 +1266,7 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1281,7 +1281,7 @@ func (s *FeatureService) UpdateFeature(
 	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1334,7 +1334,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1349,7 +1349,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 		if err != nil {
 			s.logger.Error(
 				"Failed to increment feature version",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1361,7 +1361,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			if err != nil {
 				s.logger.Error(
 					"Failed to rename feature",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -1374,7 +1374,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			if err != nil {
 				s.logger.Error(
 					"Failed to change feature description",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -1388,7 +1388,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				if err != nil {
 					s.logger.Error(
 						"Failed to add tag to feature",
-						log.FieldsFromImcomingContext(ctx).AddFields(
+						log.FieldsFromIncomingContext(ctx).AddFields(
 							zap.Error(err),
 							zap.String("environmentId", req.EnvironmentId),
 						)...,
@@ -1410,7 +1410,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				if err != nil {
 					s.logger.Error(
 						"Failed to remove tag from feature",
-						log.FieldsFromImcomingContext(ctx).AddFields(
+						log.FieldsFromIncomingContext(ctx).AddFields(
 							zap.Error(err),
 							zap.String("environmentId", req.EnvironmentId),
 						)...,
@@ -1423,7 +1423,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1438,7 +1438,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1464,7 +1464,7 @@ func (s *FeatureService) existsRunningExperiment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list experiments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -1493,7 +1493,7 @@ func (s *FeatureService) existsRunningProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressiveRollouts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -1574,7 +1574,7 @@ func (s *FeatureService) EnableFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1616,7 +1616,7 @@ func (s *FeatureService) DisableFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1666,7 +1666,7 @@ func (s *FeatureService) ArchiveFeature(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1683,7 +1683,7 @@ func (s *FeatureService) ArchiveFeature(
 	if tgtF == nil {
 		s.logger.Error(
 			"Feature not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1729,7 +1729,7 @@ func (s *FeatureService) ArchiveFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to archive feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1769,7 +1769,7 @@ func (s *FeatureService) UnarchiveFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to unarchive feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1809,7 +1809,7 @@ func (s *FeatureService) DeleteFeature(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to delete feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -1854,7 +1854,7 @@ func (s *FeatureService) updateFeature(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1868,7 +1868,7 @@ func (s *FeatureService) updateFeature(
 		if cleanupResult.Changed {
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during details update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", id),
 					zap.String("environmentId", environmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -1886,7 +1886,7 @@ func (s *FeatureService) updateFeature(
 		if migrationResult.Changed {
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during details update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", id),
 					zap.String("environmentId", environmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -1904,7 +1904,7 @@ func (s *FeatureService) updateFeature(
 		if err != nil {
 			s.logger.Error(
 				"Failed to increment feature version",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1921,7 +1921,7 @@ func (s *FeatureService) updateFeature(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1931,7 +1931,7 @@ func (s *FeatureService) updateFeature(
 		if err := s.featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1946,7 +1946,7 @@ func (s *FeatureService) updateFeature(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -2022,7 +2022,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to unmarshal command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2058,7 +2058,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to list feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2069,7 +2069,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2088,7 +2088,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 			); err != nil {
 				s.logger.Error(
 					"Invalid argument",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -2104,7 +2104,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to increment feature version",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2117,7 +2117,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				// TODO: make this error log more specific.
 				s.logger.Error(
 					"Failed to handle command",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -2129,7 +2129,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2144,7 +2144,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2193,7 +2193,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if err != nil {
 			s.logger.Error(
 				"Failed to unmarshal command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2238,7 +2238,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if err != nil {
 			s.logger.Error(
 				"Failed to list feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2249,7 +2249,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2268,7 +2268,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			); err != nil {
 				s.logger.Error(
 					"Invalid argument",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -2284,7 +2284,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if cleanupResult.Changed {
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during targeting update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
@@ -2302,7 +2302,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if migrationResult.Changed {
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during targeting update",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("featureId", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
@@ -2325,7 +2325,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if err != nil {
 			s.logger.Error(
 				"Failed to increment feature version",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2345,7 +2345,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				// TODO: same as above. Make it more specific.
 				s.logger.Error(
 					"Failed to handle command",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 					)...,
@@ -2357,7 +2357,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2372,7 +2372,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2482,7 +2482,7 @@ func (s *FeatureService) evaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", EnvironmentId),
 				zap.String("userId", user.Id),
@@ -2495,7 +2495,7 @@ func (s *FeatureService) evaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", EnvironmentId),
 				zap.String("userId", user.Id),
@@ -2524,7 +2524,7 @@ func (s *FeatureService) getFeatures(
 	}
 	s.logger.Warn(
 		"No cached data for Features",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentId", EnvironmentId),
 		)...,
@@ -2547,8 +2547,8 @@ func (s *FeatureService) getFeatures(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to retrive features from storage",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			"Failed to retrieve features from storage",
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", EnvironmentId),
 			)...,
@@ -2597,7 +2597,7 @@ func (s *FeatureService) getSegmentUsers(
 	}
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentId", EnvironmentId),
 			zap.String("segmentId", segmentID),
@@ -2611,7 +2611,7 @@ func (s *FeatureService) getSegmentUsers(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve segment users from storage",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", EnvironmentId),
 				zap.String("segmentId", segmentID),
@@ -2654,7 +2654,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature last used infos",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", EnvironmentId),
 			)...,
@@ -2693,7 +2693,7 @@ func (s *FeatureService) EvaluateFeatures(
 	if err := validateEvaluateFeatures(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2709,7 +2709,7 @@ func (s *FeatureService) EvaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2728,7 +2728,7 @@ func (s *FeatureService) EvaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get target features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2746,7 +2746,7 @@ func (s *FeatureService) EvaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2766,7 +2766,7 @@ func (s *FeatureService) EvaluateFeatures(
 		if err != nil {
 			s.logger.Error(
 				"Failed to find evaluation",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2805,7 +2805,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2821,7 +2821,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -2845,7 +2845,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get target features",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2868,7 +2868,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 		if err != nil {
 			s.logger.Error(
 				"Failed to evaluate features",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -2989,7 +2989,7 @@ func (s *FeatureService) CloneFeature(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -3016,7 +3016,7 @@ func (s *FeatureService) CloneFeature(
 		if err := s.featureStorage.CreateFeature(ctxWithTx, feature, req.Command.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.Command.EnvironmentId),
 				)...,
@@ -3030,7 +3030,7 @@ func (s *FeatureService) CloneFeature(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to clone feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.Command.EnvironmentId),
 				)...,
@@ -3052,7 +3052,7 @@ func (s *FeatureService) CloneFeature(
 		}
 		s.logger.Error(
 			"Failed to clone feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
@@ -3069,7 +3069,7 @@ func (s *FeatureService) CloneFeature(
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
@@ -3118,7 +3118,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 		}
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -3141,7 +3141,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to clone domain feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -3179,7 +3179,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 		if err := featureStorage.CreateFeature(ctxWithTx, feature, req.TargetEnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
-				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("targetEnvironmentId", req.TargetEnvironmentId),
@@ -3202,7 +3202,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 		}
 		s.logger.Error(
 			"Failed to clone feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
@@ -3219,7 +3219,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 	if err = s.domainPublisher.Publish(ctx, event); err != nil {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("targetEnvironmentId", req.TargetEnvironmentId),

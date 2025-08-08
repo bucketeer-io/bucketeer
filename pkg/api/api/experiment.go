@@ -38,7 +38,7 @@ func (s *grpcGatewayService) GetExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetExperiment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -53,7 +53,7 @@ func (s *grpcGatewayService) GetExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to get experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("experimentId", req.Id),
 			)...,
@@ -62,7 +62,7 @@ func (s *grpcGatewayService) GetExperiment(
 	}
 	if resp == nil {
 		s.logger.Error("Experiment resp is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("experimentId", req.Id),
 			)...,
 		)
@@ -84,7 +84,7 @@ func (s *grpcGatewayService) ListExperiments(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListExperiments request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -110,7 +110,7 @@ func (s *grpcGatewayService) ListExperiments(
 	})
 	if err != nil {
 		s.logger.Error("Failed to list experiments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -118,7 +118,7 @@ func (s *grpcGatewayService) ListExperiments(
 	}
 	if resp == nil {
 		s.logger.Error("ListExperiments resp is nil",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		return nil, ErrInternal
 	}
@@ -139,7 +139,7 @@ func (s *grpcGatewayService) CreateExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateExperiment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -168,7 +168,7 @@ func (s *grpcGatewayService) CreateExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to create experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -176,7 +176,7 @@ func (s *grpcGatewayService) CreateExperiment(
 	}
 	if resp == nil {
 		s.logger.Error("CreateExperiment resp is nil",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		return nil, ErrInternal
 	}
@@ -195,7 +195,7 @@ func (s *grpcGatewayService) UpdateExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateExperiment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -224,7 +224,7 @@ func (s *grpcGatewayService) UpdateExperiment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to update experiment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
