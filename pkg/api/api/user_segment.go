@@ -37,7 +37,7 @@ func (s *grpcGatewayService) CreateSegment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateSegment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -61,7 +61,7 @@ func (s *grpcGatewayService) CreateSegment(
 	}
 	if res == nil {
 		s.logger.Error("Not found created segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("name", req.Name),
 			)...)
@@ -83,7 +83,7 @@ func (s *grpcGatewayService) GetSegment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetSegment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("segmentId", req.Id),
 			)...,
@@ -103,7 +103,7 @@ func (s *grpcGatewayService) GetSegment(
 	}
 	if res == nil {
 		s.logger.Error("Segment not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("segmentId", req.Id),
 			)...,
 		)
@@ -126,7 +126,7 @@ func (s *grpcGatewayService) ListSegments(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListSegments request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -150,7 +150,7 @@ func (s *grpcGatewayService) ListSegments(
 	}
 	if res == nil {
 		s.logger.Error("Failed to list segments: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,
@@ -174,7 +174,7 @@ func (s *grpcGatewayService) DeleteSegment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteSegment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("segmentId", req.Id),
 			)...,
@@ -210,7 +210,7 @@ func (s *grpcGatewayService) UpdateSegment(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateSegment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("segmentId", req.Id),
 			)...,
@@ -237,7 +237,7 @@ func (s *grpcGatewayService) UpdateSegment(
 	}
 	if res == nil {
 		s.logger.Error("Not found updated segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("segmentId", req.Id),
 			)...,
 		)
@@ -258,7 +258,7 @@ func (s *grpcGatewayService) BulkUploadSegmentUsers(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check BulkUploadSegmentUsers request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("segmentId", req.SegmentId),
 			)...,

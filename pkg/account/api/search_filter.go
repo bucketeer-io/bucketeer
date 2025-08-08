@@ -47,7 +47,7 @@ func (s *AccountService) CreateSearchFilter(
 	if err := validateCreateSearchFilterRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("request", req),
 			)...,
@@ -75,7 +75,7 @@ func (s *AccountService) CreateSearchFilter(
 		orgID); err != nil {
 		s.logger.Error(
 			"Failed to create search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),
@@ -124,7 +124,7 @@ func (s *AccountService) UpdateSearchFilter(
 	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("request", req),
 			)...,
@@ -152,7 +152,7 @@ func (s *AccountService) UpdateSearchFilter(
 		orgID); err != nil {
 		s.logger.Error(
 			"Failed to update search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),
@@ -218,7 +218,7 @@ func (s *AccountService) DeleteSearchFilter(
 	if err := validateDeleteSearchFilterRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("request", req),
 			)...,
@@ -246,7 +246,7 @@ func (s *AccountService) DeleteSearchFilter(
 		orgID); err != nil {
 		s.logger.Error(
 			"Failed to delete search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),

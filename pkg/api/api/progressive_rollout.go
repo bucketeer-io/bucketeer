@@ -37,7 +37,7 @@ func (s *grpcGatewayService) CreateProgressiveRollout(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateProgressiveRollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 			)...,
@@ -61,7 +61,7 @@ func (s *grpcGatewayService) CreateProgressiveRollout(
 	)
 	if err != nil {
 		s.logger.Error("Failed to create progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 			)...,
@@ -70,7 +70,7 @@ func (s *grpcGatewayService) CreateProgressiveRollout(
 	}
 	if resp == nil {
 		s.logger.Error("CreateProgressiveRolloutResponse is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
@@ -92,7 +92,7 @@ func (s *grpcGatewayService) GetProgressiveRollout(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetProgressiveRollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -108,7 +108,7 @@ func (s *grpcGatewayService) GetProgressiveRollout(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -117,7 +117,7 @@ func (s *grpcGatewayService) GetProgressiveRollout(
 	}
 	if resp == nil {
 		s.logger.Error("GetProgressiveRolloutResponse is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -138,7 +138,7 @@ func (s *grpcGatewayService) StopProgressiveRollout(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check StopProgressiveRollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -160,7 +160,7 @@ func (s *grpcGatewayService) StopProgressiveRollout(
 	)
 	if err != nil {
 		s.logger.Error("Failed to stop progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -180,7 +180,7 @@ func (s *grpcGatewayService) DeleteProgressiveRollout(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteProgressiveRollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -202,7 +202,7 @@ func (s *grpcGatewayService) DeleteProgressiveRollout(
 	)
 	if err != nil {
 		s.logger.Error("Failed to delete progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -223,7 +223,7 @@ func (s *grpcGatewayService) ListProgressiveRollouts(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListProgressiveRollouts request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -244,7 +244,7 @@ func (s *grpcGatewayService) ListProgressiveRollouts(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list progressive rollouts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -271,7 +271,7 @@ func (s *grpcGatewayService) ExecuteProgressiveRollout(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ExecuteProgressiveRollout request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -293,7 +293,7 @@ func (s *grpcGatewayService) ExecuteProgressiveRollout(
 	)
 	if err != nil {
 		s.logger.Error("Failed to execute progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -302,7 +302,7 @@ func (s *grpcGatewayService) ExecuteProgressiveRollout(
 	}
 	if resp == nil {
 		s.logger.Error("ExecuteProgressiveRolloutResponse is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", req.Id),
 			)...,
 		)

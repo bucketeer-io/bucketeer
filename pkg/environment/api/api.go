@@ -240,7 +240,7 @@ func (s *EnvironmentService) checkEmailExistedInSystem(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get organizations by email",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email), zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", email), zap.Error(err))...,
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -254,7 +254,7 @@ func (s *EnvironmentService) checkEmailExistedInSystem(
 	if len(getAccountOrgs.Organizations) > 0 {
 		s.logger.Error(
 			"Email already exists in the system",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email))...)
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", email))...)
 		return true, nil
 	}
 	return false, nil
@@ -268,7 +268,7 @@ func (s *EnvironmentService) generateDemoToken(
 	if err := s.checkEmail(userEmail, localizer); err != nil {
 		s.logger.Error(
 			"Access denied email",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userEmail))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", userEmail))...,
 		)
 		return nil, err
 	}
@@ -398,7 +398,7 @@ func (s *EnvironmentService) checkSystemAdminRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -411,7 +411,7 @@ func (s *EnvironmentService) checkSystemAdminRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -424,7 +424,7 @@ func (s *EnvironmentService) checkSystemAdminRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -460,7 +460,7 @@ func (s *EnvironmentService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -473,7 +473,7 @@ func (s *EnvironmentService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -486,7 +486,7 @@ func (s *EnvironmentService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -523,7 +523,7 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,
@@ -539,7 +539,7 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,
@@ -555,7 +555,7 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,
@@ -593,7 +593,7 @@ func (s *EnvironmentService) getAccountV2ByEnvironmentID(
 		}
 		s.logger.Error(
 			"Failed to get account by environment id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentID),
 				zap.String("email", email),

@@ -67,7 +67,7 @@ func (s *AccountService) CreateAPIKey(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -109,7 +109,7 @@ func (s *AccountService) CreateAPIKey(
 		}
 		s.logger.Error(
 			"Failed to create api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -145,7 +145,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -179,7 +179,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -222,7 +222,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 	if err := s.publisher.Publish(ctx, e); err != nil {
 		s.logger.Error(
 			"Failed to publish create account event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -255,7 +255,7 @@ func (s *AccountService) ChangeAPIKeyName(
 	if err := validateChangeAPIKeyNameRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to change api key name",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -281,7 +281,7 @@ func (s *AccountService) ChangeAPIKeyName(
 		}
 		s.logger.Error(
 			"Failed to change api key name",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -317,7 +317,7 @@ func (s *AccountService) EnableAPIKey(
 	if err := validateEnableAPIKeyRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to enable api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -343,7 +343,7 @@ func (s *AccountService) EnableAPIKey(
 		}
 		s.logger.Error(
 			"Failed to enable api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -378,7 +378,7 @@ func (s *AccountService) DisableAPIKey(
 	if err := validateDisableAPIKeyRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to disable api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -404,7 +404,7 @@ func (s *AccountService) DisableAPIKey(
 		}
 		s.logger.Error(
 			"Failed to disable api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -476,7 +476,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		s.logger.Error(
 			"Failed to get api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -494,7 +494,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	if apiKey == nil {
 		s.logger.Error(
 			"Failed to get api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
@@ -567,7 +567,7 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -601,7 +601,7 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list api keys",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -727,7 +727,7 @@ func (s *AccountService) GetEnvironmentAPIKey(
 		}
 		s.logger.Error(
 			"Failed to get environment api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("apiKey", req.ApiKey),
 			)...,
@@ -805,7 +805,7 @@ func (s *AccountService) UpdateAPIKey(
 		}
 		s.logger.Error(
 			"Failed to update api key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -838,7 +838,7 @@ func (s *AccountService) UpdateAPIKey(
 	if err := s.publisher.Publish(ctx, e); err != nil {
 		s.logger.Error(
 			"Failed to publish update api key event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),

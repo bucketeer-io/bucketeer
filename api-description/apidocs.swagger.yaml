@@ -1534,7 +1534,7 @@ paths:
             $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesRequest'
       tags:
         - Feature Flags
-  /v1/evaluation_timeseries_count:
+  /v1/event_counter/evaluation_timeseries_count:
     get:
       summary: Get Evaluation Timeseries Count
       description: Get the evaluation timeseries count for an Experiment. To call this API, you need a `READ` API Key role.
@@ -1593,6 +1593,381 @@ paths:
           default: UNKNOWN
       tags:
         - Experiments
+  /v1/event_counter/experiment_evaluation_count:
+    get:
+      summary: Get Experiment Evaluation Count
+      description: Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.evaluation_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentEvaluationCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+      tags:
+        - Experiments
+  /v1/event_counter/experiment_goal_count:
+    get:
+      summary: Get Experiment Goal Count
+      description: Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.goal_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentGoalCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: goalId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+      tags:
+        - Experiments
+  /v1/event_counter/experiment_result:
+    get:
+      summary: Get Experiment Result
+      description: Get the result for an Experiment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.experiment_result.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetExperimentResultResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: experimentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Experiments
+  /v1/event_counter/experiment_results:
+    get:
+      summary: List Experiment Results
+      description: List the results for Experiments. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.experiment_result.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListExperimentResultsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
+      tags:
+        - Experiments
+  /v1/event_counter/ops_evaluation_user_count:
+    get:
+      summary: Get Ops Evaluation User Count
+      description: Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.ops_evaluation_user_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetOpsEvaluationUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Experiments
+  /v1/event_counter/ops_goal_user_count:
+    get:
+      summary: Get Ops Goal User Count
+      description: Get the user count for an Ops Goal. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.event_counter.get_ops_goal_user_count
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetOpsGoalUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Event Counter
   /v1/experiment:
     get:
       summary: Get Experiment
@@ -1735,251 +2110,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateExperimentRequest'
-      tags:
-        - Experiments
-  /v1/experiment_evaluation_count:
-    get:
-      summary: Get Experiment Evaluation Count
-      description: Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.evaluation_count.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetExperimentEvaluationCountResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: startAt
-          in: query
-          required: true
-          type: string
-          format: int64
-        - name: endAt
-          in: query
-          required: true
-          type: string
-          format: int64
-        - name: featureId
-          in: query
-          required: true
-          type: string
-        - name: featureVersion
-          in: query
-          required: true
-          type: integer
-          format: int32
-        - name: variationIds
-          in: query
-          required: false
-          type: array
-          items:
-            type: string
-          collectionFormat: multi
-      tags:
-        - Experiments
-  /v1/experiment_goal_count:
-    get:
-      summary: Get Experiment Goal Count
-      description: Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.get_goal_count
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetExperimentGoalCountResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: startAt
-          in: query
-          required: true
-          type: string
-          format: int64
-        - name: endAt
-          in: query
-          required: true
-          type: string
-          format: int64
-        - name: goalId
-          in: query
-          required: true
-          type: string
-        - name: featureId
-          in: query
-          required: true
-          type: string
-        - name: featureVersion
-          in: query
-          required: true
-          type: integer
-          format: int32
-        - name: variationIds
-          in: query
-          required: false
-          type: array
-          items:
-            type: string
-          collectionFormat: multi
-      tags:
-        - Experiments
-  /v1/experiment_result:
-    get:
-      summary: Get Experiment Result
-      description: Get the result for an Experiment. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.result.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetExperimentResultResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: experimentId
-          in: query
-          required: true
-          type: string
-      tags:
-        - Experiments
-  /v1/experiment_results:
-    get:
-      summary: List Experiment Results
-      description: List the results for Experiments. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.results.list
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayListExperimentResultsResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: featureId
-          in: query
-          required: true
-          type: string
-        - name: featureVersion
-          in: query
-          required: false
-          type: integer
-          format: int32
       tags:
         - Experiments
   /v1/experiments:
@@ -2971,136 +3101,6 @@ paths:
           default: UNKNOWN
       tags:
         - Goals
-  /v1/ops_evaluation_user_count:
-    get:
-      summary: Get Ops Evaluation User Count
-      description: Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.get_ops_evaluation_user_count
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetOpsEvaluationUserCountResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: opsRuleId
-          in: query
-          required: true
-          type: string
-        - name: clauseId
-          in: query
-          required: true
-          type: string
-        - name: featureId
-          in: query
-          required: true
-          type: string
-        - name: featureVersion
-          in: query
-          required: true
-          type: integer
-          format: int32
-        - name: variationId
-          in: query
-          required: true
-          type: string
-      tags:
-        - Experiments
-  /v1/ops_goal_user_count:
-    get:
-      summary: Get Ops Goal User Count
-      description: Get the user count for an Ops Goal. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.event_counter.get_ops_goal_user_count
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetOpsGoalUserCountResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: opsRuleId
-          in: query
-          required: true
-          type: string
-        - name: clauseId
-          in: query
-          required: true
-          type: string
-        - name: featureId
-          in: query
-          required: true
-          type: string
-        - name: featureVersion
-          in: query
-          required: true
-          type: integer
-          format: int32
-        - name: variationId
-          in: query
-          required: true
-          type: string
-      tags:
-        - Event Counter
   /v1/progressive_rollout:
     get:
       summary: Get Progressive Rollout

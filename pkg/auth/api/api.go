@@ -382,7 +382,7 @@ func (s *authService) SwitchOrganization(
 	// Verify the access token
 	accessToken, err := s.verifier.VerifyAccessToken(req.AccessToken)
 	if err != nil {
-		fields := log.FieldsFromImcomingContext(ctx)
+		fields := log.FieldsFromIncomingContext(ctx)
 		s.logger.Error(
 			"Failed to verify access token",
 			append(fields, zap.Error(err))...,
@@ -699,7 +699,7 @@ func (s *authService) generateToken(
 	if err := s.checkEmail(userEmail, localizer); err != nil {
 		s.logger.Error(
 			"Access denied email",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userEmail))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", userEmail))...,
 		)
 		return nil, err
 	}

@@ -139,7 +139,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -157,7 +157,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	if err != nil {
 		s.logger.Error(
 			"Failed to extract opsEventRateClauses",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -186,7 +186,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		if !exist {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -222,7 +222,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		}
 		s.logger.Error(
 			"Failed to create autoOps",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -260,7 +260,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -278,7 +278,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to extract opsEventRateClauses",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -307,7 +307,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 		if !exist {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -358,7 +358,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create autoOps",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -803,7 +803,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		}
 		s.logger.Error(
 			"Failed to delete autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -875,7 +875,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		if !exist {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1021,7 +1021,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 		if goal == nil || goal.ConnectionType != experimentproto.Goal_OPERATION {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1138,7 +1138,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1176,7 +1176,7 @@ func (s *AutoOpsService) returnUpdateAutoOpsRuleError(
 	}
 	s.logger.Error(
 		"Failed to update autoOpsRule",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentId", req.EnvironmentId),
 		)...,
@@ -1563,7 +1563,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list autoOpsRules",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -1671,7 +1671,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		); err != nil {
 			s.logger.Error(
 				"Failed to execute auto ops rule operation",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("autoOpsRuleId", autoOpsRule.Id),
@@ -1700,7 +1700,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			if errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
 				s.logger.Warn(
 					"No rows were affected",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("id", req.Id),
 						zap.String("environmentId", req.EnvironmentId),
@@ -1716,7 +1716,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
 			s.logger.Warn(
 				"Auto Ops Rule not found",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -1733,7 +1733,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		s.logger.Error(
 			"Failed to execute autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1831,7 +1831,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 		); err != nil {
 			s.logger.Error(
 				"Failed to execute auto ops rule operation",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("autoOpsRuleId", autoOpsRule.Id),
@@ -1874,7 +1874,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 			if errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
 				s.logger.Warn(
 					"No rows were affected",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("id", req.Id),
 						zap.String("environmentId", req.EnvironmentId),
@@ -1890,7 +1890,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
 			s.logger.Warn(
 				"Auto Ops Rule not found",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -1907,7 +1907,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 		}
 		s.logger.Error(
 			"Failed to execute autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -1937,7 +1937,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 	if err != nil {
 		s.logger.Error(
 			"Failed to check operation type",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("autoOpsRuleId", autoOpsRule.Id),
@@ -1967,7 +1967,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 	); err != nil {
 		s.logger.Error(
 			"Failed to stop progressive rollout",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("autoOpsRuleId", autoOpsRule.Id),
@@ -2051,7 +2051,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
 			s.logger.Warn(
 				"Auto Ops Rule not found",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("ruleID", ruleID),
 					zap.String("environmentId", environmentId),
@@ -2068,7 +2068,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 		}
 		s.logger.Error(
 			"Failed to get auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -2085,7 +2085,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 	if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() || autoOpsRule.Deleted {
 		s.logger.Warn(
 			"Auto Ops Rule already triggered",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ruleID", ruleID),
 				zap.String("environmentId", environmentId),
@@ -2194,7 +2194,7 @@ func (s *AutoOpsService) listOpsCounts(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list opsCounts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -2233,7 +2233,7 @@ func (s *AutoOpsService) getGoal(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("goalId", goalID),
@@ -2269,7 +2269,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -2285,7 +2285,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -2301,7 +2301,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,

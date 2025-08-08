@@ -196,7 +196,11 @@ build-migration-chart:
 
 .PHONY: delete-e2e-data-mysql
 delete-e2e-data-mysql:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-e2e-data-mysql clean build-darwin
+else
 	make -C hack/delete-e2e-data-mysql clean build
+endif
 	./hack/delete-e2e-data-mysql/delete-e2e-data-mysql delete \
 		--mysql-user=${MYSQL_USER} \
 		--mysql-pass=${MYSQL_PASS} \
@@ -204,6 +208,18 @@ delete-e2e-data-mysql:
 		--mysql-port=${MYSQL_PORT} \
 		--mysql-db-name=${MYSQL_DB_NAME} \
 		--test-id=${TEST_ID} \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: create-mysql-event-tables
+create-mysql-event-tables:
+	@echo "Creating MySQL event tables for data warehouse..."
+	go run ./hack/create-mysql-event-tables create \
+		--mysql-host=${MYSQL_HOST} \
+		--mysql-port=${MYSQL_PORT} \
+		--mysql-user=${MYSQL_USER} \
+		--mysql-pass=${MYSQL_PASS} \
+		--mysql-db-name=${MYSQL_DB_NAME} \
 		--no-profile \
 		--no-gcp-trace-enabled
 
@@ -407,3 +423,141 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
+
+#############################
+# Docker Compose
+#############################
+
+# Detect Docker Compose version and set variables
+define detect_docker_compose
+	$(eval DOCKER_COMPOSE_CMD := $(shell \
+		if docker compose version >/dev/null 2>&1; then \
+			echo "docker compose"; \
+		elif docker-compose --version >/dev/null 2>&1; then \
+			echo "docker-compose"; \
+		else \
+			echo ""; \
+		fi \
+	))
+	$(eval COMPOSE_FILE := docker-compose/compose.yml)
+	@if [ -z "$(DOCKER_COMPOSE_CMD)" ]; then \
+		echo "❌ Error: Neither 'docker compose' (v2) nor 'docker-compose' (v1) found"; \
+		echo "Please install Docker Compose: https://docs.docker.com/compose/install/"; \
+		exit 1; \
+	fi
+	@echo "🐳 Using Docker Compose command: $(DOCKER_COMPOSE_CMD)"
+endef
+
+.PHONY: docker-compose-setup
+docker-compose-setup:
+	$(call detect_docker_compose)
+	@echo "Setting up Docker Compose environment..."
+	@if [ ! -d "docker-compose/init-db" ]; then \
+		echo "Creating docker-compose/init-db directory..."; \
+		mkdir -p docker-compose/init-db; \
+	else \
+		echo "docker-compose/init-db directory already exists"; \
+	fi
+	@if [ ! -d "docker-compose/secrets" ]; then \
+		echo "Creating docker-compose/secrets directory..."; \
+		mkdir -p docker-compose/secrets; \
+		echo "Generating MySQL secret files..."; \
+		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
+		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
+		chmod 600 docker-compose/secrets/*.txt; \
+		echo "✅ MySQL secrets created"; \
+	else \
+		echo "docker-compose/secrets directory already exists"; \
+	fi
+	@echo "✅ Docker Compose setup complete"
+
+.PHONY: docker-compose-init-env
+docker-compose-init-env:
+	@if [ -f docker-compose/.env ]; then \
+		echo "⚠️  docker-compose/.env already exists. Skipping..."; \
+		echo "To recreate it, run: rm docker-compose/.env && make docker-compose-init-env"; \
+	else \
+		echo "📝 Creating docker-compose/.env from template..."; \
+		cp docker-compose/env.default docker-compose/.env; \
+		echo "✅ Created docker-compose/.env"; \
+		echo ""; \
+		echo "You can now customize the environment variables in docker-compose/.env"; \
+		echo "Then run 'make docker-compose-up' to start the services."; \
+	fi
+
+.PHONY: docker-compose-build
+docker-compose-build:
+	@echo "🔨 Building Bucketeer Docker images..."
+	@echo "Building Go applications with embedded web console..."
+	GOOS=linux make -C ./ build-go-embed
+	@echo "Building Docker images with TAG=localenv..."
+	TAG=localenv make -C ./ build-docker-images
+	@echo "✅ Docker images built successfully"
+
+# To skip the build step when starting services, run:
+# make docker-compose-up SKIP_BUILD=true
+.PHONY: docker-compose-up
+docker-compose-up: docker-compose-setup docker-compose-init-env
+	$(call detect_docker_compose)
+	@if [ "$(SKIP_BUILD)" = "true" ]; then \
+		echo "⏭️  Skipping build step as requested (SKIP_BUILD=true)."; \
+	else \
+		make docker-compose-build; \
+	fi
+	@echo "🚀 Starting Bucketeer services with Docker Compose..."
+	@set -a && . docker-compose/.env && set +a && \
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) up -d
+
+
+.PHONY: docker-compose-down
+docker-compose-down:
+	$(call detect_docker_compose)
+	@echo "Stopping Bucketeer services..."
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) down
+
+.PHONY: docker-compose-logs
+docker-compose-logs:
+	$(call detect_docker_compose)
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) logs -f
+
+.PHONY: docker-compose-status
+docker-compose-status:
+	$(call detect_docker_compose)
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) ps
+
+.PHONY: docker-compose-clean
+docker-compose-clean:
+	$(call detect_docker_compose)
+	@echo "Stopping and removing all containers, networks, and volumes..."
+	$(DOCKER_COMPOSE_CMD) -f $(COMPOSE_FILE) down -v
+	docker system prune -f
+
+.PHONY: docker-compose-regenerate-secrets
+docker-compose-regenerate-secrets:
+	@echo "Regenerating MySQL secrets..."
+	@rm -rf docker-compose/secrets
+	@mkdir -p docker-compose/secrets
+	@echo "root" > docker-compose/secrets/mysql_root_password.txt
+	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
+	@chmod 600 docker-compose/secrets/*.txt
+	@echo "✅ MySQL secrets regenerated"
+
+.PHONY: docker-compose-delete-data
+docker-compose-delete-data:
+	@echo "Deleting E2E test data from Docker Compose MySQL..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	make -C ./ delete-e2e-data-mysql
+
+.PHONY: docker-compose-create-mysql-event-tables
+docker-compose-create-mysql-event-tables:
+	@echo "Creating MySQL event tables for Docker Compose data warehouse..."
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=localhost \
+	MYSQL_PORT=3306 \
+	MYSQL_DB_NAME=bucketeer \
+	make -C ./ create-mysql-event-tables

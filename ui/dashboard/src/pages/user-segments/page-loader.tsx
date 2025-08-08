@@ -16,6 +16,7 @@ import { UserSegmentsActionsType } from './types';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 import SegmentCreateUpdateModal from './user-segment-modal/segment-create-update-form';
+import SegmentUploadingModal from './user-segment-modal/segment-uploading-modal';
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'message']);
@@ -37,6 +38,8 @@ const PageLoader = () => {
   const [isOpenFlagModal, onOpenFlagModal, onCloseFlagModal] =
     useToggleOpen(false);
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
+    useToggleOpen(false);
+  const [isOpenUploadingModal, onOpenUploadingdModal, onCloseUploadingdModal] =
     useToggleOpen(false);
   const [selectedSegment, setSelectedSegment] = useState<UserSegment>();
   const [segmentUploading, setSegmentUploading] = useState<UserSegment | null>(
@@ -99,6 +102,8 @@ const PageLoader = () => {
           return onOpenFlagModal();
         case 'DELETE':
           return onOpenDeleteModal();
+        case 'UPLOADING':
+          return onOpenUploadingdModal();
         default:
           return onBulkDownloadSegment(segment);
       }
@@ -184,6 +189,12 @@ const PageLoader = () => {
           userSegment={selectedSegment}
           onClose={onCloseDeleteModal}
           onSubmit={onDeleteSegment}
+        />
+      )}
+      {isOpenUploadingModal && (
+        <SegmentUploadingModal
+          isOpen={isOpenUploadingModal}
+          onClose={onCloseUploadingdModal}
         />
       )}
     </>

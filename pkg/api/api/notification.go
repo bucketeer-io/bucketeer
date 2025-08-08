@@ -38,7 +38,7 @@ func (s *grpcGatewayService) GetSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetSubscription request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -50,7 +50,7 @@ func (s *grpcGatewayService) GetSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to get subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("subscriptionId", req.Id),
 			)...,
@@ -59,7 +59,7 @@ func (s *grpcGatewayService) GetSubscription(
 	}
 	if res == nil {
 		s.logger.Error("GetSubscription returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("ID", req.Id),
 			)...,
 		)
@@ -81,7 +81,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListSubscriptions request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -100,7 +100,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 	})
 	if err != nil {
 		s.logger.Error("Failed to list subscriptions",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -108,7 +108,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 	}
 	if res == nil {
 		s.logger.Error("ListSubscriptions returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("organizationId", req.OrganizationId),
 			)...,
 		)
@@ -131,7 +131,7 @@ func (s *grpcGatewayService) CreateSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateSubscription request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -153,7 +153,7 @@ func (s *grpcGatewayService) CreateSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to create subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -162,7 +162,7 @@ func (s *grpcGatewayService) CreateSubscription(
 	}
 	if res == nil {
 		s.logger.Error("CreateSubscription returned nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("name", req.Name),
 			)...,
 		)
@@ -183,7 +183,7 @@ func (s *grpcGatewayService) DeleteSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteSubscription request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("subscriptionId", req.Id),
 			)...,
@@ -203,7 +203,7 @@ func (s *grpcGatewayService) DeleteSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to delete subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("subscriptionId", req.Id),
 			)...,
@@ -223,7 +223,7 @@ func (s *grpcGatewayService) UpdateSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateSubscription request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("subscriptionId", req.Id),
 			)...,
@@ -247,7 +247,7 @@ func (s *grpcGatewayService) UpdateSubscription(
 	})
 	if err != nil {
 		s.logger.Error("Failed to update subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("subscriptionId", req.Id),
 			)...,

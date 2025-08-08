@@ -36,7 +36,7 @@ func (s *grpcGatewayService) GetExperimentEvaluationCount(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetExperimentEvaluationCount request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -57,7 +57,7 @@ func (s *grpcGatewayService) GetExperimentEvaluationCount(
 		})
 	if err != nil {
 		s.logger.Error("Failed to get experiment evaluation count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 				zap.Int64("startAt", req.StartAt),
@@ -68,7 +68,7 @@ func (s *grpcGatewayService) GetExperimentEvaluationCount(
 	}
 	if resp == nil {
 		s.logger.Error("ExperimentEvaluationCount response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.FeatureId),
 				zap.Int64("startAt", req.StartAt),
 				zap.Int64("endAt", req.EndAt),
@@ -94,7 +94,7 @@ func (s *grpcGatewayService) GetEvaluationTimeseriesCount(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetEvaluationTimeseriesCount request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -114,7 +114,7 @@ func (s *grpcGatewayService) GetEvaluationTimeseriesCount(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get evaluation timeseries count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 			)...,
@@ -123,7 +123,7 @@ func (s *grpcGatewayService) GetEvaluationTimeseriesCount(
 	}
 	if resp == nil {
 		s.logger.Error("EvaluationTimeseriesCount response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
@@ -146,7 +146,7 @@ func (s *grpcGatewayService) GetExperimentResult(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetExperimentResult request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -165,7 +165,7 @@ func (s *grpcGatewayService) GetExperimentResult(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get experiment result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("experimentId", req.ExperimentId),
 			)...,
@@ -174,7 +174,7 @@ func (s *grpcGatewayService) GetExperimentResult(
 	}
 	if resp == nil {
 		s.logger.Error("ExperimentResult response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("experimentId", req.ExperimentId),
 			)...,
@@ -196,7 +196,7 @@ func (s *grpcGatewayService) ListExperimentResults(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListExperimentResults request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -216,7 +216,7 @@ func (s *grpcGatewayService) ListExperimentResults(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list experiment results",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 			)...,
@@ -225,7 +225,7 @@ func (s *grpcGatewayService) ListExperimentResults(
 	}
 	if resp == nil {
 		s.logger.Error("ListExperimentResults response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields()...,
+			log.FieldsFromIncomingContext(ctx).AddFields()...,
 		)
 		return nil, ErrInternal
 	}
@@ -245,7 +245,7 @@ func (s *grpcGatewayService) GetExperimentGoalCount(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetExperimentGoalCount request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -269,7 +269,7 @@ func (s *grpcGatewayService) GetExperimentGoalCount(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get experiment goal count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("experimentId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
@@ -282,7 +282,7 @@ func (s *grpcGatewayService) GetExperimentGoalCount(
 	}
 	if resp == nil {
 		s.logger.Error("ExperimentGoalCount response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("experimentId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 				zap.Int64("startAt", req.StartAt),
@@ -309,7 +309,7 @@ func (s *grpcGatewayService) GetOpsEvaluationUserCount(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetOpsEvaluationUserCount request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -332,7 +332,7 @@ func (s *grpcGatewayService) GetOpsEvaluationUserCount(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get ops evaluation user count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
@@ -342,7 +342,7 @@ func (s *grpcGatewayService) GetOpsEvaluationUserCount(
 	}
 	if resp == nil {
 		s.logger.Error("OpsEvaluationUserCount response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
@@ -367,7 +367,7 @@ func (s *grpcGatewayService) GetOpsGoalUserCount(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetOpsGoalUserCount request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -390,7 +390,7 @@ func (s *grpcGatewayService) GetOpsGoalUserCount(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get ops goal user count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
@@ -400,7 +400,7 @@ func (s *grpcGatewayService) GetOpsGoalUserCount(
 	}
 	if resp == nil {
 		s.logger.Error("OpsGoalUserCount response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,

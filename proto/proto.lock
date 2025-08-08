@@ -46069,7 +46069,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/experiment_evaluation_count"
+                        "value": "/v1/event_counter/experiment_evaluation_count"
                       }
                     ]
                   },
@@ -46106,7 +46106,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/evaluation_timeseries_count"
+                        "value": "/v1/event_counter/evaluation_timeseries_count"
                       }
                     ]
                   },
@@ -46143,7 +46143,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/experiment_result"
+                        "value": "/v1/event_counter/experiment_result"
                       }
                     ]
                   },
@@ -46164,7 +46164,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.event_counter.result.get"
+                        "value": "api.gateway.v1.event_counter.experiment_result.get"
                       }
                     ]
                   }
@@ -46180,7 +46180,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/experiment_results"
+                        "value": "/v1/event_counter/experiment_results"
                       }
                     ]
                   },
@@ -46201,7 +46201,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.event_counter.results.list"
+                        "value": "api.gateway.v1.event_counter.experiment_result.list"
                       }
                     ]
                   }
@@ -46217,7 +46217,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/experiment_goal_count"
+                        "value": "/v1/event_counter/experiment_goal_count"
                       }
                     ]
                   },
@@ -46238,7 +46238,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.event_counter.get_goal_count"
+                        "value": "api.gateway.v1.event_counter.goal_count.get"
                       }
                     ]
                   }
@@ -46254,7 +46254,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/ops_evaluation_user_count"
+                        "value": "/v1/event_counter/ops_evaluation_user_count"
                       }
                     ]
                   },
@@ -46275,7 +46275,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.event_counter.get_ops_evaluation_user_count"
+                        "value": "api.gateway.v1.event_counter.ops_evaluation_user_count.get"
                       }
                     ]
                   }
@@ -46291,7 +46291,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/ops_goal_user_count"
+                        "value": "/v1/event_counter/ops_goal_user_count"
                       }
                     ]
                   },

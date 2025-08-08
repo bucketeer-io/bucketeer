@@ -91,7 +91,7 @@ func (s *EnvironmentService) getOrganization(
 	org, err := s.orgStorage.GetOrganization(ctx, id)
 	if err != nil {
 		s.logger.Error("failed to get organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("organizationId", id),
 				zap.Error(err),
 			)...)
@@ -152,7 +152,7 @@ func (s *EnvironmentService) ListOrganizations(
 	if err != nil {
 		s.logger.Error(
 			"failed to create OrganizationListOrders",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -188,7 +188,7 @@ func (s *EnvironmentService) ListOrganizations(
 	if err != nil {
 		s.logger.Error(
 			"failed to list organizations",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -226,7 +226,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 	demoToken, ok := rpc.GetDemoCreationToken(ctx)
 	if !ok {
 		s.logger.Error("failed to get access demoToken",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 			Locale: localizer.GetLocale(),
@@ -246,7 +246,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 	}
 	if err := validateCreateDemoOrganizationRequest(req, demoToken.Email, localizer); err != nil {
 		s.logger.Error("failed to validate CreateDemoOrganizationRequest",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 	}
 	if err = s.publisher.Publish(ctx, event); err != nil {
 		s.logger.Error("failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...)
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -428,7 +428,7 @@ func (s *EnvironmentService) CreateOrganization(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create an organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -579,7 +579,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a domain organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...)
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -613,7 +613,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		if err != nil {
 			s.logger.Error(
 				"Failed to create the default project",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -628,7 +628,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		if err != nil {
 			s.logger.Error(
 				"Failed to create the default environments",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -649,7 +649,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		}
 		s.logger.Error(
 			"Failed to create an organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -673,7 +673,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	); err != nil {
 		s.logger.Error(
 			"Failed to create the owner account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -771,7 +771,7 @@ func (s *EnvironmentService) createOrganization(
 		}
 		s.logger.Error(
 			"Failed to create organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -962,7 +962,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 	if err = s.publisher.Publish(ctx, event); err != nil {
 		s.logger.Error(
 			"Failed to publish the event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -1006,7 +1006,7 @@ func (s *EnvironmentService) reportUpdateOrganizationError(
 ) error {
 	s.logger.Error(
 		"Failed to update organization",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 		)...,
 	)

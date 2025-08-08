@@ -1,0 +1,29 @@
+{
+  "auditLogPersister": {
+    "flushSize": 100,
+    "flushInterval": 10,
+    "flushTimeout": 10
+  },
+  "evaluationCountEventPersister": {
+    "flushSize": 100,
+    "flushInterval": 10,
+    "writeCacheInterval": 10
+  },
+  "segmentUserPersister": {
+    "domainEventProject": "bucketeer-test",
+    "domainEventTopic": "domain",
+    "flushSize": 100,
+    "flushInterval": 10,
+    "pubSubType": "redis-stream",
+    "redisServerName": "non-persistent-redis",
+    "redisAddr": "redis:6379",
+    "redisPoolSize": 25,
+    "redisMinIdle": 25,
+    "redisPartitionCount": 16,
+    "project": "bucketeer-test"
+  },
+  "userEventPersister": {
+    "flushSize": 200,
+    "flushInterval": 5
+  }
+} 

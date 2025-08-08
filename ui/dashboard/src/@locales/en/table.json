@@ -118,6 +118,8 @@
     "confirm-unarchive-desc": "The goal \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   },
   "user-segment": {
+    "segment-uploading-title": "Upload in progress",
+    "segment-uploading-desc": "Segments can't be updated until the user list has been uploaded.",
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
   },
   "experiment": {

@@ -245,7 +245,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to query experiment evaluation counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Time("startAt", startAt),
@@ -365,7 +365,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", req.FeatureId),
@@ -728,7 +728,7 @@ func (s *eventCounterService) logCountError(
 ) {
 	s.logger.Error(
 		msg,
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentId", environmentId),
 			zap.String("unit", unit.String()),
@@ -885,7 +885,7 @@ func (s *eventCounterService) GetExperimentResult(
 		}
 		s.logger.Error(
 			"Failed to get experiment result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("experimentId", req.ExperimentId),
@@ -941,7 +941,7 @@ func (s *eventCounterService) ListExperimentResults(
 		}
 		s.logger.Error(
 			"Failed to get Experiment list",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureID", req.FeatureId),
@@ -967,7 +967,7 @@ func (s *eventCounterService) ListExperimentResults(
 			} else {
 				s.logger.Error(
 					"Failed to get Experiment result",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", req.EnvironmentId),
 						zap.String("experimentID", e.Id),
@@ -1040,7 +1040,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to query experiment goal counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Time("startAt", startAt),
@@ -1176,7 +1176,7 @@ func (s *eventCounterService) GetMAUCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get the mau count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("yearMonth", req.YearMonth),
@@ -1222,7 +1222,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get the mau counts by sourceID",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("yearMonth", req.YearMonth),
 			)...,
@@ -1242,7 +1242,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get the mau counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("yearMonth", req.YearMonth),
 			)...,
@@ -1266,7 +1266,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 		if err != nil {
 			s.logger.Error(
 				"Failed to upsert the mau summary",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.Any("summary", summary),
 				)...,
@@ -1288,7 +1288,7 @@ func (s *eventCounterService) getExperimentResultMySQL(
 		}
 		s.logger.Error(
 			"Failed to get experiment count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -1325,7 +1325,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get ops evaluation user count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("opsRuleId", req.OpsRuleId),
@@ -1447,7 +1447,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get ops goal user count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("opsRuleId", req.OpsRuleId),
@@ -1567,7 +1567,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1583,7 +1583,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1599,7 +1599,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1627,7 +1627,7 @@ func (s *eventCounterService) checkSystemAdminRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1640,7 +1640,7 @@ func (s *eventCounterService) checkSystemAdminRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1653,7 +1653,7 @@ func (s *eventCounterService) checkSystemAdminRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),

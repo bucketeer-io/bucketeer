@@ -58,7 +58,7 @@ func LogUnaryServerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
 		}
 		serviceName, methodName := splitFullMethodName(info.FullMethod)
 		logger.Check(level, "").Write(
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("grpcService", serviceName),
 				zap.String("grpcMethod", methodName),

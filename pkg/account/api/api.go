@@ -188,7 +188,7 @@ func (s *AccountService) checkSystemAdminRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -201,7 +201,7 @@ func (s *AccountService) checkSystemAdminRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -214,7 +214,7 @@ func (s *AccountService) checkSystemAdminRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -252,7 +252,7 @@ func (s *AccountService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -268,7 +268,7 @@ func (s *AccountService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -284,7 +284,7 @@ func (s *AccountService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -320,7 +320,7 @@ func (s *AccountService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -336,7 +336,7 @@ func (s *AccountService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -352,7 +352,7 @@ func (s *AccountService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -388,7 +388,7 @@ func (s *AccountService) checkOrganizationRoleByEnvironmentID(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,
@@ -404,7 +404,7 @@ func (s *AccountService) checkOrganizationRoleByEnvironmentID(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,
@@ -420,7 +420,7 @@ func (s *AccountService) checkOrganizationRoleByEnvironmentID(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentID", environmentID),
 				)...,

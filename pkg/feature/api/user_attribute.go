@@ -43,7 +43,7 @@ func (s *FeatureService) GetUserAttributeKeys(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get user attribute keys",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,

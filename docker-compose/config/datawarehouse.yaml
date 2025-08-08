@@ -1,0 +1,14 @@
+type: mysql
+batchSize: 1000
+timezone: "UTC"
+mysql:
+  useMainConnection: true
+  host: ""
+  port: 3306
+  user: ""
+  password: ""
+  database: ""
+bigquery:
+  project: ""
+  dataset: ""
+  location: "" 

@@ -4453,7 +4453,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentEvaluationCount", runtime.WithHTTPPathPattern("/v1/experiment_evaluation_count"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentEvaluationCount", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_evaluation_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4478,7 +4478,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetEvaluationTimeseriesCount", runtime.WithHTTPPathPattern("/v1/evaluation_timeseries_count"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetEvaluationTimeseriesCount", runtime.WithHTTPPathPattern("/v1/event_counter/evaluation_timeseries_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4503,7 +4503,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentResult", runtime.WithHTTPPathPattern("/v1/experiment_result"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentResult", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_result"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4528,7 +4528,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/ListExperimentResults", runtime.WithHTTPPathPattern("/v1/experiment_results"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/ListExperimentResults", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_results"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4553,7 +4553,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentGoalCount", runtime.WithHTTPPathPattern("/v1/experiment_goal_count"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentGoalCount", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_goal_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4578,7 +4578,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsEvaluationUserCount", runtime.WithHTTPPathPattern("/v1/ops_evaluation_user_count"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsEvaluationUserCount", runtime.WithHTTPPathPattern("/v1/event_counter/ops_evaluation_user_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -4603,7 +4603,7 @@ func RegisterGatewayHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsGoalUserCount", runtime.WithHTTPPathPattern("/v1/ops_goal_user_count"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsGoalUserCount", runtime.WithHTTPPathPattern("/v1/event_counter/ops_goal_user_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6295,7 +6295,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentEvaluationCount", runtime.WithHTTPPathPattern("/v1/experiment_evaluation_count"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentEvaluationCount", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_evaluation_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6317,7 +6317,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetEvaluationTimeseriesCount", runtime.WithHTTPPathPattern("/v1/evaluation_timeseries_count"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetEvaluationTimeseriesCount", runtime.WithHTTPPathPattern("/v1/event_counter/evaluation_timeseries_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6339,7 +6339,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentResult", runtime.WithHTTPPathPattern("/v1/experiment_result"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentResult", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_result"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6361,7 +6361,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/ListExperimentResults", runtime.WithHTTPPathPattern("/v1/experiment_results"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/ListExperimentResults", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_results"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6383,7 +6383,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentGoalCount", runtime.WithHTTPPathPattern("/v1/experiment_goal_count"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetExperimentGoalCount", runtime.WithHTTPPathPattern("/v1/event_counter/experiment_goal_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6405,7 +6405,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsEvaluationUserCount", runtime.WithHTTPPathPattern("/v1/ops_evaluation_user_count"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsEvaluationUserCount", runtime.WithHTTPPathPattern("/v1/event_counter/ops_evaluation_user_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6427,7 +6427,7 @@ func RegisterGatewayHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsGoalUserCount", runtime.WithHTTPPathPattern("/v1/ops_goal_user_count"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.gateway.Gateway/GetOpsGoalUserCount", runtime.WithHTTPPathPattern("/v1/event_counter/ops_goal_user_count"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6595,19 +6595,19 @@ var (
 
 	pattern_Gateway_UpdateGoal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "goal"}, ""))
 
-	pattern_Gateway_GetExperimentEvaluationCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "experiment_evaluation_count"}, ""))
+	pattern_Gateway_GetExperimentEvaluationCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "experiment_evaluation_count"}, ""))
 
-	pattern_Gateway_GetEvaluationTimeseriesCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "evaluation_timeseries_count"}, ""))
+	pattern_Gateway_GetEvaluationTimeseriesCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "evaluation_timeseries_count"}, ""))
 
-	pattern_Gateway_GetExperimentResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "experiment_result"}, ""))
+	pattern_Gateway_GetExperimentResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "experiment_result"}, ""))
 
-	pattern_Gateway_ListExperimentResults_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "experiment_results"}, ""))
+	pattern_Gateway_ListExperimentResults_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "experiment_results"}, ""))
 
-	pattern_Gateway_GetExperimentGoalCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "experiment_goal_count"}, ""))
+	pattern_Gateway_GetExperimentGoalCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "experiment_goal_count"}, ""))
 
-	pattern_Gateway_GetOpsEvaluationUserCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "ops_evaluation_user_count"}, ""))
+	pattern_Gateway_GetOpsEvaluationUserCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "ops_evaluation_user_count"}, ""))
 
-	pattern_Gateway_GetOpsGoalUserCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "ops_goal_user_count"}, ""))
+	pattern_Gateway_GetOpsGoalUserCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "event_counter", "ops_goal_user_count"}, ""))
 )
 
 var (

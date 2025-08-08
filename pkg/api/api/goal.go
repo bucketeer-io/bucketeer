@@ -38,7 +38,7 @@ func (s *grpcGatewayService) GetGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetGoal request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("goalId", req.Id),
 			)...,
@@ -54,7 +54,7 @@ func (s *grpcGatewayService) GetGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to get goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("goalId", req.Id),
 			)...,
@@ -63,7 +63,7 @@ func (s *grpcGatewayService) GetGoal(
 	}
 	if resp == nil {
 		s.logger.Error("Get goal response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("goalId", req.Id),
 			)...,
 		)
@@ -86,7 +86,7 @@ func (s *grpcGatewayService) ListGoals(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListGoals request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -108,7 +108,7 @@ func (s *grpcGatewayService) ListGoals(
 	})
 	if err != nil {
 		s.logger.Error("Failed to list goals",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -116,7 +116,7 @@ func (s *grpcGatewayService) ListGoals(
 	}
 	if resp == nil {
 		s.logger.Error("List goals response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields()...,
+			log.FieldsFromIncomingContext(ctx).AddFields()...,
 		)
 		return nil, ErrInternal
 	}
@@ -137,7 +137,7 @@ func (s *grpcGatewayService) CreateGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateGoal request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -162,7 +162,7 @@ func (s *grpcGatewayService) CreateGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to create goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -170,7 +170,7 @@ func (s *grpcGatewayService) CreateGoal(
 	}
 	if resp == nil {
 		s.logger.Error("Create goal response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields()...,
+			log.FieldsFromIncomingContext(ctx).AddFields()...,
 		)
 		return nil, ErrInternal
 	}
@@ -189,7 +189,7 @@ func (s *grpcGatewayService) DeleteGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteGoal request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -211,7 +211,7 @@ func (s *grpcGatewayService) DeleteGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to delete goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -230,7 +230,7 @@ func (s *grpcGatewayService) UpdateGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateGoal request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -255,7 +255,7 @@ func (s *grpcGatewayService) UpdateGoal(
 	})
 	if err != nil {
 		s.logger.Error("Failed to update goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

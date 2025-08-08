@@ -56,7 +56,7 @@ func (s *FeatureService) CreateSegment(
 	if err = validateCreateSegmentRequest(req.Command, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -67,7 +67,7 @@ func (s *FeatureService) CreateSegment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -85,7 +85,7 @@ func (s *FeatureService) CreateSegment(
 		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -104,7 +104,7 @@ func (s *FeatureService) CreateSegment(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -126,7 +126,7 @@ func (s *FeatureService) CreateSegment(
 		}
 		s.logger.Error(
 			"Failed to create segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -154,7 +154,7 @@ func (s *FeatureService) createSegmentNoCommand(
 	if err := validateCreateSegmentNoCommandRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -165,7 +165,7 @@ func (s *FeatureService) createSegmentNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -183,7 +183,7 @@ func (s *FeatureService) createSegmentNoCommand(
 		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -222,7 +222,7 @@ func (s *FeatureService) createSegmentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -258,7 +258,7 @@ func (s *FeatureService) DeleteSegment(
 	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -290,7 +290,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -305,7 +305,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -345,7 +345,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to delete segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -392,7 +392,7 @@ func (s *FeatureService) checkSegmentInUse(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -409,7 +409,7 @@ func (s *FeatureService) checkSegmentInUse(
 	if s.containsInRules(segmentID, features) {
 		s.logger.Warn(
 			"Segment User in use",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("segmentId", segmentID),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -454,7 +454,7 @@ func (s *FeatureService) UpdateSegment(
 	if err != nil {
 		s.logger.Error(
 			"Permission denied",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -470,7 +470,7 @@ func (s *FeatureService) UpdateSegment(
 		if err != nil {
 			s.logger.Error(
 				"Failed to unmarshal command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -489,7 +489,7 @@ func (s *FeatureService) UpdateSegment(
 	if err := validateUpdateSegment(req.Id, commands, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -522,7 +522,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -535,7 +535,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -546,7 +546,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -589,7 +589,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 		}
 		s.logger.Error(
 			"Failed to update segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -621,7 +621,7 @@ func (s *FeatureService) updateSegment(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -641,7 +641,7 @@ func (s *FeatureService) updateSegment(
 			if err := handler.Handle(ctx, cmd); err != nil {
 				s.logger.Error(
 					"Failed to handle command",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentId", environmentId),
 					)...,
@@ -665,7 +665,7 @@ func (s *FeatureService) updateSegment(
 		}
 		s.logger.Error(
 			"Failed to update segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)...,
@@ -696,7 +696,7 @@ func (s *FeatureService) GetSegment(
 	if err := validateGetSegmentRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -717,7 +717,7 @@ func (s *FeatureService) GetSegment(
 		}
 		s.logger.Error(
 			"Failed to get segment",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -743,7 +743,7 @@ func (s *FeatureService) GetSegment(
 	); err != nil {
 		s.logger.Error(
 			"Failed to inject features into segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -775,7 +775,7 @@ func (s *FeatureService) ListSegments(
 	if err := validateListSegmentsRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -812,7 +812,7 @@ func (s *FeatureService) ListSegments(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -854,7 +854,7 @@ func (s *FeatureService) ListSegments(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -876,7 +876,7 @@ func (s *FeatureService) ListSegments(
 	); err != nil {
 		s.logger.Error(
 			"Failed to inject features into segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,

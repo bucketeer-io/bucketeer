@@ -1986,7 +1986,7 @@ service Gateway {
   rpc GetExperimentEvaluationCount(GetExperimentEvaluationCountRequest)
       returns (GetExperimentEvaluationCountResponse) {
     option (google.api.http) = {
-      get: "/v1/experiment_evaluation_count"
+      get: "/v1/event_counter/experiment_evaluation_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Evaluation Count",
@@ -1998,7 +1998,7 @@ service Gateway {
   rpc GetEvaluationTimeseriesCount(GetEvaluationTimeseriesCountRequest)
       returns (GetEvaluationTimeseriesCountResponse) {
     option (google.api.http) = {
-      get: "/v1/evaluation_timeseries_count"
+      get: "/v1/event_counter/evaluation_timeseries_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Evaluation Timeseries Count",
@@ -2010,55 +2010,55 @@ service Gateway {
   rpc GetExperimentResult(GetExperimentResultRequest)
       returns (GetExperimentResultResponse) {
     option (google.api.http) = {
-      get: "/v1/experiment_result"
+      get: "/v1/event_counter/experiment_result"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Result",
       description: "Get the result for an Experiment. To call this API, you need a `READ` API Key role.",
       tags: "Experiments",
-      operation_id: "api.gateway.v1.event_counter.result.get"
+      operation_id: "api.gateway.v1.event_counter.experiment_result.get"
     };
   }
   rpc ListExperimentResults(ListExperimentResultsRequest)
       returns (ListExperimentResultsResponse) {
     option (google.api.http) = {
-      get: "/v1/experiment_results"
+      get: "/v1/event_counter/experiment_results"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Experiment Results",
       description: "List the results for Experiments. To call this API, you need a `READ` API Key role.",
       tags: "Experiments",
-      operation_id: "api.gateway.v1.event_counter.results.list"
+      operation_id: "api.gateway.v1.event_counter.experiment_result.list"
     };
   }
   rpc GetExperimentGoalCount(GetExperimentGoalCountRequest)
       returns (GetExperimentGoalCountResponse) {
     option (google.api.http) = {
-      get: "/v1/experiment_goal_count"
+      get: "/v1/event_counter/experiment_goal_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Goal Count",
       description: "Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.",
       tags: "Experiments",
-      operation_id: "api.gateway.v1.event_counter.get_goal_count"
+      operation_id: "api.gateway.v1.event_counter.goal_count.get"
     };
   }
   rpc GetOpsEvaluationUserCount(GetOpsEvaluationUserCountRequest)
       returns (GetOpsEvaluationUserCountResponse) {
     option (google.api.http) = {
-      get: "/v1/ops_evaluation_user_count"
+      get: "/v1/event_counter/ops_evaluation_user_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Ops Evaluation User Count",
       description: "Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.",
       tags: "Experiments",
-      operation_id: "api.gateway.v1.event_counter.get_ops_evaluation_user_count"
+      operation_id: "api.gateway.v1.event_counter.ops_evaluation_user_count.get"
     };
   }
   rpc GetOpsGoalUserCount(GetOpsGoalUserCountRequest)
       returns (GetOpsGoalUserCountResponse) {
     option (google.api.http) = {
-      get: "/v1/ops_goal_user_count"
+      get: "/v1/event_counter/ops_goal_user_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Ops Goal User Count",

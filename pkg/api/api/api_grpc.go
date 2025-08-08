@@ -234,7 +234,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	if err := s.validateTrackRequest(req); err != nil {
 		eventCounter.WithLabelValues(callerGatewayService, typeTrack, codeInvalidURLParams)
 		s.logger.Error("Failed to validate Track request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("apiKey", req.Apikey),
 				zap.String("tag", req.Tag),
@@ -249,7 +249,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	envAPIKey, err := s.checkTrackRequest(ctx, req.Apikey)
 	if err != nil {
 		s.logger.Error("Failed to check Track request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("apiKey", req.Apikey),
 				zap.String("tag", req.Tag),
@@ -276,7 +276,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate uuid for goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("goalId", goalEvent.GoalId),
@@ -289,7 +289,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
 		s.logger.Error(
 			"Failed to marshal goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("goalId", goalEvent.GoalId),
@@ -310,7 +310,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		}
 		s.logger.Error(
 			"Failed to publish goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("eventId", event.Id),
@@ -352,7 +352,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluations request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("tag", req.Tag),
 					zap.Any("user", req.User),
@@ -369,7 +369,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluations request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
@@ -417,7 +417,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentID", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(features)),
@@ -437,7 +437,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -466,7 +466,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
@@ -491,7 +491,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
@@ -509,7 +509,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	s.logger.Debug(
 		"Features length when UEID is different",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.String("environmentID", environmentId),
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(features)),
@@ -545,7 +545,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluation request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("tag", req.Tag),
 					zap.Any("user", req.User),
@@ -562,7 +562,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetEvaluation, req.SourceId.String()).Inc()
 	if err := s.validateGetEvaluationRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluation request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", envAPIKey.ProjectId),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
@@ -596,7 +596,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get segment users map",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
@@ -608,7 +608,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
@@ -618,7 +618,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", req.User.Id),
@@ -630,7 +630,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	eval, err := s.findEvaluation(evaluations.Evaluations, req.FeatureId)
 	if err != nil {
 		s.logger.Error("Failed to find evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", envAPIKey.ProjectId),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
@@ -658,7 +658,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetFeatureFlags request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("tag", req.Tag),
 					zap.String("featureFlagsId", req.FeatureFlagsId),
@@ -677,7 +677,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 
 	if err := s.validateGetFeatureFlagsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetFeatureFlags request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
@@ -732,7 +732,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeNone).Inc()
 		s.logger.Debug(
 			"Feature Flags ID is the same",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environmentID", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(targetFeatures)),
@@ -748,7 +748,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	}
 	s.logger.Debug(
 		"Feature Flags ID is different",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.String("environmentID", environmentId),
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(targetFeatures)),
@@ -818,7 +818,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetSegmentUsers request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.Strings("segmentIds", req.SegmentIds),
 					zap.Any("sourceId", req.SourceId),
@@ -836,7 +836,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 
 	if err := s.validateGetSegmentUsersRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetSegmentUsers request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
 				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
@@ -1041,7 +1041,7 @@ func (s *grpcGatewayService) getFeatures(
 	}
 	s.logger.Warn(
 		"No cached data for Features",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentID", environmentId),
 		)...,
@@ -1050,7 +1050,7 @@ func (s *grpcGatewayService) getFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -1123,7 +1123,7 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -1169,7 +1169,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	}
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentID", environmentId),
 			zap.String("segmentId", segmentID),
@@ -1183,7 +1183,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve segment users from database",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
@@ -1199,7 +1199,7 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve segment from database",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
@@ -1237,7 +1237,7 @@ func (s *grpcGatewayService) RegisterEvents(
 	if err != nil {
 		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check RegisterEvents request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.Any("events", req.Events),
 					zap.Any("sourceId", req.SourceId),
@@ -1252,7 +1252,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodRegisterEvents, req.SourceId.String()).Inc()
 	if len(req.Events) == 0 {
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", envAPIKey.Environment.Id),
 				zap.String("apiKey", fmt.Sprintf("%s*****", envAPIKey.ApiKey.Id[:10])),
@@ -1284,7 +1284,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			if !errors.Is(err, context.Canceled) {
 				s.logger.Error(
 					"Failed to publish event",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromIncomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("environmentID", envAPIKey.Environment.Id),
 						zap.String("eventType", typ),
@@ -1416,14 +1416,14 @@ func (s *grpcGatewayService) checkTrackRequest(
 	if isContextCanceled(ctx) {
 		s.logger.Warn(
 			"Request was canceled",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		return nil, ErrContextCanceled
 	}
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
 	if err != nil {
 		s.logger.Error("Failed to get environment API key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("apiKey", apiKey),
 			)...,
@@ -1432,7 +1432,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT}); err != nil {
 		s.logger.Error("Failed to check environment API key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("envAPIKey", envAPIKey),
 			)...,
@@ -1459,7 +1459,7 @@ func (s *grpcGatewayService) checkRequest(
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, roles); err != nil {
 		s.logger.Error("Failed to check environment API key",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("envAPIKey", envAPIKey),
 			)...,
@@ -1489,7 +1489,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			}
 			s.logger.Warn(
 				"API key not found in the cache",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
 				)...,
@@ -1548,7 +1548,7 @@ func getEnvironmentAPIKey(
 		}
 		logger.Error(
 			"Failed to get environment APIKey from account service",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, ErrInternal
 	}

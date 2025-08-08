@@ -39,7 +39,7 @@ func (s *grpcGatewayService) DebugEvaluateFeatures(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DebugEvaluateFeatures request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Strings("featureIds", req.FeatureIds),
 				zap.Any("users", req.Users),
@@ -54,7 +54,7 @@ func (s *grpcGatewayService) DebugEvaluateFeatures(
 	})
 	if err != nil {
 		s.logger.Error("Failed to debug evaluate features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Strings("featureIds", req.FeatureIds),
 				zap.Any("users", req.Users),
@@ -78,7 +78,7 @@ func (s *grpcGatewayService) CreateFeature(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.Id),
 			)...,
@@ -123,7 +123,7 @@ func (s *grpcGatewayService) GetFeature(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.Id),
 			)...,
@@ -154,7 +154,7 @@ func (s *grpcGatewayService) ListFeatures(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListFeatures request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -185,7 +185,7 @@ func (s *grpcGatewayService) UpdateFeature(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", req.Id),
 			)...,

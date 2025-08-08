@@ -35,6 +35,17 @@ data:
     {{ toJson .Values.onDemandSubscribers }}
 
   processors.json: |-
+    {{- range $name, $config := .Values.processors }}
+    {{- if eq $name "segmentUserPersister" }}
+    {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
+    {{- $_ := set $config "redisServerName" $.Values.global.pubsub.redis.serverName }}
+    {{- $_ := set $config "redisAddr" $.Values.global.pubsub.redis.addr }}
+    {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
+    {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
+    {{- $_ := set $config "project" $.Values.global.pubsub.project }}
+    {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
+    {{- end }}
+    {{- end }}
     {{ toJson .Values.processors }}
 
   onDemandProcessors.json: |-

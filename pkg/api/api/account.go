@@ -36,7 +36,7 @@ func (s *grpcGatewayService) CreateAccountV2(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check create account request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
@@ -72,7 +72,7 @@ func (s *grpcGatewayService) CreateAccountV2(
 
 	if res == nil {
 		s.logger.Error("Failed to create account: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
 				zap.String("role", request.OrganizationRole.String()),
@@ -96,7 +96,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check update account request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
@@ -151,7 +151,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 
 	if res == nil {
 		s.logger.Error("Not found updated account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
 			)...,
@@ -175,7 +175,7 @@ func (s *grpcGatewayService) GetAccountV2(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check get account request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
@@ -196,7 +196,7 @@ func (s *grpcGatewayService) GetAccountV2(
 	}
 	if res == nil {
 		s.logger.Error("Account not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("email", request.Email),
 				zap.String("organizationId", request.OrganizationId),
 			)...,
@@ -220,7 +220,7 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check get account by environment request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", request.Email),
 				zap.String("environmentId", request.EnvironmentId),
@@ -241,7 +241,7 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	}
 	if res == nil {
 		s.logger.Error("Account not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("email", request.Email),
 				zap.String("environmentId", request.EnvironmentId),
 			)...,
@@ -265,7 +265,7 @@ func (s *grpcGatewayService) GetMe(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check get my account request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -283,7 +283,7 @@ func (s *grpcGatewayService) GetMe(
 	}
 	if res == nil {
 		s.logger.Error("Account not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("organizationId", request.OrganizationId),
 			)...,
 		)
@@ -306,7 +306,7 @@ func (s *grpcGatewayService) ListAccountsV2(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check list accounts request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -334,7 +334,7 @@ func (s *grpcGatewayService) ListAccountsV2(
 	}
 	if res == nil {
 		s.logger.Error("Failed to list accounts: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Int64("pageSize", request.PageSize),
 				zap.String("cursor", request.Cursor),
 				zap.String("organizationId", request.OrganizationId),

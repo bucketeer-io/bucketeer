@@ -592,11 +592,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	decripted, err := a.Decrypt(ctx, result)
+	decrypted, err := a.Decrypt(ctx, result)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(decripted)) // => {"body":{"Alert id": 123}}
+	fmt.Println(string(decrypted)) // => {"body":{"Alert id": 123}}
 }
 
 type EncrypterDecrypter interface {
