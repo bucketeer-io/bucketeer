@@ -99,6 +99,8 @@ spec:
               value: "{{ .Values.env.notificationService }}"
             - name: BUCKETEER_API_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_API_EVENT_COUNTER_SERVICE
+              value: "{{ .Values.env.eventCounterService }}"
             - name: BUCKETEER_API_GRPC_GATEWAY_PORT
               value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_API_PORT
