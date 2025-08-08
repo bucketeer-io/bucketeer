@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { useAuthAccess } from 'auth';
+import { useAuth, useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Account, Team } from '@types';
@@ -31,7 +31,10 @@ export const useColumns = ({
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const isAccountOwnerRole =
+    consoleAccount?.organizationRole === 'Organization_OWNER';
 
   const handleFilterTeams = useCallback(
     (team: string) => {
@@ -45,6 +48,15 @@ export const useColumns = ({
     },
     [filters]
   );
+
+  const onGetActionsType = (account: Account): MemberActionsType => {
+    const isUserOwner = account.organizationRole === 'Organization_OWNER';
+    const canEditUser =
+      (isUserOwner && isAccountOwnerRole) ||
+      (!isUserOwner && isOrganizationAdmin);
+
+    return canEditUser ? 'EDIT' : 'DETAILS';
+  };
 
   return compact([
     {
@@ -80,10 +92,7 @@ export const useColumns = ({
                       maxLines={1}
                       className="min-w-[300px]"
                       onClick={() =>
-                        onActions(
-                          account,
-                          isOrganizationAdmin ? 'EDIT' : 'DETAILS'
-                        )
+                        onActions(account, onGetActionsType(account))
                       }
                     />
                   }

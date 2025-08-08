@@ -64,18 +64,30 @@ const MemberDetailsModal = ({
               </p>
             </div>
           </div>
-          <div className="flex flex-col w-full gap-y-1">
-            <p className="typo-para-small text-gray-600">{t('tags')}</p>
-            <div className="flex items-center flex-wrap w-full max-w-full gap-2">
-              {member?.tags.map(tagId => (
-                <Tag
-                  key={tagId}
-                  tooltipCls={'!max-w-[450px]'}
-                  tagId={tagId}
-                  maxSize={487}
-                  value={tagList?.find(tag => tag.id === tagId)?.name || tagId}
-                />
-              ))}
+          <div className="flex items-start w-full gap-x-4">
+            <div className="flex flex-col w-full gap-y-1 flex-1">
+              <p className="typo-para-small text-gray-600">{t('teams')}</p>
+              <div className="flex items-center flex-wrap w-full max-w-full gap-2">
+                {member?.tags.map(tagId => (
+                  <Tag
+                    key={tagId}
+                    tooltipCls={'!max-w-[450px]'}
+                    tagId={tagId}
+                    maxSize={487}
+                    value={
+                      tagList?.find(tag => tag.id === tagId)?.name || tagId
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="typo-para-small text-gray-600">{t('role')}</p>
+              <p className="text-gray-700 mt-1 typo-para-medium break-all">
+                {t(
+                  String(member.organizationRole).split('_')[1]?.toLowerCase()
+                )}
+              </p>
             </div>
           </div>
           <Divider />
