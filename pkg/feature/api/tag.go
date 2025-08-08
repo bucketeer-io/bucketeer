@@ -60,7 +60,7 @@ func (s *FeatureService) ListTags(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -94,7 +94,7 @@ func (s *FeatureService) ListTags(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -160,7 +160,7 @@ func (s *FeatureService) upsertTags(
 		if err != nil {
 			s.logger.Error(
 				"Failed to create domain tag",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environment_id", environmentId),
 					zap.String("tagID", tag),
@@ -171,7 +171,7 @@ func (s *FeatureService) upsertTags(
 		if err := s.tagStorage.UpsertTag(ctx, t); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environment_id", environmentId),
 					zap.String("tagID", tag),

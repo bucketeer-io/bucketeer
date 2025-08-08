@@ -115,7 +115,7 @@ func (e *experimentCalculate) runCalculation() {
 	environments, environmentErr := e.listEnvironments(ctxWithTimeout)
 	if environmentErr != nil {
 		e.logger.Error("Failed to list environments when calculating experiments",
-			log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
+			log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 				zap.Error(environmentErr),
 			)...,
 		)
@@ -127,7 +127,7 @@ func (e *experimentCalculate) runCalculation() {
 		experiments, experimentErr := e.listExperiments(ctxWithTimeout, env.Id)
 		if experimentErr != nil {
 			e.logger.Error("Failed to list experiments when running experiment calculation",
-				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.Error(experimentErr),
 				)...,
 			)
@@ -136,7 +136,7 @@ func (e *experimentCalculate) runCalculation() {
 		}
 		if experiments == nil {
 			e.logger.Info("There are no experiments for calculation in the specified environment",
-				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 				)...,
 			)
@@ -146,7 +146,7 @@ func (e *experimentCalculate) runCalculation() {
 			calculateErr := e.calculateExperimentWithLock(ctxWithTimeout, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
-					log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
+					log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 						zap.Error(calculateErr),
 						zap.String("environmentId", env.Id),
 						zap.Any("experiment", ex),
@@ -156,7 +156,7 @@ func (e *experimentCalculate) runCalculation() {
 			}
 			calculatedCount++
 			e.logger.Info("Experiment calculated successfully in the specified environment",
-				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 					zap.Any("experiment", ex),
 				)...,
@@ -217,7 +217,7 @@ func (e *experimentCalculate) calculateExperiment(ctx context.Context,
 	})
 	if err != nil {
 		e.logger.Error("Failed experiment calculation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", env.Id),
 				zap.Any("experiment", experiment),

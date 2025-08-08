@@ -27,7 +27,7 @@ import (
 
 type Fields []zap.Field
 
-func FieldsFromImcomingContext(ctx context.Context) Fields {
+func FieldsFromIncomingContext(ctx context.Context) Fields {
 	sc := trace.FromContext(ctx).SpanContext()
 	return Fields{
 		zap.String("xRequestID", metadata.GetXRequestIDFromIncomingContext(ctx)),

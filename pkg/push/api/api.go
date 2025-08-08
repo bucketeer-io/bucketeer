@@ -128,7 +128,7 @@ func (s *PushService) CreatePush(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Strings("tags", req.Command.Tags),
@@ -171,7 +171,7 @@ func (s *PushService) CreatePush(
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Strings("tags", req.Command.Tags),
@@ -212,7 +212,7 @@ func (s *PushService) CreatePush(
 		}
 		s.logger.Error(
 			"Failed to create push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -253,7 +253,7 @@ func (s *PushService) createPushNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -297,7 +297,7 @@ func (s *PushService) createPushNoCommand(
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -355,7 +355,7 @@ func (s *PushService) createPushNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -488,7 +488,7 @@ func (s *PushService) UpdatePush(
 		}
 		s.logger.Error(
 			"Failed to update push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -579,7 +579,7 @@ func (s *PushService) updatePushNoCommand(
 		}
 		s.logger.Error(
 			"Failed to update push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -708,7 +708,7 @@ func (s *PushService) validateAddPushTagsCommand(
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -792,7 +792,7 @@ func (s *PushService) DeletePush(
 		}
 		s.logger.Error(
 			"Failed to delete push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
@@ -831,7 +831,7 @@ func (s *PushService) GetPush(
 			}
 			s.logger.Error(
 				"Failed to get push",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
@@ -1061,7 +1061,7 @@ func (s *PushService) ListPushes(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -1240,7 +1240,7 @@ func (s *PushService) listPushes(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list pushes",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Strings("environmentId", environmentIDs),
 			)...,
@@ -1282,7 +1282,7 @@ func (s *PushService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1298,7 +1298,7 @@ func (s *PushService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1314,7 +1314,7 @@ func (s *PushService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -1353,7 +1353,7 @@ func (s *PushService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -1369,7 +1369,7 @@ func (s *PushService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -1385,7 +1385,7 @@ func (s *PushService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,

@@ -53,7 +53,7 @@ func (s *AccountService) GetMe(
 	if !verifyEmailFormat(t.Email) {
 		s.logger.Error(
 			"Email inside IDToken has an invalid format",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", t.Email))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", t.Email))...,
 		)
 		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -68,7 +68,7 @@ func (s *AccountService) GetMe(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get project list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -83,7 +83,7 @@ func (s *AccountService) GetMe(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get environment list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -99,7 +99,7 @@ func (s *AccountService) GetMe(
 		if status.Code(err) == codes.NotFound {
 			s.logger.Error(
 				"Organization not found",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", req.OrganizationId),
 				)...,
@@ -115,7 +115,7 @@ func (s *AccountService) GetMe(
 		}
 		s.logger.Error(
 			"Failed to get organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -139,7 +139,7 @@ func (s *AccountService) GetMe(
 		if err != nil {
 			s.logger.Error(
 				"Failed to update system admin user last seen",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("email", sysAdminAccount.Email),
 					zap.String("organizationId", req.OrganizationId),
@@ -182,7 +182,7 @@ func (s *AccountService) GetMe(
 	if err != nil {
 		s.logger.Error(
 			"Failed to update user last seen",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", account.Email),
 				zap.String("organizationId", req.OrganizationId),
@@ -352,7 +352,7 @@ func (s *AccountService) GetMyOrganizationsByEmail(
 	if !verifyEmailFormat(req.Email) {
 		s.logger.Error(
 			"Email inside request has an invalid format",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", req.Email))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", req.Email))...,
 		)
 		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -379,7 +379,7 @@ func (s *AccountService) getMyOrganizations(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get accounts with organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -400,7 +400,7 @@ func (s *AccountService) getMyOrganizations(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get organizations",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -475,7 +475,7 @@ func (s *AccountService) getSystemAdminAccountV2(
 		}
 		s.logger.Error(
 			"Failed to get system admin account",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", email),
 			)...,

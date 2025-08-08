@@ -56,7 +56,7 @@ func LogServerMiddleware(logger *zap.Logger) middleware {
 						logger.Error("Failed to parse request body", zap.Error(err))
 					}
 					logger.Check(level, "").Write(
-						log.FieldsFromImcomingContext(r.Context()).AddFields(
+						log.FieldsFromIncomingContext(r.Context()).AddFields(
 							zap.String("requestURI", r.RequestURI),
 							zap.String("apiVersion", apiVersion),
 							zap.String("serviceName", serviceName),

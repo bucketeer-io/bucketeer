@@ -107,7 +107,7 @@ func (s *TagService) CreateTag(
 	if err := s.validateCreateTagRquest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create a tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
@@ -120,7 +120,7 @@ func (s *TagService) CreateTag(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create domain tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("tag", tag),
@@ -193,7 +193,7 @@ func (s *TagService) CreateTag(
 	if err != nil {
 		s.logger.Error(
 			"Failed to store the tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("tag", tag),
@@ -294,7 +294,7 @@ func (s *TagService) ListTags(
 	if err != nil {
 		s.logger.Error(
 			"Failed to valid list tags API. Invalid argument.",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -331,7 +331,7 @@ func (s *TagService) ListTags(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -359,7 +359,7 @@ func (s *TagService) DeleteTag(
 	if err := s.validateDeleteTagRquest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to delete a tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
@@ -373,7 +373,7 @@ func (s *TagService) DeleteTag(
 		if err != nil {
 			s.logger.Error(
 				"Failed to get tag",
-				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Any("id", req.Id),
@@ -398,7 +398,7 @@ func (s *TagService) DeleteTag(
 		if inUsed {
 			s.logger.Error(
 				"Failed to delete the tag because it is in use by a feature",
-				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+				log.FieldsFromIncomingContext(ctxWithTx).AddFields(
 					zap.String("environmentId", req.EnvironmentId),
 					zap.Any("tag", tagDB),
 				)...,
@@ -468,7 +468,7 @@ func (s *TagService) listFeaturesFromEnvironment(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentID),
 			)...,
@@ -517,7 +517,7 @@ func (s *TagService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -533,7 +533,7 @@ func (s *TagService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -549,7 +549,7 @@ func (s *TagService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -590,7 +590,7 @@ func (s *TagService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -606,7 +606,7 @@ func (s *TagService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -622,7 +622,7 @@ func (s *TagService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -709,7 +709,7 @@ func (s *TagService) reportInternalServerError(
 ) error {
 	s.logger.Error(
 		"Internal server error",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentId", environmentId),
 		)...,

@@ -38,7 +38,7 @@ func (s *grpcGatewayService) GetAutoOpsRule(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetAutoOpsRule request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -54,7 +54,7 @@ func (s *grpcGatewayService) GetAutoOpsRule(
 	)
 	if err != nil {
 		s.logger.Error("Failed to get auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -63,7 +63,7 @@ func (s *grpcGatewayService) GetAutoOpsRule(
 	}
 	if res == nil {
 		s.logger.Error("Get auto ops rule response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", request.Id),
 			)...,
 		)
@@ -84,7 +84,7 @@ func (s *grpcGatewayService) CreateAutoOpsRule(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreateAutoOpsRule request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", request.FeatureId),
 				zap.String("ops type", request.OpsType.String()),
@@ -110,7 +110,7 @@ func (s *grpcGatewayService) CreateAutoOpsRule(
 	)
 	if err != nil {
 		s.logger.Error("Failed to create auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("featureId", request.FeatureId),
 				zap.String("ops type", request.OpsType.String()),
@@ -120,7 +120,7 @@ func (s *grpcGatewayService) CreateAutoOpsRule(
 	}
 	if res == nil {
 		s.logger.Error("Create auto ops rule response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("featureId", request.FeatureId),
 				zap.String("ops type", request.OpsType.String()),
 			)...,
@@ -144,7 +144,7 @@ func (s *grpcGatewayService) ListAutoOpsRules(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListAutoOpsRules request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Strings("featureIds", request.FeatureIds),
 			)...,
@@ -162,7 +162,7 @@ func (s *grpcGatewayService) ListAutoOpsRules(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list auto ops rules",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Strings("featureIds", request.FeatureIds),
 			)...,
@@ -171,7 +171,7 @@ func (s *grpcGatewayService) ListAutoOpsRules(
 	}
 	if res == nil {
 		s.logger.Error("List auto ops rules response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Strings("featureIds", request.FeatureIds),
 			)...,
 		)
@@ -193,7 +193,7 @@ func (s *grpcGatewayService) StopAutoOpsRule(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check StopAutoOpsRule request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -215,7 +215,7 @@ func (s *grpcGatewayService) StopAutoOpsRule(
 	)
 	if err != nil {
 		s.logger.Error("Failed to stop auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -235,7 +235,7 @@ func (s *grpcGatewayService) DeleteAutoOpsRule(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteAutoOpsRule request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -257,7 +257,7 @@ func (s *grpcGatewayService) DeleteAutoOpsRule(
 	)
 	if err != nil {
 		s.logger.Error("Failed to delete auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -277,7 +277,7 @@ func (s *grpcGatewayService) UpdateAutoOpsRule(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdateAutoOpsRule request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -301,7 +301,7 @@ func (s *grpcGatewayService) UpdateAutoOpsRule(
 	)
 	if err != nil {
 		s.logger.Error("Failed to update auto ops rule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", request.Id),
 			)...,
@@ -321,7 +321,7 @@ func (s *grpcGatewayService) ExecuteAutoOps(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ExecuteAutoOps request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -343,7 +343,7 @@ func (s *grpcGatewayService) ExecuteAutoOps(
 	)
 	if err != nil {
 		s.logger.Error("Failed to execute auto ops",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", request.Id),
 				zap.String("ClauseID", request.ClauseId),
@@ -353,7 +353,7 @@ func (s *grpcGatewayService) ExecuteAutoOps(
 	}
 	if res == nil {
 		s.logger.Error("Execute auto ops response is nil",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("ID", request.Id),
 				zap.String("ClauseID", request.ClauseId),
 			)...,

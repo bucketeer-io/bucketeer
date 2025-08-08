@@ -95,7 +95,7 @@ func (s *NotificationService) checkSystemAdminRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -108,7 +108,7 @@ func (s *NotificationService) checkSystemAdminRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -121,7 +121,7 @@ func (s *NotificationService) checkSystemAdminRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -161,7 +161,7 @@ func (s *NotificationService) checkEnvironmentRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -177,7 +177,7 @@ func (s *NotificationService) checkEnvironmentRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -193,7 +193,7 @@ func (s *NotificationService) checkEnvironmentRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 				)...,
@@ -232,7 +232,7 @@ func (s *NotificationService) checkOrganizationRole(
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -248,7 +248,7 @@ func (s *NotificationService) checkOrganizationRole(
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,
@@ -264,7 +264,7 @@ func (s *NotificationService) checkOrganizationRole(
 		default:
 			s.logger.Error(
 				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
 				)...,

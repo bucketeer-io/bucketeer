@@ -38,7 +38,7 @@ func (s *grpcGatewayService) ListPushes(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListPushes request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -60,7 +60,7 @@ func (s *grpcGatewayService) ListPushes(
 	}
 	if res == nil {
 		s.logger.Error("Failed to list pushes: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,
@@ -85,7 +85,7 @@ func (s *grpcGatewayService) CreatePush(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreatePush request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -113,7 +113,7 @@ func (s *grpcGatewayService) CreatePush(
 	}
 	if res == nil {
 		s.logger.Error("Not found created push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("name", req.Name),
 			)...,
 		)
@@ -136,7 +136,7 @@ func (s *grpcGatewayService) GetPush(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check GetPush request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("pushId", req.Id),
 			)...,
@@ -156,7 +156,7 @@ func (s *grpcGatewayService) GetPush(
 	}
 	if res == nil {
 		s.logger.Error("Push not found",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("name", req.Id),
 			)...,
 		)
@@ -178,7 +178,7 @@ func (s *grpcGatewayService) UpdatePush(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check UpdatePush request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("pushId", req.Id),
 			)...,
@@ -222,7 +222,7 @@ func (s *grpcGatewayService) UpdatePush(
 	}
 	if res == nil {
 		s.logger.Error("Not found updated push",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("pushId", req.Id),
 			)...,
 		)

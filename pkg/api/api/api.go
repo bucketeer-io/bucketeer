@@ -288,7 +288,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
+			log.FieldsFromIncomingContext(req.Context()).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", reqBody.User.Id),
@@ -342,7 +342,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
+			log.FieldsFromIncomingContext(req.Context()).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", reqBody.User.Id),
@@ -409,7 +409,7 @@ func (s *gatewayService) checkGetEvaluationsRequest(
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		s.logger.Error(
 			"Failed to decode request body",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
+			log.FieldsFromIncomingContext(req.Context()).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -447,7 +447,7 @@ func (s *gatewayService) checkGetEvaluationRequest(
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		s.logger.Error(
 			"Failed to decode request body",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
+			log.FieldsFromIncomingContext(req.Context()).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -513,7 +513,7 @@ func (s *gatewayService) checkRequest(
 	if isContextCanceled(ctx) {
 		s.logger.Warn(
 			"Request was canceled",
-			log.FieldsFromImcomingContext(ctx)...,
+			log.FieldsFromIncomingContext(ctx)...,
 		)
 		return nil, errContextCanceled
 	}
@@ -563,7 +563,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	}
 	s.logger.Warn(
 		"API key not found in the cache",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("apiKey", obfuscateString(id, obfuscateAPIKeyLength)),
 		)...,
@@ -604,7 +604,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 		}
 		logger.Error(
 			"Failed to get environment APIKey from account service",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, errInternal
 	}
@@ -628,7 +628,7 @@ func (s *gatewayService) evaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -639,7 +639,7 @@ func (s *gatewayService) evaluateFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -685,7 +685,7 @@ func (s *gatewayService) getSegmentUsers(
 	}
 	s.logger.Warn(
 		"No cached data for SegmentUsers",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentID", environmentId),
 			zap.String("segmentId", segmentID),
@@ -699,7 +699,7 @@ func (s *gatewayService) getSegmentUsers(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve segment users from storage",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
@@ -730,7 +730,7 @@ func (s *gatewayService) getFeatures(
 	}
 	s.logger.Warn(
 		"No cached data for Features",
-		log.FieldsFromImcomingContext(ctx).AddFields(
+		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentID", environmentId),
 		)...,
@@ -739,7 +739,7 @@ func (s *gatewayService) getFeatures(
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
 			)...,
@@ -822,7 +822,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			if !errors.Is(err, context.Canceled) {
 				s.logger.Error(
 					"Failed to publish event",
-					log.FieldsFromImcomingContext(req.Context()).AddFields(
+					log.FieldsFromIncomingContext(req.Context()).AddFields(
 						zap.Error(err),
 						zap.String("environmentID", envAPIKey.Environment.Id),
 						zap.String("id", id),
@@ -956,7 +956,7 @@ func (s *gatewayService) getGoalEvent(ctx context.Context, event event) (*eventp
 	if err := protojson.Unmarshal(event.Event, ev); err != nil {
 		s.logger.Error(
 			"Failed to extract goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", event.ID),
 			)...,
@@ -987,7 +987,7 @@ func (s *gatewayService) getEvaluationEvent(
 	if err := protojson.Unmarshal(event.Event, ev); err != nil {
 		s.logger.Error(
 			"Failed to extract evaluation event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", event.ID),
 			)...,
@@ -1018,7 +1018,7 @@ func (s *gatewayService) getMetricsEvent(
 	if err := json.Unmarshal(event.Event, metricsEvt); err != nil {
 		s.logger.Error(
 			"Failed to extract metrics event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", event.ID),
 			)...,
@@ -1036,7 +1036,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(metricsEvt.Event, latency); err != nil {
 			s.logger.Error(
 				"Failed to extract latencyMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1057,7 +1057,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(metricsEvt.Event, size); err != nil {
 			s.logger.Error(
 				"Failed to extract sizeMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1078,7 +1078,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(event.Event, timeout); err != nil {
 			s.logger.Error(
 				"Failed to extract timeoutErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1097,7 +1097,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(event.Event, internal); err != nil {
 			s.logger.Error(
 				"Failed to extract internalErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1116,7 +1116,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(event.Event, network); err != nil {
 			s.logger.Error(
 				"Failed to extract networkErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1135,7 +1135,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err := json.Unmarshal(event.Event, internalSdk); err != nil {
 			s.logger.Error(
 				"Failed to extract internalSdkErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
 				)...,
@@ -1181,7 +1181,7 @@ func (s *gatewayService) checkRegisterEvents(
 		}
 		s.logger.Error(
 			"Failed to decode request body",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
+			log.FieldsFromIncomingContext(req.Context()).AddFields(
 				zap.Error(err),
 			)...,
 		)

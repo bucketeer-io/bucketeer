@@ -141,7 +141,7 @@ func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEve
 	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
 		v.logger.Error(
 			"Failed to extract goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
 				zap.String("environment_id", v.event.EnvironmentId),
@@ -220,7 +220,7 @@ func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.E
 	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
 		v.logger.Error(
 			"Failed to extract evaluation event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
 				zap.String("environment_id", v.event.EnvironmentId),
@@ -252,7 +252,7 @@ func (v *eventMetricsValidator) unmarshal(ctx context.Context) (*eventproto.Metr
 	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
 		v.logger.Error(
 			"Failed to extract metrics event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
 				zap.String("environment_id", v.event.EnvironmentId),
@@ -287,7 +287,7 @@ func (v *eventGoalValidator) buildGoalEventLogFields(
 	ctx context.Context,
 	ev *eventproto.GoalEvent,
 ) []zap.Field {
-	return log.FieldsFromImcomingContext(ctx).AddFields(
+	return log.FieldsFromIncomingContext(ctx).AddFields(
 		zap.String("id", v.event.Id),
 		zap.Int64("timestamp", ev.Timestamp),
 		zap.String("environment_id", v.event.EnvironmentId),
@@ -322,7 +322,7 @@ func (v *eventEvaluationValidator) buildEvaluationEventLogFields(
 	ctx context.Context,
 	ev *eventproto.EvaluationEvent,
 ) []zap.Field {
-	return log.FieldsFromImcomingContext(ctx).AddFields(
+	return log.FieldsFromIncomingContext(ctx).AddFields(
 		zap.String("id", v.event.Id),
 		zap.Int64("timestamp", ev.Timestamp),
 		zap.String("environment_id", v.event.EnvironmentId),
@@ -359,7 +359,7 @@ func (v *eventMetricsValidator) buildMetricsEventLogFields(
 	ctx context.Context,
 	ev *eventproto.MetricsEvent,
 ) []zap.Field {
-	return log.FieldsFromImcomingContext(ctx).AddFields(
+	return log.FieldsFromIncomingContext(ctx).AddFields(
 		zap.String("id", v.event.Id),
 		zap.String("environment_id", v.event.EnvironmentId),
 		zap.Int64("timestamp", ev.Timestamp),

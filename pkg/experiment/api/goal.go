@@ -101,7 +101,7 @@ func (s *experimentService) getGoalMySQL(
 	if err != nil {
 		s.logger.Error(
 			"Failed to get goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("goalId", goalID),
@@ -139,7 +139,7 @@ func (s *experimentService) ListGoals(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (s *experimentService) ListGoals(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list goals",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -304,7 +304,7 @@ func (s *experimentService) CreateGoal(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -341,7 +341,7 @@ func (s *experimentService) CreateGoal(
 		}
 		s.logger.Error(
 			"Failed to create goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -373,7 +373,7 @@ func (s *experimentService) createGoalNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -427,7 +427,7 @@ func (s *experimentService) createGoalNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -566,7 +566,7 @@ func (s *experimentService) UpdateGoal(
 	if err != nil {
 		s.logger.Error(
 			"Failed to update goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -724,7 +724,7 @@ func (s *experimentService) ArchiveGoal(
 	if err != nil {
 		s.logger.Error(
 			"Failed to archive goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,

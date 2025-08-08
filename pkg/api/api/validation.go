@@ -27,7 +27,7 @@ func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeS
 	if err := uuid.ValidateUUID(id); err != nil {
 		s.logger.Warn(
 			"Failed to validate goal event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", id),
 			)...,
@@ -37,7 +37,7 @@ func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeS
 	if !validateTimestamp(timeStamp, s.opts.oldestEventTimestamp, s.opts.furthestEventTimestamp) {
 		s.logger.Debug(
 			"Failed to validate goal event timestamp",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", id),
 				zap.Int64("timestamp", timeStamp),
 			)...,
@@ -51,7 +51,7 @@ func (s *gatewayService) validateEvaluationEvent(ctx context.Context, id string,
 	if err := uuid.ValidateUUID(id); err != nil {
 		s.logger.Warn(
 			"Failed to validate evaluation event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", id),
 			)...,
@@ -61,7 +61,7 @@ func (s *gatewayService) validateEvaluationEvent(ctx context.Context, id string,
 	if !validateTimestamp(timeStamp, s.opts.oldestEventTimestamp, s.opts.furthestEventTimestamp) {
 		s.logger.Debug(
 			"Failed to validate evaluation event timestamp",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("id", id),
 				zap.Int64("timestamp", timeStamp),
 			)...,
@@ -76,7 +76,7 @@ func (s *gatewayService) validateMetricsEvent(ctx context.Context, id string) (s
 	if err := uuid.ValidateUUID(id); err != nil {
 		s.logger.Warn(
 			"Failed to validate evaluation event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", id),
 			)...,

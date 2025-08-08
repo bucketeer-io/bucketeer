@@ -91,7 +91,7 @@ func TestSplitURLPath(t *testing.T) {
 			expectedApiName:     "unknown",
 		},
 		{
-			desc:                "sucess",
+			desc:                "success",
 			input:               "scheme://host/api_version/service_name/api_name",
 			expectedApiVersion:  "api_version",
 			expectedServiceName: "service_name",

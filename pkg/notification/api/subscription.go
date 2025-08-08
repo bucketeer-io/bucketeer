@@ -66,7 +66,7 @@ func (s *NotificationService) CreateSubscription(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("sourceType", req.Command.SourceTypes),
@@ -109,7 +109,7 @@ func (s *NotificationService) CreateSubscription(
 		}
 		s.logger.Error(
 			"Failed to create subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -125,7 +125,7 @@ func (s *NotificationService) CreateSubscription(
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
@@ -160,7 +160,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("sourceType", req.SourceTypes),
@@ -192,7 +192,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		}
 		s.logger.Error(
 			"Failed to create subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -224,7 +224,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("subscriptionId", subscription.Id),
@@ -236,7 +236,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("subscriptionId", subscription.Id),
@@ -273,7 +273,7 @@ func (s *NotificationService) UpdateSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to update subscription",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", req.Id),
@@ -341,7 +341,7 @@ func (s *NotificationService) EnableSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable subscription",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -378,7 +378,7 @@ func (s *NotificationService) DisableSubscription(
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable subscription",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
@@ -429,7 +429,7 @@ func (s *NotificationService) updateSubscription(
 		}
 		s.logger.Error(
 			"Failed to update subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", id),
 			)...,
@@ -446,7 +446,7 @@ func (s *NotificationService) updateSubscription(
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", environmentId),
 				zap.String("id", id),
@@ -520,7 +520,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 		}
 		s.logger.Error(
 			"Failed to update subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ID", ID),
 				zap.String("environmentID", environmentID),
@@ -540,7 +540,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", environmentID),
 				zap.String("ID", ID),
@@ -609,7 +609,7 @@ func (s *NotificationService) DeleteSubscription(
 		}
 		s.logger.Error(
 			"Failed to delete subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -628,7 +628,7 @@ func (s *NotificationService) DeleteSubscription(
 	if err != nil {
 		s.logger.Error(
 			"Failed to publish event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("subscriptionId", subscription.Id),
@@ -687,7 +687,7 @@ func (s *NotificationService) GetSubscription(
 		}
 		s.logger.Error(
 			"Failed to get subscription",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -735,7 +735,7 @@ func (s *NotificationService) ListSubscriptions(
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
@@ -962,7 +962,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list subscriptions",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)

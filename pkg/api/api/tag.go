@@ -37,7 +37,7 @@ func (s *grpcGatewayService) CreateTag(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check CreatePush request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -61,7 +61,7 @@ func (s *grpcGatewayService) CreateTag(
 	)
 	if err != nil {
 		s.logger.Error("Failed to create tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
 			)...,
@@ -70,7 +70,7 @@ func (s *grpcGatewayService) CreateTag(
 	}
 	if res == nil {
 		s.logger.Error("Failed to create tag: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("name", req.Name),
 			)...,
 		)
@@ -91,7 +91,7 @@ func (s *grpcGatewayService) DeleteTag(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check DeleteTag request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -114,7 +114,7 @@ func (s *grpcGatewayService) DeleteTag(
 	)
 	if err != nil {
 		s.logger.Error("Failed to delete tag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
 			)...,
@@ -135,7 +135,7 @@ func (s *grpcGatewayService) ListTags(
 	})
 	if err != nil {
 		s.logger.Error("Failed to check ListTags request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -155,7 +155,7 @@ func (s *grpcGatewayService) ListTags(
 	)
 	if err != nil {
 		s.logger.Error("Failed to list tags",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,
@@ -164,7 +164,7 @@ func (s *grpcGatewayService) ListTags(
 	}
 	if res == nil {
 		s.logger.Error("Failed to list tags: nil response",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,

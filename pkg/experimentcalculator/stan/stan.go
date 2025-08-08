@@ -163,7 +163,7 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (compileResp
 		Post("/v1/models")
 	if err != nil {
 		s.logger.Error("HttpStan failed to compile model",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -173,7 +173,7 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (compileResp
 
 	if statusCode != http.StatusCreated {
 		s.logger.Error("HttpStan failed to compile model",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("status", resp.Status()),
 				zap.Int("status_code", resp.StatusCode()),
 			)...,
@@ -214,7 +214,7 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 		Post("/v1/models/{model_id}/fits")
 	if err != nil {
 		s.logger.Error("HttpStan failed to create fit",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
 			)...,
 		)
@@ -224,7 +224,7 @@ func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (
 	statusCode = resp.StatusCode()
 	if statusCode != http.StatusCreated {
 		s.logger.Error("HttpStan failed to create fit",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
 				zap.String("status", resp.Status()),
 				zap.Int64("time_cost", resp.Time().Milliseconds()),
@@ -266,7 +266,7 @@ func (s Stan) GetOperationDetails(
 	statusCode = resp.StatusCode()
 	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get operation details",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("operation_id", operationID),
 				zap.String("status", resp.Status()),
 				zap.Int64("time_cost", resp.Time().Milliseconds()),
@@ -300,7 +300,7 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (result i
 		Get("/v1/models/{model_id}/fits/{fit_id}")
 	if err != nil {
 		s.logger.Error("HttpStan failed to get fit result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
 				zap.String("fit_id", fitID),
 			)...,
@@ -311,7 +311,7 @@ func (s Stan) GetFitResult(ctx context.Context, modelID, fitID string) (result i
 	statusCode = resp.StatusCode()
 	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get fit result",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("model_id", modelID),
 				zap.String("fit_id", fitID),
 				zap.String("status", resp.Status()),
@@ -352,7 +352,7 @@ func (s Stan) StanParams(
 		Post("/v1/models/{model_id}/params")
 	if err != nil {
 		s.logger.Error("HttpStan failed to get params",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
@@ -362,7 +362,7 @@ func (s Stan) StanParams(
 	statusCode = resp.StatusCode()
 	if statusCode != http.StatusOK {
 		s.logger.Error("HttpStan failed to get params",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("status", resp.Status()),
 				zap.Int64("time_cost", resp.Time().Milliseconds()),
 			)...,
@@ -382,7 +382,7 @@ func (s Stan) ExtractFromFitResult(ctx context.Context, res io.ReadCloser) dataf
 		err := res.Close()
 		if err != nil {
 			s.logger.Error("HttpStan failed to close response body",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 				)...,
 			)
@@ -395,7 +395,7 @@ func (s Stan) ExtractFromFitResult(ctx context.Context, res io.ReadCloser) dataf
 		unmarshalErr := json.Unmarshal(scanner.Bytes(), &lineJSON)
 		if unmarshalErr != nil {
 			s.logger.Error("HttpStan failed to unmarshal line",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.String("line", scanner.Text()),
 					zap.Error(unmarshalErr),
 				)...,
@@ -410,7 +410,7 @@ func (s Stan) ExtractFromFitResult(ctx context.Context, res io.ReadCloser) dataf
 	}
 	if err := scanner.Err(); err != nil {
 		s.logger.Error("HttpStan failed to scan response body",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
