@@ -24,7 +24,18 @@ container [here](https://docs.github.com/en/github/developing-online-with-codesp
    dev container)
 4. Wait for the dev container to be ready
 
-## Set up Minikube and services that Bucketeer depends on
+# Local Development Setup
+
+You can set up Bucketeer locally using one of two methods:
+
+1. **Minikube Setup** (Kubernetes-based)
+2. **Docker Compose Setup** (Container-based)
+
+Choose the method that best fits your development environment and requirements.
+
+## Option 1: Minikube Setup
+
+### Set up Minikube and services that Bucketeer depends on
 
 The following command will set up the Minikube and services that Bucketeer depends on:
 
@@ -49,7 +60,7 @@ Additionally, this command will:
 - Create tables for MySQL
 - Create tables for Google Big Query (Emulator)
 
-## Deploy Bucketeer
+### Deploy Bucketeer
 
 The following command will deploy all the Bucketeer services at once.
 
@@ -66,7 +77,104 @@ helm install backend manifests/bucketeer/charts/backend/ --values manifests/buck
 
 **Note:** We use the `values.dev.yaml` file to override the default values in `values.yaml` file.
 
-## Run E2E tests
+## Option 2: Docker Compose Setup
+
+As an alternative to the Minikube setup, you can use Docker Compose to run Bucketeer locally. This approach is simpler and doesn't require Kubernetes knowledge.
+
+All Docker Compose related files are organized in the `docker-compose/` directory. See `docker-compose/README.md` for detailed documentation including how to customize Docker image versions.
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Git repository cloned
+- `/etc/hosts` file updated with the following entries:
+  ```
+  127.0.0.1 web-gateway.bucketeer.io
+  127.0.0.1 api-gateway.bucketeer.io
+  ```
+
+### Quick Start with Docker Compose
+
+1. Start all services with default versions:
+```shell
+make docker-compose-up
+```
+
+2. Or start with specific versions:
+```shell
+# Use a different Bucketeer version for all services
+export BUCKETEER_VERSION=v1.4.0
+make docker-compose-up
+
+# Or customize individual service versions
+export BUCKETEER_WEB_VERSION=v1.4.0
+export BUCKETEER_API_VERSION=v1.3.0
+make docker-compose-up
+```
+
+The start command will:
+- Set up the required directories and configuration files
+- Generate development certificates if they don't exist
+- Start all Bucketeer services using Docker Compose
+
+3. Check service status:
+```shell
+make docker-compose-status
+```
+
+4. View logs:
+```shell
+make docker-compose-logs
+```
+
+5. Stop services:
+```shell
+make docker-compose-down
+```
+
+6. Create MySQL event tables for data warehouse functionality:
+```shell
+make docker-compose-create-mysql-event-tables
+```
+
+### Services and Ports
+
+The Docker Compose setup includes:
+
+- **MySQL**: Port 3306 (Database)
+- **Redis**: Port 6379 (Cache and pub/sub)
+- **Nginx**: Ports 80 (HTTP) & 443 (HTTPS) for routing to:
+  - **Web Service**: Admin UI and internal APIs via `web-gateway.bucketeer.io`
+  - **API Gateway**: SDK endpoints via `api-gateway.bucketeer.io`
+- **Batch Service**: Background processing (internal service)
+- **Subscriber Service**: Event processing (internal service)
+
+The subscriber service uses JSON configuration files located in the `docker-compose/config/subscriber-config/` directory:
+- `subscribers.json`: Main subscriber configurations
+- `onDemandSubscribers.json`: On-demand subscriber configurations
+- `processors.json`: Processor configurations
+- `onDemandProcessors.json`: On-demand processor configurations
+
+### Additional Commands
+
+```shell
+# Clean up all containers, networks, and volumes
+make docker-compose-clean
+
+# View logs for specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml logs -f web
+# Or for Docker Compose v1
+docker-compose -f docker-compose/compose.yml logs -f web
+
+# Restart a specific service (Docker Compose v2)
+docker compose -f docker-compose/compose.yml restart api
+# Or for Docker Compose v1  
+docker-compose -f docker-compose/compose.yml restart api
+```
+
+# Running E2E Tests
+
+## For Minikube Setup
 
 To run E2E tests you must create API Keys for Server and Client SDKs.
 Please note that you only need to create them once.
@@ -114,4 +222,52 @@ make e2e
 
 ```shell
 make delete-dev-container-mysql-data
+```
+
+## For Docker Compose Setup
+
+When using Docker Compose instead of Minikube, you can run E2E tests with modified endpoints:
+
+### Create API Keys for Docker Compose
+
+```shell
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
+API_KEY_NAME="e2e-test-$(date +%s)-client" \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
+API_KEY_ROLE=SDK_CLIENT \
+ENVIRONMENT_ID=e2e \
+make create-api-key
+```
+
+```shell
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
+API_KEY_NAME="e2e-test-$(date +%s)-server" \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_server \
+API_KEY_ROLE=SDK_SERVER \
+ENVIRONMENT_ID=e2e \
+make create-api-key
+```
+
+### Run E2E Tests Against Docker Compose
+
+```shell
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+GATEWAY_URL=api-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+GATEWAY_PORT=443 \
+WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
+API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
+ENVIRONMENT_ID=e2e \
+ORGANIZATION_ID=default \
+make e2e
 ```

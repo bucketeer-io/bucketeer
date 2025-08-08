@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -31,17 +32,18 @@ import (
 )
 
 type Server struct {
-	certPath   string
-	keyPath    string
-	name       string
-	logger     *zap.Logger
-	port       int
-	metrics    metrics.Registerer
-	verifier   token.Verifier
-	services   []Service
-	handlers   []httpHandler
-	rpcServer  *grpc.Server
-	httpServer *http.Server
+	certPath      string
+	keyPath       string
+	name          string
+	logger        *zap.Logger
+	port          int
+	metrics       metrics.Registerer
+	verifier      token.Verifier
+	services      []Service
+	handlers      []httpHandler
+	rpcServer     *grpc.Server
+	httpServer    *http.Server
+	grpcWebServer *grpcweb.WrappedGrpcServer
 }
 
 type httpHandler struct {
@@ -149,6 +151,9 @@ func (s *Server) setupRPC() {
 	for _, service := range s.services {
 		service.Register(s.rpcServer)
 	}
+
+	// Create gRPC-Web wrapper
+	s.grpcWebServer = grpcweb.WrapServer(s.rpcServer)
 }
 
 func (s *Server) setupHTTP() {
@@ -159,7 +164,9 @@ func (s *Server) setupHTTP() {
 	s.httpServer = &http.Server{
 		Addr: fmt.Sprintf(":%d", s.port),
 		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			if isRPC(req) {
+			if s.grpcWebServer.IsGrpcWebRequest(req) {
+				s.grpcWebServer.ServeHTTP(resp, req)
+			} else if isRPC(req) {
 				s.rpcServer.ServeHTTP(resp, req)
 			} else {
 				mux.ServeHTTP(resp, req)

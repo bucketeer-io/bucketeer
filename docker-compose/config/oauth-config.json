@@ -1,0 +1,26 @@
+{
+  "key": {
+    "secret": "bucketeer-oauth-key"
+  },
+  "issuer": "https://localhost",
+  "audience": "bucketeer",
+  "google": {
+    "issuer": "",
+    "clientId": "",
+    "clientSecret": "",
+    "redirectUrls": [
+      "https://localhost/auth/callback",
+      "https://localhost/v3/auth/callback"
+    ]
+  },
+  "demoSignIn": {
+    "enabled": true,
+    "email": "demo@bucketeer.io",
+    "password": "demo",
+    "organizationId": "demo",
+    "organizationOwnerEmail": "demo@bucketeer.io",
+    "projectId": "demo",
+    "environmentId": "demo",
+    "isSystemAdmin": true
+  }
+} 
