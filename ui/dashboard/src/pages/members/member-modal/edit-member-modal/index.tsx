@@ -188,7 +188,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       organizationRole: {
         role: values.memberRole as OrganizationRole
       },
-      ...(isAdminRole
+      ...(isAdminRole || isOwnerRole
         ? {}
         : {
             environmentRoles: values.environmentRoles.map(item => ({
