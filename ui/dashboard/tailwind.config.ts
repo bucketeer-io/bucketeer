@@ -16,6 +16,8 @@ const colors = {
   transparent: 'transparent',
   white: '#FFFFFF',
   'primary-additional': '#EFEFFE',
+  'gray-additional': '#F5F5F9',
+  'gray-additional-2': '#EAF0F6',
   overlay: 'rgba(0, 0, 0, 0.8)',
   primary: {
     900: '#292C4C',

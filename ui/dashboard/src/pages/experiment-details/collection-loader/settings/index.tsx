@@ -514,16 +514,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 )}
               />
             </div>
-
-            {/* <Form.Field
-            control={form.control}
-            name={`audience`}
-            render={({ field }) => (
-              <Form.Item className="flex flex-col w-full py-0">
-                <DefineAudience field={field as DefineAudienceField} />
-              </Form.Item>
-            )}
-          /> */}
           </div>
         </Form>
       </FormProvider>

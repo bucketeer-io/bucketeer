@@ -18,6 +18,7 @@
       "increments-less-than": "増分は100以下である必要があります"
     },
     "should-be-percent": "合計は100%である必要があります。",
+    "percentage-less-than-100": "パーセンテージは100以下で入力してください",
     "later-or-equal-days": "{{count}}日前以降である必要があります。",
     "less-or-equal-days": "{{count}}日以下である必要があります。",
     "stop-later-than-start": "停止日時は開始日時より後である必要があります。",

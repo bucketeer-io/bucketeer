@@ -1,7 +1,7 @@
 import { FunctionComponent, ReactNode, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { Feature, RuleStrategyVariation, StrategyType } from '@types';
+import { Feature, FeatureRuleStrategy, StrategyType } from '@types';
 import { IconPercentage } from '@icons';
 import Form from 'components/form';
 import VariationLabel from 'elements/variation-label';
@@ -18,26 +18,25 @@ export interface VariationOption {
 
 const SegmentVariation = ({
   feature,
-  defaultRolloutStrategy,
   segmentIndex,
   segmentRules
 }: {
   feature: Feature;
-  defaultRolloutStrategy: RuleStrategyVariation[];
   segmentIndex: number;
   segmentRules: RuleSchema[];
 }) => {
   const { t } = useTranslation(['table', 'common', 'form']);
 
   const methods = useFormContext();
-  const { watch, setFocus, setValue } = methods;
+  const { watch, setFocus } = methods;
   const commonName = `segmentRules.${segmentIndex}.strategy`;
-  const rolloutStrategy: RuleStrategyVariation[] = watch(
+  const rolloutStrategy: FeatureRuleStrategy['rolloutStrategy'] = watch(
     `${commonName}.rolloutStrategy`
   );
 
   const percentageValueCount = useMemo(
-    () => rolloutStrategy?.filter(item => item.weight > 0)?.length || 0,
+    () =>
+      rolloutStrategy?.variations?.filter(item => item.weight > 0)?.length || 0,
     [rolloutStrategy]
   );
   const variationOptions: VariationOption[] = useMemo(() => {
@@ -72,8 +71,7 @@ const SegmentVariation = ({
             variation: isFixed
               ? value
               : segmentRules[segmentIndex]?.strategy?.fixedStrategy?.variation
-          },
-          rolloutStrategy: defaultRolloutStrategy
+          }
         }
       };
 
@@ -81,23 +79,13 @@ const SegmentVariation = ({
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
-        defaultRolloutStrategy?.forEach((_, index) =>
-          setValue(`${commonName}.rolloutStrategy.${index}.weight`, 0)
-        );
         timerId = setTimeout(
-          () => setFocus(`${commonName}.rolloutStrategy.0.weight`),
+          () => setFocus(`${commonName}.rolloutStrategy.variations.0.weight`),
           100
         );
       }
     },
-    [
-      feature,
-      variationOptions,
-      defaultRolloutStrategy,
-      segmentRules,
-      segmentIndex,
-      commonName
-    ]
+    [feature, variationOptions, segmentRules, segmentIndex, commonName]
   );
 
   return (
