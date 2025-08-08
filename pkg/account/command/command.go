@@ -16,11 +16,13 @@ package command
 
 import (
 	"context"
-	"errors"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
+// nolint:lll
 var (
-	ErrBadCommand = errors.New("command: cannot handle command")
+	ErrBadCommand = pkgErr.NewErrorInvalidArgument(pkgErr.AccountPackageName, "cannot handle command", pkgErr.InvalidTypeNotMatchFormat, "command")
 )
 
 type Command interface{}
