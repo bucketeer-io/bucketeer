@@ -87,24 +87,6 @@ func GenerateSecureTokenWithLength(length int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// GenerateTemporaryPassword generates a temporary password for new users
-func GenerateTemporaryPassword() (string, error) {
-	// Generate a 12-character temporary password with mixed case, numbers, and symbols
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-	const passwordLength = 12
-
-	password := make([]byte, passwordLength)
-	for i := range password {
-		randomBytes := make([]byte, 1)
-		if _, err := rand.Read(randomBytes); err != nil {
-			return "", fmt.Errorf("failed to generate temporary password: %w", err)
-		}
-		password[i] = charset[randomBytes[0]%byte(len(charset))]
-	}
-
-	return string(password), nil
-}
-
 // containsUppercase checks if the string contains uppercase letters
 func containsUppercase(s string) bool {
 	for _, r := range s {
