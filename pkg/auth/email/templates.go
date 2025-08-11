@@ -34,7 +34,8 @@ var (
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; 
+                  color: white; text-decoration: none; border-radius: 5px; }
         .warning { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
         .footer { font-size: 12px; color: #666; margin-top: 30px; }
     </style>
@@ -47,7 +48,8 @@ var (
         
         <p>Hello,</p>
         
-        <p>We received a request to reset your Bucketeer password. If you made this request, click the button below to reset your password:</p>
+        <p>We received a request to reset your Bucketeer password. If you made this request, 
+        click the button below to reset your password:</p>
         
         <p style="text-align: center; margin: 30px 0;">
             <a href="{{resetURL}}" class="button">Reset Password</a>
@@ -114,6 +116,59 @@ var (
 </body>
 </html>`
 
+	defaultPasswordSetupSubject = "Complete Your Bucketeer Password Setup"
+	defaultPasswordSetupBody    = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Bucketeer Password Setup</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #007bff; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; 
+                  color: white; text-decoration: none; border-radius: 5px; }
+        .info { background-color: #d1ecf1; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { font-size: 12px; color: #666; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Complete Your Bucketeer Password Setup</h1>
+        </div>
+        
+        <p>Hello,</p>
+        
+        <p>Your Bucketeer account is ready! To complete your account setup, please create 
+        a password by clicking the button below:</p>
+        
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="{{setupURL}}" class="button">Set Up Password</a>
+        </p>
+        
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">{{setupURL}}</p>
+        
+        <div class="info">
+            <strong>Important:</strong>
+            <ul>
+                <li>This link will expire in 24 hours for security reasons</li>
+                <li>Setting up a password will allow you to sign in directly without OAuth</li>
+                <li>You can continue using Google sign-in even after setting up a password</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from Bucketeer. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact your system administrator.</p>
+        </div>
+    </div>
+</body>
+</html>`
+
 	defaultWelcomeSubject = "Welcome to Bucketeer"
 	defaultWelcomeBody    = `
 <!DOCTYPE html>
@@ -143,7 +198,8 @@ var (
         <div class="temp-password">{{tempPassword}}</div>
         
         <div class="warning">
-            <strong>Important:</strong> Please change this temporary password immediately after your first login for security reasons.
+            <strong>Important:</strong> Please change this temporary password immediately 
+            after your first login for security reasons.
         </div>
         
         <p>You can sign in at: {{baseURL}}</p>
@@ -195,6 +251,25 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail() (subject, body string) {
 
 	variables := map[string]string{
 		"{{baseURL}}": r.config.BaseURL,
+	}
+
+	return template.Subject, r.substituteVariables(template.Body, variables)
+}
+
+// RenderPasswordSetupEmail renders the password setup email template
+func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL, setupToken string) (subject, body string) {
+	template := r.config.Templates.PasswordSetup
+	if template.Subject == "" {
+		template.Subject = defaultPasswordSetupSubject
+	}
+	if template.Body == "" {
+		template.Body = defaultPasswordSetupBody
+	}
+
+	variables := map[string]string{
+		"{{setupURL}}":   setupURL,
+		"{{setupToken}}": setupToken,
+		"{{baseURL}}":    r.config.BaseURL,
 	}
 
 	return template.Subject, r.substituteVariables(template.Body, variables)
