@@ -77,6 +77,24 @@ func (s *SendGridEmailService) SendPasswordChangedNotification(ctx context.Conte
 	return nil
 }
 
+func (s *SendGridEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupToken, setupURL string) error {
+	subject, body := s.renderer.RenderPasswordSetupEmail(setupURL, setupToken)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password setup email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password setup email: %w", err)
+	}
+
+	s.logger.Info("Password setup email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SendGridEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
 	subject, body := s.renderer.RenderWelcomeEmail(tempPassword)
 
