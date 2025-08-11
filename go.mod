@@ -9,10 +9,13 @@ require (
 	cloud.google.com/go/pubsub v1.50.1
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/VividCortex/mysqlerr v1.0.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
-    github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
+	github.com/aws/aws-sdk-go-v2 v1.37.1
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.2
 	github.com/aws/aws-sdk-go-v2/config v1.31.16
 	github.com/aws/aws-sdk-go-v2/service/kms v1.47.0
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
+	github.com/aws/aws-sdk-go-v2/config v1.31.8
+	github.com/aws/aws-sdk-go-v2/service/kms v1.45.6
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-gota/gota v0.12.0
@@ -41,7 +44,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.37.0
+	golang.org/x/crypto v0.40.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.17.0
