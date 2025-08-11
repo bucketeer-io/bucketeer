@@ -623,6 +623,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// accountService
 	accountService := accountapi.NewAccountService(
 		environmentClient,
+		authClient,
 		mysqlClient,
 		domainTopicPublisher,
 		accountapi.WithLogger(logger),
