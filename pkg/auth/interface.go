@@ -65,6 +65,7 @@ type EmailTemplate struct {
 type EmailTemplatesConfig struct {
 	PasswordReset   EmailTemplate `json:"passwordReset"`
 	PasswordChanged EmailTemplate `json:"passwordChanged"`
+	PasswordSetup   EmailTemplate `json:"passwordSetup"`
 	Welcome         EmailTemplate `json:"welcome"`
 }
 
@@ -92,6 +93,7 @@ type PasswordAuthConfig struct {
 	PasswordRequireNumbers   bool               `json:"passwordRequireNumbers"`
 	PasswordRequireSymbols   bool               `json:"passwordRequireSymbols"`
 	PasswordResetTokenTTL    time.Duration      `json:"passwordResetTokenTTL"`
+	PasswordSetupTokenTTL    time.Duration      `json:"passwordSetupTokenTTL"`
 	EmailServiceEnabled      bool               `json:"emailServiceEnabled"`
 	EmailServiceConfig       EmailServiceConfig `json:"emailServiceConfig"`
 }

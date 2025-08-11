@@ -97,3 +97,38 @@ migration:
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133"
+
+web:
+  # Password authentication configuration
+  passwordAuth:
+    enabled: false
+    passwordMinLength: 8
+    passwordRequireUppercase: true
+    passwordRequireLowercase: true
+    passwordRequireNumbers: true
+    passwordRequireSymbols: false
+    passwordResetTokenTTL: "1h"
+    emailServiceEnabled: false
+    emailServiceConfig:
+      provider: "smtp"  # Options: smtp, sendgrid, ses
+      smtpHost: ""
+      smtpPort: 587
+      smtpUsername: ""
+      smtpPassword: ""
+      sendgridAPIKey: ""
+      sesRegion: ""
+      sesAccessKey: ""
+      sesSecretKey: ""
+      fromEmail: ""
+      fromName: ""
+      baseURL: ""
+      templates:
+        passwordReset:
+          subject: "🔐 Reset Your Bucketeer Password"
+          body: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>body{font-family:Arial,sans-serif;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.button{display:inline-block;padding:12px 24px;background:#007bff;color:white;text-decoration:none;border-radius:5px}</style></head><body><div class=\"container\"><h1>Reset Your Bucketeer Password</h1><p>Hello,</p><p>We received a request to reset your Bucketeer password. Click the button below to reset your password:</p><p style=\"text-align:center;margin:30px 0\"><a href=\"{{resetURL}}\" class=\"button\">Reset Password</a></p><p><strong>Security Note:</strong> This link will expire in 1 hour. If you didn't request this, please ignore this email.</p></div></body></html>"
+        passwordChanged:
+          subject: "✅ Password Changed Successfully"
+          body: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>body{font-family:Arial,sans-serif;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.alert{background:#fff3cd;padding:15px;border-radius:5px;margin:20px 0}</style></head><body><div class=\"container\"><h1>✅ Password Changed Successfully</h1><p>Hello,</p><p>This email confirms that your Bucketeer password has been successfully changed.</p><div class=\"alert\"><strong>Security Notice:</strong> If you did not make this change, please contact your system administrator immediately.</div><p>Thank you for keeping your account secure.</p></div></body></html>"
+        welcome:
+          subject: "🎉 Welcome to Bucketeer!"
+          body: "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>body{font-family:Arial,sans-serif;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.temp-password{background:#f8f9fa;padding:15px;border-radius:5px;font-family:monospace}.warning{background:#f8d7da;padding:15px;border-radius:5px;margin:20px 0;color:#721c24}</style></head><body><div class=\"container\"><h1>Welcome to Bucketeer!</h1><p>Hello,</p><p>Your Bucketeer account has been created. Here's your temporary password:</p><div class=\"temp-password\">{{tempPassword}}</div><div class=\"warning\"><strong>Important:</strong> Please change this password immediately after your first login.</div><p>You can sign in at: {{baseURL}}</p><p>Welcome to the team!</p></div></body></html>"
