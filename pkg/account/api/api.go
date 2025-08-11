@@ -26,6 +26,7 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -61,6 +62,7 @@ func WithLogger(logger *zap.Logger) Option {
 type AccountService struct {
 	environmentClient environmentclient.Client
 	dbClient          database.Client
+	authClient        authclient.Client
 	accountStorage    v2.AccountStorage
 	tagStorage        tagstorage.TagStorage
 	teamStorage       teamstorage.TeamStorage
@@ -74,6 +76,7 @@ func NewAccountService(
 	e environmentclient.Client,
 	dbClient database.Client,
 	accountStorage v2.AccountStorage,
+	authClient authclient.Client,
 	tagStorage tagstorage.TagStorage,
 	teamStorage teamstorage.TeamStorage,
 	auditLogStorage auditlogstorage.AuditLogStorage,
@@ -87,6 +90,7 @@ func NewAccountService(
 	return &AccountService{
 		environmentClient: e,
 		dbClient:          dbClient,
+		authClient:        authClient,
 		accountStorage:    accountStorage,
 		tagStorage:        tagStorage,
 		teamStorage:       teamStorage,

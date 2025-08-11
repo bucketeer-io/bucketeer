@@ -34,14 +34,6 @@ func (s *authService) SignIn(
 		return nil, err
 	}
 
-	// First, try demo authentication if enabled
-	demoConfig := s.config.DemoSignIn
-	if demoConfig.Enabled &&
-		request.Email == demoConfig.Email &&
-		request.Password == demoConfig.Password {
-		return s.handleDemoSignIn(ctx, request, localizer)
-	}
-
 	// Then, try password authentication if enabled
 	if s.config.PasswordAuth.Enabled {
 		return s.handlePasswordSignIn(ctx, request, localizer)
@@ -50,7 +42,6 @@ func (s *authService) SignIn(
 	// If neither is enabled or credentials don't match, deny access
 	s.logger.Error("Sign in failed - no valid authentication method",
 		zap.String("email", request.Email),
-		zap.Bool("demoEnabled", demoConfig.Enabled),
 		zap.Bool("passwordAuthEnabled", s.config.PasswordAuth.Enabled),
 	)
 	dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -61,39 +52,6 @@ func (s *authService) SignIn(
 		return nil, err
 	}
 	return nil, dt.Err()
-}
-
-func (s *authService) handleDemoSignIn(
-	ctx context.Context,
-	request *authproto.SignInRequest,
-	localizer locale.Localizer,
-) (*authproto.SignInResponse, error) {
-	config := s.config.DemoSignIn
-	organizations, err := s.getOrganizationsByEmail(ctx, config.Email, localizer)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, config.Email, organizations)
-	if err != nil {
-		s.logger.Error("Failed to check account for demo sign in",
-			zap.Error(err),
-			zap.String("email", config.Email),
-			zap.Any("organizations", organizations),
-		)
-		return nil, err
-	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
-	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
-
-	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin)
-	if err != nil {
-		return nil, err
-	}
-
-	s.logger.Info("Successful demo authentication", zap.String("email", config.Email))
-	return &authproto.SignInResponse{Token: token}, nil
 }
 
 func (s *authService) handlePasswordSignIn(

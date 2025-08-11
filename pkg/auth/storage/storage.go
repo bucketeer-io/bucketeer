@@ -32,5 +32,3 @@ type CredentialsStorage interface {
 	GetPasswordResetToken(ctx context.Context, token string) (*domain.PasswordResetToken, error)
 	DeletePasswordResetToken(ctx context.Context, token string) error
 }
-
-const transactionKey = "transaction"
