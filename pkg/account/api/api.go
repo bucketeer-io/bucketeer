@@ -26,6 +26,7 @@ import (
 
 	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
+	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -35,6 +36,7 @@ import (
 	tagstorage "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	teamstorage "github.com/bucketeer-io/bucketeer/pkg/team/storage"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -61,6 +63,7 @@ func WithLogger(logger *zap.Logger) Option {
 
 type AccountService struct {
 	environmentClient    environmentclient.Client
+	authClient           authclient.Client
 	mysqlClient          mysql.Client
 	accountStorage       v2.AccountStorage
 	tagStorage           tagstorage.TagStorage
@@ -73,6 +76,7 @@ type AccountService struct {
 
 func NewAccountService(
 	e environmentclient.Client,
+	authClient authclient.Client,
 	mysqlClient mysql.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
@@ -83,6 +87,7 @@ func NewAccountService(
 	}
 	return &AccountService{
 		environmentClient:    e,
+		authClient:           authClient,
 		mysqlClient:          mysqlClient,
 		accountStorage:       v2.NewAccountStorage(mysqlClient),
 		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
