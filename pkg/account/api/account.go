@@ -39,6 +39,7 @@ import (
 	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	teamdomain "github.com/bucketeer-io/bucketeer/pkg/team/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
@@ -153,6 +154,10 @@ func (s *AccountService) CreateAccountV2(
 			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
+
+	// Initiate password setup for newly created account
+	s.initiatePasswordSetupForNewAccount(ctx, req.Command.Email)
+
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -299,6 +304,10 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+
+	// Initiate password setup for newly created account
+	s.initiatePasswordSetupForNewAccount(ctx, req.Email)
+
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -1388,4 +1397,25 @@ func (s *AccountService) newAccountV2ListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+// initiatePasswordSetupForNewAccount sends password setup email to newly created accounts
+func (s *AccountService) initiatePasswordSetupForNewAccount(ctx context.Context, email string) {
+	if s.authClient == nil {
+		s.logger.Debug("Auth client not available, skipping password setup", zap.String("email", email))
+		return
+	}
+
+	_, err := s.authClient.InitiatePasswordSetup(ctx, &authproto.InitiatePasswordSetupRequest{
+		Email: email,
+	})
+	if err != nil {
+		s.logger.Warn("Failed to initiate password setup for new account",
+			zap.Error(err),
+			zap.String("email", email),
+		)
+		// Don't fail account creation if password setup fails
+	} else {
+		s.logger.Info("Password setup initiated for new account", zap.String("email", email))
+	}
 }
