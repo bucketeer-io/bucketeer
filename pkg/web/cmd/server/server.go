@@ -803,6 +803,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		dbClient,
 		accountStorage,
+		authClient,
 		tagStorage,
 		teamStorage,
 		adminAuditLogStorage,

@@ -36,6 +36,7 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
 )
 
 const (
@@ -61,6 +62,7 @@ func WithLogger(logger *zap.Logger) Option {
 type AccountService struct {
 	environmentClient    environmentclient.Client
 	dbClient             database.Client
+	authClient           authclient.Client
 	accountStorage       v2.AccountStorage
 	tagStorage           tagstorage.TagStorage
 	teamStorage          teamstorage.TeamStorage
@@ -74,6 +76,7 @@ func NewAccountService(
 	e environmentclient.Client,
 	dbClient database.Client,
 	accountStorage v2.AccountStorage,
+	authClient authclient.Client,
 	tagStorage tagstorage.TagStorage,
 	teamStorage teamstorage.TeamStorage,
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage,
@@ -87,6 +90,7 @@ func NewAccountService(
 	return &AccountService{
 		environmentClient:    e,
 		dbClient:             dbClient,
+		authClient:           authClient,
 		accountStorage:       accountStorage,
 		tagStorage:           tagStorage,
 		teamStorage:          teamStorage,

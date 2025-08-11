@@ -306,7 +306,8 @@ func (s *authService) InitiatePasswordReset(
 
 	// Send reset email
 	if s.emailService != nil {
-		resetURL := fmt.Sprintf("%s/auth/reset-password?token=%s", s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetToken)
+		resetURL := fmt.Sprintf("%s/auth/reset-password?token=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetToken)
 		err = s.emailService.SendPasswordResetEmail(ctx, email, resetToken, resetURL)
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
@@ -459,6 +460,277 @@ func (s *authService) ValidatePasswordResetToken(
 	}
 
 	return &authproto.ValidatePasswordResetTokenResponse{
+		IsValid: isValid,
+		Email:   email,
+	}, nil
+}
+
+func (s *authService) InitiatePasswordSetup(
+	ctx context.Context,
+	request *authproto.InitiatePasswordSetupRequest,
+) (*authproto.InitiatePasswordSetupResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validateInitiatePasswordSetupRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if password authentication and email service are enabled
+	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
+		s.logger.Error("Password setup not available")
+		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Sanitize email
+	email := auth.SanitizeEmail(request.Email)
+	if !auth.IsValidEmail(email) {
+		s.logger.Warn("Invalid email format for password setup", zap.String("email", email))
+		return &authproto.InitiatePasswordSetupResponse{
+			Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+		}, nil
+	}
+
+	// Validate that the user has organizations (i.e., account exists)
+	organizations, err := s.getOrganizationsByEmail(ctx, email, localizer)
+	if err != nil || len(organizations) == 0 {
+		s.logger.Warn("Password setup attempted for non-existent account", zap.String("email", email))
+		return &authproto.InitiatePasswordSetupResponse{
+			Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+		}, nil
+	}
+
+	// Check if credentials already exist (user already has a password)
+	_, err = s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil {
+		// Password already exists, don't reveal this for security
+		s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
+		return &authproto.InitiatePasswordSetupResponse{
+			Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+		}, nil
+	}
+	if !errors.Is(err, storage.ErrCredentialsNotFound) {
+		s.logger.Error("Failed to check credentials for password setup", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Generate secure setup token
+	setupToken, err := auth.GenerateSecureToken()
+	if err != nil {
+		s.logger.Error("Failed to generate setup token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Store setup token with longer expiration (use PasswordSetupTokenTTL)
+	expiresAt := time.Now().Add(s.config.PasswordAuth.PasswordSetupTokenTTL).Unix()
+	err = s.credentialsStorage.SetPasswordResetToken(ctx, email, setupToken, expiresAt)
+	if err != nil {
+		s.logger.Error("Failed to store setup token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Send setup email
+	if s.emailService != nil {
+		setupURL := fmt.Sprintf("%s/auth/setup-password?token=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupToken)
+		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupToken, setupURL)
+		if err != nil {
+			s.logger.Error("Failed to send password setup email",
+				zap.Error(err),
+				zap.String("email", email),
+			)
+			// Don't return error to user for security reasons
+		}
+	}
+
+	s.logger.Info("Password setup initiated", zap.String("email", email))
+	return &authproto.InitiatePasswordSetupResponse{
+		Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+	}, nil
+}
+
+func (s *authService) SetupPassword(
+	ctx context.Context,
+	request *authproto.SetupPasswordRequest,
+) (*authproto.SetupPasswordResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validateSetupPasswordRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if password authentication is enabled
+	if !s.config.PasswordAuth.Enabled {
+		s.logger.Error("Password authentication not enabled")
+		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Get and validate setup token (reusing password reset token infrastructure)
+	setupToken, err := s.credentialsStorage.GetPasswordResetToken(ctx, request.SetupToken)
+	if err != nil {
+		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
+			s.logger.Error("Invalid setup token", zap.String("token", request.SetupToken))
+			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error("Failed to get setup token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if token is expired
+	if setupToken.IsExpired() {
+		s.logger.Error("Expired setup token", zap.String("email", setupToken.Email))
+		dt, err := auth.StatusExpiredResetToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Validate new password complexity
+	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.PasswordAuth)
+	if err != nil {
+		s.logger.Error("Password complexity validation failed", zap.Error(err))
+		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: err.Error(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Check if credentials already exist (prevent double setup)
+	_, err = s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
+	if err == nil {
+		s.logger.Error("Setup attempted for account with existing password", zap.String("email", setupToken.Email))
+		dt, err := auth.StatusPasswordAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AlreadyExistsError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+	if !errors.Is(err, storage.ErrCredentialsNotFound) {
+		s.logger.Error("Failed to check credentials during setup", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Hash new password
+	passwordHash, err := auth.HashPassword(request.NewPassword)
+	if err != nil {
+		s.logger.Error("Failed to hash password during setup", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Create credentials
+	err = s.credentialsStorage.CreateCredentials(ctx, setupToken.Email, passwordHash)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+			s.logger.Error("Password setup attempted but credentials already exist", zap.String("email", setupToken.Email))
+			dt, err := auth.StatusPasswordAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error("Failed to create credentials during setup", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Delete setup token
+	err = s.credentialsStorage.DeletePasswordResetToken(ctx, request.SetupToken)
+	if err != nil {
+		s.logger.Warn("Failed to delete setup token", zap.Error(err))
+		// Don't fail the setup if token deletion fails
+	}
+
+	// Send welcome email if email service is enabled
+	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
+		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email)
+		if err != nil {
+			s.logger.Warn("Failed to send password setup completion notification",
+				zap.Error(err),
+				zap.String("email", setupToken.Email),
+			)
+			// Don't fail the setup if email sending fails
+		}
+	}
+
+	s.logger.Info("Password setup completed successfully", zap.String("email", setupToken.Email))
+	return &authproto.SetupPasswordResponse{}, nil
+}
+
+func (s *authService) ValidatePasswordSetupToken(
+	ctx context.Context,
+	request *authproto.ValidatePasswordSetupTokenRequest,
+) (*authproto.ValidatePasswordSetupTokenResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validatePasswordSetupTokenRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get setup token (reusing password reset token infrastructure)
+	setupToken, err := s.credentialsStorage.GetPasswordResetToken(ctx, request.SetupToken)
+	if err != nil {
+		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
+			return &authproto.ValidatePasswordSetupTokenResponse{
+				IsValid: false,
+				Email:   "",
+			}, nil
+		}
+		s.logger.Error("Failed to get setup token for validation", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if token is valid (not expired)
+	isValid := setupToken.IsValid()
+	email := ""
+	if isValid {
+		// Additional validation: check if account still needs password setup
+		_, err := s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
+		if err == nil {
+			// Credentials already exist, token is no longer valid for setup
+			isValid = false
+		} else if !errors.Is(err, storage.ErrCredentialsNotFound) {
+			s.logger.Error("Failed to check credentials during token validation", zap.Error(err))
+			return nil, auth.StatusInternal.Err()
+		} else {
+			// Credentials don't exist, token is valid for setup
+			email = setupToken.Email
+		}
+	}
+
+	return &authproto.ValidatePasswordSetupTokenResponse{
 		IsValid: isValid,
 		Email:   email,
 	}, nil
