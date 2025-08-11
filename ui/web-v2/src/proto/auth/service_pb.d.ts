@@ -724,6 +724,203 @@ export namespace ValidatePasswordResetTokenResponse {
   };
 }
 
+export class InitiatePasswordSetupRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordSetupRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordSetupRequest
+  ): InitiatePasswordSetupRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordSetupRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordSetupRequest;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordSetupRequest,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordSetupRequest;
+}
+
+export namespace InitiatePasswordSetupRequest {
+  export type AsObject = {
+    email: string;
+  };
+}
+
+export class InitiatePasswordSetupResponse extends jspb.Message {
+  getMessage(): string;
+  setMessage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordSetupResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordSetupResponse
+  ): InitiatePasswordSetupResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordSetupResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordSetupResponse;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordSetupResponse,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordSetupResponse;
+}
+
+export namespace InitiatePasswordSetupResponse {
+  export type AsObject = {
+    message: string;
+  };
+}
+
+export class SetupPasswordRequest extends jspb.Message {
+  getSetupToken(): string;
+  setSetupToken(value: string): void;
+
+  getNewPassword(): string;
+  setNewPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetupPasswordRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SetupPasswordRequest
+  ): SetupPasswordRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SetupPasswordRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SetupPasswordRequest;
+  static deserializeBinaryFromReader(
+    message: SetupPasswordRequest,
+    reader: jspb.BinaryReader
+  ): SetupPasswordRequest;
+}
+
+export namespace SetupPasswordRequest {
+  export type AsObject = {
+    setupToken: string;
+    newPassword: string;
+  };
+}
+
+export class SetupPasswordResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetupPasswordResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SetupPasswordResponse
+  ): SetupPasswordResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SetupPasswordResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SetupPasswordResponse;
+  static deserializeBinaryFromReader(
+    message: SetupPasswordResponse,
+    reader: jspb.BinaryReader
+  ): SetupPasswordResponse;
+}
+
+export namespace SetupPasswordResponse {
+  export type AsObject = {};
+}
+
+export class ValidatePasswordSetupTokenRequest extends jspb.Message {
+  getSetupToken(): string;
+  setSetupToken(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordSetupTokenRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordSetupTokenRequest
+  ): ValidatePasswordSetupTokenRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordSetupTokenRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordSetupTokenRequest;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordSetupTokenRequest,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordSetupTokenRequest;
+}
+
+export namespace ValidatePasswordSetupTokenRequest {
+  export type AsObject = {
+    setupToken: string;
+  };
+}
+
+export class ValidatePasswordSetupTokenResponse extends jspb.Message {
+  getIsValid(): boolean;
+  setIsValid(value: boolean): void;
+
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordSetupTokenResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordSetupTokenResponse
+  ): ValidatePasswordSetupTokenResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordSetupTokenResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordSetupTokenResponse;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordSetupTokenResponse,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordSetupTokenResponse;
+}
+
+export namespace ValidatePasswordSetupTokenResponse {
+  export type AsObject = {
+    isValid: boolean;
+    email: string;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;
