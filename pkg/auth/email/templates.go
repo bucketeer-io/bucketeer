@@ -34,7 +34,8 @@ var (
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; 
+                  color: white; text-decoration: none; border-radius: 5px; }
         .warning { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
         .footer { font-size: 12px; color: #666; margin-top: 30px; }
     </style>
@@ -47,7 +48,8 @@ var (
         
         <p>Hello,</p>
         
-        <p>We received a request to reset your Bucketeer password. If you made this request, click the button below to reset your password:</p>
+        <p>We received a request to reset your Bucketeer password. If you made this request, 
+        click the button below to reset your password:</p>
         
         <p style="text-align: center; margin: 30px 0;">
             <a href="{{resetURL}}" class="button">Reset Password</a>
@@ -143,7 +145,8 @@ var (
         <div class="temp-password">{{tempPassword}}</div>
         
         <div class="warning">
-            <strong>Important:</strong> Please change this temporary password immediately after your first login for security reasons.
+            <strong>Important:</strong> Please change this temporary password immediately 
+            after your first login for security reasons.
         </div>
         
         <p>You can sign in at: {{baseURL}}</p>

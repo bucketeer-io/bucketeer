@@ -306,7 +306,8 @@ func (s *authService) InitiatePasswordReset(
 
 	// Send reset email
 	if s.emailService != nil {
-		resetURL := fmt.Sprintf("%s/auth/reset-password?token=%s", s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetToken)
+		resetURL := fmt.Sprintf("%s/auth/reset-password?token=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetToken)
 		err = s.emailService.SendPasswordResetEmail(ctx, email, resetToken, resetURL)
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
