@@ -162,7 +162,9 @@ func (s *credentialsStorage) SetPasswordResetToken(ctx context.Context, email, t
 	return nil
 }
 
-func (s *credentialsStorage) GetPasswordResetToken(ctx context.Context, token string) (*domain.PasswordResetToken, error) {
+func (s *credentialsStorage) GetPasswordResetToken(
+	ctx context.Context, token string,
+) (*domain.PasswordResetToken, error) {
 	var resetToken domain.PasswordResetToken
 	err := s.qe.QueryRowContext(
 		ctx,

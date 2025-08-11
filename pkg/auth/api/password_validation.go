@@ -136,3 +136,64 @@ func validatePasswordResetTokenRequest(
 	}
 	return nil
 }
+
+func validateInitiatePasswordSetupRequest(
+	req *authproto.InitiatePasswordSetupRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Email == "" {
+		dt, err := auth.StatusMissingEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func validateSetupPasswordRequest(
+	req *authproto.SetupPasswordRequest,
+	localizer locale.Localizer,
+) error {
+	if req.SetupToken == "" {
+		dt, err := auth.StatusMissingResetToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "setup_token"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.NewPassword == "" {
+		dt, err := auth.StatusMissingNewPassword.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "new_password"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func validatePasswordSetupTokenRequest(
+	req *authproto.ValidatePasswordSetupTokenRequest,
+	localizer locale.Localizer,
+) error {
+	if req.SetupToken == "" {
+		dt, err := auth.StatusMissingResetToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "setup_token"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
