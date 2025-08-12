@@ -2,21 +2,27 @@ import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import ReactCreatableSelect from 'react-select/creatable';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import omit from 'lodash/omit';
+import uniq from 'lodash/uniq';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { isNotEmptyObject } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
-import AutocompleteInput from 'components/autocomplete-input';
 import Button from 'components/button';
-import { CreatableSelect } from 'components/creatable-select';
+import {
+  colorStyles,
+  CreatableSelect,
+  Option,
+  optionStyle
+} from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
   DropdownMenu,
@@ -152,7 +158,7 @@ const RuleForm = ({
       ),
     [feature.rules]
   );
-  const attributeKeyOptions = [...formAttributes, ...attributeKeys];
+  const attributeKeyOptions = uniq([...formAttributes, ...attributeKeys]);
 
   return (
     <>
@@ -314,9 +320,39 @@ const RuleForm = ({
                                     contentClassName="!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
-                                  <AutocompleteInput
-                                    {...field}
-                                    options={attributeKeyOptions}
+                                  <ReactCreatableSelect<Option, false>
+                                    options={attributeKeyOptions?.map(
+                                      (item: string) => ({
+                                        label: item,
+                                        value: item
+                                      })
+                                    )}
+                                    classNamePrefix="react-select"
+                                    styles={{
+                                      option: (styles, props) =>
+                                        optionStyle(styles, props, false),
+                                      ...colorStyles
+                                    }}
+                                    value={{
+                                      label: field.value,
+                                      value: field.value
+                                    }}
+                                    onChange={option => {
+                                      const newValue = option as Option;
+                                      field.onChange(newValue.value);
+                                    }}
+                                    formatCreateLabel={value => (
+                                      <p>
+                                        {`${t('create-option', {
+                                          option: value
+                                        })}`}
+                                      </p>
+                                    )}
+                                    noOptionsMessage={() => (
+                                      <UserMessage
+                                        message={t('no-opts-type-to-create')}
+                                      />
+                                    )}
                                   />
                                 )}
                               </Form.Control>
