@@ -47,6 +47,11 @@ func (s *grpcGatewayService) GetCodeReference(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetCodeReference, "").Inc()
+
 	resp, err := s.codeRefClient.GetCodeReference(ctx, &coderefproto.GetCodeReferenceRequest{
 		Id:            req.Id,
 		EnvironmentId: envAPIKey.Environment.Id,
@@ -89,6 +94,11 @@ func (s *grpcGatewayService) ListCodeReferences(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListCodeReferences, "").Inc()
+
 	resp, err := s.codeRefClient.ListCodeReferences(ctx, &coderefproto.ListCodeReferencesRequest{
 		PageSize:       req.PageSize,
 		Cursor:         req.Cursor,
@@ -127,6 +137,10 @@ func (s *grpcGatewayService) CreateCodeReference(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateCodeReference, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -179,6 +193,10 @@ func (s *grpcGatewayService) UpdateCodeReference(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateCodeReference, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -237,6 +255,10 @@ func (s *grpcGatewayService) DeleteCodeReference(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteCodeReference, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,

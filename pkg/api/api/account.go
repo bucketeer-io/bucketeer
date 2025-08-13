@@ -45,6 +45,9 @@ func (s *grpcGatewayService) CreateAccountV2(
 		)
 		return nil, err
 	}
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateAccountV2, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -104,6 +107,10 @@ func (s *grpcGatewayService) UpdateAccountV2(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateAccountV2, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -168,7 +175,7 @@ func (s *grpcGatewayService) GetAccountV2(
 	ctx context.Context,
 	request *gwproto.GetAccountV2Request,
 ) (*gwproto.GetAccountV2Response, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -183,6 +190,10 @@ func (s *grpcGatewayService) GetAccountV2(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAccountV2, "").Inc()
 
 	res, err := s.accountClient.GetAccountV2(
 		ctx,
@@ -213,7 +224,7 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	ctx context.Context,
 	request *gwproto.GetAccountV2ByEnvironmentIDRequest,
 ) (*gwproto.GetAccountV2ByEnvironmentIDResponse, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -228,6 +239,10 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAccountV2ByEnvironmentID, "").Inc()
 
 	res, err := s.accountClient.GetAccountV2ByEnvironmentID(
 		ctx,
@@ -258,7 +273,7 @@ func (s *grpcGatewayService) GetMe(
 	ctx context.Context,
 	request *gwproto.GetMeRequest,
 ) (*gwproto.GetMeResponse, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -271,6 +286,10 @@ func (s *grpcGatewayService) GetMe(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetMe, "").Inc()
 
 	res, err := s.accountClient.GetMe(
 		ctx,
@@ -299,7 +318,7 @@ func (s *grpcGatewayService) ListAccountsV2(
 	ctx context.Context,
 	request *gwproto.ListAccountsV2Request,
 ) (*gwproto.ListAccountsV2Response, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -312,6 +331,10 @@ func (s *grpcGatewayService) ListAccountsV2(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListAccountsV2, "").Inc()
 
 	res, err := s.accountClient.ListAccountsV2(
 		ctx,

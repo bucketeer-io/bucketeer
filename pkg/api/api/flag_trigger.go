@@ -45,6 +45,10 @@ func (s *grpcGatewayService) CreateFlagTrigger(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateFlagTrigger, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -98,6 +102,10 @@ func (s *grpcGatewayService) DeleteFlagTrigger(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteFlagTrigger, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -137,6 +145,10 @@ func (s *grpcGatewayService) UpdateFlagTrigger(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateFlagTrigger, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -192,6 +204,10 @@ func (s *grpcGatewayService) GetFlagTrigger(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetFlagTrigger, "").Inc()
+
 	resp, err := s.featureClient.GetFlagTrigger(ctx, &featureproto.GetFlagTriggerRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
 		Id:            req.Id,
@@ -235,6 +251,10 @@ func (s *grpcGatewayService) ListFlagTriggers(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListFlagTriggers, "").Inc()
 
 	resp, err := s.featureClient.ListFlagTriggers(ctx, &featureproto.ListFlagTriggersRequest{
 		EnvironmentId:  envAPIKey.Environment.Id,

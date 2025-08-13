@@ -45,6 +45,11 @@ func (s *grpcGatewayService) GetAutoOpsRule(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAutoOpsRule, "").Inc()
+
 	res, err := s.autoOpsClient.GetAutoOpsRule(
 		ctx,
 		&autoopsproto.GetAutoOpsRuleRequest{
@@ -92,6 +97,11 @@ func (s *grpcGatewayService) CreateAutoOpsRule(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateAutoOpsRule, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -151,6 +161,11 @@ func (s *grpcGatewayService) ListAutoOpsRules(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListAutoOpsRules, "").Inc()
+
 	res, err := s.autoOpsClient.ListAutoOpsRules(
 		ctx,
 		&autoopsproto.ListAutoOpsRulesRequest{
@@ -200,6 +215,11 @@ func (s *grpcGatewayService) StopAutoOpsRule(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodStopAutoOpsRule, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -242,6 +262,11 @@ func (s *grpcGatewayService) DeleteAutoOpsRule(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteAutoOpsRule, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -284,6 +309,11 @@ func (s *grpcGatewayService) UpdateAutoOpsRule(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateAutoOpsRule, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -327,6 +357,11 @@ func (s *grpcGatewayService) ExecuteAutoOps(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodExecuteAutoOps, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,

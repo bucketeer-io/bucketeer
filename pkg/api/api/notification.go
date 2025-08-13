@@ -44,6 +44,11 @@ func (s *grpcGatewayService) GetSubscription(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetSubscription, "").Inc()
+
 	res, err := s.notificationClient.GetSubscription(ctx, &notification.GetSubscriptionRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
 		Id:            req.Id,
@@ -74,7 +79,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 	ctx context.Context,
 	req *gwproto.ListSubscriptionsRequest,
 ) (*gwproto.ListSubscriptionsResponse, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -87,6 +92,11 @@ func (s *grpcGatewayService) ListSubscriptions(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListSubscriptions, "").Inc()
+
 	res, err := s.notificationClient.ListSubscriptions(ctx, &notification.ListSubscriptionsRequest{
 		PageSize:       req.PageSize,
 		Cursor:         req.Cursor,
@@ -137,6 +147,10 @@ func (s *grpcGatewayService) CreateSubscription(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateSubscription, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -191,6 +205,10 @@ func (s *grpcGatewayService) DeleteSubscription(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteSubscription, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -230,6 +248,10 @@ func (s *grpcGatewayService) UpdateSubscription(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateSubscription, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
