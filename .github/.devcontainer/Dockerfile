@@ -96,8 +96,77 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mv -f /tmp/scripts/first-run-notice.txt /usr/local/etc/vscode-dev-containers/ \
     && rm -rf /tmp/scripts
 
+# Install Go
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://golang.org/dl/go1.24.1.linux-${ARCH}.tar.gz" | tar -C /usr/local -xzf -
+
+# Install Node.js
+RUN ARCH=$(dpkg --print-architecture) \
+    && case $ARCH in \
+        amd64) NODE_ARCH="x64" ;; \
+        arm64) NODE_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac \
+    && curl -fsSL "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-${NODE_ARCH}.tar.xz" | tar -C /usr/local --strip-components=1 -xJ \
+    && npm install -g yarn
+
+# Install kubectl, helm, and minikube
+RUN ARCH=$(dpkg --print-architecture) \
+    && case $ARCH in \
+        amd64) K8S_ARCH="amd64" ;; \
+        arm64) K8S_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac \
+    # Install kubectl
+    && curl -fsSL "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${K8S_ARCH}/kubectl" -o /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl \
+    # Install helm
+    && curl -fsSL "https://get.helm.sh/helm-v3.16.4-linux-${K8S_ARCH}.tar.gz" | tar -C /tmp -xzf - \
+    && mv "/tmp/linux-${K8S_ARCH}/helm" /usr/local/bin/helm \
+    && rm -rf "/tmp/linux-${K8S_ARCH}" \
+    # Install minikube
+    && curl -fsSL "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${K8S_ARCH}" -o /usr/local/bin/minikube \
+    && chmod +x /usr/local/bin/minikube
+
+# Set up Go environment
+ENV PATH="/usr/local/go/bin:$PATH"
+ENV GOPATH="/go"
+ENV CGO_ENABLED=1
+
+# Create go workspace
+RUN mkdir -p /go/bin /go/src /go/pkg
+
+# Create codespace user (matching what devcontainer features would create)
+RUN groupadd --gid 1000 codespace \
+    && useradd --uid 1000 --gid 1000 -m codespace \
+    && echo "codespace ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/codespace \
+    && chmod 0440 /etc/sudoers.d/codespace
+
+# Install additional development tools
+RUN ARCH=$(dpkg --print-architecture) \
+    # Install GitHub CLI
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y gh git-lfs \
+    # Install protoc
+    && case $ARCH in \
+        amd64) PROTOC_ARCH="x86_64" ;; \
+        arm64) PROTOC_ARCH="aarch_64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac \
+    && curl -fsSL "https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-${PROTOC_ARCH}.zip" -o /tmp/protoc.zip \
+    && unzip /tmp/protoc.zip -d /usr/local \
+    && rm /tmp/protoc.zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Atlas for MySQL migration
 RUN curl -sSf https://atlasgo.sh | sh -s -- -y
+
+# Switch to codespace user
+USER codespace
 
 # Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
