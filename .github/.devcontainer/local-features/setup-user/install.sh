@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------------------------------------
-# Setup user configuration for Bucketeer development environment
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 
 USERNAME=${USERNAME:-"codespace"}
@@ -12,29 +13,27 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# Ensure that login shells get the correct path
+# Ensure that login shells get the correct path if the user updated the PATH using ENV.
 rm -f /etc/profile.d/00-restore-env.sh
-echo "export PATH=/usr/local/go/bin:/go/bin:/usr/local/bin:/home/${USERNAME}/.local/bin:\$PATH" >/etc/profile.d/00-restore-env.sh
-echo "export GOPATH=/go" >>/etc/profile.d/00-restore-env.sh
-echo "export GOROOT=/usr/local/go" >>/etc/profile.d/00-restore-env.sh
+echo "export PATH=${PATH//$(sh -lc 'echo $PATH')/\$PATH}" >/etc/profile.d/00-restore-env.sh
 chmod +x /etc/profile.d/00-restore-env.sh
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Set up user home directory permissions
+sudo_if() {
+  COMMAND="$*"
+  if [ "$(id -u)" -eq 0 ] && [ "$USERNAME" != "root" ]; then
+    su - "$USERNAME" -c "$COMMAND"
+  else
+    "$COMMAND"
+  fi
+}
+
 HOME_DIR="/home/${USERNAME}/"
-if [ -d "${HOME_DIR}" ]; then
-  chown -R ${USERNAME}:${USERNAME} ${HOME_DIR}
-  chmod -R g+r+w "${HOME_DIR}"
-  find "${HOME_DIR}" -type d | xargs -n 1 chmod g+s
-fi
+chown -R ${USERNAME}:${USERNAME} ${HOME_DIR}
+chmod -R g+r+w "${HOME_DIR}"
+find "${HOME_DIR}" -type d | xargs -n 1 chmod g+s
 
-# Create npm global directory for user
-NPM_GLOBAL_DIR="/home/${USERNAME}/.npm-global"
-mkdir -p "${NPM_GLOBAL_DIR}"
-chown -R ${USERNAME}:${USERNAME} "${NPM_GLOBAL_DIR}"
+echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin:/usr/local/share:/home/${USERNAME}/.local/bin:${PATH}\"" >>/etc/sudoers.d/$USERNAME
 
-# Configure sudo PATH
-echo "Defaults secure_path=\"/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/${USERNAME}/.local/bin\"" >>/etc/sudoers.d/$USERNAME
-
-echo "User setup complete!"
+echo "Done!"

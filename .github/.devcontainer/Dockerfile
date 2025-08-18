@@ -7,6 +7,10 @@ ENV LANG="C.UTF-8" \
     SHELL=/bin/bash \
     DOCKER_BUILDKIT=1
 
+# Restore man command
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && yes | unminimize 2>&1
+
 # Install packages in optimized order for better layer caching
 RUN apt-get update \
     && apt-get upgrade -y \
@@ -14,8 +18,8 @@ RUN apt-get update \
         # Core essentials (changes rarely)
         ca-certificates \
         curl \
-        git \
-        sudo \
+        gettext \
+        software-properties-common \
         # Build tools (changes rarely)  
         make \
         build-essential \
@@ -24,7 +28,8 @@ RUN apt-get update \
         unzip \
         zip \
         rsync \
-        xz-utils \
+        moreutils \
+    && add-apt-repository universe \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -33,21 +38,55 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Development tools
         jq \
         vim \
-        protobuf-compiler \
-        python3-dev \
+        vim-doc \
+        xtail \
         python3-pip \
+        python3-dev \
+        # Build and debug tools
+        swig3.0 \
+        cppcheck \
+        valgrind \
+        clang \
+        clang-format \
+        lldb \
+        llvm \
+        gdb \
         # Database drivers
         libpq-dev \
         default-libmysqlclient-dev \
         sqlite3 \
         libsqlite3-dev \
+        unixodbc-dev \
         # System libraries
         libssl-dev \
+        libc6 \
         libgcc1 \
+        libgssapi-krb5-2 \
+        libncurses6 \
+        liblttng-ust1 \
         libstdc++6 \
         zlib1g \
         libuuid1 \
+        libunwind8 \
+        tk-dev \
         uuid-dev \
+        libgdiplus \
+        libsecret-1-dev \
+        # GUI libraries (useful for 'puppeteer' project)
+        libnss3 \
+        libnspr4 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libx11-6 \
+        libpangocairo-1.0-0 \
+        libx11-xcb1 \
+        libcups2 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libpango-1.0-0 \
+        libgbm1 \
+        libgtk-3-0 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -56,67 +95,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mv -f /tmp/scripts/first-run-notice.txt /usr/local/etc/vscode-dev-containers/ \
     && rm -rf /tmp/scripts
 
-# Install Go
-RUN curl -fsSL https://golang.org/dl/go1.24.6.linux-$(dpkg --print-architecture).tar.gz | tar -C /usr/local -xzf -
-
-# Install Node.js and npm manually (more reliable for multi-platform builds)
-RUN ARCH=$(dpkg --print-architecture) \
-    && case $ARCH in \
-        amd64) NODE_ARCH="x64" ;; \
-        arm64) NODE_ARCH="arm64" ;; \
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
-    esac \
-    && curl -fsSL "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-${NODE_ARCH}.tar.xz" | tar -C /usr/local --strip-components=1 -xJ \
-    && npm install -g yarn
-
-# Set up Go environment
-ENV PATH=$PATH:/usr/local/go/bin
-ENV GOPATH=/go
-ENV CGO_ENABLED=1
-
-# Create codespace user (UID 1000 for compatibility)
-RUN groupadd --gid 1000 codespace \
-    && useradd --uid 1000 --gid 1000 -m -s /bin/bash codespace \
-    && echo 'codespace ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-# Create go workspace
-RUN mkdir -p /go/bin /go/src /go/pkg \
-    && chown -R codespace:codespace /go
-
 # Install Atlas for MySQL migration
 RUN curl -sSf https://atlasgo.sh | sh -s -- -y
-
-# Install kubectl, helm, and minikube
-RUN ARCH=$(dpkg --print-architecture) \
-    && case $ARCH in \
-        amd64) KUBECTL_ARCH="amd64"; HELM_ARCH="amd64"; MINIKUBE_ARCH="amd64" ;; \
-        arm64) KUBECTL_ARCH="arm64"; HELM_ARCH="arm64"; MINIKUBE_ARCH="arm64" ;; \
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
-    esac \
-    # Install kubectl
-    && curl -fsSL "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${KUBECTL_ARCH}/kubectl" -o /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl \
-    # Install helm
-    && curl -fsSL https://get.helm.sh/helm-v3.16.4-linux-${HELM_ARCH}.tar.gz | tar -C /tmp -xzf - \
-    && mv /tmp/linux-${HELM_ARCH}/helm /usr/local/bin/helm \
-    && rm -rf /tmp/linux-${HELM_ARCH} \
-    # Install minikube
-    && curl -fsSL "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${MINIKUBE_ARCH}" -o /usr/local/bin/minikube \
-    && chmod +x /usr/local/bin/minikube
-
-# Set up codespace user directories and permissions
-RUN mkdir -p /home/codespace/go-tools \
-    && mkdir -p /home/codespace/.yarn/cache \
-    && mkdir -p /home/codespace/.npm-global \
-    && chown -R codespace:codespace /home/codespace
-
-# Switch to codespace user for final setup
-USER codespace
 
 # Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
 
-# Simple entrypoint for dev container
+# Fire Docker/Moby script if needed
+ENTRYPOINT [ "/usr/local/share/docker-init.sh", "/usr/local/share/ssh-init.sh"]
 CMD [ "sleep", "infinity" ]
 
 # [Optional] Install debugger for development of Codespaces - Not in resulting image by default
