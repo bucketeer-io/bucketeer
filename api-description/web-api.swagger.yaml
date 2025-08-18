@@ -10992,6 +10992,8 @@ definitions:
         $ref: '#/definitions/environmentCreateTrialProjectCommand'
   environmentCreateTrialProjectResponse:
     type: object
+  environmentDeleteBucketeerDataResponse:
+    type: object
   environmentDemoCreationToken:
     type: object
     properties:

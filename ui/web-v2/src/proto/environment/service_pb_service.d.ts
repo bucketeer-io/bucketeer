@@ -238,6 +238,15 @@ type EnvironmentServiceCreateDemoOrganization = {
   readonly responseType: typeof proto_environment_service_pb.CreateDemoOrganizationResponse;
 };
 
+type EnvironmentServiceDeleteBucketeerData = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.DeleteBucketeerDataRequest;
+  readonly responseType: typeof proto_environment_service_pb.DeleteBucketeerDataResponse;
+};
+
 export class EnvironmentService {
   static readonly serviceName: string;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
@@ -266,6 +275,7 @@ export class EnvironmentService {
   static readonly ListProjectsV2: EnvironmentServiceListProjectsV2;
   static readonly ExchangeDemoToken: EnvironmentServiceExchangeDemoToken;
   static readonly CreateDemoOrganization: EnvironmentServiceCreateDemoOrganization;
+  static readonly DeleteBucketeerData: EnvironmentServiceDeleteBucketeerData;
 }
 
 export type ServiceError = {
@@ -701,6 +711,21 @@ export class EnvironmentServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_environment_service_pb.CreateDemoOrganizationResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteBucketeerData(
+    requestMessage: proto_environment_service_pb.DeleteBucketeerDataRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.DeleteBucketeerDataResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteBucketeerData(
+    requestMessage: proto_environment_service_pb.DeleteBucketeerDataRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.DeleteBucketeerDataResponse | null
     ) => void
   ): UnaryResponse;
 }

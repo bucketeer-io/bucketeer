@@ -2215,3 +2215,68 @@ export namespace CreateDemoOrganizationResponse {
     organization?: proto_environment_organization_pb.Organization.AsObject;
   };
 }
+
+export class DeleteBucketeerDataRequest extends jspb.Message {
+  clearDeleteOrganizationIdsList(): void;
+  getDeleteOrganizationIdsList(): Array<string>;
+  setDeleteOrganizationIdsList(value: Array<string>): void;
+  addDeleteOrganizationIds(value: string, index?: number): string;
+
+  clearDeleteEnvironmentIdsList(): void;
+  getDeleteEnvironmentIdsList(): Array<string>;
+  setDeleteEnvironmentIdsList(value: Array<string>): void;
+  addDeleteEnvironmentIds(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteBucketeerDataRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteBucketeerDataRequest
+  ): DeleteBucketeerDataRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteBucketeerDataRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteBucketeerDataRequest;
+  static deserializeBinaryFromReader(
+    message: DeleteBucketeerDataRequest,
+    reader: jspb.BinaryReader
+  ): DeleteBucketeerDataRequest;
+}
+
+export namespace DeleteBucketeerDataRequest {
+  export type AsObject = {
+    deleteOrganizationIdsList: Array<string>;
+    deleteEnvironmentIdsList: Array<string>;
+  };
+}
+
+export class DeleteBucketeerDataResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteBucketeerDataResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteBucketeerDataResponse
+  ): DeleteBucketeerDataResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteBucketeerDataResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteBucketeerDataResponse;
+  static deserializeBinaryFromReader(
+    message: DeleteBucketeerDataResponse,
+    reader: jspb.BinaryReader
+  ): DeleteBucketeerDataResponse;
+}
+
+export namespace DeleteBucketeerDataResponse {
+  export type AsObject = {};
+}

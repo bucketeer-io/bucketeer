@@ -244,6 +244,15 @@ EnvironmentService.CreateDemoOrganization = {
   responseType: proto_environment_service_pb.CreateDemoOrganizationResponse
 };
 
+EnvironmentService.DeleteBucketeerData = {
+  methodName: 'DeleteBucketeerData',
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.DeleteBucketeerDataRequest,
+  responseType: proto_environment_service_pb.DeleteBucketeerDataResponse
+};
+
 exports.EnvironmentService = EnvironmentService;
 
 function EnvironmentServiceClient(serviceHost, options) {
@@ -1084,6 +1093,38 @@ EnvironmentServiceClient.prototype.createDemoOrganization =
       callback = arguments[1];
     }
     var client = grpc.unary(EnvironmentService.CreateDemoOrganization, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+EnvironmentServiceClient.prototype.deleteBucketeerData =
+  function deleteBucketeerData(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(EnvironmentService.DeleteBucketeerData, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,

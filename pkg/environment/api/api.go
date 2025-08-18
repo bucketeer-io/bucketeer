@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -50,6 +51,30 @@ type options struct {
 	isDemoSiteEnabled bool
 	logger            *zap.Logger
 }
+
+var (
+	targetEntities = []string{
+		"subscription",
+		"experiment_result",
+		"push",
+		"ops_count",
+		"auto_ops_rule",
+		"segment_user",
+		"segment",
+		"goal",
+		"experiment",
+		"tag",
+		"ops_progressive_rollout",
+		"flag_trigger",
+		"code_reference",
+		"feature",
+		"api_key",
+		"audit_log",
+	}
+	targetEntitiesInOrganization = []string{
+		"account_v2",
+	}
+)
 
 type Option func(*options)
 
@@ -227,6 +252,208 @@ func (s *EnvironmentService) ExchangeDemoToken(
 	return &environmentproto.ExchangeDemoTokenResponse{
 		DemoCreationToken: demoToken,
 	}, nil
+}
+
+func (s *EnvironmentService) DeleteBucketeerData(
+	ctx context.Context,
+	request *environmentproto.DeleteBucketeerDataRequest,
+) (*environmentproto.DeleteBucketeerDataResponse, error) {
+	if len(request.DeleteOrganizationIds) > 0 {
+		err := s.deleteOrganizationData(ctx, request.DeleteOrganizationIds)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(request.DeleteEnvironmentIds) > 0 {
+		err := s.deleteEnvironmentsData(ctx, request.DeleteEnvironmentIds)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &environmentproto.DeleteBucketeerDataResponse{}, nil
+}
+
+func (s *EnvironmentService) deleteOrganizationData(ctx context.Context, organizationIDs []string) error {
+	// 1. Get all environments for the organization IDs
+	inFilters := []*mysql.InFilter{
+		{
+			Column: "environment_v2.organization_id",
+			Values: convToInterfaceSlice(organizationIDs),
+		},
+	}
+	options := &mysql.ListOptions{
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+		Filters:     nil,
+		InFilters:   inFilters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	environments, _, _, err := s.environmentStorage.ListEnvironmentsV2(ctx, options)
+	if err != nil {
+		s.logger.Error("Could not list environments", zap.Error(err))
+		return err
+	}
+
+	// 2. Delete all target entities from the environments
+	for _, environment := range environments {
+		err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+			for _, target := range targetEntities {
+				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environment.Id, target)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			s.logger.Error("Failed to delete data from environment",
+				zap.String("environmentId", environment.Id),
+				zap.Error(err),
+			)
+			return nil
+		}
+	}
+
+	// 3. Delete all environments from organizations
+	err = s.deleteEnvironmentsFromOrganizations(ctx, organizationIDs)
+	if err != nil {
+		s.logger.Error("Failed to delete environments",
+			zap.Any("organizationIDs", organizationIDs),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	// 4. Delete all projects from organizations
+	err = s.deleteProjectsFromOrganizations(ctx, organizationIDs)
+	if err != nil {
+		s.logger.Error("Failed to delete projects",
+			zap.Any("organizationIDs", organizationIDs),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	// 5. Delete all organizations
+	err = s.deleteOrganizations(ctx, organizationIDs)
+	if err != nil {
+		s.logger.Error("Failed to delete organizations",
+			zap.Any("organizationIDs", organizationIDs),
+			zap.Error(err),
+		)
+		return err
+	}
+	return nil
+}
+
+func (s *EnvironmentService) deleteEnvironmentsData(
+	ctx context.Context,
+	environmentIDs []string,
+) error {
+	inFilters := []*mysql.InFilter{
+		{
+			Column: "environment_v2.id",
+			Values: convToInterfaceSlice(environmentIDs),
+		},
+	}
+	options := &mysql.ListOptions{
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+		Filters:     nil,
+		InFilters:   inFilters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	environments, _, _, err := s.environmentStorage.ListEnvironmentsV2(ctx, options)
+	if err != nil {
+		s.logger.Error("Could not list environments", zap.Error(err))
+		return err
+	}
+	// 2. Delete all target entities from the environments
+	for _, environment := range environments {
+		err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+			for _, target := range targetEntities {
+				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environment.Id, target)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			s.logger.Error("Failed to delete data from environment",
+				zap.String("environmentId", environment.Id),
+				zap.Error(err),
+			)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (s *EnvironmentService) deleteEnvironmentsFromOrganizations(
+	ctx context.Context,
+	organizationIDs []string,
+) error {
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
+	}
+	err := s.environmentStorage.DeleteEnvironmentV2(ctx, whereParts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *EnvironmentService) deleteProjectsFromOrganizations(ctx context.Context, organizationIDs []string) error {
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
+	}
+	err := s.projectStorage.DeleteProjects(ctx, whereParts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *EnvironmentService) deleteOrganizations(ctx context.Context, organizationIDs []string) error {
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
+	}
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	return s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		for _, target := range targetEntitiesInOrganization {
+			query := fmt.Sprintf("DELETE FROM %s %s", target, whereSQL)
+			_, err := s.mysqlClient.ExecContext(
+				ctxWithTx,
+				query,
+				whereArgs...,
+			)
+			if err != nil {
+				s.logger.Error("Failed to delete organization entity",
+					zap.Error(err),
+					zap.String("table", target),
+				)
+				return err
+			}
+		}
+		whereParts = []mysql.WherePart{
+			mysql.NewInFilter("id", convToInterfaceSlice(organizationIDs)),
+		}
+		err := s.orgStorage.DeleteOrganizations(ctxWithTx, whereParts)
+		if err != nil {
+			s.logger.Error("Failed to delete organizations", zap.Error(err))
+			return err
+		}
+		return nil
+	})
 }
 
 func (s *EnvironmentService) checkEmailExistedInSystem(
