@@ -1,6 +1,16 @@
 {
   "name": "bucketeer",
   "image": "ghcr.io/bucketeer-io/bucketeer-devcontainer:latest",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2.5.3": {
+      "username": "codespace",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1.2.2": {
+      "version": "latest"
+    }
+  },
   "mounts": [
     // Persistent Go modules cache
     "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
