@@ -162,6 +162,20 @@ RUN ARCH=$(dpkg --print-architecture) \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Docker for minikube
+RUN curl -fsSL https://get.docker.com | sh \
+    && usermod -aG docker codespace
+
+# Create docker startup script
+RUN echo '#!/bin/bash\n\
+# Start docker daemon in background\n\
+sudo dockerd > /dev/null 2>&1 &\n\
+# Wait for docker to be ready\n\
+while ! docker info > /dev/null 2>&1; do sleep 1; done\n\
+# Execute the command\n\
+exec "$@"' > /usr/local/bin/docker-init.sh \
+    && chmod +x /usr/local/bin/docker-init.sh
+
 # Install Atlas for MySQL migration
 RUN curl -sSf https://atlasgo.sh | sh -s -- -y
 
@@ -171,8 +185,8 @@ USER codespace
 # Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
 
-# Fire Docker/Moby script if needed
-ENTRYPOINT [ "/usr/local/share/docker-init.sh", "/usr/local/share/ssh-init.sh"]
+# Fire Docker init script
+ENTRYPOINT [ "/usr/local/bin/docker-init.sh" ]
 CMD [ "sleep", "infinity" ]
 
 # [Optional] Install debugger for development of Codespaces - Not in resulting image by default
