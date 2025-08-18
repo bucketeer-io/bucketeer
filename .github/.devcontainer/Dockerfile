@@ -74,8 +74,14 @@ ENV PATH=$PATH:/usr/local/go/bin
 ENV GOPATH=/go
 ENV CGO_ENABLED=1
 
+# Create codespace user (UID 1000 for compatibility)
+RUN groupadd --gid 1000 codespace \
+    && useradd --uid 1000 --gid 1000 -m -s /bin/bash codespace \
+    && echo 'codespace ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # Create go workspace
-RUN mkdir -p /go/bin /go/src /go/pkg
+RUN mkdir -p /go/bin /go/src /go/pkg \
+    && chown -R codespace:codespace /go
 
 # Install Atlas for MySQL migration
 RUN curl -sSf https://atlasgo.sh | sh -s -- -y
@@ -97,6 +103,15 @@ RUN ARCH=$(dpkg --print-architecture) \
     # Install minikube
     && curl -fsSL "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${MINIKUBE_ARCH}" -o /usr/local/bin/minikube \
     && chmod +x /usr/local/bin/minikube
+
+# Set up codespace user directories and permissions
+RUN mkdir -p /home/codespace/go-tools \
+    && mkdir -p /home/codespace/.yarn/cache \
+    && mkdir -p /home/codespace/.npm-global \
+    && chown -R codespace:codespace /home/codespace
+
+# Switch to codespace user for final setup
+USER codespace
 
 # Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
