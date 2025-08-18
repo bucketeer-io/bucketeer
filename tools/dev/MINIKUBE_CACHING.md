@@ -58,6 +58,15 @@ make -C tools/dev pre-cache-docker-images
 
 # Setup minikube with pre-cached images
 make -C tools/dev setup-minikube-cached
+
+# Show cache status and disk usage
+make -C tools/dev cache-status
+
+# Light cleanup: remove unused images only (keeps volumes)
+make -C tools/dev clean-cache-light
+
+# Full cleanup: remove all cache and volumes (requires confirmation)
+make -C tools/dev clean-cache
 ```
 
 ### Enhanced Existing Commands
@@ -98,24 +107,26 @@ If you encounter network issues and need to delete minikube:
 1. `minikube delete` - Only deletes the cluster, not Docker images
 2. `make start-minikube` - Uses cached images for fast restart
 
-If Docker images are corrupted:
-1. `docker system prune -a` - Clean everything
+If Docker images are corrupted or you need to free space:
+1. `make -C tools/dev clean-cache` - Interactive cleanup (removes everything)
 2. `make -C tools/dev pre-cache-docker-images` - Re-cache images
 3. `make start-minikube` - Start with fresh cache
+
+For lighter cleanup (keeps volumes):
+1. `make -C tools/dev clean-cache-light` - Remove unused images only
 
 ## 🔍 Cache Status
 
 Check what's cached:
 
 ```bash
-# List cached Docker images
-docker images
+# Comprehensive cache status (recommended)
+make -C tools/dev cache-status
 
-# Check minikube cache
-minikube cache list
-
-# Check disk usage
-docker system df
+# Manual checks
+docker images              # List cached Docker images
+minikube cache list        # Check minikube cache (if running)
+docker system df           # Check disk usage
 ```
 
 ## 📁 Volume Management
