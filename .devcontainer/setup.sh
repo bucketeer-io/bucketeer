@@ -105,6 +105,13 @@ fix_cache_permissions() {
         fi
     done
 
+    # Fix minikube cache permissions
+    if [ -d "/home/$USER_NAME/.minikube" ]; then
+        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/.minikube
+        chmod -R u+wrx /home/$USER_NAME/.minikube
+        print_status "Fixed minikube cache permissions"
+    fi
+
     print_success "Cache permissions fixed"
 }
 
