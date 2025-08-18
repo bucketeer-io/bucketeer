@@ -1,6 +1,17 @@
 {
   "name": "bucketeer",
   "image": "ghcr.io/bucketeer-io/bucketeer-devcontainer:latest",
+  "privileged": true,
+  "capAdd": [
+    "SYS_ADMIN"
+  ],
+  "securityOpt": [
+    "seccomp:unconfined"
+  ],
+  "init": true,
+  "runArgs": [
+    "--cgroupns=host"
+  ],
   "mounts": [
     // Persistent Go modules cache
     "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
