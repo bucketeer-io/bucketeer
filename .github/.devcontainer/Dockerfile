@@ -11,7 +11,7 @@ ENV LANG="C.UTF-8" \
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-                # Core essentials (changes rarely)
+        # Core essentials (changes rarely)
         ca-certificates \
         curl \
         git \
@@ -79,6 +79,24 @@ RUN mkdir -p /go/bin /go/src /go/pkg
 
 # Install Atlas for MySQL migration
 RUN curl -sSf https://atlasgo.sh | sh -s -- -y
+
+# Install kubectl, helm, and minikube
+RUN ARCH=$(dpkg --print-architecture) \
+    && case $ARCH in \
+        amd64) KUBECTL_ARCH="amd64"; HELM_ARCH="amd64"; MINIKUBE_ARCH="amd64" ;; \
+        arm64) KUBECTL_ARCH="arm64"; HELM_ARCH="arm64"; MINIKUBE_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac \
+    # Install kubectl
+    && curl -fsSL "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${KUBECTL_ARCH}/kubectl" -o /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl \
+    # Install helm
+    && curl -fsSL https://get.helm.sh/helm-v3.16.4-linux-${HELM_ARCH}.tar.gz | tar -C /tmp -xzf - \
+    && mv /tmp/linux-${HELM_ARCH}/helm /usr/local/bin/helm \
+    && rm -rf /tmp/linux-${HELM_ARCH} \
+    # Install minikube
+    && curl -fsSL "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${MINIKUBE_ARCH}" -o /usr/local/bin/minikube \
+    && chmod +x /usr/local/bin/minikube
 
 # Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
