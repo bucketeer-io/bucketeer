@@ -7,32 +7,41 @@ ENV LANG="C.UTF-8" \
     SHELL=/bin/bash \
     DOCKER_BUILDKIT=1
 
-# Install all packages in a single RUN command to reduce layers
+# Install packages in optimized order for better layer caching
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-        # Essential build tools
+                # Core essentials (changes rarely)
+        ca-certificates \
+        curl \
+        git \
+        sudo \
+        # Build tools (changes rarely)  
         make \
         build-essential \
         cmake \
-        curl \
-        git \
+        # File utilities
         unzip \
         zip \
         rsync \
-        jq \
         xz-utils \
-        # Database drivers (only what's actually needed)
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development packages in separate layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        # Development tools
+        jq \
+        vim \
+        protobuf-compiler \
+        python3-dev \
+        python3-pip \
+        # Database drivers
         libpq-dev \
         default-libmysqlclient-dev \
         sqlite3 \
         libsqlite3-dev \
-        # Development tools
-        python3-dev \
-        python3-pip \
-        vim \
-        protobuf-compiler \
-        # Essential libraries
+        # System libraries
         libssl-dev \
         libgcc1 \
         libstdc++6 \
@@ -40,7 +49,7 @@ RUN apt-get update \
         libuuid1 \
         uuid-dev \
     && apt-get autoremove -y \
-    && apt-get clean -y \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     # Move first run notice to right spot
     && mkdir -p "/usr/local/etc/vscode-dev-containers/" \
