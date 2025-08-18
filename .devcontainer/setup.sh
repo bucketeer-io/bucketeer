@@ -65,6 +65,13 @@ print_error() {
 export PATH="/home/codespace/go-tools/bin:$PATH"
 export GOBIN="/home/codespace/go-tools/bin"
 
+# Make PATH change persistent by adding to shell profile if not already there
+if ! grep -q "/home/codespace/go-tools/bin" ~/.bashrc; then
+    echo 'export PATH="/home/codespace/go-tools/bin:$PATH"' >> ~/.bashrc
+    echo 'export GOBIN="/home/codespace/go-tools/bin"' >> ~/.bashrc
+    print_status "Added Go tools to PATH in ~/.bashrc for persistence"
+fi
+
 # Function to fix permissions on cache directories
 fix_cache_permissions() {
     print_status "Ensuring cache directories have correct permissions..."
