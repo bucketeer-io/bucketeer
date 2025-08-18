@@ -107,7 +107,7 @@ RUN ARCH=$(dpkg --print-architecture) \
         arm64) NODE_ARCH="arm64" ;; \
         *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
     esac \
-    && curl -fsSL "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-${NODE_ARCH}.tar.xz" | tar -C /usr/local --strip-components=1 -xJ \
+    && curl -fsSL "https://nodejs.org/dist/v22.18.0/node-v22.18.0-linux-${NODE_ARCH}.tar.xz" | tar -C /usr/local --strip-components=1 -xJ \
     && npm install -g yarn
 
 # Install kubectl, helm, and minikube

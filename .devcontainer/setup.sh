@@ -363,3 +363,18 @@ main() {
 
 # Run main function
 main "$@"
+
+# Start Docker daemon automatically after main setup is complete
+if ! docker info > /dev/null 2>&1; then
+    echo "🐳 Starting Docker daemon..."
+    nohup sudo dockerd > /tmp/dockerd.log 2>&1 < /dev/null &
+    # Wait for Docker to be ready
+    while ! docker info > /dev/null 2>&1; do
+        sleep 1
+    done
+    echo "✅ Docker daemon started successfully"
+    # Reset cursor position for clean terminal state
+    printf "\r"
+else
+    echo "✅ Docker daemon already running"
+fi
