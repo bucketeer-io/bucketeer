@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         vim \
         vim-doc \
         xtail \
+        sudo \
         python3-pip \
         python3-dev \
         # Build and debug tools
