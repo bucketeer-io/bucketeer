@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import ReactCreatableSelect from 'react-select/creatable';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
@@ -17,12 +16,7 @@ import { isNotEmptyObject } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
-import {
-  colorStyles,
-  CreatableSelect,
-  Option,
-  optionStyle
-} from 'components/creatable-select';
+import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
   DropdownMenu,
@@ -40,6 +34,7 @@ import VariationLabel from 'elements/variation-label';
 import { TargetingSchema } from '../form-schema';
 import { UserMessage } from '../individual-rule';
 import { RuleClauseType } from '../types';
+import AttributeKeySelect from './attribute-key-select';
 
 interface Props {
   feature: Feature;
@@ -320,39 +315,18 @@ const RuleForm = ({
                                     contentClassName="!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
-                                  <ReactCreatableSelect<Option, false>
+                                  <AttributeKeySelect
                                     options={attributeKeyOptions?.map(
                                       (item: string) => ({
                                         label: item,
                                         value: item
                                       })
                                     )}
-                                    classNamePrefix="react-select"
-                                    styles={{
-                                      option: (styles, props) =>
-                                        optionStyle(styles, props, false),
-                                      ...colorStyles
-                                    }}
+                                    onChange={value => field.onChange(value)}
                                     value={{
                                       label: field.value,
                                       value: field.value
                                     }}
-                                    onChange={option => {
-                                      const newValue = option as Option;
-                                      field.onChange(newValue.value);
-                                    }}
-                                    formatCreateLabel={value => (
-                                      <p>
-                                        {`${t('create-option', {
-                                          option: value
-                                        })}`}
-                                      </p>
-                                    )}
-                                    noOptionsMessage={() => (
-                                      <UserMessage
-                                        message={t('no-opts-type-to-create')}
-                                      />
-                                    )}
                                   />
                                 )}
                               </Form.Control>

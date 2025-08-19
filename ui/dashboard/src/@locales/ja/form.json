@@ -176,7 +176,8 @@
     "context-kind": "コンテキスト種別",
     "attribute-key": "属性キー",
     "operator": "オペレータ",
-    "values": "値"
+    "values": "値",
+    "attribute-key-select-title": "クライアントSDKユーザー属性"
   },
   "origin-env": "元の環境",
   "destination-env": "複製先環境",
