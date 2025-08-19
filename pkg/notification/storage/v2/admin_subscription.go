@@ -18,17 +18,17 @@ package v2
 import (
 	"context"
 	_ "embed"
-	"errors"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
 var (
-	ErrAdminSubscriptionAlreadyExists          = errors.New("subscription: admin subscription already exists")
-	ErrAdminSubscriptionNotFound               = errors.New("subscription: admin subscription not found")
-	ErrAdminSubscriptionUnexpectedAffectedRows = errors.New("subscription: admin subscription unexpected affected rows")
+	ErrAdminSubscriptionAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.NotificationPackageName, "admin subscription already exists")
+	ErrAdminSubscriptionNotFound               = pkgErr.NewErrorNotFound(pkgErr.NotificationPackageName, "admin subscription not found")
+	ErrAdminSubscriptionUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.NotificationPackageName, "admin subscription unexpected affected rows")
 
 	//go:embed sql/admin_subscription/insert_admin_subscription_v2.sql
 	insertAdminSubscriptionV2SQLQuery string

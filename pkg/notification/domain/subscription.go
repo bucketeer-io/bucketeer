@@ -17,7 +17,6 @@ package domain
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"sort"
 	"time"
 
@@ -25,16 +24,17 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	ErrUnknownRecipient              = errors.New("subscription: unknown recipient")
-	ErrSourceTypesMustHaveAtLeastOne = errors.New("subscription: notification types must have at least one")
-	ErrSourceTypeNotFound            = errors.New("subscription: notification not found")
-	ErrAlreadyEnabled                = errors.New("subscription: already enabled")
-	ErrAlreadyDisabled               = errors.New("subscription: already disabled")
-	ErrCannotUpdateFeatureFlagTags   = errors.New(
-		"subscription: cannot update the feature flag tags when there is feature source type")
+	ErrUnknownRecipient              = pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "unknown recipient type", pkgErr.InvalidTypeNotMatchFormat, "RecipientType")
+	ErrSourceTypesMustHaveAtLeastOne = pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "notification types must have at least one", pkgErr.InvalidTypeEmpty, "SourceTypes")
+	ErrSourceTypeNotFound            = pkgErr.NewErrorNotFound(pkgErr.NotificationPackageName, "notification not found", "SourceType")
+	ErrAlreadyEnabled                = pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "already enabled", pkgErr.InvalidTypeAlreadyExists, "Enabled")
+	ErrAlreadyDisabled               = pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "already disabled", pkgErr.InvalidTypeAlreadyExists, "Disabled")
+	ErrCannotUpdateFeatureFlagTags   = pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "cannot update the feature flag tags when there is feature source type", pkgErr.InvalidTypeNotMatchFormat, "Tags")
 )
 
 type Subscription struct {

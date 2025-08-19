@@ -15,36 +15,24 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	api "github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal            = gstatus.New(codes.Internal, "notification: internal")
-	statusIDRequired          = gstatus.New(codes.InvalidArgument, "notification: id must be specified")
-	statusNameRequired        = gstatus.New(codes.InvalidArgument, "notification: name must be specified")
-	statusSourceTypesRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: notification types must be specified",
-	)
-	statusUnknownRecipient  = gstatus.New(codes.InvalidArgument, "notification: unknown recipient")
-	statusRecipientRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: recipient must be specified",
-	)
-	statusSlackRecipientRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: slack recipient must be specified",
-	)
-	statusSlackRecipientWebhookURLRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: webhook URL must be specified",
-	)
-	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "notification: cursor is invalid")
-	statusNoCommand        = gstatus.New(codes.InvalidArgument, "notification: no command")
-	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
-	statusNotFound         = gstatus.New(codes.NotFound, "notification: not found")
-	statusAlreadyExists    = gstatus.New(codes.AlreadyExists, "notification: already exists")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "notification: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "notification: permission denied")
+	statusInternal                         = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.NotificationPackageName, "internal"))
+	statusIDRequired                       = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "id must be specified", pkgErr.InvalidTypeEmpty, "Id"))
+	statusNameRequired                     = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "name must be specified", pkgErr.InvalidTypeEmpty, "Name"))
+	statusSourceTypesRequired              = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "notification types must be specified", pkgErr.InvalidTypeEmpty, "SourceTypes"))
+	statusUnknownRecipient                 = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "unknown recipient type", pkgErr.InvalidTypeNotMatchFormat, "Recipient"))
+	statusRecipientRequired                = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "recipient must be specified", pkgErr.InvalidTypeEmpty, "Recipient"))
+	statusSlackRecipientRequired           = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "slack recipient must be specified", pkgErr.InvalidTypeEmpty, "SlackRecipient"))
+	statusSlackRecipientWebhookURLRequired = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "slack recipient webhook URL must be specified", pkgErr.InvalidTypeEmpty, "WebhookUrl"))
+	statusInvalidCursor                    = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "cursor is invalid", pkgErr.InvalidTypeNotMatchFormat, "Cursor"))
+	statusNoCommand                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "no command", pkgErr.InvalidTypeNotMatchFormat, "Command"))
+	statusInvalidOrderBy                   = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.NotificationPackageName, "order_by is invalid", pkgErr.InvalidTypeNotMatchFormat, "OrderBy"))
+	statusNotFound                         = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.NotificationPackageName, "not found"))
+	statusAlreadyExists                    = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(pkgErr.NotificationPackageName, "already exists"))
+	statusUnauthenticated                  = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(pkgErr.NotificationPackageName, "unauthenticated"))
+	statusPermissionDenied                 = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(pkgErr.NotificationPackageName, "permission denied"))
 )
