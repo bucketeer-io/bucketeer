@@ -21,6 +21,7 @@
   "add-to-env": "環境に追加",
   "env-access": "環境アクセス",
   "env-admin-access": "すべての環境",
+  "env-admin-access-desc": "この組織内のすべての環境にアクセスできます",
   "env-settings": "環境設定",
   "trial": "トライアル",
   "enter-first-name": "名を入力",

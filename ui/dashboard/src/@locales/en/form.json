@@ -21,6 +21,7 @@
   "add-to-env": "Add to Environment",
   "env-access": "Environment Access",
   "env-admin-access": "All environments",
+  "env-admin-access-desc": "Has access to all environments in this organization",
   "env-settings": "Environment Settings",
   "trial": "Trial",
   "enter-first-name": "Enter first name",

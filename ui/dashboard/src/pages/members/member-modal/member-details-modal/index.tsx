@@ -1,4 +1,4 @@
-import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
@@ -22,12 +22,16 @@ const MemberDetailsModal = ({
 }: MemberDetailsModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { isOrganizationAdmin } = useAuthAccess();
   const { t } = useTranslation(['common', 'form']);
 
+  const isAdminOwnerAccount = [
+    'Organization_ADMIN',
+    'Organization_OWNER'
+  ].includes(member.organizationRole);
+
   const { data: collection, isLoading } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId,
-    pageSize: 9999
+    pageSize: 9999,
+    enabledQuery: !isAdminOwnerAccount
   });
 
   const { data: tagCollection } = useFetchTags({
@@ -85,7 +89,10 @@ const MemberDetailsModal = ({
               <p className="typo-para-small text-gray-600">{t('role')}</p>
               <p className="text-gray-700 mt-1 typo-para-medium break-all">
                 {t(
-                  String(member.organizationRole).split('_')[1]?.toLowerCase()
+                  typeof member.organizationRole === 'string' &&
+                    member.organizationRole.includes('_')
+                    ? member.organizationRole.split('_')[1].toLowerCase()
+                    : 'form:unknown'
                 )}
               </p>
             </div>
@@ -93,37 +100,38 @@ const MemberDetailsModal = ({
           <Divider />
           <div>
             <h3 className="typo-head-bold-small text-gray-800">
-              {isOrganizationAdmin ? t('environments') : t('form:env-access')}
+              {t('form:env-admin-access')}
             </h3>
-            {isOrganizationAdmin && (
+            {isAdminOwnerAccount && (
               <div className="typo-para-small text-gray-800 mt-2">
-                {t('form:env-admin-access')}
+                {t('form:env-admin-access-desc')}
               </div>
             )}
           </div>
-          {(member.environmentRoles || []).map((env, index) => (
-            <div className="flex items-start w-full gap-x-4" key={index}>
-              <div className="flex-1">
-                <p className="typo-para-small text-gray-600">
-                  {t('environment')}
-                </p>
-                <p className="text-gray-700 mt-1 typo-para-medium">
-                  {
-                    environments?.find(item => item.id === env.environmentId)
-                      ?.name
-                  }
-                </p>
+          {!isAdminOwnerAccount &&
+            (member.environmentRoles || []).map((env, index) => (
+              <div className="flex items-start w-full gap-x-4" key={index}>
+                <div className="flex-1">
+                  <p className="typo-para-small text-gray-600">
+                    {t('environment')}
+                  </p>
+                  <p className="text-gray-700 mt-1 typo-para-medium">
+                    {
+                      environments?.find(item => item.id === env.environmentId)
+                        ?.name
+                    }
+                  </p>
+                </div>
+                <div className="flex-1">
+                  <p className="typo-para-small text-gray-600">{t('role')}</p>
+                  <p className="text-gray-700 mt-1 capitalize typo-para-medium">
+                    {env?.role === 'Environment_EDITOR'
+                      ? t('editor')
+                      : t('viewer')}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="typo-para-small text-gray-600">{t('role')}</p>
-                <p className="text-gray-700 mt-1 capitalize typo-para-medium">
-                  {env?.role === 'Environment_EDITOR'
-                    ? t('editor')
-                    : t('viewer')}
-                </p>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </SlideModal>

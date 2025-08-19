@@ -153,6 +153,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const roleWatch = watch('memberRole');
   const isAdminRole = roleWatch === 'Organization_ADMIN';
   const isOwnerRole = member.organizationRole === 'Organization_OWNER';
+  const shouldSkipEnvironmentRoles = isAdminRole || isOwnerRole;
 
   const handleCheckTags = useCallback(
     (teamValues: string[]) => {
@@ -188,7 +189,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       organizationRole: {
         role: values.memberRole as OrganizationRole
       },
-      ...(isAdminRole || isOwnerRole
+      ...(shouldSkipEnvironmentRoles
         ? {}
         : {
             environmentRoles: values.environmentRoles.map(item => ({
