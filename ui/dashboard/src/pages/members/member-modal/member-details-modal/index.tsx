@@ -26,7 +26,8 @@ const MemberDetailsModal = ({
   const { t } = useTranslation(['common', 'form']);
 
   const { data: collection, isLoading } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    pageSize: 9999
   });
 
   const { data: tagCollection } = useFetchTags({
@@ -90,11 +91,16 @@ const MemberDetailsModal = ({
             </div>
           </div>
           <Divider />
-          <h3 className="typo-head-bold-small text-gray-800">
-            {t(
-              isOrganizationAdmin ? `form:env-admin-access` : `form:env-access`
+          <div>
+            <h3 className="typo-head-bold-small text-gray-800">
+              {isOrganizationAdmin ? t('environments') : t('form:env-access')}
+            </h3>
+            {isOrganizationAdmin && (
+              <div className="typo-para-small text-gray-800 mt-2">
+                {t('form:env-admin-access')}
+              </div>
             )}
-          </h3>
+          </div>
           {(member.environmentRoles || []).map((env, index) => (
             <div className="flex items-start w-full gap-x-4" key={index}>
               <div className="flex-1">
