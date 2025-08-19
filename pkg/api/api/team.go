@@ -45,6 +45,10 @@ func (s *grpcGatewayService) CreateTeam(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateTeam, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -99,6 +103,10 @@ func (s *grpcGatewayService) DeleteTeam(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteTeam, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -141,6 +149,11 @@ func (s *grpcGatewayService) ListTeams(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListTeams, "").Inc()
+
 	res, err := s.teamClient.ListTeams(
 		ctx,
 		&teamproto.ListTeamsRequest{

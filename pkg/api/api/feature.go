@@ -47,6 +47,11 @@ func (s *grpcGatewayService) DebugEvaluateFeatures(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDebugEvaluateFeatures, "").Inc()
+
 	resp, err := s.featureClient.DebugEvaluateFeatures(ctx, &featureproto.DebugEvaluateFeaturesRequest{
 		Users:         req.Users,
 		FeatureIds:    req.FeatureIds,
@@ -85,6 +90,10 @@ func (s *grpcGatewayService) CreateFeature(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateFeature, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -130,6 +139,11 @@ func (s *grpcGatewayService) GetFeature(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetFeature, "").Inc()
+
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		EnvironmentId:  envAPIKey.Environment.Id,
 		Id:             req.Id,
@@ -160,6 +174,11 @@ func (s *grpcGatewayService) ListFeatures(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListFeatures, "").Inc()
+
 	resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 		EnvironmentId:  envAPIKey.Environment.Id,
 		PageSize:       req.PageSize,
@@ -192,6 +211,10 @@ func (s *grpcGatewayService) UpdateFeature(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateFeature, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
