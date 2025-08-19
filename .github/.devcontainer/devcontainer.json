@@ -5,5 +5,9 @@
     "context": "."
   },
   "remoteUser": "codespace",
-  "containerUser": "codespace"
+  "containerUser": "codespace",
+  "mounts": [
+    "source=minikube-cache,target=/home/codespace/.minikube,type=volume",
+    "source=docker-cache,target=/var/lib/docker,type=volume"
+  ]
 }
