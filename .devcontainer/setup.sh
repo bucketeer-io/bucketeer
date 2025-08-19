@@ -65,28 +65,43 @@ print_error() {
 export PATH="/home/codespace/go-tools/bin:$PATH"
 export GOBIN="/home/codespace/go-tools/bin"
 
+# Make PATH change persistent by adding to shell profile if not already there
+if ! grep -q "/home/codespace/go-tools/bin" ~/.bashrc; then
+    echo 'export PATH="/home/codespace/go-tools/bin:$PATH"' >> ~/.bashrc
+    echo 'export GOBIN="/home/codespace/go-tools/bin"' >> ~/.bashrc
+    print_status "Added Go tools to PATH in ~/.bashrc for persistence"
+fi
+
 # Function to fix permissions on cache directories
 fix_cache_permissions() {
     print_status "Ensuring cache directories have correct permissions..."
 
+    # Check if codespace user exists
+    if id "codespace" &>/dev/null; then
+        USER_NAME="codespace"
+    else
+        USER_NAME=$(whoami)
+        print_status "codespace user not found, using current user: $USER_NAME"
+    fi
+
     # Fix Go modules cache permissions
     sudo mkdir -p /go/pkg/mod /go/pkg/sumdb
-    sudo chown -R codespace:codespace /go/pkg/mod /go/pkg/sumdb
+    sudo chown -R $USER_NAME:$USER_NAME /go/pkg/mod /go/pkg/sumdb
 
     # Fix Go tools directory permissions
-    if [ -d "/home/codespace/go-tools" ]; then
-        sudo chown -R codespace:codespace /home/codespace/go-tools
+    if [ -d "/home/$USER_NAME/go-tools" ]; then
+        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/go-tools
     fi
 
     # Fix Yarn cache permissions
-    if [ -d "/home/codespace/.yarn" ]; then
-        sudo chown -R codespace:codespace /home/codespace/.yarn
+    if [ -d "/home/$USER_NAME/.yarn" ]; then
+        sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/.yarn
     fi
 
     # Fix node_modules permissions
     for project in "${NODE_PROJECTS[@]}"; do
         if [ -d "$project/node_modules" ]; then
-            sudo chown -R codespace:codespace "$project/node_modules"
+            sudo chown -R $USER_NAME:$USER_NAME "$project/node_modules"
         fi
     done
 
@@ -139,11 +154,18 @@ check_go_tools() {
 install_go_tools() {
     print_status "Installing Go development tools..."
 
-    # Ensure go-tools directory exists and has correct permissions
-    sudo mkdir -p /home/codespace/go-tools/bin
-    sudo chown -R codespace:codespace /home/codespace/go-tools
+    # Check if codespace user exists
+    if id "codespace" &>/dev/null; then
+        USER_NAME="codespace"
+    else
+        USER_NAME=$(whoami)
+    fi
 
-    cd /home/codespace/go-tools
+    # Ensure go-tools directory exists and has correct permissions
+    sudo mkdir -p /home/$USER_NAME/go-tools/bin
+    sudo chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/go-tools
+
+    cd /home/$USER_NAME/go-tools
     if [ ! -e go.mod ]; then go mod init go-tools; fi
 
     # Set additional Go environment variables for better module handling
@@ -237,9 +259,16 @@ install_node_deps() {
 
     print_status "Installing $name dependencies..."
 
+    # Check if codespace user exists
+    if id "codespace" &>/dev/null; then
+        USER_NAME="codespace"
+    else
+        USER_NAME=$(whoami)
+    fi
+
     # Ensure node_modules directory has correct permissions if it exists
     if [ -d "$dir/node_modules" ]; then
-        sudo chown -R codespace:codespace "$dir/node_modules"
+        sudo chown -R $USER_NAME:$USER_NAME "$dir/node_modules"
     fi
 
     cd "$dir"
@@ -341,3 +370,18 @@ main() {
 
 # Run main function
 main "$@"
+
+# Start Docker daemon automatically after main setup is complete
+if ! docker info > /dev/null 2>&1; then
+    echo "🐳 Starting Docker daemon..."
+    nohup sudo dockerd > /tmp/dockerd.log 2>&1 < /dev/null &
+    # Wait for Docker to be ready
+    while ! docker info > /dev/null 2>&1; do
+        sleep 1
+    done
+    echo "✅ Docker daemon started successfully"
+    # Reset cursor position for clean terminal state
+    printf "\r"
+else
+    echo "✅ Docker daemon already running"
+fi
