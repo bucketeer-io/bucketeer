@@ -1296,7 +1296,7 @@ func (s *AccountService) ListAccountsV2(
 				})
 		}
 	} else {
-		jsonOrFilters := make([]mysql.WherePart, 0)
+		orWhereParts := make([]mysql.WherePart, 0)
 		for _, r := range requestEnvironmentRoles {
 			envRole := &EnvironmentRole{
 				EnvironmentID: &r.EnvironmentId,
@@ -1317,14 +1317,18 @@ func (s *AccountService) ListAccountsV2(
 				}
 				return nil, dt.Err()
 			}
-			jsonOrFilters = append(jsonOrFilters, &mysql.JSONFilter{
+			orWhereParts = append(orWhereParts, &mysql.JSONFilter{
 				Column: "environment_roles",
 				Func:   mysql.JSONContainsJSON,
 				Values: []interface{}{string(jsonValues)},
 			})
 		}
+		orWhereParts = append(
+			orWhereParts,
+			mysql.NewFilter("organization_role", ">=", accountproto.AccountV2_Role_Organization_ADMIN),
+		)
 		orFilters = append(orFilters, &mysql.OrFilter{
-			Queries: jsonOrFilters,
+			Queries: orWhereParts,
 		})
 	}
 
