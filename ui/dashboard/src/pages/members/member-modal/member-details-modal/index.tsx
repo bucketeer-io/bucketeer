@@ -1,9 +1,9 @@
+import { useEnvironmentsMultiIds } from '@queries/environments';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Divider from 'components/divider';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
@@ -29,16 +29,16 @@ const MemberDetailsModal = ({
     'Organization_OWNER'
   ].includes(member.organizationRole);
 
-  const { data: collection, isLoading } = useFetchEnvironments({
-    pageSize: 9999,
-    enabledQuery: !isAdminOwnerAccount
-  });
+  const environmentRoles = useEnvironmentsMultiIds(
+    (member.environmentRoles || []).map(role => role.environmentId),
+    !isAdminOwnerAccount
+  );
 
   const { data: tagCollection } = useFetchTags({
     organizationId: currentEnvironment.organizationId
   });
 
-  const environments = collection?.environments || [];
+  const environments = environmentRoles?.data || [];
   const tagList = tagCollection?.tags || [];
 
   return (
@@ -47,7 +47,7 @@ const MemberDetailsModal = ({
       title={t(`form:member-details`)}
       onClose={onClose}
     >
-      {isLoading ? (
+      {environmentRoles.isLoading ? (
         <div className="w-full flex-center py-12">
           <Spinner />
         </div>
@@ -117,8 +117,9 @@ const MemberDetailsModal = ({
                   </p>
                   <p className="text-gray-700 mt-1 typo-para-medium">
                     {
-                      environments?.find(item => item.id === env.environmentId)
-                        ?.name
+                      environments?.find(
+                        item => item.environment.id === env.environmentId
+                      )?.environment.name
                     }
                   </p>
                 </div>
