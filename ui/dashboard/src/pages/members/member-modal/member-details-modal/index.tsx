@@ -100,7 +100,7 @@ const MemberDetailsModal = ({
           <Divider />
           <div>
             <h3 className="typo-head-bold-small text-gray-800">
-              {t('form:env-admin-access')}
+              {t('form:env-access')}
             </h3>
             {isAdminOwnerAccount && (
               <div className="typo-para-small text-gray-800 mt-2">
