@@ -24,71 +24,135 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
-func NewGRPCStatus(err error, metadatas ...map[string]string) *status.Status {
-	var reason string
-	var allMetadatas []map[string]string
-	var st *status.Status
-	var bucketeerErr *pkgErr.BucketeerError
+const (
+	bktDomain = ".bucketeer.io"
+)
+
+func NewGRPCStatus(err error) *status.Status {
+	var bucketeerErr *pkgErr.BktError
+	var bktInvalidError *pkgErr.BktInvalidError
+	var bktFieldError *pkgErr.BktFieldError
 	if err == nil {
 		return status.New(codes.Unknown, "")
 	}
 	if errors.As(err, &bucketeerErr) {
-		bucketeerErr.AddMetadata(metadatas...)
-		var stCode codes.Code
-
-		switch bucketeerErr.ErrorType() {
-		case pkgErr.ErrorTypeInvalidArgument:
-			reason = "INVALID_ARGUMENT"
-			stCode = codes.InvalidArgument
-		case pkgErr.ErrorTypeNotFound:
-			reason = "NOT_FOUND"
-			stCode = codes.NotFound
-		case pkgErr.ErrorTypeAlreadyExists:
-			reason = "ALREADY_EXISTS"
-			stCode = codes.AlreadyExists
-		case pkgErr.ErrorTypeUnauthenticated:
-			reason = "UNAUTHENTICATED"
-			stCode = codes.Unauthenticated
-		case pkgErr.ErrorTypePermissionDenied:
-			reason = "PERMISSION_DENIED"
-			stCode = codes.PermissionDenied
-		case pkgErr.ErrorTypeUnexpectedAffectedRows:
-			reason = "UNEXPECTED_AFFECTED_ROWS"
-			stCode = codes.Internal
-		case pkgErr.ErrorTypeInternal:
-			reason = "INTERNAL"
-			stCode = codes.Internal
-		default:
-			reason = "UNKNOWN"
-			stCode = codes.Unknown
-		}
-
-		st = status.New(stCode, bucketeerErr.Message())
-		allMetadatas = append(allMetadatas, bucketeerErr.Metadatas()...)
-
-		// ToDo: Once the frontend is multilingual, delete it.
-		if bucketeerErr.Message() != "" {
-			st, _ = st.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  "en",
-				Message: bucketeerErr.Message(),
-			})
-		}
+		return convertBktError(bucketeerErr)
+	} else if errors.As(err, &bktFieldError) {
+		return convertFieldError(bktFieldError)
+	} else if errors.As(err, &bktInvalidError) {
+		return convertInvalidError(bktInvalidError)
 	} else {
-		reason = "UNKNOWN"
-		st = status.New(codes.Unknown, err.Error())
-		if len(metadatas) > 0 {
-			allMetadatas = append(allMetadatas, metadatas...)
+		reason := "UNKNOWN"
+		st := status.New(codes.Unknown, err.Error())
+		metadata := map[string]string{
+			"message": err.Error(),
 		}
-	}
+		packageName := "unknown"
 
-	for _, md := range allMetadatas {
 		st, err = st.WithDetails(&errdetails.ErrorInfo{
 			Reason:   reason,
-			Metadata: md,
+			Domain:   packageName + bktDomain,
+			Metadata: metadata,
 		})
 		if err != nil {
 			return status.New(codes.Internal, err.Error())
 		}
+		return st
+	}
+}
+
+func convertBktError(bktError *pkgErr.BktError) *status.Status {
+	st := status.New(convertStatusCode(bktError.ErrorType()), bktError.Message())
+	metadata := map[string]string{
+		"messageKey": bktError.PackageName() + "." + string(bktError.ErrorType()),
+	}
+
+	st, err := st.WithDetails(&errdetails.ErrorInfo{
+		Reason:   convertErrorReason(bktError.ErrorType()),
+		Domain:   bktError.PackageName() + bktDomain,
+		Metadata: metadata,
+	})
+	if err != nil {
+		return status.New(codes.Internal, err.Error())
 	}
 	return st
+}
+
+func convertFieldError(fieldError *pkgErr.BktFieldError) *status.Status {
+	st := status.New(convertStatusCode(fieldError.ErrorType()), fieldError.Message())
+	metadata := map[string]string{
+		"messageKey": fieldError.PackageName() + "." + string(fieldError.ErrorType()),
+		"field":      fieldError.Field(),
+	}
+
+	st, err := st.WithDetails(&errdetails.ErrorInfo{
+		Reason:   convertErrorReason(fieldError.ErrorType()),
+		Domain:   fieldError.PackageName() + bktDomain,
+		Metadata: metadata,
+	})
+	if err != nil {
+		return status.New(codes.Internal, err.Error())
+	}
+	return st
+}
+
+func convertInvalidError(invalidError *pkgErr.BktInvalidError) *status.Status {
+	st := status.New(codes.InvalidArgument, invalidError.Message())
+	mkey := invalidError.PackageName() + "." + string(invalidError.ErrorType()) + "." + string(invalidError.InvalidType())
+	metadata := map[string]string{
+		"messageKey": mkey,
+		"field":      invalidError.Field(),
+	}
+
+	st, err := st.WithDetails(&errdetails.ErrorInfo{
+		Reason:   "INVALID_ARGUMENT",
+		Domain:   invalidError.PackageName() + bktDomain,
+		Metadata: metadata,
+	})
+	if err != nil {
+		return status.New(codes.Internal, err.Error())
+	}
+	return st
+}
+
+func convertErrorReason(errorType pkgErr.ErrorType) string {
+	switch errorType {
+	case pkgErr.ErrorTypeInvalidArgument:
+		return "INVALID_ARGUMENT"
+	case pkgErr.ErrorTypeNotFound:
+		return "NOT_FOUND"
+	case pkgErr.ErrorTypeAlreadyExists:
+		return "ALREADY_EXISTS"
+	case pkgErr.ErrorTypeUnauthenticated:
+		return "UNAUTHENTICATED"
+	case pkgErr.ErrorTypePermissionDenied:
+		return "PERMISSION_DENIED"
+	case pkgErr.ErrorTypeUnexpectedAffectedRows:
+		return "UNEXPECTED_AFFECTED_ROWS"
+	case pkgErr.ErrorTypeInternal:
+		return "INTERNAL"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
+	switch errorType {
+	case pkgErr.ErrorTypeInvalidArgument:
+		return codes.InvalidArgument
+	case pkgErr.ErrorTypeNotFound:
+		return codes.NotFound
+	case pkgErr.ErrorTypeAlreadyExists:
+		return codes.AlreadyExists
+	case pkgErr.ErrorTypeUnauthenticated:
+		return codes.Unauthenticated
+	case pkgErr.ErrorTypePermissionDenied:
+		return codes.PermissionDenied
+	case pkgErr.ErrorTypeUnexpectedAffectedRows:
+		return codes.Internal
+	case pkgErr.ErrorTypeInternal:
+		return codes.Internal
+	default:
+		return codes.Unknown
+	}
 }

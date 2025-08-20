@@ -49,7 +49,7 @@ var (
 
 // nolint:lll
 var (
-	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", "account")
+	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists")
 	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")
 	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows")
 )

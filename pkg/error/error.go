@@ -20,14 +20,6 @@ const (
 	AccountPackageName = "account"
 )
 
-type BucketeerError struct {
-	packageName string
-	errorType   ErrorType
-	message     string
-	metadatas   []map[string]string
-	err         error
-}
-
 type ErrorType string
 
 const (
@@ -40,77 +32,96 @@ const (
 	ErrorTypeInvalidArgument        ErrorType = "invalid_argument"
 )
 
-func (e *BucketeerError) PackageName() string            { return e.packageName }
-func (e *BucketeerError) ErrorType() ErrorType           { return e.errorType }
-func (e *BucketeerError) Message() string                { return e.message }
-func (e *BucketeerError) Metadatas() []map[string]string { return e.metadatas }
-func (e *BucketeerError) Error() string                  { return e.message }
-func (e *BucketeerError) Unwrap() error                  { return e.err }
-func (e *BucketeerError) AddMetadata(metadatas ...map[string]string) {
-	e.metadatas = append(e.metadatas, metadatas...)
+// Base error - no field needed
+type BktError struct {
+	packageName string
+	errorType   ErrorType
+	message     string
+	err         error
 }
-func (e *BucketeerError) JoinError(err error) {
+
+func (e *BktError) PackageName() string  { return e.packageName }
+func (e *BktError) ErrorType() ErrorType { return e.errorType }
+func (e *BktError) Message() string      { return e.message }
+func (e *BktError) Error() string        { return e.message }
+func (e *BktError) Unwrap() error        { return e.err }
+func (e *BktError) JoinError(err error) {
 	e.err = errors.Join(e.err, err)
 }
 
-func newError(pkg string, errorType ErrorType, defaultMessage string, args ...string) *BucketeerError {
+// BktFieldError represents an error with a specific field
+type BktFieldError struct {
+	*BktError
+	field string
+}
+
+func (e *BktFieldError) Field() string {
+	return e.field
+}
+
+type BktInvalidError struct {
+	*BktFieldError
+	invalidType InvalidType
+}
+
+func (e *BktInvalidError) InvalidType() InvalidType {
+	return e.invalidType
+}
+
+func newBktError(pkg string, errorType ErrorType, defaultMessage string) *BktError {
 	msg := pkg + ":"
 	if defaultMessage != "" {
 		msg += defaultMessage
 	}
 
-	messageKey := pkg + "." + string(errorType)
-	metadatas := make([]map[string]string, 0, len(args))
-	for _, arg := range args {
-		if arg != "" {
-			msg += ", " + arg
-		}
-		metadatas = append(metadatas, map[string]string{
-			"messageKey": messageKey,
-			"field":      arg,
-		})
-	}
-
-	// example: NotFound {
-	// 	packageName: "account",
-	// 	message:     "account not found, user_id",
-	//  metadatas:  []map[string]string{
-	// 		{
-	// 			"messageKey": "account.not_found",
-	// 			"field":      "user_id",
-	// 		},
-	// 	},
-	//}
-	return &BucketeerError{
+	return &BktError{
 		packageName: pkg,
 		errorType:   errorType,
 		message:     msg,
-		metadatas:   metadatas,
 	}
 }
 
-func NewErrorNotFound(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypeNotFound, message, args...)
+func newBktFieldError(pkg string, errorType ErrorType, defaultMessage string, field string) *BktFieldError {
+	msg := pkg + ":"
+	if defaultMessage != "" {
+		msg += defaultMessage
+	}
+	if field != "" {
+		msg += ", " + field
+	}
+
+	return &BktFieldError{
+		BktError: &BktError{
+			packageName: pkg,
+			errorType:   errorType,
+			message:     msg,
+		},
+		field: field,
+	}
 }
 
-func NewErrorAlreadyExists(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypeAlreadyExists, message, args...)
+func NewErrorNotFound(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeNotFound, message, field)
 }
 
-func NewErrorUnauthenticated(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypeUnauthenticated, message, args...)
+func NewErrorAlreadyExists(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeAlreadyExists, message)
 }
 
-func NewErrorPermissionDenied(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypePermissionDenied, message, args...)
+func NewErrorUnauthenticated(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeUnauthenticated, message)
 }
 
-func NewErrorUnexpectedAffectedRows(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypeUnexpectedAffectedRows, message, args...)
+func NewErrorPermissionDenied(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypePermissionDenied, message)
 }
 
-func NewErrorInternal(pkg string, message string, args ...string) *BucketeerError {
-	return newError(pkg, ErrorTypeInternal, message, args...)
+func NewErrorUnexpectedAffectedRows(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeUnexpectedAffectedRows, message)
+}
+
+func NewErrorInternal(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeInternal, message)
 }
 
 type InvalidType string
@@ -122,56 +133,32 @@ const (
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
-func NewErrorInvalidArgument(pkg string, message string, invalidType InvalidType, args ...string) *BucketeerError {
-	return newInvalidArgumentErrorBase(pkg, message, invalidType, args...)
-}
-
-func newInvalidArgumentErrorBase(pkg, message string, invalidType InvalidType, args ...string) *BucketeerError {
+func NewErrorInvalidArgument(pkg string, message string, invalidType InvalidType, field string) *BktInvalidError {
 	errorType := ErrorTypeInvalidArgument
-	messageKey := pkg + "." + string(errorType)
-	if invalidType == "" {
-		invalidType = invalidTypeUnknown
-	}
-	messageKey = messageKey + "." + string(invalidType)
+
 	msg := pkg + ":"
 	if message != "" {
 		msg += message
 	} else {
 		msg += "invalid argument"
 	}
-	metadatas := make([]map[string]string, 0, len(args))
-	for _, arg := range args {
-		if arg != "" {
-			msg += "[" + arg
-			if invalidType != "" {
-				msg += ":" + string(invalidType)
-			}
-			msg += "]"
+	if field != "" {
+		if invalidType != "" {
+			msg += "[" + field + ":" + string(invalidType) + "]"
+		} else {
+			msg += ", " + field
 		}
-		metadatas = append(metadatas, map[string]string{
-			"messageKey": messageKey,
-			"field":      arg,
-		})
 	}
 
-	// example: two invalid arguments found {
-	// 	packageName: "account",
-	// 	message:     "account invalid argument, user_id[empty], name[empty]",
-	//  metadatas:  []map[string]string{
-	// 		{
-	// 			"messageKey": "account.invalid_argument.empty",
-	// 			"field":      "user_id",
-	// 		},
-	// 		{
-	// 			"messageKey": "account.invalid_argument.empty",
-	// 			"field":      "name",
-	// 		},
-	// 	},
-	//}
-	return &BucketeerError{
-		packageName: pkg,
-		errorType:   errorType,
-		message:     msg,
-		metadatas:   metadatas,
+	return &BktInvalidError{
+		BktFieldError: &BktFieldError{
+			BktError: &BktError{
+				packageName: pkg,
+				errorType:   errorType,
+				message:     msg,
+			},
+			field: field,
+		},
+		invalidType: invalidType,
 	}
 }

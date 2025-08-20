@@ -29,113 +29,92 @@ func TestNewGRPCStatus(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name                string
-		err                 error
-		anotherDetailData   []map[string]string
-		expectedCode        codes.Code
-		expectedMessage     string
-		expectedReason      string
-		expectedMetadataLen int
+		name             string
+		err              error
+		expectedCode     codes.Code
+		expectedMessage  string
+		expectedReason   string
+		expectedMetadata map[string]string
 	}{
 		{
-			name:                "ErrorInvalidArgument",
-			err:                 pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
-			expectedCode:        codes.InvalidArgument,
-			expectedMessage:     "test:invalid argument[field1:empty]",
-			expectedReason:      "INVALID_ARGUMENT",
-			expectedMetadataLen: 2,
+			name:            "ErrorInvalidArgument",
+			err:             pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
+			expectedCode:    codes.InvalidArgument,
+			expectedMessage: "test:invalid argument[field1:empty]",
+			expectedReason:  "INVALID_ARGUMENT",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.invalid_argument.empty",
+				"field":      "field1",
+			},
 		},
 		{
-			name:                "ErrorNotFound",
-			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
-			expectedCode:        codes.NotFound,
-			expectedMessage:     "test:not found, resource",
-			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 2,
+			name:            "ErrorNotFound",
+			err:             pkgErr.NewErrorNotFound("test", "not found", "resource"),
+			expectedCode:    codes.NotFound,
+			expectedMessage: "test:not found, resource",
+			expectedReason:  "NOT_FOUND",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.not_found",
+				"field":      "resource",
+			},
 		},
 		{
-			name:                "ErrorAlreadyExists",
-			err:                 pkgErr.NewErrorAlreadyExists("test", "already exists", "resource"),
-			expectedCode:        codes.AlreadyExists,
-			expectedMessage:     "test:already exists, resource",
-			expectedReason:      "ALREADY_EXISTS",
-			expectedMetadataLen: 2,
+			name:            "ErrorAlreadyExists",
+			err:             pkgErr.NewErrorAlreadyExists("test", "already exists"),
+			expectedCode:    codes.AlreadyExists,
+			expectedMessage: "test:already exists",
+			expectedReason:  "ALREADY_EXISTS",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.already_exists",
+			},
 		},
 		{
-			name:                "ErrorUnauthenticated",
-			err:                 pkgErr.NewErrorUnauthenticated("test", "unauthenticated"),
-			expectedCode:        codes.Unauthenticated,
-			expectedMessage:     "test:unauthenticated",
-			expectedReason:      "UNAUTHENTICATED",
-			expectedMetadataLen: 1,
+			name:            "ErrorUnauthenticated",
+			err:             pkgErr.NewErrorUnauthenticated("test", "unauthenticated"),
+			expectedCode:    codes.Unauthenticated,
+			expectedMessage: "test:unauthenticated",
+			expectedReason:  "UNAUTHENTICATED",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.unauthenticated",
+			},
 		},
 		{
-			name:                "ErrorPermissionDenied",
-			err:                 pkgErr.NewErrorPermissionDenied("test", "permission denied"),
-			expectedCode:        codes.PermissionDenied,
-			expectedMessage:     "test:permission denied",
-			expectedReason:      "PERMISSION_DENIED",
-			expectedMetadataLen: 1,
+			name:            "ErrorPermissionDenied",
+			err:             pkgErr.NewErrorPermissionDenied("test", "permission denied"),
+			expectedCode:    codes.PermissionDenied,
+			expectedMessage: "test:permission denied",
+			expectedReason:  "PERMISSION_DENIED",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.permission_denied",
+			},
 		},
 		{
-			name:                "ErrorUnexpectedAffectedRows",
-			err:                 pkgErr.NewErrorUnexpectedAffectedRows("test", "unexpected affected rows"),
-			expectedCode:        codes.Internal,
-			expectedMessage:     "test:unexpected affected rows",
-			expectedReason:      "UNEXPECTED_AFFECTED_ROWS",
-			expectedMetadataLen: 1,
+			name:            "ErrorUnexpectedAffectedRows",
+			err:             pkgErr.NewErrorUnexpectedAffectedRows("test", "unexpected affected rows"),
+			expectedCode:    codes.Internal,
+			expectedMessage: "test:unexpected affected rows",
+			expectedReason:  "UNEXPECTED_AFFECTED_ROWS",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.unexpected_affected_rows",
+			},
 		},
 		{
-			name:                "ErrorInternal",
-			err:                 pkgErr.NewErrorInternal("test", "internal error"),
-			expectedCode:        codes.Internal,
-			expectedMessage:     "test:internal error",
-			expectedReason:      "INTERNAL",
-			expectedMetadataLen: 1,
+			name:            "ErrorInternal",
+			err:             pkgErr.NewErrorInternal("test", "internal error"),
+			expectedCode:    codes.Internal,
+			expectedMessage: "test:internal error",
+			expectedReason:  "INTERNAL",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.internal",
+			},
 		},
 		{
-			name:                "Non-BucketeerError",
-			err:                 errors.New("standard error"),
-			expectedCode:        codes.Unknown,
-			expectedMessage:     "standard error",
-			expectedReason:      "UNKNOWN",
-			expectedMetadataLen: 0,
-		},
-		{
-			name:                "ErrorInvalidArgument with additional metadata",
-			err:                 pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
-			anotherDetailData:   []map[string]string{{"additional": "data"}},
-			expectedCode:        codes.InvalidArgument,
-			expectedMessage:     "test:invalid argument[field1:empty]",
-			expectedReason:      "INVALID_ARGUMENT",
-			expectedMetadataLen: 3,
-		},
-		{
-			name:                "ErrorNotFound with multiple additional metadata",
-			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
-			anotherDetailData:   []map[string]string{{"key1": "value1"}, {"key2": "value2"}},
-			expectedCode:        codes.NotFound,
-			expectedMessage:     "test:not found, resource",
-			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 4,
-		},
-		{
-			name:                "Non-BucketeerError with additional metadata",
-			err:                 errors.New("standard error"),
-			anotherDetailData:   []map[string]string{{"additional": "data"}},
-			expectedCode:        codes.Unknown,
-			expectedMessage:     "standard error",
-			expectedReason:      "UNKNOWN",
-			expectedMetadataLen: 1,
-		},
-		{
-			name:                "another metadata is nil",
-			err:                 pkgErr.NewErrorNotFound("test", "not found", "resource"),
-			anotherDetailData:   nil,
-			expectedCode:        codes.NotFound,
-			expectedMessage:     "test:not found, resource",
-			expectedReason:      "NOT_FOUND",
-			expectedMetadataLen: 2,
+			name:             "Non-BucketeerError",
+			err:              errors.New("standard error"),
+			expectedCode:     codes.Unknown,
+			expectedMessage:  "standard error",
+			expectedReason:   "UNKNOWN",
+			expectedMetadata: map[string]string{},
 		},
 	}
 
@@ -143,19 +122,20 @@ func TestNewGRPCStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			st := NewGRPCStatus(tt.err, tt.anotherDetailData...)
+			st := NewGRPCStatus(tt.err)
 
 			assert.Equal(t, tt.expectedCode, st.Code())
 
 			assert.Equal(t, tt.expectedMessage, st.Message())
 
 			details := st.Details()
-			assert.Len(t, details, tt.expectedMetadataLen)
 
 			for _, detail := range details {
 				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
 					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
 					assert.NotEmpty(t, errorInfo.Metadata)
+					assert.Equal(t, tt.expectedMetadata["messagekey"], errorInfo.Metadata["messageKey"])
+					assert.Equal(t, tt.expectedMetadata["field"], errorInfo.Metadata["field"])
 				} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
 					assert.Equal(t, "en", localizedMessage.Locale)
 					assert.Equal(t, st.Message(), localizedMessage.Message)
@@ -173,23 +153,6 @@ func TestNewGRPCStatus_NilError(t *testing.T) {
 	assert.Equal(t, codes.Unknown, st.Code())
 	assert.Equal(t, "", st.Message())
 	assert.Len(t, st.Details(), 0)
-}
-
-func TestNewGRPCStatus_WithDetailsError(t *testing.T) {
-	t.Parallel()
-
-	err := pkgErr.NewErrorInternal("test", "internal error")
-
-	largeMetadata := make([]map[string]string, 1000)
-	for i := 0; i < 1000; i++ {
-		largeMetadata[i] = map[string]string{
-			"key": "value",
-		}
-	}
-
-	st := NewGRPCStatus(err, largeMetadata...)
-
-	assert.Equal(t, codes.Internal, st.Code())
 }
 
 func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
@@ -227,7 +190,6 @@ func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
 			assert.Equal(t, codes.InvalidArgument, st.Code())
 
 			details := st.Details()
-			assert.Len(t, details, 2)
 			for _, detail := range details {
 				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
 					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
@@ -237,62 +199,14 @@ func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
 	}
 }
 
-func TestNewGRPCStatus_MetadataHandling(t *testing.T) {
-	t.Parallel()
-
-	err := pkgErr.NewErrorInvalidArgument("test", "multiple fields invalid", pkgErr.InvalidTypeEmpty, "field1", "field2", "field3")
-
-	st := NewGRPCStatus(err)
-
-	assert.Equal(t, codes.InvalidArgument, st.Code())
-
-	details := st.Details()
-	assert.Len(t, details, 4)
-
-	for _, detail := range details {
-		if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
-			assert.True(t, ok)
-			assert.Equal(t, "INVALID_ARGUMENT", errorInfo.Reason)
-			assert.Equal(t, "test.invalid_argument.empty", errorInfo.Metadata["messageKey"])
-		} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
-			assert.Equal(t, "en", localizedMessage.Locale)
-			assert.Equal(t, st.Message(), localizedMessage.Message)
-		} else {
-			assert.Fail(t, "unexpected detail type")
-		}
-	}
-}
-
-func TestNewGRPCStatus_ActualMessageFormat(t *testing.T) {
-	t.Parallel()
-
-	err := pkgErr.NewErrorNotFound("test", "not found", "resource")
-	st := NewGRPCStatus(err)
-
-	t.Logf("Actual message: %s", st.Message())
-	t.Logf("Actual code: %v", st.Code())
-
-	details := st.Details()
-	for i, detail := range details {
-		errorInfo, ok := detail.(*errdetails.ErrorInfo)
-		if ok {
-			t.Logf("Detail %d - Reason: %s, Domain: %s, Metadata: %v", i, errorInfo.Reason, errorInfo.Domain, errorInfo.Metadata)
-		}
-	}
-
-	assert.Equal(t, codes.NotFound, st.Code())
-	assert.NotEmpty(t, st.Message())
-}
-
 func TestNewGRPCStatus_EdgeCases(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name              string
-		err               error
-		anotherDetailData []map[string]string
-		expectedCode      codes.Code
-		expectedMessage   string
+		name            string
+		err             error
+		expectedCode    codes.Code
+		expectedMessage string
 	}{
 		{
 			name:            "Empty string error",
@@ -312,27 +226,13 @@ func TestNewGRPCStatus_EdgeCases(t *testing.T) {
 			expectedCode:    codes.Unknown,
 			expectedMessage: "error message with unicode: 🚀",
 		},
-		{
-			name:              "Empty metadata",
-			err:               pkgErr.NewErrorNotFound("test", "not found"),
-			anotherDetailData: []map[string]string{},
-			expectedCode:      codes.NotFound,
-			expectedMessage:   "test:not found",
-		},
-		{
-			name:              "Nil metadata",
-			err:               pkgErr.NewErrorNotFound("test", "not found"),
-			anotherDetailData: nil,
-			expectedCode:      codes.NotFound,
-			expectedMessage:   "test:not found",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			st := NewGRPCStatus(tt.err, tt.anotherDetailData...)
+			st := NewGRPCStatus(tt.err)
 
 			assert.Equal(t, tt.expectedCode, st.Code())
 			assert.Equal(t, tt.expectedMessage, st.Message())

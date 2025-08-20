@@ -39,7 +39,7 @@ var (
 	statusMissingAPIKeyName                      = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.AccountPackageName, "apikey name must be not empty", pkgErr.InvalidTypeEmpty, "apikey name"))
 	statusInvalidOrderBy                         = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.AccountPackageName, "order_by is invalid", pkgErr.InvalidTypeNotMatchFormat, "order_by"))
 	statusNotFound                               = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account"))
-	statusAlreadyExists                          = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists", "account"))
+	statusAlreadyExists                          = api.NewGRPCStatus(pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists"))
 	statusUnauthenticated                        = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(pkgErr.AccountPackageName, "account unauthenticated"))
 	statusPermissionDenied                       = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(pkgErr.AccountPackageName, "permission denied"))
 	statusSearchFilterNameIsEmpty                = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgument(pkgErr.AccountPackageName, "search filter name is empty", pkgErr.InvalidTypeEmpty, "search filter name"))

@@ -33,35 +33,6 @@ func TestBucketeerError_BasicProperties(t *testing.T) {
 	assert.Equal(t, "test:not found, resource", err.Error())
 }
 
-func TestBucketeerError_Metadatas(t *testing.T) {
-	t.Parallel()
-
-	err := NewErrorNotFound("test", "not found", "resource1", "resource2")
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 2)
-
-	expectedMessageKey := "test.not_found"
-	for _, metadata := range metadatas {
-		assert.Equal(t, expectedMessageKey, metadata["messageKey"])
-		assert.Contains(t, []string{"resource1", "resource2"}, metadata["field"])
-	}
-}
-
-func TestBucketeerError_AddMetadata(t *testing.T) {
-	t.Parallel()
-
-	err := NewErrorNotFound("test", "not found", "resource")
-	initialLen := len(err.Metadatas())
-
-	newMetadata := map[string]string{"key1": "value1", "key2": "value2"}
-	err.AddMetadata(newMetadata)
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, initialLen+1)
-	assert.Equal(t, newMetadata, metadatas[initialLen])
-}
-
 func TestBucketeerError_JoinError(t *testing.T) {
 	t.Parallel()
 
@@ -104,7 +75,7 @@ func TestBucketeerError_JoinError_ErrorsIs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bucketeerErr := &BucketeerError{
+			bucketeerErr := &BktError{
 				packageName: "test",
 				errorType:   ErrorTypeNotFound,
 				message:     "test error",
@@ -167,7 +138,6 @@ func TestBucketeerError_JoinError_Chain(t *testing.T) {
 
 	bucketeerErr.JoinError(err3)
 
-	// チェーンの各レベルが検知できることを確認
 	assert.ErrorIs(t, bucketeerErr, err3)
 	assert.ErrorIs(t, bucketeerErr, err2)
 	assert.ErrorIs(t, bucketeerErr, err1)
@@ -177,36 +147,28 @@ func TestNewErrorNotFound(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		pkg            string
-		message        string
-		args           []string
-		expectedMsg    string
-		expectedFields []string
+		name          string
+		pkg           string
+		message       string
+		field         string
+		expectedMsg   string
+		expectedField string
 	}{
 		{
-			name:           "basic not found error",
-			pkg:            "account",
-			message:        "user not found",
-			args:           []string{"user_id"},
-			expectedMsg:    "account:user not found, user_id",
-			expectedFields: []string{"user_id"},
+			name:          "basic not found error",
+			pkg:           "account",
+			message:       "user not found",
+			field:         "user_id",
+			expectedMsg:   "account:user not found, user_id",
+			expectedField: "user_id",
 		},
 		{
-			name:           "not found error with multiple fields",
-			pkg:            "feature",
-			message:        "feature not found",
-			args:           []string{"feature_id", "environment_id"},
-			expectedMsg:    "feature:feature not found, feature_id, environment_id",
-			expectedFields: []string{"feature_id", "environment_id"},
-		},
-		{
-			name:           "not found error without args",
-			pkg:            "test",
-			message:        "resource not found",
-			args:           []string{},
-			expectedMsg:    "test:resource not found",
-			expectedFields: []string{},
+			name:          "not found error without args",
+			pkg:           "test",
+			message:       "resource not found",
+			field:         "",
+			expectedMsg:   "test:resource not found",
+			expectedField: "",
 		},
 	}
 
@@ -214,19 +176,11 @@ func TestNewErrorNotFound(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := NewErrorNotFound(tt.pkg, tt.message, tt.args...)
+			err := NewErrorNotFound(tt.pkg, tt.message, tt.field)
 
 			assert.Equal(t, tt.pkg, err.PackageName())
 			assert.Equal(t, ErrorTypeNotFound, err.ErrorType())
 			assert.Equal(t, tt.expectedMsg, err.Message())
-
-			metadatas := err.Metadatas()
-			assert.Len(t, metadatas, len(tt.expectedFields))
-
-			for i, field := range tt.expectedFields {
-				assert.Equal(t, field, metadatas[i]["field"])
-				assert.Equal(t, tt.pkg+".not_found", metadatas[i]["messageKey"])
-			}
 		})
 	}
 }
@@ -234,16 +188,11 @@ func TestNewErrorNotFound(t *testing.T) {
 func TestNewErrorAlreadyExists(t *testing.T) {
 	t.Parallel()
 
-	err := NewErrorAlreadyExists("account", "user already exists", "email")
+	err := NewErrorAlreadyExists("account", "user already exists")
 
 	assert.Equal(t, "account", err.PackageName())
 	assert.Equal(t, ErrorTypeAlreadyExists, err.ErrorType())
-	assert.Equal(t, "account:user already exists, email", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 1)
-	assert.Equal(t, "email", metadatas[0]["field"])
-	assert.Equal(t, "account.already_exists", metadatas[0]["messageKey"])
+	assert.Equal(t, "account:user already exists", err.Message())
 }
 
 func TestNewErrorUnauthenticated(t *testing.T) {
@@ -254,24 +203,16 @@ func TestNewErrorUnauthenticated(t *testing.T) {
 	assert.Equal(t, "auth", err.PackageName())
 	assert.Equal(t, ErrorTypeUnauthenticated, err.ErrorType())
 	assert.Equal(t, "auth:invalid token", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
 }
 
 func TestNewErrorPermissionDenied(t *testing.T) {
 	t.Parallel()
 
-	err := NewErrorPermissionDenied("feature", "insufficient permissions", "feature_id")
+	err := NewErrorPermissionDenied("feature", "insufficient permissions")
 
 	assert.Equal(t, "feature", err.PackageName())
 	assert.Equal(t, ErrorTypePermissionDenied, err.ErrorType())
-	assert.Equal(t, "feature:insufficient permissions, feature_id", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 1)
-	assert.Equal(t, "feature_id", metadatas[0]["field"])
-	assert.Equal(t, "feature.permission_denied", metadatas[0]["messageKey"])
+	assert.Equal(t, "feature:insufficient permissions", err.Message())
 }
 
 func TestNewErrorUnexpectedAffectedRows(t *testing.T) {
@@ -282,9 +223,6 @@ func TestNewErrorUnexpectedAffectedRows(t *testing.T) {
 	assert.Equal(t, "database", err.PackageName())
 	assert.Equal(t, ErrorTypeUnexpectedAffectedRows, err.ErrorType())
 	assert.Equal(t, "database:unexpected affected rows", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
 }
 
 func TestNewErrorInternal(t *testing.T) {
@@ -295,67 +233,55 @@ func TestNewErrorInternal(t *testing.T) {
 	assert.Equal(t, "system", err.PackageName())
 	assert.Equal(t, ErrorTypeInternal, err.ErrorType())
 	assert.Equal(t, "system:internal server error", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 0)
 }
 
 func TestNewErrorInvalidArgument(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		pkg            string
-		message        string
-		invalidType    InvalidType
-		args           []string
-		expectedMsg    string
-		expectedFields []string
+		name          string
+		pkg           string
+		message       string
+		invalidType   InvalidType
+		field         string
+		expectedMsg   string
+		expectedField string
 	}{
 		{
-			name:           "empty field error",
-			pkg:            "account",
-			message:        "invalid argument",
-			invalidType:    InvalidTypeEmpty,
-			args:           []string{"email"},
-			expectedMsg:    "account:invalid argument[email:empty]",
-			expectedFields: []string{"email"},
+			name:          "empty field error",
+			pkg:           "account",
+			message:       "invalid argument",
+			invalidType:   InvalidTypeEmpty,
+			field:         "email",
+			expectedMsg:   "account:invalid argument[email:empty]",
+			expectedField: "email",
 		},
 		{
-			name:           "nil field error",
-			pkg:            "feature",
-			message:        "invalid input",
-			invalidType:    InvalidTypeNil,
-			args:           []string{"name"},
-			expectedMsg:    "feature:invalid input[name:nil]",
-			expectedFields: []string{"name"},
+			name:          "nil field error",
+			pkg:           "feature",
+			message:       "invalid input",
+			invalidType:   InvalidTypeNil,
+			field:         "name",
+			expectedMsg:   "feature:invalid input[name:nil]",
+			expectedField: "name",
 		},
 		{
-			name:           "format mismatch error",
-			pkg:            "validation",
-			message:        "format error",
-			invalidType:    InvalidTypeNotMatchFormat,
-			args:           []string{"date"},
-			expectedMsg:    "validation:format error[date:not_match_format]",
-			expectedFields: []string{"date"},
+			name:          "format mismatch error",
+			pkg:           "validation",
+			message:       "format error",
+			invalidType:   InvalidTypeNotMatchFormat,
+			field:         "date",
+			expectedMsg:   "validation:format error[date:not_match_format]",
+			expectedField: "date",
 		},
 		{
-			name:           "multiple fields error",
-			pkg:            "form",
-			message:        "validation failed",
-			invalidType:    InvalidTypeEmpty,
-			args:           []string{"username", "password"},
-			expectedMsg:    "form:validation failed[username:empty][password:empty]",
-			expectedFields: []string{"username", "password"},
-		},
-		{
-			name:           "empty message error",
-			pkg:            "test",
-			message:        "",
-			invalidType:    InvalidTypeEmpty,
-			args:           []string{"field"},
-			expectedMsg:    "test:invalid argument[field:empty]",
-			expectedFields: []string{"field"},
+			name:          "empty message error",
+			pkg:           "test",
+			message:       "",
+			invalidType:   InvalidTypeEmpty,
+			field:         "field",
+			expectedMsg:   "test:invalid argument[field:empty]",
+			expectedField: "field",
 		},
 	}
 
@@ -363,20 +289,11 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := NewErrorInvalidArgument(tt.pkg, tt.message, tt.invalidType, tt.args...)
+			err := NewErrorInvalidArgument(tt.pkg, tt.message, tt.invalidType, tt.field)
 
 			assert.Equal(t, tt.pkg, err.PackageName())
 			assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
 			assert.Equal(t, tt.expectedMsg, err.Message())
-
-			metadatas := err.Metadatas()
-			assert.Len(t, metadatas, len(tt.expectedFields))
-
-			expectedMessageKey := tt.pkg + ".invalid_argument." + string(tt.invalidType)
-			for i, field := range tt.expectedFields {
-				assert.Equal(t, field, metadatas[i]["field"])
-				assert.Equal(t, expectedMessageKey, metadatas[i]["messageKey"])
-			}
 		})
 	}
 }
@@ -388,19 +305,14 @@ func TestNewErrorInvalidArgument_EmptyInvalidType(t *testing.T) {
 
 	assert.Equal(t, "test", err.PackageName())
 	assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
-	assert.Equal(t, "test:invalid[field:unknown]", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 1)
-	assert.Equal(t, "field", metadatas[0]["field"])
-	assert.Equal(t, "test.invalid_argument.unknown", metadatas[0]["messageKey"])
+	assert.Equal(t, "test:invalid, field", err.Message())
 }
 
 func TestBucketeerError_Unwrap(t *testing.T) {
 	t.Parallel()
 
 	originalErr := errors.New("original error")
-	bucketeerErr := &BucketeerError{
+	bucketeerErr := &BktError{
 		packageName: "test",
 		errorType:   ErrorTypeInternal,
 		message:     "test error",
@@ -417,24 +329,6 @@ func TestBucketeerError_EmptyArgs(t *testing.T) {
 	err := NewErrorNotFound("test", "not found", "")
 
 	assert.Equal(t, "test:not found", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 1)
-	assert.Equal(t, "", metadatas[0]["field"])
-}
-
-func TestBucketeerError_MultipleEmptyArgs(t *testing.T) {
-	t.Parallel()
-
-	err := NewErrorNotFound("test", "not found", "", "", "valid_field")
-
-	assert.Equal(t, "test:not found, valid_field", err.Message())
-
-	metadatas := err.Metadatas()
-	assert.Len(t, metadatas, 3)
-	assert.Equal(t, "", metadatas[0]["field"])
-	assert.Equal(t, "", metadatas[1]["field"])
-	assert.Equal(t, "valid_field", metadatas[2]["field"])
 }
 
 func TestErrorType_String(t *testing.T) {
