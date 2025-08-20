@@ -44,9 +44,11 @@ const CustomMenuList = (props: MenuListProps<Option, false>) => {
           <IconChecked className="text-primary-500 w-6" />
         </div>
       )}
-      {selectedChild && !selected?.__isNew__ && <Divider className="mt-0.5" />}
+      {selectedChild && !selected?.__isNew__ && otherChildren.length > 0 && (
+        <Divider className="mt-0.5" />
+      )}
 
-      {!hasCreateOption && (
+      {!hasCreateOption && otherChildren.length > 0 && (
         <>
           <div
             className={cn(
