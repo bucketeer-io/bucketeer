@@ -153,7 +153,11 @@ const RuleForm = ({
       ),
     [feature.rules]
   );
-  const attributeKeyOptions = uniq([...formAttributes, ...attributeKeys]);
+
+  const attributeKeyOptions = uniq([
+    ...formAttributes,
+    ...attributeKeys
+  ]).sort();
 
   return (
     <>
