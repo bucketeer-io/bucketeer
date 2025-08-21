@@ -79,6 +79,18 @@ const AttributeKeySelect = ({
       noOptionsMessage={() => (
         <UserMessage message={t('no-opts-type-to-create')} />
       )}
+      isValidNewOption={(inputValue, _value, options) => {
+        if (!inputValue) return false;
+        const existingOptions = options.flatMap(
+          group => group.options as Option[]
+        );
+
+        const exists = existingOptions.some(
+          opt => opt.label.toLowerCase() === inputValue.toLowerCase()
+        );
+
+        return !exists;
+      }}
     />
   );
 };
