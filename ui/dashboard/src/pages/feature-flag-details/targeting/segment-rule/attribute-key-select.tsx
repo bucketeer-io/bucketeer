@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { components, GroupBase } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
 import { useTranslation } from 'i18n';
@@ -11,33 +10,21 @@ const AttributeKeySelect = ({
   createdOptions,
   sdkOptions,
   value,
-  onChange
+  onChange,
+  onCreateOption
 }: {
   createdOptions: Option[];
   sdkOptions: Option[];
   value: Option;
   onChange: (v: string) => void;
+  onCreateOption: (v: string) => void;
 }) => {
   const { t } = useTranslation(['form', 'common', 'table']);
-  const [createdOptionList, setCreatedOptionList] =
-    useState<Option[]>(createdOptions);
-
-  const onCreateOption = (value: string) => {
-    setCreatedOptionList(prev => [
-      ...(prev?.filter(opt => !opt.__isNew__) || []),
-      { label: value, value, __isNew__: true }
-    ]);
-    onChange(value);
-  };
-
-  useEffect(() => {
-    setCreatedOptionList(createdOptions);
-  }, [createdOptions]);
 
   return (
     <ReactCreatableSelect<Option, false, GroupBase<Option>>
       options={[
-        { label: '', options: createdOptionList },
+        { label: '', options: createdOptions },
         {
           label: t('form:feature-flags.attribute-key-select-title'),
           options: sdkOptions

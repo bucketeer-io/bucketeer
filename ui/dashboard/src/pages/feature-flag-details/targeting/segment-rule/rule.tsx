@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -62,6 +62,18 @@ const RuleForm = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const isLanguageJapanese = getLanguage() === Language.JAPANESE;
+
+  const formAttributeKeys: string[] = useMemo(
+    () =>
+      compact(
+        feature.rules
+          ?.flatMap(item => item.clauses)
+          .map(clause => clause.attribute)
+      ),
+    [feature.rules]
+  );
+
+  const [createdOptionList, setCreatedOptionList] = useState<string[]>([]);
 
   const methods = useFormContext<TargetingSchema>();
   const {
@@ -145,20 +157,11 @@ const RuleForm = ({
     [clauses]
   );
 
-  const formAttributeKeys: string[] = useMemo(
-    () =>
-      compact(
-        feature.rules
-          ?.flatMap(item => item.clauses)
-          .map(clause => clause.attribute)
-      ),
-    [feature.rules]
-  );
-
-  const createdAttributeKeys = useMemo(
-    () => difference(uniq(formAttributeKeys), sdkAttributeKeys).sort(),
-    [formAttributeKeys]
-  );
+  useEffect(() => {
+    setCreatedOptionList(
+      difference(uniq(formAttributeKeys), sdkAttributeKeys).sort()
+    );
+  }, [formAttributeKeys, sdkAttributeKeys]);
 
   return (
     <>
@@ -321,7 +324,7 @@ const RuleForm = ({
                                   />
                                 ) : (
                                   <AttributeKeySelect
-                                    createdOptions={createdAttributeKeys?.map(
+                                    createdOptions={createdOptionList?.map(
                                       (item: string) => ({
                                         label: item,
                                         value: item
@@ -334,6 +337,12 @@ const RuleForm = ({
                                         value: item
                                       }))}
                                     onChange={value => field.onChange(value)}
+                                    onCreateOption={(value: string) => {
+                                      setCreatedOptionList(prev =>
+                                        [...prev, value].sort()
+                                      );
+                                      field.onChange(value);
+                                    }}
                                     value={{
                                       label: field.value,
                                       value: field.value
