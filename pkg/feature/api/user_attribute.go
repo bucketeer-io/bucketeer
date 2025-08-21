@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"sort"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -40,6 +41,7 @@ func (s *FeatureService) GetUserAttributeKeys(
 	}
 
 	userAttributeKeys, err := s.userAttributesCache.GetUserAttributeKeyAll(req.EnvironmentId)
+	sort.Strings(userAttributeKeys)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get user attribute keys",

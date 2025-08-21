@@ -18,7 +18,6 @@ package v3
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -96,6 +95,5 @@ func (u *userAttributesCache) GetUserAttributeKeyAll(
 	if err != nil {
 		return nil, err
 	}
-	sort.Strings(keys)
 	return keys, nil
 }
