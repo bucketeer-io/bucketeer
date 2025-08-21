@@ -104,7 +104,7 @@ gen_proto: clean_proto gen_proto_external_api
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
 	-I $(OPENAPI) \
-	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/external/*.proto" -not -path "**/auth/*.proto" -not -path "**/test/*.proto" -not -path "**/eventpersisterdwh/*.proto" -not -path "**/batch/*.proto" -not -path "**/openapi/web_default_settings.proto"  -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
+	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/external/*.proto" -not -path "**/test/*.proto" -not -path "**/eventpersisterdwh/*.proto" -not -path "**/batch/*.proto" -not -path "**/openapi/web_default_settings.proto"  -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
 
 
 .PHONY: gen_proto_external_api
