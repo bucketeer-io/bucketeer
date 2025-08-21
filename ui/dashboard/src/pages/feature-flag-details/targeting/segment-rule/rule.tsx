@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -6,7 +6,10 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
+import compact from 'lodash/compact';
+import difference from 'lodash/difference';
 import omit from 'lodash/omit';
+import uniq from 'lodash/uniq';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, UserSegment } from '@types';
 import { truncateBySide } from 'utils/converts';
@@ -32,15 +35,23 @@ import VariationLabel from 'elements/variation-label';
 import { TargetingSchema } from '../form-schema';
 import { UserMessage } from '../individual-rule';
 import { RuleClauseType } from '../types';
+import AttributeKeySelect from './attribute-key-select';
 
 interface Props {
   feature: Feature;
   features: Feature[];
   segmentIndex: number;
   userSegments?: UserSegment[];
+  sdkAttributeKeys: string[];
 }
 
-const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
+const RuleForm = ({
+  feature,
+  features,
+  segmentIndex,
+  userSegments,
+  sdkAttributeKeys
+}: Props) => {
   const { t } = useTranslation(['form', 'common', 'table']);
   const {
     conditionerCompareOptions,
@@ -51,6 +62,18 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const isLanguageJapanese = getLanguage() === Language.JAPANESE;
+
+  const formAttributeKeys: string[] = useMemo(
+    () =>
+      compact(
+        feature.rules
+          ?.flatMap(item => item.clauses)
+          .map(clause => clause.attribute)
+      ),
+    [feature.rules]
+  );
+
+  const [createdOptionList, setCreatedOptionList] = useState<string[]>([]);
 
   const methods = useFormContext<TargetingSchema>();
   const {
@@ -133,6 +156,12 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
     },
     [clauses]
   );
+
+  useEffect(() => {
+    setCreatedOptionList(
+      difference(uniq(formAttributeKeys), sdkAttributeKeys).sort()
+    );
+  }, [formAttributeKeys, sdkAttributeKeys]);
 
   return (
     <>
@@ -294,7 +323,31 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                     contentClassName="!w-[500px] !max-w-[500px]"
                                   />
                                 ) : (
-                                  <Input {...field} />
+                                  <AttributeKeySelect
+                                    createdOptions={createdOptionList?.map(
+                                      (item: string) => ({
+                                        label: item,
+                                        value: item
+                                      })
+                                    )}
+                                    sdkOptions={sdkAttributeKeys
+                                      ?.sort()
+                                      .map((item: string) => ({
+                                        label: item,
+                                        value: item
+                                      }))}
+                                    onChange={value => field.onChange(value)}
+                                    onCreateOption={(value: string) => {
+                                      setCreatedOptionList(prev =>
+                                        [...prev, value].sort()
+                                      );
+                                      field.onChange(value);
+                                    }}
+                                    value={{
+                                      label: field.value,
+                                      value: field.value
+                                    }}
+                                  />
                                 )}
                               </Form.Control>
                               <Form.Message />
@@ -484,6 +537,13 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                       );
                                       field.onChange(values);
                                     }}
+                                    formatCreateLabel={value => (
+                                      <p>
+                                        {`${t('create-option', {
+                                          option: value
+                                        })}`}
+                                      </p>
+                                    )}
                                     noOptionsMessage={() => (
                                       <UserMessage
                                         message={t('no-opts-type-to-create')}
