@@ -1,88 +1,77 @@
-import React from 'react';
-import { components, MenuListProps } from 'react-select';
+import { useState } from 'react';
+import { components, GroupBase } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
 import { useTranslation } from 'i18n';
-import { t } from 'i18next';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import { colorStyles, Option, optionStyle } from 'components/creatable-select';
-import Divider from 'components/divider';
 import { UserMessage } from '../individual-rule';
 
-const CustomMenuList = (props: MenuListProps<Option, false>) => {
-  const { getValue, children } = props;
-  const selected = getValue()[0] as
-    | (Option & { __isNew__?: boolean })
-    | undefined;
-
-  let selectedChild: React.ReactNode = null;
-  const otherChildren: React.ReactNode[] = [];
-  let hasCreateOption = false;
-
-  React.Children.forEach(children, child => {
-    if (!React.isValidElement(child)) return;
-
-    const data = (child.props as { data?: Option & { __isNew__?: boolean } })
-      .data;
-
-    if (data?.__isNew__) {
-      hasCreateOption = true;
-    }
-
-    if (selected && data?.value === selected.value) {
-      selectedChild = child;
-    } else {
-      otherChildren.push(child);
-    }
-  });
-
-  return (
-    <components.MenuList {...props}>
-      {selectedChild && !selected?.__isNew__ && (
-        <div className="flex items-center justify-between w-full px-3 py-1.5">
-          <span>{selected?.label}</span>
-          <IconChecked className="text-primary-500 w-6" />
-        </div>
-      )}
-      {selectedChild && !selected?.__isNew__ && otherChildren.length > 0 && (
-        <Divider className="mt-0.5" />
-      )}
-
-      {!hasCreateOption && otherChildren.length > 0 && (
-        <>
-          <div
-            className={cn(
-              'typo-para-tiny text-gray-600 bg-gray-100 relative w-full px-3 py-2.5',
-              { '-mt-1 rounded-t-md': !selectedChild }
-            )}
-          >
-            {t('form:feature-flags.attribute-key-select-title')}
-          </div>
-          <Divider className="mb-0.5" />
-        </>
-      )}
-
-      {otherChildren}
-    </components.MenuList>
-  );
-};
-
 const AttributeKeySelect = ({
-  options,
+  createdOptions,
+  sdkOptions,
   value,
   onChange
 }: {
-  options: Option[];
+  createdOptions: Option[];
+  sdkOptions: Option[];
   value: Option;
   onChange: (v: string) => void;
 }) => {
   const { t } = useTranslation(['form', 'common', 'table']);
+  const [createdOptionList, setCreatedOptionList] =
+    useState<Option[]>(createdOptions);
+
+  const onCreateOption = (value: string) => {
+    setCreatedOptionList(prev => [
+      ...(prev?.filter(opt => !opt.__isNew__) || []),
+      { label: value, value, __isNew__: true }
+    ]);
+    onChange(value);
+  };
 
   return (
-    <ReactCreatableSelect<Option, false>
-      options={options}
+    <ReactCreatableSelect<Option, false, GroupBase<Option>>
+      options={[
+        { label: '', options: createdOptionList },
+        {
+          label: t('form:feature-flags.attribute-key-select-title'),
+          options: sdkOptions
+        }
+      ]}
       classNamePrefix="react-select"
-      components={{ MenuList: CustomMenuList }}
+      components={{
+        MenuList: props => (
+          <components.MenuList
+            {...props}
+            className="!max-h-[250px] !-mt-1 overflow-x-hidden overflow-y-auto small-scroll"
+          />
+        ),
+        Option: props => (
+          <components.Option
+            {...props}
+            className={cn(
+              'flex items-center justify-between w-full px-3 py-1.5 mb-0.5',
+              props.isSelected && 'bg-gray-100'
+            )}
+          >
+            <span>{props.data.label}</span>
+            {props.isSelected && (
+              <IconChecked className="text-primary-500 w-6" />
+            )}
+          </components.Option>
+        ),
+        GroupHeading: props =>
+          props.children && (
+            <div
+              className={cn(
+                'typo-para-tiny text-gray-600 bg-gray-100 relative w-full px-2 py-2.5 mb-2'
+              )}
+            >
+              {props.children}
+            </div>
+          )
+      }}
       styles={{
         option: (styles, props) => optionStyle(styles, props, false),
         ...colorStyles
@@ -93,12 +82,9 @@ const AttributeKeySelect = ({
         onChange(newValue.value);
       }}
       formatCreateLabel={value => (
-        <p>
-          {`${t('create-option', {
-            option: value
-          })}`}
-        </p>
+        <p>{`${t('create-option', { option: value })}`}</p>
       )}
+      onCreateOption={onCreateOption}
       noOptionsMessage={() => (
         <UserMessage message={t('no-opts-type-to-create')} />
       )}

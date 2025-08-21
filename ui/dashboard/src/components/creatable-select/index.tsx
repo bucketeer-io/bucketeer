@@ -59,13 +59,13 @@ export const optionStyle = (
   props: OptionProps<Option, boolean, GroupBase<Option>>,
   isHiddenCreateNewOption: boolean
 ) => {
-  const { isFocused, data } = props;
+  const { isFocused, data, isSelected } = props;
 
   const isNewOption = data?.__isNew__;
 
   return {
     ...styles,
-    backgroundColor: isFocused ? backgroundColor : undefined,
+    backgroundColor: isFocused && !isSelected ? backgroundColor : undefined,
     color: textColor,
     ':hover': {
       backgroundColor: '#FAFAFC !important',

@@ -7,6 +7,7 @@ import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
+import difference from 'lodash/difference';
 import omit from 'lodash/omit';
 import uniq from 'lodash/uniq';
 import { v4 as uuid } from 'uuid';
@@ -41,7 +42,7 @@ interface Props {
   features: Feature[];
   segmentIndex: number;
   userSegments?: UserSegment[];
-  attributeKeys: string[];
+  sdkAttributeKeys: string[];
 }
 
 const RuleForm = ({
@@ -49,7 +50,7 @@ const RuleForm = ({
   features,
   segmentIndex,
   userSegments,
-  attributeKeys
+  sdkAttributeKeys
 }: Props) => {
   const { t } = useTranslation(['form', 'common', 'table']);
   const {
@@ -144,20 +145,20 @@ const RuleForm = ({
     [clauses]
   );
 
-  const formAttributes: string[] = useMemo(
+  const formAttributeKeys: string[] = useMemo(
     () =>
       compact(
         feature.rules
           ?.flatMap(item => item.clauses)
-          .map(clause => clause.attribute && clause.attribute)
+          .map(clause => clause.attribute)
       ),
     [feature.rules]
   );
 
-  const attributeKeyOptions = uniq([
-    ...formAttributes,
-    ...attributeKeys
-  ]).sort();
+  const createdAttributeKeys = useMemo(
+    () => difference(uniq(formAttributeKeys), sdkAttributeKeys).sort(),
+    [formAttributeKeys]
+  );
 
   return (
     <>
@@ -320,12 +321,18 @@ const RuleForm = ({
                                   />
                                 ) : (
                                   <AttributeKeySelect
-                                    options={attributeKeyOptions?.map(
+                                    createdOptions={createdAttributeKeys?.map(
                                       (item: string) => ({
                                         label: item,
                                         value: item
                                       })
                                     )}
+                                    sdkOptions={sdkAttributeKeys
+                                      ?.sort()
+                                      .map((item: string) => ({
+                                        label: item,
+                                        value: item
+                                      }))}
                                     onChange={value => field.onChange(value)}
                                     value={{
                                       label: field.value,

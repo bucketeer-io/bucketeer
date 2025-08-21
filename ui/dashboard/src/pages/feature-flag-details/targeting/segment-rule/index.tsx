@@ -72,7 +72,7 @@ const TargetSegmentRule = ({
 
   const segmentRulesWatch = watch('segmentRules');
   const userSegments = segmentCollection?.segments || [];
-  const attributeKeys = keysCollection?.userAttributeKeys || [];
+  const sdkAttributeKeys = keysCollection?.userAttributeKeys || [];
 
   const handleChangeIndexRule = useCallback(
     (type: 'increase' | 'decrease', currentIndex: number) => {
@@ -176,7 +176,7 @@ const TargetSegmentRule = ({
                   features={features}
                   segmentIndex={segmentIndex}
                   userSegments={userSegments}
-                  attributeKeys={attributeKeys}
+                  sdkAttributeKeys={sdkAttributeKeys}
                 />
                 <SegmentVariation
                   feature={feature}
