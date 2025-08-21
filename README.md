@@ -7,6 +7,12 @@ Bucketeer offers advanced features, such as dark launch and staged rollouts, tha
 
 We are preparing and making the installation process simpler so anyone can easily use it. Stay tuned for weekly updates!
 
+## Try now
+
+Try Bucketeer online with our [online demo](https://app.bucketeer.io/demo).
+
+![Bucketeer Feature Flag Dashboard](/static-files/img/feature-flag-list-page.png)
+
 ## Bucketeer Features
 
 ### Feature Flags
