@@ -42,22 +42,7 @@ func NewGRPCStatus(err error) *status.Status {
 	} else if errors.As(err, &bucketeerErr) {
 		return convertBktError(bucketeerErr)
 	} else {
-		reason := "UNKNOWN"
-		st := status.New(codes.Unknown, err.Error())
-		metadata := map[string]string{
-			"message": err.Error(),
-		}
-		packageName := "unknown"
-
-		st, err = st.WithDetails(&errdetails.ErrorInfo{
-			Reason:   reason,
-			Domain:   packageName + bktDomain,
-			Metadata: metadata,
-		})
-		if err != nil {
-			return status.New(codes.Internal, err.Error())
-		}
-		return st
+		return convertUnknownError(err)
 	}
 }
 
@@ -111,6 +96,23 @@ func convertInvalidError(invalidError *pkgErr.BktInvalidError) *status.Status {
 	})
 	if err != nil {
 		return status.New(codes.Internal, err.Error())
+	}
+	return st
+}
+
+func convertUnknownError(err error) *status.Status {
+	st := status.New(codes.Unknown, err.Error())
+	metadata := map[string]string{
+		"messageKey": "unknown",
+		"message":    err.Error(),
+	}
+	st, detailErr := st.WithDetails(&errdetails.ErrorInfo{
+		Reason:   "UNKNOWN",
+		Domain:   "unknown" + bktDomain,
+		Metadata: metadata,
+	})
+	if detailErr != nil {
+		return status.New(codes.Internal, detailErr.Error())
 	}
 	return st
 }

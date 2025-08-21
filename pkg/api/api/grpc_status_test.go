@@ -109,12 +109,15 @@ func TestNewGRPCStatus(t *testing.T) {
 			},
 		},
 		{
-			name:             "Non-BucketeerError",
-			err:              errors.New("standard error"),
-			expectedCode:     codes.Unknown,
-			expectedMessage:  "standard error",
-			expectedReason:   "UNKNOWN",
-			expectedMetadata: map[string]string{},
+			name:            "Non-BucketeerError",
+			err:             errors.New("standard error"),
+			expectedCode:    codes.Unknown,
+			expectedMessage: "standard error",
+			expectedReason:  "UNKNOWN",
+			expectedMetadata: map[string]string{
+				"messagekey": "unknown",
+				"message":    "standard error",
+			},
 		},
 	}
 
@@ -136,6 +139,7 @@ func TestNewGRPCStatus(t *testing.T) {
 					assert.NotEmpty(t, errorInfo.Metadata)
 					assert.Equal(t, tt.expectedMetadata["messagekey"], errorInfo.Metadata["messageKey"])
 					assert.Equal(t, tt.expectedMetadata["field"], errorInfo.Metadata["field"])
+					assert.Equal(t, tt.expectedMetadata["message"], errorInfo.Metadata["message"])
 				} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
 					assert.Equal(t, "en", localizedMessage.Locale)
 					assert.Equal(t, st.Message(), localizedMessage.Message)
