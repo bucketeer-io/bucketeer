@@ -38,33 +38,44 @@ func TestGetUserAttributeKeyAllCache(t *testing.T) {
 	defer mockController.Finish()
 
 	indexKey := fmt.Sprintf("%s:%s:keys", testEnvironmentId, userAttributeKind)
-	expectedAttributeKeys := []string{"key1", "key2"}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*userAttributesCache)
-		expectedErr error
+		desc                  string
+		setup                 func(*userAttributesCache)
+		expectedErr           error
+		expectedAttributeKeys []string
 	}{
 		{
 			desc: "error_smembers",
 			setup: func(uac *userAttributesCache) {
 				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return(nil, errors.New("smembers error"))
 			},
-			expectedErr: errors.New("smembers error"),
+			expectedErr:           errors.New("smembers error"),
+			expectedAttributeKeys: nil,
 		},
 		{
 			desc: "success",
 			setup: func(uac *userAttributesCache) {
-				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return(expectedAttributeKeys, nil)
+				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return([]string{"key1", "key2"}, nil)
 			},
-			expectedErr: nil,
+			expectedErr:           nil,
+			expectedAttributeKeys: []string{"key1", "key2"},
+		},
+		{
+			desc: "success_sorted",
+			setup: func(uac *userAttributesCache) {
+				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return([]string{"banana", "apple", "cherry", "date", "-apple"}, nil)
+			},
+			expectedErr:           nil,
+			expectedAttributeKeys: []string{"-apple", "apple", "banana", "cherry", "date"},
 		},
 		{
 			desc: "success_empty",
 			setup: func(uac *userAttributesCache) {
 				uac.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().SMembers(indexKey).Return([]string{}, nil)
 			},
-			expectedErr: nil,
+			expectedErr:           nil,
+			expectedAttributeKeys: []string{},
 		},
 	}
 	for _, p := range patterns {
@@ -73,19 +84,9 @@ func TestGetUserAttributeKeyAllCache(t *testing.T) {
 			p.setup(uac)
 			attributeKeys, err := uac.GetUserAttributeKeyAll(testEnvironmentId)
 			if err == nil {
-				if p.desc == "success" {
-					assert.Len(t, attributeKeys, len(expectedAttributeKeys))
-					for i, expectedKey := range expectedAttributeKeys {
-						assert.Equal(t, expectedKey, attributeKeys[i])
-					}
-				} else if p.desc == "success_empty" {
-					assert.Len(t, attributeKeys, 0)
-				}
-			}
-			if p.expectedErr != nil {
-				assert.EqualError(t, err, p.expectedErr.Error())
+				assert.Equal(t, p.expectedAttributeKeys, attributeKeys)
 			} else {
-				assert.NoError(t, err)
+				assert.EqualError(t, err, p.expectedErr.Error())
 			}
 		})
 	}
