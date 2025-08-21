@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Maintenance Mode - Bucketeer Console</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, 'Helvetica Neue', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2d3748;
+        line-height: 1.6;
+      }
+
+      .maintenance-container {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        max-width: 540px;
+        margin: 2rem;
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .maintenance-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: #667eea;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      h1 {
+        color: #2d3748;
+        margin-bottom: 1rem;
+        font-size: 2.25rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+      }
+
+      .subtitle {
+        color: #4a5568;
+        font-size: 1.125rem;
+        margin-bottom: 2rem;
+        font-weight: 500;
+      }
+
+      .description {
+        color: #718096;
+        font-size: 1rem;
+        line-height: 1.7;
+        margin-bottom: 2.5rem;
+      }
+
+      .status-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .status-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .status-label {
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      .status-value {
+        color: #667eea;
+        font-weight: 500;
+      }
+
+      .refresh-info {
+        font-size: 0.875rem;
+        color: #a0aec0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .refresh-dot {
+        width: 6px;
+        height: 6px;
+        background: #a0aec0;
+        border-radius: 50%;
+        animation: blink 2s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 1rem;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
+        animation: progress 30s linear infinite;
+      }
+
+      @keyframes progress {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .maintenance-container {
+          margin: 1rem;
+          padding: 2rem;
+        }
+
+        h1 {
+          font-size: 1.875rem;
+        }
+
+        .maintenance-icon {
+          font-size: 3rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="maintenance-container">
+      <div class="maintenance-icon">🔧</div>
+      <h1>Maintenance Mode</h1>
+      <div class="subtitle">System Temporarily Unavailable</div>
+      <p class="description">
+        We're currently performing scheduled maintenance to improve your
+        experience with Bucketeer Console. Our team is working to get everything
+        back online as quickly as possible.
+      </p>
+
+      <div class="status-card">
+        <div class="status-row">
+          <span class="status-label">Status:</span>
+          <span class="status-value">Maintenance in progress</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Expected duration:</span>
+          <span class="status-value">Please check back soon</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Service:</span>
+          <span class="status-value">Bucketeer Console</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="refresh-info">
+        <div class="refresh-dot"></div>
+        <span>This page will automatically refresh every 30 seconds</span>
+      </div>
+    </div>
+
+    <script>
+      // Auto-refresh every 30 seconds
+      let refreshTimer;
+      let countdownTimer;
+
+      function startRefreshCountdown() {
+        let seconds = 30;
+
+        function updateCountdown() {
+          if (seconds > 0) {
+            seconds--;
+            setTimeout(updateCountdown, 1000);
+          } else {
+            // Reset the progress bar animation
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.animation = 'none';
+            setTimeout(() => {
+              progressFill.style.animation = 'progress 30s linear infinite';
+            }, 50);
+
+            // Refresh the page
+            window.location.reload();
+          }
+        }
+
+        updateCountdown();
+      }
+
+      // Start the countdown when page loads
+      document.addEventListener('DOMContentLoaded', startRefreshCountdown);
+
+      // Add some visual feedback when the user tries to interact
+      document.addEventListener('click', function (e) {
+        const container = document.querySelector('.maintenance-container');
+        container.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          container.style.transform = 'scale(1)';
+        }, 150);
+      });
+    </script>
+  </body>
+</html>
