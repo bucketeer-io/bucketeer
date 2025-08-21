@@ -35,12 +35,12 @@ func NewGRPCStatus(err error) *status.Status {
 	if err == nil {
 		return status.New(codes.Unknown, "")
 	}
-	if errors.As(err, &bucketeerErr) {
-		return convertBktError(bucketeerErr)
+	if errors.As(err, &bktInvalidError) {
+		return convertInvalidError(bktInvalidError)
 	} else if errors.As(err, &bktFieldError) {
 		return convertFieldError(bktFieldError)
-	} else if errors.As(err, &bktInvalidError) {
-		return convertInvalidError(bktInvalidError)
+	} else if errors.As(err, &bucketeerErr) {
+		return convertBktError(bucketeerErr)
 	} else {
 		reason := "UNKNOWN"
 		st := status.New(codes.Unknown, err.Error())
@@ -62,7 +62,7 @@ func NewGRPCStatus(err error) *status.Status {
 }
 
 func convertBktError(bktError *pkgErr.BktError) *status.Status {
-	st := status.New(convertStatusCode(bktError.ErrorType()), bktError.Message())
+	st := status.New(convertStatusCode(bktError.ErrorType()), bktError.Error())
 	metadata := map[string]string{
 		"messageKey": bktError.PackageName() + "." + string(bktError.ErrorType()),
 	}
@@ -79,7 +79,7 @@ func convertBktError(bktError *pkgErr.BktError) *status.Status {
 }
 
 func convertFieldError(fieldError *pkgErr.BktFieldError) *status.Status {
-	st := status.New(convertStatusCode(fieldError.ErrorType()), fieldError.Message())
+	st := status.New(convertStatusCode(fieldError.ErrorType()), fieldError.Error())
 	metadata := map[string]string{
 		"messageKey": fieldError.PackageName() + "." + string(fieldError.ErrorType()),
 		"field":      fieldError.Field(),
@@ -97,7 +97,7 @@ func convertFieldError(fieldError *pkgErr.BktFieldError) *status.Status {
 }
 
 func convertInvalidError(invalidError *pkgErr.BktInvalidError) *status.Status {
-	st := status.New(codes.InvalidArgument, invalidError.Message())
+	st := status.New(codes.InvalidArgument, invalidError.Error())
 	mkey := invalidError.PackageName() + "." + string(invalidError.ErrorType()) + "." + string(invalidError.InvalidType())
 	metadata := map[string]string{
 		"messageKey": mkey,

@@ -14,7 +14,10 @@
 
 package error
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	AccountPackageName = "account"
@@ -34,25 +37,42 @@ const (
 
 // Base error - no field needed
 type BktError struct {
-	packageName string
-	errorType   ErrorType
-	message     string
-	err         error
+	packageName  string
+	errorType    ErrorType
+	message      string
+	wrappedError error
 }
 
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
-func (e *BktError) Message() string      { return e.message }
-func (e *BktError) Error() string        { return e.message }
-func (e *BktError) Unwrap() error        { return e.err }
-func (e *BktError) JoinError(err error) {
-	e.err = errors.Join(e.err, err)
+func (e *BktError) Error() string {
+	msg := e.packageName + ":" + e.message
+	if e.wrappedError != nil {
+		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
+	}
+	return msg
+}
+
+func (e *BktError) Unwrap() error { return e.wrappedError }
+func (e *BktError) Wrap(err error) {
+	e.wrappedError = errors.Join(e.wrappedError, err)
 }
 
 // BktFieldError represents an error with a specific field
 type BktFieldError struct {
 	*BktError
 	field string
+}
+
+func (e *BktFieldError) Error() string {
+	msg := e.packageName + ":" + e.message
+	if e.field != "" {
+		msg += ", " + e.field
+	}
+	if e.wrappedError != nil {
+		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
+	}
+	return msg
 }
 
 func (e *BktFieldError) Field() string {
@@ -64,37 +84,43 @@ type BktInvalidError struct {
 	invalidType InvalidType
 }
 
+func (e *BktInvalidError) Error() string {
+	if e.message == "" {
+		e.message = "invalid argument"
+	}
+
+	msg := e.packageName + ":" + e.message
+	if e.field != "" {
+		if e.invalidType != "" {
+			msg += "[" + e.field + ":" + string(e.invalidType) + "]"
+		} else {
+			msg += ", " + e.field
+		}
+	}
+	if e.wrappedError != nil {
+		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
+	}
+	return msg
+}
+
 func (e *BktInvalidError) InvalidType() InvalidType {
 	return e.invalidType
 }
 
-func newBktError(pkg string, errorType ErrorType, defaultMessage string) *BktError {
-	msg := pkg + ":"
-	if defaultMessage != "" {
-		msg += defaultMessage
-	}
-
+func newBktError(pkg string, errorType ErrorType, message string) *BktError {
 	return &BktError{
 		packageName: pkg,
 		errorType:   errorType,
-		message:     msg,
+		message:     message,
 	}
 }
 
-func newBktFieldError(pkg string, errorType ErrorType, defaultMessage string, field string) *BktFieldError {
-	msg := pkg + ":"
-	if defaultMessage != "" {
-		msg += defaultMessage
-	}
-	if field != "" {
-		msg += ", " + field
-	}
-
+func newBktFieldError(pkg string, errorType ErrorType, message string, field string) *BktFieldError {
 	return &BktFieldError{
 		BktError: &BktError{
 			packageName: pkg,
 			errorType:   errorType,
-			message:     msg,
+			message:     message,
 		},
 		field: field,
 	}
@@ -127,35 +153,19 @@ func NewErrorInternal(pkg string, message string) *BktError {
 type InvalidType string
 
 const (
-	invalidTypeUnknown        InvalidType = "unknown"
+	InvalidTypeUnknown        InvalidType = "unknown"
 	InvalidTypeEmpty          InvalidType = "empty"
 	InvalidTypeNil            InvalidType = "nil"
 	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
 )
 
 func NewErrorInvalidArgument(pkg string, message string, invalidType InvalidType, field string) *BktInvalidError {
-	errorType := ErrorTypeInvalidArgument
-
-	msg := pkg + ":"
-	if message != "" {
-		msg += message
-	} else {
-		msg += "invalid argument"
-	}
-	if field != "" {
-		if invalidType != "" {
-			msg += "[" + field + ":" + string(invalidType) + "]"
-		} else {
-			msg += ", " + field
-		}
-	}
-
 	return &BktInvalidError{
 		BktFieldError: &BktFieldError{
 			BktError: &BktError{
 				packageName: pkg,
-				errorType:   errorType,
-				message:     msg,
+				errorType:   ErrorTypeInvalidArgument,
+				message:     message,
 			},
 			field: field,
 		},
