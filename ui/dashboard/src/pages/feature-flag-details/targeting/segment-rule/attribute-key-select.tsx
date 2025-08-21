@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { components, GroupBase } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
 import { useTranslation } from 'i18n';
@@ -29,6 +29,10 @@ const AttributeKeySelect = ({
     ]);
     onChange(value);
   };
+
+  useEffect(() => {
+    setCreatedOptionList(createdOptions);
+  }, [createdOptions]);
 
   return (
     <ReactCreatableSelect<Option, false, GroupBase<Option>>
