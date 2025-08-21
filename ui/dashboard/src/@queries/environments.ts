@@ -1,5 +1,6 @@
 import {
   EnvironmentsFetcherParams,
+  environmentFetcher,
   environmentsFetcher
 } from '@api/environment';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +22,16 @@ export const useQueryEnvironments = (options?: QueryOptions) => {
     ...queryOptions
   });
   return query;
+};
+
+export const useEnvironmentsMultiIds = (ids: string[], enabled?: boolean) => {
+  return useQuery({
+    queryKey: ['environments-multiple-ids', ids],
+    queryFn: async () => {
+      return Promise.all(ids.map(id => environmentFetcher({ id })));
+    },
+    enabled: enabled && ids.length > 0
+  });
 };
 
 export const usePrefetchEnvironments = (options?: QueryOptions) => {
