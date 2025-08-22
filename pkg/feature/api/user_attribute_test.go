@@ -102,7 +102,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
-				expectedKeys := []string{"appVersion", "platform", "country", "deviceType"}
+				expectedKeys := []string{"app_version", "appVersion", "platform", "country", "deviceType"}
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().
 					GetUserAttributeKeyAll("ns0").
 					Return(expectedKeys, nil)
@@ -111,7 +111,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expected: &featureproto.GetUserAttributeKeysResponse{
-				UserAttributeKeys: []string{"appVersion", "platform", "country", "deviceType"},
+				UserAttributeKeys: []string{"appVersion", "app_version", "country", "deviceType", "platform"},
 			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
