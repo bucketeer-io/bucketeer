@@ -123,7 +123,10 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 
 func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 	switch errorType {
-	case pkgErr.ErrorTypeInvalidArgUnknown, pkgErr.ErrorTypeInvalidArgEmpty, pkgErr.ErrorTypeInvalidArgNil, pkgErr.ErrorTypeInvalidArgNotMatchFormat:
+	case pkgErr.ErrorTypeInvalidArgUnknown,
+		pkgErr.ErrorTypeInvalidArgEmpty,
+		pkgErr.ErrorTypeInvalidArgNil,
+		pkgErr.ErrorTypeInvalidArgNotMatchFormat:
 		return codes.InvalidArgument
 	case pkgErr.ErrorTypeNotFound:
 		return codes.NotFound
