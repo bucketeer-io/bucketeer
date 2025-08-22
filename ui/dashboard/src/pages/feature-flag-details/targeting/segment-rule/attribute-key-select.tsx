@@ -1,10 +1,43 @@
-import { components, GroupBase } from 'react-select';
+import { memo, useRef } from 'react';
+import { components, GroupBase, OptionProps } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
+import { useIsTruncated } from 'hooks/use-is-truncated';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import { colorStyles, Option, optionStyle } from 'components/creatable-select';
+import { Tooltip } from 'components/tooltip';
 import { UserMessage } from '../individual-rule';
+
+const CustomOption = memo((props: OptionProps<Option>) => {
+  const label = props.data.label;
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const isTruncated = useIsTruncated(spanRef, [props.data.label]);
+
+  const labelNode = (
+    <span ref={spanRef} className="truncate block">
+      {label}
+    </span>
+  );
+
+  return (
+    <components.Option
+      {...props}
+      className={cn(
+        'flex items-center justify-between w-full gap-2 px-3 py-1.5 mb-0.5',
+        props.isSelected && 'bg-gray-100'
+      )}
+    >
+      {isTruncated ? (
+        <Tooltip align="start" content={label} trigger={labelNode} />
+      ) : (
+        labelNode
+      )}
+
+      {props.isSelected && <IconChecked className="text-primary-500 w-6" />}
+    </components.Option>
+  );
+});
 
 const AttributeKeySelect = ({
   createdOptions,
@@ -35,23 +68,10 @@ const AttributeKeySelect = ({
         MenuList: props => (
           <components.MenuList
             {...props}
-            className="!max-h-[250px] !-mt-1 overflow-x-hidden overflow-y-auto small-scroll"
+            className="!max-h-[250px] overflow-x-hidden overflow-y-auto small-scroll"
           />
         ),
-        Option: props => (
-          <components.Option
-            {...props}
-            className={cn(
-              'flex items-center justify-between w-full px-3 py-1.5 mb-0.5',
-              props.isSelected && 'bg-gray-100'
-            )}
-          >
-            <span>{props.data.label}</span>
-            {props.isSelected && (
-              <IconChecked className="text-primary-500 w-6" />
-            )}
-          </components.Option>
-        ),
+        Option: CustomOption,
         GroupHeading: props =>
           props.children && (
             <div
@@ -65,12 +85,21 @@ const AttributeKeySelect = ({
       }}
       styles={{
         option: (styles, props) => optionStyle(styles, props, false),
-        ...colorStyles
+        ...colorStyles,
+        menu: base => ({
+          ...base,
+          width: 'auto',
+          minWidth: base.width,
+          maxWidth: '400px'
+        }),
+        menuPortal: base => ({
+          ...base,
+          zIndex: 9999
+        })
       }}
       value={value}
-      onChange={option => {
-        const newValue = option as Option;
-        onChange(newValue.value);
+      onChange={(option: Option | null) => {
+        if (option) onChange(option.value);
       }}
       formatCreateLabel={value => (
         <p>{`${t('create-option', { option: value })}`}</p>
