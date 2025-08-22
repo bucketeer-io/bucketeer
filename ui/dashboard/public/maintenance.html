@@ -2,264 +2,133 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/favicon.ico" />
-    <title>Maintenance Mode - Bucketeer Console</title>
+    <title>Maintenance - Bucketeer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tailwind CSS CDN -->
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      @font-face {
+        font-family: 'Sofia Pro';
+        src: url('fonts/sofiapro-regular.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        letter-spacing: 0.01em;
       }
 
       body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-          Cantarell, 'Helvetica Neue', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #2d3748;
-        line-height: 1.6;
-      }
-
-      .maintenance-container {
-        background: white;
-        border-radius: 16px;
-        padding: 3rem;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        text-align: center;
-        max-width: 540px;
-        margin: 2rem;
-        animation: fadeIn 0.6s ease-out;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .maintenance-icon {
-        font-size: 4rem;
-        margin-bottom: 1.5rem;
-        color: #667eea;
-        animation: pulse 2s infinite;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.05);
-        }
-      }
-
-      h1 {
-        color: #2d3748;
-        margin-bottom: 1rem;
-        font-size: 2.25rem;
-        font-weight: 700;
-        letter-spacing: -0.025em;
-      }
-
-      .subtitle {
-        color: #4a5568;
-        font-size: 1.125rem;
-        margin-bottom: 2rem;
-        font-weight: 500;
-      }
-
-      .description {
-        color: #718096;
-        font-size: 1rem;
-        line-height: 1.7;
-        margin-bottom: 2.5rem;
-      }
-
-      .status-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-      }
-
-      .status-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.75rem;
-        font-size: 0.9rem;
-      }
-
-      .status-row:last-child {
-        margin-bottom: 0;
-      }
-
-      .status-label {
-        font-weight: 600;
-        color: #4a5568;
-      }
-
-      .status-value {
-        color: #667eea;
-        font-weight: 500;
-      }
-
-      .refresh-info {
-        font-size: 0.875rem;
-        color: #a0aec0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-      }
-
-      .refresh-dot {
-        width: 6px;
-        height: 6px;
-        background: #a0aec0;
-        border-radius: 50%;
-        animation: blink 2s infinite;
-      }
-
-      @keyframes blink {
-        0%,
-        50% {
-          opacity: 1;
-        }
-        51%,
-        100% {
-          opacity: 0.3;
-        }
-      }
-
-      .progress-bar {
-        width: 100%;
-        height: 4px;
-        background: #e2e8f0;
-        border-radius: 2px;
-        overflow: hidden;
-        margin-top: 1rem;
-      }
-
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-        border-radius: 2px;
-        animation: progress 30s linear infinite;
-      }
-
-      @keyframes progress {
-        0% {
-          width: 0%;
-        }
-        100% {
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 640px) {
-        .maintenance-container {
-          margin: 1rem;
-          padding: 2rem;
-        }
-
-        h1 {
-          font-size: 1.875rem;
-        }
-
-        .maintenance-icon {
-          font-size: 3rem;
-        }
+        font-family: 'Sofia Pro', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scrollbar-gutter: stable;
       }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import images -->
+    <link rel="preload" as="image" href="/images/bucketeer-logo.svg" />
+    <link rel="preload" as="image" href="/images/auth-background.svg" />
+    <link rel="preload" as="image" href="/images/english-flag.svg" />
+    <link rel="preload" as="image" href="/images/japan-flag.svg" />
+    <link rel="preload" as="image" href="/images/chevron-down.svg" />
   </head>
-
   <body>
-    <div class="maintenance-container">
-      <div class="maintenance-icon">🔧</div>
-      <h1>Maintenance Mode</h1>
-      <div class="subtitle">System Temporarily Unavailable</div>
-      <p class="description">
-        We're currently performing scheduled maintenance to improve your
-        experience with Bucketeer Console. Our team is working to get everything
-        back online as quickly as possible.
-      </p>
+    <div class="flex min-h-screen w-full overflow-auto">
+      <div class="grid flex-1 place-items-center p-5 pr-0">
+        <div class="w-full max-w-[500px]">
+          <div class="mb-12">
+            <img src="/images/bucketeer-logo.svg" alt="bucketeer-logo" />
+          </div>
 
-      <div class="status-card">
-        <div class="status-row">
-          <span class="status-label">Status:</span>
-          <span class="status-value">Maintenance in progress</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Expected duration:</span>
-          <span class="status-value">Please check back soon</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Service:</span>
-          <span class="status-value">Bucketeer Console</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill"></div>
+          <div class="grid gap-6">
+            <div class="flex items-center justify-between gap-2">
+              <h1
+                class="text-2xl font-bold text-gray-900"
+                id="maintenance-title"
+              >
+                We are under maintenance
+              </h1>
+              <div class="relative" id="language-dropdown">
+                <button
+                  id="language-trigger"
+                  class="flex items-center gap-2 rounded border-gray-200 bg-transparent px-3 py-2 shadow-none"
+                >
+                  <img
+                    src="/images/english-flag.svg"
+                    alt="English"
+                    class="h-5 w-5"
+                    id="language-icon"
+                  />
+                  <span id="language-label">English</span>
+                  <img
+                    src="/images/chevron-down.svg"
+                    alt="Toggle Language"
+                    class="h-5 w-5"
+                  />
+                </button>
+                <div
+                  class="absolute left-0 top-full z-10 mt-1 hidden min-w-[120px] rounded border border-gray-200 bg-white shadow"
+                  id="language-menu"
+                >
+                  <!-- Language options will be injected here -->
+                </div>
+              </div>
+            </div>
+            <div class="text-md text-gray-700" id="maintenance-message">
+              We are currently undergoing maintenance. We sincerely apologize
+              for the inconvenience.
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="refresh-info">
-        <div class="refresh-dot"></div>
-        <span>This page will automatically refresh every 30 seconds</span>
+      <div class="flex-1 p-4">
+        <div
+          class="flex h-full items-center justify-end rounded-3xl bg-[#EFEFFE]"
+        >
+          <img
+            src="/images/auth-background.svg"
+            alt="feature flags dashboard"
+            class="w-[92%]"
+          />
+        </div>
       </div>
     </div>
 
     <script>
-      // Auto-refresh every 30 seconds
-      let refreshTimer;
-      let countdownTimer;
+      const languageList = [
+        { value: 'ja', label: '日本語', icon: '/images/japan-flag.svg' },
+        { value: 'en', label: 'English', icon: '/images/english-flag.svg' }
+      ];
+      let currentLanguage = 'en';
 
-      function startRefreshCountdown() {
-        let seconds = 30;
-
-        function updateCountdown() {
-          if (seconds > 0) {
-            seconds--;
-            setTimeout(updateCountdown, 1000);
-          } else {
-            // Reset the progress bar animation
-            const progressFill = document.querySelector('.progress-fill');
-            progressFill.style.animation = 'none';
-            setTimeout(() => {
-              progressFill.style.animation = 'progress 30s linear infinite';
-            }, 50);
-
-            // Refresh the page
-            window.location.reload();
-          }
-        }
-
-        updateCountdown();
-      }
-
-      // Start the countdown when page loads
-      document.addEventListener('DOMContentLoaded', startRefreshCountdown);
-
-      // Add some visual feedback when the user tries to interact
-      document.addEventListener('click', function (e) {
-        const container = document.querySelector('.maintenance-container');
-        container.style.transform = 'scale(0.98)';
-        setTimeout(() => {
-          container.style.transform = 'scale(1)';
-        }, 150);
+      // Populate language dropdown
+      const languageMenu = document.getElementById('language-menu');
+      languageList.forEach(item => {
+        const div = document.createElement('div');
+        div.className =
+          'flex items-center w-40 gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100';
+        div.innerHTML = `<img src="${item.icon}" alt="${item.label}" class="w-5 h-5" /> ${item.label}`;
+        div.onclick = () => {
+          currentLanguage = item.value;
+          document.getElementById('language-label').textContent = item.label;
+          document.getElementById('language-icon').src = item.icon;
+          languageMenu.classList.add('hidden');
+          // Simulate translation change
+          document.getElementById('maintenance-title').textContent =
+            item.value === 'ja' ? 'メンテナンス中' : 'We are under maintenance';
+          document.getElementById('maintenance-message').textContent =
+            item.value === 'ja'
+              ? '只今メンテナンスです。ご不便ご不便おかけしてしまい大変申し訳ございません。'
+              : 'We are currently undergoing maintenance. We sincerely apologize for the inconvenience.';
+        };
+        languageMenu.appendChild(div);
       });
+
+      // Dropdown toggle
+      document.getElementById('language-trigger').onclick = function (e) {
+        e.stopPropagation();
+        languageMenu.classList.toggle('hidden');
+      };
+      document.body.onclick = function () {
+        languageMenu.classList.add('hidden');
+      };
     </script>
   </body>
 </html>
