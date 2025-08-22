@@ -17,22 +17,33 @@ package error
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 const (
 	AccountPackageName = "account"
+
+	invalidTypeUnknown        = "unknown"
+	invalidTypeEmpty          = "empty"
+	invalidTypeNil            = "nil"
+	invalidTypeNotMatchFormat = "not_match_format"
+
+	invalidPrefix = "invalid"
 )
 
 type ErrorType string
 
 const (
-	ErrorTypeNotFound               ErrorType = "not_found"
-	ErrorTypeAlreadyExists          ErrorType = "already_exists"
-	ErrorTypeUnauthenticated        ErrorType = "unauthenticated"
-	ErrorTypePermissionDenied       ErrorType = "permission_denied"
-	ErrorTypeUnexpectedAffectedRows ErrorType = "unexpected_affected_rows"
-	ErrorTypeInternal               ErrorType = "internal"
-	ErrorTypeInvalidArgument        ErrorType = "invalid_argument"
+	ErrorTypeNotFound                 ErrorType = "not_found"
+	ErrorTypeAlreadyExists            ErrorType = "already_exists"
+	ErrorTypeUnauthenticated          ErrorType = "unauthenticated"
+	ErrorTypePermissionDenied         ErrorType = "permission_denied"
+	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
+	ErrorTypeInternal                 ErrorType = "internal"
+	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
+	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
+	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
+	ErrorTypeInvalidArgNotMatchFormat ErrorType = invalidPrefix + "_" + invalidTypeNotMatchFormat
 )
 
 // Base error - no field needed
@@ -67,32 +78,8 @@ type BktFieldError struct {
 func (e *BktFieldError) Error() string {
 	msg := e.packageName + ":" + e.message
 	if e.field != "" {
-		msg += ", " + e.field
-	}
-	if e.wrappedError != nil {
-		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
-	}
-	return msg
-}
-
-func (e *BktFieldError) Field() string {
-	return e.field
-}
-
-type BktInvalidError struct {
-	*BktFieldError
-	invalidType InvalidType
-}
-
-func (e *BktInvalidError) Error() string {
-	if e.message == "" {
-		e.message = "invalid argument"
-	}
-
-	msg := e.packageName + ":" + e.message
-	if e.field != "" {
-		if e.invalidType != "" {
-			msg += "[" + e.field + ":" + string(e.invalidType) + "]"
+		if strings.HasPrefix(string(e.errorType), invalidPrefix) {
+			msg += "[" + e.field + ":" + string(e.errorType) + "]"
 		} else {
 			msg += ", " + e.field
 		}
@@ -103,8 +90,8 @@ func (e *BktInvalidError) Error() string {
 	return msg
 }
 
-func (e *BktInvalidError) InvalidType() InvalidType {
-	return e.invalidType
+func (e *BktFieldError) Field() string {
+	return e.field
 }
 
 func newBktError(pkg string, errorType ErrorType, message string) *BktError {
@@ -150,25 +137,18 @@ func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
 }
 
-type InvalidType string
+func NewErrorInvalidUnknown(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
+}
 
-const (
-	InvalidTypeUnknown        InvalidType = "unknown"
-	InvalidTypeEmpty          InvalidType = "empty"
-	InvalidTypeNil            InvalidType = "nil"
-	InvalidTypeNotMatchFormat InvalidType = "not_match_format"
-)
+func NewErrorInvalidEmpty(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgEmpty, message, field)
+}
 
-func NewErrorInvalidArgument(pkg string, message string, invalidType InvalidType, field string) *BktInvalidError {
-	return &BktInvalidError{
-		BktFieldError: &BktFieldError{
-			BktError: &BktError{
-				packageName: pkg,
-				errorType:   ErrorTypeInvalidArgument,
-				message:     message,
-			},
-			field: field,
-		},
-		invalidType: invalidType,
-	}
+func NewErrorInvalidNil(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgNil, message, field)
+}
+
+func NewErrorInvalidNotMatchFormat(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgNotMatchFormat, message, field)
 }

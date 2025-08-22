@@ -156,7 +156,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 		name                 string
 		pkg                  string
 		message              string
-		invalidType          InvalidType
+		errorType            ErrorType
 		field                string
 		wrappedError         error
 		expectedErrorMessage string
@@ -166,46 +166,46 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			name:                 "empty field error",
 			pkg:                  "account",
 			message:              "invalid argument",
-			invalidType:          InvalidTypeEmpty,
+			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "email",
-			expectedErrorMessage: "account:invalid argument[email:empty]",
+			expectedErrorMessage: "account:invalid argument[email:invalid_empty]",
 			expectedField:        "email",
 		},
 		{
 			name:                 "nil field error",
 			pkg:                  "feature",
 			message:              "invalid input",
-			invalidType:          InvalidTypeNil,
+			errorType:            ErrorTypeInvalidArgNil,
 			field:                "name",
-			expectedErrorMessage: "feature:invalid input[name:nil]",
+			expectedErrorMessage: "feature:invalid input[name:invalid_nil]",
 			expectedField:        "name",
 		},
 		{
 			name:                 "format mismatch error",
 			pkg:                  "validation",
 			message:              "format error",
-			invalidType:          InvalidTypeNotMatchFormat,
+			errorType:            ErrorTypeInvalidArgNotMatchFormat,
 			field:                "date",
-			expectedErrorMessage: "validation:format error[date:not_match_format]",
+			expectedErrorMessage: "validation:format error[date:invalid_not_match_format]",
 			expectedField:        "date",
 		},
 		{
 			name:                 "empty message error",
 			pkg:                  "test",
 			message:              "",
-			invalidType:          InvalidTypeEmpty,
+			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "field",
-			expectedErrorMessage: "test:invalid argument[field:empty]",
+			expectedErrorMessage: "test:[field:invalid_empty]",
 			expectedField:        "field",
 		},
 		{
 			name:                 "wrapped error",
 			pkg:                  "test",
 			message:              "invalid argument",
-			invalidType:          InvalidTypeEmpty,
+			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "field",
 			wrappedError:         errors.New("wrapped error"),
-			expectedErrorMessage: "test:invalid argument[field:empty]: wrapped error",
+			expectedErrorMessage: "test:invalid argument[field:invalid_empty]: wrapped error",
 			expectedField:        "field",
 		},
 	}
@@ -214,24 +214,13 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := NewErrorInvalidArgument(tt.pkg, tt.message, tt.invalidType, tt.field)
+			err := newBktFieldError(tt.pkg, tt.errorType, tt.message, tt.field)
 			err.Wrap(tt.wrappedError)
 			assert.Equal(t, tt.pkg, err.PackageName())
-			assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
+			assert.Equal(t, tt.errorType, err.ErrorType())
 			assert.Equal(t, tt.expectedErrorMessage, err.Error())
 		})
 	}
-}
-
-func TestNewErrorInvalidArgument_EmptyInvalidType(t *testing.T) {
-	t.Parallel()
-
-	err := NewErrorInvalidArgument("test", "invalid", "", "field")
-
-	assert.Equal(t, "test", err.PackageName())
-	assert.Equal(t, ErrorTypeInvalidArgument, err.ErrorType())
-	assert.Equal(t, "invalid", err.message)
-	assert.Equal(t, "test:invalid, field", err.Error())
 }
 
 func TestBucketeerError_Unwrap(t *testing.T) {
@@ -272,33 +261,16 @@ func TestErrorType_String(t *testing.T) {
 		{ErrorTypePermissionDenied, "permission_denied"},
 		{ErrorTypeUnexpectedAffectedRows, "unexpected_affected_rows"},
 		{ErrorTypeInternal, "internal"},
-		{ErrorTypeInvalidArgument, "invalid_argument"},
+		{ErrorTypeInvalidArgUnknown, "invalid_unknown"},
+		{ErrorTypeInvalidArgEmpty, "invalid_empty"},
+		{ErrorTypeInvalidArgNil, "invalid_nil"},
+		{ErrorTypeInvalidArgNotMatchFormat, "invalid_not_match_format"},
 	}
 
 	for _, tt := range tests {
 		t.Run(string(tt.errorType), func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, string(tt.errorType))
-		})
-	}
-}
-
-func TestInvalidType_String(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		invalidType InvalidType
-		expected    string
-	}{
-		{InvalidTypeEmpty, "empty"},
-		{InvalidTypeNil, "nil"},
-		{InvalidTypeNotMatchFormat, "not_match_format"},
-	}
-
-	for _, tt := range tests {
-		t.Run(string(tt.invalidType), func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.expected, string(tt.invalidType))
 		})
 	}
 }
@@ -310,7 +282,7 @@ func TestErrorWrapComplex(t *testing.T) {
 	fieldErr := NewErrorNotFound("test", "not found", "resource")
 	fieldErr.Wrap(originalErr)
 
-	invalidErr := NewErrorInvalidArgument("test", "invalid argument", InvalidTypeEmpty, "field")
+	invalidErr := NewErrorInvalidEmpty("test", "invalid argument", "field")
 	invalidErr.Wrap(fieldErr)
 
 	assert.ErrorIs(t, invalidErr, originalErr)

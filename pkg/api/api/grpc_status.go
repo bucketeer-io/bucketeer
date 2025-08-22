@@ -30,13 +30,9 @@ const (
 
 func NewGRPCStatus(err error) *status.Status {
 	var bucketeerErr *pkgErr.BktError
-	var bktInvalidError *pkgErr.BktInvalidError
 	var bktFieldError *pkgErr.BktFieldError
 	if err == nil {
 		return status.New(codes.Unknown, "")
-	}
-	if errors.As(err, &bktInvalidError) {
-		return convertInvalidError(bktInvalidError)
 	} else if errors.As(err, &bktFieldError) {
 		return convertFieldError(bktFieldError)
 	} else if errors.As(err, &bucketeerErr) {
@@ -81,25 +77,6 @@ func convertFieldError(fieldError *pkgErr.BktFieldError) *status.Status {
 	return st
 }
 
-func convertInvalidError(invalidError *pkgErr.BktInvalidError) *status.Status {
-	st := status.New(codes.InvalidArgument, invalidError.Error())
-	mkey := invalidError.PackageName() + "." + string(invalidError.ErrorType()) + "." + string(invalidError.InvalidType())
-	metadata := map[string]string{
-		"messageKey": mkey,
-		"field":      invalidError.Field(),
-	}
-
-	st, err := st.WithDetails(&errdetails.ErrorInfo{
-		Reason:   "INVALID_ARGUMENT",
-		Domain:   invalidError.PackageName() + bktDomain,
-		Metadata: metadata,
-	})
-	if err != nil {
-		return status.New(codes.Internal, err.Error())
-	}
-	return st
-}
-
 func convertUnknownError(err error) *status.Status {
 	st := status.New(codes.Unknown, err.Error())
 	metadata := map[string]string{
@@ -119,7 +96,13 @@ func convertUnknownError(err error) *status.Status {
 
 func convertErrorReason(errorType pkgErr.ErrorType) string {
 	switch errorType {
-	case pkgErr.ErrorTypeInvalidArgument:
+	case pkgErr.ErrorTypeInvalidArgEmpty:
+		return "INVALID_ARGUMENT_EMPTY"
+	case pkgErr.ErrorTypeInvalidArgNil:
+		return "INVALID_ARGUMENT_NIL"
+	case pkgErr.ErrorTypeInvalidArgNotMatchFormat:
+		return "INVALID_ARGUMENT_NOT_MATCH_FORMAT"
+	case pkgErr.ErrorTypeInvalidArgUnknown:
 		return "INVALID_ARGUMENT"
 	case pkgErr.ErrorTypeNotFound:
 		return "NOT_FOUND"
@@ -140,7 +123,7 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 
 func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 	switch errorType {
-	case pkgErr.ErrorTypeInvalidArgument:
+	case pkgErr.ErrorTypeInvalidArgUnknown, pkgErr.ErrorTypeInvalidArgEmpty, pkgErr.ErrorTypeInvalidArgNil, pkgErr.ErrorTypeInvalidArgNotMatchFormat:
 		return codes.InvalidArgument
 	case pkgErr.ErrorTypeNotFound:
 		return codes.NotFound

@@ -37,13 +37,46 @@ func TestNewGRPCStatus(t *testing.T) {
 		expectedMetadata map[string]string
 	}{
 		{
-			name:            "ErrorInvalidArgument",
-			err:             pkgErr.NewErrorInvalidArgument("test", "invalid argument", pkgErr.InvalidTypeEmpty, "field1"),
+			name:            "ErrorInvalidEmpty",
+			err:             pkgErr.NewErrorInvalidEmpty("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
-			expectedMessage: "test:invalid argument[field1:empty]",
+			expectedMessage: "test:invalid argument[field1:invalid_empty]",
+			expectedReason:  "INVALID_ARGUMENT_EMPTY",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.invalid_empty",
+				"field":      "field1",
+			},
+		},
+		{
+			name:            "ErrorInvalidNil",
+			err:             pkgErr.NewErrorInvalidNil("test", "invalid argument", "field1"),
+			expectedCode:    codes.InvalidArgument,
+			expectedMessage: "test:invalid argument[field1:invalid_nil]",
+			expectedReason:  "INVALID_ARGUMENT_NIL",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.invalid_nil",
+				"field":      "field1",
+			},
+		},
+		{
+			name:            "ErrorInvalidNotMatchFormat",
+			err:             pkgErr.NewErrorInvalidNotMatchFormat("test", "invalid argument", "field1"),
+			expectedCode:    codes.InvalidArgument,
+			expectedMessage: "test:invalid argument[field1:invalid_not_match_format]",
+			expectedReason:  "INVALID_ARGUMENT_NOT_MATCH_FORMAT",
+			expectedMetadata: map[string]string{
+				"messagekey": "test.invalid_not_match_format",
+				"field":      "field1",
+			},
+		},
+		{
+			name:            "ErrorInvalidUnknown",
+			err:             pkgErr.NewErrorInvalidUnknown("test", "invalid argument", "field1"),
+			expectedCode:    codes.InvalidArgument,
+			expectedMessage: "test:invalid argument[field1:invalid_unknown]",
 			expectedReason:  "INVALID_ARGUMENT",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.invalid_argument.empty",
+				"messagekey": "test.invalid_unknown",
 				"field":      "field1",
 			},
 		},
@@ -157,50 +190,6 @@ func TestNewGRPCStatus_NilError(t *testing.T) {
 	assert.Equal(t, codes.Unknown, st.Code())
 	assert.Equal(t, "", st.Message())
 	assert.Len(t, st.Details(), 0)
-}
-
-func TestNewGRPCStatus_ErrorInvalidArgumentTypes(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name           string
-		invalidType    pkgErr.InvalidType
-		expectedReason string
-	}{
-		{
-			name:           "InvalidTypeEmpty",
-			invalidType:    pkgErr.InvalidTypeEmpty,
-			expectedReason: "INVALID_ARGUMENT",
-		},
-		{
-			name:           "InvalidTypeNil",
-			invalidType:    pkgErr.InvalidTypeNil,
-			expectedReason: "INVALID_ARGUMENT",
-		},
-		{
-			name:           "InvalidTypeNotMatchFormat",
-			invalidType:    pkgErr.InvalidTypeNotMatchFormat,
-			expectedReason: "INVALID_ARGUMENT",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := pkgErr.NewErrorInvalidArgument("test", "invalid", tt.invalidType, "field")
-			st := NewGRPCStatus(err)
-
-			assert.Equal(t, codes.InvalidArgument, st.Code())
-
-			details := st.Details()
-			for _, detail := range details {
-				if errorInfo, ok := detail.(*errdetails.ErrorInfo); ok {
-					assert.Equal(t, tt.expectedReason, errorInfo.Reason)
-				}
-			}
-		})
-	}
 }
 
 func TestNewGRPCStatus_EdgeCases(t *testing.T) {
