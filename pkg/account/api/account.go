@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -134,14 +135,7 @@ func (s *AccountService) CreateAccountV2(
 				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// Upsert tags
 	for _, envRole := range req.Command.EnvironmentRoles {
@@ -156,7 +150,7 @@ func (s *AccountService) CreateAccountV2(
 					zap.Strings("tags", req.Command.Tags),
 				)...,
 			)
-			return nil, statusInternal.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
@@ -262,14 +256,7 @@ func (s *AccountService) createAccountV2NoCommand(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	if err = s.publisher.Publish(ctx, createAccountEvent); err != nil {
@@ -296,7 +283,7 @@ func (s *AccountService) createAccountV2NoCommand(
 					zap.Any("tags", req.Tags),
 				)...,
 			)
-			return nil, statusInternal.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 
@@ -310,7 +297,7 @@ func (s *AccountService) createAccountV2NoCommand(
 				zap.Any("teams", req.Teams),
 			)...,
 		)
-		return nil, statusInternal.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
@@ -511,14 +498,7 @@ func (s *AccountService) UpdateAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// Upsert tags
 	if req.ChangeTagsCommand != nil {
@@ -534,7 +514,7 @@ func (s *AccountService) UpdateAccountV2(
 						zap.Strings("tags", req.ChangeTagsCommand.Tags),
 					)...,
 				)
-				return nil, statusInternal.Err()
+				return nil, api.NewGRPCStatus(err).Err()
 			}
 		}
 	}
@@ -609,14 +589,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// Upsert tags
 	if req.Tags != nil {
@@ -635,7 +608,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 						zap.Any("tags", req.Tags),
 					)...,
 				)
-				return nil, statusInternal.Err()
+				return nil, api.NewGRPCStatus(err).Err()
 			}
 		}
 	}
@@ -650,7 +623,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 					zap.Any("teams", updatedAccountPb.Teams),
 				)...,
 			)
-			return nil, statusInternal.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return &accountproto.UpdateAccountV2Response{
@@ -767,14 +740,7 @@ func (s *AccountService) EnableAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.EnableAccountV2Response{
 		Account: accountV2Pb,
@@ -842,14 +808,7 @@ func (s *AccountService) DisableAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.DisableAccountV2Response{
 		Account: accountV2Pb,
@@ -1030,14 +989,7 @@ func (s *AccountService) DeleteAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.DeleteAccountV2Response{}, nil
 }
@@ -1099,14 +1051,7 @@ func (s *AccountService) getAccountV2(
 				zap.String("email", email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return account, nil
 }
@@ -1168,14 +1113,7 @@ func (s *AccountService) getAccountV2ByEnvironmentID(
 				zap.String("email", email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return account, nil
 }
@@ -1275,14 +1213,7 @@ func (s *AccountService) ListAccountsV2(
 				"Failed to marshal environment role",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		values = append(values, string(jsonValues))
 
@@ -1308,14 +1239,7 @@ func (s *AccountService) ListAccountsV2(
 					"Failed to marshal environment role",
 					log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 				)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
+				return nil, api.NewGRPCStatus(err).Err()
 			}
 			orWhereParts = append(orWhereParts, &mysql.JSONFilter{
 				Column: "environment_roles",
@@ -1383,14 +1307,7 @@ func (s *AccountService) ListAccountsV2(
 				zap.String("organizationID", req.OrganizationId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.ListAccountsV2Response{
 		Accounts:   accounts,
