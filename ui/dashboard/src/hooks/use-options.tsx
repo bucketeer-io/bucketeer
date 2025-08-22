@@ -411,6 +411,52 @@ const useOptions = () => {
     [language]
   );
 
+  const splitExperimentOptions = useMemo(
+    () => [
+      {
+        label: translation(
+          'experiments.define-audience.split-audience-equally',
+          'form'
+        ),
+        value: 'equally'
+      },
+      {
+        label: translation(
+          'experiments.define-audience.split-audience-custom',
+          'form'
+        ),
+        value: 'percentage'
+      }
+    ],
+    [language]
+  );
+
+  const audienceTrafficOptions = useMemo(
+    () => [
+      {
+        label: '5%',
+        value: 5
+      },
+      {
+        label: '10%',
+        value: 10
+      },
+      {
+        label: '50%',
+        value: 50
+      },
+      {
+        label: '100%',
+        value: 100
+      },
+      {
+        label: translation('custom', 'form'),
+        value: 'custom'
+      }
+    ],
+    [language]
+  );
+
   const apiKeyOptions = useMemo(
     () => [
       {
@@ -480,7 +526,9 @@ const useOptions = () => {
     conditionerCompareOptions,
     conditionerDateOptions,
     apiKeyOptions,
-    environmentEnabledFilterOptions
+    environmentEnabledFilterOptions,
+    splitExperimentOptions,
+    audienceTrafficOptions
   };
 };
 

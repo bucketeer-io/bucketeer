@@ -56,12 +56,23 @@ export const getDefaultStrategy = (
     fixedStrategy: {
       variation: fixedStrategy?.variation || ''
     },
-    rolloutStrategy: rolloutStrategy?.variations?.length
-      ? rolloutStrategy.variations?.map(item => ({
-          ...item,
-          weight: item.weight / 1000 || 0
-        }))
-      : getDefaultRolloutStrategy(feature),
+    rolloutStrategy: {
+      variations: rolloutStrategy?.variations?.length
+        ? rolloutStrategy.variations?.map(item => ({
+            ...item,
+            weight: item.weight / 1000 || 0
+          }))
+        : getDefaultRolloutStrategy(feature),
+      audience: rolloutStrategy?.audience
+        ? {
+            percentage: rolloutStrategy?.audience?.percentage || 0,
+            defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
+          }
+        : {
+            percentage: 100,
+            defaultVariation: ''
+          }
+    },
     currentOption:
       type === StrategyType.FIXED
         ? fixedStrategy?.variation
@@ -76,7 +87,13 @@ export const getDefaultRule = (feature: Feature) => ({
     fixedStrategy: {
       variation: feature?.variations[0]?.id || ''
     },
-    rolloutStrategy: getDefaultRolloutStrategy(feature),
+    rolloutStrategy: {
+      variations: getDefaultRolloutStrategy(feature),
+      audience: {
+        percentage: 100,
+        defaultVariation: ''
+      }
+    },
     type: StrategyType.FIXED
   },
   clauses: [
@@ -159,7 +176,7 @@ export const handleCreateDefaultValues = (feature: Feature) => {
         defaultStrategy?.type === StrategyType.FIXED
           ? defaultStrategy?.fixedStrategy?.variation
           : StrategyType.MANUAL,
-      manualStrategy: _defaultStrategy?.rolloutStrategy
+      rolloutStrategy: _defaultStrategy?.rolloutStrategy
     },
     enabled,
     comment: '',
@@ -190,42 +207,62 @@ const handleGetStrategy = (
   strategy?: StrategySchema | FeatureRuleStrategy
 ): Partial<FeatureRuleStrategy> => {
   const { type, fixedStrategy, rolloutStrategy } = strategy || {};
-  if (type === StrategyType.FIXED)
+  if (type === StrategyType.FIXED) {
     return {
       type,
       fixedStrategy: {
         variation: fixedStrategy?.variation || ''
       }
     };
-  return {
-    type,
-    rolloutStrategy: {
-      variations:
-        ((rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])?.variations
-          ? (rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])
-              ?.variations
-          : (rolloutStrategy as StrategySchema['rolloutStrategy'])
-        )?.map(item => ({
-          ...item,
-          weight: item.weight * 1000
-        })) || []
-    }
-  };
+  } else {
+    return {
+      type,
+      rolloutStrategy: {
+        variations:
+          (
+            rolloutStrategy as FeatureRuleStrategy['rolloutStrategy']
+          )?.variations?.map(item => ({
+            ...item,
+            weight: item.weight * 1000
+          })) || [],
+        audience: rolloutStrategy?.audience
+          ? {
+              percentage: rolloutStrategy?.audience?.percentage || 0,
+              defaultVariation:
+                rolloutStrategy?.audience?.defaultVariation || ''
+            }
+          : {
+              percentage: 100,
+              defaultVariation: ''
+            }
+      }
+    };
+  }
 };
 
 export const handleGetDefaultRuleStrategy = (
   defaultRule?: DefaultRuleSchema
 ): Partial<FeatureRuleStrategy> => {
-  const { currentOption, manualStrategy } = defaultRule || {};
+  const { currentOption, rolloutStrategy } = defaultRule || {};
   if (currentOption === StrategyType.MANUAL) {
     return {
       type: StrategyType.ROLLOUT,
       rolloutStrategy: {
         variations:
-          manualStrategy?.map(item => ({
+          rolloutStrategy?.variations?.map(item => ({
             ...item,
             weight: item.weight * 1000
-          })) || []
+          })) || [],
+        audience: rolloutStrategy?.audience
+          ? {
+              percentage: rolloutStrategy?.audience?.percentage || 0,
+              defaultVariation:
+                rolloutStrategy?.audience?.defaultVariation || ''
+            }
+          : {
+              percentage: 100,
+              defaultVariation: ''
+            }
       }
     };
   }
@@ -385,4 +422,15 @@ export const handleCheckPrerequisites = (
     }
   });
   return prerequisiteChanges;
+};
+
+export const isEquallyVariations = (
+  variations: StrategySchema['rolloutStrategy']['variations'] = []
+): boolean => {
+  if (variations.length === 0) return false;
+  const expectedWeight = 100 / variations.length;
+
+  return variations.every(
+    item => Math.abs(item.weight - expectedWeight) < 0.0001
+  );
 };

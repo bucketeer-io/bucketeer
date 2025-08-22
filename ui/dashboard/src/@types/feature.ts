@@ -58,6 +58,10 @@ export interface FeatureRuleStrategy {
   };
   rolloutStrategy: {
     variations: RuleStrategyVariation[];
+    audience: {
+      percentage: number;
+      defaultVariation: string;
+    };
   };
 }
 

@@ -20,7 +20,6 @@ import Card from '../../elements/card';
 import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
 import { RuleCategory } from '../types';
-import { getDefaultRolloutStrategy } from '../utils';
 import RuleForm from './rule';
 import SegmentVariation from './variation';
 
@@ -180,7 +179,6 @@ const TargetSegmentRule = ({
                 />
                 <SegmentVariation
                   feature={feature}
-                  defaultRolloutStrategy={getDefaultRolloutStrategy(feature)}
                   segmentIndex={segmentIndex}
                   segmentRules={segmentRules}
                 />

@@ -3,7 +3,6 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import flatmap from 'lodash/flatMap';
 import uniqBy from 'lodash/uniqBy';
 import { v4 as uuid } from 'uuid';
 import {
@@ -85,13 +84,13 @@ const Variations = ({
 
   const prerequisiteVariationIdsInOtherFlags = useMemo(() => {
     return uniqBy(
-      flatmap(features.map(item => item.prerequisites)),
+      features?.flatMap(item => item.prerequisites),
       'variationId'
     ).map(item => item.variationId);
   }, [features]);
 
   const ruleVariationIdsInOtherFlags = useMemo(() => {
-    const featureRules = flatmap(features.map(item => item.rules));
+    const featureRules = features?.flatMap(item => item.rules);
     const variationIds: string[] = [];
     featureRules.forEach(rule => {
       rule.clauses.filter(item => {
