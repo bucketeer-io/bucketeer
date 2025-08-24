@@ -31,6 +31,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -74,6 +75,7 @@ type server struct {
 	teamService            *string
 	notificationService    *string
 	experimentService      *string
+	environmentService     *string
 	eventCounterService    *string
 	redisServerName        *string
 	redisAddr              *string
@@ -160,6 +162,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
+		environmentService: cmd.Flag(
+			"environment-service",
+			"bucketeer-environment-service address.",
+		).Default("environment:9090").String(),
 		eventCounterService: cmd.Flag(
 			"event-counter-service",
 			"bucketeer-event-counter-service address.",
@@ -431,6 +437,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer eventCounterClient.Close()
 
+	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer environmentClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -457,6 +475,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationClient,
 		experimentClient,
 		eventCounterClient,
+		environmentClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
