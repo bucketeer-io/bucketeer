@@ -43176,6 +43176,163 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "GetEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetEnvironmentV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment",
+                "type": "environment.EnvironmentV2"
+              }
+            ]
+          },
+          {
+            "name": "ListEnvironmentsV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "environment.ListEnvironmentsV2Request.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "environment.ListEnvironmentsV2Request.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListEnvironmentsV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environments",
+                "type": "environment.EnvironmentV2",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "GetProjectRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetProjectResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "environment.Project"
+              }
+            ]
+          },
+          {
+            "name": "ListProjectsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "environment.ListProjectsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "environment.ListProjectsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              }
+            ]
+          },
+          {
+            "name": "ListProjectsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "projects",
+                "type": "environment.Project",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -46317,6 +46474,154 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetEnvironmentV2",
+                "in_type": "GetEnvironmentV2Request",
+                "out_type": "GetEnvironmentV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/environment/get_environment"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Environment"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Environment by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Environment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.environment.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListEnvironmentsV2",
+                "in_type": "ListEnvironmentsV2Request",
+                "out_type": "ListEnvironmentsV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/environment/list_environments"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Environments"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Environments. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Environment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.environment.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetProject",
+                "in_type": "GetProjectRequest",
+                "out_type": "GetProjectResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/environment/get_project"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Project"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Project by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Project"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.project.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListProjects",
+                "in_type": "ListProjectsRequest",
+                "out_type": "ListProjectsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/environment/list_projects"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Projects"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Projects. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Project"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.project.list"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -46441,6 +46746,15 @@
           },
           {
             "path": "proto/eventcounter/variation_count.proto"
+          },
+          {
+            "path": "proto/environment/environment.proto"
+          },
+          {
+            "path": "proto/environment/project.proto"
+          },
+          {
+            "path": "proto/environment/service.proto"
           }
         ],
         "package": {

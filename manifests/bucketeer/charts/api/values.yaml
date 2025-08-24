@@ -39,6 +39,7 @@ env:
   notificationService: localhost:9001
   experimentService: localhost:9001
   eventCounterService: localhost:9001
+  environmentService: localhost:9001
   traceSamplingProbability: 0.0001
 affinity: {}
 nodeSelector: {}

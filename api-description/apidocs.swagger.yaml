@@ -1534,6 +1534,272 @@ paths:
             $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesRequest'
       tags:
         - Feature Flags
+  /v1/environment/get_environment:
+    get:
+      summary: Get Environment
+      description: Get an Environment by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.environment.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Environment
+  /v1/environment/get_project:
+    get:
+      summary: Get Project
+      description: Get a Project by ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.project.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Project
+  /v1/environment/list_environments:
+    get:
+      summary: List Environments
+      description: List Environments. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.environment.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListEnvironmentsV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - NAME
+            - URL_CODE
+            - CREATED_AT
+            - UPDATED_AT
+            - FEATURE_COUNT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: projectId
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+      tags:
+        - Environment
+  /v1/environment/list_projects:
+    get:
+      summary: List Projects
+      description: List Projects. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.project.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListProjectsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - CREATED_AT
+            - UPDATED_AT
+            - NAME
+            - URL_CODE
+            - ENVIRONMENT_COUNT
+            - FEATURE_COUNT
+            - CREATOR_EMAIL
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Project
   /v1/event_counter/evaluation_timeseries_count:
     get:
       summary: Get Evaluation Timeseries Count
@@ -5777,6 +6043,11 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayGetEnvironmentV2Response:
+    type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
   bucketeergatewayGetEvaluationTimeseriesCountResponse:
     type: object
     properties:
@@ -5870,6 +6141,11 @@ definitions:
     properties:
       progressiveRollout:
         $ref: '#/definitions/autoopsProgressiveRollout'
+  bucketeergatewayGetProjectResponse:
+    type: object
+    properties:
+      project:
+        $ref: '#/definitions/environmentProject'
   bucketeergatewayGetPushResponse:
     type: object
     properties:
@@ -5929,6 +6205,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/coderefCodeReference'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListEnvironmentsV2Response:
+    type: object
+    properties:
+      environments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentEnvironmentV2'
       cursor:
         type: string
       totalCount:
@@ -6011,6 +6300,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/autoopsProgressiveRollout'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListProjectsResponse:
+    type: object
+    properties:
+      projects:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentProject'
       cursor:
         type: string
       totalCount:
@@ -6780,6 +7082,42 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+  environmentListEnvironmentsV2RequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - NAME
+      - URL_CODE
+      - CREATED_AT
+      - UPDATED_AT
+      - FEATURE_COUNT
+    default: DEFAULT
+  environmentListEnvironmentsV2RequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  environmentListProjectsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+      - URL_CODE
+      - ENVIRONMENT_COUNT
+      - FEATURE_COUNT
+      - CREATOR_EMAIL
+    default: DEFAULT
+  environmentListProjectsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   environmentProject:
     type: object
     properties:
