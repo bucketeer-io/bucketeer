@@ -102,7 +102,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -183,7 +183,7 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -291,7 +291,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -393,7 +393,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx := setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -495,7 +495,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, p.isSystemAdmin)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -618,7 +618,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
