@@ -862,6 +862,26 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 	}
+
+	// Create credentials for demo user if not exists
+	_, err = s.credentialsStorage.GetCredentials(ctx, config.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			passwordHash, hashErr := auth.HashPassword(config.Password)
+			if hashErr != nil {
+				s.logger.Error("Failed to hash demo user password", zap.Error(hashErr))
+				return
+			}
+			err = s.credentialsStorage.CreateCredentials(ctx, config.Email, passwordHash)
+			if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+				s.logger.Error("Failed to create credentials for demo user", zap.Error(err))
+				return
+			}
+		} else {
+			s.logger.Error("Failed to check credentials for demo user", zap.Error(err))
+			return
+		}
+	}
 	s.logger.Info("Demo environment prepared successfully")
 }
 
@@ -922,10 +942,18 @@ func (s *authService) initiatePasswordSetupInternal(ctx context.Context, email s
 
 	// Send setup email
 	if s.emailService != nil {
-		setupURL := fmt.Sprintf("%s/auth/setup-password?token=%s",
-			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupToken)
+		setupPath := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupPath
+		if setupPath == "" {
+			return fmt.Errorf("password setup path not configured")
+		}
+		setupParam := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupParam
+		if setupParam == "" {
+			return fmt.Errorf("password setup parameter not configured")
+		}
+		setupURL := fmt.Sprintf("%s%s?%s=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
 
-		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupToken, setupURL)
+		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL)
 		if err != nil {
 			return fmt.Errorf("failed to send password setup email: %w", err)
 		}

@@ -119,15 +119,3 @@ func containsSymbols(s string) bool {
 	symbols := "!@#$%^&*()_+-=[]{}|;:,.<>?"
 	return strings.ContainsAny(s, symbols)
 }
-
-// SanitizeEmail normalizes and validates email address
-func SanitizeEmail(email string) string {
-	return strings.ToLower(strings.TrimSpace(email))
-}
-
-// IsValidEmail performs basic email validation
-func IsValidEmail(email string) bool {
-	// Basic email regex pattern
-	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return re.MatchString(email)
-}

@@ -1477,54 +1477,6 @@ paths:
       tags:
         - Authentication
   /v1/auth/password:
-    post:
-      summary: Create Password
-      description: Create a password for an existing account.
-      operationId: web.v1.auth.create_password
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authCreatePasswordResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "409":
-          description: Returned when password already exists for the account.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 6
-              details: []
-              message: password already exists
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authCreatePasswordRequest'
-      tags:
-        - Password Management
     put:
       summary: Update Password
       description: Update the password for the authenticated user.
@@ -1571,86 +1523,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/authUpdatePasswordRequest'
-      tags:
-        - Password Management
-  /v1/auth/password/reset:
-    post:
-      summary: Reset Password
-      description: Reset password using a valid reset token.
-      operationId: web.v1.auth.reset_password
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authResetPasswordResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authResetPasswordRequest'
-      tags:
-        - Password Management
-  /v1/auth/password/reset/initiate:
-    post:
-      summary: Initiate Password Reset
-      description: Initiate password reset process by sending a reset email.
-      operationId: web.v1.auth.initiate_password_reset
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authInitiatePasswordResetResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authInitiatePasswordResetRequest'
       tags:
         - Password Management
   /v1/auth/password/reset/validate:
@@ -9765,16 +9637,6 @@ definitions:
       - AUTH_TYPE_GOOGLE
       - AUTH_TYPE_GITHUB
     default: AUTH_TYPE_UNSPECIFIED
-  authCreatePasswordRequest:
-    type: object
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    title: Password Management Messages
-  authCreatePasswordResponse:
-    type: object
   authExchangeTokenRequest:
     type: object
     properties:
@@ -9808,16 +9670,6 @@ definitions:
     properties:
       isDemoSiteEnabled:
         type: boolean
-  authInitiatePasswordResetRequest:
-    type: object
-    properties:
-      email:
-        type: string
-  authInitiatePasswordResetResponse:
-    type: object
-    properties:
-      message:
-        type: string
   authInitiatePasswordSetupRequest:
     type: object
     properties:
@@ -9839,15 +9691,6 @@ definitions:
     properties:
       token:
         $ref: '#/definitions/authToken'
-  authResetPasswordRequest:
-    type: object
-    properties:
-      resetToken:
-        type: string
-      newPassword:
-        type: string
-  authResetPasswordResponse:
-    type: object
   authSetupPasswordRequest:
     type: object
     properties:
@@ -9900,6 +9743,7 @@ definitions:
         type: string
       newPassword:
         type: string
+    title: Password Management Messages
   authUpdatePasswordResponse:
     type: object
   authValidatePasswordResetTokenRequest:
