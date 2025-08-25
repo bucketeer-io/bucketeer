@@ -39,7 +39,7 @@ func (s *authService) SignIn(
 		return s.handlePasswordSignIn(ctx, request, localizer)
 	}
 
-	// If neither is enabled or credentials don't match, deny access
+	// If neither is enabled nor credentials don't match, deny access
 	s.logger.Error("Sign in failed - no valid authentication method",
 		zap.String("email", request.Email),
 		zap.Bool("passwordAuthEnabled", s.config.PasswordAuth.Enabled),
@@ -59,19 +59,7 @@ func (s *authService) handlePasswordSignIn(
 	request *authproto.SignInRequest,
 	localizer locale.Localizer,
 ) (*authproto.SignInResponse, error) {
-	// Sanitize email
-	email := auth.SanitizeEmail(request.Email)
-	if !auth.IsValidEmail(email) {
-		s.logger.Error("Invalid email format for password sign in", zap.String("email", email))
-		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
-	}
+	email := request.Email
 
 	// Get credentials
 	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
