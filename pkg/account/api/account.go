@@ -23,6 +23,8 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
@@ -1321,6 +1323,12 @@ func (s *AccountService) initiatePasswordSetupForNewAccount(ctx context.Context,
 		Email: email,
 	})
 	if err != nil {
+		// Check if the error is because password already exists
+		if st, ok := status.FromError(err); ok && st.Code() == codes.AlreadyExists {
+			s.logger.Info("Password already exists for account, skipping setup", zap.String("email", email))
+			return
+		}
+
 		s.logger.Warn("Failed to initiate password setup for new account",
 			zap.Error(err),
 			zap.String("email", email),
