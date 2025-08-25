@@ -17,6 +17,7 @@ package email
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -61,24 +62,6 @@ func NewSESEmailService(emailConfig auth.EmailServiceConfig, logger *zap.Logger)
 	}, nil
 }
 
-func (s *SESEmailService) SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, resetToken)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send password reset email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send password reset email: %w", err)
-	}
-
-	s.logger.Info("Password reset email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
 func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
 	subject, body := s.renderer.RenderPasswordChangedEmail()
 
@@ -97,8 +80,8 @@ func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, t
 	return nil
 }
 
-func (s *SESEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupToken, setupURL string) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(setupURL, setupToken)
+func (s *SESEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration) error {
+	subject, body := s.renderer.RenderPasswordSetupEmail(setupURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -110,24 +93,6 @@ func (s *SESEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupT
 	}
 
 	s.logger.Info("Password setup email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
-func (s *SESEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
-	subject, body := s.renderer.RenderWelcomeEmail(tempPassword)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send welcome email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send welcome email: %w", err)
-	}
-
-	s.logger.Info("Welcome email sent successfully",
 		zap.String("to", to),
 	)
 	return nil

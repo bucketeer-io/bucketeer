@@ -65,6 +65,8 @@ func (s *credentialsStorage) CreateCredentials(ctx context.Context, email, passw
 		insertCredentialsSQL,
 		email,
 		passwordHash,
+		nil, // password_reset_token (NULL)
+		nil, // password_reset_token_expires_at (NULL)
 		now,
 		now,
 	)
