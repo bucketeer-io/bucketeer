@@ -606,7 +606,7 @@ func TestGetMeMySQL(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -731,7 +731,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -859,7 +859,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1195,7 +1195,7 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
