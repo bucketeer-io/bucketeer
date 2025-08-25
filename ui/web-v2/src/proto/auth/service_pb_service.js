@@ -64,15 +64,6 @@ AuthService.GetDemoSiteStatus = {
   responseType: proto_auth_service_pb.GetDemoSiteStatusResponse
 };
 
-AuthService.CreatePassword = {
-  methodName: 'CreatePassword',
-  service: AuthService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_auth_service_pb.CreatePasswordRequest,
-  responseType: proto_auth_service_pb.CreatePasswordResponse
-};
-
 AuthService.UpdatePassword = {
   methodName: 'UpdatePassword',
   service: AuthService,
@@ -80,24 +71,6 @@ AuthService.UpdatePassword = {
   responseStream: false,
   requestType: proto_auth_service_pb.UpdatePasswordRequest,
   responseType: proto_auth_service_pb.UpdatePasswordResponse
-};
-
-AuthService.InitiatePasswordReset = {
-  methodName: 'InitiatePasswordReset',
-  service: AuthService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_auth_service_pb.InitiatePasswordResetRequest,
-  responseType: proto_auth_service_pb.InitiatePasswordResetResponse
-};
-
-AuthService.ResetPassword = {
-  methodName: 'ResetPassword',
-  service: AuthService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_auth_service_pb.ResetPasswordRequest,
-  responseType: proto_auth_service_pb.ResetPasswordResponse
 };
 
 AuthService.ValidatePasswordResetToken = {
@@ -350,41 +323,6 @@ AuthServiceClient.prototype.getDemoSiteStatus = function getDemoSiteStatus(
   };
 };
 
-AuthServiceClient.prototype.createPassword = function createPassword(
-  requestMessage,
-  metadata,
-  callback
-) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AuthService.CreatePassword, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
-        }
-      }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
-  };
-};
-
 AuthServiceClient.prototype.updatePassword = function updatePassword(
   requestMessage,
   metadata,
@@ -394,73 +332,6 @@ AuthServiceClient.prototype.updatePassword = function updatePassword(
     callback = arguments[1];
   }
   var client = grpc.unary(AuthService.UpdatePassword, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
-        }
-      }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
-  };
-};
-
-AuthServiceClient.prototype.initiatePasswordReset =
-  function initiatePasswordReset(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AuthService.InitiatePasswordReset, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
-        }
-      }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
-  };
-
-AuthServiceClient.prototype.resetPassword = function resetPassword(
-  requestMessage,
-  metadata,
-  callback
-) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AuthService.ResetPassword, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
