@@ -17,6 +17,7 @@ package email
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -25,13 +26,11 @@ import (
 
 // EmailService defines the interface for sending emails
 type EmailService interface {
-	SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error
 	SendPasswordChangedNotification(ctx context.Context, to string) error
-	SendPasswordSetupEmail(ctx context.Context, to, setupToken, setupURL string) error
-	SendWelcomeEmail(ctx context.Context, to, tempPassword string) error
+	SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration) error
 }
 
-// EmailServiceFactory creates an email service based on configuration
+// NewEmailService EmailServiceFactory creates an email service based on configuration
 func NewEmailService(config auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
 	switch config.Provider {
 	case "smtp":
@@ -55,14 +54,6 @@ func NewNoOpEmailService(logger *zap.Logger) EmailService {
 	return &NoOpEmailService{logger: logger}
 }
 
-func (s *NoOpEmailService) SendPasswordResetEmail(ctx context.Context, to, resetToken, resetURL string) error {
-	s.logger.Info("No-op email service: password reset email not sent",
-		zap.String("to", to),
-		zap.String("resetURL", resetURL),
-	)
-	return nil
-}
-
 func (s *NoOpEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
 	s.logger.Info("No-op email service: password changed notification not sent",
 		zap.String("to", to),
@@ -70,17 +61,10 @@ func (s *NoOpEmailService) SendPasswordChangedNotification(ctx context.Context, 
 	return nil
 }
 
-func (s *NoOpEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupToken, setupURL string) error {
+func (s *NoOpEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration) error {
 	s.logger.Info("No-op email service: password setup email not sent",
 		zap.String("to", to),
 		zap.String("setupURL", setupURL),
-	)
-	return nil
-}
-
-func (s *NoOpEmailService) SendWelcomeEmail(ctx context.Context, to, tempPassword string) error {
-	s.logger.Info("No-op email service: welcome email not sent",
-		zap.String("to", to),
 	)
 	return nil
 }
