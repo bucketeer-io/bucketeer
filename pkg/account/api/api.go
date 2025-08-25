@@ -36,7 +36,6 @@ import (
 	tagstorage "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	teamstorage "github.com/bucketeer-io/bucketeer/pkg/team/storage"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
