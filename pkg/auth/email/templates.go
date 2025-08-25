@@ -16,65 +16,13 @@ package email
 
 import (
 	"strings"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 )
 
 // Default email templates
 var (
-	defaultPasswordResetSubject = "Reset Your Bucketeer Password"
-	defaultPasswordResetBody    = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Bucketeer Password</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #007bff; 
-                  color: white; text-decoration: none; border-radius: 5px; }
-        .warning { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .footer { font-size: 12px; color: #666; margin-top: 30px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Reset Your Bucketeer Password</h1>
-        </div>
-        
-        <p>Hello,</p>
-        
-        <p>We received a request to reset your Bucketeer password. If you made this request, 
-        click the button below to reset your password:</p>
-        
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="{{resetURL}}" class="button">Reset Password</a>
-        </p>
-        
-        <p>Or copy and paste this link into your browser:</p>
-        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">{{resetURL}}</p>
-        
-        <div class="warning">
-            <strong>Security Note:</strong>
-            <ul>
-                <li>This link will expire in 1 hour for security reasons</li>
-                <li>If you didn't request this password reset, please ignore this email</li>
-                <li>Never share this link with anyone</li>
-            </ul>
-        </div>
-        
-        <div class="footer">
-            <p>This is an automated message from Bucketeer. Please do not reply to this email.</p>
-            <p>If you have any questions, please contact your system administrator.</p>
-        </div>
-    </div>
-</body>
-</html>`
-
 	defaultPasswordChangedSubject = "Password Changed Successfully"
 	defaultPasswordChangedBody    = `
 <!DOCTYPE html>
@@ -155,7 +103,7 @@ var (
         <div class="info">
             <strong>Important:</strong>
             <ul>
-                <li>This link will expire in 24 hours for security reasons</li>
+                <li>This link will expire in {{expirationTime}} for security reasons</li>
                 <li>Setting up a password will allow you to sign in directly without OAuth</li>
                 <li>You can continue using Google sign-in even after setting up a password</li>
             </ul>
@@ -165,46 +113,6 @@ var (
             <p>This is an automated message from Bucketeer. Please do not reply to this email.</p>
             <p>If you have any questions, please contact your system administrator.</p>
         </div>
-    </div>
-</body>
-</html>`
-
-	defaultWelcomeSubject = "Welcome to Bucketeer"
-	defaultWelcomeBody    = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Welcome to Bucketeer</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #007bff; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .temp-password { background-color: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; }
-        .warning { background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Welcome to Bucketeer!</h1>
-        </div>
-        
-        <p>Hello,</p>
-        
-        <p>Your Bucketeer account has been created. Here are your login credentials:</p>
-        
-        <p><strong>Temporary Password:</strong></p>
-        <div class="temp-password">{{tempPassword}}</div>
-        
-        <div class="warning">
-            <strong>Important:</strong> Please change this temporary password immediately 
-            after your first login for security reasons.
-        </div>
-        
-        <p>You can sign in at: {{baseURL}}</p>
-        
-        <p>Welcome to the team!</p>
     </div>
 </body>
 </html>`
@@ -218,25 +126,6 @@ type TemplateRenderer struct {
 // NewTemplateRenderer creates a new template renderer
 func NewTemplateRenderer(config auth.EmailServiceConfig) *TemplateRenderer {
 	return &TemplateRenderer{config: config}
-}
-
-// RenderPasswordResetEmail renders the password reset email template
-func (r *TemplateRenderer) RenderPasswordResetEmail(resetURL, resetToken string) (subject, body string) {
-	template := r.config.Templates.PasswordReset
-	if template.Subject == "" {
-		template.Subject = defaultPasswordResetSubject
-	}
-	if template.Body == "" {
-		template.Body = defaultPasswordResetBody
-	}
-
-	variables := map[string]string{
-		"{{resetURL}}":   resetURL,
-		"{{resetToken}}": resetToken,
-		"{{baseURL}}":    r.config.BaseURL,
-	}
-
-	return template.Subject, r.substituteVariables(template.Body, variables)
 }
 
 // RenderPasswordChangedEmail renders the password changed notification template
@@ -257,7 +146,7 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail() (subject, body string) {
 }
 
 // RenderPasswordSetupEmail renders the password setup email template
-func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL, setupToken string) (subject, body string) {
+func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL string, ttl time.Duration) (subject, body string) {
 	template := r.config.Templates.PasswordSetup
 	if template.Subject == "" {
 		template.Subject = defaultPasswordSetupSubject
@@ -267,27 +156,9 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL, setupToken string)
 	}
 
 	variables := map[string]string{
-		"{{setupURL}}":   setupURL,
-		"{{setupToken}}": setupToken,
-		"{{baseURL}}":    r.config.BaseURL,
-	}
-
-	return template.Subject, r.substituteVariables(template.Body, variables)
-}
-
-// RenderWelcomeEmail renders the welcome email template
-func (r *TemplateRenderer) RenderWelcomeEmail(tempPassword string) (subject, body string) {
-	template := r.config.Templates.Welcome
-	if template.Subject == "" {
-		template.Subject = defaultWelcomeSubject
-	}
-	if template.Body == "" {
-		template.Body = defaultWelcomeBody
-	}
-
-	variables := map[string]string{
-		"{{tempPassword}}": tempPassword,
-		"{{baseURL}}":      r.config.BaseURL,
+		"{{setupURL}}":       setupURL,
+		"{{baseURL}}":        r.config.BaseURL,
+		"{{expirationTime}}": ttl.String(),
 	}
 
 	return template.Subject, r.substituteVariables(template.Body, variables)
