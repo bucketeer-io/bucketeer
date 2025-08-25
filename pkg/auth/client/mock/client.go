@@ -154,6 +154,26 @@ func (mr *MockClientMockRecorder) InitiatePasswordReset(ctx, in any, opts ...any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitiatePasswordReset", reflect.TypeOf((*MockClient)(nil).InitiatePasswordReset), varargs...)
 }
 
+// InitiatePasswordSetup mocks base method.
+func (m *MockClient) InitiatePasswordSetup(ctx context.Context, in *auth.InitiatePasswordSetupRequest, opts ...grpc.CallOption) (*auth.InitiatePasswordSetupResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "InitiatePasswordSetup", varargs...)
+	ret0, _ := ret[0].(*auth.InitiatePasswordSetupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitiatePasswordSetup indicates an expected call of InitiatePasswordSetup.
+func (mr *MockClientMockRecorder) InitiatePasswordSetup(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitiatePasswordSetup", reflect.TypeOf((*MockClient)(nil).InitiatePasswordSetup), varargs...)
+}
+
 // RefreshToken mocks base method.
 func (m *MockClient) RefreshToken(ctx context.Context, in *auth.RefreshTokenRequest, opts ...grpc.CallOption) (*auth.RefreshTokenResponse, error) {
 	m.ctrl.T.Helper()
@@ -192,6 +212,26 @@ func (mr *MockClientMockRecorder) ResetPassword(ctx, in any, opts ...any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockClient)(nil).ResetPassword), varargs...)
+}
+
+// SetupPassword mocks base method.
+func (m *MockClient) SetupPassword(ctx context.Context, in *auth.SetupPasswordRequest, opts ...grpc.CallOption) (*auth.SetupPasswordResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SetupPassword", varargs...)
+	ret0, _ := ret[0].(*auth.SetupPasswordResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetupPassword indicates an expected call of SetupPassword.
+func (mr *MockClientMockRecorder) SetupPassword(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupPassword", reflect.TypeOf((*MockClient)(nil).SetupPassword), varargs...)
 }
 
 // SignIn mocks base method.
@@ -272,4 +312,24 @@ func (mr *MockClientMockRecorder) ValidatePasswordResetToken(ctx, in any, opts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatePasswordResetToken", reflect.TypeOf((*MockClient)(nil).ValidatePasswordResetToken), varargs...)
+}
+
+// ValidatePasswordSetupToken mocks base method.
+func (m *MockClient) ValidatePasswordSetupToken(ctx context.Context, in *auth.ValidatePasswordSetupTokenRequest, opts ...grpc.CallOption) (*auth.ValidatePasswordSetupTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ValidatePasswordSetupToken", varargs...)
+	ret0, _ := ret[0].(*auth.ValidatePasswordSetupTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidatePasswordSetupToken indicates an expected call of ValidatePasswordSetupToken.
+func (mr *MockClientMockRecorder) ValidatePasswordSetupToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatePasswordSetupToken", reflect.TypeOf((*MockClient)(nil).ValidatePasswordSetupToken), varargs...)
 }
