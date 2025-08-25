@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	teamstoragemock "github.com/bucketeer-io/bucketeer/pkg/team/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
@@ -48,11 +47,11 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewAccountService(t *testing.T) {
 	t.Parallel()
-	g := NewAccountService(nil, nil, nil)
+	g := NewAccountService(nil, nil, nil, nil)
 	assert.IsType(t, &AccountService{}, g)
 }
 
-func createAccountService(t *testing.T, mockController *gomock.Controller, db storage.Client) *AccountService {
+func createAccountService(t *testing.T, mockController *gomock.Controller) *AccountService {
 	t.Helper()
 	logger := zap.NewNop()
 	return &AccountService{
@@ -73,7 +72,7 @@ func createContextWithDefaultToken(t *testing.T, isSystemAdmin bool) context.Con
 
 func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool) context.Context {
 	t.Helper()
-	token := &token.AccessToken{
+	accessToken := &token.AccessToken{
 		Issuer:        "issuer",
 		Audience:      "audience",
 		Expiry:        time.Now().AddDate(100, 0, 0),
@@ -82,12 +81,12 @@ func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool)
 		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, accessToken)
 }
 
 func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.AccessToken{
+	accessToken := &token.AccessToken{
 		Issuer:   "issuer",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
@@ -95,5 +94,5 @@ func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 		Email:    "bucketeer@",
 	}
 	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	return context.WithValue(ctx, rpc.AccessTokenKey, accessToken)
 }
