@@ -220,7 +220,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -488,7 +488,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -665,7 +665,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -853,7 +853,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1022,7 +1022,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1151,7 +1151,7 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx = setToken(ctx, false)
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1267,7 +1267,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
