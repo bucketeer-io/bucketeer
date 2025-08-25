@@ -22,33 +22,6 @@ import (
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
-func validateCreatePasswordRequest(
-	req *authproto.CreatePasswordRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Email == "" {
-		dt, err := auth.StatusMissingEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Password == "" {
-		dt, err := auth.StateMissingPassword.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "password"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
 func validateUpdatePasswordRequest(
 	req *authproto.UpdatePasswordRequest,
 	localizer locale.Localizer,
@@ -57,50 +30,6 @@ func validateUpdatePasswordRequest(
 		dt, err := auth.StatusMissingCurrentPassword.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "current_password"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.NewPassword == "" {
-		dt, err := auth.StatusMissingNewPassword.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "new_password"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateInitiatePasswordResetRequest(
-	req *authproto.InitiatePasswordResetRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Email == "" {
-		dt, err := auth.StatusMissingEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateResetPasswordRequest(
-	req *authproto.ResetPasswordRequest,
-	localizer locale.Localizer,
-) error {
-	if req.ResetToken == "" {
-		dt, err := auth.StatusMissingResetToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "reset_token"),
 		})
 		if err != nil {
 			return auth.StatusInternal.Err()
