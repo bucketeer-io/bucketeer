@@ -30,16 +30,16 @@ const (
 	urlTemplateAPIKey       = "%s/%s/apikeys/%s"
 	urlTemplateSegment      = "%s/%s/segments/%s"
 	urlTemplateAutoOpsRule  = "%s/%s/features/%s/autoops"
-	urlTemplatePush         = "%s/%s/settings/pushes/%s"
-	urlTemplateSubscription = "%s/%s/settings/notifications/%s"
+	urlTemplatePush         = "%s/%s/pushes/%s?environmentId=%s"
+	urlTemplateSubscription = "%s/%s/notifications/%s?environmentId=%s"
 	urlTemplateTag          = "%s/%s/tags/%s"
 	urlTemplateTeam         = "%s/%s/teams/%s"
 
-	urlTemplateAdminSubscription = "%s/admin/notifications/%s"
-	urlTemplateEnvironment       = "%s/admin/environments/%s"
-	urlTemplateAdminAccount      = "%s/admin/accounts/%s"
-	urlTemplateProject           = "%s/admin/projects/%s"
-	urlTemplateOrganization      = "%s/admin/organizations/%s"
+	urlTemplateAdminSubscription = "%s/%s/notifications/%s"
+	urlTemplateEnvironment       = "%s/%s/environments/%s"
+	urlTemplateAdminAccount      = "%s/%s/accounts/%s"
+	urlTemplateProject           = "%s/%s/projects/%s"
+	urlTemplateOrganization      = "%s/%s/organizations/%s/settings"
 )
 
 var (
@@ -63,19 +63,19 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 	case proto.Event_AUTOOPS_RULE, proto.Event_PROGRESSIVE_ROLLOUT:
 		return fmt.Sprintf(urlTemplateAutoOpsRule, url, envURLCode, id), nil
 	case proto.Event_PUSH:
-		return fmt.Sprintf(urlTemplatePush, url, envURLCode, id), nil
+		return fmt.Sprintf(urlTemplatePush, url, envURLCode, id, envURLCode), nil
 	case proto.Event_SUBSCRIPTION:
-		return fmt.Sprintf(urlTemplateSubscription, url, envURLCode, id), nil
+		return fmt.Sprintf(urlTemplateSubscription, url, envURLCode, id, envURLCode), nil
 	case proto.Event_ADMIN_SUBSCRIPTION:
-		return fmt.Sprintf(urlTemplateAdminSubscription, url, id), nil
+		return fmt.Sprintf(urlTemplateAdminSubscription, url, envURLCode, id), nil
 	case proto.Event_ENVIRONMENT:
-		return fmt.Sprintf(urlTemplateEnvironment, url, id), nil
+		return fmt.Sprintf(urlTemplateEnvironment, url, envURLCode, id), nil
 	case proto.Event_ADMIN_ACCOUNT:
-		return fmt.Sprintf(urlTemplateAdminAccount, url, id), nil
+		return fmt.Sprintf(urlTemplateAdminAccount, url, envURLCode, id), nil
 	case proto.Event_PROJECT:
-		return fmt.Sprintf(urlTemplateProject, url, id), nil
+		return fmt.Sprintf(urlTemplateProject, url, envURLCode, id), nil
 	case proto.Event_ORGANIZATION:
-		return fmt.Sprintf(urlTemplateOrganization, url, id), nil
+		return fmt.Sprintf(urlTemplateOrganization, url, envURLCode, id), nil
 	case proto.Event_FLAG_TRIGGER:
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	case proto.Event_TAG:
