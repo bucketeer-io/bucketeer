@@ -23,7 +23,9 @@ interface Props {
 }
 
 export const UserMessage = ({ message }: { message: ReactNode }) => {
-  return <div className={'text-center text-gray-500'}>{message}</div>;
+  return (
+    <div className={'text-center typo-para-small text-gray-500'}>{message}</div>
+  );
 };
 
 const IndividualRule = ({ individualRules }: Props) => {

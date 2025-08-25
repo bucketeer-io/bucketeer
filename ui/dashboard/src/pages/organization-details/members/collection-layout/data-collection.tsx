@@ -108,13 +108,13 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'tags',
-      header: `${t('tags')}`,
+      accessorKey: 'teams',
+      header: `${t('teams')}`,
       size: 300,
       cell: ({ row }) => {
         const account = row.original;
-        const formattedTags = account.tags?.map(
-          item => tagList.find(tag => tag.id === item)?.name || item
+        const formattedTags = account.teams?.map(
+          item => tagList.find(team => team.id === item)?.name || item
         );
 
         return (

@@ -20,6 +20,8 @@
   "member-details": "Member Details",
   "add-to-env": "Add to Environment",
   "env-access": "Environment Access",
+  "env-admin-access": "All environments",
+  "env-admin-access-desc": "Has access to all environments in this organization",
   "env-settings": "Environment Settings",
   "trial": "Trial",
   "enter-first-name": "Enter first name",
@@ -176,7 +178,8 @@
     "context-kind": "Context kind",
     "attribute-key": "Attribute Key",
     "operator": "Operator",
-    "values": "Values"
+    "values": "Values",
+    "attribute-key-select-title": "Attributes from the client SDK"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

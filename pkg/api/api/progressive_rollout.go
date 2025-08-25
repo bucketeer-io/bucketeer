@@ -44,6 +44,11 @@ func (s *grpcGatewayService) CreateProgressiveRollout(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateProgressiveRollout, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -99,6 +104,11 @@ func (s *grpcGatewayService) GetProgressiveRollout(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetProgressiveRollout, "").Inc()
+
 	resp, err := s.autoOpsClient.GetProgressiveRollout(
 		ctx,
 		&autoops.GetProgressiveRolloutRequest{
@@ -145,6 +155,11 @@ func (s *grpcGatewayService) StopProgressiveRollout(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodStopProgressiveRollout, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -187,6 +202,11 @@ func (s *grpcGatewayService) DeleteProgressiveRollout(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteProgressiveRollout, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
@@ -229,6 +249,11 @@ func (s *grpcGatewayService) ListProgressiveRollouts(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListProgressiveRollouts, "").Inc()
+
 	resp, err := s.autoOpsClient.ListProgressiveRollouts(
 		ctx,
 		&autoops.ListProgressiveRolloutsRequest{
@@ -278,6 +303,11 @@ func (s *grpcGatewayService) ExecuteProgressiveRollout(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodExecuteProgressiveRollout, "").Inc()
+
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
 		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,

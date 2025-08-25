@@ -17,3 +17,7 @@ export interface EnvironmentCollection {
   cursor: string;
   totalCount: string;
 }
+
+export interface EnvironmentResponse {
+  environment: Environment;
+}

@@ -44,6 +44,11 @@ func (s *grpcGatewayService) ListPushes(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListPushes, "").Inc()
+
 	res, err := s.pushClient.ListPushes(
 		ctx,
 		&pushproto.ListPushesRequest{
@@ -92,6 +97,10 @@ func (s *grpcGatewayService) CreatePush(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreatePush, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
@@ -144,6 +153,10 @@ func (s *grpcGatewayService) GetPush(
 		return nil, err
 	}
 
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetPush, "").Inc()
+
 	res, err := s.pushClient.GetPush(
 		ctx,
 		&pushproto.GetPushRequest{
@@ -185,6 +198,10 @@ func (s *grpcGatewayService) UpdatePush(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdatePush, "").Inc()
 
 	headerMetaData := metadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,

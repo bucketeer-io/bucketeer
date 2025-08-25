@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
+	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -159,6 +160,7 @@ type grpcGatewayService struct {
 	teamClient             teamclient.Client
 	notificationClient     notificationclient.Client
 	experimentClient       experimentclient.Client
+	eventCounterClient     eventcounterclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -181,6 +183,7 @@ func NewGrpcGatewayService(
 	teamClient teamclient.Client,
 	notificationClient notificationclient.Client,
 	experimentClient experimentclient.Client,
+	eventCounterClient eventcounterclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -205,6 +208,7 @@ func NewGrpcGatewayService(
 		teamClient:             teamClient,
 		notificationClient:     notificationClient,
 		experimentClient:       experimentClient,
+		eventCounterClient:     eventCounterClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,

@@ -42,6 +42,11 @@ func (s *grpcGatewayService) GetAuditLog(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAuditLog, "").Inc()
+
 	res, err := s.auditLogClient.GetAuditLog(
 		ctx,
 		&auditlogproto.GetAuditLogRequest{
@@ -88,6 +93,11 @@ func (s *grpcGatewayService) ListAuditLogs(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListAuditLogs, "").Inc()
+
 	res, err := s.auditLogClient.ListAuditLogs(
 		ctx,
 		&auditlogproto.ListAuditLogsRequest{
@@ -138,6 +148,11 @@ func (s *grpcGatewayService) ListFeatureHistory(
 		)
 		return nil, err
 	}
+
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
+		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListFeatureHistory, "").Inc()
+
 	res, err := s.auditLogClient.ListFeatureHistory(
 		ctx,
 		&auditlogproto.ListFeatureHistoryRequest{

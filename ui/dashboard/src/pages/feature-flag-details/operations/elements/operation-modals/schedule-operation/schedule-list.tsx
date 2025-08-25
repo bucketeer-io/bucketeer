@@ -44,18 +44,18 @@ const ScheduleList = ({
     number[]
   >([]);
 
-  const { control } = useFormContext<DateTimeClauseListType>();
+  const { control, watch, trigger } = useFormContext<DateTimeClauseListType>();
 
   const {
     fields: scheduleData,
     append,
-    remove,
-    update
+    remove
   } = useFieldArray({
     name: 'datetimeClausesList',
     control,
     keyName: 'scheduleOperationId'
   });
+  const watchScheduleList = [...watch('datetimeClausesList')];
 
   const stateOptions = useMemo(
     () => [
@@ -72,12 +72,12 @@ const ScheduleList = ({
   );
 
   const handleAddDate = useCallback(() => {
-    const lastTime = scheduleData.at(-1)?.time?.getTime();
+    const lastTime = watchScheduleList.at(-1)?.time?.getTime();
     const dateTimeClause = createDatetimeClausesList(lastTime);
     append({
       ...dateTimeClause
     });
-  }, [scheduleData]);
+  }, [watchScheduleList]);
 
   const isDisabledField = useCallback(
     (wasPassed?: boolean) => {
@@ -89,7 +89,7 @@ const ScheduleList = ({
   );
 
   useEffect(() => {
-    if (rollouts.length && scheduleData.length) {
+    if (rollouts.length && watchScheduleList.length) {
       const waitingRolloutItems = rollouts.filter(
         item => item.status === 'WAITING'
       );
@@ -99,7 +99,7 @@ const ScheduleList = ({
         );
 
         const conflictIndexes: number[] = [];
-        scheduleData.forEach((item, index) => {
+        watchScheduleList.forEach((item, index) => {
           const timeString = Math.trunc(
             dayjs(item.time)?.set('second', 0)?.valueOf() / 1000
           )?.toString();
@@ -123,7 +123,7 @@ const ScheduleList = ({
         setConflictWithRolloutIndexes(conflictIndexes);
       }
     }
-  }, [rollouts, scheduleData]);
+  }, [rollouts, watchScheduleList]);
 
   return (
     <>
@@ -207,11 +207,10 @@ const ScheduleList = ({
                                     disabled={isDisabledField(item.wasPassed)}
                                     onChange={date => {
                                       if (date) {
-                                        field.onChange(date);
-                                        update(index, {
-                                          ...item,
-                                          time: date
+                                        field.onChange(date, {
+                                          shouldValidate: true
                                         });
+                                        trigger('datetimeClausesList');
                                       }
                                     }}
                                   />
@@ -234,11 +233,10 @@ const ScheduleList = ({
                                     disabled={isDisabledField(item.wasPassed)}
                                     onChange={date => {
                                       if (date) {
-                                        field.onChange(date);
-                                        update(index, {
-                                          ...item,
-                                          time: date
+                                        field.onChange(date, {
+                                          shouldValidate: true
                                         });
+                                        trigger('datetimeClausesList');
                                       }
                                     }}
                                     icon={

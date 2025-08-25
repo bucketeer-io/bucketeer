@@ -31,6 +31,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
+	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -73,6 +74,7 @@ type server struct {
 	teamService            *string
 	notificationService    *string
 	experimentService      *string
+	eventCounterService    *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -158,6 +160,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
+		eventCounterService: cmd.Flag(
+			"event-counter-service",
+			"bucketeer-event-counter-service address.",
+		).Default("event-counter:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -413,6 +419,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer experimentClient.Close()
 
+	eventCounterClient, err := eventcounterclient.NewClient(*s.eventCounterService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer eventCounterClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -438,6 +456,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		teamClient,
 		notificationClient,
 		experimentClient,
+		eventCounterClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,

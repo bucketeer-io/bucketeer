@@ -1,6 +1,17 @@
 {
   "name": "bucketeer",
   "image": "ghcr.io/bucketeer-io/bucketeer-devcontainer:latest",
+  "privileged": true,
+  "capAdd": [
+    "SYS_ADMIN"
+  ],
+  "securityOpt": [
+    "seccomp:unconfined"
+  ],
+  "init": true,
+  "runArgs": [
+    "--cgroupns=host"
+  ],
   "mounts": [
     // Persistent Go modules cache
     "source=bucketeer-go-mod-cache,target=/go/pkg/mod,type=volume",
@@ -11,7 +22,11 @@
     // Persistent Node.js cache for evaluation typescript
     "source=bucketeer-eval-ts-node-modules,target=/workspaces/bucketeer/evaluation/typescript/node_modules,type=volume",
     // Persistent yarn cache
-    "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume"
+    "source=bucketeer-yarn-cache,target=/home/codespace/.yarn/cache,type=volume",
+    // Persistent minikube cache to survive cluster deletions
+    "source=bucketeer-minikube-cache,target=/home/codespace/.minikube,type=volume",
+    // Persistent Docker image cache
+    "source=bucketeer-docker-cache,target=/var/lib/docker,type=volume"
   ],
   "containerEnv": {
     // Optimize Go module downloads

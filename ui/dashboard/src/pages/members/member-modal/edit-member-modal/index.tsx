@@ -152,6 +152,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   } = form;
   const roleWatch = watch('memberRole');
   const isAdminRole = roleWatch === 'Organization_ADMIN';
+  const isOwnerRole = member.organizationRole === 'Organization_OWNER';
+  const shouldSkipEnvironmentRoles = isAdminRole || isOwnerRole;
 
   const handleCheckTags = useCallback(
     (teamValues: string[]) => {
@@ -187,7 +189,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       organizationRole: {
         role: values.memberRole as OrganizationRole
       },
-      ...(isAdminRole
+      ...(shouldSkipEnvironmentRoles
         ? {}
         : {
             environmentRoles: values.environmentRoles.map(item => ({
@@ -351,10 +353,13 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t('form:select-role')}
+                        disabled={isOwnerRole}
                         label={
-                          organizationRoles.find(
-                            item => item.value === field.value
-                          )?.label
+                          isOwnerRole
+                            ? t('owner')
+                            : organizationRoles.find(
+                                item => item.value === field.value
+                              )?.label
                         }
                         variant="secondary"
                         className="w-full"
@@ -417,7 +422,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 </Form.Item>
               )}
             />
-            {!isAdminRole && !!roleWatch && (
+            {!isAdminRole && !isOwnerRole && !!roleWatch && (
               <>
                 <Divider className="mt-1 mb-3" />
                 <EnvironmentRoles environments={formattedEnvironments} />

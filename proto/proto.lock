@@ -42779,6 +42779,428 @@
                 "type": "experiment.Experiment"
               }
             ]
+          },
+          {
+            "name": "GetExperimentEvaluationCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "start_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "end_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "variation_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentEvaluationCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "variation_counts",
+                "type": "eventcounter.VariationCount",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetEvaluationTimeseriesCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "time_range",
+                "type": "eventcounter.GetEvaluationTimeseriesCountRequest.TimeRange",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetEvaluationTimeseriesCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "user_counts",
+                "type": "eventcounter.VariationTimeseries",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "event_counts",
+                "type": "eventcounter.VariationTimeseries",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentResultRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "experiment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentResultResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "experiment_result",
+                "type": "eventcounter.ExperimentResult"
+              }
+            ]
+          },
+          {
+            "name": "ListExperimentResultsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value"
+              }
+            ]
+          },
+          {
+            "name": "ListExperimentResultsResponse",
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 1,
+                  "name": "results",
+                  "type": "eventcounter.ExperimentResult"
+                }
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentGoalCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "start_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "end_at",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "goal_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "feature_version",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "variation_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentGoalCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "goal_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "variation_counts",
+                "type": "eventcounter.VariationCount",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetOpsEvaluationUserCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "variation_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetOpsEvaluationUserCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "GetOpsGoalUserCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "variation_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetOpsGoalUserCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -45661,6 +46083,265 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetExperimentEvaluationCount",
+                "in_type": "GetExperimentEvaluationCountRequest",
+                "out_type": "GetExperimentEvaluationCountResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/experiment_evaluation_count"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Experiment Evaluation Count"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.evaluation_count.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetEvaluationTimeseriesCount",
+                "in_type": "GetEvaluationTimeseriesCountRequest",
+                "out_type": "GetEvaluationTimeseriesCountResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/evaluation_timeseries_count"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Evaluation Timeseries Count"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the evaluation timeseries count for an Experiment. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.evaluation_timeseries_count.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetExperimentResult",
+                "in_type": "GetExperimentResultRequest",
+                "out_type": "GetExperimentResultResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/experiment_result"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Experiment Result"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the result for an Experiment. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.experiment_result.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListExperimentResults",
+                "in_type": "ListExperimentResultsRequest",
+                "out_type": "ListExperimentResultsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/experiment_results"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Experiment Results"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List the results for Experiments. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.experiment_result.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetExperimentGoalCount",
+                "in_type": "GetExperimentGoalCountRequest",
+                "out_type": "GetExperimentGoalCountResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/experiment_goal_count"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Experiment Goal Count"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the goal count for an Experiment. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.goal_count.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetOpsEvaluationUserCount",
+                "in_type": "GetOpsEvaluationUserCountRequest",
+                "out_type": "GetOpsEvaluationUserCountResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/ops_evaluation_user_count"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Ops Evaluation User Count"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Experiments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.ops_evaluation_user_count.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetOpsGoalUserCount",
+                "in_type": "GetOpsGoalUserCountRequest",
+                "out_type": "GetOpsGoalUserCountResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/event_counter/ops_goal_user_count"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Ops Goal User Count"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the user count for an Ops Goal. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Event Counter"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.event_counter.get_ops_goal_user_count"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -45773,6 +46454,18 @@
           },
           {
             "path": "proto/experiment/service.proto"
+          },
+          {
+            "path": "proto/eventcounter/service.proto"
+          },
+          {
+            "path": "proto/eventcounter/experiment_result.proto"
+          },
+          {
+            "path": "proto/eventcounter/timeseries.proto"
+          },
+          {
+            "path": "proto/eventcounter/variation_count.proto"
           }
         ],
         "package": {

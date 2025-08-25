@@ -54,18 +54,18 @@ const fontSize = '1rem';
 const lineHeight = '1.25rem';
 const minHeight = '3rem';
 
-const optionStyle = (
+export const optionStyle = (
   styles: CSSObjectWithLabel,
-  props: OptionProps<Option, true, GroupBase<Option>>,
+  props: OptionProps<Option, boolean, GroupBase<Option>>,
   isHiddenCreateNewOption: boolean
 ) => {
-  const { isFocused, data } = props;
+  const { isFocused, data, isSelected } = props;
 
   const isNewOption = data?.__isNew__;
 
   return {
     ...styles,
-    backgroundColor: isFocused ? backgroundColor : undefined,
+    backgroundColor: isFocused && !isSelected ? backgroundColor : undefined,
     color: textColor,
     ':hover': {
       backgroundColor: '#FAFAFC !important',
@@ -75,7 +75,7 @@ const optionStyle = (
   };
 };
 
-export const colorStyles: StylesConfig<Option, true> = {
+export const colorStyles: StylesConfig<Option, boolean> = {
   control: (styles, { isDisabled }) => ({
     ...styles,
     backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
@@ -116,10 +116,13 @@ export const colorStyles: StylesConfig<Option, true> = {
       color: '#292C4C !important'
     }
   }),
+  indicatorSeparator: base => ({
+    ...base,
+    display: 'none'
+  }),
   singleValue: (styles, { isDisabled }) => ({
     ...styles,
-    color: isDisabled ? textColorDisabled : textColor,
-    backgroundColor: 'red !important'
+    color: isDisabled ? textColorDisabled : textColor
   })
 };
 
