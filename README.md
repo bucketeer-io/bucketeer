@@ -108,9 +108,9 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/kakcy"><img src="https://avatars.githubusercontent.com/u/43775118?v=4" title="kakcy" width="80" height="80"></a>
 <a href="https://github.com/bimalgrg519"><img src="https://avatars.githubusercontent.com/u/11039098?v=4" title="bimalgrg519" width="80" height="80"></a>
 <a href="https://github.com/kentakozuka"><img src="https://avatars.githubusercontent.com/u/16733673?v=4" title="kentakozuka" width="80" height="80"></a>
-<a href="https://github.com/ono-max"><img src="https://avatars.githubusercontent.com/u/59436572?v=4" title="ono-max" width="80" height="80"></a>
 <a href="https://github.com/masaaania"><img src="https://avatars.githubusercontent.com/u/2755429?v=4" title="masaaania" width="80" height="80"></a>
 
+<a href="https://github.com/ono-max"><img src="https://avatars.githubusercontent.com/u/59436572?v=4" title="ono-max" width="80" height="80"></a>
 <a href="https://github.com/gkuga"><img src="https://avatars.githubusercontent.com/u/33643470?v=4" title="gkuga" width="80" height="80"></a>
 <a href="https://github.com/mura-s"><img src="https://avatars.githubusercontent.com/u/4702673?v=4" title="mura-s" width="80" height="80"></a>
 <a href="https://github.com/asukaleido"><img src="https://avatars.githubusercontent.com/u/1432458?v=4" title="asukaleido" width="80" height="80"></a>
@@ -119,8 +119,8 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/nghialv"><img src="https://avatars.githubusercontent.com/u/1751755?v=4" title="nghialv" width="80" height="80"></a>
 <a href="https://github.com/codesuki"><img src="https://avatars.githubusercontent.com/u/5276006?v=4" title="codesuki" width="80" height="80"></a>
 <a href="https://github.com/satoshi0212"><img src="https://avatars.githubusercontent.com/u/5768361?v=4" title="satoshi0212" width="80" height="80"></a>
-<a href="https://github.com/takahirom"><img src="https://avatars.githubusercontent.com/u/1386930?v=4" title="takahirom" width="80" height="80"></a>
 
+<a href="https://github.com/takahirom"><img src="https://avatars.githubusercontent.com/u/1386930?v=4" title="takahirom" width="80" height="80"></a>
 <a href="https://github.com/hiro511"><img src="https://avatars.githubusercontent.com/u/15856616?v=4" title="hiro511" width="80" height="80"></a>
 <a href="https://github.com/rinov"><img src="https://avatars.githubusercontent.com/u/16882820?v=4" title="rinov" width="80" height="80"></a>
 <a href="https://github.com/sckm"><img src="https://avatars.githubusercontent.com/u/2162201?v=4" title="sckm" width="80" height="80"></a>
@@ -129,6 +129,6 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/Nonchalant"><img src="https://avatars.githubusercontent.com/u/5227451?v=4" title="Nonchalant" width="80" height="80"></a>
 <a href="https://github.com/YukiMatsumura"><img src="https://avatars.githubusercontent.com/u/1576836?v=4" title="YukiMatsumura" width="80" height="80"></a>
 <a href="https://github.com/yysskk"><img src="https://avatars.githubusercontent.com/u/7744927?v=4" title="yysskk" width="80" height="80"></a>
-<a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
 
+<a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
 <a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="unvalley" width="80" height="80"></a>
