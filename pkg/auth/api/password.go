@@ -23,11 +23,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
