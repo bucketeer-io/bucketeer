@@ -270,9 +270,6 @@ func (s *authService) ExchangeToken(
 
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
-	// Check and offer password setup for existing users without credentials
-	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations)
-
 	// Check if the user has at least one account enabled in any Organization
 	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
 	if err != nil {
@@ -296,6 +293,9 @@ func (s *authService) ExchangeToken(
 		)
 		return nil, err
 	}
+
+	// Check and offer password setup for existing users without credentials
+	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations)
 
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
@@ -997,6 +997,12 @@ func (s *authService) initiatePasswordSetupInternal(ctx context.Context, email s
 	setupToken, err := auth.GenerateSecureToken()
 	if err != nil {
 		return fmt.Errorf("failed to generate setup token: %w", err)
+	}
+
+	// Create empty credentials record if it doesn't exist
+	err = s.credentialsStorage.CreateCredentials(ctx, email, "")
+	if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+		return fmt.Errorf("failed to create credentials: %w", err)
 	}
 
 	// Store setup token with 24-hour expiration
