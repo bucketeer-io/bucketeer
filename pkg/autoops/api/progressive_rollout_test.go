@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -2066,6 +2067,78 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.ExecuteProgressiveRolloutRequest{},
 			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "success: feature already has target strategy",
+			setup: func(s *AutoOpsService) {
+				tx := mysqlmock.NewMockTransaction(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, tx)
+				}).Return(nil)
+
+				// Create a manual schedule clause with 10% weight
+				clause := &autoopsproto.ProgressiveRolloutManualScheduleClause{
+					VariationId: "variation-1",
+					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+						{
+							ScheduleId: "sid1",
+							Weight:     10000, // 10%
+							ExecuteAt:  time.Now().Unix(),
+						},
+					},
+				}
+				anyClause, _ := ptypes.MarshalAny(clause)
+
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.ProgressiveRollout{
+					ProgressiveRollout: &autoopsproto.ProgressiveRollout{
+						FeatureId: "feature-id",
+						Type:      autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+						Clause:    anyClause,
+					},
+				}, nil)
+
+				// Feature already has the target strategy (10%/90% rollout)
+				targetStrategy := &featureproto.Strategy{
+					Type: featureproto.Strategy_ROLLOUT,
+					RolloutStrategy: &featureproto.RolloutStrategy{
+						Variations: []*featureproto.RolloutStrategy_Variation{
+							{Variation: "variation-1", Weight: 10000}, // 10%
+							{Variation: "variation-2", Weight: 90000}, // 90%
+						},
+					},
+				}
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&ftdomain.Feature{
+					Feature: &featureproto.Feature{
+						Id:              "feature-id",
+						Enabled:         true,
+						DefaultStrategy: targetStrategy,
+						Variations: []*featureproto.Variation{
+							{Id: "variation-1"},
+							{Id: "variation-2"},
+						},
+					},
+				}, nil)
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().UpdateProgressiveRollout(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
+					ScheduleId: "sid1",
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "success",
