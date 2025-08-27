@@ -13,6 +13,7 @@
 		{"type":"build","section":"Build System","hidden":false}
 	],
 	"release-type": "simple",
+	"release-as": "2.0.0",
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
