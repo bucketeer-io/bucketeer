@@ -1,17 +1,34 @@
 <h1 align="center">Maximize Development with Minimum Risk</h1>
 
-![Bucketeer Dashboard](/static-files/img/bucketeer-dashboard.png)
+![Bucketeer Dashboard](./static-files/img/bucketeer-dashboard.png)
 
-[Bucketeer](https://bucketeer.io) is an open-source platform created by CyberAgent to help teams make better decisions, reduce deployment lead time and release risk through feature flags.
-Bucketeer offers advanced features, such as dark launch and staged rollouts, that perform limited releases based on user attributes, devices, and other segments.
-
-We are preparing and making the installation process simpler so anyone can easily use it. Stay tuned for weekly updates!
+<div id="header" align="center">
+  <br/>
+  <div id="links">
+    <a href="https://bucketeer.io">
+      Official Web Site
+    </a>
+    |
+    <a href="https://docs.bucketeer.io">
+      Documentation
+    </a>
+    |
+    <a href="https://app.slack.com/client/T08PSQ7BQ/C043026BME1">
+      Community (Slack)
+    </a>
+  </div>
+</div>
 
 ## Try now
 
 Try Bucketeer online with our [online demo](https://app.bucketeer.io/demo).
 
-![Bucketeer Feature Flag Dashboard](/static-files/img/feature-flag-list-page.png)
+![Bucketeer Feature Flag Dashboard](./static-files/img/feature-flag-list-page.png)
+
+## About us
+
+[Bucketeer](https://bucketeer.io) is an open-source platform created by CyberAgent to help teams make better decisions, reduce deployment lead time and release risk through feature flags.
+Bucketeer offers advanced features, such as dark launch and staged rollouts, that perform limited releases based on user attributes, devices, and other segments.
 
 ## Bucketeer Features
 
@@ -40,7 +57,7 @@ This practice is essential for large teams to ensure that a shared branch is alw
 
 ### Supported SDKs
 
-Bucketeer supports various languages and runtimes, with more coming soon!
+Bucketeer supports various languages and runtimes, including Open Feature SDKs!
 
 #### Client-side
 
@@ -48,11 +65,22 @@ Bucketeer supports various languages and runtimes, with more coming soon!
 - iOS
 - JavaScript
 - Flutter
+- React
+- React Native
 
 #### Server-side
 
 - Go
 - Node.js
+
+#### Open Feature SDKs
+
+[Ecosystem](https://openfeature.dev/ecosystem?instant_search%5BrefinementList%5D%5Bvendor%5D%5B0%5D=Bucketeer)
+
+-  JavaScript
+-  Swift
+-  Kotlin
+-  Go
 
 ## Documentation
 
