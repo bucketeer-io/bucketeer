@@ -24,6 +24,7 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
@@ -578,7 +579,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		feature, err := s.featureStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -632,6 +633,18 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
+		// Check if feature already has the target strategy to avoid unnecessary updates
+		if proto.Equal(feature.DefaultStrategy, defaultStrategy) && (enabled == nil || feature.Enabled == enabled.Value) {
+			s.logger.Warn(
+				"Feature already has target strategy, skipping update",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("id", progressiveRollout.Id),
+					zap.String("featureId", progressiveRollout.FeatureId),
+				)...,
+			)
+			return nil
+		}
 		updated, err := feature.Update(
 			nil, // name
 			nil, // description
@@ -650,7 +663,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.UpdateFeature(contextWithTx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -754,7 +767,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err != nil {
 			return err
 		}
-		feature, err := s.featureStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(contextWithTx, progressiveRollout.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -804,6 +817,18 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err != nil {
 			return err
 		}
+		// Check if feature already has the target strategy to avoid unnecessary updates
+		if proto.Equal(feature.DefaultStrategy, defaultStrategy) && (enabled == nil || feature.Enabled == enabled.Value) {
+			s.logger.Warn(
+				"Feature already has target strategy, skipping update",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("id", progressiveRollout.Id),
+					zap.String("featureId", progressiveRollout.FeatureId),
+				)...,
+			)
+			return nil
+		}
 		updated, err := feature.Update(
 			nil, // name
 			nil, // description
@@ -822,7 +847,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err != nil {
 			return err
 		}
-		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.UpdateFeature(contextWithTx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromIncomingContext(ctx).AddFields(
