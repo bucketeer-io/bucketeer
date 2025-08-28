@@ -135,42 +135,6 @@ func (s *authService) UpdatePassword(
 	return &authproto.UpdatePasswordResponse{}, nil
 }
 
-func (s *authService) ValidatePasswordResetToken(
-	ctx context.Context,
-	request *authproto.ValidatePasswordResetTokenRequest,
-) (*authproto.ValidatePasswordResetTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validatePasswordResetTokenRequest(request, localizer)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get reset token
-	resetToken, err := s.credentialsStorage.GetPasswordResetToken(ctx, request.ResetToken)
-	if err != nil {
-		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
-			return &authproto.ValidatePasswordResetTokenResponse{
-				IsValid: false,
-				Email:   "",
-			}, nil
-		}
-		s.logger.Error("Failed to get reset token for validation", zap.Error(err))
-		return nil, auth.StatusInternal.Err()
-	}
-
-	// Check if token is valid (not expired)
-	isValid := resetToken.IsValid()
-	email := ""
-	if isValid {
-		email = resetToken.Email
-	}
-
-	return &authproto.ValidatePasswordResetTokenResponse{
-		IsValid: isValid,
-		Email:   email,
-	}, nil
-}
-
 func (s *authService) InitiatePasswordSetup(
 	ctx context.Context,
 	request *authproto.InitiatePasswordSetupRequest,
