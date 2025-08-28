@@ -1525,46 +1525,6 @@ paths:
             $ref: '#/definitions/authUpdatePasswordRequest'
       tags:
         - Password Management
-  /v1/auth/password/reset/validate:
-    post:
-      summary: Validate Password Reset Token
-      description: Validate if a password reset token is valid and not expired.
-      operationId: web.v1.auth.validate_password_reset_token
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authValidatePasswordResetTokenResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authValidatePasswordResetTokenRequest'
-      tags:
-        - Password Management
   /v1/auth/password/setup:
     post:
       summary: Setup Password
@@ -9746,18 +9706,6 @@ definitions:
     title: Password Management Messages
   authUpdatePasswordResponse:
     type: object
-  authValidatePasswordResetTokenRequest:
-    type: object
-    properties:
-      resetToken:
-        type: string
-  authValidatePasswordResetTokenResponse:
-    type: object
-    properties:
-      isValid:
-        type: boolean
-      email:
-        type: string
   authValidatePasswordSetupTokenRequest:
     type: object
     properties:
