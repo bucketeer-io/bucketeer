@@ -114,7 +114,7 @@
   "start-at": "開始日時",
   "end-at": "終了日時",
   "select-evaluation": "評価を選択",
-  "save-with-comment": "コメントを付けてで保存",
+  "save-with-comment": "コメントを付けて保存",
   "member-tags-tooltip": "タグを使用してメンバーをグループ化し、リストページでの表示を簡単にできます",
   "member-role-tooltip": "管理者はすべての操作を行えますが、メンバーはプロジェクト、環境、APIキー、およびメンバーの作成または更新ができません。",
   "feature-flag-tags": "フィーチャーフラグタグ",
