@@ -5718,31 +5718,6 @@
             "name": "UpdatePasswordResponse"
           },
           {
-            "name": "ValidatePasswordResetTokenRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "reset_token",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ValidatePasswordResetTokenResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "is_valid",
-                "type": "bool"
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
             "name": "InitiatePasswordSetupRequest",
             "fields": [
               {
@@ -6622,92 +6597,6 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "ValidatePasswordResetToken",
-                "in_type": "ValidatePasswordResetTokenRequest",
-                "out_type": "ValidatePasswordResetTokenResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "post",
-                        "value": "/v1/auth/password/reset/validate"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Validate Password Reset Token"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Validate if a password reset token is valid and not expired."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Password Management"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.auth.validate_password_reset_token"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
                                   }
                                 ]
                               }
