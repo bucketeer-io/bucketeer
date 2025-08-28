@@ -73,15 +73,6 @@ AuthService.UpdatePassword = {
   responseType: proto_auth_service_pb.UpdatePasswordResponse
 };
 
-AuthService.ValidatePasswordResetToken = {
-  methodName: 'ValidatePasswordResetToken',
-  service: AuthService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
-  responseType: proto_auth_service_pb.ValidatePasswordResetTokenResponse
-};
-
 AuthService.InitiatePasswordSetup = {
   methodName: 'InitiatePasswordSetup',
   service: AuthService,
@@ -357,38 +348,6 @@ AuthServiceClient.prototype.updatePassword = function updatePassword(
     }
   };
 };
-
-AuthServiceClient.prototype.validatePasswordResetToken =
-  function validatePasswordResetToken(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AuthService.ValidatePasswordResetToken, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
-        }
-      }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
-  };
 
 AuthServiceClient.prototype.initiatePasswordSetup =
   function initiatePasswordSetup(requestMessage, metadata, callback) {
