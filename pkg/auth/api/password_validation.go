@@ -49,23 +49,6 @@ func validateUpdatePasswordRequest(
 	return nil
 }
 
-func validatePasswordResetTokenRequest(
-	req *authproto.ValidatePasswordResetTokenRequest,
-	localizer locale.Localizer,
-) error {
-	if req.ResetToken == "" {
-		dt, err := auth.StatusMissingResetToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "reset_token"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
 func validateInitiatePasswordSetupRequest(
 	req *authproto.InitiatePasswordSetupRequest,
 	localizer locale.Localizer,
