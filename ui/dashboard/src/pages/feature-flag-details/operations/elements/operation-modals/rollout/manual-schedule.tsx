@@ -206,6 +206,21 @@ const ManualSchedule = ({
                     onChange={date => {
                       if (date) {
                         field.onChange(date);
+                        const filterScheduleList = watchScheduleList.map(
+                          (item, idx) =>
+                            idx === index ? { ...item, executeAt: date } : item
+                        );
+                        const isValidIntervals = areIntervalsApart(
+                          filterScheduleList.map(item =>
+                            item.executeAt.getTime()
+                          ),
+                          5
+                        );
+                        if (isValidIntervals) {
+                          clearErrors(
+                            'progressiveRollout.manual.schedulesList'
+                          );
+                        }
                       }
                     }}
                   />
