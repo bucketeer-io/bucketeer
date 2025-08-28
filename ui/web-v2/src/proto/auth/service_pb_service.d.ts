@@ -67,15 +67,6 @@ type AuthServiceUpdatePassword = {
   readonly responseType: typeof proto_auth_service_pb.UpdatePasswordResponse;
 };
 
-type AuthServiceValidatePasswordResetToken = {
-  readonly methodName: string;
-  readonly service: typeof AuthService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_auth_service_pb.ValidatePasswordResetTokenRequest;
-  readonly responseType: typeof proto_auth_service_pb.ValidatePasswordResetTokenResponse;
-};
-
 type AuthServiceInitiatePasswordSetup = {
   readonly methodName: string;
   readonly service: typeof AuthService;
@@ -112,7 +103,6 @@ export class AuthService {
   static readonly SwitchOrganization: AuthServiceSwitchOrganization;
   static readonly GetDemoSiteStatus: AuthServiceGetDemoSiteStatus;
   static readonly UpdatePassword: AuthServiceUpdatePassword;
-  static readonly ValidatePasswordResetToken: AuthServiceValidatePasswordResetToken;
   static readonly InitiatePasswordSetup: AuthServiceInitiatePasswordSetup;
   static readonly SetupPassword: AuthServiceSetupPassword;
   static readonly ValidatePasswordSetupToken: AuthServiceValidatePasswordSetupToken;
@@ -266,21 +256,6 @@ export class AuthServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.UpdatePasswordResponse | null
-    ) => void
-  ): UnaryResponse;
-  validatePasswordResetToken(
-    requestMessage: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
-    metadata: grpc.Metadata,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.ValidatePasswordResetTokenResponse | null
-    ) => void
-  ): UnaryResponse;
-  validatePasswordResetToken(
-    requestMessage: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.ValidatePasswordResetTokenResponse | null
     ) => void
   ): UnaryResponse;
   initiatePasswordSetup(
