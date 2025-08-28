@@ -39,7 +39,7 @@ const (
 	urlTemplateEnvironment       = "%s/%s/environments/%s"
 	urlTemplateAdminAccount      = "%s/%s/accounts/%s"
 	urlTemplateProject           = "%s/%s/projects/%s"
-	urlTemplateOrganization      = "%s/%s/organizations/%s/settings"
+	urlTemplateOrganization      = "%s/organizations/%s/settings"
 )
 
 var (
@@ -75,7 +75,7 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 	case proto.Event_PROJECT:
 		return fmt.Sprintf(urlTemplateProject, url, envURLCode, id), nil
 	case proto.Event_ORGANIZATION:
-		return fmt.Sprintf(urlTemplateOrganization, url, envURLCode, id), nil
+		return fmt.Sprintf(urlTemplateOrganization, url, id), nil
 	case proto.Event_FLAG_TRIGGER:
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	case proto.Event_TAG:
