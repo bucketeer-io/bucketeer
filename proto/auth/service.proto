@@ -89,15 +89,6 @@ message UpdatePasswordRequest {
 
 message UpdatePasswordResponse {}
 
-message ValidatePasswordResetTokenRequest {
-  string reset_token = 1;
-}
-
-message ValidatePasswordResetTokenResponse {
-  bool is_valid = 1;
-  string email = 2;
-}
-
 // Password Setup Messages
 message InitiatePasswordSetupRequest {
   string email = 1;
@@ -342,31 +333,6 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-
-  rpc ValidatePasswordResetToken(ValidatePasswordResetTokenRequest)
-      returns (ValidatePasswordResetTokenResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/password/reset/validate"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Validate Password Reset Token",
-      description: "Validate if a password reset token is valid and not expired.",
-      tags: "Password Management",
-      operation_id: "web.v1.auth.validate_password_reset_token",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
           }
         }
       }
