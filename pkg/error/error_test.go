@@ -282,7 +282,7 @@ func TestErrorWrapComplex(t *testing.T) {
 	fieldErr := NewErrorNotFound("test", "not found", "resource")
 	fieldErr.Wrap(originalErr)
 
-	invalidErr := NewErrorInvalidEmpty("test", "invalid argument", "field")
+	invalidErr := NewErrorInvalidArgEmpty("test", "invalid argument", "field")
 	invalidErr.Wrap(fieldErr)
 
 	assert.ErrorIs(t, invalidErr, originalErr)

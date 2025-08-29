@@ -137,18 +137,18 @@ func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
 }
 
-func NewErrorInvalidUnknown(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
 }
 
-func NewErrorInvalidEmpty(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgEmpty(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgEmpty, message, field)
 }
 
-func NewErrorInvalidNil(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgNil(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNil, message, field)
 }
 
-func NewErrorInvalidNotMatchFormat(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNotMatchFormat, message, field)
 }

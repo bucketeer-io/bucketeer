@@ -38,7 +38,7 @@ func TestNewGRPCStatus(t *testing.T) {
 	}{
 		{
 			name:            "ErrorInvalidEmpty",
-			err:             pkgErr.NewErrorInvalidEmpty("test", "invalid argument", "field1"),
+			err:             pkgErr.NewErrorInvalidArgEmpty("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
 			expectedMessage: "test:invalid argument[field1:invalid_empty]",
 			expectedReason:  "INVALID_ARGUMENT_EMPTY",
@@ -49,7 +49,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:            "ErrorInvalidNil",
-			err:             pkgErr.NewErrorInvalidNil("test", "invalid argument", "field1"),
+			err:             pkgErr.NewErrorInvalidArgNil("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
 			expectedMessage: "test:invalid argument[field1:invalid_nil]",
 			expectedReason:  "INVALID_ARGUMENT_NIL",
@@ -60,7 +60,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:            "ErrorInvalidNotMatchFormat",
-			err:             pkgErr.NewErrorInvalidNotMatchFormat("test", "invalid argument", "field1"),
+			err:             pkgErr.NewErrorInvalidArgNotMatchFormat("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
 			expectedMessage: "test:invalid argument[field1:invalid_not_match_format]",
 			expectedReason:  "INVALID_ARGUMENT_NOT_MATCH_FORMAT",
@@ -71,7 +71,7 @@ func TestNewGRPCStatus(t *testing.T) {
 		},
 		{
 			name:            "ErrorInvalidUnknown",
-			err:             pkgErr.NewErrorInvalidUnknown("test", "invalid argument", "field1"),
+			err:             pkgErr.NewErrorInvalidArgUnknown("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
 			expectedMessage: "test:invalid argument[field1:invalid_unknown]",
 			expectedReason:  "INVALID_ARGUMENT",

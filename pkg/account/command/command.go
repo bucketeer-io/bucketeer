@@ -22,7 +22,7 @@ import (
 
 // nolint:lll
 var (
-	ErrBadCommand = pkgErr.NewErrorInvalidNotMatchFormat(pkgErr.AccountPackageName, "cannot handle command", "command")
+	ErrBadCommand = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "cannot handle command", "command")
 )
 
 type Command interface{}
