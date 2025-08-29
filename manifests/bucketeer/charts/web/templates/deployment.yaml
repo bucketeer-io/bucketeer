@@ -163,6 +163,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_WEB_ENABLE_PPROF
+              value: "{{ .Values.env.enablePprof }}"
+            - name: BUCKETEER_WEB_PPROF_ADDR
+              value: "{{ .Values.env.pprofAddr }}"
             - name: BUCKETEER_WEB_PUBSUB_TYPE
               value: "{{ .Values.global.pubsub.type }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_SERVER_NAME

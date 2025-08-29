@@ -119,6 +119,10 @@ spec:
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_BATCH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_BATCH_ENABLE_PPROF
+              value: "{{ .Values.env.enablePprof }}"
+            - name: BUCKETEER_BATCH_PPROF_ADDR
+              value: "{{ .Values.env.pprofAddr }}"
             - name: BUCKETEER_BATCH_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
             - name: BUCKETEER_BATCH_GRPC_GATEWAY_PORT

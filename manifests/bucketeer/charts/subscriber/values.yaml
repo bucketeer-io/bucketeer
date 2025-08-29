@@ -9,6 +9,8 @@ env:
   project:
   profile: true
   gcpEnabled: true
+  enablePprof: false
+  pprofAddr: 127.0.0.1:6060
   mysqlUser:
   mysqlPass:
   mysqlHost:
