@@ -1645,6 +1645,175 @@ paths:
             $ref: '#/definitions/authExchangeTokenRequest'
       tags:
         - Authentication
+  /v1/auth/password:
+    put:
+      summary: Update Password
+      description: Update the password for the authenticated user.
+      operationId: web.v1.auth.update_password
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authUpdatePasswordResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authUpdatePasswordRequest'
+      tags:
+        - Password Management
+  /v1/auth/password/setup:
+    post:
+      summary: Setup Password
+      description: Complete password setup using a valid setup token.
+      operationId: web.v1.auth.setup_password
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authSetupPasswordResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authSetupPasswordRequest'
+      tags:
+        - Password Management
+  /v1/auth/password/setup/initiate:
+    post:
+      summary: Initiate Password Setup
+      description: Initiate password setup process by sending a setup email to users without passwords.
+      operationId: web.v1.auth.initiate_password_setup
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authInitiatePasswordSetupResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authInitiatePasswordSetupRequest'
+      tags:
+        - Password Management
+  /v1/auth/password/setup/validate:
+    post:
+      summary: Validate Password Setup Token
+      description: Validate if a password setup token is valid and not expired.
+      operationId: web.v1.auth.validate_password_setup_token
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authValidatePasswordSetupTokenResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authValidatePasswordSetupTokenRequest'
+      tags:
+        - Password Management
   /v1/auth/refresh_token:
     post:
       summary: Refresh Token
@@ -9583,6 +9752,17 @@ definitions:
     properties:
       isDemoSiteEnabled:
         type: boolean
+  authInitiatePasswordSetupRequest:
+    type: object
+    properties:
+      email:
+        type: string
+    title: Password Setup Messages
+  authInitiatePasswordSetupResponse:
+    type: object
+    properties:
+      message:
+        type: string
   authRefreshTokenRequest:
     type: object
     properties:
@@ -9593,6 +9773,15 @@ definitions:
     properties:
       token:
         $ref: '#/definitions/authToken'
+  authSetupPasswordRequest:
+    type: object
+    properties:
+      setupToken:
+        type: string
+      newPassword:
+        type: string
+  authSetupPasswordResponse:
+    type: object
   authSignInRequest:
     type: object
     properties:
@@ -9629,6 +9818,28 @@ definitions:
       expiry:
         type: string
         format: int64
+  authUpdatePasswordRequest:
+    type: object
+    properties:
+      currentPassword:
+        type: string
+      newPassword:
+        type: string
+    title: Password Management Messages
+  authUpdatePasswordResponse:
+    type: object
+  authValidatePasswordSetupTokenRequest:
+    type: object
+    properties:
+      setupToken:
+        type: string
+  authValidatePasswordSetupTokenResponse:
+    type: object
+    properties:
+      isValid:
+        type: boolean
+      email:
+        type: string
   autoopsActionType:
     type: string
     enum:
