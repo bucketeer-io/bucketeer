@@ -362,6 +362,10 @@ const useOptions = () => {
         value: FeatureRuleClauseOperator.EQUALS
       },
       {
+        label: '≠',
+        value: FeatureRuleClauseOperator.NOT_EQUALS
+      },
+      {
         label: '>=',
         value: FeatureRuleClauseOperator.GREATER_OR_EQUAL
       },
