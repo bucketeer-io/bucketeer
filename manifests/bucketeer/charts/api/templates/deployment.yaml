@@ -109,6 +109,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_API_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_API_ENABLE_PPROF
+              value: "{{ .Values.env.enablePprof }}"
+            - name: BUCKETEER_API_PPROF_ADDR
+              value: "{{ .Values.env.pprofAddr }}"
             - name: BUCKETEER_API_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
             - name: BUCKETEER_API_PUBSUB_TYPE

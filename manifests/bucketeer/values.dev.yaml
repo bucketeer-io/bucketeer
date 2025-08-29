@@ -59,6 +59,8 @@ web:
     gcpEnabled: false
     cloudService: hcv
     profile: false
+    enablePprof: false
+    pprofAddr: 127.0.0.1:6060
     bucketeerTestEnabled: true
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     project: ${global.pubsub.project}
@@ -132,6 +134,8 @@ api:
   env:
     gcpEnabled: false
     profile: false
+    enablePprof: true
+    pprofAddr: 0.0.0.0:6060
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     project: ${global.pubsub.project}
     goalTopic: goal
@@ -167,6 +171,8 @@ batch-server:
     project: bucketeer-test
     profile: false
     gcpEnabled: false
+    enablePprof: true
+    pprofAddr: 0.0.0.0:6060
     mysqlUser: bucketeer
     mysqlPass: bucketeer
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
@@ -287,6 +293,8 @@ subscriber:
     project: bucketeer-test
     profile: false
     gcpEnabled: false
+    enablePprof: true
+    pprofAddr: 0.0.0.0:6060
     mysqlUser: bucketeer
     mysqlPass: bucketeer
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local

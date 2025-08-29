@@ -7,6 +7,8 @@ env:
   project:
   gcpEnabled: true
   profile: true
+  enablePprof: false
+  pprofAddr: 127.0.0.1:6060
   pubsubEmulatorHost:
   goalTopic:
   evaluationTopic:
