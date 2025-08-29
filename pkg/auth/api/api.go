@@ -902,8 +902,8 @@ func (s *authService) checkAndOfferPasswordSetup(
 	}
 
 	// Check if user already has password credentials
-	_, err := s.credentialsStorage.GetCredentials(ctx, email)
-	if err == nil {
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
 		// User already has password, no need to send setup email
 		return
 	}
