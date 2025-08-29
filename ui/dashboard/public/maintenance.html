@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Maintenance - Bucketeer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tailwind CSS CDN -->
+    <style>
+      @font-face {
+        font-family: 'Sofia Pro';
+        src: url('fonts/sofiapro-regular.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        letter-spacing: 0.01em;
+      }
+
+      body {
+        font-family: 'Sofia Pro', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scrollbar-gutter: stable;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import images -->
+    <link rel="preload" as="image" href="/images/bucketeer-logo.svg" />
+    <link rel="preload" as="image" href="/images/auth-background.svg" />
+    <link rel="preload" as="image" href="/images/english-flag.svg" />
+    <link rel="preload" as="image" href="/images/japan-flag.svg" />
+    <link rel="preload" as="image" href="/images/chevron-down.svg" />
+  </head>
+  <body>
+    <div class="flex min-h-screen w-full overflow-auto">
+      <div class="grid flex-1 place-items-center p-5 pr-0">
+        <div class="w-full max-w-[500px]">
+          <div class="mb-12">
+            <img src="/images/bucketeer-logo.svg" alt="bucketeer-logo" />
+          </div>
+
+          <div class="grid gap-6">
+            <div class="flex items-center justify-between gap-2">
+              <h1
+                class="text-2xl font-bold text-gray-900"
+                id="maintenance-title"
+              >
+                We are under maintenance
+              </h1>
+              <div class="relative" id="language-dropdown">
+                <button
+                  id="language-trigger"
+                  class="flex items-center gap-2 rounded border-gray-200 bg-transparent px-3 py-2 shadow-none"
+                >
+                  <img
+                    src="/images/english-flag.svg"
+                    alt="English"
+                    class="h-5 w-5"
+                    id="language-icon"
+                  />
+                  <span id="language-label">English</span>
+                  <img
+                    src="/images/chevron-down.svg"
+                    alt="Toggle Language"
+                    class="h-5 w-5"
+                  />
+                </button>
+                <div
+                  class="absolute left-0 top-full z-10 mt-1 hidden min-w-[120px] rounded border border-gray-200 bg-white shadow"
+                  id="language-menu"
+                >
+                  <!-- Language options will be injected here -->
+                </div>
+              </div>
+            </div>
+            <div class="text-md text-gray-700" id="maintenance-message">
+              We are currently undergoing maintenance. We sincerely apologize
+              for the inconvenience.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 p-4">
+        <div
+          class="flex h-full items-center justify-end rounded-3xl bg-[#EFEFFE]"
+        >
+          <img
+            src="/images/auth-background.svg"
+            alt="feature flags dashboard"
+            class="w-[92%]"
+          />
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const languageList = [
+        { value: 'ja', label: '日本語', icon: '/images/japan-flag.svg' },
+        { value: 'en', label: 'English', icon: '/images/english-flag.svg' }
+      ];
+      let currentLanguage = 'en';
+
+      // Populate language dropdown
+      const languageMenu = document.getElementById('language-menu');
+      languageList.forEach(item => {
+        const div = document.createElement('div');
+        div.className =
+          'flex items-center w-40 gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100';
+        div.innerHTML = `<img src="${item.icon}" alt="${item.label}" class="w-5 h-5" /> ${item.label}`;
+        div.onclick = () => {
+          currentLanguage = item.value;
+          document.getElementById('language-label').textContent = item.label;
+          document.getElementById('language-icon').src = item.icon;
+          languageMenu.classList.add('hidden');
+          // Simulate translation change
+          document.getElementById('maintenance-title').textContent =
+            item.value === 'ja' ? 'メンテナンス中' : 'We are under maintenance';
+          document.getElementById('maintenance-message').textContent =
+            item.value === 'ja'
+              ? '只今メンテナンスです。ご不便ご不便おかけしてしまい大変申し訳ございません。'
+              : 'We are currently undergoing maintenance. We sincerely apologize for the inconvenience.';
+        };
+        languageMenu.appendChild(div);
+      });
+
+      // Dropdown toggle
+      document.getElementById('language-trigger').onclick = function (e) {
+        e.stopPropagation();
+        languageMenu.classList.toggle('hidden');
+      };
+      document.body.onclick = function () {
+        languageMenu.classList.add('hidden');
+      };
+    </script>
+  </body>
+</html>
