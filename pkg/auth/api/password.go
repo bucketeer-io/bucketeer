@@ -170,8 +170,8 @@ func (s *authService) InitiatePasswordSetup(
 	}
 
 	// Check if credentials already exist (user already has a password)
-	_, err = s.credentialsStorage.GetCredentials(ctx, email)
-	if err == nil {
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
 		// Password already exists, don't reveal this for security
 		s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
@@ -304,8 +304,8 @@ func (s *authService) SetupPassword(
 	}
 
 	// Check if credentials already exist (prevent double setup)
-	_, err = s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
-	if err == nil {
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
+	if err == nil && credentials.PasswordHash != "" {
 		s.logger.Error("Setup attempted for account with existing password", zap.String("email", setupToken.Email))
 		dt, err := auth.StatusPasswordAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -397,8 +397,8 @@ func (s *authService) ValidatePasswordSetupToken(
 	email := ""
 	if isValid {
 		// Additional validation: check if account still needs password setup
-		_, err := s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
-		if err == nil {
+		credentials, err := s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
+		if err == nil && credentials.PasswordHash != "" {
 			// Credentials already exist, token is no longer valid for setup
 			isValid = false
 		} else if !errors.Is(err, storage.ErrCredentialsNotFound) {
