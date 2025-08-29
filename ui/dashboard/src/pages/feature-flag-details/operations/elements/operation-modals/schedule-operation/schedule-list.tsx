@@ -55,7 +55,11 @@ const ScheduleList = ({
     control,
     keyName: 'scheduleOperationId'
   });
-  const watchScheduleList = [...watch('datetimeClausesList')];
+
+  const watchScheduleList = useMemo(
+    () => watch('datetimeClausesList'),
+    [watch, scheduleData.length]
+  );
 
   const stateOptions = useMemo(
     () => [
