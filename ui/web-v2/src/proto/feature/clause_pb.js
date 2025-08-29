@@ -219,7 +219,8 @@ proto.bucketeer.feature.Clause.Operator = {
   BEFORE: 9,
   AFTER: 10,
   FEATURE_FLAG: 11,
-  PARTIALLY_MATCH: 12
+  PARTIALLY_MATCH: 12,
+  NOT_EQUALS: 13
 };
 
 /**

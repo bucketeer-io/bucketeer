@@ -920,6 +920,10 @@ export const clauseCompareOperatorOptions: Option[] = [
     label: intl.formatMessage(messages.feature.clause.operator.equal)
   },
   {
+    value: Clause.Operator.NOT_EQUALS.toString(),
+    label: intl.formatMessage(messages.feature.clause.operator.notEqual)
+  },
+  {
     value: Clause.Operator.GREATER_OR_EQUAL.toString(),
     label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual)
   },

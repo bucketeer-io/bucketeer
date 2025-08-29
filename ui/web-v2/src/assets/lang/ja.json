@@ -295,6 +295,7 @@
   "feature.clause.operator.before": "次の値より後",
   "feature.clause.operator.endWith": "次の値で終わる",
   "feature.clause.operator.equal": "=",
+  "feature.clause.operator.notEqual": "≠",
   "feature.clause.operator.greater": ">",
   "feature.clause.operator.greaterOrEqual": ">=",
   "feature.clause.operator.in": "次の値のいずれか",

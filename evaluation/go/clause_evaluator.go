@@ -63,6 +63,8 @@ func (c *clauseEvaluator) Evaluate(
 		return c.dependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
 	case featureproto.Clause_PARTIALLY_MATCH:
 		return c.partiallyMatches(targetValue, clause.Values), nil
+	case featureproto.Clause_NOT_EQUALS:
+		return !c.equals(targetValue, clause.Values), nil
 	}
 	return false, nil
 }

@@ -1,5 +1,6 @@
 export enum FeatureRuleClauseOperator {
   EQUALS = 'EQUALS',
+  NOT_EQUALS = 'NOT_EQUALS',
   GREATER_OR_EQUAL = 'GREATER_OR_EQUAL',
   GREATER = 'GREATER',
   LESS_OR_EQUAL = 'LESS_OR_EQUAL',

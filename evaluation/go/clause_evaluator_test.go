@@ -1339,3 +1339,93 @@ func TestAfterInt(t *testing.T) {
 		assert.Equal(t, tc.expected, res, des)
 	}
 }
+
+func TestNotEquals(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		targetValue string
+		values      []string
+		expected    bool
+	}{
+		// String equality tests
+		{
+			targetValue: "value1",
+			values:      []string{"value1"},
+			expected:    false, // NOT_EQUALS should return false when values are equal
+		},
+		{
+			targetValue: "value1",
+			values:      []string{"value2"},
+			expected:    true, // NOT_EQUALS should return true when values are different
+		},
+		{
+			targetValue: "value1",
+			values:      []string{"value1", "value2"},
+			expected:    false, // NOT_EQUALS should return false when any value matches
+		},
+		{
+			targetValue: "value1",
+			values:      []string{"value2", "value3"},
+			expected:    true, // NOT_EQUALS should return true when no values match
+		},
+		// Numeric tests
+		{
+			targetValue: "10",
+			values:      []string{"10"},
+			expected:    false,
+		},
+		{
+			targetValue: "10",
+			values:      []string{"20"},
+			expected:    true,
+		},
+		{
+			targetValue: "10.5",
+			values:      []string{"10.5"},
+			expected:    false,
+		},
+		{
+			targetValue: "10.5",
+			values:      []string{"20.5"},
+			expected:    true,
+		},
+		// Semantic version tests
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.0"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v2.0.0"},
+			expected:    true,
+		},
+		// Empty tests
+		{
+			targetValue: "",
+			values:      []string{""},
+			expected:    false,
+		},
+		{
+			targetValue: "",
+			values:      []string{"non-empty"},
+			expected:    true,
+		},
+		{
+			targetValue: "non-empty",
+			values:      []string{},
+			expected:    true, // NOT_EQUALS with empty values should return true
+		},
+	}
+
+	clauseEvaluator := &clauseEvaluator{}
+	for i, tc := range testcases {
+		clause := &featureproto.Clause{
+			Operator: featureproto.Clause_NOT_EQUALS,
+			Values:   tc.values,
+		}
+		des := fmt.Sprintf("index: %d", i)
+		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+		assert.Equal(t, tc.expected, res, des)
+	}
+}
