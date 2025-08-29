@@ -206,13 +206,9 @@ const ManualSchedule = ({
                     onChange={date => {
                       if (date) {
                         field.onChange(date);
-                        const filterScheduleList = watchScheduleList.map(
-                          (item, idx) =>
-                            idx === index ? { ...item, executeAt: date } : item
-                        );
                         const isValidIntervals = areIntervalsApart(
-                          filterScheduleList.map(item =>
-                            item.executeAt.getTime()
+                          watchScheduleList.map((item, idx) =>
+                            (idx === index ? date : item.executeAt).getTime()
                           ),
                           5
                         );

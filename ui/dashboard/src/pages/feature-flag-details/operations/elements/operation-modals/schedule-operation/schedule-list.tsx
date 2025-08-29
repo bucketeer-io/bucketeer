@@ -58,7 +58,7 @@ const ScheduleList = ({
 
   const watchScheduleList = useMemo(
     () => watch('datetimeClausesList'),
-    [watch, scheduleData]
+    [watch, scheduleData.length]
   );
 
   const stateOptions = useMemo(
