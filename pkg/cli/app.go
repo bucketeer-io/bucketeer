@@ -18,12 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"cloud.google.com/go/profiler"
@@ -76,7 +74,7 @@ func (a *App) Run() error {
 	profile := a.app.Flag("profile", "If true enables uploading the profiles to Stackdriver.").Default("true").Bool()
 	metricsPort := a.app.Flag("metrics-port", "Port to bind metrics server to.").Default("9002").Int()
 	enablePprof := a.app.Flag("enable-pprof", "Enable pprof debug endpoints at /debug/pprof/.").Default("false").Bool()
-	pprofPort := a.app.Flag("pprof-port", "Port to bind pprof server to.").Default("6060").Int()
+	pprofAddr := a.app.Flag("pprof-addr", "Address to bind pprof server to.").Default("127.0.0.1:6060").String()
 	traceSamplingProbability := a.app.Flag(
 		"trace-sampling-probability",
 		"How offten we send traces to exporters.",
@@ -129,8 +127,7 @@ func (a *App) Run() error {
 
 	if *enablePprof {
 		go func() {
-			pprofAddr := net.JoinHostPort("127.0.0.1", strconv.Itoa(*pprofPort))
-			if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+			if err := http.ListenAndServe(*pprofAddr, nil); err != nil {
 				logger.Error("Failed to start pprof server", zap.Error(err))
 			}
 		}()
