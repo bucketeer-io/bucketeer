@@ -15,7 +15,7 @@ const CustomOption = memo((props: OptionProps<Option>) => {
   const isTruncated = useIsTruncated(spanRef, [props.data.label]);
 
   const labelNode = (
-    <span ref={spanRef} className="truncate block">
+    <span ref={spanRef} className="truncate block max-w-[350px]">
       {label}
     </span>
   );
