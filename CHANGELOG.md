@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/bucketeer-io/bucketeer/compare/v2.0.0...v2.0.1) (2025-08-30)
+
+
+### Miscellaneous
+
+* fix typo in locales ([#2091](https://github.com/bucketeer-io/bucketeer/issues/2091)) ([b998a47](https://github.com/bucketeer-io/bucketeer/commit/b998a479680384b8534904e4d6052f2b0d74110b))
+* update new url for new console ([#2085](https://github.com/bucketeer-io/bucketeer/issues/2085)) ([a80039b](https://github.com/bucketeer-io/bucketeer/commit/a80039b8e69da41ddf740045bee4c4307114288d))
+
 ## [2.0.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v2.0.0) (2025-08-27)
 
 
