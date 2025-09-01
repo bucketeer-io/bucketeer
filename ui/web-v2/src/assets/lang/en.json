@@ -295,6 +295,7 @@
   "feature.clause.operator.before": "before",
   "feature.clause.operator.endWith": "ends with",
   "feature.clause.operator.equal": "=",
+  "feature.clause.operator.notEqual": "≠",
   "feature.clause.operator.greater": ">",
   "feature.clause.operator.greaterOrEqual": ">=",
   "feature.clause.operator.in": "contains",

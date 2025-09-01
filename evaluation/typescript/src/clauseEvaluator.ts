@@ -52,6 +52,8 @@ class ClauseEvaluator {
           );
         case Clause.Operator.PARTIALLY_MATCH:
           return this.partiallyMatches(targetValue, clause.getValuesList());
+        case Clause.Operator.NOT_EQUALS:
+          return !this.equals(targetValue, clause.getValuesList());
         default:
           return false;
       }

@@ -1767,6 +1767,10 @@ export const messages = {
           id: 'feature.clause.operator.equal',
           defaultMessage: '='
         }),
+        notEqual: defineMessage({
+          id: 'feature.clause.operator.notEqual',
+          defaultMessage: '≠'
+        }),
         greaterOrEqual: defineMessage({
           id: 'feature.clause.operator.greaterOrEqual',
           defaultMessage: '>='

@@ -33,6 +33,7 @@ message Clause {
     // Attribute is feature ID, and value is variation ID.
     FEATURE_FLAG = 11;
     PARTIALLY_MATCH = 12;
+    NOT_EQUALS = 13;
   }
   string id = 1;
   string attribute = 2;
