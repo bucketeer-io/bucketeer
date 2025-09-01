@@ -40,7 +40,7 @@ var (
 	ErrEmailIsEmpty            = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "email is empty", "email")
 	ErrEmailInvalidFormat      = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid email format", "email")
 	ErrFullNameIsEmpty         = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "full name is empty", "full_name")
-	ErrFirstNameInvalidFormat  = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid first name format", "first name")
+	ErrFirstNameInvalidFormat  = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid first name format", "first_name")
 	ErrLastNameInvalidFormat   = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid last name format", "last_name")
 	ErrLanguageIsEmpty         = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "language is empty", "language")
 	ErrOrganizationRoleInvalid = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "invalid organization role", "organization_role")
