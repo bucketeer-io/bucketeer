@@ -15,39 +15,35 @@
 package domain
 
 import (
-	"errors"
 	"regexp"
 	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
+// nolint:lll
 var (
 	maxAccountNameLength = 250
 	// nolint:lll
-	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
-	ErrTeamNotFound             = errors.New("team: not found")
-	statusMissingOrganizationID = gstatus.New(
-		codes.InvalidArgument,
-		"account: organization id must be specified",
-	)
-	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
-	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
-	statusFullNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: full name is empty")
-	statusInvalidFirstName        = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
-	statusInvalidLastName         = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
-	statusLanguageIsEmpty         = gstatus.New(codes.InvalidArgument, "account: language is empty")
-	statusInvalidOrganizationRole = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
+	emailRegex                 = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	ErrSearchFilterNotFound    = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "search filter not found", "search_filter")
+	ErrTeamNotFound            = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "team not found", "team")
+	ErrMissingOrganizationID   = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "organization id must be specified", "organization_id")
+	ErrEmailIsEmpty            = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "email is empty", "email")
+	ErrEmailInvalidFormat      = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid email format", "email")
+	ErrFullNameIsEmpty         = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "full name is empty", "full_name")
+	ErrFirstNameInvalidFormat  = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid first name format", "first_name")
+	ErrLastNameInvalidFormat   = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid last name format", "last_name")
+	ErrLanguageIsEmpty         = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "language is empty", "language")
+	ErrOrganizationRoleInvalid = pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "invalid organization role", "organization_role")
 )
 
 type AccountV2 struct {
@@ -377,34 +373,34 @@ func (a *AccountV2) GetAccountFullName() string {
 
 func validate(a *AccountV2) error {
 	if a.OrganizationId == "" {
-		return statusMissingOrganizationID.Err()
+		return ErrMissingOrganizationID
 	}
 	if a.Email == "" {
-		return statusEmailIsEmpty.Err()
+		return ErrEmailIsEmpty
 	}
 	if !emailRegex.MatchString(a.Email) {
-		return statusInvalidEmail.Err()
+		return ErrEmailInvalidFormat
 	}
 	// If both first name and last name are empty, the name field must not be empty
 	if a.FirstName == "" && a.LastName == "" {
 		// TODO: This should be removed after the new console is released and the migration is completed
 		if a.Name == "" {
-			return statusFullNameIsEmpty.Err()
+			return ErrFullNameIsEmpty
 		}
 	}
 	// Validate first name length if it's provided
 	if a.FirstName != "" && len(a.FirstName) > maxAccountNameLength {
-		return statusInvalidFirstName.Err()
+		return ErrFirstNameInvalidFormat
 	}
 	// Validate last name length if it's provided
 	if a.LastName != "" && len(a.LastName) > maxAccountNameLength {
-		return statusInvalidLastName.Err()
+		return ErrLastNameInvalidFormat
 	}
 	if a.Language == "" {
-		return statusLanguageIsEmpty.Err()
+		return ErrLanguageIsEmpty
 	}
 	if a.OrganizationRole == proto.AccountV2_Role_Organization_UNASSIGNED {
-		return statusInvalidOrganizationRole.Err()
+		return ErrOrganizationRoleInvalid
 	}
 	return nil
 }
