@@ -49,7 +49,7 @@ jobs:
       COMMIT_MESSAGE: ${{ steps.commit_message.outputs.value }}
       MIGRATION_REQUIRED: ${{ steps.changes.outputs.migration }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
       - name: Store git tag value to output
@@ -79,7 +79,7 @@ jobs:
       id-token: "write"
       packages: "write"
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
@@ -118,7 +118,7 @@ jobs:
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: docker build migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
       - name: Login to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -155,13 +155,13 @@ jobs:
           done
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@140bb5113ffb6b65a7e9b937a81fa96cf5064462 # v2.1.11
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           token_format: "access_token"
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
       - name: Login to GAR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           registry: ${{ env.GAR_REGISTRY }}
           username: oauth2accesstoken
@@ -201,7 +201,7 @@ jobs:
     needs: [setup, go]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Workflow Dispatch
         uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
