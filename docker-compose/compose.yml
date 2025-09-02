@@ -121,6 +121,8 @@ services:
       - BUCKETEER_WEB_LOG_LEVEL=info
       - BUCKETEER_WEB_PROFILE=false
       - BUCKETEER_WEB_GCP_TRACE_ENABLED=false
+      - BUCKETEER_WEB_ENABLE_PPROF=false
+      - BUCKETEER_WEB_PPROF_ADDR=127.0.0.1:6060
       - BUCKETEER_WEB_USE_MYSQL=true
       - BUCKETEER_WEB_CLOUD_SERVICE=gcp
       - BUCKETEER_WEB_WEBHOOK_BASE_URL=https://localhost
@@ -204,6 +206,8 @@ services:
       - BUCKETEER_API_PROFILE=false
       - BUCKETEER_API_GCP_TRACE_ENABLED=false
       - BUCKETEER_API_TRACE_SAMPLING_PROBABILITY=0.0
+      - BUCKETEER_API_ENABLE_PPROF=false
+      - BUCKETEER_API_PPROF_ADDR=127.0.0.1:6060
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
@@ -270,6 +274,8 @@ services:
       - BUCKETEER_BATCH_LOG_LEVEL=info
       - BUCKETEER_BATCH_PROFILE=false
       - BUCKETEER_BATCH_GCP_TRACE_ENABLED=false
+      - BUCKETEER_BATCH_ENABLE_PPROF=false
+      - BUCKETEER_BATCH_PPROF_ADDR=127.0.0.1:6060
       - BUCKETEER_BATCH_STAN_MODEL_ID=y3qsnd7m
       - BUCKETEER_BATCH_STAN_HOST=httpstan
       - BUCKETEER_BATCH_STAN_PORT=8080
@@ -332,6 +338,8 @@ services:
       - BUCKETEER_SUBSCRIBER_LOG_LEVEL=info
       - BUCKETEER_SUBSCRIBER_PROFILE=false
       - BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED=false
+      - BUCKETEER_SUBSCRIBER_ENABLE_PPROF=false
+      - BUCKETEER_SUBSCRIBER_PPROF_ADDR=127.0.0.1:6060
       - BUCKETEER_SUBSCRIBER_SUBSCRIBER_CONFIG=/usr/local/conf/subscribers.json
       - BUCKETEER_SUBSCRIBER_ON_DEMAND_SUBSCRIBER_CONFIG=/usr/local/conf/onDemandSubscribers.json
       - BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG=/usr/local/conf/processors.json
