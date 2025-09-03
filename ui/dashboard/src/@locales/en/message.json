@@ -18,6 +18,7 @@
       "increments-less-than": "Increments must be less than or equal to 100"
     },
     "should-be-percent": "Total should be 100%.",
+    "percentage-less-than-100": "Percentage must be less than or equal to 100",
     "later-or-equal-days": "This must be later than or equal to {{count}} days ago.",
     "less-or-equal-days": "This must be less than or equals to {{count}} days.",
     "stop-later-than-start": "Stop at must be later than the start at.",

@@ -1301,7 +1301,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusFullNameIsEmpty.Err(),
+			expectedErr: ErrFullNameIsEmpty,
 		},
 		{
 			desc: "error: missing organization id",
@@ -1314,7 +1314,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusMissingOrganizationID.Err(),
+			expectedErr: ErrMissingOrganizationID,
 		},
 		{
 			desc: "error: empty email",
@@ -1327,7 +1327,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusEmailIsEmpty.Err(),
+			expectedErr: ErrEmailIsEmpty,
 		},
 		{
 			desc: "error: invalid email format",
@@ -1340,7 +1340,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusInvalidEmail.Err(),
+			expectedErr: ErrEmailInvalidFormat,
 		},
 		{
 			desc: "error: empty language",
@@ -1353,7 +1353,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusLanguageIsEmpty.Err(),
+			expectedErr: ErrLanguageIsEmpty,
 		},
 		{
 			desc: "error: invalid organization role",
@@ -1366,7 +1366,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_UNASSIGNED,
 			},
-			expectedErr: statusInvalidOrganizationRole.Err(),
+			expectedErr: ErrOrganizationRoleInvalid,
 		},
 		{
 			desc: "error: first name too long",
@@ -1379,7 +1379,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusInvalidFirstName.Err(),
+			expectedErr: ErrFirstNameInvalidFormat,
 		},
 		{
 			desc: "error: last name too long",
@@ -1392,7 +1392,7 @@ func TestAccountV2_Validate(t *testing.T) {
 				OrganizationId:   "org123",
 				OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: statusInvalidLastName.Err(),
+			expectedErr: ErrLastNameInvalidFormat,
 		},
 	}
 

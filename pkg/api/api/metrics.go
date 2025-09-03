@@ -117,6 +117,11 @@ const (
 	methodDeleteSegment          = "DeleteSegment"
 	methodBulkUploadSegmentUsers = "BulkUploadSegmentUsers"
 
+	methodGetEnvironmentV2   = "GetEnvironmentV2"
+	methodListEnvironmentsV2 = "ListEnvironmentsV2"
+	methodGetProject         = "GetProject"
+	methodListProjects       = "ListProjects"
+
 	typeFeatures      = "Features"
 	typeSegmentUsers  = "SegmentUsers"
 	typeAPIKey        = "APIKey"

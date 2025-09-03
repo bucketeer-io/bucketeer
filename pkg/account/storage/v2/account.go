@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -46,10 +47,11 @@ var (
 	selectAccountsWithOrganizationSQL string
 )
 
+// nolint:lll
 var (
-	ErrAccountAlreadyExists          = errors.New("account: account already exists")
-	ErrAccountNotFound               = errors.New("account: account not found")
-	ErrAccountUnexpectedAffectedRows = errors.New("account: account unexpected affected rows")
+	ErrAccountAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "account already exists")
+	ErrAccountNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "account not found", "account")
+	ErrAccountUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.AccountPackageName, " unexpected affected rows")
 )
 
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {

@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -84,6 +85,7 @@ var (
 	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
 	ErrBadRole            = status.Error(codes.PermissionDenied, "gateway: bad role")
 	ErrInternal           = status.Error(codes.Internal, "gateway: internal")
+	ErrNotFound           = status.Error(codes.NotFound, "gateway: not found")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
@@ -161,6 +163,7 @@ type grpcGatewayService struct {
 	notificationClient     notificationclient.Client
 	experimentClient       experimentclient.Client
 	eventCounterClient     eventcounterclient.Client
+	environmentClient      environmentclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -184,6 +187,7 @@ func NewGrpcGatewayService(
 	notificationClient notificationclient.Client,
 	experimentClient experimentclient.Client,
 	eventCounterClient eventcounterclient.Client,
+	environmentClient environmentclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -209,6 +213,7 @@ func NewGrpcGatewayService(
 		notificationClient:     notificationClient,
 		experimentClient:       experimentClient,
 		eventCounterClient:     eventCounterClient,
+		environmentClient:      environmentClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,

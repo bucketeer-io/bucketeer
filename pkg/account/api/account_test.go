@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -32,7 +31,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	alstoragemock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -161,7 +162,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
@@ -176,7 +177,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				},
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -446,9 +447,9 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -724,7 +725,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -736,7 +737,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					LastName: "newLastName",
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1090,7 +1091,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1103,7 +1104,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1304,13 +1305,13 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1491,13 +1492,13 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1689,13 +1690,13 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("test"))
+				).Return(pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1830,13 +1831,13 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), "bucketeer@example.com", gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal("account", "test"))
 			},
 			req: &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         "bucketeer@example.com",
 				EnvironmentId: "env0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success",
@@ -1943,11 +1944,11 @@ func TestListAccountsV2MySQL(t *testing.T) {
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("test"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal("account", "test"))
 			},
 			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0"},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
 			desc: "success with member role",

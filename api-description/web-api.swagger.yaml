@@ -12138,6 +12138,7 @@ definitions:
       - AFTER
       - FEATURE_FLAG
       - PARTIALLY_MATCH
+      - NOT_EQUALS
     default: EQUALS
     description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   featureCloneFeatureCommand:

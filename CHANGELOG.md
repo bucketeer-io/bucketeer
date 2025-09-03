@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.0.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v2.0.0) (2025-08-27)
+
+
+### ⚠ BREAKING CHANGES
+* This release introduces the new **Bucketeer 2.0 Console**, which replaces the old UI.  
+* Some REST/Proto APIs have been promoted to **Public API**, and may require updated authentication or endpoint usage.  
+* Team and Organization concepts are now generally available; older account management flows have been deprecated.  
+
+### Features
+
+* **New Console UI/UX**: Completely redesigned dashboard for usability, speed, and scalability. ([#1908](https://github.com/bucketeer-io/bucketeer/issues/1908))
+* **Flag Management at Scale**: Improved list view with search, filters, and bulk management. ([#1600](https://github.com/bucketeer-io/bucketeer/issues/1600))
+* **Flag Templates**: Added built-in templates for Custom, Release, Kill Switch, and Experiment use cases. ([#1755](https://github.com/bucketeer-io/bucketeer/issues/1755))
+* **Audience Traffic Allocation**: Support for splitting traffic inside rollout segments (e.g. 5% rollout, 50/50 test group). ([#1800](https://github.com/bucketeer-io/bucketeer/issues/1800))
+* **Organizations & Team Management**: Create and manage organizations, environments, API keys, members, and roles. ([#1874](https://github.com/bucketeer-io/bucketeer/issues/1874), [#1872](https://github.com/bucketeer-io/bucketeer/issues/1872))
+* **User Attribute Keys in Rules**: Console now suggests attribute keys automatically from client SDKs. ([#1994](https://github.com/bucketeer-io/bucketeer/issues/1994), [#2054](https://github.com/bucketeer-io/bucketeer/issues/2054))
+* **Debugger Enhancements**: Debug multiple users and flags, with grouped results and improved insights. ([#1706](https://github.com/bucketeer-io/bucketeer/issues/1706))
+* **Code References**: Detect and display where flags are referenced in application code. ([#1504](https://github.com/bucketeer-io/bucketeer/issues/1504))
+* **Scheduled Flag Updates**: Schedule future changes to variations, rules, or enabled state. ([#1591](https://github.com/bucketeer-io/bucketeer/issues/1591))
+* **Progressive Rollouts & Flag Triggers**: Public APIs and console workflows for gradual rollouts and auto-disable triggers. ([#1526](https://github.com/bucketeer-io/bucketeer/issues/1526), [#1588](https://github.com/bucketeer-io/bucketeer/issues/1588))
+* **Lite Version**: Added Docker Compose support for easier self-hosted deployments. ([#1836](https://github.com/bucketeer-io/bucketeer/issues/1836))
+* **Public API**: General availability of programmatic APIs for Flags, Environments, Teams, Goals, Experiments, and more. ([#2084](https://github.com/bucketeer-io/bucketeer/issues/2084), [#2049](https://github.com/bucketeer-io/bucketeer/issues/2049))
+
+### Bug Fixes
+
+* Fixed various console issues with environment switching, member updates, and experiment rendering.  
+* Resolved Redis/cluster consistency for user attributes.  
+* Fixed Docker Compose build issues on Apple Silicon.  
+* Corrected validation and error handling in REST and Public APIs.  
+
+### Performance Improvements
+
+* Optimized list feature flags query latency.  
+* Added indexes for faster audit log queries.  
+* Improved caching behavior across organizations and environments. 
+
 ## [1.3.0](https://github.com/bucketeer-io/bucketeer/compare/v1.2.0...v1.3.0) (2025-02-28)
 
 
