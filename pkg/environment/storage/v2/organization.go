@@ -259,13 +259,3 @@ func (s *organizationStorage) DeleteOrganizations(ctx context.Context, wherePart
 	}
 	return nil
 }
-
-func convToInterfaceSlice(
-	slice []string,
-) []interface{} {
-	result := make([]interface{}, 0, len(slice))
-	for _, element := range slice {
-		result = append(result, element)
-	}
-	return result
-}
