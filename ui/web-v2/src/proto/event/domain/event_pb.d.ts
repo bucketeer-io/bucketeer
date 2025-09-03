@@ -1920,6 +1920,12 @@ export class FeatureClonedEvent extends jspb.Message {
     index?: number
   ): proto_feature_prerequisite_pb.Prerequisite;
 
+  getSourceEnvironment(): string;
+  setSourceEnvironment(value: string): void;
+
+  getTargetEnvironment(): string;
+  setTargetEnvironment(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FeatureClonedEvent.AsObject;
   static toObject(
@@ -1955,6 +1961,8 @@ export namespace FeatureClonedEvent {
     maintainer: string;
     variationType: proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap];
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
+    sourceEnvironment: string;
+    targetEnvironment: string;
   };
 }
 

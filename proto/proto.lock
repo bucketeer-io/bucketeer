@@ -21900,6 +21900,16 @@
                 "name": "prerequisites",
                 "type": "bucketeer.feature.Prerequisite",
                 "is_repeated": true
+              },
+              {
+                "id": 13,
+                "name": "source_environment",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "target_environment",
+                "type": "string"
               }
             ]
           },
