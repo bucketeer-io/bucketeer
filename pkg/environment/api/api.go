@@ -258,6 +258,12 @@ func (s *EnvironmentService) DeleteBucketeerData(
 	ctx context.Context,
 	request *environmentproto.DeleteBucketeerDataRequest,
 ) (*environmentproto.DeleteBucketeerDataResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(request.DeleteOrganizationIds) > 0 {
 		err := s.deleteOrganizationData(ctx, request.DeleteOrganizationIds)
 		if err != nil {

@@ -9,6 +9,8 @@ namespace: default
 env:
   project:
   profile: true
+  demo:
+    demoTrialPeriod: 1 # days
   gcpEnabled: true
   mysqlUser:
   mysqlPass:
