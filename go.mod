@@ -14,6 +14,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
 	github.com/aws/aws-sdk-go-v2/service/kms v1.47.0
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.54.4
+	github.com/aws/aws-sdk-go-v2/config v1.31.8
+	github.com/aws/aws-sdk-go-v2/service/kms v1.45.6
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-gota/gota v0.12.0
@@ -44,7 +46,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.41.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.18.0
