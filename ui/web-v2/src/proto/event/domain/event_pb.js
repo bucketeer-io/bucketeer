@@ -14503,7 +14503,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getPrerequisitesList(),
           proto_feature_prerequisite_pb.Prerequisite.toObject,
           includeInstance
-        )
+        ),
+        sourceEnvironment: jspb.Message.getFieldWithDefault(msg, 13, ''),
+        targetEnvironment: jspb.Message.getFieldWithDefault(msg, 14, '')
       };
 
     if (includeInstance) {
@@ -14616,6 +14618,14 @@ proto.bucketeer.event.domain.FeatureClonedEvent.deserializeBinaryFromReader =
           );
           msg.addPrerequisites(value);
           break;
+        case 13:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setSourceEnvironment(value);
+          break;
+        case 14:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setTargetEnvironment(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -14715,6 +14725,14 @@ proto.bucketeer.event.domain.FeatureClonedEvent.serializeBinaryToWriter =
         f,
         proto_feature_prerequisite_pb.Prerequisite.serializeBinaryToWriter
       );
+    }
+    f = message.getSourceEnvironment();
+    if (f.length > 0) {
+      writer.writeString(13, f);
+    }
+    f = message.getTargetEnvironment();
+    if (f.length > 0) {
+      writer.writeString(14, f);
     }
   };
 
@@ -15108,6 +15126,46 @@ proto.bucketeer.event.domain.FeatureClonedEvent.prototype.addPrerequisites =
 proto.bucketeer.event.domain.FeatureClonedEvent.prototype.clearPrerequisitesList =
   function () {
     return this.setPrerequisitesList([]);
+  };
+
+/**
+ * optional string source_environment = 13;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.FeatureClonedEvent.prototype.getSourceEnvironment =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 13, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.FeatureClonedEvent} returns this
+ */
+proto.bucketeer.event.domain.FeatureClonedEvent.prototype.setSourceEnvironment =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 13, value);
+  };
+
+/**
+ * optional string target_environment = 14;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.FeatureClonedEvent.prototype.getTargetEnvironment =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 14, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.FeatureClonedEvent} returns this
+ */
+proto.bucketeer.event.domain.FeatureClonedEvent.prototype.setTargetEnvironment =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 14, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

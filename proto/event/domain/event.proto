@@ -516,6 +516,8 @@ message FeatureClonedEvent {
   string maintainer = 10;
   bucketeer.feature.Feature.VariationType variation_type = 11;
   repeated bucketeer.feature.Prerequisite prerequisites = 12;
+  string source_environment = 13;
+  string target_environment = 14;
 }
 
 message FeatureSamplingSeedResetEvent {
