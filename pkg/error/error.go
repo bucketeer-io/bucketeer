@@ -22,6 +22,7 @@ import (
 
 const (
 	AccountPackageName = "account"
+	CoderefPackageName = "coderef"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
