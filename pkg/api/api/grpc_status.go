@@ -104,6 +104,8 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "INVALID_ARGUMENT_NOT_MATCH_FORMAT"
 	case pkgErr.ErrorTypeInvalidArgUnknown:
 		return "INVALID_ARGUMENT"
+	case pkgErr.ErrorTypeInvalidArgDuplicated:
+		return "INVALID_ARGUMENT_DUPLICATED"
 	case pkgErr.ErrorTypeNotFound:
 		return "NOT_FOUND"
 	case pkgErr.ErrorTypeAlreadyExists:
@@ -126,7 +128,8 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 	case pkgErr.ErrorTypeInvalidArgUnknown,
 		pkgErr.ErrorTypeInvalidArgEmpty,
 		pkgErr.ErrorTypeInvalidArgNil,
-		pkgErr.ErrorTypeInvalidArgNotMatchFormat:
+		pkgErr.ErrorTypeInvalidArgNotMatchFormat,
+		pkgErr.ErrorTypeInvalidArgDuplicated:
 		return codes.InvalidArgument
 	case pkgErr.ErrorTypeNotFound:
 		return codes.NotFound
