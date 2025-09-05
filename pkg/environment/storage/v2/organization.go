@@ -39,6 +39,8 @@ var (
 	selectOrganizationsSQL string
 	//go:embed sql/organization/count_organizations.sql
 	countOrganizationsSQL string
+	//go:embed sql/organization/deleteOrganizations.sql
+	deleteOrganizationsSQL string
 )
 
 var (
@@ -56,6 +58,7 @@ type OrganizationStorage interface {
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.Organization, int, int64, error)
+	DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error
 }
 
 type organizationStorage struct {
@@ -241,4 +244,18 @@ func (s *organizationStorage) ListOrganizations(
 		return nil, 0, 0, err
 	}
 	return organizations, nextOffset, totalCount, nil
+}
+
+func (s *organizationStorage) DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(deleteOrganizationsSQL, whereSQL)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
