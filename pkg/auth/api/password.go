@@ -417,6 +417,287 @@ func (s *authService) ValidatePasswordSetupToken(
 }
 
 // extractEmailFromContext extracts email from the authentication context
+func (s *authService) InitiatePasswordReset(
+	ctx context.Context,
+	request *authproto.InitiatePasswordResetRequest,
+) (*authproto.InitiatePasswordResetResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validateInitiatePasswordResetRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if password authentication and email service are enabled
+	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
+		s.logger.Error("Password reset not available")
+		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	email := request.Email
+
+	// Check if credentials exist with a password (only allow reset for existing password users)
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			// Don't reveal whether the account exists for security
+			s.logger.Warn("Password reset attempted for non-existent account", zap.String("email", email))
+			return &authproto.InitiatePasswordResetResponse{
+				Message: "If an account with this email exists and has a password, a reset link has been sent.",
+			}, nil
+		}
+		s.logger.Error("Failed to check credentials for password reset", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if user actually has a password set
+	if credentials.PasswordHash == "" {
+		// Don't reveal this information for security
+		s.logger.Warn("Password reset attempted for account without password", zap.String("email", email))
+		return &authproto.InitiatePasswordResetResponse{
+			Message: "If an account with this email exists and has a password, a reset link has been sent.",
+		}, nil
+	}
+
+	// Generate secure reset token
+	resetToken, err := auth.GenerateSecureToken()
+	if err != nil {
+		s.logger.Error("Failed to generate reset token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Store reset token with expiration (use PasswordResetTokenTTL)
+	expiresAt := time.Now().Add(s.config.PasswordAuth.PasswordResetTokenTTL).Unix()
+	err = s.credentialsStorage.SetPasswordResetToken(ctx, email, resetToken, expiresAt)
+	if err != nil {
+		s.logger.Error("Failed to store reset token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Send reset email
+	if s.emailService != nil {
+		resetPath := s.config.PasswordAuth.EmailServiceConfig.PasswordResetPath
+		if resetPath == "" {
+			s.logger.Error("Password reset path not configured")
+			return nil, auth.StatusInternal.Err()
+		}
+		resetParam := s.config.PasswordAuth.EmailServiceConfig.PasswordResetParam
+		if resetParam == "" {
+			s.logger.Error("Password reset parameter not configured")
+			return nil, auth.StatusInternal.Err()
+		}
+		resetURL := fmt.Sprintf("%s%s?%s=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetPath, resetParam, resetToken)
+		err = s.emailService.SendPasswordResetEmail(ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL)
+		if err != nil {
+			s.logger.Error("Failed to send password reset email",
+				zap.Error(err),
+				zap.String("email", email),
+			)
+			// Don't return error to user for security reasons
+		}
+	}
+
+	s.logger.Info("Password reset initiated", zap.String("email", email))
+	return &authproto.InitiatePasswordResetResponse{
+		Message: "If an account with this email exists and has a password, a reset link has been sent.",
+	}, nil
+}
+
+func (s *authService) ResetPassword(
+	ctx context.Context,
+	request *authproto.ResetPasswordRequest,
+) (*authproto.ResetPasswordResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validateResetPasswordRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if password authentication is enabled
+	if !s.config.PasswordAuth.Enabled {
+		s.logger.Error("Password authentication not enabled")
+		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Get and validate reset token (reusing password reset token infrastructure)
+	resetToken, err := s.credentialsStorage.GetPasswordResetToken(ctx, request.ResetToken)
+	if err != nil {
+		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
+			s.logger.Error("Invalid reset token", zap.String("token", request.ResetToken))
+			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error("Failed to get reset token", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if token is expired
+	if resetToken.IsExpired() {
+		s.logger.Error("Expired reset token", zap.String("email", resetToken.Email))
+		dt, err := auth.StatusExpiredResetToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Validate new password complexity
+	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.PasswordAuth)
+	if err != nil {
+		s.logger.Error("Password complexity validation failed", zap.Error(err))
+		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: err.Error(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Check if credentials exist (should exist since reset token was valid)
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, resetToken.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			s.logger.Error("Reset attempted for account without credentials", zap.String("email", resetToken.Email))
+			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error("Failed to check credentials during reset", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if user has a password (should have one since reset was initiated)
+	if credentials.PasswordHash == "" {
+		s.logger.Error("Reset attempted for account without password", zap.String("email", resetToken.Email))
+		dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Hash new password
+	passwordHash, err := auth.HashPassword(request.NewPassword)
+	if err != nil {
+		s.logger.Error("Failed to hash password during reset", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Update password
+	err = s.credentialsStorage.UpdatePassword(ctx, resetToken.Email, passwordHash)
+	if err != nil {
+		s.logger.Error("Failed to update password during reset", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Delete reset token
+	err = s.credentialsStorage.DeletePasswordResetToken(ctx, request.ResetToken)
+	if err != nil {
+		s.logger.Warn("Failed to delete reset token", zap.Error(err))
+		// Don't fail the reset if token deletion fails
+	}
+
+	// Send password changed notification email if email service is enabled
+	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
+		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email)
+		if err != nil {
+			s.logger.Warn("Failed to send password changed notification",
+				zap.Error(err),
+				zap.String("email", resetToken.Email),
+			)
+			// Don't fail the reset if email sending fails
+		}
+	}
+
+	s.logger.Info("Password reset completed successfully", zap.String("email", resetToken.Email))
+	return &authproto.ResetPasswordResponse{}, nil
+}
+
+func (s *authService) ValidatePasswordResetToken(
+	ctx context.Context,
+	request *authproto.ValidatePasswordResetTokenRequest,
+) (*authproto.ValidatePasswordResetTokenResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	err := validatePasswordResetTokenRequest(request, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get reset token (reusing password reset token infrastructure)
+	resetToken, err := s.credentialsStorage.GetPasswordResetToken(ctx, request.ResetToken)
+	if err != nil {
+		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
+			return &authproto.ValidatePasswordResetTokenResponse{
+				IsValid: false,
+				Email:   "",
+			}, nil
+		}
+		s.logger.Error("Failed to get reset token for validation", zap.Error(err))
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// Check if token is valid (not expired)
+	isValid := resetToken.IsValid()
+	email := ""
+	if isValid {
+		// Additional validation: check if account still has a password to reset
+		credentials, err := s.credentialsStorage.GetCredentials(ctx, resetToken.Email)
+		if err != nil {
+			if errors.Is(err, storage.ErrCredentialsNotFound) {
+				// No credentials exist, token is no longer valid for reset
+				isValid = false
+			} else {
+				s.logger.Error("Failed to check credentials during token validation", zap.Error(err))
+				return nil, auth.StatusInternal.Err()
+			}
+		} else if credentials.PasswordHash == "" {
+			// No password exists, token is no longer valid for reset
+			isValid = false
+		} else {
+			// Credentials exist with password, token is valid for reset
+			email = resetToken.Email
+		}
+	}
+
+	return &authproto.ValidatePasswordResetTokenResponse{
+		IsValid: isValid,
+		Email:   email,
+	}, nil
+}
+
 func extractEmailFromContext(ctx context.Context) string {
 	accessToken, ok := rpc.GetAccessToken(ctx)
 	if !ok || accessToken == nil {
