@@ -77,6 +77,24 @@ func (s *SMTPEmailService) SendPasswordSetupEmail(ctx context.Context, to, setup
 	return nil
 }
 
+func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration) error {
+	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, ttl)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password reset email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+
+	s.logger.Info("Password reset email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
 	auth := smtp.PlainAuth("", s.config.SMTPUsername, s.config.SMTPPassword, s.config.SMTPHost)
 

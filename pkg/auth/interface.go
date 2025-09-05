@@ -67,6 +67,7 @@ type EmailTemplate struct {
 type EmailTemplatesConfig struct {
 	PasswordChanged EmailTemplate `json:"passwordChanged"`
 	PasswordSetup   EmailTemplate `json:"passwordSetup"`
+	PasswordReset   EmailTemplate `json:"passwordReset"`
 }
 
 type EmailServiceConfig struct {
@@ -84,6 +85,8 @@ type EmailServiceConfig struct {
 	BaseURL            string               `json:"baseURL"`            // For constructing reset URLs
 	PasswordSetupPath  string               `json:"passwordSetupPath"`  // Path for password setup page
 	PasswordSetupParam string               `json:"passwordSetupParam"` // URL parameter name for setup token
+	PasswordResetPath  string               `json:"passwordResetPath"`  // Path for password reset page
+	PasswordResetParam string               `json:"passwordResetParam"` // URL parameter name for reset token
 	Templates          EmailTemplatesConfig `json:"templates"`
 }
 
@@ -94,6 +97,7 @@ type PasswordAuthConfig struct {
 	PasswordRequireLowercase bool               `json:"passwordRequireLowercase"`
 	PasswordRequireNumbers   bool               `json:"passwordRequireNumbers"`
 	PasswordRequireSymbols   bool               `json:"passwordRequireSymbols"`
+	PasswordResetTokenTTL    time.Duration      `json:"passwordResetTokenTTL"`
 	PasswordSetupTokenTTL    time.Duration      `json:"passwordSetupTokenTTL"`
 	EmailServiceEnabled      bool               `json:"emailServiceEnabled"`
 	EmailServiceConfig       EmailServiceConfig `json:"emailServiceConfig"`
@@ -121,6 +125,11 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	resetTTL, err := time.ParseDuration(aux.PasswordResetTokenTTL)
+	if err != nil {
+		return fmt.Errorf("failed to parse passwordResetTokenTTL: %w", err)
+	}
+
 	setupTTL, err := time.ParseDuration(aux.PasswordSetupTokenTTL)
 	if err != nil {
 		return fmt.Errorf("failed to parse passwordSetupTokenTTL: %w", err)
@@ -133,6 +142,7 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 	c.PasswordRequireLowercase = aux.PasswordRequireLowercase
 	c.PasswordRequireNumbers = aux.PasswordRequireNumbers
 	c.PasswordRequireSymbols = aux.PasswordRequireSymbols
+	c.PasswordResetTokenTTL = resetTTL
 	c.PasswordSetupTokenTTL = setupTTL
 	c.EmailServiceEnabled = aux.EmailServiceEnabled
 	c.EmailServiceConfig = aux.EmailServiceConfig
