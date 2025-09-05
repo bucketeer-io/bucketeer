@@ -94,6 +94,33 @@ type AuthServiceValidatePasswordSetupToken = {
   readonly responseType: typeof proto_auth_service_pb.ValidatePasswordSetupTokenResponse;
 };
 
+type AuthServiceInitiatePasswordReset = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.InitiatePasswordResetRequest;
+  readonly responseType: typeof proto_auth_service_pb.InitiatePasswordResetResponse;
+};
+
+type AuthServiceResetPassword = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.ResetPasswordRequest;
+  readonly responseType: typeof proto_auth_service_pb.ResetPasswordResponse;
+};
+
+type AuthServiceValidatePasswordResetToken = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.ValidatePasswordResetTokenRequest;
+  readonly responseType: typeof proto_auth_service_pb.ValidatePasswordResetTokenResponse;
+};
+
 export class AuthService {
   static readonly serviceName: string;
   static readonly ExchangeToken: AuthServiceExchangeToken;
@@ -106,6 +133,9 @@ export class AuthService {
   static readonly InitiatePasswordSetup: AuthServiceInitiatePasswordSetup;
   static readonly SetupPassword: AuthServiceSetupPassword;
   static readonly ValidatePasswordSetupToken: AuthServiceValidatePasswordSetupToken;
+  static readonly InitiatePasswordReset: AuthServiceInitiatePasswordReset;
+  static readonly ResetPassword: AuthServiceResetPassword;
+  static readonly ValidatePasswordResetToken: AuthServiceValidatePasswordResetToken;
 }
 
 export type ServiceError = {
@@ -301,6 +331,51 @@ export class AuthServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.ValidatePasswordSetupTokenResponse | null
+    ) => void
+  ): UnaryResponse;
+  initiatePasswordReset(
+    requestMessage: proto_auth_service_pb.InitiatePasswordResetRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.InitiatePasswordResetResponse | null
+    ) => void
+  ): UnaryResponse;
+  initiatePasswordReset(
+    requestMessage: proto_auth_service_pb.InitiatePasswordResetRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.InitiatePasswordResetResponse | null
+    ) => void
+  ): UnaryResponse;
+  resetPassword(
+    requestMessage: proto_auth_service_pb.ResetPasswordRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ResetPasswordResponse | null
+    ) => void
+  ): UnaryResponse;
+  resetPassword(
+    requestMessage: proto_auth_service_pb.ResetPasswordRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ResetPasswordResponse | null
+    ) => void
+  ): UnaryResponse;
+  validatePasswordResetToken(
+    requestMessage: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ValidatePasswordResetTokenResponse | null
+    ) => void
+  ): UnaryResponse;
+  validatePasswordResetToken(
+    requestMessage: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ValidatePasswordResetTokenResponse | null
     ) => void
   ): UnaryResponse;
 }
