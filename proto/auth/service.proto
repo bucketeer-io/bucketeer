@@ -114,6 +114,31 @@ message ValidatePasswordSetupTokenResponse {
   string email = 2;
 }
 
+// Password Reset Messages
+message InitiatePasswordResetRequest {
+  string email = 1;
+}
+
+message InitiatePasswordResetResponse {
+  string message = 1;
+}
+
+message ResetPasswordRequest {
+  string reset_token = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {}
+
+message ValidatePasswordResetTokenRequest {
+  string reset_token = 1;
+}
+
+message ValidatePasswordResetTokenResponse {
+  bool is_valid = 1;
+  string email = 2;
+}
+
 service AuthService {
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
     option (google.api.http) = {
@@ -400,6 +425,81 @@ service AuthService {
       description: "Validate if a password setup token is valid and not expired.",
       tags: "Password Management",
       operation_id: "web.v1.auth.validate_password_setup_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Password Reset APIs
+  rpc InitiatePasswordReset(InitiatePasswordResetRequest)
+      returns (InitiatePasswordResetResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/initiate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Initiate Password Reset",
+      description: "Initiate password reset process by sending a reset email to users with existing passwords.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.initiate_password_reset",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reset Password",
+      description: "Complete password reset using a valid reset token.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.reset_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ValidatePasswordResetToken(ValidatePasswordResetTokenRequest)
+      returns (ValidatePasswordResetTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/validate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Validate Password Reset Token",
+      description: "Validate if a password reset token is valid and not expired.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.validate_password_reset_token",
       responses: {
         key: "400"
         value: {
