@@ -7,10 +7,6 @@ ENV LANG="C.UTF-8" \
     SHELL=/bin/bash \
     DOCKER_BUILDKIT=1
 
-# Restore man command
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && yes | unminimize 2>&1
-
 # Install packages in optimized order for better layer caching
 RUN apt-get update \
     && apt-get upgrade -y \
@@ -29,6 +25,13 @@ RUN apt-get update \
         zip \
         rsync \
         moreutils \
+        # Minimal man support
+        man-db \
+        manpages \
+        manpages-dev \
+        groff-base \
+        less \
+        locales \
     && add-apt-repository universe \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
