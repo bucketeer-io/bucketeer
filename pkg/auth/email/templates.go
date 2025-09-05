@@ -116,6 +116,59 @@ var (
     </div>
 </body>
 </html>`
+
+	defaultPasswordResetSubject = "Reset Your Bucketeer Password"
+	defaultPasswordResetBody    = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Bucketeer Password</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #dc3545; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #dc3545; 
+                  color: white; text-decoration: none; border-radius: 5px; }
+        .info { background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { font-size: 12px; color: #666; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Reset Your Bucketeer Password</h1>
+        </div>
+        
+        <p>Hello,</p>
+        
+        <p>We received a request to reset your Bucketeer password. Click the button below 
+        to create a new password:</p>
+        
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="{{resetURL}}" class="button">Reset Password</a>
+        </p>
+        
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 3px;">{{resetURL}}</p>
+        
+        <div class="info">
+            <strong>Security Information:</strong>
+            <ul>
+                <li>This link will expire in {{expirationTime}} for security reasons</li>
+                <li>If you did not request this password reset, please ignore this email</li>
+                <li>Your password will remain unchanged until you create a new one</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from Bucketeer. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact your system administrator.</p>
+        </div>
+    </div>
+</body>
+</html>`
 )
 
 // TemplateRenderer handles email template rendering with variable substitution
@@ -157,6 +210,25 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL string, ttl time.Du
 
 	variables := map[string]string{
 		"{{setupURL}}":       setupURL,
+		"{{baseURL}}":        r.config.BaseURL,
+		"{{expirationTime}}": ttl.String(),
+	}
+
+	return template.Subject, r.substituteVariables(template.Body, variables)
+}
+
+// RenderPasswordResetEmail renders the password reset email template
+func (r *TemplateRenderer) RenderPasswordResetEmail(resetURL string, ttl time.Duration) (subject, body string) {
+	template := r.config.Templates.PasswordReset
+	if template.Subject == "" {
+		template.Subject = defaultPasswordResetSubject
+	}
+	if template.Body == "" {
+		template.Body = defaultPasswordResetBody
+	}
+
+	variables := map[string]string{
+		"{{resetURL}}":       resetURL,
 		"{{baseURL}}":        r.config.BaseURL,
 		"{{expirationTime}}": ttl.String(),
 	}
