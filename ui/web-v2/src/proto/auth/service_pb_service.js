@@ -100,6 +100,33 @@ AuthService.ValidatePasswordSetupToken = {
   responseType: proto_auth_service_pb.ValidatePasswordSetupTokenResponse
 };
 
+AuthService.InitiatePasswordReset = {
+  methodName: 'InitiatePasswordReset',
+  service: AuthService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auth_service_pb.InitiatePasswordResetRequest,
+  responseType: proto_auth_service_pb.InitiatePasswordResetResponse
+};
+
+AuthService.ResetPassword = {
+  methodName: 'ResetPassword',
+  service: AuthService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auth_service_pb.ResetPasswordRequest,
+  responseType: proto_auth_service_pb.ResetPasswordResponse
+};
+
+AuthService.ValidatePasswordResetToken = {
+  methodName: 'ValidatePasswordResetToken',
+  service: AuthService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auth_service_pb.ValidatePasswordResetTokenRequest,
+  responseType: proto_auth_service_pb.ValidatePasswordResetTokenResponse
+};
+
 exports.AuthService = AuthService;
 
 function AuthServiceClient(serviceHost, options) {
@@ -422,6 +449,105 @@ AuthServiceClient.prototype.validatePasswordSetupToken =
       callback = arguments[1];
     }
     var client = grpc.unary(AuthService.ValidatePasswordSetupToken, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+AuthServiceClient.prototype.initiatePasswordReset =
+  function initiatePasswordReset(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AuthService.InitiatePasswordReset, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+AuthServiceClient.prototype.resetPassword = function resetPassword(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AuthService.ResetPassword, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AuthServiceClient.prototype.validatePasswordResetToken =
+  function validatePasswordResetToken(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AuthService.ValidatePasswordResetToken, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,
