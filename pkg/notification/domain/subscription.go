@@ -34,15 +34,15 @@ var (
 		"recipient",
 	)
 	ErrSourceTypesMustHaveAtLeastOne = err.NewErrorInvalidArgNotMatchFormat(
-		"subscription",
+		err.NotificationPackageName,
 		"notification types must have at least one",
 		"notification_types",
 	)
-	ErrSourceTypeNotFound          = err.NewErrorNotFound("subscription", "notification not found", "notification_type")
-	ErrAlreadyEnabled              = err.NewErrorAlreadyExists("subscription", "already enabled")
-	ErrAlreadyDisabled             = err.NewErrorAlreadyExists("subscription", "already disabled")
+	ErrSourceTypeNotFound          = err.NewErrorNotFound(err.NotificationPackageName, "notification not found", "notification_type")
+	ErrAlreadyEnabled              = err.NewErrorAlreadyExists(err.NotificationPackageName, "already enabled")
+	ErrAlreadyDisabled             = err.NewErrorAlreadyExists(err.NotificationPackageName, "already disabled")
 	ErrCannotUpdateFeatureFlagTags = err.NewErrorNotFound(
-		"subscription",
+		err.NotificationPackageName,
 		"cannot update the feature flag tags when there is feature source type",
 		"feature_source_type",
 	)
