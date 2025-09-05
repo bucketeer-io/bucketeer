@@ -11,6 +11,7 @@
     "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, you cannot add, delete, or modify variation values while the experiment is running.",
     "operation": {
       "later-than-current-time": "This must be later than the current time.",
+      "weight-increasing-order": "The weight must be in increasing order.",
       "date-increasing-order": "The date must be in increasing order.",
       "schedule-interval": "The scheduled time interval must be at least 5 minutes apart.",
       "schedules-same-time": "You cannot have multiple schedules at the same date and time.",
