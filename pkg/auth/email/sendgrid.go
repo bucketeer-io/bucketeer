@@ -82,6 +82,28 @@ func (s *SendGridEmailService) SendPasswordSetupEmail(
 	return nil
 }
 
+func (s *SendGridEmailService) SendPasswordResetEmail(
+	ctx context.Context,
+	to, resetURL string,
+	ttl time.Duration,
+) error {
+	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, ttl)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send password reset email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+
+	s.logger.Info("Password reset email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SendGridEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
 	from := mail.NewEmail(s.config.FromName, s.config.FromEmail)
 	toEmail := mail.NewEmail("", to)
