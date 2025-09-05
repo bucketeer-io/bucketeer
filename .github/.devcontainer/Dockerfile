@@ -98,7 +98,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Go
 RUN ARCH=$(dpkg --print-architecture) \
-    && curl -fsSL "https://golang.org/dl/go1.24.1.linux-${ARCH}.tar.gz" | tar -C /usr/local -xzf -
+    && curl -fsSL "https://golang.org/dl/go1.25.1.linux-${ARCH}.tar.gz" | tar -C /usr/local -xzf -
 
 # Install Node.js
 RUN ARCH=$(dpkg --print-architecture) \
