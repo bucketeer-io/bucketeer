@@ -114,6 +114,8 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "UNAUTHENTICATED"
 	case pkgErr.ErrorTypePermissionDenied:
 		return "PERMISSION_DENIED"
+	case pkgErr.ErrorTypeFailedPrecondition:
+		return "FAILED_PRECONDITION"
 	case pkgErr.ErrorTypeUnexpectedAffectedRows:
 		return "UNEXPECTED_AFFECTED_ROWS"
 	case pkgErr.ErrorTypeInternal:
@@ -137,6 +139,8 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 		return codes.AlreadyExists
 	case pkgErr.ErrorTypeUnauthenticated:
 		return codes.Unauthenticated
+	case pkgErr.ErrorTypeFailedPrecondition:
+		return codes.FailedPrecondition
 	case pkgErr.ErrorTypePermissionDenied:
 		return codes.PermissionDenied
 	case pkgErr.ErrorTypeUnexpectedAffectedRows:

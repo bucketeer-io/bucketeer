@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -29,6 +28,8 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -126,14 +127,14 @@ func TestCreateTagMySQL(t *testing.T) {
 				}, nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("storage error"))
+				).Return(err.NewErrorInternal(err.TagPackageName, "storage error"))
 			},
 			req: &proto.CreateTagRequest{
 				EnvironmentId: "ns0",
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: createError(api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "storage error")), localizer.MustLocalize(locale.InternalServerError)),
 			expectedTag: nil,
 		},
 		{
@@ -146,14 +147,14 @@ func TestCreateTagMySQL(t *testing.T) {
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTagByName(
 					gomock.Any(), "test-tag", "ns0", proto.Tag_FEATURE_FLAG,
-				).Return(nil, errors.New("get error"))
+				).Return(nil, err.NewErrorNotFound(err.TagPackageName, "tag name not found", "tag_name"))
 			},
 			req: &proto.CreateTagRequest{
 				EnvironmentId: "ns0",
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: createError(api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag name not found", "tag_name")), localizer.MustLocalize(locale.InternalServerError)),
 			expectedTag: nil,
 		},
 		{
@@ -181,14 +182,14 @@ func TestCreateTagMySQL(t *testing.T) {
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("publish error"))
+				).Return(err.NewErrorInternal(err.TagPackageName, "publish error"))
 			},
 			req: &proto.CreateTagRequest{
 				EnvironmentId: "ns0",
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: createError(api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "publish error")), localizer.MustLocalize(locale.InternalServerError)),
 			expectedTag: nil,
 		},
 		{
@@ -420,13 +421,13 @@ func TestDeleteTagMySQL(t *testing.T) {
 				})
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().GetTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag"))
 			},
 			req: &proto.DeleteTagRequest{
 				Id:            "tag-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: createError(api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag")), localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "err: in used",

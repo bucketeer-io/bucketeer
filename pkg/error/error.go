@@ -23,6 +23,7 @@ import (
 const (
 	AccountPackageName = "account"
 	PushPackageName    = "push"
+	TagPackageName     = "tag"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
@@ -42,6 +43,7 @@ const (
 	ErrorTypePermissionDenied         ErrorType = "permission_denied"
 	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal                 ErrorType = "internal"
+	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
 	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
@@ -158,4 +160,8 @@ func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) 
 
 func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
+}
+
+func NewErrorFailedPrecondition(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }
