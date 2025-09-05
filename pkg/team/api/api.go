@@ -27,10 +27,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	gstatus "google.golang.org/grpc/status"
 
 	accclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -45,14 +46,28 @@ import (
 )
 
 var (
-	statusInternal         = gstatus.New(codes.Internal, "team: internal")
-	statusNameRequired     = gstatus.New(codes.InvalidArgument, "team: name must be specified")
-	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "team: cursor is invalid")
-	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "team: order_by is invalid")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "team: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "team: permission denied")
-	statusTeamNotFound     = gstatus.New(codes.NotFound, "team: not found")
-	statusTeamInUsed       = gstatus.New(codes.FailedPrecondition, "team: team is in use by an account")
+	statusInternal     = api.NewGRPCStatus(err.NewErrorInternal(err.TeamPackageName, "internal"))
+	statusNameRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.TeamPackageName, "name must be specified", "name"),
+	)
+	statusInvalidCursor = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.TeamPackageName, "cursor is invalid", "cursor"),
+	)
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.TeamPackageName, "order_by is invalid", "order_by"),
+	)
+	statusUnauthenticated = api.NewGRPCStatus(
+		err.NewErrorUnauthenticated(err.TeamPackageName, "unauthenticated"),
+	)
+	statusPermissionDenied = api.NewGRPCStatus(
+		err.NewErrorPermissionDenied(err.TeamPackageName, "permission denied"),
+	)
+	statusTeamNotFound = api.NewGRPCStatus(
+		err.NewErrorNotFound(err.TeamPackageName, "not found", "team"),
+	)
+	statusTeamInUsed = api.NewGRPCStatus(
+		err.NewErrorUnexpectedAffectedRows(err.TeamPackageName, "team is in use by an account"),
+	)
 )
 
 type options struct {
@@ -139,14 +154,7 @@ func (s *TeamService) CreateTeam(
 				zap.String("name", req.Name),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	var event *eventproto.Event
@@ -218,11 +226,11 @@ func (s *TeamService) CreateTeam(
 				zap.String("name", req.Name),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 
 	if err := s.publisher.Publish(ctx, event); err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 
 	return &proto.CreateTeamResponse{
@@ -338,7 +346,7 @@ func (s *TeamService) DeleteTeam(
 			}
 			return nil, dt.Err()
 		}
-		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 	return &proto.DeleteTeamResponse{}, nil
 }
@@ -464,7 +472,7 @@ func (s *TeamService) ListTeams(
 				zap.String("organizationID", req.OrganizationId),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 	return &proto.ListTeamsResponse{
 		Teams:      teams,
@@ -555,14 +563,7 @@ func (s *TeamService) checkOrganizationRole(
 				"Failed to check role",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -572,7 +573,6 @@ func (s *TeamService) reportInternalServerError(
 	ctx context.Context,
 	err error,
 	organizationID string,
-	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Internal server error",
@@ -581,12 +581,5 @@ func (s *TeamService) reportInternalServerError(
 			zap.String("organizationID", organizationID),
 		)...,
 	)
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return api.NewGRPCStatus(err).Err()
 }
