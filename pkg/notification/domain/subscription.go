@@ -38,7 +38,10 @@ var (
 		"notification types must have at least one",
 		"notification_types",
 	)
-	ErrSourceTypeNotFound          = err.NewErrorNotFound(err.NotificationPackageName, "notification not found", "notification_type")
+	ErrSourceTypeNotFound = err.NewErrorNotFound(
+		err.NotificationPackageName,
+		"notification not found", "notification_type",
+	)
 	ErrAlreadyEnabled              = err.NewErrorAlreadyExists(err.NotificationPackageName, "already enabled")
 	ErrAlreadyDisabled             = err.NewErrorAlreadyExists(err.NotificationPackageName, "already disabled")
 	ErrCannotUpdateFeatureFlagTags = err.NewErrorNotFound(
