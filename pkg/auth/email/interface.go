@@ -28,6 +28,7 @@ import (
 type EmailService interface {
 	SendPasswordChangedNotification(ctx context.Context, to string) error
 	SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration) error
+	SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration) error
 }
 
 // NewEmailService EmailServiceFactory creates an email service based on configuration
@@ -65,6 +66,14 @@ func (s *NoOpEmailService) SendPasswordSetupEmail(ctx context.Context, to, setup
 	s.logger.Info("No-op email service: password setup email not sent",
 		zap.String("to", to),
 		zap.String("setupURL", setupURL),
+	)
+	return nil
+}
+
+func (s *NoOpEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration) error {
+	s.logger.Info("No-op email service: password reset email not sent",
+		zap.String("to", to),
+		zap.String("resetURL", resetURL),
 	)
 	return nil
 }
