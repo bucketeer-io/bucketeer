@@ -11,6 +11,7 @@
     "experiment-running-warning-desc": "エクスペリメント結果の整合性と精度を維持するため、実行中のエクスペリメントではバリエーションの追加、削除、または値の変更はできません。",
     "operation": {
       "later-than-current-time": "現在時刻より後の時刻を指定してください。",
+      "weight-increasing-order": "ウェイトは昇順で設定する必要があります。",
       "date-increasing-order": "日付は昇順で指定してください。",
       "schedule-interval": "スケジュールの時間間隔は最低5分以上必要です。",
       "schedules-same-time": "同じ日時に複数のスケジュールを設定することはできません。",
