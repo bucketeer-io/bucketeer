@@ -117,14 +117,43 @@ web:
       redirectUrls:
         - https://localhost:9000/auth/callback
         - https://localhost:9000/v3/auth/callback
+  
+    # Password authentication configuration for development
+    passwordAuth:
+      enabled: true
+      passwordMinLength: 8
+      passwordRequireUppercase: true
+      passwordRequireLowercase: true
+      passwordRequireNumbers: true
+      passwordRequireSymbols: false
+      passwordSetupTokenTTL: "24h"
+      passwordResetTokenTTL: "1h"
+      emailServiceEnabled: true
+      emailServiceConfig:
+        provider: "smtp"
+        smtpHost: "smtp.gmail.com"
+        smtpPort: 587
+        smtpUsername: "bucketeer@example.com"
+        smtpPassword: "${SMTP_PASSWORD}"
+        sendgridAPIKey: ""
+        sesRegion: ""
+        sesAccessKey: ""
+        sesSecretKey: ""
+        fromEmail: "bucketeer@example.com"
+        fromName: "Bucketeer Development"
+        baseURL: "https://localhost"
+        passwordResetPath: "/auth/reset-password"
+        passwordSetupPath: "/auth/setup-password"
+        passwordResetParam: "token"
+        passwordSetupParam: "token"
     demoSignIn:
       enabled: true
-      email: demo@bucketeer.io
-      password: demo
-      organizationId: demo
-      organizationOwnerEmail: demo@bucketeer.io
-      projectId: demo
-      environmentId: demo
+      email: "demo@bucketeer.io"
+      password: "demo"
+      organizationId: "demo"
+      organizationOwnerEmail: "demo@bucketeer.io"
+      projectId: "demo"
+      environmentId: "demo"
       isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io
