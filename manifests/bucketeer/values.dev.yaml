@@ -162,6 +162,7 @@ web:
       passwordRequireNumbers: true
       passwordRequireSymbols: false
       passwordSetupTokenTTL: "24h"
+      passwordResetTokenTTL: "1h"
       emailServiceEnabled: true
       emailServiceConfig:
         provider: "smtp"
