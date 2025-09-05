@@ -16,13 +16,13 @@ package command
 
 import (
 	"context"
-	"errors"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 var (
-	errUnknownCommand = errors.New("command: unknown command")
+	errUnknownCommand = err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown command", "command")
 )
 
 type Command interface{}
