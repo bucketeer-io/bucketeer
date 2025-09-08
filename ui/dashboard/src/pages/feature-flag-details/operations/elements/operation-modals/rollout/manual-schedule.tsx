@@ -108,7 +108,10 @@ const ManualSchedule = ({
     if (!isDatesSorted) {
       return t('message:validation.operation.date-increasing-order');
     }
-    return t('message:validation.operation.schedule-interval');
+    if (!isDatetime5MinutesApart) {
+      return t('message:validation.operation.schedule-interval');
+    }
+    return null;
   };
 
   return (
