@@ -34,16 +34,16 @@ const (
 )
 
 const (
-	healthServiceName           = "/grpc.health.v1.Health/"
-	flagTriggerWebhookName      = "/bucketeer.feature.FeatureService/FlagTriggerWebhook"
-	exchangeDemoTokenName       = "/bucketeer.environment.EnvironmentService/ExchangeDemoToken"
-	createDemoOrganizationName  = "/bucketeer.environment.EnvironmentService/CreateDemoOrganization"
-	initiatePasswordResetName   = "/bucketeer.auth.AuthService/InitiatePasswordReset"
-	resetPasswordName           = "/bucketeer.auth.AuthService/ResetPassword"
-	validatePasswordResetName   = "/bucketeer.auth.AuthService/ValidatePasswordResetToken"
-	initiatePasswordSetupName   = "/bucketeer.auth.AuthService/InitiatePasswordSetup"
-	setupPasswordName           = "/bucketeer.auth.AuthService/SetupPassword"
-	validatePasswordSetupName   = "/bucketeer.auth.AuthService/ValidatePasswordSetupToken"
+	healthServiceName          = "/grpc.health.v1.Health/"
+	flagTriggerWebhookName     = "/bucketeer.feature.FeatureService/FlagTriggerWebhook"
+	exchangeDemoTokenName      = "/bucketeer.environment.EnvironmentService/ExchangeDemoToken"
+	createDemoOrganizationName = "/bucketeer.environment.EnvironmentService/CreateDemoOrganization"
+	initiatePasswordResetName  = "/bucketeer.auth.AuthService/InitiatePasswordReset"
+	resetPasswordName          = "/bucketeer.auth.AuthService/ResetPassword"
+	validatePasswordResetName  = "/bucketeer.auth.AuthService/ValidatePasswordResetToken"
+	initiatePasswordSetupName  = "/bucketeer.auth.AuthService/InitiatePasswordSetup"
+	setupPasswordName          = "/bucketeer.auth.AuthService/SetupPassword"
+	validatePasswordSetupName  = "/bucketeer.auth.AuthService/ValidatePasswordSetupToken"
 )
 
 type authFunc func(verifier token.Verifier, token string) (interface{}, error)
