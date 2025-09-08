@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -32,380 +33,388 @@ import (
 )
 
 func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	defer client.Close()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, featureID, client)
-	enableFeature(t, featureID, client)
-	// Update feature flag cache
-	updateFeatueFlagCache(t)
-	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
+	synctest.Test(t, func(t *testing.T) {
+		client := newFeatureClient(t)
+		defer client.Close()
+		uuid := newUUID(t)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := newUserID(t, uuid)
+		featureID := newFeatureID(t, uuid)
+		cmd := newCreateFeatureCommand(featureID)
+		createFeature(t, client, cmd)
+		addTag(t, tag, featureID, client)
+		enableFeature(t, featureID, client)
+		// Update feature flag cache
+		updateFeatueFlagCache(t)
+		response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
-	if response.Evaluations == nil {
-		t.Fatal("Evaluations field is nil")
-	}
-	if len(response.Evaluations.Evaluations) == 0 {
-		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
-	}
-	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
-	if err != nil {
-		t.Fatalf("Failed to find evaluation. Error: %v", err)
-	}
-	reason := eval.Reason.Type
-	if reason != featureproto.Reason_DEFAULT {
-		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
-	}
+		if response.Evaluations == nil {
+			t.Fatal("Evaluations field is nil")
+		}
+		if len(response.Evaluations.Evaluations) == 0 {
+			t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
+		}
+		eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+		if err != nil {
+			t.Fatalf("Failed to find evaluation. Error: %v", err)
+		}
+		reason := eval.Reason.Type
+		if reason != featureproto.Reason_DEFAULT {
+			t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
+		}
+	})
 }
 
 func TestGetEvaluationsFeatureFlagDisabled(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	defer client.Close()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, featureID, client)
-	// Update feature flag cache
-	updateFeatueFlagCache(t)
-	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
+	synctest.Test(t, func(t *testing.T) {
+		client := newFeatureClient(t)
+		defer client.Close()
+		uuid := newUUID(t)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := newUserID(t, uuid)
+		featureID := newFeatureID(t, uuid)
+		cmd := newCreateFeatureCommand(featureID)
+		createFeature(t, client, cmd)
+		addTag(t, tag, featureID, client)
+		// Update feature flag cache
+		updateFeatueFlagCache(t)
+		response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
-	if response.Evaluations == nil {
-		t.Fatal("Evaluations field is nil")
-	}
-	if len(response.Evaluations.Evaluations) == 0 {
-		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
-	}
-	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
-	if err != nil {
-		t.Fatalf("Failed to find evaluation. Error: %v", err)
-	}
-	reason := eval.Reason.Type
-	if reason != featureproto.Reason_OFF_VARIATION {
-		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
-	}
+		if response.Evaluations == nil {
+			t.Fatal("Evaluations field is nil")
+		}
+		if len(response.Evaluations.Evaluations) == 0 {
+			t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
+		}
+		eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+		if err != nil {
+			t.Fatalf("Failed to find evaluation. Error: %v", err)
+		}
+		reason := eval.Reason.Type
+		if reason != featureproto.Reason_OFF_VARIATION {
+			t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
+		}
+	})
 }
 
 func TestGetEvaluationsFullState(t *testing.T) {
-	t.Parallel()
-	c := newGatewayClient(t, *apiKeyPath)
-	defer c.Close()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	featureID := newFeatureID(t, uuid)
-	createFeatureWithTag(t, tag, featureID)
-	featureID2 := newFeatureID(t, newUUID(t))
-	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
-	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
+	synctest.Test(t, func(t *testing.T) {
+		c := newGatewayClient(t, *apiKeyPath)
+		defer c.Close()
+		uuid := newUUID(t)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := newUserID(t, uuid)
+		featureID := newFeatureID(t, uuid)
+		createFeatureWithTag(t, tag, featureID)
+		featureID2 := newFeatureID(t, newUUID(t))
+		createFeatureWithTag(t, tag, featureID2)
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
-	if response.Evaluations == nil {
-		t.Fatal("Evaluations field is nil")
-	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize < 2 {
-		t.Fatalf("Wrong evaluation size. Expected 2, actual: %d", evaluationSize)
-	}
+		if response.Evaluations == nil {
+			t.Fatal("Evaluations field is nil")
+		}
+		evaluationSize := len(response.Evaluations.Evaluations)
+		if evaluationSize < 2 {
+			t.Fatalf("Wrong evaluation size. Expected 2, actual: %d", evaluationSize)
+		}
+	})
 }
 
 func TestGetEvaluation(t *testing.T) {
-	t.Parallel()
-	c := newGatewayClient(t, *apiKeyPath)
-	defer c.Close()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	featureID := newFeatureID(t, uuid)
-	createFeatureWithTag(t, tag, featureID)
-	featureID2 := newFeatureID(t, newUUID(t))
-	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
-	response := util.GetEvaluation(t, tag, featureID2, userID, *gatewayAddr, *apiKeyPath)
-	if response.Evaluation == nil {
-		t.Fatal("Evaluation field is nil")
-	}
-	targetFeatureID := response.Evaluation.FeatureId
-	if targetFeatureID != featureID2 {
-		t.Fatalf("Wrong feature id. Expected: %s, actual: %s", featureID2, targetFeatureID)
-	}
+	synctest.Test(t, func(t *testing.T) {
+		c := newGatewayClient(t, *apiKeyPath)
+		defer c.Close()
+		uuid := newUUID(t)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := newUserID(t, uuid)
+		featureID := newFeatureID(t, uuid)
+		createFeatureWithTag(t, tag, featureID)
+		featureID2 := newFeatureID(t, newUUID(t))
+		createFeatureWithTag(t, tag, featureID2)
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		response := util.GetEvaluation(t, tag, featureID2, userID, *gatewayAddr, *apiKeyPath)
+		if response.Evaluation == nil {
+			t.Fatal("Evaluation field is nil")
+		}
+		targetFeatureID := response.Evaluation.FeatureId
+		if targetFeatureID != featureID2 {
+			t.Fatalf("Wrong feature id. Expected: %s, actual: %s", featureID2, targetFeatureID)
+		}
+	})
 }
 
 func TestRegisterEvents(t *testing.T) {
-	t.Parallel()
-	evaluation, err := protojson.Marshal(&eventproto.EvaluationEvent{
-		Timestamp:      time.Now().Unix(),
-		FeatureId:      "feature-id",
-		FeatureVersion: 1,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User: &userproto.User{
-			Id: "user-id",
-		},
-		Reason: &featureproto.Reason{},
-		Tag:    "tag",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	goal, err := protojson.Marshal(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
-		GoalId:    "goal-id",
-		UserId:    "user-id",
-		Value:     0.3,
-		User: &userproto.User{
-			Id: "user-id",
-		},
-		Tag: "tag",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	response := util.RegisterEvents(
-		t,
-		[]util.Event{
-			{
-				ID:            newUUID(t),
-				Event:         json.RawMessage(evaluation),
-				EnvironmentId: "",
-				Type:          gwapi.EvaluationEventType,
+	synctest.Test(t, func(t *testing.T) {
+		evaluation, err := protojson.Marshal(&eventproto.EvaluationEvent{
+			Timestamp:      time.Now().Unix(),
+			FeatureId:      "feature-id",
+			FeatureVersion: 1,
+			UserId:         "user-id",
+			VariationId:    "variation-id",
+			User: &userproto.User{
+				Id: "user-id",
 			},
-			{
-				ID:            newUUID(t),
-				Event:         json.RawMessage(goal),
-				EnvironmentId: "",
-				Type:          gwapi.GoalEventType,
+			Reason: &featureproto.Reason{},
+			Tag:    "tag",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		goal, err := protojson.Marshal(&eventproto.GoalEvent{
+			Timestamp: time.Now().Unix(),
+			GoalId:    "goal-id",
+			UserId:    "user-id",
+			Value:     0.3,
+			User: &userproto.User{
+				Id: "user-id",
 			},
-		},
-		*gatewayAddr,
-		*apiKeyPath,
-	)
-	if len(response.Errors) > 0 {
-		t.Fatalf("Failed to register events. Error: %v", response.Errors)
-	}
+			Tag: "tag",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		response := util.RegisterEvents(
+			t,
+			[]util.Event{
+				{
+					ID:            newUUID(t),
+					Event:         json.RawMessage(evaluation),
+					EnvironmentId: "",
+					Type:          gwapi.EvaluationEventType,
+				},
+				{
+					ID:            newUUID(t),
+					Event:         json.RawMessage(goal),
+					EnvironmentId: "",
+					Type:          gwapi.GoalEventType,
+				},
+			},
+			*gatewayAddr,
+			*apiKeyPath,
+		)
+		if len(response.Errors) > 0 {
+			t.Fatalf("Failed to register events. Error: %v", response.Errors)
+		}
+	})
 }
 
 // TODO: This is a temporary custom JSON unmarshaler to handle boolean fields sent as strings from the Android SDK.
 // This addresses a compatibility issue that arose after switching from Envoy JSON transcoder to gRPC-Gateway.
 // Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
 func TestHTTPBooleanStringHandling(t *testing.T) {
-	t.Parallel()
-	// This test verifies that the custom JSON unmarshaler correctly handles
-	// boolean strings sent from the Android SDK via HTTP requests,
-	// specifically the userAttributesUpdated field in get_evaluations API
+	synctest.Test(t, func(t *testing.T) {
+		// This test verifies that the custom JSON unmarshaler correctly handles
+		// boolean strings sent from the Android SDK via HTTP requests,
+		// specifically the userAttributesUpdated field in get_evaluations API
 
-	client := newFeatureClient(t)
-	defer client.Close()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, featureID, client)
-	enableFeature(t, featureID, client)
-	// Update feature flag cache
-	updateFeatueFlagCache(t)
+		client := newFeatureClient(t)
+		defer client.Close()
+		uuid := newUUID(t)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := newUserID(t, uuid)
+		featureID := newFeatureID(t, uuid)
+		cmd := newCreateFeatureCommand(featureID)
+		createFeature(t, client, cmd)
+		addTag(t, tag, featureID, client)
+		enableFeature(t, featureID, client)
+		// Update feature flag cache
+		updateFeatueFlagCache(t)
 
-	testCases := []struct {
-		name        string
-		description string
-		requestBody func(uuid, tag, userID string) map[string]interface{}
-	}{
-		{
-			name:        "boolean_string_true_lowercase",
-			description: "userAttributesUpdated as 'true' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationsId": fmt.Sprintf("test-evaluations-id-%s", uuid),
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "true",
-					},
-				}
+		testCases := []struct {
+			name        string
+			description string
+			requestBody func(uuid, tag, userID string) map[string]interface{}
+		}{
+			{
+				name:        "boolean_string_true_lowercase",
+				description: "userAttributesUpdated as 'true' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationsId": fmt.Sprintf("test-evaluations-id-%s", uuid),
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "true",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_false_lowercase",
-			description: "userAttributesUpdated as 'false' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "false",
-					},
-				}
+			{
+				name:        "boolean_string_false_lowercase",
+				description: "userAttributesUpdated as 'false' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "false",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_true_titlecase",
-			description: "userAttributesUpdated as 'True' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "True",
-					},
-				}
+			{
+				name:        "boolean_string_true_titlecase",
+				description: "userAttributesUpdated as 'True' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "True",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_false_titlecase",
-			description: "userAttributesUpdated as 'False' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "False",
-					},
-				}
+			{
+				name:        "boolean_string_false_titlecase",
+				description: "userAttributesUpdated as 'False' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "False",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_true_uppercase",
-			description: "userAttributesUpdated as 'TRUE' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "TRUE",
-					},
-				}
+			{
+				name:        "boolean_string_true_uppercase",
+				description: "userAttributesUpdated as 'TRUE' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "TRUE",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_false_uppercase",
-			description: "userAttributesUpdated as 'FALSE' string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "FALSE",
-					},
-				}
+			{
+				name:        "boolean_string_false_uppercase",
+				description: "userAttributesUpdated as 'FALSE' string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "FALSE",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_numeric_1",
-			description: "userAttributesUpdated as '1' string (true)",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "1",
-					},
-				}
+			{
+				name:        "boolean_string_numeric_1",
+				description: "userAttributesUpdated as '1' string (true)",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "1",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "boolean_string_numeric_0",
-			description: "userAttributesUpdated as '0' string (false)",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "0",
-					},
-				}
+			{
+				name:        "boolean_string_numeric_0",
+				description: "userAttributesUpdated as '0' string (false)",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "0",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "empty_user_evaluation_condition",
-			description: "Empty user evaluation condition object",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{},
-				}
+			{
+				name:        "empty_user_evaluation_condition",
+				description: "Empty user evaluation condition object",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{},
+					}
+				},
 			},
-		},
-		{
-			name:        "null_user_data",
-			description: "User data is null with boolean string",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id":   userID,
-						"data": nil,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": "false",
-					},
-				}
+			{
+				name:        "null_user_data",
+				description: "User data is null with boolean string",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id":   userID,
+							"data": nil,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": "false",
+						},
+					}
+				},
 			},
-		},
-		{
-			name:        "actual_boolean_value",
-			description: "userAttributesUpdated as actual boolean (not string)",
-			requestBody: func(uuid, tag, userID string) map[string]interface{} {
-				return map[string]interface{}{
-					"tag": tag,
-					"user": map[string]interface{}{
-						"id": userID,
-					},
-					"userEvaluationCondition": map[string]interface{}{
-						"evaluatedAt":           time.Now().Unix() - 60,
-						"userAttributesUpdated": true, // actual boolean
-					},
-				}
+			{
+				name:        "actual_boolean_value",
+				description: "userAttributesUpdated as actual boolean (not string)",
+				requestBody: func(uuid, tag, userID string) map[string]interface{} {
+					return map[string]interface{}{
+						"tag": tag,
+						"user": map[string]interface{}{
+							"id": userID,
+						},
+						"userEvaluationCondition": map[string]interface{}{
+							"evaluatedAt":           time.Now().Unix() - 60,
+							"userAttributesUpdated": true, // actual boolean
+						},
+					}
+				},
 			},
-		},
-	}
+		}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			// Make the HTTP request - should succeed for all cases
-			response := util.GetEvaluationsRaw(t, tc.requestBody(uuid, tag, userID), *gatewayAddr, *apiKeyPath)
+		for _, tc := range testCases {
+			tc := tc // capture range variable
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+				// Make the HTTP request - should succeed for all cases
+				response := util.GetEvaluationsRaw(t, tc.requestBody(uuid, tag, userID), *gatewayAddr, *apiKeyPath)
 
-			// Verify we got a valid response (no error occurred)
-			assert.NotNil(t, response, "Response should not be nil for test case: %s", tc.description)
-		})
-	}
+				// Verify we got a valid response (no error occurred)
+				assert.NotNil(t, response, "Response should not be nil for test case: %s", tc.description)
+			})
+		}
+	})
 }

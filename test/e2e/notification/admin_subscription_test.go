@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"testing/synctest"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,221 +29,224 @@ import (
 )
 
 func TestCreateGetDeleteAdminSubscription(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	notificationClient := newNotificationClient(t)
-	defer notificationClient.Close()
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		notificationClient := newNotificationClient(t)
+		defer notificationClient.Close()
 
-	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
-	sourceTypes := []proto.Subscription_SourceType{
-		proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
-	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
-	recipient := &proto.Recipient{
-		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
-	}
-	id, err := domain.ID(recipient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
-		Id: id,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	subscription := resp.Subscription
-	if subscription == nil {
-		t.Fatalf("Subscription not found")
-	}
-	if subscription.Name != name {
-		t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
-	}
-	if len(subscription.SourceTypes) != 1 {
-		t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
-	}
-	if subscription.SourceTypes[0] != sourceTypes[0] {
-		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
-	}
-	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
-		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
-	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
-	}
-	if subscription.Disabled != false {
-		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
-	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
-		Id:      id,
-		Command: &proto.DeleteAdminSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
-		Id: id,
-	})
-	if err != nil {
-		st, _ := status.FromError(err)
-		if st.Code() != codes.NotFound {
+		name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
+		sourceTypes := []proto.Subscription_SourceType{
+			proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+		}
+		webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+		recipient := &proto.Recipient{
+			Type:                  proto.Recipient_SlackChannel,
+			SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
+		}
+		id, err := domain.ID(recipient)
+		if err != nil {
 			t.Fatal(err)
 		}
-	}
+		createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
+		resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+			Id: id,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		subscription := resp.Subscription
+		if subscription == nil {
+			t.Fatalf("Subscription not found")
+		}
+		if subscription.Name != name {
+			t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
+		}
+		if len(subscription.SourceTypes) != 1 {
+			t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
+		}
+		if subscription.SourceTypes[0] != sourceTypes[0] {
+			t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
+		}
+		if subscription.Recipient.Type != proto.Recipient_SlackChannel {
+			t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
+		}
+		if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
+			t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+		}
+		if subscription.Disabled != false {
+			t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
+		}
+		_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+			Id:      id,
+			Command: &proto.DeleteAdminSubscriptionCommand{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+			Id: id,
+		})
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatal(err)
+			}
+		}
+	})
 }
 
 func TestCreateListDeleteAdminSubscription(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	notificationClient := newNotificationClient(t)
-	defer notificationClient.Close()
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		notificationClient := newNotificationClient(t)
+		defer notificationClient.Close()
 
-	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
-	sourceTypes := []proto.Subscription_SourceType{
-		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
-	recipient := &proto.Recipient{
-		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
-	}
-	id, err := domain.ID(recipient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	subscriptions := listAdminSubscriptions(t, notificationClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
-	var subscription *proto.Subscription
-	for _, s := range subscriptions {
-		if s.Id == id {
-			subscription = s
-			break
+		name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
+		sourceTypes := []proto.Subscription_SourceType{
+			proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 		}
-	}
-	if subscription == nil {
-		t.Fatalf("Subscription not found")
-	}
-	if subscription.Name != name {
-		t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
-	}
-	if len(subscription.SourceTypes) != 1 {
-		t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
-	}
-	if subscription.SourceTypes[0] != sourceTypes[0] {
-		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
-	}
-	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
-		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
-	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
-	}
-	if subscription.Disabled != false {
-		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
-	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
-		Id:      id,
-		Command: &proto.DeleteAdminSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
-		Id: id,
-	})
-	if err != nil {
-		st, _ := status.FromError(err)
-		if st.Code() != codes.NotFound {
+		webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+		recipient := &proto.Recipient{
+			Type:                  proto.Recipient_SlackChannel,
+			SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
+		}
+		id, err := domain.ID(recipient)
+		if err != nil {
 			t.Fatal(err)
 		}
-	}
+		createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
+		subscriptions := listAdminSubscriptions(t, notificationClient, []proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT})
+		var subscription *proto.Subscription
+		for _, s := range subscriptions {
+			if s.Id == id {
+				subscription = s
+				break
+			}
+		}
+		if subscription == nil {
+			t.Fatalf("Subscription not found")
+		}
+		if subscription.Name != name {
+			t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
+		}
+		if len(subscription.SourceTypes) != 1 {
+			t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
+		}
+		if subscription.SourceTypes[0] != sourceTypes[0] {
+			t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
+		}
+		if subscription.Recipient.Type != proto.Recipient_SlackChannel {
+			t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
+		}
+		if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
+			t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+		}
+		if subscription.Disabled != false {
+			t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
+		}
+		_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+			Id:      id,
+			Command: &proto.DeleteAdminSubscriptionCommand{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+			Id: id,
+		})
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatal(err)
+			}
+		}
+	})
 }
 
 func TestUpdateAdminSubscription(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	notificationClient := newNotificationClient(t)
-	defer notificationClient.Close()
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		notificationClient := newNotificationClient(t)
+		defer notificationClient.Close()
 
-	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
-	sourceTypes := []proto.Subscription_SourceType{
-		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
-	recipient := &proto.Recipient{
-		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
-	}
-	id, err := domain.ID(recipient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
-	_, err = notificationClient.UpdateAdminSubscription(ctx, &proto.UpdateAdminSubscriptionRequest{
-		Id: id,
-		AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
-			SourceTypes: []proto.Subscription_SourceType{
-				proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
-			},
-		},
-		DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{
-			SourceTypes: []proto.Subscription_SourceType{
-				proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
-		Id: id,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	subscription := resp.Subscription
-	if subscription == nil {
-		t.Fatalf("Subscription not found")
-	}
-	if subscription.Name != name {
-		t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
-	}
-	if len(subscription.SourceTypes) != 1 {
-		t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
-	}
-	if subscription.SourceTypes[0] != proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT {
-		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
-	}
-	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
-		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
-	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
-	}
-	if subscription.Disabled != false {
-		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
-	}
-	_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
-		Id:      id,
-		Command: &proto.DeleteAdminSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		Id: id,
-	})
-	if err != nil {
-		st, _ := status.FromError(err)
-		if st.Code() != codes.NotFound {
+		name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
+		sourceTypes := []proto.Subscription_SourceType{
+			proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+		}
+		webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+		recipient := &proto.Recipient{
+			Type:                  proto.Recipient_SlackChannel,
+			SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
+		}
+		id, err := domain.ID(recipient)
+		if err != nil {
 			t.Fatal(err)
 		}
-	}
+		createAdminSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
+		_, err = notificationClient.UpdateAdminSubscription(ctx, &proto.UpdateAdminSubscriptionRequest{
+			Id: id,
+			AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+				},
+			},
+			DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				},
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := notificationClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
+			Id: id,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		subscription := resp.Subscription
+		if subscription == nil {
+			t.Fatalf("Subscription not found")
+		}
+		if subscription.Name != name {
+			t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
+		}
+		if len(subscription.SourceTypes) != 1 {
+			t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
+		}
+		if subscription.SourceTypes[0] != proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT {
+			t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
+		}
+		if subscription.Recipient.Type != proto.Recipient_SlackChannel {
+			t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
+		}
+		if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
+			t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+		}
+		if subscription.Disabled != false {
+			t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
+		}
+		_, err = notificationClient.DeleteAdminSubscription(ctx, &proto.DeleteAdminSubscriptionRequest{
+			Id:      id,
+			Command: &proto.DeleteAdminSubscriptionCommand{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+			Id: id,
+		})
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatal(err)
+			}
+		}
+	})
 }
 
 func createAdminSubscription(

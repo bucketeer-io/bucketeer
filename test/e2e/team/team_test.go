@@ -24,6 +24,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -62,7 +63,7 @@ var (
 )
 
 func TestUpsertAndListTeam(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -83,6 +84,7 @@ func TestUpsertAndListTeam(t *testing.T) {
 	// Otherwise, the test could fail because it could finish in less than 1 second,
 	// not updating the `updateAt` correctly.
 	time.Sleep(5 * time.Second)
+	synctest.Wait()
 	// Upsert team index 1
 	targetTeam := teams[1]
 	createTeam(t, client, targetTeam.Name)
@@ -102,10 +104,11 @@ func TestUpsertAndListTeam(t *testing.T) {
 		t.Fatalf("The team update time didn't change. Expected: %v\n, Actual: %v",
 			targetTeam, teamUpsert[0])
 	}
+	})
 }
 
 func TestDeleteTeam(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newTeamClient(t)
@@ -134,10 +137,11 @@ func TestDeleteTeam(t *testing.T) {
 	if len(target) != 0 {
 		t.Fatalf("The team hasn't deleted. Team: %v", target)
 	}
+	})
 }
 
 func TestFailedDeleteTeam(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	teamClient := newTeamClient(t)
@@ -185,6 +189,7 @@ func TestFailedDeleteTeam(t *testing.T) {
 	if _, err := teamClient.DeleteTeam(ctx, req); err == nil {
 		t.Fatal("Expected error when deleting team with existing account, but got nil")
 	}
+	})
 }
 
 func newAccountClient(t *testing.T) accountclient.Client {

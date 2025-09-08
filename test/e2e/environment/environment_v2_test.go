@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -53,6 +54,7 @@ const (
 )
 
 func TestGetEnvironmentV2(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -68,9 +70,11 @@ func TestGetEnvironmentV2(t *testing.T) {
 	if resp.Environment.Name != environmentName {
 		t.Fatalf("different name, expected: %v, actual: %v", environmentName, resp.Environment.Name)
 	}
+	})
 }
 
 func TestListEnvironmentsV2ByProject(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -87,9 +91,11 @@ func TestListEnvironmentsV2ByProject(t *testing.T) {
 			t.Fatalf("different project id, expected: %s, actual: %s", defaultProjectID, env.ProjectId)
 		}
 	}
+	})
 }
 
 func TestListEnvironmentsV2(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -103,9 +109,11 @@ func TestListEnvironmentsV2(t *testing.T) {
 	if responseSize != pageSize {
 		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
 	}
+	})
 }
 
 func TestUpdateEnvironmentV2(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -154,6 +162,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	if getResp.Environment.Description != newDesc {
 		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
 	}
+	})
 }
 
 func getEnvironmentID(t *testing.T) string {

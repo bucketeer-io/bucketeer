@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -35,7 +36,7 @@ const (
 )
 
 func TestAddSegmentUserCommand(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -60,10 +61,11 @@ func TestAddSegmentUserCommand(t *testing.T) {
 		assert.Equal(t, tc.state, user.State)
 		assert.Equal(t, false, user.Deleted)
 	}
+	})
 }
 
 func TestDeleteSegmentUserCommand(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -90,10 +92,11 @@ func TestDeleteSegmentUserCommand(t *testing.T) {
 		)
 		assert.Empty(t, len(listRes.Users))
 	}
+	})
 }
 
 func TestListSegmentUsersPageSize(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -109,10 +112,11 @@ func TestListSegmentUsersPageSize(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, pageSize, int64(len(res.Users)))
+	})
 }
 
 func TestListSegmentUsersCursor(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -150,10 +154,11 @@ func TestListSegmentUsersCursor(t *testing.T) {
 			break
 		}
 	}
+	})
 }
 
 func TestListSegmentUsersWithoutState(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -165,41 +170,44 @@ func TestListSegmentUsersWithoutState(t *testing.T) {
 	assert.Equal(t, segmentID, res.Users[0].SegmentId)
 	assert.Equal(t, userIDs[0], res.Users[0].UserId)
 	assert.Equal(t, featureproto.SegmentUser_INCLUDED, res.Users[0].State)
+	})
 }
 
 func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	uids := []string{newUserID(t), newUserID(t), newUserID(t)}
-	sort.Strings(uids)
-	userIDs := []byte(fmt.Sprintf("%s\n%s\n%s\n", uids[0], uids[1], uids[2]))
-	uploadRes, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
-		EnvironmentId: *environmentID,
-		SegmentId:     segmentID,
-		Command: &featureproto.BulkUploadSegmentUsersCommand{
-			Data:  userIDs,
-			State: featureproto.SegmentUser_INCLUDED,
-		},
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		uids := []string{newUserID(t), newUserID(t), newUserID(t)}
+		sort.Strings(uids)
+		userIDs := []byte(fmt.Sprintf("%s\n%s\n%s\n", uids[0], uids[1], uids[2]))
+		uploadRes, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
+			EnvironmentId: *environmentID,
+			SegmentId:     segmentID,
+			Command: &featureproto.BulkUploadSegmentUsersCommand{
+				Data:  userIDs,
+				State: featureproto.SegmentUser_INCLUDED,
+			},
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, uploadRes)
+		// Because the upload process is done in the background,
+		// we wait a bit so the test won't fail.
+		time.Sleep(20 * time.Second)
+		for i := 0; i < segmentUserRetryTimes; i++ {
+			downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
+			if err == nil {
+				assert.Equal(t, string(userIDs), string(downloadRes.Data))
+				break
+			}
+			if i == segmentUserRetryTimes-1 {
+				t.Fatalf("SegmentUsers cannot be downloaded.")
+			}
+			time.Sleep(5 * time.Second)
+			synctest.Wait()
+		}
 	})
-	assert.NoError(t, err)
-	assert.NotNil(t, uploadRes)
-	// Because the upload process is done in the background,
-	// we wait a bit so the test won't fail.
-	time.Sleep(20 * time.Second)
-	for i := 0; i < segmentUserRetryTimes; i++ {
-		downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
-		if err == nil {
-			assert.Equal(t, string(userIDs), string(downloadRes.Data))
-			break
-		}
-		if i == segmentUserRetryTimes-1 {
-			t.Fatalf("SegmentUsers cannot be downloaded.")
-		}
-		time.Sleep(5 * time.Second)
-	}
 }
 
 func addSegmentUser(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, userIDs []string, state featureproto.SegmentUser_State) {

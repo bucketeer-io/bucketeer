@@ -17,6 +17,7 @@ package autoops
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -34,7 +35,7 @@ import (
 const totalVariationWeight = int32(100000)
 
 func TestCreateAndListProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -78,10 +79,11 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
 	}
+	})
 }
 
 func TestCreateAndListProgressiveRolloutNoCommand(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -125,10 +127,11 @@ func TestCreateAndListProgressiveRolloutNoCommand(t *testing.T) {
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
 	}
+	})
 }
 
 func TestGetProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -172,10 +175,11 @@ func TestGetProgressiveRollout(t *testing.T) {
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
 	}
+	})
 }
 
 func TestCreateAndGetProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -219,10 +223,11 @@ func TestCreateAndGetProgressiveRollout(t *testing.T) {
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
 	}
+	})
 }
 
 func TestStopProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -258,10 +263,11 @@ func TestStopProgressiveRollout(t *testing.T) {
 	assert.True(t, resp.ProgressiveRollout.StoppedAt > time.Now().Add(time.Second*-10).Unix())
 	assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, resp.ProgressiveRollout.Status)
 	assert.Equal(t, autoopsproto.ProgressiveRollout_USER, resp.ProgressiveRollout.StoppedBy)
+	})
 }
 
 func TestDeleteProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -302,10 +308,11 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 	if status.Code(err) != codes.NotFound {
 		t.Fatalf("different error code, expected: %s, actual: %s", codes.NotFound, status.Code(err))
 	}
+	})
 }
 
 func TestExecuteProgressiveRollout(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -376,10 +383,11 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	if actualClause.Schedules[0].TriggeredAt == 0 {
 		t.Fatalf("triggered at is empty")
 	}
+	})
 }
 
 func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -448,10 +456,11 @@ func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
 	if actualClause.Schedules[0].TriggeredAt == 0 {
 		t.Fatalf("triggered at is empty")
 	}
+	})
 }
 
 func TestProgressiveRolloutBatch(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
@@ -491,6 +500,7 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 			t.Fatalf("Retry count has reached the limit")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
 		feature = getFeature(t, featureClient, featureID)
 		expectedStrategy := &featureproto.RolloutStrategy{
 			Variations: []*featureproto.RolloutStrategy_Variation{
@@ -523,6 +533,7 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 		}
 		break
 	}
+	})
 }
 
 func createProgressiveRollout(

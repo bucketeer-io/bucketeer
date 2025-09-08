@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -39,7 +40,7 @@ const (
 )
 
 func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	cmd := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, cmd)
@@ -68,11 +69,13 @@ func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 			t.Fatalf("LastUsedInfo cannot be fetched.")
 		}
 		time.Sleep(time.Second)
+		synctest.Wait()
 	}
+	})
 }
 
 func TestGetFeatureLastUsedInfo(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	cmd := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, cmd)
@@ -101,7 +104,9 @@ func TestGetFeatureLastUsedInfo(t *testing.T) {
 			t.Fatalf("LastUsedInfo cannot be fetched.")
 		}
 		time.Sleep(time.Second)
+		synctest.Wait()
 	}
+	})
 }
 
 func grpcRegisterEvaluationEvents(t *testing.T, features []*feature.Feature, tag string, now time.Time) {

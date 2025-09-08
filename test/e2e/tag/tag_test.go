@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -55,7 +56,7 @@ var (
 )
 
 func TestUpsertAndListTag(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newTagClient(t)
@@ -103,6 +104,7 @@ func TestUpsertAndListTag(t *testing.T) {
 
 		// Wait before retrying to allow system to reach consistency
 		time.Sleep(500 * time.Millisecond)
+		synctest.Wait()
 	}
 
 	// Wait a few seconds before upserting the same tag.
@@ -128,10 +130,11 @@ func TestUpsertAndListTag(t *testing.T) {
 		t.Fatalf("The tag update time didn't change. Expected: %v\n, Actual: %v",
 			targetTag, tagUpsert[0])
 	}
+	})
 }
 
 func TestDeleteTag(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newTagClient(t)
@@ -161,10 +164,11 @@ func TestDeleteTag(t *testing.T) {
 	if len(target) != 0 {
 		t.Fatalf("The tag hasn't deleted. Tag: %v", target)
 	}
+	})
 }
 
 func TestFailedDeleteTag(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	tagClient := newTagClient(t)
@@ -197,6 +201,7 @@ func TestFailedDeleteTag(t *testing.T) {
 	if _, err := tagClient.DeleteTag(ctx, req); err == nil {
 		t.Fatal("Expected error when deleting tag that is in use, but got none")
 	}
+	})
 }
 
 func newFeatureID(t *testing.T) string {

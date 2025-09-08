@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -14,6 +15,7 @@ const (
 )
 
 func TestGetOrganization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -26,9 +28,11 @@ func TestGetOrganization(t *testing.T) {
 	if resp.Organization.Id != id {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, resp.Organization.Id)
 	}
+	})
 }
 
 func TestListOrganizations(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -42,9 +46,11 @@ func TestListOrganizations(t *testing.T) {
 	if responseSize != pageSize {
 		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
 	}
+	})
 }
 
 func TestUpdateOrganization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -73,9 +79,11 @@ func TestUpdateOrganization(t *testing.T) {
 	if getResp.Organization.Name != newName {
 		t.Fatalf("different names, expected: %v, actual: %v", newName, getResp.Organization.Name)
 	}
+	})
 }
 
 func TestEnableAndDisableOrganization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -110,9 +118,11 @@ func TestEnableAndDisableOrganization(t *testing.T) {
 	if getResp2.Organization.Disabled != false {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp2.Organization.Id)
 	}
+	})
 }
 
 func TestArchiveAndUnarchiveOrganization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -147,4 +157,5 @@ func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	if getResp2.Organization.Archived != false {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp2.Organization.Id)
 	}
+	})
 }

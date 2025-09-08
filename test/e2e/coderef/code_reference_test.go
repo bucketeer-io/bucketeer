@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -53,7 +54,7 @@ var (
 )
 
 func TestCreateCodeReference(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -76,10 +77,11 @@ func TestCreateCodeReference(t *testing.T) {
 	assert.Equal(t, createReq.RepositoryBranch, resp.CodeReference.RepositoryBranch)
 	assert.Equal(t, createReq.CommitHash, resp.CodeReference.CommitHash)
 	assert.NotEmpty(t, resp.CodeReference.Id)
+	})
 }
 
 func TestUpdateCodeReference(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -124,10 +126,11 @@ func TestUpdateCodeReference(t *testing.T) {
 	assert.Equal(t, updateReq.RepositoryType, getResp.CodeReference.RepositoryType)
 	assert.Equal(t, updateReq.RepositoryBranch, getResp.CodeReference.RepositoryBranch)
 	assert.Equal(t, updateReq.CommitHash, getResp.CodeReference.CommitHash)
+	})
 }
 
 func TestListCodeReferences(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -139,6 +142,7 @@ func TestListCodeReferences(t *testing.T) {
 	createReq1 := newCreateCodeReferenceRequest(t, featureID)
 	resp1 := createCodeReference(t, client, createReq1)
 	time.Sleep(time.Second)
+	synctest.Wait()
 	createReq2 := newCreateCodeReferenceRequest(t, featureID)
 	resp2 := createCodeReference(t, client, createReq2)
 
@@ -186,10 +190,11 @@ func TestListCodeReferences(t *testing.T) {
 	}
 	assert.True(t, found1, "First created code reference not found in list response")
 	assert.True(t, found2, "Second created code reference not found in list response")
+	})
 }
 
 func TestListCodeReferencesCursor(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -202,6 +207,7 @@ func TestListCodeReferencesCursor(t *testing.T) {
 		createReq := newCreateCodeReferenceRequest(t, featureID)
 		createCodeReference(t, client, createReq)
 		time.Sleep(time.Second) // Ensure different creation times
+		synctest.Wait()
 	}
 
 	expectedSize := 1
@@ -239,10 +245,11 @@ func TestListCodeReferencesCursor(t *testing.T) {
 	if expectedSize != actualSize {
 		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
 	}
+	})
 }
 
 func TestListCodeReferencesPageSize(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -255,6 +262,7 @@ func TestListCodeReferencesPageSize(t *testing.T) {
 		createReq := newCreateCodeReferenceRequest(t, featureID)
 		createCodeReference(t, client, createReq)
 		time.Sleep(time.Second) // Ensure different creation times
+		synctest.Wait()
 	}
 
 	expectedSize := 3
@@ -273,10 +281,11 @@ func TestListCodeReferencesPageSize(t *testing.T) {
 	if expectedSize != actualSize {
 		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
 	}
+	})
 }
 
 func TestDeleteCodeReference(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newCodeRefClient(t)
 	featureClient := newFeatureClient(t)
 
@@ -307,6 +316,7 @@ func TestDeleteCodeReference(t *testing.T) {
 	st, ok := status.FromError(err)
 	assert.True(t, ok)
 	assert.Equal(t, codes.NotFound, st.Code())
+	})
 }
 
 func newCreateCodeReferenceRequest(t *testing.T, featureID string) *coderefproto.CreateCodeReferenceRequest {

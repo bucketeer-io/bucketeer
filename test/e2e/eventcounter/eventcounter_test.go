@@ -23,6 +23,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -78,7 +79,7 @@ var (
 )
 
 func TestGrpcExperimentGoalCount(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -135,12 +136,14 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// Evaluation events must always be sent before goal events
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -152,6 +155,8 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if err != nil {
@@ -211,10 +216,11 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestExperimentGoalCount(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -272,12 +278,14 @@ func TestExperimentGoalCount(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -289,6 +297,8 @@ func TestExperimentGoalCount(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if err != nil {
@@ -349,10 +359,11 @@ func TestExperimentGoalCount(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestGrpcExperimentResult(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -409,6 +420,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// CVRs is 3/4
 	// Evaluation events must always be sent before goal events
@@ -422,6 +434,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	// Register goal variation
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -444,6 +457,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	// Register goal
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
@@ -459,6 +473,8 @@ func TestGrpcExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentResult(t, ecClient, experiment.Id)
 		if err != nil {
@@ -519,10 +535,11 @@ func TestGrpcExperimentResult(t *testing.T) {
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestExperimentResult(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -579,6 +596,7 @@ func TestExperimentResult(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// CVRs is 3/4
 	// Evaluation events must always be sent before goal events
@@ -592,6 +610,7 @@ func TestExperimentResult(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	// Register goal variation
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -614,6 +633,7 @@ func TestExperimentResult(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	// Register goal
 	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
@@ -629,6 +649,8 @@ func TestExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentResult(t, ecClient, experiment.Id)
 		if err != nil {
@@ -689,10 +711,11 @@ func TestExperimentResult(t *testing.T) {
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestGrpcMultiGoalsEventCounter(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -755,6 +778,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// Evaluation events must always be sent before goal events
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
@@ -762,6 +786,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -775,6 +800,8 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		// Goal 0.
 		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
@@ -916,10 +943,11 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestMultiGoalsEventCounter(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -982,6 +1010,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
@@ -989,6 +1018,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -1002,6 +1032,8 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		// Goal 0.
 		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
@@ -1143,10 +1175,11 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestHTTPTrack(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	experimentClient := newExperimentClient(t)
@@ -1206,12 +1239,14 @@ func TestHTTPTrack(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
+	synctest.Wait()
 
 	// Send track events
 	// This track event will be converted to a goal event on the backend.
@@ -1223,6 +1258,8 @@ func TestHTTPTrack(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if err != nil {
@@ -1272,10 +1309,11 @@ func TestHTTPTrack(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	featureClient := newFeatureClient(t)
@@ -1341,6 +1379,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
@@ -1351,6 +1390,8 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if err != nil {
@@ -1403,10 +1444,11 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	featureClient := newFeatureClient(t)
@@ -1471,6 +1513,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
@@ -1481,6 +1524,8 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 
 		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if err != nil {
@@ -1532,10 +1577,11 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		break
 	}
 	stopExperiment(ctx, t, experimentClient, experiment.Id)
+	})
 }
 
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	ecClient := newEventCounterClient(t)
@@ -1577,6 +1623,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 LOOP:
 	for {
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
+	synctest.Wait()
 		i++
 		if i == retryTimes {
 			t.Fatalf("retry timeout")
@@ -1621,6 +1669,7 @@ LOOP:
 		}
 		break
 	}
+	})
 }
 
 func getVariationCount(vcs []*ecproto.VariationCount, id string) *ecproto.VariationCount {
@@ -1723,6 +1772,7 @@ func createExperimentWithMultiGoals(
 		}
 		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -1770,6 +1820,7 @@ func stopExperiment(
 		}
 		fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 }
 
@@ -1793,6 +1844,7 @@ func updateFeatueFlagCache(t *testing.T) {
 		}
 		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -2198,6 +2250,7 @@ func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEv
 		}
 		fmt.Printf("Failed to get evaluations. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		return nil, err
@@ -2227,6 +2280,7 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 		}
 		fmt.Printf("Failed to get experiment. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", id, st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		return nil, err
@@ -2254,6 +2308,8 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
 			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
 			time.Sleep(5 * time.Second)
+			synctest.Wait()
+		synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2291,6 +2347,8 @@ func getExperimentEvaluationCount(
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
 			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
+			synctest.Wait()
+		synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2329,6 +2387,8 @@ func getExperimentGoalCount(
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
 			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
+			synctest.Wait()
+		synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2361,6 +2421,7 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) (*f
 		}
 		fmt.Printf("Failed to get feature. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	return response.Feature, err
 }
@@ -2394,6 +2455,8 @@ func getEvaluationTimeseriesCount(
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
 			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 			time.Sleep(5 * time.Second)
+			synctest.Wait()
+		synctest.Wait()
 			continue
 		}
 		return nil, err

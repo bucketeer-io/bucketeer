@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -100,8 +101,8 @@ type registerEventsResponse struct {
 }
 
 func TestCreateAndListAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -160,11 +161,12 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
 		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
 	}
+	})
 }
 
 func TestCreateAndListAutoOpsRuleNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -223,11 +225,12 @@ func TestCreateAndListAutoOpsRuleNoCommand(t *testing.T) {
 	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
 		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
 	}
+	})
 }
 
 func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -270,11 +273,12 @@ func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
 	if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
 		t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
 	}
+	})
 }
 
 func TestGetAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -330,11 +334,12 @@ func TestGetAutoOpsRule(t *testing.T) {
 	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
 		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
 	}
+	})
 }
 
 func TestDeleteAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -375,11 +380,12 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	if status.Code(err) != codes.NotFound {
 		t.Fatalf("different error code, expected: %s, actual: %s", codes.NotFound, status.Code(err))
 	}
+	})
 }
 
 func TestUpdateAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -414,11 +420,12 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	if odc.ActionType != addClause.ActionType {
 		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
 	}
+	})
 }
 
 func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -469,11 +476,12 @@ func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 	if odc.ActionType != addClause.ActionType {
 		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
 	}
+	})
 }
 
 func TestExecuteAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -519,11 +527,12 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
 		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 	}
+	})
 }
 
 func TestExecuteAutoOpsRuleNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -567,11 +576,12 @@ func TestExecuteAutoOpsRuleNoCommand(t *testing.T) {
 	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
 		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 	}
+	})
 }
 
 func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -605,13 +615,14 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 	if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
 		t.Fatalf("status is not running")
 	}
+	})
 }
 
 // Test for old SDK client. Tag is not set in the EvaluationEvent and GoalEvent
 // Evaluation field in the GoalEvent is deprecated.
 func TestOpsEventRateBatchWithoutTag(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -643,6 +654,7 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -653,11 +665,12 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	}
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
+	})
 }
 
 func TestGrpcOpsEventRateBatch(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -690,6 +703,7 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -700,11 +714,12 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	}
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
+	})
 }
 
 func TestOpsEventRateBatch(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -759,6 +774,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -776,11 +792,12 @@ func TestOpsEventRateBatch(t *testing.T) {
 	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
 		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
 	}
+	})
 }
 
 func TestDatetimeBatch(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -824,6 +841,7 @@ func TestDatetimeBatch(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
@@ -833,11 +851,12 @@ func TestDatetimeBatch(t *testing.T) {
 	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
 		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
 	}
+	})
 }
 
 func TestDatetimeBatchForMultiSchedule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -880,6 +899,7 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
+	synctest.Wait()
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 	// As a requirement, when disabling a flag using an auto operation,
 	// It must stop the progressive rollout if it is running
@@ -887,11 +907,12 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
 		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
 	}
+	})
 }
 
 func TestStopAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	autoOpsClient := newAutoOpsClient(t)
 	defer autoOpsClient.Close()
@@ -918,6 +939,7 @@ func TestStopAutoOpsRule(t *testing.T) {
 	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
 		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
 	}
+	})
 }
 
 func sendHttpWebhook(t *testing.T, url, payload string) {
@@ -1049,6 +1071,7 @@ func createAutoOpsRule(
 		}
 		fmt.Printf("Failed to execute auto ops rules cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -1092,6 +1115,7 @@ func createAutoOpsRuleNoCommand(
 		}
 		fmt.Printf("Failed to execute auto ops rules cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
 		time.Sleep(5 * time.Second)
+		synctest.Wait()
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -1594,6 +1618,7 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
+		synctest.Wait()
 		feature := getFeature(t, featureClient, featureID)
 		if feature.Enabled {
 			continue

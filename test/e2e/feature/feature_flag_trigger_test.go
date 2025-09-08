@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ import (
 )
 
 func TestCreateFeatureFlagTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	cmd := newCreateFeatureCommand(newFeatureID(t))
@@ -61,10 +62,11 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	if resp.GetUrl() == "" {
 		t.Fatal("unexpected empty url")
 	}
+	})
 }
 
 func TestUpdateFeatureFlagDescriptionTriggerNoCommand(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
@@ -114,10 +116,11 @@ func TestUpdateFeatureFlagDescriptionTriggerNoCommand(t *testing.T) {
 	if getResp.FlagTrigger.Description != updateFlagTriggerReq.Description.Value {
 		t.Fatal("unexpected description")
 	}
+	})
 }
 
 func TestUpdateFlagTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -150,10 +153,11 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	if resp.FlagTrigger.Description != updateFlagTriggerReq.ChangeFlagTriggerDescriptionCommand.Description {
 		t.Fatal("unexpected description")
 	}
+	})
 }
 
 func TestDisableEnableFlagTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -199,10 +203,11 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	if resp.FlagTrigger.Disabled != false {
 		t.Fatal("unexpected disabled")
 	}
+	})
 }
 
 func TestResetFlagTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -227,10 +232,11 @@ func TestResetFlagTrigger(t *testing.T) {
 	if resetResp.Url == createResp.Url {
 		t.Fatalf("unexpected reset url: %s, create url: %s", resetResp.Url, createResp.Url)
 	}
+	})
 }
 
 func TestResetFlagUpdateTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
@@ -246,6 +252,7 @@ func TestResetFlagUpdateTrigger(t *testing.T) {
 		t.Fatal(err)
 	}
 	time.Sleep(1)
+	synctest.Wait()
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
 		Id:            createResp.FlagTrigger.Id,
 		EnvironmentId: *environmentID,
@@ -256,10 +263,11 @@ func TestResetFlagUpdateTrigger(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.NotEqual(t, createResp.Url, updateResp.Url)
+	})
 }
 
 func TestDeleteFlagTrigger(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -289,10 +297,11 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	if err == nil {
 		t.Fatal("flag trigger delete error")
 	}
+	})
 }
 
 func TestListFlagTriggers(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -310,6 +319,7 @@ func TestListFlagTriggers(t *testing.T) {
 		t.Fatal(err)
 	}
 	time.Sleep(1 * time.Second)
+	synctest.Wait()
 	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentId: *environmentID,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
@@ -357,10 +367,11 @@ func TestListFlagTriggers(t *testing.T) {
 	if triggers.Cursor != "2" {
 		t.Fatalf("unexpected cursor: %s", triggers.Cursor)
 	}
+	})
 }
 
 func TestFeatureFlagWebhook(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	command := newCreateFeatureCommand(newFeatureID(t))
@@ -435,6 +446,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if disabledTrigger.FlagTrigger.LastTriggeredAt == 0 {
 		t.Fatal("unexpected last triggered at")
 	}
+	})
 }
 
 func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {

@@ -20,6 +20,7 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -30,6 +31,7 @@ const (
 )
 
 func TestGetProject(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -42,9 +44,11 @@ func TestGetProject(t *testing.T) {
 	if resp.Project.Id != id {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, resp.Project.Id)
 	}
+	})
 }
 
 func TestListProjects(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -58,9 +62,11 @@ func TestListProjects(t *testing.T) {
 	if responseSize != pageSize {
 		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
 	}
+	})
 }
 
 func TestListProjectsRequestOrganizations(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -93,9 +99,11 @@ func TestListProjectsRequestOrganizations(t *testing.T) {
 			t.Fatalf("received a project of a not request organization expected: %v, actual: %s", orgIds, project.OrganizationId)
 		}
 	}
+	})
 }
 
 func TestUpdateProject(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newEnvironmentClient(t)
@@ -124,4 +132,5 @@ func TestUpdateProject(t *testing.T) {
 	if getResp.Project.Name != newName {
 		t.Fatalf("different names, expected: %v, actual: %v", newName, getResp.Project.Name)
 	}
+	})
 }

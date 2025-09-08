@@ -17,6 +17,7 @@ package feature
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -24,7 +25,7 @@ import (
 )
 
 func TestCreateAndListTag(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -35,10 +36,11 @@ func TestCreateAndListTag(t *testing.T) {
 	if len(tags) != len(cmd.Tags) {
 		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(cmd.Tags), len(tags))
 	}
+	})
 }
 
 func TestUpdateTag(t *testing.T) {
-	t.Parallel()
+	synctest.Test(t, func(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -55,11 +57,13 @@ func TestUpdateTag(t *testing.T) {
 	addTag(t, newTag, featureID, client)
 	expected := append(cmd.Tags, newTag)
 	time.Sleep(time.Second * 3)
+	synctest.Wait()
 	actual = listTags(ctx, t, client)
 	tags = findTags(actual, expected)
 	if len(tags) != len(expected) {
 		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(expected), len(tags))
 	}
+	})
 }
 
 func findTags(tags []*feature.Tag, targetNames []string) []*feature.Tag {
