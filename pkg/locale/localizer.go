@@ -135,6 +135,9 @@ const (
 	AutoOpsWaitingOrRunningExperimentExists            = "AutoOpsWaitingOrRunningExperimentExists"
 	AutoOpsProgressiveRolloutInProgress                = "AutoOpsProgressiveRolloutInProgress"
 	AutoOpsProgressiveRolloutVariationsMustBeDifferent = "AutoOpsProgressiveRolloutVariationsMustBeDifferent"
+	// password setup/reset messages
+	PasswordSetupEmailSent = "PasswordSetupEmailSent"
+	PasswordResetEmailSent = "PasswordResetEmailSent"
 )
 
 // domain events
