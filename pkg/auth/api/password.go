@@ -37,6 +37,7 @@ func (s *authService) UpdatePassword(
 	localizer := locale.NewLocalizer(ctx)
 	err := validateUpdatePasswordRequest(request, localizer)
 	if err != nil {
+		s.logger.Error("UpdatePassword request validation failed", zap.Error(err))
 		return nil, err
 	}
 
