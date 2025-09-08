@@ -133,6 +133,9 @@ const (
 	AutoOpsInvalidVariationSize             = "AutoOpsInvalidVariationSize"
 	AutoOpsWaitingOrRunningExperimentExists = "AutoOpsWaitingOrRunningExperimentExists"
 	AutoOpsProgressiveRolloutInProgress     = "AutoOpsProgressiveRolloutInProgress"
+	// password setup/reset messages
+	PasswordSetupEmailSent = "PasswordSetupEmailSent"
+	PasswordResetEmailSent = "PasswordResetEmailSent"
 )
 
 // domain events
