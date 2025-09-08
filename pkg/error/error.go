@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	AccountPackageName = "account"
+	AccountPackageName  = "account"
+	AuditlogPackageName = "auditlog"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"

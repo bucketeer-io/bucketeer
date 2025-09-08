@@ -18,17 +18,17 @@ package v2
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 var (
-	ErrAdminAuditLogAlreadyExists = errors.New("auditlog: admin auditlog already exists")
+	ErrAdminAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(pkgErr.AuditlogPackageName, "admin auditlog already exists")
 
 	//go:embed sql/adminauditlog/insert_admin_audit_logs_v2.sql
 	insertAdminAuditLogsV2SQL string
