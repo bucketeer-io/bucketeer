@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -58,972 +59,984 @@ var (
 )
 
 func TestGetAccount(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.Account.Email != email {
+			t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
+		}
+		if resp.Account.OrganizationId != defaultOrganizationID {
+			t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
-	}
-	if resp.Account.OrganizationId != defaultOrganizationID {
-		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
-	}
 }
 
 func TestCreateAccountV2(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
-	lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
-	avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
-	envRole := &accountproto.AccountV2_EnvironmentRole{
-		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-		EnvironmentId: "test",
-	}
-	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        firstName,
-			LastName:         lastName,
-			Language:         language,
-			AvatarImageUrl:   avatarURL,
-			Tags:             tags,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
-		},
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+		lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+		avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+		tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
+		envRole := &accountproto.AccountV2_EnvironmentRole{
+			Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			EnvironmentId: "test",
+		}
+		resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        firstName,
+				LastName:         lastName,
+				Language:         language,
+				AvatarImageUrl:   avatarURL,
+				Tags:             tags,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.Account.Email != email {
+			t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
+		}
+		if resp.Account.OrganizationId != defaultOrganizationID {
+			t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
+		}
+		if resp.Account.Name != name {
+			t.Fatalf("different name, expected: %v, actual: %v", name, resp.Account.Name)
+		}
+		if resp.Account.FirstName != firstName {
+			t.Fatalf("different first name, expected: %v, actual: %v", firstName, resp.Account.FirstName)
+		}
+		if resp.Account.LastName != lastName {
+			t.Fatalf("different last name, expected: %v, actual: %v", lastName, resp.Account.LastName)
+		}
+		if resp.Account.Language != language {
+			t.Fatalf("different language, expected: %v, actual: %v", language, resp.Account.Language)
+		}
+		if resp.Account.AvatarImageUrl != avatarURL {
+			t.Fatalf("different avatar url, expected: %v, actual: %v", avatarURL, resp.Account.AvatarImageUrl)
+		}
+		if !reflect.DeepEqual(resp.Account.Tags, tags) {
+			t.Fatalf("different tags, expected: %v, actual: %v", tags, resp.Account.Tags)
+		}
+		if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_MEMBER {
+			t.Fatalf("different organization role, expected: %v, actual: %v",
+				accountproto.AccountV2_Role_Organization_MEMBER,
+				resp.Account.OrganizationRole,
+			)
+		}
+		if resp.Account.EnvironmentRoles[0].Role != envRole.Role {
+			t.Fatalf("different organization role, expected: %v, actual: %v",
+				envRole.Role,
+				resp.Account.EnvironmentRoles[0].Role,
+			)
+		}
+		if resp.Account.EnvironmentRoles[0].EnvironmentId != envRole.EnvironmentId {
+			t.Fatalf("different environment id, expected: %s, actual: %s",
+				envRole.EnvironmentId,
+				resp.Account.EnvironmentRoles[0].EnvironmentId,
+			)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
-	}
-	if resp.Account.OrganizationId != defaultOrganizationID {
-		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
-	}
-	if resp.Account.Name != name {
-		t.Fatalf("different name, expected: %v, actual: %v", name, resp.Account.Name)
-	}
-	if resp.Account.FirstName != firstName {
-		t.Fatalf("different first name, expected: %v, actual: %v", firstName, resp.Account.FirstName)
-	}
-	if resp.Account.LastName != lastName {
-		t.Fatalf("different last name, expected: %v, actual: %v", lastName, resp.Account.LastName)
-	}
-	if resp.Account.Language != language {
-		t.Fatalf("different language, expected: %v, actual: %v", language, resp.Account.Language)
-	}
-	if resp.Account.AvatarImageUrl != avatarURL {
-		t.Fatalf("different avatar url, expected: %v, actual: %v", avatarURL, resp.Account.AvatarImageUrl)
-	}
-	if !reflect.DeepEqual(resp.Account.Tags, tags) {
-		t.Fatalf("different tags, expected: %v, actual: %v", tags, resp.Account.Tags)
-	}
-	if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_MEMBER {
-		t.Fatalf("different organization role, expected: %v, actual: %v",
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			resp.Account.OrganizationRole,
-		)
-	}
-	if resp.Account.EnvironmentRoles[0].Role != envRole.Role {
-		t.Fatalf("different organization role, expected: %v, actual: %v",
-			envRole.Role,
-			resp.Account.EnvironmentRoles[0].Role,
-		)
-	}
-	if resp.Account.EnvironmentRoles[0].EnvironmentId != envRole.EnvironmentId {
-		t.Fatalf("different environment id, expected: %s, actual: %s",
-			envRole.EnvironmentId,
-			resp.Account.EnvironmentRoles[0].EnvironmentId,
-		)
-	}
 }
 
 func TestCreateAccountV2Admin(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
-	lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
-	avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
-	envRole := &accountproto.AccountV2_EnvironmentRole{
-		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-		EnvironmentId: "test",
-	}
-	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        firstName,
-			LastName:         lastName,
-			Language:         language,
-			AvatarImageUrl:   avatarURL,
-			Tags:             tags,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
-		},
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+		lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+		avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+		tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
+		envRole := &accountproto.AccountV2_EnvironmentRole{
+			Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			EnvironmentId: "test",
+		}
+		resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        firstName,
+				LastName:         lastName,
+				Language:         language,
+				AvatarImageUrl:   avatarURL,
+				Tags:             tags,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.Account.Email != email {
+			t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
+		}
+		if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
+			t.Fatalf("different organization role, expected: %v, actual: %v",
+				accountproto.AccountV2_Role_Organization_ADMIN,
+				resp.Account.OrganizationRole,
+			)
+		}
+		if len(resp.Account.EnvironmentRoles) != 0 {
+			t.Fatalf("env roles length should be zero, actual: %d", len(resp.Account.EnvironmentRoles))
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
-	}
-	if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
-		t.Fatalf("different organization role, expected: %v, actual: %v",
-			accountproto.AccountV2_Role_Organization_ADMIN,
-			resp.Account.OrganizationRole,
-		)
-	}
-	if len(resp.Account.EnvironmentRoles) != 0 {
-		t.Fatalf("env roles length should be zero, actual: %d", len(resp.Account.EnvironmentRoles))
-	}
 }
 
 func TestListAccounts(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		pageSize := int64(1)
+		resp, err := c.ListAccountsV2(ctx, &accountproto.ListAccountsV2Request{
+			OrganizationId: defaultOrganizationID,
+			PageSize:       pageSize,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		responseSize := int64(len(resp.Accounts))
+		if responseSize != pageSize {
+			t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	pageSize := int64(1)
-	resp, err := c.ListAccountsV2(ctx, &accountproto.ListAccountsV2Request{
-		OrganizationId: defaultOrganizationID,
-		PageSize:       pageSize,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	responseSize := int64(len(resp.Accounts))
-	if responseSize != pageSize {
-		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
-	}
 }
 
 func TestUpdateAccount(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		newName := fmt.Sprintf("name-%v", time.Now().Unix())
+		newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+		newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+		newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+		newTags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
+		_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+				Name: newName,
+			},
+			ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+				FirstName: newFirstName,
+			},
+			ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+				LastName: newLastName,
+			},
+			ChangeAvatarUrlCommand: &accountproto.ChangeAccountV2AvatarImageUrlCommand{
+				AvatarImageUrl: newAvatarURL,
+			},
+			ChangeTagsCommand: &accountproto.ChangeAccountV2TagsCommand{
+				Tags: newTags,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp.Account.Email != email {
+			t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
+		}
+		if getResp.Account.OrganizationId != defaultOrganizationID {
+			t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
+		}
+		if getResp.Account.Name != newName {
+			t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
+		}
+		if getResp.Account.FirstName != newFirstName {
+			t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
+		}
+		if getResp.Account.LastName != newLastName {
+			t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
+		}
+		if getResp.Account.AvatarImageUrl != newAvatarURL {
+			t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
+		}
+		if !reflect.DeepEqual(getResp.Account.Tags, newTags) {
+			t.Fatalf("different tags, expected: %v, actual: %v", newTags, getResp.Account.Tags)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	newName := fmt.Sprintf("name-%v", time.Now().Unix())
-	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
-	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
-	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	newTags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
-	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-			Name: newName,
-		},
-		ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
-			FirstName: newFirstName,
-		},
-		ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
-			LastName: newLastName,
-		},
-		ChangeAvatarUrlCommand: &accountproto.ChangeAccountV2AvatarImageUrlCommand{
-			AvatarImageUrl: newAvatarURL,
-		},
-		ChangeTagsCommand: &accountproto.ChangeAccountV2TagsCommand{
-			Tags: newTags,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
-	}
-	if getResp.Account.OrganizationId != defaultOrganizationID {
-		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
-	}
-	if getResp.Account.Name != newName {
-		t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
-	}
-	if getResp.Account.FirstName != newFirstName {
-		t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
-	}
-	if getResp.Account.LastName != newLastName {
-		t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
-	}
-	if getResp.Account.AvatarImageUrl != newAvatarURL {
-		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
-	}
-	if !reflect.DeepEqual(getResp.Account.Tags, newTags) {
-		t.Fatalf("different tags, expected: %v, actual: %v", newTags, getResp.Account.Tags)
-	}
 }
 
 func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				EnvironmentId: "test",
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId:   defaultOrganizationID,
+			Name:             name,
+			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "test",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	newName := fmt.Sprintf("name-%v", time.Now().Unix())
-	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
-	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
-	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Name:           wrapperspb.String(newName),
-		FirstName:      wrapperspb.String(newFirstName),
-		LastName:       wrapperspb.String(newLastName),
-		AvatarImageUrl: wrapperspb.String(newAvatarURL),
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				EnvironmentId: "test",
-				Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		newName := fmt.Sprintf("name-%v", time.Now().Unix())
+		newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+		newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+		newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+		_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Name:           wrapperspb.String(newName),
+			FirstName:      wrapperspb.String(newFirstName),
+			LastName:       wrapperspb.String(newLastName),
+			AvatarImageUrl: wrapperspb.String(newAvatarURL),
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "test",
+					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
-	}
-	if getResp.Account.OrganizationId != defaultOrganizationID {
-		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
-	}
-	if getResp.Account.Name != newName {
-		t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
-	}
-	if getResp.Account.FirstName != newFirstName {
-		t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
-	}
-	if getResp.Account.LastName != newLastName {
-		t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
-	}
-	if getResp.Account.AvatarImageUrl != newAvatarURL {
-		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp.Account.Email != email {
+			t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
+		}
+		if getResp.Account.OrganizationId != defaultOrganizationID {
+			t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
+		}
+		if getResp.Account.Name != newName {
+			t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
+		}
+		if getResp.Account.FirstName != newFirstName {
+			t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
+		}
+		if getResp.Account.LastName != newLastName {
+			t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
+		}
+		if getResp.Account.AvatarImageUrl != newAvatarURL {
+			t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
+		}
 
-	// disable then enable account
-	_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !getResp1.Account.Disabled {
-		t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
-	}
+		// disable then enable account
+		_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !getResp1.Account.Disabled {
+			t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
+		}
 
-	_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp2.Account.Disabled {
-		t.Fatalf("different enabled, expected: %v, actual: %v", false, getResp2.Account.Disabled)
-	}
+		_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp2.Account.Disabled {
+			t.Fatalf("different enabled, expected: %v, actual: %v", false, getResp2.Account.Disabled)
+		}
 
-	// delete account
-	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DeleteAccountV2Command{},
+		// delete account
+		_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command:        &accountproto.DeleteAccountV2Command{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err == nil {
+			t.Fatal("account is not deleted")
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err == nil {
-		t.Fatal("account is not deleted")
-	}
 }
 
 func TestCreateUpdateAccountTeams(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	// create account
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   defaultOrganizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		Teams:            []string{"team-id-1", "team-id-2"},
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				EnvironmentId: "test",
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		// create account
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId:   defaultOrganizationID,
+			Name:             name,
+			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			Teams:            []string{"team-id-1", "team-id-2"},
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "test",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// update account team
-	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		TeamChanges: []*accountproto.TeamChange{
-			{
-				ChangeType: accountproto.ChangeType_CREATE,
-				Team:       "team-id-3",
+		// update account team
+		_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			TeamChanges: []*accountproto.TeamChange{
+				{
+					ChangeType: accountproto.ChangeType_CREATE,
+					Team:       "team-id-3",
+				},
+				{
+					ChangeType: accountproto.ChangeType_DELETE,
+					Team:       "team-id-2",
+				},
 			},
-			{
-				ChangeType: accountproto.ChangeType_DELETE,
-				Team:       "team-id-2",
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "test",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				},
 			},
-		},
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				EnvironmentId: "test",
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedTeams := []string{"team-id-1", "team-id-3"}
-	if !reflect.DeepEqual(getResp.Account.Teams, expectedTeams) {
-		t.Fatalf("different teams, expected: %v, actual: %v", expectedTeams, getResp.Account.Teams)
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		expectedTeams := []string{"team-id-1", "team-id-3"}
+		if !reflect.DeepEqual(getResp.Account.Teams, expectedTeams) {
+			t.Fatalf("different teams, expected: %v, actual: %v", expectedTeams, getResp.Account.Teams)
+		}
 
-	// delete account
-	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
+		// delete account
+		_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestEnableAndDisableAccount(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DisableAccountV2Command{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !getResp1.Account.Disabled {
-		t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command:        &accountproto.DisableAccountV2Command{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !getResp1.Account.Disabled {
+			t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
+		}
 
-	_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.EnableAccountV2Command{},
+		_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command:        &accountproto.EnableAccountV2Command{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp2.Account.Disabled {
+			t.Fatalf("different enabled, expected: %v, actual: %v", false, getResp2.Account.Disabled)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp2.Account.Disabled {
-		t.Fatalf("different enabled, expected: %v, actual: %v", false, getResp2.Account.Disabled)
-	}
 }
 
 func TestDeleteAccount(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command:        &accountproto.DeleteAccountV2Command{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err == nil {
+			t.Fatal("account is not deleted")
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DeleteAccountV2Command{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err == nil {
-		t.Fatal("account is not deleted")
-	}
 }
 
 func TestCreateSearchFilter(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if baseAccount.Account.SearchFilters != nil {
+			t.Fatal("search filters are not nil")
+		}
 
-	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
-		Query:            "query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             requestSearchFilter.Name,
-			Query:            requestSearchFilter.Query,
-			FilterTargetType: requestSearchFilter.FilterTargetType,
-			EnvironmentId:    requestSearchFilter.EnvironmentId,
-			DefaultFilter:    requestSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+		requestSearchFilter := &accountproto.SearchFilter{
+			Name:             "name",
+			Query:            "query",
+			FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+			DefaultFilter:    false,
+			EnvironmentId:    "environment-id",
+		}
+		_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateSearchFilterCommand{
+				Name:             requestSearchFilter.Name,
+				Query:            requestSearchFilter.Query,
+				FilterTargetType: requestSearchFilter.FilterTargetType,
+				EnvironmentId:    requestSearchFilter.EnvironmentId,
+				DefaultFilter:    requestSearchFilter.DefaultFilter,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
+		account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(account.Account.SearchFilters) != 1 {
+			t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+		}
+		if account.Account.SearchFilters[0].Name != requestSearchFilter.Name {
+			t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, account.Account.SearchFilters[0].Name)
+		}
+		if account.Account.SearchFilters[0].Query != requestSearchFilter.Query {
+			t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, account.Account.SearchFilters[0].Query)
+		}
+		if account.Account.SearchFilters[0].FilterTargetType != requestSearchFilter.FilterTargetType {
+			t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
+		}
+		if account.Account.SearchFilters[0].DefaultFilter != requestSearchFilter.DefaultFilter {
+			t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	if account.Account.SearchFilters[0].Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, account.Account.SearchFilters[0].Name)
-	}
-	if account.Account.SearchFilters[0].Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
-	}
 }
 
 func TestUpdateSearchFilter(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
-	initialSearchFilter := &accountproto.SearchFilter{
-		Name:             "name",
-		Query:            "query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initialSearchFilter.Name,
-			Query:            initialSearchFilter.Query,
-			FilterTargetType: initialSearchFilter.FilterTargetType,
-			EnvironmentId:    initialSearchFilter.EnvironmentId,
-			DefaultFilter:    initialSearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if baseAccount.Account.SearchFilters != nil {
+			t.Fatal("search filters are not nil")
+		}
+		initialSearchFilter := &accountproto.SearchFilter{
+			Name:             "name",
+			Query:            "query",
+			FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+			DefaultFilter:    false,
+			EnvironmentId:    "environment-id",
+		}
+		_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateSearchFilterCommand{
+				Name:             initialSearchFilter.Name,
+				Query:            initialSearchFilter.Query,
+				FilterTargetType: initialSearchFilter.FilterTargetType,
+				EnvironmentId:    initialSearchFilter.EnvironmentId,
+				DefaultFilter:    initialSearchFilter.DefaultFilter,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(account.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	if account.Account.SearchFilters[0].Name != initialSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, account.Account.SearchFilters[0].Name)
-	}
-	if account.Account.SearchFilters[0].Query != initialSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, account.Account.SearchFilters[0].Query)
-	}
-	if account.Account.SearchFilters[0].FilterTargetType != initialSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
-	}
-	if account.Account.SearchFilters[0].DefaultFilter != initialSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
-	}
+		account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(account.Account.SearchFilters) != 1 {
+			t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+		}
+		if account.Account.SearchFilters[0].Name != initialSearchFilter.Name {
+			t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, account.Account.SearchFilters[0].Name)
+		}
+		if account.Account.SearchFilters[0].Query != initialSearchFilter.Query {
+			t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, account.Account.SearchFilters[0].Query)
+		}
+		if account.Account.SearchFilters[0].FilterTargetType != initialSearchFilter.FilterTargetType {
+			t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
+		}
+		if account.Account.SearchFilters[0].DefaultFilter != initialSearchFilter.DefaultFilter {
+			t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
+		}
 
-	requestSearchFilter := &accountproto.SearchFilter{
-		Name:             "new-name",
-		Query:            "new-query",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    true,
-		EnvironmentId:    "environment-id",
-	}
+		requestSearchFilter := &accountproto.SearchFilter{
+			Name:             "new-name",
+			Query:            "new-query",
+			FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+			DefaultFilter:    true,
+			EnvironmentId:    "environment-id",
+		}
 
-	_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		EnvironmentId:  requestSearchFilter.EnvironmentId,
-		ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
-			Id:   account.Account.SearchFilters[0].Id,
-			Name: requestSearchFilter.Name,
-		},
-		ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
-			Id:    account.Account.SearchFilters[0].Id,
-			Query: requestSearchFilter.Query,
-		},
-		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
-			Id:            account.Account.SearchFilters[0].Id,
-			DefaultFilter: requestSearchFilter.DefaultFilter,
-		},
+		_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			EnvironmentId:  requestSearchFilter.EnvironmentId,
+			ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
+				Id:   account.Account.SearchFilters[0].Id,
+				Name: requestSearchFilter.Name,
+			},
+			ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
+				Id:    account.Account.SearchFilters[0].Id,
+				Query: requestSearchFilter.Query,
+			},
+			ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
+				Id:            account.Account.SearchFilters[0].Id,
+				DefaultFilter: requestSearchFilter.DefaultFilter,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(updateAccount.Account.SearchFilters) != 1 {
+			t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+		}
+		updateSearchFilter := updateAccount.Account.SearchFilters[0]
+		if updateSearchFilter.Name != requestSearchFilter.Name {
+			t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, requestSearchFilter.Name)
+		}
+		if updateSearchFilter.Query != requestSearchFilter.Query {
+			t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, requestSearchFilter.Query)
+		}
+		if updateSearchFilter.FilterTargetType != requestSearchFilter.FilterTargetType {
+			t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, requestSearchFilter.FilterTargetType)
+		}
+		if updateSearchFilter.DefaultFilter != requestSearchFilter.DefaultFilter {
+			t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, requestSearchFilter.DefaultFilter)
+		}
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(updateAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
-	}
-	updateSearchFilter := updateAccount.Account.SearchFilters[0]
-	if updateSearchFilter.Name != requestSearchFilter.Name {
-		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, requestSearchFilter.Name)
-	}
-	if updateSearchFilter.Query != requestSearchFilter.Query {
-		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, requestSearchFilter.Query)
-	}
-	if updateSearchFilter.FilterTargetType != requestSearchFilter.FilterTargetType {
-		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, requestSearchFilter.FilterTargetType)
-	}
-	if updateSearchFilter.DefaultFilter != requestSearchFilter.DefaultFilter {
-		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, requestSearchFilter.DefaultFilter)
-	}
 }
 
 func TestDeleteSearchFilter(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newAccountClient(t)
+		defer c.Close()
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateAccountV2Command{
+				Name:             name,
+				Email:            email,
+				FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+				LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+				Language:         language,
+				Tags:             []string{"tag"},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if baseAccount.Account.SearchFilters != nil {
-		t.Fatal("search filters are not nil")
-	}
-
-	initial1SearchFilter := &accountproto.SearchFilter{
-		Name:             "name1",
-		Query:            "query1",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial1SearchFilter.Name,
-			Query:            initial1SearchFilter.Query,
-			FilterTargetType: initial1SearchFilter.FilterTargetType,
-			EnvironmentId:    initial1SearchFilter.EnvironmentId,
-			DefaultFilter:    initial1SearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	initial2SearchFilter := &accountproto.SearchFilter{
-		Name:             "name2",
-		Query:            "query2",
-		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-		DefaultFilter:    false,
-		EnvironmentId:    "environment-id",
-	}
-	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateSearchFilterCommand{
-			Name:             initial2SearchFilter.Name,
-			Query:            initial2SearchFilter.Query,
-			FilterTargetType: initial2SearchFilter.FilterTargetType,
-			EnvironmentId:    initial2SearchFilter.EnvironmentId,
-			DefaultFilter:    initial2SearchFilter.DefaultFilter,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	updatedAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(updatedAccount.Account.SearchFilters) != 2 {
-		t.Fatalf("different count of filters, expected: 2, actual: %v", len(updatedAccount.Account.SearchFilters))
-	}
-
-	deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
-	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.DeleteSearchFilterCommand{
-			Id: deleteFilterID,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	filterRemovalAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(filterRemovalAccount.Account.SearchFilters) != 1 {
-		t.Fatalf("different count of filters, expected: 1, actual: %v", len(filterRemovalAccount.Account.SearchFilters))
-	}
-	for _, f := range filterRemovalAccount.Account.SearchFilters {
-		if f.Id == deleteFilterID {
-			t.Fatalf("search filter is not deleted")
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
+		baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if baseAccount.Account.SearchFilters != nil {
+			t.Fatal("search filters are not nil")
+		}
+
+		initial1SearchFilter := &accountproto.SearchFilter{
+			Name:             "name1",
+			Query:            "query1",
+			FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+			DefaultFilter:    false,
+			EnvironmentId:    "environment-id",
+		}
+		_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateSearchFilterCommand{
+				Name:             initial1SearchFilter.Name,
+				Query:            initial1SearchFilter.Query,
+				FilterTargetType: initial1SearchFilter.FilterTargetType,
+				EnvironmentId:    initial1SearchFilter.EnvironmentId,
+				DefaultFilter:    initial1SearchFilter.DefaultFilter,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		initial2SearchFilter := &accountproto.SearchFilter{
+			Name:             "name2",
+			Query:            "query2",
+			FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+			DefaultFilter:    false,
+			EnvironmentId:    "environment-id",
+		}
+		_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.CreateSearchFilterCommand{
+				Name:             initial2SearchFilter.Name,
+				Query:            initial2SearchFilter.Query,
+				FilterTargetType: initial2SearchFilter.FilterTargetType,
+				EnvironmentId:    initial2SearchFilter.EnvironmentId,
+				DefaultFilter:    initial2SearchFilter.DefaultFilter,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		updatedAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(updatedAccount.Account.SearchFilters) != 2 {
+			t.Fatalf("different count of filters, expected: 2, actual: %v", len(updatedAccount.Account.SearchFilters))
+		}
+
+		deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
+		_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+			Command: &accountproto.DeleteSearchFilterCommand{
+				Id: deleteFilterID,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		filterRemovalAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: defaultOrganizationID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(filterRemovalAccount.Account.SearchFilters) != 1 {
+			t.Fatalf("different count of filters, expected: 1, actual: %v", len(filterRemovalAccount.Account.SearchFilters))
+		}
+		for _, f := range filterRemovalAccount.Account.SearchFilters {
+			if f.Id == deleteFilterID {
+				t.Fatalf("search filter is not deleted")
+			}
+		}
+	})
 }
 
 func newAccountClient(t *testing.T) accountclient.Client {
