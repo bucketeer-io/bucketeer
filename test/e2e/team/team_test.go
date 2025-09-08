@@ -64,131 +64,131 @@ var (
 
 func TestUpsertAndListTeam(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	client := newTeamClient(t)
-	testTeams := []string{
-		newTeamName(t),
-		newTeamName(t),
-		newTeamName(t),
-	}
-	createTeams(t, client, testTeams)
-	actual := listTeams(ctx, t, client)
-	// Check if the created teams are in the response
-	teams := findTeams(actual, testTeams)
-	if len(teams) != len(testTeams) {
-		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(testTeams), len(teams))
-	}
-	// Wait a few seconds before upserting the same team.
-	// Otherwise, the test could fail because it could finish in less than 1 second,
-	// not updating the `updateAt` correctly.
-	time.Sleep(5 * time.Second)
-	synctest.Wait()
-	// Upsert team index 1
-	targetTeam := teams[1]
-	createTeam(t, client, targetTeam.Name)
-	actual = listTeams(ctx, t, client)
-	teamUpsert := findTeams(actual, []string{targetTeam.Name})
-	if teamUpsert == nil {
-		t.Fatalf("Upserted team wasn't found in the response. Expected: %v\n Response: %v",
-			targetTeam, actual)
-	}
-	// Check if the create time is equal
-	if targetTeam.CreatedAt != teamUpsert[0].CreatedAt {
-		t.Fatalf("Different create time. Expected: %v\n, Actual: %v",
-			targetTeam, teamUpsert[0])
-	}
-	// Check if the update time has changed
-	if targetTeam.UpdatedAt == teamUpsert[0].UpdatedAt {
-		t.Fatalf("The team update time didn't change. Expected: %v\n, Actual: %v",
-			targetTeam, teamUpsert[0])
-	}
+		client := newTeamClient(t)
+		testTeams := []string{
+			newTeamName(t),
+			newTeamName(t),
+			newTeamName(t),
+		}
+		createTeams(t, client, testTeams)
+		actual := listTeams(ctx, t, client)
+		// Check if the created teams are in the response
+		teams := findTeams(actual, testTeams)
+		if len(teams) != len(testTeams) {
+			t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(testTeams), len(teams))
+		}
+		// Wait a few seconds before upserting the same team.
+		// Otherwise, the test could fail because it could finish in less than 1 second,
+		// not updating the `updateAt` correctly.
+		time.Sleep(5 * time.Second)
+		synctest.Wait()
+		// Upsert team index 1
+		targetTeam := teams[1]
+		createTeam(t, client, targetTeam.Name)
+		actual = listTeams(ctx, t, client)
+		teamUpsert := findTeams(actual, []string{targetTeam.Name})
+		if teamUpsert == nil {
+			t.Fatalf("Upserted team wasn't found in the response. Expected: %v\n Response: %v",
+				targetTeam, actual)
+		}
+		// Check if the create time is equal
+		if targetTeam.CreatedAt != teamUpsert[0].CreatedAt {
+			t.Fatalf("Different create time. Expected: %v\n, Actual: %v",
+				targetTeam, teamUpsert[0])
+		}
+		// Check if the update time has changed
+		if targetTeam.UpdatedAt == teamUpsert[0].UpdatedAt {
+			t.Fatalf("The team update time didn't change. Expected: %v\n, Actual: %v",
+				targetTeam, teamUpsert[0])
+		}
 	})
 }
 
 func TestDeleteTeam(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newTeamClient(t)
-	// Create team
-	createReq := &teamproto.CreateTeamRequest{
-		Name:           newTeamName(t),
-		OrganizationId: *organizationID,
-	}
-	resp, err := client.CreateTeam(ctx, createReq)
-	if err != nil {
-		t.Fatalf("Failed to create team. Error %v", err)
-	}
-	// Delete team
-	req := &teamproto.DeleteTeamRequest{
-		Id:             resp.Team.Id,
-		OrganizationId: *organizationID,
-	}
-	defer cancel()
-	if _, err := client.DeleteTeam(ctx, req); err != nil {
-		t.Fatalf("Failed to delete team. Error: %v", err)
-	}
-	// List the teams
-	teams := listTeams(ctx, t, client)
-	target := findTeams(teams, []string{resp.Team.Name})
-	// Check if it has been deleted
-	if len(target) != 0 {
-		t.Fatalf("The team hasn't deleted. Team: %v", target)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newTeamClient(t)
+		// Create team
+		createReq := &teamproto.CreateTeamRequest{
+			Name:           newTeamName(t),
+			OrganizationId: *organizationID,
+		}
+		resp, err := client.CreateTeam(ctx, createReq)
+		if err != nil {
+			t.Fatalf("Failed to create team. Error %v", err)
+		}
+		// Delete team
+		req := &teamproto.DeleteTeamRequest{
+			Id:             resp.Team.Id,
+			OrganizationId: *organizationID,
+		}
+		defer cancel()
+		if _, err := client.DeleteTeam(ctx, req); err != nil {
+			t.Fatalf("Failed to delete team. Error: %v", err)
+		}
+		// List the teams
+		teams := listTeams(ctx, t, client)
+		target := findTeams(teams, []string{resp.Team.Name})
+		// Check if it has been deleted
+		if len(target) != 0 {
+			t.Fatalf("The team hasn't deleted. Team: %v", target)
+		}
 	})
 }
 
 func TestFailedDeleteTeam(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	teamClient := newTeamClient(t)
-	defer teamClient.Close()
-	accountClient := newAccountClient(t)
-	defer accountClient.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		teamClient := newTeamClient(t)
+		defer teamClient.Close()
+		accountClient := newAccountClient(t)
+		defer accountClient.Close()
 
-	// create account with team
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := accountClient.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId:   *organizationID,
-		Name:             name,
-		Email:            email,
-		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-		Language:         language,
-		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-			{
-				EnvironmentId: "test",
-				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+		// create account with team
+		email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+		name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+		_, err := accountClient.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+			OrganizationId:   *organizationID,
+			Name:             name,
+			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "test",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				},
 			},
-		},
-		Teams: []string{"team1"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// get team id
-	teams := listTeams(ctx, t, teamClient)
-	var teamID string
-	for _, team := range teams {
-		if team.Name == "team1" {
-			teamID = team.Id
-			break
+			Teams: []string{"team1"},
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
-	req := &teamproto.DeleteTeamRequest{
-		Id:             teamID,
-		OrganizationId: *organizationID,
-	}
-	defer cancel()
-	if _, err := teamClient.DeleteTeam(ctx, req); err == nil {
-		t.Fatal("Expected error when deleting team with existing account, but got nil")
-	}
+
+		// get team id
+		teams := listTeams(ctx, t, teamClient)
+		var teamID string
+		for _, team := range teams {
+			if team.Name == "team1" {
+				teamID = team.Id
+				break
+			}
+		}
+		req := &teamproto.DeleteTeamRequest{
+			Id:             teamID,
+			OrganizationId: *organizationID,
+		}
+		defer cancel()
+		if _, err := teamClient.DeleteTeam(ctx, req); err == nil {
+			t.Fatal("Expected error when deleting team with existing account, but got nil")
+		}
 	})
 }
 

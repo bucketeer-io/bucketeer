@@ -37,139 +37,139 @@ const (
 
 func TestAddSegmentUserCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userID := newUserID(t)
-	testcases := []struct {
-		userID string
-		state  featureproto.SegmentUser_State
-	}{
-		{
-			userID: userID,
-			state:  featureproto.SegmentUser_INCLUDED,
-		},
-	}
-	for _, tc := range testcases {
-		addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		user := getSegmentUser(ctx, t, client, segmentID, tc.userID, tc.state)
-		id := domain.SegmentUserID(segmentID, tc.userID, tc.state)
-		assert.Equal(t, id, user.Id)
-		assert.Equal(t, segmentID, user.SegmentId)
-		assert.Equal(t, tc.userID, user.UserId)
-		assert.Equal(t, tc.state, user.State)
-		assert.Equal(t, false, user.Deleted)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		userID := newUserID(t)
+		testcases := []struct {
+			userID string
+			state  featureproto.SegmentUser_State
+		}{
+			{
+				userID: userID,
+				state:  featureproto.SegmentUser_INCLUDED,
+			},
+		}
+		for _, tc := range testcases {
+			addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
+			user := getSegmentUser(ctx, t, client, segmentID, tc.userID, tc.state)
+			id := domain.SegmentUserID(segmentID, tc.userID, tc.state)
+			assert.Equal(t, id, user.Id)
+			assert.Equal(t, segmentID, user.SegmentId)
+			assert.Equal(t, tc.userID, user.UserId)
+			assert.Equal(t, tc.state, user.State)
+			assert.Equal(t, false, user.Deleted)
+		}
 	})
 }
 
 func TestDeleteSegmentUserCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userID := newUserID(t)
-	testcases := []struct {
-		userID string
-		state  featureproto.SegmentUser_State
-	}{
-		{
-			userID: userID,
-			state:  featureproto.SegmentUser_INCLUDED,
-		},
-	}
-	for _, tc := range testcases {
-		addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		deleteSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		listRes := listSegmentUsers(
-			ctx,
-			t,
-			client,
-			segmentID,
-			&wrappersproto.Int32Value{Value: int32(tc.state)},
-		)
-		assert.Empty(t, len(listRes.Users))
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		userID := newUserID(t)
+		testcases := []struct {
+			userID string
+			state  featureproto.SegmentUser_State
+		}{
+			{
+				userID: userID,
+				state:  featureproto.SegmentUser_INCLUDED,
+			},
+		}
+		for _, tc := range testcases {
+			addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
+			deleteSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
+			listRes := listSegmentUsers(
+				ctx,
+				t,
+				client,
+				segmentID,
+				&wrappersproto.Int32Value{Value: int32(tc.state)},
+			)
+			assert.Empty(t, len(listRes.Users))
+		}
 	})
 }
 
 func TestListSegmentUsersPageSize(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userIDs := []string{newUserID(t), newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
-	pageSize := int64(1)
-	res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
-		PageSize:      pageSize,
-		SegmentId:     segmentID,
-		State:         &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
-		EnvironmentId: *environmentID,
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, pageSize, int64(len(res.Users)))
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		userIDs := []string{newUserID(t), newUserID(t)}
+		addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+		pageSize := int64(1)
+		res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
+			PageSize:      pageSize,
+			SegmentId:     segmentID,
+			State:         &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
+			EnvironmentId: *environmentID,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, pageSize, int64(len(res.Users)))
 	})
 }
 
 func TestListSegmentUsersCursor(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userIDs := []string{newUserID(t), newUserID(t), newUserID(t), newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
-	var lastUsers []*featureproto.SegmentUser
-	pageSize := int64(2)
-	state := &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
-	cursor := ""
-	for i := 0; i < 3; i++ {
-		res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
-			PageSize:      pageSize,
-			Cursor:        cursor,
-			SegmentId:     segmentID,
-			State:         state,
-			EnvironmentId: *environmentID,
-		})
-		assert.NoError(t, err)
-		assert.NotEmpty(t, res.Cursor)
-		cursor = res.Cursor
-		switch i {
-		case 0:
-			assert.Equal(t, int(pageSize), len(res.Users))
-			copySegmentUsers(lastUsers, res.Users)
-			break
-		case 1:
-			assert.Equal(t, int(pageSize), len(res.Users))
-			if containsSegmentUser(lastUsers, res.Users) {
-				t.Fatalf("Segment user from the last response was found in the actual response. Last response: %v, actual response: %v", lastUsers, res.Users)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		userIDs := []string{newUserID(t), newUserID(t), newUserID(t), newUserID(t)}
+		addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+		var lastUsers []*featureproto.SegmentUser
+		pageSize := int64(2)
+		state := &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
+		cursor := ""
+		for i := 0; i < 3; i++ {
+			res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
+				PageSize:      pageSize,
+				Cursor:        cursor,
+				SegmentId:     segmentID,
+				State:         state,
+				EnvironmentId: *environmentID,
+			})
+			assert.NoError(t, err)
+			assert.NotEmpty(t, res.Cursor)
+			cursor = res.Cursor
+			switch i {
+			case 0:
+				assert.Equal(t, int(pageSize), len(res.Users))
+				copySegmentUsers(lastUsers, res.Users)
+				break
+			case 1:
+				assert.Equal(t, int(pageSize), len(res.Users))
+				if containsSegmentUser(lastUsers, res.Users) {
+					t.Fatalf("Segment user from the last response was found in the actual response. Last response: %v, actual response: %v", lastUsers, res.Users)
+				}
+				break
+			case 2:
+				assert.Zero(t, len(res.Users))
+				break
 			}
-			break
-		case 2:
-			assert.Zero(t, len(res.Users))
-			break
 		}
-	}
 	})
 }
 
 func TestListSegmentUsersWithoutState(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userIDs := []string{newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
-	res := listSegmentUsers(ctx, t, client, segmentID, nil)
-	assert.Equal(t, 1, len(res.Users))
-	assert.Equal(t, segmentID, res.Users[0].SegmentId)
-	assert.Equal(t, userIDs[0], res.Users[0].UserId)
-	assert.Equal(t, featureproto.SegmentUser_INCLUDED, res.Users[0].State)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		segmentID := createSegment(ctx, t, client).Id
+		userIDs := []string{newUserID(t)}
+		addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+		res := listSegmentUsers(ctx, t, client, segmentID, nil)
+		assert.Equal(t, 1, len(res.Users))
+		assert.Equal(t, segmentID, res.Users[0].SegmentId)
+		assert.Equal(t, userIDs[0], res.Users[0].UserId)
+		assert.Equal(t, featureproto.SegmentUser_INCLUDED, res.Users[0].State)
 	})
 }
 

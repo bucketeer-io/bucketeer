@@ -55,267 +55,267 @@ var (
 
 func TestCreateCodeReference(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create code reference
-	createReq := newCreateCodeReferenceRequest(t, featureID)
-	resp := createCodeReference(t, client, createReq)
+		// Create code reference
+		createReq := newCreateCodeReferenceRequest(t, featureID)
+		resp := createCodeReference(t, client, createReq)
 
-	assert.Equal(t, createReq.FeatureId, resp.CodeReference.FeatureId)
-	assert.Equal(t, createReq.FilePath, resp.CodeReference.FilePath)
-	assert.Equal(t, createReq.FileExtension, resp.CodeReference.FileExtension)
-	assert.Equal(t, createReq.LineNumber, resp.CodeReference.LineNumber)
-	assert.Equal(t, createReq.CodeSnippet, resp.CodeReference.CodeSnippet)
-	assert.Equal(t, createReq.RepositoryName, resp.CodeReference.RepositoryName)
-	assert.Equal(t, createReq.RepositoryOwner, resp.CodeReference.RepositoryOwner)
-	assert.Equal(t, createReq.RepositoryType, resp.CodeReference.RepositoryType)
-	assert.Equal(t, createReq.RepositoryBranch, resp.CodeReference.RepositoryBranch)
-	assert.Equal(t, createReq.CommitHash, resp.CodeReference.CommitHash)
-	assert.NotEmpty(t, resp.CodeReference.Id)
+		assert.Equal(t, createReq.FeatureId, resp.CodeReference.FeatureId)
+		assert.Equal(t, createReq.FilePath, resp.CodeReference.FilePath)
+		assert.Equal(t, createReq.FileExtension, resp.CodeReference.FileExtension)
+		assert.Equal(t, createReq.LineNumber, resp.CodeReference.LineNumber)
+		assert.Equal(t, createReq.CodeSnippet, resp.CodeReference.CodeSnippet)
+		assert.Equal(t, createReq.RepositoryName, resp.CodeReference.RepositoryName)
+		assert.Equal(t, createReq.RepositoryOwner, resp.CodeReference.RepositoryOwner)
+		assert.Equal(t, createReq.RepositoryType, resp.CodeReference.RepositoryType)
+		assert.Equal(t, createReq.RepositoryBranch, resp.CodeReference.RepositoryBranch)
+		assert.Equal(t, createReq.CommitHash, resp.CodeReference.CommitHash)
+		assert.NotEmpty(t, resp.CodeReference.Id)
 	})
 }
 
 func TestUpdateCodeReference(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create code reference
-	createReq := newCreateCodeReferenceRequest(t, featureID)
-	createResp := createCodeReference(t, client, createReq)
+		// Create code reference
+		createReq := newCreateCodeReferenceRequest(t, featureID)
+		createResp := createCodeReference(t, client, createReq)
 
-	// Update code reference
-	updateReq := &coderefproto.UpdateCodeReferenceRequest{
-		Id:               createResp.CodeReference.Id,
-		EnvironmentId:    *environmentID,
-		FilePath:         "updated/path/to/file.ts",
-		FileExtension:    "ts",
-		LineNumber:       200,
-		CodeSnippet:      "updated code snippet",
-		ContentHash:      "updated-hash-123",
-		RepositoryName:   createResp.CodeReference.RepositoryName,
-		RepositoryOwner:  createResp.CodeReference.RepositoryOwner,
-		RepositoryType:   createResp.CodeReference.RepositoryType,
-		RepositoryBranch: createResp.CodeReference.RepositoryBranch,
-		CommitHash:       createResp.CodeReference.CommitHash,
-	}
-	_, err := client.UpdateCodeReference(context.Background(), updateReq)
-	assert.NoError(t, err)
+		// Update code reference
+		updateReq := &coderefproto.UpdateCodeReferenceRequest{
+			Id:               createResp.CodeReference.Id,
+			EnvironmentId:    *environmentID,
+			FilePath:         "updated/path/to/file.ts",
+			FileExtension:    "ts",
+			LineNumber:       200,
+			CodeSnippet:      "updated code snippet",
+			ContentHash:      "updated-hash-123",
+			RepositoryName:   createResp.CodeReference.RepositoryName,
+			RepositoryOwner:  createResp.CodeReference.RepositoryOwner,
+			RepositoryType:   createResp.CodeReference.RepositoryType,
+			RepositoryBranch: createResp.CodeReference.RepositoryBranch,
+			CommitHash:       createResp.CodeReference.CommitHash,
+		}
+		_, err := client.UpdateCodeReference(context.Background(), updateReq)
+		assert.NoError(t, err)
 
-	// Get and verify update
-	getResp := getCodeReference(t, client, &coderefproto.GetCodeReferenceRequest{
-		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentID,
-	})
-	assert.Equal(t, updateReq.FilePath, getResp.CodeReference.FilePath)
-	assert.Equal(t, updateReq.FileExtension, getResp.CodeReference.FileExtension)
-	assert.Equal(t, updateReq.LineNumber, getResp.CodeReference.LineNumber)
-	assert.Equal(t, updateReq.CodeSnippet, getResp.CodeReference.CodeSnippet)
-	assert.Equal(t, updateReq.ContentHash, getResp.CodeReference.ContentHash)
-	assert.Equal(t, updateReq.RepositoryName, getResp.CodeReference.RepositoryName)
-	assert.Equal(t, updateReq.RepositoryOwner, getResp.CodeReference.RepositoryOwner)
-	assert.Equal(t, updateReq.RepositoryType, getResp.CodeReference.RepositoryType)
-	assert.Equal(t, updateReq.RepositoryBranch, getResp.CodeReference.RepositoryBranch)
-	assert.Equal(t, updateReq.CommitHash, getResp.CodeReference.CommitHash)
+		// Get and verify update
+		getResp := getCodeReference(t, client, &coderefproto.GetCodeReferenceRequest{
+			Id:            createResp.CodeReference.Id,
+			EnvironmentId: *environmentID,
+		})
+		assert.Equal(t, updateReq.FilePath, getResp.CodeReference.FilePath)
+		assert.Equal(t, updateReq.FileExtension, getResp.CodeReference.FileExtension)
+		assert.Equal(t, updateReq.LineNumber, getResp.CodeReference.LineNumber)
+		assert.Equal(t, updateReq.CodeSnippet, getResp.CodeReference.CodeSnippet)
+		assert.Equal(t, updateReq.ContentHash, getResp.CodeReference.ContentHash)
+		assert.Equal(t, updateReq.RepositoryName, getResp.CodeReference.RepositoryName)
+		assert.Equal(t, updateReq.RepositoryOwner, getResp.CodeReference.RepositoryOwner)
+		assert.Equal(t, updateReq.RepositoryType, getResp.CodeReference.RepositoryType)
+		assert.Equal(t, updateReq.RepositoryBranch, getResp.CodeReference.RepositoryBranch)
+		assert.Equal(t, updateReq.CommitHash, getResp.CodeReference.CommitHash)
 	})
 }
 
 func TestListCodeReferences(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create multiple code references
-	createReq1 := newCreateCodeReferenceRequest(t, featureID)
-	resp1 := createCodeReference(t, client, createReq1)
-	time.Sleep(time.Second)
-	synctest.Wait()
-	createReq2 := newCreateCodeReferenceRequest(t, featureID)
-	resp2 := createCodeReference(t, client, createReq2)
+		// Create multiple code references
+		createReq1 := newCreateCodeReferenceRequest(t, featureID)
+		resp1 := createCodeReference(t, client, createReq1)
+		time.Sleep(time.Second)
+		synctest.Wait()
+		createReq2 := newCreateCodeReferenceRequest(t, featureID)
+		resp2 := createCodeReference(t, client, createReq2)
 
-	// List code references
-	listReq := &coderefproto.ListCodeReferencesRequest{
-		FeatureId:      featureID,
-		EnvironmentId:  *environmentID,
-		PageSize:       10,
-		Cursor:         "0",
-		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
-		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
-	}
-	listResp, err := client.ListCodeReferences(context.Background(), listReq)
-	assert.NoError(t, err)
-
-	// Verify the created code references are in the response
-	found1, found2 := false, false
-	for _, ref := range listResp.CodeReferences {
-		if ref.Id == resp1.CodeReference.Id {
-			found1 = true
-			assert.Equal(t, createReq1.FeatureId, ref.FeatureId)
-			assert.Equal(t, createReq1.FilePath, ref.FilePath)
-			assert.Equal(t, createReq1.FileExtension, ref.FileExtension)
-			assert.Equal(t, createReq1.LineNumber, ref.LineNumber)
-			assert.Equal(t, createReq1.CodeSnippet, ref.CodeSnippet)
-			assert.Equal(t, createReq1.RepositoryName, ref.RepositoryName)
-			assert.Equal(t, createReq1.RepositoryOwner, ref.RepositoryOwner)
-			assert.Equal(t, createReq1.RepositoryType, ref.RepositoryType)
-			assert.Equal(t, createReq1.RepositoryBranch, ref.RepositoryBranch)
-			assert.Equal(t, createReq1.CommitHash, ref.CommitHash)
+		// List code references
+		listReq := &coderefproto.ListCodeReferencesRequest{
+			FeatureId:      featureID,
+			EnvironmentId:  *environmentID,
+			PageSize:       10,
+			Cursor:         "0",
+			OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+			OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
 		}
-		if ref.Id == resp2.CodeReference.Id {
-			found2 = true
-			assert.Equal(t, createReq2.FeatureId, ref.FeatureId)
-			assert.Equal(t, createReq2.FilePath, ref.FilePath)
-			assert.Equal(t, createReq2.FileExtension, ref.FileExtension)
-			assert.Equal(t, createReq2.LineNumber, ref.LineNumber)
-			assert.Equal(t, createReq2.CodeSnippet, ref.CodeSnippet)
-			assert.Equal(t, createReq2.RepositoryName, ref.RepositoryName)
-			assert.Equal(t, createReq2.RepositoryOwner, ref.RepositoryOwner)
-			assert.Equal(t, createReq2.RepositoryType, ref.RepositoryType)
-			assert.Equal(t, createReq2.RepositoryBranch, ref.RepositoryBranch)
-			assert.Equal(t, createReq2.CommitHash, ref.CommitHash)
+		listResp, err := client.ListCodeReferences(context.Background(), listReq)
+		assert.NoError(t, err)
+
+		// Verify the created code references are in the response
+		found1, found2 := false, false
+		for _, ref := range listResp.CodeReferences {
+			if ref.Id == resp1.CodeReference.Id {
+				found1 = true
+				assert.Equal(t, createReq1.FeatureId, ref.FeatureId)
+				assert.Equal(t, createReq1.FilePath, ref.FilePath)
+				assert.Equal(t, createReq1.FileExtension, ref.FileExtension)
+				assert.Equal(t, createReq1.LineNumber, ref.LineNumber)
+				assert.Equal(t, createReq1.CodeSnippet, ref.CodeSnippet)
+				assert.Equal(t, createReq1.RepositoryName, ref.RepositoryName)
+				assert.Equal(t, createReq1.RepositoryOwner, ref.RepositoryOwner)
+				assert.Equal(t, createReq1.RepositoryType, ref.RepositoryType)
+				assert.Equal(t, createReq1.RepositoryBranch, ref.RepositoryBranch)
+				assert.Equal(t, createReq1.CommitHash, ref.CommitHash)
+			}
+			if ref.Id == resp2.CodeReference.Id {
+				found2 = true
+				assert.Equal(t, createReq2.FeatureId, ref.FeatureId)
+				assert.Equal(t, createReq2.FilePath, ref.FilePath)
+				assert.Equal(t, createReq2.FileExtension, ref.FileExtension)
+				assert.Equal(t, createReq2.LineNumber, ref.LineNumber)
+				assert.Equal(t, createReq2.CodeSnippet, ref.CodeSnippet)
+				assert.Equal(t, createReq2.RepositoryName, ref.RepositoryName)
+				assert.Equal(t, createReq2.RepositoryOwner, ref.RepositoryOwner)
+				assert.Equal(t, createReq2.RepositoryType, ref.RepositoryType)
+				assert.Equal(t, createReq2.RepositoryBranch, ref.RepositoryBranch)
+				assert.Equal(t, createReq2.CommitHash, ref.CommitHash)
+			}
 		}
-	}
-	assert.True(t, found1, "First created code reference not found in list response")
-	assert.True(t, found2, "Second created code reference not found in list response")
+		assert.True(t, found1, "First created code reference not found in list response")
+		assert.True(t, found2, "Second created code reference not found in list response")
 	})
 }
 
 func TestListCodeReferencesCursor(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create multiple code references
-	for i := 0; i < 2; i++ {
-		createReq := newCreateCodeReferenceRequest(t, featureID)
-		createCodeReference(t, client, createReq)
-		time.Sleep(time.Second) // Ensure different creation times
-		synctest.Wait()
-	}
+		// Create multiple code references
+		for i := 0; i < 2; i++ {
+			createReq := newCreateCodeReferenceRequest(t, featureID)
+			createCodeReference(t, client, createReq)
+			time.Sleep(time.Second) // Ensure different creation times
+			synctest.Wait()
+		}
 
-	expectedSize := 1
-	listReq := &coderefproto.ListCodeReferencesRequest{
-		FeatureId:      featureID,
-		EnvironmentId:  *environmentID,
-		PageSize:       int64(expectedSize),
-		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
-		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
-	}
-	listResp, err := client.ListCodeReferences(context.Background(), listReq)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if listResp.Cursor == "" {
-		t.Fatal("Cursor is empty")
-	}
-	actualSize := len(listResp.CodeReferences)
-	if expectedSize != actualSize {
-		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
-	}
+		expectedSize := 1
+		listReq := &coderefproto.ListCodeReferencesRequest{
+			FeatureId:      featureID,
+			EnvironmentId:  *environmentID,
+			PageSize:       int64(expectedSize),
+			OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+			OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+		}
+		listResp, err := client.ListCodeReferences(context.Background(), listReq)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if listResp.Cursor == "" {
+			t.Fatal("Cursor is empty")
+		}
+		actualSize := len(listResp.CodeReferences)
+		if expectedSize != actualSize {
+			t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+		}
 
-	listResp, err = client.ListCodeReferences(context.Background(), &coderefproto.ListCodeReferencesRequest{
-		FeatureId:      featureID,
-		EnvironmentId:  *environmentID,
-		PageSize:       int64(expectedSize),
-		Cursor:         listResp.Cursor,
-		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
-		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	actualSize = len(listResp.CodeReferences)
-	if expectedSize != actualSize {
-		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
-	}
+		listResp, err = client.ListCodeReferences(context.Background(), &coderefproto.ListCodeReferencesRequest{
+			FeatureId:      featureID,
+			EnvironmentId:  *environmentID,
+			PageSize:       int64(expectedSize),
+			Cursor:         listResp.Cursor,
+			OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+			OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		actualSize = len(listResp.CodeReferences)
+		if expectedSize != actualSize {
+			t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+		}
 	})
 }
 
 func TestListCodeReferencesPageSize(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create multiple code references
-	for i := 0; i < 3; i++ {
-		createReq := newCreateCodeReferenceRequest(t, featureID)
-		createCodeReference(t, client, createReq)
-		time.Sleep(time.Second) // Ensure different creation times
-		synctest.Wait()
-	}
+		// Create multiple code references
+		for i := 0; i < 3; i++ {
+			createReq := newCreateCodeReferenceRequest(t, featureID)
+			createCodeReference(t, client, createReq)
+			time.Sleep(time.Second) // Ensure different creation times
+			synctest.Wait()
+		}
 
-	expectedSize := 3
-	listReq := &coderefproto.ListCodeReferencesRequest{
-		FeatureId:      featureID,
-		EnvironmentId:  *environmentID,
-		PageSize:       int64(expectedSize),
-		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
-		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
-	}
-	listResp, err := client.ListCodeReferences(context.Background(), listReq)
-	if err != nil {
-		t.Fatal(err)
-	}
-	actualSize := len(listResp.CodeReferences)
-	if expectedSize != actualSize {
-		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
-	}
+		expectedSize := 3
+		listReq := &coderefproto.ListCodeReferencesRequest{
+			FeatureId:      featureID,
+			EnvironmentId:  *environmentID,
+			PageSize:       int64(expectedSize),
+			OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+			OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+		}
+		listResp, err := client.ListCodeReferences(context.Background(), listReq)
+		if err != nil {
+			t.Fatal(err)
+		}
+		actualSize := len(listResp.CodeReferences)
+		if expectedSize != actualSize {
+			t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+		}
 	})
 }
 
 func TestDeleteCodeReference(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newCodeRefClient(t)
-	featureClient := newFeatureClient(t)
+		client := newCodeRefClient(t)
+		featureClient := newFeatureClient(t)
 
-	// First create a feature
-	featureID := createFeatureID(t)
-	createFeature(t, featureClient, featureID)
+		// First create a feature
+		featureID := createFeatureID(t)
+		createFeature(t, featureClient, featureID)
 
-	// Create code reference
-	createReq := newCreateCodeReferenceRequest(t, featureID)
-	createResp := createCodeReference(t, client, createReq)
+		// Create code reference
+		createReq := newCreateCodeReferenceRequest(t, featureID)
+		createResp := createCodeReference(t, client, createReq)
 
-	// Delete code reference
-	deleteReq := &coderefproto.DeleteCodeReferenceRequest{
-		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentID,
-	}
-	_, err := client.DeleteCodeReference(context.Background(), deleteReq)
-	assert.NoError(t, err)
+		// Delete code reference
+		deleteReq := &coderefproto.DeleteCodeReferenceRequest{
+			Id:            createResp.CodeReference.Id,
+			EnvironmentId: *environmentID,
+		}
+		_, err := client.DeleteCodeReference(context.Background(), deleteReq)
+		assert.NoError(t, err)
 
-	// Verify deletion
-	getReq := &coderefproto.GetCodeReferenceRequest{
-		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentID,
-	}
-	_, err = client.GetCodeReference(context.Background(), getReq)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "not found") // Verify it's specifically a not found error
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.NotFound, st.Code())
+		// Verify deletion
+		getReq := &coderefproto.GetCodeReferenceRequest{
+			Id:            createResp.CodeReference.Id,
+			EnvironmentId: *environmentID,
+		}
+		_, err = client.GetCodeReference(context.Background(), getReq)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not found") // Verify it's specifically a not found error
+		st, ok := status.FromError(err)
+		assert.True(t, ok)
+		assert.Equal(t, codes.NotFound, st.Code())
 	})
 }
 

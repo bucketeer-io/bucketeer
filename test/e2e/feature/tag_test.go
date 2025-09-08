@@ -26,43 +26,43 @@ import (
 
 func TestCreateAndListTag(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	actual := listTags(ctx, t, client)
-	tags := findTags(actual, cmd.Tags)
-	if len(tags) != len(cmd.Tags) {
-		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(cmd.Tags), len(tags))
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		cmd := newCreateFeatureCommand(newFeatureID(t))
+		createFeature(t, client, cmd)
+		actual := listTags(ctx, t, client)
+		tags := findTags(actual, cmd.Tags)
+		if len(tags) != len(cmd.Tags) {
+			t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(cmd.Tags), len(tags))
+		}
 	})
 }
 
 func TestUpdateTag(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	actual := listTags(ctx, t, client)
-	tags := findTags(actual, cmd.Tags)
-	if len(tags) != len(cmd.Tags) {
-		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(cmd.Tags), len(tags))
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		client := newFeatureClient(t)
+		featureID := newFeatureID(t)
+		cmd := newCreateFeatureCommand(featureID)
+		createFeature(t, client, cmd)
+		actual := listTags(ctx, t, client)
+		tags := findTags(actual, cmd.Tags)
+		if len(tags) != len(cmd.Tags) {
+			t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(cmd.Tags), len(tags))
+		}
 
-	newTag := "tag-1"
-	addTag(t, newTag, featureID, client)
-	expected := append(cmd.Tags, newTag)
-	time.Sleep(time.Second * 3)
-	synctest.Wait()
-	actual = listTags(ctx, t, client)
-	tags = findTags(actual, expected)
-	if len(tags) != len(expected) {
-		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(expected), len(tags))
-	}
+		newTag := "tag-1"
+		addTag(t, newTag, featureID, client)
+		expected := append(cmd.Tags, newTag)
+		time.Sleep(time.Second * 3)
+		synctest.Wait()
+		actual = listTags(ctx, t, client)
+		tags = findTags(actual, expected)
+		if len(tags) != len(expected) {
+			t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(expected), len(tags))
+		}
 	})
 }
 

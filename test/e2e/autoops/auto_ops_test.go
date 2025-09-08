@@ -103,518 +103,518 @@ type registerEventsResponse struct {
 func TestCreateAndListAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := autoOpsRules[0]
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
-	}
-	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
-	}
-	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
-	if oerc.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
-	}
-	if oerc.GoalId != goalID {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.MinCount != int64(5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ThreadsholdRate != float64(0.5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
-		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		actual := autoOpsRules[0]
+		if actual.Id == "" {
+			t.Fatal("id is empty")
+		}
+		if actual.FeatureId != featureID {
+			t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+		}
+		if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
+			t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
+		}
+		if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+			t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
+		}
+		oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
+		if oerc.VariationId != feature.Variations[0].Id {
+			t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
+		}
+		if oerc.GoalId != goalID {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.MinCount != int64(5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ThreadsholdRate != float64(0.5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ActionType != autoopsproto.ActionType_DISABLE {
+			t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
+		}
 	})
 }
 
 func TestCreateAndListAutoOpsRuleNoCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRuleNoCommand(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := autoOpsRules[0]
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
-	}
-	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
-	}
-	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
-	if oerc.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
-	}
-	if oerc.GoalId != goalID {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.MinCount != int64(5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ThreadsholdRate != float64(0.5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
-		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRuleNoCommand(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		actual := autoOpsRules[0]
+		if actual.Id == "" {
+			t.Fatal("id is empty")
+		}
+		if actual.FeatureId != featureID {
+			t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+		}
+		if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
+			t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
+		}
+		if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+			t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
+		}
+		oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
+		if oerc.VariationId != feature.Variations[0].Id {
+			t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
+		}
+		if oerc.GoalId != goalID {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.MinCount != int64(5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ThreadsholdRate != float64(0.5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ActionType != autoopsproto.ActionType_DISABLE {
+			t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
+		}
 	})
 }
 
 func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 2)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := autoOpsRules[0]
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.OpsType != autoopsproto.OpsType_SCHEDULE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_SCHEDULE, actual.OpsType)
-	}
-	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
-	}
-	if len(actual.Clauses) != 2 {
-		t.Fatalf("different clauses length, expected: %v, actual: %v", 2, len(actual.Clauses))
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		clauses := createDatetimeClausesWithActionType(t, 2)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		actual := autoOpsRules[0]
+		if actual.Id == "" {
+			t.Fatal("id is empty")
+		}
+		if actual.FeatureId != featureID {
+			t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+		}
+		if actual.OpsType != autoopsproto.OpsType_SCHEDULE {
+			t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_SCHEDULE, actual.OpsType)
+		}
+		if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+			t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
+		}
+		if len(actual.Clauses) != 2 {
+			t.Fatalf("different clauses length, expected: %v, actual: %v", 2, len(actual.Clauses))
+		}
 
-	actualClause1 := actual.Clauses[0]
-	oerc1 := unmarshalDatetimeClause(t, actualClause1)
-	if oerc1.ActionType != autoopsproto.ActionType_DISABLE {
-		t.Fatalf("different dateClause1 action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, actualClause1.ActionType)
-	}
+		actualClause1 := actual.Clauses[0]
+		oerc1 := unmarshalDatetimeClause(t, actualClause1)
+		if oerc1.ActionType != autoopsproto.ActionType_DISABLE {
+			t.Fatalf("different dateClause1 action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, actualClause1.ActionType)
+		}
 
-	actualClause2 := actual.Clauses[1]
-	oerc2 := unmarshalDatetimeClause(t, actualClause2)
-	if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
-		t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
-	}
+		actualClause2 := actual.Clauses[1]
+		oerc2 := unmarshalDatetimeClause(t, actualClause2)
+		if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
+			t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
+		}
 	})
 }
 
 func TestGetAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	actual := getAutoOpsRules(t, autoOpsRules[0].Id)
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.FeatureId != featureID {
-		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
-	}
-	if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
-	}
-	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
-	if oerc.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
-	}
-	if oerc.GoalId != goalID {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.MinCount != int64(5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ThreadsholdRate != float64(0.5) {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
-		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
-	}
-	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
-		t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		actual := getAutoOpsRules(t, autoOpsRules[0].Id)
+		if actual.Id == "" {
+			t.Fatal("id is empty")
+		}
+		if actual.FeatureId != featureID {
+			t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+		}
+		if actual.OpsType != autoopsproto.OpsType_EVENT_RATE {
+			t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_EVENT_RATE, actual.OpsType)
+		}
+		oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
+		if oerc.VariationId != feature.Variations[0].Id {
+			t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
+		}
+		if oerc.GoalId != goalID {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.MinCount != int64(5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ThreadsholdRate != float64(0.5) {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
+			t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+		}
+		if oerc.ActionType != autoopsproto.ActionType_DISABLE {
+			t.Fatalf("different action type, expected: %v, actual: %v", "gid", oerc.ActionType)
+		}
 	})
 }
 
 func TestDeleteAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	deleteAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp != nil {
-		t.Fatal("autoOpsRules is not deleted")
-	}
-	if err == nil {
-		t.Fatal("err is empty")
-	}
-	if status.Code(err) != codes.NotFound {
-		t.Fatalf("different error code, expected: %s, actual: %s", codes.NotFound, status.Code(err))
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		deleteAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id)
+		resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+		})
+		if resp != nil {
+			t.Fatal("autoOpsRules is not deleted")
+		}
+		if err == nil {
+			t.Fatal("err is empty")
+		}
+		if status.Code(err) != codes.NotFound {
+			t.Fatalf("different error code, expected: %s, actual: %s", codes.NotFound, status.Code(err))
+		}
 	})
 }
 
 func TestUpdateAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 1)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	addClause := autoopsproto.DatetimeClause{
-		Time:       time.Now().Unix() + 1000,
-		ActionType: autoopsproto.ActionType_DISABLE,
-	}
-	updateAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id, &addClause)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		clauses := createDatetimeClausesWithActionType(t, 1)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		addClause := autoopsproto.DatetimeClause{
+			Time:       time.Now().Unix() + 1000,
+			ActionType: autoopsproto.ActionType_DISABLE,
+		}
+		updateAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id, &addClause)
+		resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+		})
+		if resp == nil {
+			t.Fatalf("failed to get AutoOpsRule, err %d", err)
+		}
 
-	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[1])
-	if odc.Time != addClause.Time {
-		t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
-	}
-	if odc.ActionType != addClause.ActionType {
-		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
-	}
+		odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[1])
+		if odc.Time != addClause.Time {
+			t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
+		}
+		if odc.ActionType != addClause.ActionType {
+			t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
+		}
 	})
 }
 
 func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 1)
-	createAutoOpsRuleNoCommand(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	addClause := autoopsproto.DatetimeClause{
-		Time:       time.Now().Unix() + 1000,
-		ActionType: autoopsproto.ActionType_DISABLE,
-	}
-	_, err := autoOpsClient.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-		DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
-			{
-				Clause:     &addClause,
-				ChangeType: autoopsproto.ChangeType_CREATE,
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		clauses := createDatetimeClausesWithActionType(t, 1)
+		createAutoOpsRuleNoCommand(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		addClause := autoopsproto.DatetimeClause{
+			Time:       time.Now().Unix() + 1000,
+			ActionType: autoopsproto.ActionType_DISABLE,
+		}
+		_, err := autoOpsClient.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+			DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
+				{
+					Clause:     &addClause,
+					ChangeType: autoopsproto.ChangeType_CREATE,
+				},
+				{
+					Id:         autoOpsRules[0].Clauses[0].Id,
+					ChangeType: autoopsproto.ChangeType_DELETE,
+				},
 			},
-			{
-				Id:         autoOpsRules[0].Clauses[0].Id,
-				ChangeType: autoopsproto.ChangeType_DELETE,
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal("failed to update auto ops rules", err)
-	}
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
+		})
+		if err != nil {
+			t.Fatal("failed to update auto ops rules", err)
+		}
+		resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+		})
+		if resp == nil {
+			t.Fatalf("failed to get AutoOpsRule, err %d", err)
+		}
 
-	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[0])
-	if odc.Time != addClause.Time {
-		t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
-	}
-	if odc.ActionType != addClause.ActionType {
-		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
-	}
+		odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[0])
+		if odc.Time != addClause.Time {
+			t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
+		}
+		if odc.ActionType != addClause.ActionType {
+			t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
+		}
 	})
 }
 
 func TestExecuteAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-			ClauseId: autoOpsRules[0].Clauses[0].Id,
-		},
-	})
-	if err != nil {
-		t.Fatalf("failed to execute auto ops: %s", err.Error())
-	}
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled == true {
-		t.Fatalf("feature is enabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	aor := autoOpsRules[0]
-	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
-		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+			ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+				ClauseId: autoOpsRules[0].Clauses[0].Id,
+			},
+		})
+		if err != nil {
+			t.Fatalf("failed to execute auto ops: %s", err.Error())
+		}
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled == true {
+			t.Fatalf("feature is enabled")
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		aor := autoOpsRules[0]
+		if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+			t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
+		}
 	})
 }
 
 func TestExecuteAutoOpsRuleNoCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-		ClauseId:      autoOpsRules[0].Clauses[0].Id,
-	})
-	if err != nil {
-		t.Fatalf("failed to execute auto ops: %s", err.Error())
-	}
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled == true {
-		t.Fatalf("feature is enabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	aor := autoOpsRules[0]
-	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
-		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+			ClauseId:      autoOpsRules[0].Clauses[0].Id,
+		})
+		if err != nil {
+			t.Fatalf("failed to execute auto ops: %s", err.Error())
+		}
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled == true {
+			t.Fatalf("feature is enabled")
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		aor := autoOpsRules[0]
+		if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+			t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
+		}
 	})
 }
 
 func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 2)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-			ClauseId: autoOpsRules[0].Clauses[0].Id,
-		},
-	})
-	if err != nil {
-		t.Fatalf("failed to execute auto ops: %s", err.Error())
-	}
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled == true {
-		t.Fatalf("feature is enabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
-		t.Fatalf("status is not running")
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		clauses := createDatetimeClausesWithActionType(t, 2)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+			ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+				ClauseId: autoOpsRules[0].Clauses[0].Id,
+			},
+		})
+		if err != nil {
+			t.Fatalf("failed to execute auto ops: %s", err.Error())
+		}
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled == true {
+			t.Fatalf("feature is enabled")
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
+			t.Fatalf("status is not running")
+		}
 	})
 }
 
@@ -623,322 +623,322 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
+		// Wait for the event-persister-ops subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
 
-	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs[:6] {
-		registerGoalEventWithEvaluations(t, featureID, feature.Version, goalID, uid, feature.Variations[0].Id)
-	}
-	for _, uid := range userIDs {
-		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
-	}
+		userIDs := createUserIDs(t, 10)
+		for _, uid := range userIDs[:6] {
+			registerGoalEventWithEvaluations(t, featureID, feature.Version, goalID, uid, feature.Variations[0].Id)
+		}
+		for _, uid := range userIDs {
+			grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
+		}
 
-	checkIfAutoOpsRulesAreTriggered(t, featureID)
+		checkIfAutoOpsRulesAreTriggered(t, featureID)
 	})
 }
 
 func TestGrpcOpsEventRateBatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
 
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
+		// Wait for the event-persister-ops subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
 
-	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs[:6] {
-		grpcRegisterGoalEvent(t, goalID, uid, feature.Tags[0])
-	}
-	for _, uid := range userIDs {
-		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
-	}
+		userIDs := createUserIDs(t, 10)
+		for _, uid := range userIDs[:6] {
+			grpcRegisterGoalEvent(t, goalID, uid, feature.Tags[0])
+		}
+		for _, uid := range userIDs {
+			grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
+		}
 
-	checkIfAutoOpsRulesAreTriggered(t, featureID)
+		checkIfAutoOpsRulesAreTriggered(t, featureID)
 	})
 }
 
 func TestOpsEventRateBatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	now := time.Now()
-	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: now.Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		now := time.Now()
+		schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+			{
+				Weight:    20000,
+				ExecuteAt: now.Add(10 * time.Minute).Unix(),
+			},
+		}
+		createProgressiveRollout(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			&autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   schedules,
+				VariationId: feature.Variations[0].Id,
+			},
+			nil,
+		)
+		progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+		if len(progressiveRollouts) != 1 {
+			t.Fatal("Progressive rollout list shouldn't be empty")
+		}
 
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		autoopsproto.OpsType_EVENT_RATE,
-		[]*autoopsproto.OpsEventRateClause{clause},
-		nil,
-	)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
+		goalID := createGoal(ctx, t, experimentClient)
+		clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+		createAutoOpsRule(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			autoopsproto.OpsType_EVENT_RATE,
+			[]*autoopsproto.OpsEventRateClause{clause},
+			nil,
+		)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
+		// Wait for the event-persister-ops subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
 
-	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs[:6] {
-		registerGoalEvent(t, goalID, uid, feature.Tags[0])
-	}
-	for _, uid := range userIDs {
-		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
-	}
+		userIDs := createUserIDs(t, 10)
+		for _, uid := range userIDs[:6] {
+			registerGoalEvent(t, goalID, uid, feature.Tags[0])
+		}
+		for _, uid := range userIDs {
+			registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
+		}
 
-	checkIfAutoOpsRulesAreTriggered(t, featureID)
+		checkIfAutoOpsRulesAreTriggered(t, featureID)
 
-	// As a requirement, when disabling a flag using an auto operation,
-	// It must stop the progressive rollout if it is running
-	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
-	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
-		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
-	}
+		// As a requirement, when disabling a flag using an auto operation,
+		// It must stop the progressive rollout if it is running
+		pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+		if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+			t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+		}
 	})
 }
 
 func TestDatetimeBatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	now := time.Now()
-	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: now.Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		now := time.Now()
+		schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+			{
+				Weight:    20000,
+				ExecuteAt: now.Add(10 * time.Minute).Unix(),
+			},
+		}
+		createProgressiveRollout(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			&autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   schedules,
+				VariationId: feature.Variations[0].Id,
+			},
+			nil,
+		)
+		progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+		if len(progressiveRollouts) != 1 {
+			t.Fatal("Progressive rollout list shouldn't be empty")
+		}
 
-	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, []*autoopsproto.DatetimeClause{clause})
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
+		clause := createDatetimeClause(t)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, []*autoopsproto.DatetimeClause{clause})
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
 
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
+		// Wait for the event-persister-ops subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
 
-	checkIfAutoOpsRulesAreTriggered(t, featureID)
+		checkIfAutoOpsRulesAreTriggered(t, featureID)
 
-	// As a requirement, when disabling a flag using an auto operation,
-	// It must stop the progressive rollout if it is running
-	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
-	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
-		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
-	}
+		// As a requirement, when disabling a flag using an auto operation,
+		// It must stop the progressive rollout if it is running
+		pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+		if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+			t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+		}
 	})
 }
 
 func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	feature := getFeature(t, featureClient, featureID)
-	now := time.Now()
-	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: now.Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		autoOpsClient,
-		featureID,
-		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		feature := getFeature(t, featureClient, featureID)
+		now := time.Now()
+		schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+			{
+				Weight:    20000,
+				ExecuteAt: now.Add(10 * time.Minute).Unix(),
+			},
+		}
+		createProgressiveRollout(
+			ctx,
+			t,
+			autoOpsClient,
+			featureID,
+			&autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   schedules,
+				VariationId: feature.Variations[0].Id,
+			},
+			nil,
+		)
+		progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+		if len(progressiveRollouts) != 1 {
+			t.Fatal("Progressive rollout list shouldn't be empty")
+		}
 
-	clauses := createDatetimeClausesWithActionType(t, 2)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	// Wait for the event-persister-ops subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-	checkIfAutoOpsRulesAreTriggered(t, featureID)
-	// As a requirement, when disabling a flag using an auto operation,
-	// It must stop the progressive rollout if it is running
-	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
-	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
-		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
-	}
+		clauses := createDatetimeClausesWithActionType(t, 2)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		// Wait for the event-persister-ops subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+		checkIfAutoOpsRulesAreTriggered(t, featureID)
+		// As a requirement, when disabling a flag using an auto operation,
+		// It must stop the progressive rollout if it is running
+		pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+		if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+			t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+		}
 	})
 }
 
 func TestStopAutoOpsRule(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
+		defer cancel()
+		autoOpsClient := newAutoOpsClient(t)
+		defer autoOpsClient.Close()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
 
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 4)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
+		featureID := createFeatureID(t)
+		createFeature(ctx, t, featureClient, featureID)
+		clauses := createDatetimeClausesWithActionType(t, 4)
+		createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if len(autoOpsRules) != 1 {
+			t.Fatal("not enough rules")
+		}
+		stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
+		resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+			EnvironmentId: *environmentID,
+			Id:            autoOpsRules[0].Id,
+		})
+		if resp == nil {
+			t.Fatalf("failed to get AutoOpsRule, err %d", err)
+		}
 
-	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
-	}
+		if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
+			t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
+		}
 	})
 }
 

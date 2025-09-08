@@ -80,1595 +80,1595 @@ var (
 
 func TestGrpcExperimentGoalCount(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
-	featureID := createFeatureID(t, uuid)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := createUserID(t, uuid)
+		featureID := createFeatureID(t, uuid)
 
-	variationVarA := "a"
-	variationVarB := "b"
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-	// Because we set the user to the individual targeting when creating the flag,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range experiment.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		variationVarA := "a"
+		variationVarB := "b"
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 		}
+		// Because we set the user to the individual targeting when creating the flag,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range experiment.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// Evaluation events must always be sent before goal events
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+		grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[0] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
 				continue
 			}
+			if vcA.EventCount != 2 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if vcB.ValueSum != float64(0) {
+				continue
+			}
+			if vcB.ValueSumPerUserMean != float64(0.0) {
+				continue
+			}
+			if vcB.ValueSumPerUserVariance != float64(0.0) {
+				continue
+			}
+			break
 		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if vcB.ValueSum != float64(0) {
-			continue
-		}
-		if vcB.ValueSumPerUserMean != float64(0.0) {
-			continue
-		}
-		if vcB.ValueSumPerUserVariance != float64(0.0) {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestExperimentGoalCount(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
-	featureID := createFeatureID(t, uuid)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := createUserID(t, uuid)
+		featureID := createFeatureID(t, uuid)
 
-	variationVarA := "a"
-	variationVarB := "b"
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting when creating the flag,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range experiment.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		variationVarA := "a"
+		variationVarB := "b"
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 		}
+
+		// Because we set the user to the individual targeting when creating the flag,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range experiment.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// Evaluation events must always be sent before goal events
+		registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+		registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[0] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
 				continue
 			}
-		}
+			if vcA.EventCount != 2 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
 
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
+			vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSumPerUserMean, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			break
 		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSumPerUserMean, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestGrpcExperimentResult(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	featureID := createFeatureID(t, uuid)
-
-	createFeature(t, featureClient, featureID, tag, "a", "b")
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting when creating the flag,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// CVRs is 3/4
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for the user index 1, 2 and 3
-	// Register variation a
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag, reason)
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-
-	// CVRs is 2/3
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for the user index 4 and 5
-	// Register variation
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userIDs := []string{}
+		for i := 0; i < 5; i++ {
+			userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 		}
+		featureID := createFeatureID(t, uuid)
+
+		createFeature(t, featureClient, featureID, tag, "a", "b")
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting when creating the flag,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// CVRs is 3/4
+		// Evaluation events must always be sent before goal events
+		// Register 3 events and 2 user counts for the user index 1, 2 and 3
+		// Register variation a
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag, reason)
+		// Increment evaluation event count
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		resp, err := getExperimentResult(t, ecClient, experiment.Id)
+		// Register goal variation
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
+		// Increment experiment event count
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+
+		// CVRs is 2/3
+		// Evaluation events must always be sent before goal events
+		// Register 3 events and 2 user counts for the user index 4 and 5
+		// Register variation
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
+		// Increment evaluation event count
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+
+		// Register goal
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
+		// Increment experiment event count
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentResult(t, ecClient, experiment.Id)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if resp != nil {
+				er := resp.ExperimentResult
+				if er.Id != experiment.Id {
+					t.Fatalf("experiment ID is not correct: %s", er.Id)
+				}
+				if len(er.GoalResults) == 0 {
+					continue
+				}
+				if len(er.GoalResults) != 1 {
+					t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
+				}
+				gr := er.GoalResults[0]
+				if gr.GoalId != goalIDs[0] {
+					t.Fatalf("goal ID is not correct: %s", gr.GoalId)
+				}
+				if len(gr.VariationResults) != 2 {
+					t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+				}
+				vsA := gr.VariationResults[0]
+				vsB := gr.VariationResults[1]
+				// These counts are based on the number of events sent earlier
+				if vsA.EvaluationCount.EventCount != 4 || // variation A
+					vsA.EvaluationCount.UserCount != 3 ||
+					vsB.EvaluationCount.EventCount != 3 || // variation B
+					vsB.EvaluationCount.UserCount != 2 {
+					continue
+				}
+				// These counts are based on the number of events sent earlier
+				if vsA.ExperimentCount.EventCount != 5 || // variation A
+					vsA.ExperimentCount.UserCount != 3 ||
+					vsB.ExperimentCount.EventCount != 4 || // variation B
+					vsB.ExperimentCount.UserCount != 2 {
+					continue
+				}
+				checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
+				checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
+				break
+			}
+		}
+		res, err := getExperiment(t, experimentClient, experiment.Id)
 		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				continue
-			}
+			t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
 		}
-
-		if resp != nil {
-			er := resp.ExperimentResult
-			if er.Id != experiment.Id {
-				t.Fatalf("experiment ID is not correct: %s", er.Id)
-			}
-			if len(er.GoalResults) == 0 {
-				continue
-			}
-			if len(er.GoalResults) != 1 {
-				t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
-			}
-			gr := er.GoalResults[0]
-			if gr.GoalId != goalIDs[0] {
-				t.Fatalf("goal ID is not correct: %s", gr.GoalId)
-			}
-			if len(gr.VariationResults) != 2 {
-				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
-			}
-			vsA := gr.VariationResults[0]
-			vsB := gr.VariationResults[1]
-			// These counts are based on the number of events sent earlier
-			if vsA.EvaluationCount.EventCount != 4 || // variation A
-				vsA.EvaluationCount.UserCount != 3 ||
-				vsB.EvaluationCount.EventCount != 3 || // variation B
-				vsB.EvaluationCount.UserCount != 2 {
-				continue
-			}
-			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 5 || // variation A
-				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 4 || // variation B
-				vsB.ExperimentCount.UserCount != 2 {
-				continue
-			}
-			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
-			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
-			break
+		if res.Experiment.Status != experimentproto.Experiment_RUNNING {
+			expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
+			actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
+			t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 		}
-	}
-	res, err := getExperiment(t, experimentClient, experiment.Id)
-	if err != nil {
-		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
-	}
-	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
-		expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
-		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
-		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestExperimentResult(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	featureID := createFeatureID(t, uuid)
-
-	createFeature(t, featureClient, featureID, tag, "a", "b")
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// CVRs is 3/4
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for user 1, 2 and 3
-	// Register variation a
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, reason)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-
-	// CVRs is 2/3
-	// Evaluation events must always be sent before goal events
-	// Register 3 events and 2 user counts for user 4 and 5
-	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userIDs := []string{}
+		for i := 0; i < 5; i++ {
+			userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 		}
+		featureID := createFeatureID(t, uuid)
+
+		createFeature(t, featureClient, featureID, tag, "a", "b")
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// CVRs is 3/4
+		// Evaluation events must always be sent before goal events
+		// Register 3 events and 2 user counts for user 1, 2 and 3
+		// Register variation a
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, reason)
+		// Increment evaluation event count
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		resp, err := getExperimentResult(t, ecClient, experiment.Id)
+		// Register goal variation
+		registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
+		// Increment experiment event count
+		registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+
+		// CVRs is 2/3
+		// Evaluation events must always be sent before goal events
+		// Register 3 events and 2 user counts for user 4 and 5
+		// Register variation
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
+		// Increment evaluation event count
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+
+		// Register goal
+		registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
+		// Increment experiment event count
+		registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentResult(t, ecClient, experiment.Id)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if resp != nil {
+				er := resp.ExperimentResult
+				if er.Id != experiment.Id {
+					t.Fatalf("experiment ID is not correct: %s", er.Id)
+				}
+				if len(er.GoalResults) == 0 {
+					continue
+				}
+				if len(er.GoalResults) != 1 {
+					t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
+				}
+				gr := er.GoalResults[0]
+				if gr.GoalId != goalIDs[0] {
+					t.Fatalf("goal ID is not correct: %s", gr.GoalId)
+				}
+				if len(gr.VariationResults) != 2 {
+					t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+				}
+				vsA := gr.VariationResults[0]
+				vsB := gr.VariationResults[1]
+				// These counts are based on the number of events sent earlier
+				if vsA.EvaluationCount.EventCount != 4 || // variation A
+					vsA.EvaluationCount.UserCount != 3 ||
+					vsB.EvaluationCount.EventCount != 3 || // variation B
+					vsB.EvaluationCount.UserCount != 2 {
+					continue
+				}
+				// These counts are based on the number of events sent earlier
+				if vsA.ExperimentCount.EventCount != 5 || // variation A
+					vsA.ExperimentCount.UserCount != 3 ||
+					vsB.ExperimentCount.EventCount != 4 || // variation B
+					vsB.ExperimentCount.UserCount != 2 {
+					continue
+				}
+				checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
+				checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
+				break
+			}
+		}
+		res, err := getExperiment(t, experimentClient, experiment.Id)
 		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				continue
-			}
+			t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
 		}
-
-		if resp != nil {
-			er := resp.ExperimentResult
-			if er.Id != experiment.Id {
-				t.Fatalf("experiment ID is not correct: %s", er.Id)
-			}
-			if len(er.GoalResults) == 0 {
-				continue
-			}
-			if len(er.GoalResults) != 1 {
-				t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
-			}
-			gr := er.GoalResults[0]
-			if gr.GoalId != goalIDs[0] {
-				t.Fatalf("goal ID is not correct: %s", gr.GoalId)
-			}
-			if len(gr.VariationResults) != 2 {
-				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
-			}
-			vsA := gr.VariationResults[0]
-			vsB := gr.VariationResults[1]
-			// These counts are based on the number of events sent earlier
-			if vsA.EvaluationCount.EventCount != 4 || // variation A
-				vsA.EvaluationCount.UserCount != 3 ||
-				vsB.EvaluationCount.EventCount != 3 || // variation B
-				vsB.EvaluationCount.UserCount != 2 {
-				continue
-			}
-			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 5 || // variation A
-				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 4 || // variation B
-				vsB.ExperimentCount.UserCount != 2 {
-				continue
-			}
-			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
-			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
-			break
+		if res.Experiment.Status != experimentproto.Experiment_RUNNING {
+			expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
+			actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
+			t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 		}
-	}
-	res, err := getExperiment(t, experimentClient, experiment.Id)
-	if err != nil {
-		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
-	}
-	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
-		expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
-		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
-		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	featureID := createFeatureID(t, uuid)
-
-	variationVarA := "a"
-	variationVarB := "b"
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range experiment.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userIDs := []string{}
+		for i := 0; i < 5; i++ {
+			userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 		}
+		featureID := createFeatureID(t, uuid)
+
+		variationVarA := "a"
+		variationVarB := "b"
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 3)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range experiment.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// Evaluation events must always be sent before goal events
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		// Goal 0.
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			// Goal 0.
+			resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[0] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
 				continue
 			}
-		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		// Goal 1.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			if vcA.EventCount != 2 {
 				continue
 			}
-		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[1] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 0 {
-			continue
-		}
-		if vcA.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 1 {
-			continue
-		}
-		if vcB.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
-			continue
-		}
-
-		// Goal 2.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
 				continue
 			}
-		}
 
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[2] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
+			vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
 
-		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 0 {
-			continue
-		}
-		if vcA.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
+			// Goal 1.
+			resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
 
-		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[1] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 0 {
+				continue
+			}
+			if vcA.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+
+			vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 1 {
+				continue
+			}
+			if vcB.EventCount != 2 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
+				continue
+			}
+
+			// Goal 2.
+			resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[2] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 0 {
+				continue
+			}
+			if vcA.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+
+			vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			break
 		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestMultiGoalsEventCounter(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	featureID := createFeatureID(t, uuid)
-
-	variationVarA := "a"
-	variationVarB := "b"
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
-	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range experiment.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userIDs := []string{}
+		for i := 0; i < 5; i++ {
+			userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 		}
+		featureID := createFeatureID(t, uuid)
+
+		variationVarA := "a"
+		variationVarB := "b"
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+		addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 3)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range experiment.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// Evaluation events must always be sent before goal events
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		// Goal 0.
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+		registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+		// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+		registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			// Goal 0.
+			resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[0] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
 				continue
 			}
-		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		// Goal 1.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			if vcA.EventCount != 2 {
 				continue
 			}
-		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[1] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 0 {
-			continue
-		}
-		if vcA.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-
-		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 1 {
-			continue
-		}
-		if vcB.EventCount != 2 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
-			continue
-		}
-
-		// Goal 2.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
 				continue
 			}
-		}
 
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[2] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
+			vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
 
-		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 0 {
-			continue
-		}
-		if vcA.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
+			// Goal 1.
+			resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
 
-		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[1] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 0 {
+				continue
+			}
+			if vcA.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+
+			vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 1 {
+				continue
+			}
+			if vcB.EventCount != 2 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
+				continue
+			}
+
+			// Goal 2.
+			resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[2] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 0 {
+				continue
+			}
+			if vcA.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+
+			vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			break
 		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestHTTPTrack(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
-	featureID := createFeatureID(t, uuid)
-	value := float64(1.23)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := createUserID(t, uuid)
+		featureID := createFeatureID(t, uuid)
+		value := float64(1.23)
 
-	variationVarA := "a"
-	variationVarB := "b"
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range experiment.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
-
-	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
-	time.Sleep(10 * time.Second)
-	synctest.Wait()
-
-	// Send track events
-	// This track event will be converted to a goal event on the backend.
-	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
-
-	// Check the count
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+		variationVarA := "a"
+		variationVarB := "b"
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range experiment.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		// Evaluation events must always be sent before goal events
+		registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+		// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 		time.Sleep(10 * time.Second)
 		synctest.Wait()
-	synctest.Wait()
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+		// Send track events
+		// This track event will be converted to a goal event on the backend.
+		sendHTTPTrack(t, userID, goalIDs[0], tag, value)
+
+		// Check the count
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if len(resp.VariationCounts) == 0 {
+				t.Fatalf("no count returned")
+			}
+			if resp.GoalId != goalIDs[0] {
+				t.Fatalf("goal ID is not correct: %s", resp.GoalId)
+			}
+
+			// variation a
+			vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
 				continue
 			}
+			if vcA.EventCount != 1 {
+				continue
+			}
+			if diff := cmp.Diff(vcA.ValueSum, value, compareFloatOpt); diff != "" {
+				continue
+			}
+			// variation b
+			vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
+				continue
+			}
+			break
 		}
-
-		if len(resp.VariationCounts) == 0 {
-			t.Fatalf("no count returned")
-		}
-		if resp.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
-		}
-
-		// variation a
-		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 1 {
-			continue
-		}
-		if diff := cmp.Diff(vcA.ValueSum, value, compareFloatOpt); diff != "" {
-			continue
-		}
-		// variation b
-		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	uuid := newUUID(t)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
+		uuid := newUUID(t)
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
-	featureID := createFeatureID(t, uuid)
-	variationVarA := "a"
-	variationVarB := "b"
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := createUserID(t, uuid)
+		featureID := createFeatureID(t, uuid)
+		variationVarA := "a"
+		variationVarB := "b"
 
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range f.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx,
-		t,
-		experimentClient,
-		"TestGrpcExperimentEvaluationEventCount",
-		featureID,
-		goalIDs,
-		f.Variations[0].Id,
-		startAt, stopAt,
-	)
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
-		synctest.Wait()
-	synctest.Wait()
-
-		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
 		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range f.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx,
+			t,
+			experimentClient,
+			"TestGrpcExperimentEvaluationEventCount",
+			featureID,
+			goalIDs,
+			f.Variations[0].Id,
+			startAt, stopAt,
+		)
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+		grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+
+			if resp == nil {
 				continue
 			}
-		}
+			ec := resp
+			if ec.FeatureId != featureID {
+				t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
+			}
+			if ec.FeatureVersion != f.Version {
+				t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
+			}
 
-		if resp == nil {
-			continue
-		}
-		ec := resp
-		if ec.FeatureId != featureID {
-			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
-		}
-		if ec.FeatureVersion != f.Version {
-			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
-		}
+			vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
+				continue
+			}
+			if vcA.EventCount != 3 {
+				continue
+			}
+			if vcA.ValueSum != float64(0) {
+				continue
+			}
 
-		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
+			vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if vcB.ValueSum != float64(0) {
+				continue
+			}
+			break
 		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 3 {
-			continue
-		}
-		if vcA.ValueSum != float64(0) {
-			continue
-		}
-
-		vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
-		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if vcB.ValueSum != float64(0) {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
+		experimentClient := newExperimentClient(t)
+		defer experimentClient.Close()
 
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
-	featureID := createFeatureID(t, uuid)
-	variationVarA := "a"
-	variationVarB := "b"
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		userID := createUserID(t, uuid)
+		featureID := createFeatureID(t, uuid)
+		variationVarA := "a"
+		variationVarB := "b"
 
-	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Because we set the user to the individual targeting,
-	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
-	// evaluates the user
-	reason := &featureproto.Reason{
-		Type: featureproto.Reason_TARGET,
-	}
-	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
-
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-
-	// Get the latest version after all changes in the feature flag
-	f, err = getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	variations := make(map[string]*featureproto.Variation)
-	variationIDs := []string{}
-	for _, v := range f.Variations {
-		variationIDs = append(variationIDs, v.Id)
-		variations[v.Value] = v
-	}
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx,
-		t,
-		experimentClient,
-		"TestExperimentEvaluationEventCount",
-		featureID,
-		goalIDs,
-		f.Variations[0].Id,
-		startAt, stopAt,
-	)
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-	synctest.Wait()
-
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
-		synctest.Wait()
-	synctest.Wait()
-
-		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+		f, err := getFeature(t, featureClient, featureID)
 		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		// Because we set the user to the individual targeting,
+		// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+		// evaluates the user
+		reason := &featureproto.Reason{
+			Type: featureproto.Reason_TARGET,
+		}
+		addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+
+		// Get the latest version after all changes in the feature flag
+		f, err = getFeature(t, featureClient, featureID)
+		if err != nil {
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+		}
+
+		variations := make(map[string]*featureproto.Variation)
+		variationIDs := []string{}
+		for _, v := range f.Variations {
+			variationIDs = append(variationIDs, v.Id)
+			variations[v.Value] = v
+		}
+		goalIDs := createGoals(ctx, t, experimentClient, 1)
+		startAt := time.Now().Add(-time.Hour)
+		stopAt := startAt.Add(time.Hour * 2)
+		experiment := createExperimentWithMultiGoals(
+			ctx,
+			t,
+			experimentClient,
+			"TestExperimentEvaluationEventCount",
+			featureID,
+			goalIDs,
+			f.Variations[0].Id,
+			startAt, stopAt,
+		)
+
+		// Wait for the event-persister-dwh subscribe to the pubsub
+		// The batch runs every minute, so we give a extra 10 seconds
+		// to ensure that it will subscribe correctly.
+		time.Sleep(70 * time.Second)
+		synctest.Wait()
+
+		registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+		registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+
+		for i := 0; i < retryTimes; i++ {
+			if i == retryTimes-1 {
+				t.Fatalf("retry timeout")
+			}
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+
+			resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+			if resp == nil {
 				continue
 			}
-		}
-		if resp == nil {
-			continue
-		}
-		ec := resp
-		if ec.FeatureId != featureID {
-			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
-		}
-		if ec.FeatureVersion != f.Version {
-			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
-		}
+			ec := resp
+			if ec.FeatureId != featureID {
+				t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
+			}
+			if ec.FeatureVersion != f.Version {
+				t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
+			}
 
-		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
-		if vcA == nil {
-			t.Fatalf("variation a is missing")
-		}
-		if vcA.UserCount != 1 {
-			continue
-		}
-		if vcA.EventCount != 3 {
-			continue
-		}
-		if vcA.ValueSum != float64(0) {
-			continue
-		}
+			vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
+			if vcA == nil {
+				t.Fatalf("variation a is missing")
+			}
+			if vcA.UserCount != 1 {
+				continue
+			}
+			if vcA.EventCount != 3 {
+				continue
+			}
+			if vcA.ValueSum != float64(0) {
+				continue
+			}
 
-		vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
-		if vcB == nil {
-			t.Fatalf("variation b is missing")
+			vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
+			if vcB == nil {
+				t.Fatalf("variation b is missing")
+			}
+			if vcB.UserCount != 0 {
+				continue
+			}
+			if vcB.EventCount != 0 {
+				continue
+			}
+			if vcB.ValueSum != float64(0) {
+				continue
+			}
+			break
 		}
-		if vcB.UserCount != 0 {
-			continue
-		}
-		if vcB.EventCount != 0 {
-			continue
-		}
-		if vcB.ValueSum != float64(0) {
-			continue
-		}
-		break
-	}
-	stopExperiment(ctx, t, experimentClient, experiment.Id)
+		stopExperiment(ctx, t, experimentClient, experiment.Id)
 	})
 }
 
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
-	featureID := createFeatureID(t, uuid)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	createFeature(t, featureClient, featureID, tag, "a", "b")
-	userIDs := []string{}
-	for i := 0; i < 8; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	// Because the event-persister-dwh calls the EvaluateFeatures API
-	// and it uses the feature flag cache, we must update it before sending events.
-	updateFeatueFlagCache(t)
-	f, err := getFeature(t, featureClient, featureID)
-	if err != nil {
-		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
-	}
-
-	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, nil)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, nil)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
-	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, nil)
-	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
-	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[5], defaultVariationID, tag, nil)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[6], defaultVariationID, tag, nil)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[7], defaultVariationID, tag, nil)
-	expectedUserVal := []float64{3, 2, 3}
-	expectedEventVal := []float64{4, 3, 3}
-	i := 0
-LOOP:
-	for {
-		time.Sleep(10 * time.Second)
-		synctest.Wait()
-	synctest.Wait()
-		i++
-		if i == retryTimes {
-			t.Fatalf("retry timeout")
+		featureClient := newFeatureClient(t)
+		defer featureClient.Close()
+		ecClient := newEventCounterClient(t)
+		defer ecClient.Close()
+		uuid := newUUID(t)
+		featureID := createFeatureID(t, uuid)
+		tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+		createFeature(t, featureClient, featureID, tag, "a", "b")
+		userIDs := []string{}
+		for i := 0; i < 8; i++ {
+			userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 		}
-		res, err := getEvaluationTimeseriesCount(t, featureID, ecClient, ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS)
+		// Because the event-persister-dwh calls the EvaluateFeatures API
+		// and it uses the feature flag cache, we must update it before sending events.
+		updateFeatueFlagCache(t)
+		f, err := getFeature(t, featureClient, featureID)
 		if err != nil {
-			st, _ := status.FromError(err)
-			if st.Code() != codes.NotFound {
-				t.Fatalf("Failed to get the evaluation timeseries count. Error code: %d. Error: %v\n", st.Code(), err)
-			} else {
-				continue
-			}
+			t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 		}
-		if len(res.UserCounts) != 3 {
-			t.Fatalf("the number of user counts is not correct: %d", len(res.UserCounts))
+
+		// Register variation
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, nil)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, nil)
+		// Increment evaluation event count
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
+		// Register variation
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, nil)
+		// Increment evaluation event count
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
+		// Register variation
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[5], defaultVariationID, tag, nil)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[6], defaultVariationID, tag, nil)
+		registerEvaluationEvent(t, featureID, f.Version, userIDs[7], defaultVariationID, tag, nil)
+		expectedUserVal := []float64{3, 2, 3}
+		expectedEventVal := []float64{4, 3, 3}
+		i := 0
+	LOOP:
+		for {
+			time.Sleep(10 * time.Second)
+			synctest.Wait()
+			synctest.Wait()
+			i++
+			if i == retryTimes {
+				t.Fatalf("retry timeout")
+			}
+			res, err := getEvaluationTimeseriesCount(t, featureID, ecClient, ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS)
+			if err != nil {
+				st, _ := status.FromError(err)
+				if st.Code() != codes.NotFound {
+					t.Fatalf("Failed to get the evaluation timeseries count. Error code: %d. Error: %v\n", st.Code(), err)
+				} else {
+					continue
+				}
+			}
+			if len(res.UserCounts) != 3 {
+				t.Fatalf("the number of user counts is not correct: %d", len(res.UserCounts))
+			}
+			expectedVIDs := []string{f.Variations[0].Id, f.Variations[1].Id, defaultVariationID}
+			if len(res.EventCounts) != len(expectedVIDs) {
+				t.Fatalf("the number of event counts is not correct: %d", len(res.UserCounts))
+			}
+			for idx, uc := range res.UserCounts {
+				if uc.VariationId != expectedVIDs[idx] {
+					t.Fatalf("variation ID is not correct: %s", uc.VariationId)
+				}
+				if len(uc.Timeseries.Timestamps) != 30 {
+					t.Fatalf("the number of user counts is not correct: %d", len(uc.Timeseries.Timestamps))
+				}
+				if uc.Timeseries.Values[len(uc.Timeseries.Values)-1] != expectedUserVal[idx] {
+					continue LOOP
+				}
+			}
+			for idx, ec := range res.EventCounts {
+				if ec.VariationId != expectedVIDs[idx] {
+					t.Fatalf("variation ID is not correct: %s", ec.VariationId)
+				}
+				if len(ec.Timeseries.Timestamps) != 30 {
+					t.Fatalf("the number of event counts is not correct: %d", len(ec.Timeseries.Timestamps))
+				}
+				if ec.Timeseries.Values[len(ec.Timeseries.Values)-1] != expectedEventVal[idx] {
+					continue LOOP
+				}
+			}
+			break
 		}
-		expectedVIDs := []string{f.Variations[0].Id, f.Variations[1].Id, defaultVariationID}
-		if len(res.EventCounts) != len(expectedVIDs) {
-			t.Fatalf("the number of event counts is not correct: %d", len(res.UserCounts))
-		}
-		for idx, uc := range res.UserCounts {
-			if uc.VariationId != expectedVIDs[idx] {
-				t.Fatalf("variation ID is not correct: %s", uc.VariationId)
-			}
-			if len(uc.Timeseries.Timestamps) != 30 {
-				t.Fatalf("the number of user counts is not correct: %d", len(uc.Timeseries.Timestamps))
-			}
-			if uc.Timeseries.Values[len(uc.Timeseries.Values)-1] != expectedUserVal[idx] {
-				continue LOOP
-			}
-		}
-		for idx, ec := range res.EventCounts {
-			if ec.VariationId != expectedVIDs[idx] {
-				t.Fatalf("variation ID is not correct: %s", ec.VariationId)
-			}
-			if len(ec.Timeseries.Timestamps) != 30 {
-				t.Fatalf("the number of event counts is not correct: %d", len(ec.Timeseries.Timestamps))
-			}
-			if ec.Timeseries.Values[len(ec.Timeseries.Values)-1] != expectedEventVal[idx] {
-				continue LOOP
-			}
-		}
-		break
-	}
 	})
 }
 
@@ -2309,7 +2309,7 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
 			time.Sleep(5 * time.Second)
 			synctest.Wait()
-		synctest.Wait()
+			synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2348,7 +2348,7 @@ func getExperimentEvaluationCount(
 			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
 			synctest.Wait()
-		synctest.Wait()
+			synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2388,7 +2388,7 @@ func getExperimentGoalCount(
 			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
 			synctest.Wait()
-		synctest.Wait()
+			synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -2456,7 +2456,7 @@ func getEvaluationTimeseriesCount(
 			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 			time.Sleep(5 * time.Second)
 			synctest.Wait()
-		synctest.Wait()
+			synctest.Wait()
 			continue
 		}
 		return nil, err

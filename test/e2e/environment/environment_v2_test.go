@@ -55,113 +55,113 @@ const (
 
 func TestGetEnvironmentV2(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newEnvironmentClient(t)
-	defer c.Close()
-	id := getEnvironmentID(t)
-	resp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Environment.Id != id {
-		t.Fatalf("different ids, expected: %v, actual: %v", id, resp.Environment.Id)
-	}
-	if resp.Environment.Name != environmentName {
-		t.Fatalf("different name, expected: %v, actual: %v", environmentName, resp.Environment.Name)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newEnvironmentClient(t)
+		defer c.Close()
+		id := getEnvironmentID(t)
+		resp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.Environment.Id != id {
+			t.Fatalf("different ids, expected: %v, actual: %v", id, resp.Environment.Id)
+		}
+		if resp.Environment.Name != environmentName {
+			t.Fatalf("different name, expected: %v, actual: %v", environmentName, resp.Environment.Name)
+		}
 	})
 }
 
 func TestListEnvironmentsV2ByProject(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newEnvironmentClient(t)
-	defer c.Close()
-	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{ProjectId: defaultProjectID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(resp.Environments) == 0 {
-		t.Fatal("environments is empty, expected at least 1")
-	}
-	for _, env := range resp.Environments {
-		if env.ProjectId != defaultProjectID {
-			t.Fatalf("different project id, expected: %s, actual: %s", defaultProjectID, env.ProjectId)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newEnvironmentClient(t)
+		defer c.Close()
+		resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{ProjectId: defaultProjectID})
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
+		if len(resp.Environments) == 0 {
+			t.Fatal("environments is empty, expected at least 1")
+		}
+		for _, env := range resp.Environments {
+			if env.ProjectId != defaultProjectID {
+				t.Fatalf("different project id, expected: %s, actual: %s", defaultProjectID, env.ProjectId)
+			}
+		}
 	})
 }
 
 func TestListEnvironmentsV2(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newEnvironmentClient(t)
-	defer c.Close()
-	pageSize := int64(1)
-	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{PageSize: pageSize})
-	if err != nil {
-		t.Fatal(err)
-	}
-	responseSize := int64(len(resp.Environments))
-	if responseSize != pageSize {
-		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newEnvironmentClient(t)
+		defer c.Close()
+		pageSize := int64(1)
+		resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{PageSize: pageSize})
+		if err != nil {
+			t.Fatal(err)
+		}
+		responseSize := int64(len(resp.Environments))
+		if responseSize != pageSize {
+			t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
+		}
 	})
 }
 
 func TestUpdateEnvironmentV2(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newEnvironmentClient(t)
-	defer c.Close()
-	id := getEnvironmentID(t)
-	newDesc := fmt.Sprintf("This environment is for local development (Updated at %d)", time.Now().Unix())
-	_, err := c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
-		Id:                       id,
-		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionEnvironmentV2Command{Description: newDesc},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Environment.Id != id {
-		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
-	}
-	if getResp.Environment.Name != environmentName {
-		t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
-	}
-	if getResp.Environment.Description != newDesc {
-		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		c := newEnvironmentClient(t)
+		defer c.Close()
+		id := getEnvironmentID(t)
+		newDesc := fmt.Sprintf("This environment is for local development (Updated at %d)", time.Now().Unix())
+		_, err := c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
+			Id:                       id,
+			ChangeDescriptionCommand: &environmentproto.ChangeDescriptionEnvironmentV2Command{Description: newDesc},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp.Environment.Id != id {
+			t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
+		}
+		if getResp.Environment.Name != environmentName {
+			t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
+		}
+		if getResp.Environment.Description != newDesc {
+			t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
+		}
 
-	newDesc = fmt.Sprintf("This environment is for local development (Updated at %d with no command)", time.Now().Unix())
-	_, err = c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
-		Id:          id,
-		Description: wrapperspb.String(newDesc),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err = c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Environment.Id != id {
-		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
-	}
-	if getResp.Environment.Name != environmentName {
-		t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
-	}
-	if getResp.Environment.Description != newDesc {
-		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
-	}
+		newDesc = fmt.Sprintf("This environment is for local development (Updated at %d with no command)", time.Now().Unix())
+		_, err = c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
+			Id:          id,
+			Description: wrapperspb.String(newDesc),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		getResp, err = c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if getResp.Environment.Id != id {
+			t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
+		}
+		if getResp.Environment.Name != environmentName {
+			t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
+		}
+		if getResp.Environment.Description != newDesc {
+			t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
+		}
 	})
 }
 

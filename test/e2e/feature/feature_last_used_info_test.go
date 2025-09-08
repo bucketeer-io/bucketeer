@@ -41,71 +41,71 @@ const (
 
 func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	enableFeature(t, cmd.Id, client)
-	f := getFeature(t, cmd.Id, client)
-	lastUsedAt := time.Now()
-	grpcRegisterEvaluationEvents(t, []*feature.Feature{f}, f.Tags[0], lastUsedAt)
-	for i := 0; i < featureRecorderRetryTimes; i++ {
-		actual := getFeature(t, cmd.Id, client)
-		if actual.LastUsedInfo != nil {
-			if actual.LastUsedInfo.FeatureId != f.Id {
-				t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
+		client := newFeatureClient(t)
+		cmd := newCreateFeatureCommand(newFeatureID(t))
+		createFeature(t, client, cmd)
+		enableFeature(t, cmd.Id, client)
+		f := getFeature(t, cmd.Id, client)
+		lastUsedAt := time.Now()
+		grpcRegisterEvaluationEvents(t, []*feature.Feature{f}, f.Tags[0], lastUsedAt)
+		for i := 0; i < featureRecorderRetryTimes; i++ {
+			actual := getFeature(t, cmd.Id, client)
+			if actual.LastUsedInfo != nil {
+				if actual.LastUsedInfo.FeatureId != f.Id {
+					t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
+				}
+				if actual.LastUsedInfo.Version != f.Version {
+					t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
+				}
+				if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
+					t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
+				}
+				if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
+					t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
+				}
+				break
 			}
-			if actual.LastUsedInfo.Version != f.Version {
-				t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
+			if i == featureRecorderRetryTimes-1 {
+				t.Fatalf("LastUsedInfo cannot be fetched.")
 			}
-			if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
-				t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
-			}
-			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
-				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
-			}
-			break
+			time.Sleep(time.Second)
+			synctest.Wait()
 		}
-		if i == featureRecorderRetryTimes-1 {
-			t.Fatalf("LastUsedInfo cannot be fetched.")
-		}
-		time.Sleep(time.Second)
-		synctest.Wait()
-	}
 	})
 }
 
 func TestGetFeatureLastUsedInfo(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	enableFeature(t, cmd.Id, client)
-	f := getFeature(t, cmd.Id, client)
-	lastUsedAt := time.Now()
-	registerEvaluationEvents(t, []*feature.Feature{f}, f.Tags[0], lastUsedAt)
-	for i := 0; i < featureRecorderRetryTimes; i++ {
-		actual := getFeature(t, cmd.Id, client)
-		if actual.LastUsedInfo != nil {
-			if actual.LastUsedInfo.FeatureId != f.Id {
-				t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
+		client := newFeatureClient(t)
+		cmd := newCreateFeatureCommand(newFeatureID(t))
+		createFeature(t, client, cmd)
+		enableFeature(t, cmd.Id, client)
+		f := getFeature(t, cmd.Id, client)
+		lastUsedAt := time.Now()
+		registerEvaluationEvents(t, []*feature.Feature{f}, f.Tags[0], lastUsedAt)
+		for i := 0; i < featureRecorderRetryTimes; i++ {
+			actual := getFeature(t, cmd.Id, client)
+			if actual.LastUsedInfo != nil {
+				if actual.LastUsedInfo.FeatureId != f.Id {
+					t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
+				}
+				if actual.LastUsedInfo.Version != f.Version {
+					t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
+				}
+				if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
+					t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
+				}
+				if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
+					t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
+				}
+				break
 			}
-			if actual.LastUsedInfo.Version != f.Version {
-				t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
+			if i == featureRecorderRetryTimes-1 {
+				t.Fatalf("LastUsedInfo cannot be fetched.")
 			}
-			if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
-				t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
-			}
-			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
-				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
-			}
-			break
+			time.Sleep(time.Second)
+			synctest.Wait()
 		}
-		if i == featureRecorderRetryTimes-1 {
-			t.Fatalf("LastUsedInfo cannot be fetched.")
-		}
-		time.Sleep(time.Second)
-		synctest.Wait()
-	}
 	})
 }
 
