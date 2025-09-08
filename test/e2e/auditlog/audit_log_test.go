@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -43,97 +44,99 @@ var (
 )
 
 func TestListAndGetAuditLog(t *testing.T) {
-	t.Parallel()
-	featureClient := newFeatureClient(t)
-	req := newCreateFeatureReq(newFeatureID(t))
+	synctest.Test(t, func(t *testing.T) {
+		featureClient := newFeatureClient(t)
+		req := newCreateFeatureReq(newFeatureID(t))
 
-	// Record the time before creating the feature for time-based filtering
-	startTime := time.Now().Unix()
+		// Record the time before creating the feature for time-based filtering
+		startTime := time.Now().Unix()
 
-	createFeatureNoCmd(t, featureClient, req)
-	// Wait for the audit log to be saved
-	time.Sleep(20 * time.Second)
+		createFeatureNoCmd(t, featureClient, req)
+		// Wait for the audit log to be saved
+		time.Sleep(20 * time.Second)
+		synctest.Wait()
 
-	auditlogClient := newAuditLogClient(t)
+		auditlogClient := newAuditLogClient(t)
 
-	// Use time filtering to avoid scanning the entire table
-	// This dramatically improves query performance
-	fromTime := startTime - 10       // 10 seconds before feature creation
-	toTime := time.Now().Unix() + 10 // 10 seconds into the future for clock skew
+		// Use time filtering to avoid scanning the entire table
+		// This dramatically improves query performance
+		fromTime := startTime - 10       // 10 seconds before feature creation
+		toTime := time.Now().Unix() + 10 // 10 seconds into the future for clock skew
 
-	var auditLogID string
-	cursor := "0"
-	maxLogs := 500
-	totalLogs := 0
-	pageSize := int64(50)
+		var auditLogID string
+		cursor := "0"
+		maxLogs := 500
+		totalLogs := 0
+		pageSize := int64(50)
 
-	for {
-		listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
-			EnvironmentId:  *environmentID,
-			EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-			PageSize:       pageSize,
-			Cursor:         cursor,
-			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
-			OrderDirection: auditlog.ListAuditLogsRequest_DESC,
-			From:           fromTime,
-			To:             toTime,
-		})
-		if err != nil {
-			t.Fatal("Failed to list audit logs:", err)
-		}
+		for {
+			listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
+				EnvironmentId:  *environmentID,
+				EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
+				PageSize:       pageSize,
+				Cursor:         cursor,
+				OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
+				OrderDirection: auditlog.ListAuditLogsRequest_DESC,
+				From:           fromTime,
+				To:             toTime,
+			})
+			if err != nil {
+				t.Fatal("Failed to list audit logs:", err)
+			}
 
-		totalLogs += len(listResp.AuditLogs)
-		// Search for the target audit log in the current batch
-		for _, log := range listResp.AuditLogs {
-			if log.EntityId == req.Id {
-				auditLogID = log.Id
+			totalLogs += len(listResp.AuditLogs)
+			// Search for the target audit log in the current batch
+			for _, log := range listResp.AuditLogs {
+				if log.EntityId == req.Id {
+					auditLogID = log.Id
+					break
+				}
+			}
+
+			// Break if we found the target log, reached max logs, or reached the end
+			if auditLogID != "" ||
+				listResp.Cursor == "" ||
+				len(listResp.AuditLogs) == 0 ||
+				totalLogs >= maxLogs {
 				break
 			}
+			cursor = listResp.Cursor
 		}
 
-		// Break if we found the target log, reached max logs, or reached the end
-		if auditLogID != "" ||
-			listResp.Cursor == "" ||
-			len(listResp.AuditLogs) == 0 ||
-			totalLogs >= maxLogs {
-			break
+		if auditLogID == "" {
+			t.Fatal("Failed to find audit log for the created feature")
 		}
-		cursor = listResp.Cursor
-	}
 
-	if auditLogID == "" {
-		t.Fatal("Failed to find audit log for the created feature")
-	}
+		getResp, err := getAuditLogWithRetry(t, auditlogClient, &auditlog.GetAuditLogRequest{
+			Id:            auditLogID,
+			EnvironmentId: *environmentID,
+		})
+		if err != nil {
+			t.Fatal("Failed to get audit log:", err)
+		}
+		if getResp.AuditLog.Id != auditLogID {
+			t.Fatal("GetAuditLog ID error")
+		}
 
-	getResp, err := getAuditLogWithRetry(t, auditlogClient, &auditlog.GetAuditLogRequest{
-		Id:            auditLogID,
-		EnvironmentId: *environmentID,
+		listAdminResp, err := listAdminAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAdminAuditLogsRequest{
+			EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
+			PageSize:       10,
+			Cursor:         "0",
+			OrderBy:        auditlog.ListAdminAuditLogsRequest_TIMESTAMP,
+			OrderDirection: auditlog.ListAdminAuditLogsRequest_DESC,
+		})
+		if err != nil {
+			t.Fatal("Failed to list admin audit logs", err)
+		}
+		if len(listAdminResp.AuditLogs) > 10 {
+			t.Fatal("ListAdminAuditLogs page size error")
+		}
+		for i := 1; i < len(listAdminResp.AuditLogs); i++ {
+			if listAdminResp.AuditLogs[i].Timestamp > listAdminResp.AuditLogs[i-1].Timestamp {
+				t.Fatal("ListAdminAuditLogs order error")
+			}
+		}
 	})
-	if err != nil {
-		t.Fatal("Failed to get audit log:", err)
-	}
-	if getResp.AuditLog.Id != auditLogID {
-		t.Fatal("GetAuditLog ID error")
-	}
-
-	listAdminResp, err := listAdminAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAdminAuditLogsRequest{
-		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-		PageSize:       10,
-		Cursor:         "0",
-		OrderBy:        auditlog.ListAdminAuditLogsRequest_TIMESTAMP,
-		OrderDirection: auditlog.ListAdminAuditLogsRequest_DESC,
-	})
-	if err != nil {
-		t.Fatal("Failed to list admin audit logs", err)
-	}
-	if len(listAdminResp.AuditLogs) > 10 {
-		t.Fatal("ListAdminAuditLogs page size error")
-	}
-	for i := 1; i < len(listAdminResp.AuditLogs); i++ {
-		if listAdminResp.AuditLogs[i].Timestamp > listAdminResp.AuditLogs[i-1].Timestamp {
-			t.Fatal("ListAdminAuditLogs order error")
-		}
-	}
 }
 
 func newFeatureID(t *testing.T) string {
@@ -272,6 +275,7 @@ func listAuditLogsWithRetry(
 				sleepTimeBetweenRequests.Seconds(),
 			)
 			time.Sleep(sleepTimeBetweenRequests)
+			synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -314,6 +318,7 @@ func getAuditLogWithRetry(
 				sleepTimeBetweenRequests.Seconds(),
 			)
 			time.Sleep(sleepTimeBetweenRequests)
+			synctest.Wait()
 			continue
 		}
 		return nil, err
@@ -356,6 +361,7 @@ func listAdminAuditLogsWithRetry(
 				sleepTimeBetweenRequests.Seconds(),
 			)
 			time.Sleep(sleepTimeBetweenRequests)
+			synctest.Wait()
 			continue
 		}
 		return nil, err
