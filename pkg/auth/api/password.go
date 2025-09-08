@@ -166,7 +166,7 @@ func (s *authService) InitiatePasswordSetup(
 	if err != nil || len(organizations) == 0 {
 		s.logger.Warn("Password setup attempted for non-existent account", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
-			Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
 		}, nil
 	}
 
@@ -176,7 +176,7 @@ func (s *authService) InitiatePasswordSetup(
 		// Password already exists, don't reveal this for security
 		s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
-			Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
 		}, nil
 	}
 	if !errors.Is(err, storage.ErrCredentialsNotFound) {
@@ -232,7 +232,7 @@ func (s *authService) InitiatePasswordSetup(
 
 	s.logger.Info("Password setup initiated", zap.String("email", email))
 	return &authproto.InitiatePasswordSetupResponse{
-		Message: "If an account with this email exists and needs password setup, a setup link has been sent.",
+		Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
 	}, nil
 }
 
@@ -450,7 +450,7 @@ func (s *authService) InitiatePasswordReset(
 			// Don't reveal whether the account exists for security
 			s.logger.Warn("Password reset attempted for non-existent account", zap.String("email", email))
 			return &authproto.InitiatePasswordResetResponse{
-				Message: "If an account with this email exists and has a password, a reset link has been sent.",
+				Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
 			}, nil
 		}
 		s.logger.Error("Failed to check credentials for password reset", zap.Error(err))
@@ -462,7 +462,7 @@ func (s *authService) InitiatePasswordReset(
 		// Don't reveal this information for security
 		s.logger.Warn("Password reset attempted for account without password", zap.String("email", email))
 		return &authproto.InitiatePasswordResetResponse{
-			Message: "If an account with this email exists and has a password, a reset link has been sent.",
+			Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
 		}, nil
 	}
 
@@ -507,7 +507,7 @@ func (s *authService) InitiatePasswordReset(
 
 	s.logger.Info("Password reset initiated", zap.String("email", email))
 	return &authproto.InitiatePasswordResetResponse{
-		Message: "If an account with this email exists and has a password, a reset link has been sent.",
+		Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
 	}, nil
 }
 
