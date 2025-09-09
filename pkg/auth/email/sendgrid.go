@@ -109,7 +109,7 @@ func (s *SendGridEmailService) sendEmail(ctx context.Context, to, subject, body 
 	toEmail := mail.NewEmail("", to)
 	message := mail.NewSingleEmail(from, subject, toEmail, "", body)
 
-	client := sendgrid.NewSendClient(s.config.SendGridAPIKey)
+	client := sendgrid.NewSendClient(s.config.SendGrid.SendGridAPIKey)
 	response, err := client.SendWithContext(ctx, message)
 	if err != nil {
 		return fmt.Errorf("failed to send email via SendGrid: %w", err)
