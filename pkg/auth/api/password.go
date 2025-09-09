@@ -122,7 +122,7 @@ func (s *authService) UpdatePassword(
 
 	// Send notification email if email service is enabled
 	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, email)
+		err = s.emailService.SendPasswordChangedNotification(ctx, email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
 				zap.Error(err),
@@ -220,7 +220,7 @@ func (s *authService) InitiatePasswordSetup(
 		}
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
 			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
-		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL)
+		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL, localizer.GetLocale())
 		if err != nil {
 			s.logger.Error("Failed to send password setup email",
 				zap.Error(err),
@@ -356,7 +356,7 @@ func (s *authService) SetupPassword(
 
 	// Send welcome email if email service is enabled
 	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email)
+		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password setup completion notification",
 				zap.Error(err),
@@ -495,7 +495,7 @@ func (s *authService) InitiatePasswordReset(
 		}
 		resetURL := fmt.Sprintf("%s%s?%s=%s",
 			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetPath, resetParam, resetToken)
-		err = s.emailService.SendPasswordResetEmail(ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL)
+		err = s.emailService.SendPasswordResetEmail(ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL, localizer.GetLocale())
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
 				zap.Error(err),
@@ -633,7 +633,7 @@ func (s *authService) ResetPassword(
 
 	// Send password changed notification email if email service is enabled
 	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email)
+		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
 				zap.Error(err),

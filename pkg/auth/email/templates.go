@@ -181,9 +181,22 @@ func NewTemplateRenderer(config auth.EmailServiceConfig) *TemplateRenderer {
 	return &TemplateRenderer{config: config}
 }
 
+// getTemplateForLanguage returns the template configuration for the specified language
+// Falls back to English if the requested language is not available
+func (r *TemplateRenderer) getTemplateForLanguage(language string) auth.EmailTemplatesByLanguage {
+	switch language {
+	case "ja":
+		return r.config.Templates.Ja
+	case "en":
+		fallthrough
+	default:
+		return r.config.Templates.En
+	}
+}
+
 // RenderPasswordChangedEmail renders the password changed notification template
-func (r *TemplateRenderer) RenderPasswordChangedEmail() (subject, body string) {
-	template := r.config.Templates.PasswordChanged
+func (r *TemplateRenderer) RenderPasswordChangedEmail(language string) (subject, body string) {
+	template := r.getTemplateForLanguage(language).PasswordChanged
 	if template.Subject == "" {
 		template.Subject = defaultPasswordChangedSubject
 	}
@@ -199,8 +212,8 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail() (subject, body string) {
 }
 
 // RenderPasswordSetupEmail renders the password setup email template
-func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL string, ttl time.Duration) (subject, body string) {
-	template := r.config.Templates.PasswordSetup
+func (r *TemplateRenderer) RenderPasswordSetupEmail(language string, setupURL string, ttl time.Duration) (subject, body string) {
+	template := r.getTemplateForLanguage(language).PasswordSetup
 	if template.Subject == "" {
 		template.Subject = defaultPasswordSetupSubject
 	}
@@ -218,8 +231,8 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(setupURL string, ttl time.Du
 }
 
 // RenderPasswordResetEmail renders the password reset email template
-func (r *TemplateRenderer) RenderPasswordResetEmail(resetURL string, ttl time.Duration) (subject, body string) {
-	template := r.config.Templates.PasswordReset
+func (r *TemplateRenderer) RenderPasswordResetEmail(language string, resetURL string, ttl time.Duration) (subject, body string) {
+	template := r.getTemplateForLanguage(language).PasswordReset
 	if template.Subject == "" {
 		template.Subject = defaultPasswordResetSubject
 	}
