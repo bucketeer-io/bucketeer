@@ -80,7 +80,9 @@ func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, t
 	return nil
 }
 
-func (s *SESEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error {
+func (s *SESEmailService) SendPasswordSetupEmail(
+	ctx context.Context, to, setupURL string, ttl time.Duration, language string,
+) error {
 	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
@@ -98,7 +100,9 @@ func (s *SESEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupU
 	return nil
 }
 
-func (s *SESEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error {
+func (s *SESEmailService) SendPasswordResetEmail(
+	ctx context.Context, to, resetURL string, ttl time.Duration, language string,
+) error {
 	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
