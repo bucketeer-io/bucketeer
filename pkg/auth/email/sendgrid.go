@@ -42,8 +42,8 @@ func NewSendGridEmailService(config auth.EmailServiceConfig, logger *zap.Logger)
 	}
 }
 
-func (s *SendGridEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
-	subject, body := s.renderer.RenderPasswordChangedEmail()
+func (s *SendGridEmailService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderPasswordChangedEmail(language)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -64,8 +64,9 @@ func (s *SendGridEmailService) SendPasswordSetupEmail(
 	ctx context.Context,
 	to, setupURL string,
 	ttl time.Duration,
+	language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(setupURL, ttl)
+	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -86,8 +87,9 @@ func (s *SendGridEmailService) SendPasswordResetEmail(
 	ctx context.Context,
 	to, resetURL string,
 	ttl time.Duration,
+	language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, ttl)
+	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
