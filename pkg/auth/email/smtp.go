@@ -41,8 +41,8 @@ func NewSMTPEmailService(config auth.EmailServiceConfig, logger *zap.Logger) Ema
 	}
 }
 
-func (s *SMTPEmailService) SendPasswordChangedNotification(ctx context.Context, to string) error {
-	subject, body := s.renderer.RenderPasswordChangedEmail()
+func (s *SMTPEmailService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderPasswordChangedEmail(language)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -59,8 +59,8 @@ func (s *SMTPEmailService) SendPasswordChangedNotification(ctx context.Context, 
 	return nil
 }
 
-func (s *SMTPEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(setupURL, ttl)
+func (s *SMTPEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error {
+	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -77,8 +77,8 @@ func (s *SMTPEmailService) SendPasswordSetupEmail(ctx context.Context, to, setup
 	return nil
 }
 
-func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(resetURL, ttl)
+func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error {
+	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
