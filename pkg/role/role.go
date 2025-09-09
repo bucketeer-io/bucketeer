@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -65,17 +64,10 @@ func CheckEnvironmentRole(
 	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err != nil {
-			return nil, err
-		}
-		account := accdomain.AccountV2{AccountV2: resp}
 		return &eventproto.Editor{
-			Email:            publicAPIEditor.Maintainer,
-			Name:             account.GetAccountFullName(),
-			PublicApiEditor:  publicAPIEditor,
-			EnvironmentRoles: account.EnvironmentRoles,
-			OrganizationRole: account.OrganizationRole,
+			Email:           publicAPIEditor.Maintainer,
+			Name:            publicAPIEditor.Name,
+			PublicApiEditor: publicAPIEditor,
 		}, nil
 	}
 
@@ -160,17 +152,10 @@ func CheckOrganizationRole(
 	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err != nil {
-			return nil, err
-		}
-		account := accdomain.AccountV2{AccountV2: resp.Account}
 		return &eventproto.Editor{
-			Email:            publicAPIEditor.Maintainer,
-			Name:             account.GetAccountFullName(),
-			PublicApiEditor:  publicAPIEditor,
-			EnvironmentRoles: account.EnvironmentRoles,
-			OrganizationRole: account.OrganizationRole,
+			Email:           publicAPIEditor.Maintainer,
+			Name:            publicAPIEditor.Name,
+			PublicApiEditor: publicAPIEditor,
 		}, nil
 	}
 

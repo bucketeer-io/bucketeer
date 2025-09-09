@@ -381,27 +381,13 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
-			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
-				return &accountproto.AccountV2{
-					Email: "apikey_maintainer@example.com",
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
-					},
-					FirstName: "apikey",
-					LastName:  "maintainer",
-					Disabled:  false,
-				}, nil
-			},
 			expected: &eventproto.Editor{
 				Email: "apikey_maintainer@example.com",
-				Name:  "apikey maintainer",
+				Name:  "apikey_name",
 				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
 					Token:      "apikey_token",
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
-				},
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 				},
 			},
 			expectedErr: nil,
