@@ -220,7 +220,9 @@ func (s *authService) InitiatePasswordSetup(
 		}
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
 			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
-		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL, localizer.GetLocale())
+		err = s.emailService.SendPasswordSetupEmail(
+			ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL, localizer.GetLocale(),
+		)
 		if err != nil {
 			s.logger.Error("Failed to send password setup email",
 				zap.Error(err),
@@ -495,7 +497,9 @@ func (s *authService) InitiatePasswordReset(
 		}
 		resetURL := fmt.Sprintf("%s%s?%s=%s",
 			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetPath, resetParam, resetToken)
-		err = s.emailService.SendPasswordResetEmail(ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL, localizer.GetLocale())
+		err = s.emailService.SendPasswordResetEmail(
+			ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL, localizer.GetLocale(),
+		)
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
 				zap.Error(err),
