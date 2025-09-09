@@ -96,7 +96,7 @@ func (s *SMTPEmailService) SendPasswordResetEmail(ctx context.Context, to, reset
 }
 
 func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
-	auth := smtp.PlainAuth("", s.config.SMTPUsername, s.config.SMTPPassword, s.config.SMTPHost)
+	auth := smtp.PlainAuth("", s.config.SMTP.SMTPUsername, s.config.SMTP.SMTPPassword, s.config.SMTP.SMTPHost)
 
 	msg := []byte(fmt.Sprintf("To: %s\r\n"+
 		"From: %s\r\n"+
@@ -106,6 +106,6 @@ func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body stri
 		"\r\n"+
 		"%s\r\n", to, s.config.FromEmail, subject, body))
 
-	addr := fmt.Sprintf("%s:%d", s.config.SMTPHost, s.config.SMTPPort)
+	addr := fmt.Sprintf("%s:%d", s.config.SMTP.SMTPHost, s.config.SMTP.SMTPPort)
 	return smtp.SendMail(addr, auth, s.config.FromEmail, []string{to}, msg)
 }
