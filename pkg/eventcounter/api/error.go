@@ -15,25 +15,25 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal               = gstatus.New(codes.Internal, "eventcounter: internal")
-	statusFeatureIDRequired      = gstatus.New(codes.InvalidArgument, "eventcounter: feature id is required")
-	statusFeatureVersionRequired = gstatus.New(codes.InvalidArgument, "eventcounter: feature version is required")
-	statusVariationIDRequired    = gstatus.New(codes.InvalidArgument, "eventcounter: variation id is required")
-	statusExperimentIDRequired   = gstatus.New(codes.InvalidArgument, "eventcounter: experiment id is required")
-	statusMAUYearMonthRequired   = gstatus.New(codes.InvalidArgument, "eventcounter: mau year month is required")
-	statusGoalIDRequired         = gstatus.New(codes.InvalidArgument, "eventcounter: goal id is required")
-	statusStartAtRequired        = gstatus.New(codes.InvalidArgument, "eventcounter: start at is required")
-	statusEndAtRequired          = gstatus.New(codes.InvalidArgument, "eventcounter: end at is required")
-	statusStartAtIsAfterEndAt    = gstatus.New(codes.InvalidArgument, "eventcounter: start at is after end at")
-	statusAutoOpsRuleIDRequired  = gstatus.New(codes.InvalidArgument, "eventcounter: auto ops rule id is required")
-	statusClauseIDRequired       = gstatus.New(codes.InvalidArgument, "eventcounter: clause id is required")
-	statusNotFound               = gstatus.New(codes.NotFound, "eventcounter: not found")
-	statusUnauthenticated        = gstatus.New(codes.Unauthenticated, "feature: unauthenticated")
-	statusPermissionDenied       = gstatus.New(codes.PermissionDenied, "feature: permission denied")
-	statusUnknownTimeRange       = gstatus.New(codes.Internal, "eventcounter: unknown time range")
+	statusInternal               = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "eventcounter: internal"))
+	statusFeatureIDRequired      = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature id is required", "feature_id"))
+	statusFeatureVersionRequired = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature version is required", "feature_version"))
+	statusVariationIDRequired    = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "variation id is required", "variation_id"))
+	statusExperimentIDRequired   = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "experiment id is required", "experiment_id"))
+	statusMAUYearMonthRequired   = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "mau year month is required", "mau_year_month"))
+	statusGoalIDRequired         = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "goal id is required", "goal_id"))
+	statusStartAtRequired        = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "start at is required", "start_at"))
+	statusEndAtRequired          = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "end at is required", "end_at"))
+	statusStartAtIsAfterEndAt    = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "start at is after end at", "start_at"))
+	statusAutoOpsRuleIDRequired  = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "auto ops rule id is required", "auto_ops_rule_id"))
+	statusClauseIDRequired       = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "clause id is required", "clause_id"))
+	statusNotFound               = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.EventCounterPackageName, "not found", "eventcounter"))
+	statusUnauthenticated        = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(pkgErr.EventCounterPackageName, "unauthenticated"))
+	statusPermissionDenied       = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(pkgErr.EventCounterPackageName, "permission denied"))
+	statusUnknownTimeRange       = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "unknown time range", "time_range"))
 )
