@@ -16,15 +16,15 @@ package command
 
 import (
 	"context"
-	"errors"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/golang/protobuf/ptypes"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
-	errBadCommand = errors.New("command: cannot handle command")
+	errBadCommand = pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "cannot handle command", "command")
 )
 
 type Command interface{}

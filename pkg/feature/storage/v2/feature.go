@@ -20,15 +20,16 @@ import (
 	_ "embed"
 	"errors"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
-	ErrFeatureAlreadyExists          = errors.New("feature: already exists")
-	ErrFeatureNotFound               = errors.New("feature: not found")
-	ErrFeatureUnexpectedAffectedRows = errors.New("feature: unexpected affected rows")
+	ErrFeatureAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "feature already exists")
+	ErrFeatureNotFound               = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "feature not found", "feature")
+	ErrFeatureUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.FeaturePackageName, "feature unexpected affected rows")
 )
 
 var (

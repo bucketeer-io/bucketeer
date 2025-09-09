@@ -21,6 +21,7 @@ import (
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -1118,14 +1119,7 @@ func (s *FeatureService) checkProgressiveRolloutInProgress(
 ) error {
 	exists, err := s.existsRunningProgressiveRollout(ctx, featureID, environmentID)
 	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if exists {
 		dt, err := statusProgressiveRolloutWaitingOrRunningState.WithDetails(&errdetails.LocalizedMessage{
@@ -1420,14 +1414,7 @@ func validateRule(
 			}
 			return dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return validateStrategy(tarF.Variations, rule.Strategy, localizer)
 }
@@ -1674,14 +1661,7 @@ func validateAddPrerequisite(
 			}
 			return dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -1724,14 +1704,7 @@ func (s *FeatureService) validateFeatureStatus(
 ) error {
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentId)
 	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if runningExperimentExists {
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
@@ -1756,14 +1729,7 @@ func (s *FeatureService) validateEnvironmentSettings(
 	}
 	resp, err := s.environmentClient.GetEnvironmentV2(ctx, req)
 	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if resp.Environment.RequireComment {
 		if updateComment == "" {
