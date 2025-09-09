@@ -63,7 +63,9 @@ func (s *NoOpEmailService) SendPasswordChangedNotification(ctx context.Context, 
 	return nil
 }
 
-func (s *NoOpEmailService) SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error {
+func (s *NoOpEmailService) SendPasswordSetupEmail(
+	ctx context.Context, to, setupURL string, ttl time.Duration, language string,
+) error {
 	s.logger.Info("No-op email service: password setup email not sent",
 		zap.String("to", to),
 		zap.String("setupURL", setupURL),
@@ -72,7 +74,9 @@ func (s *NoOpEmailService) SendPasswordSetupEmail(ctx context.Context, to, setup
 	return nil
 }
 
-func (s *NoOpEmailService) SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error {
+func (s *NoOpEmailService) SendPasswordResetEmail(
+	ctx context.Context, to, resetURL string, ttl time.Duration, language string,
+) error {
 	s.logger.Info("No-op email service: password reset email not sent",
 		zap.String("to", to),
 		zap.String("resetURL", resetURL),

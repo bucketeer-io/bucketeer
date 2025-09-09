@@ -212,7 +212,9 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail(language string) (subject,
 }
 
 // RenderPasswordSetupEmail renders the password setup email template
-func (r *TemplateRenderer) RenderPasswordSetupEmail(language string, setupURL string, ttl time.Duration) (subject, body string) {
+func (r *TemplateRenderer) RenderPasswordSetupEmail(
+	language string, setupURL string, ttl time.Duration,
+) (subject, body string) {
 	template := r.getTemplateForLanguage(language).PasswordSetup
 	if template.Subject == "" {
 		template.Subject = defaultPasswordSetupSubject
@@ -231,7 +233,9 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(language string, setupURL st
 }
 
 // RenderPasswordResetEmail renders the password reset email template
-func (r *TemplateRenderer) RenderPasswordResetEmail(language string, resetURL string, ttl time.Duration) (subject, body string) {
+func (r *TemplateRenderer) RenderPasswordResetEmail(
+	language string, resetURL string, ttl time.Duration,
+) (subject, body string) {
 	template := r.getTemplateForLanguage(language).PasswordReset
 	if template.Subject == "" {
 		template.Subject = defaultPasswordResetSubject
