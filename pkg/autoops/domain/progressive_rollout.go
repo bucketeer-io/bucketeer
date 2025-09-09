@@ -17,10 +17,11 @@ package domain
 import (
 	"time"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/runtime/protoiface"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"

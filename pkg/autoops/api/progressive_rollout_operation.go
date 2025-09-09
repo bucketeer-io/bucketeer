@@ -15,12 +15,13 @@
 package api
 
 import (
+	"github.com/golang/protobuf/ptypes"
+
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	"github.com/golang/protobuf/ptypes"
 )
 
 var errVariationNotFound = err.NewErrorNotFound(err.AutoopsPackageName, "a variation for a progressive rollout is not found", "variation_id")

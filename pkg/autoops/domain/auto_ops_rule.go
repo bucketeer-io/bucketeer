@@ -18,12 +18,13 @@ import (
 	"sort"
 	"time"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
