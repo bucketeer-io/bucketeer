@@ -41,10 +41,10 @@ type SESEmailService struct {
 func NewSESEmailService(emailConfig auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
 	// Create AWS config with explicit credentials
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(emailConfig.SESRegion),
+		config.WithRegion(emailConfig.SES.SESRegion),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			emailConfig.SESAccessKey,
-			emailConfig.SESSecretKey,
+			emailConfig.SES.SESAccessKey,
+			emailConfig.SES.SESSecretKey,
 			"",
 		)),
 	)

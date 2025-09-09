@@ -70,16 +70,28 @@ type EmailTemplatesConfig struct {
 	PasswordReset   EmailTemplate `json:"passwordReset"`
 }
 
+type SMTPConfig struct {
+	SMTPHost     string `json:"smtpHost"`
+	SMTPPort     int    `json:"smtpPort"`
+	SMTPUsername string `json:"smtpUsername"`
+	SMTPPassword string `json:"smtpPassword"`
+}
+
+type SendGridConfig struct {
+	SendGridAPIKey string `json:"sendgridAPIKey"`
+}
+
+type SESConfig struct {
+	SESRegion    string `json:"sesRegion"`
+	SESAccessKey string `json:"sesAccessKey"`
+	SESSecretKey string `json:"sesSecretKey"`
+}
+
 type EmailServiceConfig struct {
 	Provider           string               `json:"provider"` // "smtp", "sendgrid", "ses"
-	SMTPHost           string               `json:"smtpHost"`
-	SMTPPort           int                  `json:"smtpPort"`
-	SMTPUsername       string               `json:"smtpUsername"`
-	SMTPPassword       string               `json:"smtpPassword"`
-	SendGridAPIKey     string               `json:"sendgridAPIKey"`
-	SESRegion          string               `json:"sesRegion"`
-	SESAccessKey       string               `json:"sesAccessKey"`
-	SESSecretKey       string               `json:"sesSecretKey"`
+	SMTP               SMTPConfig           `json:"smtp"`
+	SendGrid           SendGridConfig       `json:"sendgrid"`
+	SES                SESConfig            `json:"ses"`
 	FromEmail          string               `json:"fromEmail"`
 	FromName           string               `json:"fromName"`
 	BaseURL            string               `json:"baseURL"`            // For constructing reset URLs

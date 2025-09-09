@@ -115,14 +115,17 @@ oauth:
     emailServiceEnabled:
     emailServiceConfig:
       provider:
-      smtpHost:
-      smtpPort:
-      smtpUsername:
-      smtpPassword:
-      sendgridAPIKey:
-      sesRegion:
-      sesAccessKey:
-      sesSecretKey:
+      smtp:
+        smtpHost:
+        smtpPort:
+        smtpUsername:
+        smtpPassword:
+      sendgrid:
+        sendgridAPIKey:
+      ses:
+        sesRegion:
+        sesAccessKey:
+        sesSecretKey:
       fromEmail:
       fromName:
       baseURL:
