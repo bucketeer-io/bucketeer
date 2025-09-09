@@ -16,9 +16,11 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
+
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
@@ -124,14 +126,14 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, err.NewErrorInternal("autoops", "test"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "test")).Err(),
 		},
 		{
 			desc: "err: InvalidVariationSize",
@@ -666,7 +668,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(err.NewErrorInternal("autoops", "transaction error"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -679,7 +681,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "transaction error")).Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutAlreadyExists",
@@ -736,7 +738,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				}}, nil)
 				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					nil,
-					errors.New("internal error"),
+					err.NewErrorInternal("autoops", "error listing experiments"),
 				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -750,7 +752,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "error listing experiments")).Err(),
 		},
 		{
 			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
@@ -921,12 +923,12 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, err.NewErrorInternal("autoops", "error"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "error")).Err(),
 		},
 		{
 			desc: "err: InvalidVariationSize",
@@ -1431,7 +1433,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(err.NewErrorInternal("autoops", "transaction error"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
@@ -1442,7 +1444,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "transaction error")).Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutAlreadyExists",
@@ -1497,7 +1499,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				}}, nil)
 				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					nil,
-					errors.New("internal error"),
+					err.NewErrorInternal("autoops", "error listing experiments"),
 				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -1509,7 +1511,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "error listing experiments")).Err(),
 		},
 		{
 			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
@@ -1696,7 +1698,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(err.NewErrorInternal("autoops", "transaction error"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
 				Id:            "id",
@@ -1705,7 +1707,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "transaction error")).Err(),
 		},
 		{
 			desc: "err: not found",
@@ -1803,14 +1805,14 @@ func TestStopProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(err.NewErrorInternal("autoops", "transaction error"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
 				Id:            "id",
 				EnvironmentId: "ns",
 				StoppedBy:     autoopsproto.ProgressiveRollout_USER,
 			},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "transaction error")).Err(),
 		},
 		{
 			desc: "err: not found",
@@ -1905,20 +1907,10 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(err.NewErrorInternal("autoops", "test"))
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
-		},
-		{
-			desc: "err: internal error during transaction",
-			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
-			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "test")).Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutNotFound",
@@ -2004,11 +1996,11 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, int64(0), 0, errors.New("error"))
+				).Return(nil, int64(0), 0, err.NewErrorInternal("autoops", "error"))
 			},
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
 			environmentId: "ns0",
-			expected:      createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expected:      api.NewGRPCStatus(err.NewErrorInternal("autoops", "error")).Err(),
 		},
 		{
 			desc: "success",

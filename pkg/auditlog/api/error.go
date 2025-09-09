@@ -24,7 +24,7 @@ var (
 	statusUnauthenticated  = api.NewGRPCStatus(pkgErr.NewErrorUnauthenticated(pkgErr.AuditlogPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(pkgErr.NewErrorPermissionDenied(pkgErr.AuditlogPackageName, "permission denied"))
 	statusMissingID        = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing ID", "ID"))
-	statusNotFound         = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "not found", "ID"))
+	statusNotFound         = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "not found", "auditlog"))
 	statusInvalidCursor    = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "cursor is invalid", "cursor"))
 	statusInvalidOrderBy   = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "order_by is invalid", "order_by"))
 )

@@ -116,6 +116,12 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "UNEXPECTED_AFFECTED_ROWS"
 	case pkgErr.ErrorTypeInternal:
 		return "INTERNAL"
+	case pkgErr.ErrorTypeFailedPrecondition:
+		return "FAILED_PRECONDITION"
+	case pkgErr.ErrorTypeUnavailable:
+		return "UNAVAILABLE"
+	case pkgErr.ErrorTypeAborted:
+		return "ABORTED"
 	default:
 		return "UNKNOWN"
 	}
@@ -140,6 +146,12 @@ func convertStatusCode(errorType pkgErr.ErrorType) codes.Code {
 		return codes.Internal
 	case pkgErr.ErrorTypeInternal:
 		return codes.Internal
+	case pkgErr.ErrorTypeFailedPrecondition:
+		return codes.FailedPrecondition
+	case pkgErr.ErrorTypeUnavailable:
+		return codes.Unavailable
+	case pkgErr.ErrorTypeAborted:
+		return codes.Aborted
 	default:
 		return codes.Unknown
 	}

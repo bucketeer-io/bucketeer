@@ -18,7 +18,8 @@ package v2
 import (
 	"context"
 	_ "embed"
-	"errors"
+
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -41,9 +42,9 @@ var (
 )
 
 var (
-	ErrProgressiveRolloutAlreadyExists          = errors.New("progressiveRollout: already exists")
-	ErrProgressiveRolloutNotFound               = errors.New("progressiveRollout: not found")
-	ErrProgressiveRolloutUnexpectedAffectedRows = errors.New("progressiveRollout: unexpected affected rows")
+	ErrProgressiveRolloutAlreadyExists          = err.NewErrorAlreadyExists(err.AutoopsPackageName, "already exists")
+	ErrProgressiveRolloutNotFound               = err.NewErrorNotFound(err.AutoopsPackageName, "not found", "progressive_rollout")
+	ErrProgressiveRolloutUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(err.AutoopsPackageName, "unexpected affected rows")
 )
 
 type progressiveRolloutStorage struct {
