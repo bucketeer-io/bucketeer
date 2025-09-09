@@ -64,10 +64,15 @@ type EmailTemplate struct {
 	Body    string `json:"body"`
 }
 
-type EmailTemplatesConfig struct {
+type EmailTemplatesByLanguage struct {
 	PasswordChanged EmailTemplate `json:"passwordChanged"`
 	PasswordSetup   EmailTemplate `json:"passwordSetup"`
 	PasswordReset   EmailTemplate `json:"passwordReset"`
+}
+
+type EmailTemplatesConfig struct {
+	En EmailTemplatesByLanguage `json:"en"`
+	Ja EmailTemplatesByLanguage `json:"ja"`
 }
 
 type SMTPConfig struct {
