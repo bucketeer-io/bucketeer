@@ -295,7 +295,7 @@ func (s *authService) ExchangeToken(
 	}
 
 	// Check and offer password setup for existing users without credentials
-	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations)
+	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations, localizer)
 
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
@@ -956,6 +956,7 @@ func (s *authService) checkAndOfferPasswordSetup(
 	ctx context.Context,
 	email string,
 	organizations []*envproto.Organization,
+	localizer locale.Localizer,
 ) {
 	// Only proceed if password auth and email service are enabled
 	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
@@ -982,7 +983,7 @@ func (s *authService) checkAndOfferPasswordSetup(
 	}
 
 	// User doesn't have password credentials, initiate setup
-	err = s.initiatePasswordSetupInternal(ctx, email)
+	err = s.initiatePasswordSetupInternal(ctx, email, localizer)
 	if err != nil {
 		s.logger.Warn("Failed to initiate password setup for OAuth user",
 			zap.Error(err),
@@ -992,7 +993,11 @@ func (s *authService) checkAndOfferPasswordSetup(
 }
 
 // initiatePasswordSetupInternal handles the internal password setup process
-func (s *authService) initiatePasswordSetupInternal(ctx context.Context, email string) error {
+func (s *authService) initiatePasswordSetupInternal(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) error {
 	// Generate secure setup token
 	setupToken, err := auth.GenerateSecureToken()
 	if err != nil {
@@ -1025,7 +1030,13 @@ func (s *authService) initiatePasswordSetupInternal(ctx context.Context, email s
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
 			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
 
-		err = s.emailService.SendPasswordSetupEmail(ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL)
+		err = s.emailService.SendPasswordSetupEmail(
+			ctx,
+			email,
+			setupURL,
+			s.config.PasswordAuth.PasswordSetupTokenTTL,
+			localizer.GetLocale(),
+		)
 		if err != nil {
 			return fmt.Errorf("failed to send password setup email: %w", err)
 		}
