@@ -23,6 +23,7 @@ import (
 const (
 	AccountPackageName      = "account"
 	NotificationPackageName = "notification"
+	AuthPackageName         = "auth"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"

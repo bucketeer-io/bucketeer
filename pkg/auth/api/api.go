@@ -35,6 +35,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -186,14 +187,7 @@ func (s *authService) GetAuthenticationURL(
 			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl)
 	if err != nil {
@@ -203,14 +197,7 @@ func (s *authService) GetAuthenticationURL(
 			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &authproto.GetAuthenticationURLResponse{Url: loginURL}, nil
 }
@@ -237,14 +224,7 @@ func (s *authService) ExchangeToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	userInfo, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl)
 	if err != nil {
@@ -254,14 +234,7 @@ func (s *authService) ExchangeToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email, localizer)
@@ -360,14 +333,7 @@ func (s *authService) RefreshToken(
 			zap.Any("organizations", organizations),
 			zap.Any("refresh_token", refreshToken),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &authproto.RefreshTokenResponse{Token: newToken}, nil
 }
@@ -444,14 +410,7 @@ func (s *authService) SwitchOrganization(
 			zap.String("email", accessToken.Email),
 			zap.String("organizationID", newOrganizationID),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	if account.Account.Disabled {
@@ -528,14 +487,7 @@ func (s *authService) getOrganizationsByEmail(
 			zap.Error(err),
 			zap.String("email", email),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if len(orgResp.Organizations) == 0 {
 		s.logger.Error(
@@ -727,14 +679,7 @@ func (s *authService) generateToken(
 			"Failed to sign access token",
 			zap.Error(err),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// Create refresh token
@@ -755,14 +700,7 @@ func (s *authService) generateToken(
 			"Failed to sign refresh token",
 			zap.Error(err),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	return &authproto.Token{
@@ -812,14 +750,7 @@ func (s *authService) checkAccountStatus(
 				// So, to avoid false errors, we ignore them if the account wasn't found in non-system admin organizations.
 				continue
 			}
-			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, auth.StatusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		if !resp.Account.Disabled {
 			// The account must have at least one account enabled

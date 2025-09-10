@@ -17,18 +17,23 @@ package google
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 )
 
 var (
-	ErrUnregisteredRedirectURL = errors.New("google: unregistered redirectURL")
+	ErrUnregisteredRedirectURL = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.AuthPackageName,
+		"unregistered redirectURL",
+		"redirectURL",
+	)
 )
 
 var (
