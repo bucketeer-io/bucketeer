@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,6 +28,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -76,7 +77,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
@@ -85,7 +86,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 					Role: accountproto.APIKey_SDK_CLIENT,
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -163,14 +164,14 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Name: "name",
 				Role: accountproto.APIKey_SDK_CLIENT,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -278,7 +279,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
@@ -287,7 +288,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					Name: "new name",
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -393,14 +394,14 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -504,14 +505,14 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -729,7 +730,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			input: &accountproto.ListAPIKeysRequest{
 				EnvironmentIds: []string{"ns0"},
@@ -737,7 +738,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err()
 			},
 		},
 		{
