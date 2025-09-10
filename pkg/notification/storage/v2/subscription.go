@@ -20,15 +20,26 @@ import (
 	_ "embed"
 	"errors"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
 var (
-	ErrSubscriptionAlreadyExists          = errors.New("subscription: subscription already exists")
-	ErrSubscriptionNotFound               = errors.New("subscription: subscription not found")
-	ErrSubscriptionUnexpectedAffectedRows = errors.New("subscription: subscription unexpected affected rows")
+	ErrSubscriptionAlreadyExists = err.NewErrorAlreadyExists(
+		err.NotificationPackageName,
+		"subscription already exists",
+	)
+	ErrSubscriptionNotFound = err.NewErrorNotFound(
+		err.NotificationPackageName,
+		"subscription not found",
+		"subscription",
+	)
+	ErrSubscriptionUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
+		err.NotificationPackageName,
+		"subscription unexpected affected rows",
+	)
 
 	//go:embed sql/subscription/insert_subscription_v2.sql
 	insertSubscriptionV2SQLQuery string
