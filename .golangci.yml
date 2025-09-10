@@ -27,6 +27,8 @@ linters:
         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
         See the License for the specific language governing permissions and
         limitations under the License.
+    staticcheck:
+      checks: ["all", "-SA1019", "-ST1003","-ST1012"] # ignore deprecated, ignore poorly chosen identifier and ignore poorly chosen name for error variable
   exclusions:
     generated: lax
     presets:
@@ -34,10 +36,6 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
 formatters:
   enable:
     - gofmt
@@ -48,7 +46,3 @@ formatters:
         - github.com/bucketeer-io/bucketeer
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
