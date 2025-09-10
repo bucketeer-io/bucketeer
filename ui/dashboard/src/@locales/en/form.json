@@ -383,5 +383,11 @@
     "confirm-stop-title": "Audience traffic allocation will be updated",
     "current-variation-title": "Current Variation Allocation",
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
-  }
+  },
+  "discard-unsaved-changes": "Discard unsaved changes",
+  "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
+  "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user",
+  "custom-rule-discard-desc": "{{action}} clause with <b>{{clauseLabel}}</b>",
+  "custom-rule-clause-value-discard-desc": "{{action}} value {{value}} from clause <b>{{clauseLabel}}</b>",
+  "custom-rule-strategy-discard-desc": "{{action}} rule variation to"
 }

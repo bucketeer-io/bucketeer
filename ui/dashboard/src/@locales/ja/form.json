@@ -383,5 +383,11 @@
     "confirm-stop-title": "オーディエンスのトラフィック配分が更新されます",
     "current-variation-title": "現在のバリエーション配分",
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
-  }
+  },
+  "discard-unsaved-changes": "保存されていない変更を破棄",
+  "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
+  "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user",
+  "custom-rule-discard-desc": "<b>{{clauseLabel}}</b>を含む条項を{{action}}",
+  "custom-rule-clause-value-discard-desc": "条項 <b>{{clauseLabel}}</b> から値 {{value}} を{{action}}",
+  "custom-rule-strategy-discard-desc": "{{action}} rule variation to"
 }

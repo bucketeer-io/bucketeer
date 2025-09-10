@@ -3,7 +3,8 @@ import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import {
   IconArrowDownwardFilled,
-  IconArrowUpwardFilled
+  IconArrowUpwardFilled,
+  IconUndoOutlined
 } from 'react-icons-material-design';
 import { Fragment } from 'react/jsx-runtime';
 import { useQueryAttributeKeys } from '@queries/attribute-keys';
@@ -12,14 +13,14 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { IconClose, IconInfo } from '@icons';
+import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import { TargetingDivider } from '..';
 import Card from '../../elements/card';
 import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
-import { RuleCategory } from '../types';
+import { DiscardChangesType, RuleCategory } from '../types';
 import RuleForm from './rule';
 import SegmentVariation from './variation';
 
@@ -36,6 +37,7 @@ interface Props {
   onAddRule: (rule: RuleCategory) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
+  handleDiscardChanges: (type: DiscardChangesType, index?: number) => void;
 }
 
 const TargetSegmentRule = ({
@@ -45,8 +47,8 @@ const TargetSegmentRule = ({
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
   onAddRule,
-  segmentRulesRemove,
-  segmentRulesSwap
+  segmentRulesSwap,
+  handleDiscardChanges
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
   const { consoleAccount } = useAuth();
@@ -126,11 +128,16 @@ const TargetSegmentRule = ({
 
                 <div className="flex items-center gap-x-2">
                   <div
-                    className="flex-center cursor-pointer group"
-                    onClick={() => segmentRulesRemove(segmentIndex)}
+                    className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-500"
+                    onClick={() =>
+                      handleDiscardChanges(
+                        DiscardChangesType.CUSTOM,
+                        segmentIndex
+                      )
+                    }
                   >
                     <Icon
-                      icon={IconClose}
+                      icon={IconUndoOutlined}
                       size={'sm'}
                       className="flex-center text-gray-500 group-hover:text-gray-700"
                     />
