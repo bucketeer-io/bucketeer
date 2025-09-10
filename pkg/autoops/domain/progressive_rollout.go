@@ -30,7 +30,11 @@ import (
 var (
 	ErrProgressiveRolloutScheduleNotFound  = err.NewErrorNotFound(err.AutoopsPackageName, "schedule not found", "schedule")
 	ErrProgressiveRolloutInvalidType       = err.NewErrorInvalidArgUnknown(err.AutoopsPackageName, "invalid type", "type")
-	ErrProgressiveRolloutStoopedByRequired = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "stopped by is required", "stopped_by")
+	ErrProgressiveRolloutStoopedByRequired = err.NewErrorInvalidArgEmpty(
+		err.AutoopsPackageName,
+		"stopped by is required",
+		"stopped_by",
+	)
 )
 
 type ProgressiveRollout struct {

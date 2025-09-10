@@ -40,7 +40,10 @@ var (
 var (
 	ErrAutoOpsRuleAlreadyExists          = err.NewErrorAlreadyExists(err.AutoopsPackageName, "already exists")
 	ErrAutoOpsRuleNotFound               = err.NewErrorNotFound(err.AutoopsPackageName, "not found", "autoOpsRule")
-	ErrAutoOpsRuleUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(err.AutoopsPackageName, "unexpected affected rows")
+	ErrAutoOpsRuleUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
+		err.AutoopsPackageName,
+		"unexpected affected rows",
+	)
 )
 
 type AutoOpsRuleStorage interface {

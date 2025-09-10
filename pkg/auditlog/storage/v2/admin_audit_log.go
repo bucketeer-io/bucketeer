@@ -28,7 +28,8 @@ import (
 )
 
 var (
-	ErrAdminAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(pkgErr.AuditlogPackageName, "admin auditlog already exists")
+	ErrAdminAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.AuditlogPackageName, "admin auditlog already exists")
 
 	//go:embed sql/adminauditlog/insert_admin_audit_logs_v2.sql
 	insertAdminAuditLogsV2SQL string

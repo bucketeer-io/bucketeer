@@ -42,9 +42,16 @@ var (
 )
 
 var (
-	ErrProgressiveRolloutAlreadyExists          = err.NewErrorAlreadyExists(err.AutoopsPackageName, "already exists")
-	ErrProgressiveRolloutNotFound               = err.NewErrorNotFound(err.AutoopsPackageName, "not found", "progressive_rollout")
-	ErrProgressiveRolloutUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(err.AutoopsPackageName, "unexpected affected rows")
+	ErrProgressiveRolloutAlreadyExists = err.NewErrorAlreadyExists(err.AutoopsPackageName, "already exists")
+	ErrProgressiveRolloutNotFound      = err.NewErrorNotFound(
+		err.AutoopsPackageName,
+		"not found",
+		"progressive_rollout",
+	)
+	ErrProgressiveRolloutUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
+		err.AutoopsPackageName,
+		"unexpected affected rows",
+	)
 )
 
 type progressiveRolloutStorage struct {

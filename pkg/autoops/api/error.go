@@ -56,8 +56,10 @@ var (
 		pkgErr.NewErrorAlreadyExists(pkgErr.AutoopsPackageName, "clause is already executed"),
 	)
 	statusIncompatibleOpsType = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "ops type is incompatible with ops clause", "ops_type"),
-	)
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"ops type is incompatible with ops clause", "ops_type",
+		))
 	statusShouldAddMoreClauses = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.AutoopsPackageName, "if existing clauses are deleted all, should add one or more clauses.", "clause"),
@@ -69,11 +71,16 @@ var (
 		pkgErr.NewErrorUnavailable(pkgErr.AutoopsPackageName, "auto ops rule is status of finished"),
 	)
 	statusOpsEventRateClauseRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.AutoopsPackageName, "ops event rate clause must be specified", "ops_event_rate_clause"),
+		pkgErr.NewErrorInvalidArgNil(pkgErr.AutoopsPackageName,
+			"ops event rate clause must be specified", "ops_event_rate_clause",
+		),
 	)
 	statusOpsEventRateClauseVariationIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName, "ops event rate clause variation id must be specified", "ops_event_rate_clause_variation_id"),
+			pkgErr.AutoopsPackageName,
+			"ops event rate clause variation id must be specified",
+			"ops_event_rate_clause_variation_id",
+		),
 	)
 	statusOpsEventRateClauseGoalIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
@@ -83,19 +90,34 @@ var (
 			pkgErr.AutoopsPackageName, "ops event rate clause min count must be specified", "ops_event_rate_clause_min_count"))
 	statusOpsEventRateClauseInvalidThredshold = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
-			pkgErr.AutoopsPackageName, "ops event rate clause thredshold must be >0 and <=1", "ops_event_rate_clause_thredshold"))
+			pkgErr.AutoopsPackageName,
+			"ops event rate clause thredshold must be >0 and <=1",
+			"ops_event_rate_clause_thredshold",
+		))
 	statusDatetimeClauseRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNil(pkgErr.AutoopsPackageName, "datetime clause must be specified", "datetime_clause"))
 	statusDatetimeClauseInvalidTime = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "datetime clause time must be after now timestamp", "datetime_clause_time"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"datetime clause time must be after now timestamp",
+			"datetime_clause_time",
+		))
 	statusDatetimeClauseDuplicateTime = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "datetime clause time must be unique", "datetime_clause_time"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"datetime clause time must be unique",
+			"datetime_clause_time",
+		))
 	statusNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "not found", "auto_ops_rule"))
 	statusAlreadyDeleted = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "already deleted", "deleted_auto_ops_rule"))
 	statusOpsEventRateClauseGoalNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "ops event rate clause goal does not exist", "ops_event_rate_clause_goal"))
+		pkgErr.NewErrorNotFound(
+			pkgErr.AutoopsPackageName,
+			"ops event rate clause goal does not exist",
+			"ops_event_rate_clause_goal",
+		))
 	statusAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.AutoopsPackageName, "already exists"))
 	statusUnauthenticated = api.NewGRPCStatus(
@@ -103,49 +125,98 @@ var (
 	statusPermissionDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.AutoopsPackageName, "permission denied"))
 	statusProgressiveRolloutFeatureIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "feature id must be specified for a progressive rollout", "feature_id"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"feature id must be specified for a progressive rollout",
+			"feature_id",
+		))
 	statusProgressiveRolloutClauseRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.AutoopsPackageName, "at least one clause must be specified for a progressive rollout", "clause"))
+		pkgErr.NewErrorInvalidArgNil(
+			pkgErr.AutoopsPackageName,
+			"at least one clause must be specified for a progressive rollout",
+			"clause",
+		))
 	statusIncorrectProgressiveRolloutClause = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "only one clause must be specified for a progressive rollout", "clause"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"only one clause must be specified for a progressive rollout",
+			"clause",
+		))
 	statusProgressiveRolloutInternal = api.NewGRPCStatus(
 		pkgErr.NewErrorInternal(pkgErr.AutoopsPackageName, "internal error occurs for a progressive rollout"))
 	statusProgressiveRolloutAlreadyStopped = api.NewGRPCStatus(
 		pkgErr.NewErrorUnavailable(pkgErr.AutoopsPackageName, "progressive rollout is already stopped"))
 	statusProgressiveRolloutClauseVariationIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName, "clause variation id must be specified for a progressive rollout", "clause_variation_id"))
+			pkgErr.AutoopsPackageName,
+			"clause variation id must be specified for a progressive rollout",
+			"clause_variation_id",
+		))
 	statusProgressiveRolloutClauseInvalidVariationID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,
-			"the clause variation id set in the progressive rollout is invalid for a progressive rollout", "clause_variation_id"))
+			"the clause variation id set in the progressive rollout is invalid for a progressive rollout",
+			"clause_variation_id",
+		))
 	statusProgressiveRolloutClauseSchedulesRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "at least one clause schedule must be specified for a progressive rollout", "clause_schedule"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"at least one clause schedule must be specified for a progressive rollout",
+			"clause_schedule",
+		))
 	statusProgressiveRolloutClauseInvalidIncrements = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "increments is invalid for a progressive rollout", "increments"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName,
+			"increments is invalid for a progressive rollout",
+			"increments",
+		))
 	statusProgressiveRolloutClauseUnknownInterval = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.AutoopsPackageName, "interval is unknown for a progressive rollout", "interval"))
+		pkgErr.NewErrorInvalidArgUnknown(
+			pkgErr.AutoopsPackageName,
+			"interval is unknown for a progressive rollout",
+			"interval",
+		))
 	statusProgressiveRolloutWaitingOrRunningExperimentExists = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.AutoopsPackageName, "cannot create a progressive rollout when there is a scheduled or running experiment"))
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.AutoopsPackageName,
+			"cannot create a progressive rollout when there is a scheduled or running experiment",
+		))
 	statusProgressiveRolloutInvalidVariationSize = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.AutoopsPackageName, "the number of variations must be equal to 2 when creating a progressive rollout"))
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.AutoopsPackageName,
+			"the number of variations must be equal to 2 when creating a progressive rollout",
+		))
 	statusProgressiveRolloutInvalidScheduleSpans = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
-			pkgErr.AutoopsPackageName, "the span of time for each scheduled time must be at least 5 minutes for a progressive rollout"))
+			pkgErr.AutoopsPackageName,
+			"the span of time for each scheduled time must be at least 5 minutes for a progressive rollout",
+		))
 	statusProgressiveRolloutScheduleExecutedAtRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "schedule executed_at must be specified for a progressive rollout", "schedule_executed_at"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"schedule executed_at must be specified for a progressive rollout",
+			"schedule_executed_at",
+		))
 	statusProgressiveRolloutScheduleInvalidWeight = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "schedule weight is invalid for a progressive rollout", "schedule_weight"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"schedule weight is invalid for a progressive rollout",
+			"schedule_weight",
+		))
 	statusProgressiveRolloutAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.AutoopsPackageName, "progressive rollout already exists"))
 	statusProgressiveRolloutIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "id must be specified for a progressive rollout", "id"))
 	statusProgressiveRolloutNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.AutoopsPackageName, "progressive rollout not found", "progressive_rollout"))
+		pkgErr.NewErrorNotFound(
+			pkgErr.AutoopsPackageName, "progressive rollout not found", "progressive_rollout"))
 	statusProgressiveRolloutInvalidCursor = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "cursor is invalid for a progressive rollout", "cursor"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName, "cursor is invalid for a progressive rollout", "cursor"))
 	statusProgressiveRolloutInvalidOrderBy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AutoopsPackageName, "order_by is invalid for a progressive rollout", "order_by"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AutoopsPackageName, "order_by is invalid for a progressive rollout", "order_by"))
 	statusProgressiveRolloutScheduleIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AutoopsPackageName, "schedule id must be specified for a progressive rollout", "schedule_id"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName, "schedule id must be specified for a progressive rollout", "schedule_id"))
 )
