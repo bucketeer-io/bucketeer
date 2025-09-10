@@ -67,7 +67,7 @@ const RuleForm = ({
     () =>
       compact(
         feature.rules
-          ?.flatMap(item => item.clauses)
+          ?.flatMap(item => item?.clauses || [])
           .map(clause => clause.attribute)
       ),
     [feature.rules]

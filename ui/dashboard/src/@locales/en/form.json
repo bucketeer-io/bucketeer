@@ -354,5 +354,11 @@
   "name-email-search-placeholder": "Search by name or email...",
   "name-desc-search-placeholder": "Search by name or description...",
   "email-search-placeholder": "Search by email...",
-  "name-search-placeholder": "Search by name..."
+  "name-search-placeholder": "Search by name...",
+  "discard-unsaved-changes": "Discard unsaved changes",
+  "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
+  "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user",
+  "custom-rule-discard-desc": "{{action}} clause with <b>{{clauseLabel}}</b>",
+  "custom-rule-clause-value-discard-desc": "{{action}} value {{value}} from clause <b>{{clauseLabel}}</b>",
+  "custom-rule-strategy-discard-desc": "{{action}} rule variation to"
 }
