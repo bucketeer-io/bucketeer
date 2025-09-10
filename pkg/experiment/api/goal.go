@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -69,26 +70,12 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mapConnectedOperations(ctx, []*proto.Goal{goal.Goal}, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error("Failed to map connected operations", zap.Error(err))
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.GetGoalResponse{Goal: goal.Goal}, nil
 }
@@ -180,26 +167,12 @@ func (s *experimentService) ListGoals(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mapConnectedOperations(ctx, goals, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error("Failed to map connected operations", zap.Error(err))
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	return &proto.ListGoalsResponse{
@@ -309,14 +282,7 @@ func (s *experimentService) CreateGoal(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentId)
@@ -346,14 +312,7 @@ func (s *experimentService) CreateGoal(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.CreateGoalResponse{
 		Goal: goal.Goal,
@@ -378,14 +337,7 @@ func (s *experimentService) createGoalNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		e, err := domainevent.NewEvent(
@@ -432,14 +384,7 @@ func (s *experimentService) createGoalNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.CreateGoalResponse{
 		Goal: goal.Goal,
@@ -641,14 +586,7 @@ func (s *experimentService) updateGoalNoCommand(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.UpdateGoalResponse{
 		Goal: updatedGoal,
@@ -791,14 +729,7 @@ func (s *experimentService) DeleteGoal(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.DeleteGoalResponse{}, nil
 }
@@ -837,14 +768,7 @@ func (s *experimentService) updateGoal(
 			}
 			return dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
