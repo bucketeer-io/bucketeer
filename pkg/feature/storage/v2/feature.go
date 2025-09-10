@@ -29,7 +29,10 @@ import (
 var (
 	ErrFeatureAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "feature already exists")
 	ErrFeatureNotFound               = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "feature not found", "feature")
-	ErrFeatureUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.FeaturePackageName, "feature unexpected affected rows")
+	ErrFeatureUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.FeaturePackageName,
+		"feature unexpected affected rows",
+	)
 )
 
 var (

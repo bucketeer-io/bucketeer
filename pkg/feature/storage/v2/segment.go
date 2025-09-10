@@ -32,7 +32,10 @@ import (
 var (
 	ErrSegmentAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "segment already exists")
 	ErrSegmentNotFound               = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "segment not found", "segment")
-	ErrSegmentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.FeaturePackageName, "segment unexpected affected rows")
+	ErrSegmentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.FeaturePackageName,
+		"segment unexpected affected rows",
+	)
 
 	//go:embed sql/segment/select_segments.sql
 	selectSegmentsSQL string

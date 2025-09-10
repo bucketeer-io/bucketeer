@@ -46,9 +46,19 @@ var (
 )
 
 var (
-	ErrFlagTriggerAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "flag trigger already exists")
-	ErrFlagTriggerNotFound               = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "flag trigger not found", "flag_trigger")
-	ErrFlagTriggerUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(pkgErr.FeaturePackageName, "flag trigger unexpected affected rows")
+	ErrFlagTriggerAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.FeaturePackageName,
+		"flag trigger already exists",
+	)
+	ErrFlagTriggerNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName,
+		"flag trigger not found",
+		"flag_trigger",
+	)
+	ErrFlagTriggerUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.FeaturePackageName,
+		"flag trigger unexpected affected rows",
+	)
 )
 
 type FlagTriggerStorage interface {

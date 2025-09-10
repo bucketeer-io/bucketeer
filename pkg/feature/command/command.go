@@ -17,8 +17,9 @@ package command
 import (
 	"context"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/golang/protobuf/ptypes"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
