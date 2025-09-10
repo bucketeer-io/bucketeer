@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { autoOpsCreator } from '@api/auto-ops';
 import { FeatureResponse, featureUpdater } from '@api/features';
@@ -6,15 +6,20 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
-import { invalidateUserSegments } from '@queries/user-segments';
+import {
+  invalidateUserSegments,
+  useQueryUserSegments
+} from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast, useToggleOpen } from 'hooks';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
-import { v4 as uuid } from 'uuid';
-import { Evaluation, Feature } from '@types';
+import { Evaluation, Feature, FeatureRule } from '@types';
+import { isEmpty } from 'utils/data-type';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -28,6 +33,7 @@ import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
+import DiscardChangeModal from '../elements/discard-changes-modal';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
@@ -40,14 +46,28 @@ import { formSchema, TargetingSchema } from './form-schema';
 import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
 import TargetSegmentRule from './segment-rule';
-import { PrerequisiteSchema, RuleCategory } from './types';
+import {
+  DiscardChangesState,
+  DiscardChangesStateData,
+  DiscardChangesType,
+  IndividualRuleItem,
+  PrerequisiteSchema,
+  RuleCategory
+} from './types';
 import {
   getDefaultRule,
+  handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
+  handleCheckPrerequisiteDiscardChanges,
   handleCheckPrerequisites,
   handleCheckSegmentRules,
+  handleCheckSegmentRulesDiscardChanges,
   handleCreateDefaultValues,
-  handleGetDefaultRuleStrategy
+  handleCreateIndividualRules,
+  handleCreatePrerequisites,
+  handleCreateSegmentRules,
+  handleGetDefaultRuleStrategy,
+  handleSwapRuleFeature
 } from './utils';
 
 export const TargetingDivider = () => (
@@ -62,6 +82,11 @@ const TargetingPage = ({
   editable: boolean;
 }) => {
   const { consoleAccount } = useAuth();
+  const {
+    situationOptions,
+    conditionerCompareOptions,
+    conditionerDateOptions
+  } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
@@ -79,13 +104,28 @@ const TargetingPage = ({
   const [debuggerForm, setDebuggerForm] = useState<AddDebuggerFormType | null>(
     null
   );
+  const featureRef = useRef<Feature>(cloneDeep(feature));
   const [isShowRules, setIsShowRules] = useState<boolean>(feature.enabled);
-
+  const [discardChangesState, setDiscardChangesState] =
+    useState<DiscardChangesState>({
+      type: undefined,
+      isOpen: false,
+      data: [],
+      ruleIndex: undefined
+    });
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
       environmentId: currentEnvironment.id,
       featureIds: [feature.id]
+    }
+  });
+
+  const { data: segmentCollection } = useQueryUserSegments({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
     }
   });
 
@@ -117,7 +157,9 @@ const TargetingPage = ({
     control,
     formState: { isDirty, isValid, dirtyFields, isSubmitting },
     watch,
-    reset
+    reset,
+    setValue,
+    getValues
   } = form;
 
   useUnsavedLeavePage({
@@ -127,6 +169,10 @@ const TargetingPage = ({
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
+  const operatorOptions = useMemo(
+    () => [...conditionerCompareOptions, ...conditionerDateOptions],
+    [conditionerCompareOptions, conditionerDateOptions]
+  );
 
   const hasPrerequisiteFlags = activeFeatures.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
@@ -195,6 +241,7 @@ const TargetingPage = ({
         );
       }
       segmentRulesAppend(getDefaultRule(feature));
+      featureRef.current.rules.push(getDefaultRule(featureRef.current));
     },
     [feature]
   );
@@ -202,16 +249,121 @@ const TargetingPage = ({
   const handleSwapSegmentRule = useCallback(
     (indexA: number, indexB: number) => {
       segmentRulesUpdate(indexA, {
-        ...segmentRulesWatch[indexA],
-        id: uuid()
+        ...segmentRulesWatch[indexA]
       });
       segmentRulesUpdate(indexB, {
-        ...segmentRulesWatch[indexB],
-        id: uuid()
+        ...segmentRulesWatch[indexB]
       });
       segmentRulesSwap(indexA, indexB);
+      const featureRuleSwap = handleSwapRuleFeature(
+        featureRef.current,
+        indexA,
+        indexB
+      );
+      featureRef.current = featureRuleSwap;
     },
     [segmentRulesWatch]
+  );
+
+  const handleDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      const { prerequisites, individualRules, segmentRules } = getValues();
+      let discardData: DiscardChangesStateData[] | null = null;
+      if (type === DiscardChangesType.PREREQUISITE) {
+        discardData = handleCheckPrerequisiteDiscardChanges(
+          prerequisites as PrerequisiteSchema[],
+          feature,
+          activeFeatures
+        );
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        discardData = handleCheckIndividualDiscardChanges(
+          feature,
+          individualRules as IndividualRuleItem[]
+        );
+      }
+
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        if (segmentRules) {
+          const variationFeatures = feature.variations;
+          discardData = handleCheckSegmentRulesDiscardChanges(
+            featureRef.current?.rules[index] || [],
+            segmentCollection?.segments || [],
+            segmentRules[index] as unknown as FeatureRule,
+            situationOptions,
+            features,
+            operatorOptions,
+            variationFeatures,
+            t
+          );
+        }
+      }
+      if (isEmpty(discardData)) return onDiscardChanges(type);
+      setDiscardChangesState({
+        type,
+        isOpen: true,
+        data: discardData!,
+        ruleIndex: index
+      });
+    },
+    [activeFeatures, feature, segmentRulesWatch, featureRef.current]
+  );
+
+  const handleOnCloseDiscardModal = useCallback(() => {
+    setDiscardChangesState({
+      type: undefined,
+      isOpen: false,
+      data: []
+    });
+  }, []);
+
+  const onDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      if (type === DiscardChangesType.PREREQUISITE) {
+        const { prerequisites } = feature;
+
+        const resetPrerequisites = prerequisites.length
+          ? handleCreatePrerequisites(prerequisites)
+          : [];
+
+        setValue('prerequisites', resetPrerequisites, {
+          shouldDirty: resetPrerequisites.length === 0
+        });
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        const { targets, variations } = feature;
+        const resetIndividualRules = targets.length
+          ? handleCreateIndividualRules(targets, variations)
+          : [];
+        setValue('individualRules', resetIndividualRules, {
+          shouldDirty: resetIndividualRules.length === 0
+        });
+      }
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        const currentRule = featureRef.current.rules[index] as FeatureRule;
+
+        console.log('check rule index curren t::: ', currentRule);
+        const matchedRuleIndex = feature.rules.findIndex(
+          r => r.id === currentRule.id
+        );
+
+        if (matchedRuleIndex !== -1) {
+          const resetSegmentRules = handleCreateSegmentRules(feature);
+          const resetSwap = resetSegmentRules.find(
+            r => r.id === currentRule.id
+          );
+          segmentRulesUpdate(index, resetSwap!);
+        } else {
+          segmentRulesRemove(index);
+          featureRef.current = {
+            ...featureRef.current,
+            rules: featureRef.current.rules.filter((_, i) => i !== index)
+          };
+        }
+      }
+      handleOnCloseDiscardModal();
+    },
+    [feature, featureRef.current, segmentRulesWatch]
   );
 
   const onSubmit = useCallback(
@@ -336,6 +488,7 @@ const TargetingPage = ({
                     prerequisites={prerequisites}
                     hasPrerequisiteFlags={hasPrerequisiteFlags}
                     onRemovePrerequisite={prerequisiteRemove}
+                    handleDiscardChanges={handleDiscardChanges}
                     onAddPrerequisite={() =>
                       onAddRule(RuleCategory.PREREQUISITE)
                     }
@@ -355,7 +508,10 @@ const TargetingPage = ({
               {individualRules?.length > 0 && (
                 <>
                   <TargetingDivider />
-                  <IndividualRule individualRules={individualRules} />
+                  <IndividualRule
+                    individualRules={individualRules}
+                    handleDiscardChanges={handleDiscardChanges}
+                  />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
@@ -376,6 +532,7 @@ const TargetingPage = ({
                     onAddRule={onAddRule}
                     segmentRulesRemove={segmentRulesRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
+                    handleDiscardChanges={handleDiscardChanges}
                   />
                   <TargetingDivider />
                   <AddRule
@@ -467,6 +624,13 @@ const TargetingPage = ({
             setEvaluations([]);
             onOpenDebuggerModal();
           }}
+        />
+      )}
+      {discardChangesState.isOpen && (
+        <DiscardChangeModal
+          {...discardChangesState}
+          onClose={handleOnCloseDiscardModal}
+          onSubmit={onDiscardChanges}
         />
       )}
     </PageLayout.Content>
