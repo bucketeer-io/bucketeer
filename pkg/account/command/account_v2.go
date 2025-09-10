@@ -223,11 +223,12 @@ func (h *accountV2CommandHandler) changeEnvironmentRoles(
 	ctx context.Context,
 	cmd *accountproto.ChangeAccountV2EnvironmentRolesCommand,
 ) error {
-	if cmd.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_OVERRIDE {
+	switch cmd.WriteType {
+	case accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_OVERRIDE:
 		if err := h.account.ChangeEnvironmentRole(cmd.Roles); err != nil {
 			return err
 		}
-	} else if cmd.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH {
+	case accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH:
 		if err := h.account.PatchEnvironmentRole(cmd.Roles); err != nil {
 			return err
 		}

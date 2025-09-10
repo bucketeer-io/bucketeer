@@ -35,5 +35,3 @@ type CodeReferenceStorage interface {
 	) ([]*domain.CodeReference, int, int64, error)
 	DeleteCodeReference(ctx context.Context, id string) error
 }
-
-const transactionKey = "transaction"

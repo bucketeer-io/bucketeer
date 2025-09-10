@@ -19,7 +19,6 @@ import (
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -35,7 +34,7 @@ type FeatureEventFactory struct {
 func (s *FeatureEventFactory) CreateEvent(
 	eventType eventproto.Event_Type,
 	event proto.Message,
-) (*domainproto.Event, error) {
+) (*eventproto.Event, error) {
 	var prev *featureproto.Feature
 	if s.previousFeature != nil && s.previousFeature.Feature != nil {
 		prev = s.previousFeature.Feature

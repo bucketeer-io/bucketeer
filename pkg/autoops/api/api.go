@@ -34,7 +34,6 @@ import (
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -1642,7 +1641,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return dt.Err()
 		}
-		ftStorage := ftstorage.NewFeatureStorage(tx)
+		ftStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -1802,7 +1801,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 			return dt.Err()
 		}
 
-		ftStorage := ftstorage.NewFeatureStorage(tx)
+		ftStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
