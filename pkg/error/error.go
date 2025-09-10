@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	AccountPackageName = "account"
-	FeaturePackageName = "feature"
+	AccountPackageName      = "account"
+	FeaturePackageName      = "feature"
+	NotificationPackageName = "notification"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
