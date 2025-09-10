@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
+import { IconUndoOutlined } from 'react-icons-material-design';
 import { MultiValue } from 'react-select';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -15,11 +16,12 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { TargetingSchema } from '../form-schema';
-import { IndividualRuleItem } from '../types';
+import { DiscardChangesType, IndividualRuleItem } from '../types';
 import { getAlreadyTargetedVariation } from '../utils';
 
 interface Props {
   individualRules: IndividualRuleItem[];
+  handleDiscardChanges: (type: DiscardChangesType) => void;
 }
 
 export const UserMessage = ({ message }: { message: ReactNode }) => {
@@ -28,7 +30,7 @@ export const UserMessage = ({ message }: { message: ReactNode }) => {
   );
 };
 
-const IndividualRule = ({ individualRules }: Props) => {
+const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
   const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const { notify } = useToast();
 
@@ -46,7 +48,7 @@ const IndividualRule = ({ individualRules }: Props) => {
 
   return (
     <Card>
-      <div>
+      <div className="flex items-center w-full justify-between">
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium leading-4 text-gray-700">
             {t('form:targeting.individual-target')}
@@ -61,6 +63,16 @@ const IndividualRule = ({ individualRules }: Props) => {
               </div>
             }
             className="max-w-[400px]"
+          />
+        </div>
+        <div
+          className="flex-center h-8 w-8 px-2 border-gray-500 border rounded-md cursor-pointer group"
+          onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
+        >
+          <Icon
+            icon={IconUndoOutlined}
+            size={'sm'}
+            className="flex-center text-gray-500 group-hover:text-gray-700"
           />
         </div>
       </div>
