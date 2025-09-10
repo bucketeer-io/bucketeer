@@ -389,6 +389,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
 				},
+				IsAdmin: true,
 			},
 			expectedErr: nil,
 		},

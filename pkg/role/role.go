@@ -68,6 +68,7 @@ func CheckEnvironmentRole(
 			Email:           publicAPIEditor.Maintainer,
 			Name:            publicAPIEditor.Name,
 			PublicApiEditor: publicAPIEditor,
+			IsAdmin:         true,
 		}, nil
 	}
 
@@ -156,6 +157,7 @@ func CheckOrganizationRole(
 			Email:           publicAPIEditor.Maintainer,
 			Name:            publicAPIEditor.Name,
 			PublicApiEditor: publicAPIEditor,
+			IsAdmin:         true,
 		}, nil
 	}
 
