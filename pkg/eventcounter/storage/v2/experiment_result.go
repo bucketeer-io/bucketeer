@@ -26,7 +26,10 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
-var ErrExperimentResultNotFound = pkgErr.NewErrorNotFound(pkgErr.EventCounterPackageName, "experiment result not found", "experiment_result")
+var ErrExperimentResultNotFound = pkgErr.NewErrorNotFound(
+	pkgErr.EventCounterPackageName,
+	"experiment result not found",
+	"experiment_result")
 
 var (
 	//go:embed sql/select_experiment_result.sql

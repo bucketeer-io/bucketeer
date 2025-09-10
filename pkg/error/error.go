@@ -23,6 +23,7 @@ import (
 const (
 	AccountPackageName      = "account"
 	EventCounterPackageName = "eventcounter"
+	EnvironmentPackageName  = "environment"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
@@ -41,6 +42,7 @@ const (
 	ErrorTypePermissionDenied         ErrorType = "permission_denied"
 	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal                 ErrorType = "internal"
+	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
 	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
@@ -136,6 +138,10 @@ func NewErrorUnexpectedAffectedRows(pkg string, message string) *BktError {
 
 func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
+}
+
+func NewErrorFailedPrecondition(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }
 
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {

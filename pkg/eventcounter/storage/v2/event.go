@@ -45,8 +45,12 @@ var (
 	//go:embed sql/goal_count.sql
 	goalCountSQL string
 
-	ErrUnexpectedMultipleResults = pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "bigquery: unexpected multiple results")
-	ErrNoResultsFound            = pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "bigquery: no results found")
+	ErrUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"bigquery: unexpected multiple results")
+	ErrNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"bigquery: no results found")
 )
 
 type EventStorage interface {
