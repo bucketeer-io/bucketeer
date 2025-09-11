@@ -35,7 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
 	mockAutoOpsStorage "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2/mock"
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
+	bkterr "github.com/bucketeer-io/bucketeer/pkg/error"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
@@ -344,7 +344,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, err.NewErrorInternal("autoops", "error"))
+				).Return(nil, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error"))
 			},
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
@@ -362,7 +362,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "error")).Err(),
+			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error")).Err(),
 		},
 		{
 			desc: "success event rate",
@@ -682,7 +682,7 @@ func TestCreateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, err.NewErrorInternal("autoops", "error"))
+				).Return(nil, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error"))
 			},
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				FeatureId: "fid",
@@ -698,7 +698,7 @@ func TestCreateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: api.NewGRPCStatus(err.NewErrorInternal("autoops", "error")).Err(),
+			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error")).Err(),
 		},
 		{
 			desc: "success event rate",
