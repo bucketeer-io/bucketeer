@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	AccountPackageName  = "account"
-	AuditlogPackageName = "auditlog"
-	AutoopsPackageName  = "autoops"
+	AccountPackageName      = "account"
+	NotificationPackageName = "notification"
+	AuditlogPackageName     = "auditlog"
+	AutoopsPackageName      = "autoops"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"

@@ -24,9 +24,6 @@ export const schedulesListSchema = ({
   const laterThanCurrentTimeMessage = translation(
     'message:validation.operation.later-than-current-time'
   );
-  const increasingOrderMessage = translation(
-    'message:validation.operation.date-increasing-order'
-  );
 
   return yup
     .array()
@@ -50,26 +47,7 @@ export const schedulesListSchema = ({
               name: translation('message:operation.the-weight'),
               value: 100
             })
-          )
-          .test('isAscending', (_, context) => {
-            if (
-              context.from &&
-              context.from[3].value.progressiveRolloutType ===
-                RolloutTypeMap.MANUAL_SCHEDULE
-            ) {
-              const isValidWeight = isArraySorted(
-                context.from[3].value.progressiveRollout.manual.schedulesList.map(
-                  (d: yup.AnyObject) => Number(d.weight)
-                )
-              );
-              if (!isValidWeight)
-                return context.createError({
-                  message: increasingOrderMessage,
-                  path: context.path
-                });
-            }
-            return true;
-          }),
+          ),
         executeAt: yup
           .date()
           .required(requiredMessage)
@@ -88,51 +66,69 @@ export const schedulesListSchema = ({
                 });
             }
             return true;
-          })
-          .test('isAscending', (_, context) => {
-            if (
-              context.from &&
-              context.from[3].value.progressiveRolloutType ===
-                RolloutTypeMap.MANUAL_SCHEDULE
-            ) {
-              const isValidDates = isTimestampArraySorted(
-                context.from[3].value.progressiveRollout.manual.schedulesList.map(
-                  (d: yup.AnyObject) => d.executeAt.getTime()
-                )
-              ).isSorted;
-              if (!isValidDates)
-                return context.createError({
-                  message: increasingOrderMessage,
-                  path: context.path
-                });
-            }
-            return true;
-          })
-          .test(
-            'timeIntervals',
-            translation('message:validation.operation.schedule-interval'),
-            (_, context) => {
-              if (
-                context.from &&
-                context.from[3].value.progressiveRolloutType ===
-                  RolloutTypeMap.MANUAL_SCHEDULE
-              ) {
-                const isValidIntervals = areIntervalsApart(
-                  context.from[3].value.progressiveRollout.manual.schedulesList.map(
-                    (d: yup.AnyObject) => d.executeAt.getTime()
-                  ),
-                  5
-                );
-                if (!isValidIntervals) return false;
-              }
+          }),
 
-              return true;
-            }
-          ),
         triggeredAt: yup.string()
       })
     )
-    .required(requiredMessage);
+    .required(requiredMessage)
+    .test(
+      'isAscending',
+      translation('message:validation.operation.weight-increasing-order'),
+      (_, context) => {
+        if (
+          context.from &&
+          context.from[2].value.progressiveRolloutType ===
+            RolloutTypeMap.MANUAL_SCHEDULE
+        ) {
+          return isArraySorted(
+            context.from[2].value.progressiveRollout.manual.schedulesList.map(
+              (d: yup.AnyObject) => Number(d.weight)
+            )
+          );
+        }
+        return true;
+      }
+    )
+    .test(
+      'isAscending',
+      translation('message:validation.operation.date-increasing-order'),
+      (_, context) => {
+        if (
+          context.from &&
+          context.from[2].value.progressiveRolloutType ===
+            RolloutTypeMap.MANUAL_SCHEDULE
+        ) {
+          return isTimestampArraySorted(
+            context.from[2].value.progressiveRollout.manual.schedulesList.map(
+              (d: yup.AnyObject) => d.executeAt.getTime()
+            )
+          ).isSorted;
+        }
+        return true;
+      }
+    )
+    .test(
+      'timeIntervals',
+      translation('message:validation.operation.schedule-interval'),
+      (_, context) => {
+        if (
+          context.from &&
+          context.from[2].value.progressiveRolloutType ===
+            RolloutTypeMap.MANUAL_SCHEDULE
+        ) {
+          const isValidIntervals = areIntervalsApart(
+            context.from[2].value.progressiveRollout.manual.schedulesList.map(
+              (d: yup.AnyObject) => d.executeAt.getTime()
+            ),
+            5
+          );
+          if (!isValidIntervals) return false;
+        }
+
+        return true;
+      }
+    );
 };
 
 export interface DateTimeClauseListType {
