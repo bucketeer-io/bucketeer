@@ -23,6 +23,8 @@ import (
 const (
 	AccountPackageName      = "account"
 	NotificationPackageName = "notification"
+	CoderefPackageName      = "coderef"
+	TeamPackageName         = "team"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
