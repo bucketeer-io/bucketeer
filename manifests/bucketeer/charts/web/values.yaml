@@ -9,6 +9,8 @@ env:
   bucketeerTestEnabled:
   demoSiteEnabled: false
   gcpEnabled: true
+  enablePprof: false
+  pprofAddr: 127.0.0.1:6060
   bigqueryQuerierEmulatorHost:
   pubsubEmulatorHost:
   project:

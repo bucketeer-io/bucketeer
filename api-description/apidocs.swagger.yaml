@@ -1858,7 +1858,7 @@ paths:
             - THIRTY_DAYS
           default: UNKNOWN
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/experiment_evaluation_count:
     get:
       summary: Get Experiment Evaluation Count
@@ -1928,7 +1928,7 @@ paths:
             type: string
           collectionFormat: multi
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/experiment_goal_count:
     get:
       summary: Get Experiment Goal Count
@@ -2002,7 +2002,7 @@ paths:
             type: string
           collectionFormat: multi
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/experiment_result:
     get:
       summary: Get Experiment Result
@@ -2050,7 +2050,7 @@ paths:
           required: true
           type: string
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/experiment_results:
     get:
       summary: List Experiment Results
@@ -2103,7 +2103,7 @@ paths:
           type: integer
           format: int32
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/ops_evaluation_user_count:
     get:
       summary: Get Ops Evaluation User Count
@@ -2168,7 +2168,7 @@ paths:
           required: true
           type: string
       tags:
-        - Experiments
+        - Event Counter
   /v1/event_counter/ops_goal_user_count:
     get:
       summary: Get Ops Goal User Count
