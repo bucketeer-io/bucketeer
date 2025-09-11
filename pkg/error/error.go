@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	AccountPackageName = "account"
-	PushPackageName    = "push"
-	TagPackageName     = "tag"
+	AccountPackageName      = "account"
+	NotificationPackageName = "notification"
+	PushPackageName         = "push"
+	TagPackageName          = "tag"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"

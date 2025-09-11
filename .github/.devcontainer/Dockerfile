@@ -7,10 +7,6 @@ ENV LANG="C.UTF-8" \
     SHELL=/bin/bash \
     DOCKER_BUILDKIT=1
 
-# Restore man command
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && yes | unminimize 2>&1
-
 # Install packages in optimized order for better layer caching
 RUN apt-get update \
     && apt-get upgrade -y \
@@ -29,6 +25,13 @@ RUN apt-get update \
         zip \
         rsync \
         moreutils \
+        # Minimal man support
+        man-db \
+        manpages \
+        manpages-dev \
+        groff-base \
+        less \
+        locales \
     && add-apt-repository universe \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -98,7 +101,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Go
 RUN ARCH=$(dpkg --print-architecture) \
-    && curl -fsSL "https://golang.org/dl/go1.24.1.linux-${ARCH}.tar.gz" | tar -C /usr/local -xzf -
+    && curl -fsSL "https://golang.org/dl/go1.25.1.linux-${ARCH}.tar.gz" | tar -C /usr/local -xzf -
 
 # Install Node.js
 RUN ARCH=$(dpkg --print-architecture) \

@@ -2,7 +2,12 @@ import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { getLanguage, useTranslation } from 'i18n';
-import { areIntervalsApart } from 'utils/function';
+import {
+  areIntervalsApart,
+  hasDuplicateTimestamps,
+  isArraySorted,
+  isTimestampArraySorted
+} from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
 import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
@@ -47,6 +52,20 @@ const ManualSchedule = ({
     keyName: 'scheduleItemId'
   });
 
+  const isWeightsSorted = isArraySorted(
+    watchScheduleList.map(d => Number(d.weight))
+  );
+  const isDatesSorted = isTimestampArraySorted(
+    watchScheduleList.map(d => d.executeAt.getTime())
+  ).isSorted;
+  const hasDuplicate = hasDuplicateTimestamps(
+    watchScheduleList.map(d => d.executeAt.getTime())
+  );
+  const isDatetime5MinutesApart = areIntervalsApart(
+    watchScheduleList.map(d => d.executeAt.getTime()),
+    5
+  );
+
   const isLastScheduleWeight100 = useMemo(
     () => Number(watchScheduleList.at(-1)?.weight) === 100,
     [watchScheduleList]
@@ -77,6 +96,22 @@ const ManualSchedule = ({
     );
     if (isValidIntervals)
       clearErrors('progressiveRollout.manual.schedulesList');
+  };
+
+  const getValidationErrorMessage = () => {
+    if (!isWeightsSorted) {
+      return t('message:validation.operation.weight-increasing-order');
+    }
+    if (hasDuplicate) {
+      return t('message:validation.operation.schedules-same-time');
+    }
+    if (!isDatesSorted) {
+      return t('message:validation.operation.date-increasing-order');
+    }
+    if (!isDatetime5MinutesApart) {
+      return t('message:validation.operation.schedule-interval');
+    }
+    return null;
   };
 
   return (
@@ -206,17 +241,6 @@ const ManualSchedule = ({
                     onChange={date => {
                       if (date) {
                         field.onChange(date);
-                        const isValidIntervals = areIntervalsApart(
-                          watchScheduleList.map((item, idx) =>
-                            (idx === index ? date : item.executeAt).getTime()
-                          ),
-                          5
-                        );
-                        if (isValidIntervals) {
-                          clearErrors(
-                            'progressiveRollout.manual.schedulesList'
-                          );
-                        }
                       }
                     }}
                   />
@@ -236,11 +260,27 @@ const ManualSchedule = ({
           </Button>
         </div>
       ))}
+
+      {(hasDuplicate ||
+        !isDatetime5MinutesApart ||
+        !isWeightsSorted ||
+        !isDatesSorted) && (
+        <p className="typo-para-small text-accent-red-500">
+          {getValidationErrorMessage()}
+        </p>
+      )}
+
       <Button
         type="button"
         variant={'text'}
         className="w-fit px-0 h-6"
-        disabled={isLastScheduleWeight100 || isDisabled}
+        disabled={
+          isLastScheduleWeight100 ||
+          isDisabled ||
+          hasDuplicate ||
+          !isWeightsSorted ||
+          !isDatesSorted
+        }
         onClick={handleAddIncrement}
       >
         <Icon icon={IconPlus} size={'md'} />

@@ -105,6 +105,10 @@ spec:
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_SUBSCRIBER_ENABLE_PPROF
+              value: "{{ .Values.env.enablePprof }}"
+            - name: BUCKETEER_SUBSCRIBER_PPROF_ADDR
+              value: "{{ .Values.env.pprofAddr }}"
             - name: BUCKETEER_SUBSCRIBER_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
             - name: BUCKETEER_SUBSCRIBER_PORT

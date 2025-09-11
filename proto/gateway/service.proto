@@ -2041,7 +2041,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Evaluation Count",
       description: "Get the evaluation count for an Experiment. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.evaluation_count.get"
     };
   }
@@ -2053,7 +2053,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Evaluation Timeseries Count",
       description: "Get the evaluation timeseries count for an Experiment. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.evaluation_timeseries_count.get"
     };
   }
@@ -2065,7 +2065,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Result",
       description: "Get the result for an Experiment. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.experiment_result.get"
     };
   }
@@ -2077,7 +2077,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Experiment Results",
       description: "List the results for Experiments. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.experiment_result.list"
     };
   }
@@ -2089,7 +2089,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Experiment Goal Count",
       description: "Get the goal count for an Experiment. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.goal_count.get"
     };
   }
@@ -2101,7 +2101,7 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Ops Evaluation User Count",
       description: "Get the user count for an Ops Evaluation. To call this API, you need a `READ` API Key role.",
-      tags: "Experiments",
+      tags: "Event Counter",
       operation_id: "api.gateway.v1.event_counter.ops_evaluation_user_count.get"
     };
   }
