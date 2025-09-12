@@ -20,14 +20,15 @@ import (
 	_ "embed"
 	"errors"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 var (
-	ErrTagNotFound               = errors.New("tag: not found")
-	ErrTagUnexpectedAffectedRows = errors.New("tag: unexpected affected rows")
+	ErrTagNotFound               = err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag")
+	ErrTagUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(err.TagPackageName, "tag unexpected affected rows")
 
 	//go:embed sql/insert_tag.sql
 	insertTagSQL string
