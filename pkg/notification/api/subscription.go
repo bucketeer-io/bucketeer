@@ -76,7 +76,7 @@ func (s *NotificationService) CreateSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
+	handler := command.NewEmptySubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if err := s.subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId); err != nil {
 			return err
@@ -362,7 +362,7 @@ func (s *NotificationService) updateSubscription(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
+	handler := command.NewEmptySubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, id, environmentId)
 		if err != nil {

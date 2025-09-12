@@ -36,7 +36,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	evdomain "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
@@ -326,7 +325,7 @@ func (s *EnvironmentService) createProjectNoCommand(
 	if err != nil {
 		return nil, err
 	}
-	var domainEvent *evdomain.Event
+	var domainEvent *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
 		domainEvent, err = s.newCreateDomainEvent(newProj.Project, editor)
@@ -433,7 +432,7 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 func (s *EnvironmentService) newCreateDomainEvent(
 	newProj *environmentproto.Project,
 	editor *eventproto.Editor,
-) (*evdomain.Event, error) {
+) (*eventproto.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PROJECT,
@@ -909,7 +908,7 @@ func (s *EnvironmentService) updateProjectNoCommand(
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateProjectResponse, error) {
-	var domainEvent *evdomain.Event
+	var domainEvent *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
 		updated, err := project.Update(
@@ -1020,7 +1019,7 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 	req *environmentproto.UpdateProjectRequest,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
-) (*evdomain.Event, error) {
+) (*eventproto.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PROJECT,

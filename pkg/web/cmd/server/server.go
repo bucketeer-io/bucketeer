@@ -60,7 +60,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	gatewayapi "github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -836,12 +835,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Set up REST gateway
 	restAddr := fmt.Sprintf(":%d", *s.webGrpcGatewayPort)
 
-	webGrpcGateway, err := gateway.NewGateway(
+	webGrpcGateway, err := gatewayapi.NewGateway(
 		restAddr,
-		gateway.WithLogger(logger.Named("web-grpc-gateway")),
-		gateway.WithMetrics(registerer),
-		gateway.WithCertPath(*s.certPath),
-		gateway.WithKeyPath(*s.keyPath),
+		gatewayapi.WithLogger(logger.Named("web-grpc-gateway")),
+		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create web gRPC gateway: %v", err)
@@ -945,9 +944,10 @@ func (s *server) createPublisher(
 	}
 
 	// Add provider-specific options
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		redisClient, err := redisv3.NewClient(
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),

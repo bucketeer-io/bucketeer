@@ -94,11 +94,11 @@ func (w *progressiveRolloutWatcher) listEnvironments(ctx context.Context) ([]*en
 	return resp.Environments, nil
 }
 
-func (s *progressiveRolloutWatcher) listProgressiveRollouts(
+func (w *progressiveRolloutWatcher) listProgressiveRollouts(
 	ctx context.Context,
 	environmentID string,
 ) ([]*aoproto.ProgressiveRollout, error) {
-	resp, err := s.aoClient.ListProgressiveRollouts(
+	resp, err := w.aoClient.ListProgressiveRollouts(
 		ctx,
 		&aoproto.ListProgressiveRolloutsRequest{
 			EnvironmentId: environmentID,

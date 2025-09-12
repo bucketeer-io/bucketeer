@@ -17,13 +17,12 @@ package crypto
 import (
 	"context"
 
-	cloudkms "cloud.google.com/go/kms/apiv1"
 	kms "cloud.google.com/go/kms/apiv1"
 	kmsproto "google.golang.org/genproto/googleapis/cloud/kms/v1"
 )
 
 type cloudKMSCrypto struct {
-	client  *cloudkms.KeyManagementClient
+	client  *kms.KeyManagementClient
 	keyName string
 }
 

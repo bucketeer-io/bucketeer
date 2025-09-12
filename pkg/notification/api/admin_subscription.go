@@ -58,7 +58,7 @@ func (s *NotificationService) CreateAdminSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if err := s.adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
@@ -349,7 +349,7 @@ func (s *NotificationService) updateAdminSubscription(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
 		if err != nil {
@@ -414,7 +414,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	if err := validateDeleteAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {

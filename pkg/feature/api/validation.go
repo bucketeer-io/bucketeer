@@ -22,7 +22,6 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -1168,7 +1167,7 @@ func validateArchiveFeatureRequest(
 }
 
 func validateVariationCommand(fs []*featureproto.Feature, tgt *featureproto.Feature, localizer locale.Localizer) error {
-	if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgt}, fs) {
+	if featuredomain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgt}, fs) {
 		dt, err := statusInvalidChangingVariation.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),

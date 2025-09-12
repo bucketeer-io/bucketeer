@@ -92,7 +92,7 @@ func (a *AutoOpsRule) Update(
 	}
 
 	if autoOpsStatus != nil {
-		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
+		updated.AutoOpsStatus = *autoOpsStatus
 	}
 
 	if err := updated.changeClauses(
@@ -103,7 +103,7 @@ func (a *AutoOpsRule) Update(
 	}
 
 	now := time.Now().Unix()
-	updated.AutoOpsRule.UpdatedAt = now
+	updated.UpdatedAt = now
 	return updated, nil
 }
 
@@ -274,8 +274,8 @@ func (a *AutoOpsRule) SetStopped() {
 }
 
 func (a *AutoOpsRule) SetDeleted() {
-	a.AutoOpsRule.Deleted = true
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.Deleted = true
+	a.UpdatedAt = time.Now().Unix()
 }
 
 func (a *AutoOpsRule) SetFinished() {
@@ -292,8 +292,8 @@ func (a *AutoOpsRule) IsStopped() bool {
 
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
 	now := time.Now().Unix()
-	a.AutoOpsRule.AutoOpsStatus = status
-	a.AutoOpsRule.UpdatedAt = now
+	a.AutoOpsStatus = status
+	a.UpdatedAt = now
 }
 
 func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*proto.Clause, error) {
@@ -305,7 +305,7 @@ func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*pr
 	if err != nil {
 		return nil, err
 	}
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.UpdatedAt = time.Now().Unix()
 	return clause, nil
 }
 
@@ -320,7 +320,7 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 	if err != nil {
 		return nil, err
 	}
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.UpdatedAt = time.Now().Unix()
 	return clause, nil
 }
 
@@ -334,7 +334,7 @@ func (a *AutoOpsRule) addClause(ac *any.Any, actionType proto.ActionType) (*prot
 		Clause:     ac,
 		ActionType: actionType,
 	}
-	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses, clause)
+	a.Clauses = append(a.Clauses, clause)
 	return clause, nil
 }
 
@@ -365,7 +365,7 @@ func (a *AutoOpsRule) sortDatetimeClause() {
 	for _, c := range sortClauses {
 		newClauses = append(newClauses, c.clause)
 	}
-	a.AutoOpsRule.Clauses = newClauses
+	a.Clauses = newClauses
 }
 
 func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRateClause) error {
@@ -373,7 +373,7 @@ func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRa
 	if err != nil {
 		return err
 	}
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
@@ -383,7 +383,7 @@ func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) 
 	if err != nil {
 		return err
 	}
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
@@ -406,7 +406,7 @@ func (a *AutoOpsRule) DeleteClause(id string) error {
 	if len(a.Clauses) <= 1 {
 		return errClauseEmpty
 	}
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.UpdatedAt = time.Now().Unix()
 	var clauses []*proto.Clause
 	for i, c := range a.Clauses {
 		if c.Id == id {

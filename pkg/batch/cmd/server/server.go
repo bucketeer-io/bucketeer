@@ -53,7 +53,6 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
-	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -358,7 +357,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	progressiveRolloutExecutor := opsexecutor.NewProgressiveRolloutExecutor(
 		autoOpsClient,
-		executor.WithLogger(logger),
+		opsexecutor.WithLogger(logger),
 	)
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)

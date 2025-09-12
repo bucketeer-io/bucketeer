@@ -175,7 +175,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 ) error {
 	locked, lockValue, err := e.experimentLock.Lock(ctx, env.Id, experiment.Id)
 	if err != nil {
-		return fmt.Errorf("Failed to acquire lock when calculating experiment. Error: %w", err)
+		return fmt.Errorf("failed to acquire lock when calculating experiment. Error: %w", err)
 	}
 	if !locked {
 		e.logger.Info("Experiment is being calculated by another instance",

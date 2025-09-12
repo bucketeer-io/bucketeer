@@ -728,7 +728,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 	if len(f.Targets[idx].Users) > 0 {
 		return ErrVariationInUse
 	}
-	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
+	if strategyContainsVariation(id, f.DefaultStrategy) {
 		return ErrVariationInUse
 	}
 	if f.rulesContainsVariation(id) {
@@ -738,7 +738,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 }
 
 func (f *Feature) rulesContainsVariation(id string) bool {
-	for _, r := range f.Feature.Rules {
+	for _, r := range f.Rules {
 		if ok := strategyContainsVariation(id, r.Strategy); ok {
 			return true
 		}
@@ -747,11 +747,12 @@ func (f *Feature) rulesContainsVariation(id string) bool {
 }
 
 func strategyContainsVariation(id string, strategy *feature.Strategy) bool {
-	if strategy.Type == feature.Strategy_FIXED {
+	switch strategy.Type {
+	case feature.Strategy_FIXED:
 		if strategy.FixedStrategy.Variation == id {
 			return true
 		}
-	} else if strategy.Type == feature.Strategy_ROLLOUT {
+	case feature.Strategy_ROLLOUT:
 		for _, v := range strategy.RolloutStrategy.Variations {
 			if v.Variation == id && v.Weight > 0 {
 				return true

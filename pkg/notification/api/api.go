@@ -32,7 +32,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
@@ -200,20 +199,23 @@ func (s *NotificationService) checkEnvironmentRole(
 
 func (s *NotificationService) checkOrganizationRole(
 	ctx context.Context,
-	requiredRole proto.AccountV2_Role_Organization,
+	requiredRole accountproto.AccountV2_Role_Organization,
 	organizationID string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(email string) (*proto.GetAccountV2Response, error) {
-		resp, err := s.accountClient.GetAccountV2(ctx, &proto.GetAccountV2Request{
-			Email:          email,
-			OrganizationId: organizationID,
+	editor, err := role.CheckOrganizationRole(
+		ctx,
+		requiredRole,
+		func(email string) (*accountproto.GetAccountV2Response, error) {
+			resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+				Email:          email,
+				OrganizationId: organizationID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp, nil
 		})
-		if err != nil {
-			return nil, err
-		}
-		return resp, nil
-	})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
