@@ -15,26 +15,47 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal                  = gstatus.New(codes.Internal, "push: internal")
-	statusIDRequired                = gstatus.New(codes.InvalidArgument, "push: id must be specified")
-	statusNameRequired              = gstatus.New(codes.InvalidArgument, "push: name must be specified")
-	statusFCMServiceAccountRequired = gstatus.New(
-		codes.InvalidArgument,
-		"push: fcm service account must be specified",
+	statusInternal   = api.NewGRPCStatus(err.NewErrorInternal(err.PushPackageName, "internal"))
+	statusIDRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "id must be specified", "id"),
 	)
-	statusFCMServiceAccountInvalid       = gstatus.New(codes.InvalidArgument, "push: fcm service account is invalid")
-	statusTagsRequired                   = gstatus.New(codes.InvalidArgument, "push: tags must be specified")
-	statusInvalidCursor                  = gstatus.New(codes.InvalidArgument, "push: cursor is invalid")
-	statusInvalidOrderBy                 = gstatus.New(codes.InvalidArgument, "push: order_by is invalid")
-	statusNotFound                       = gstatus.New(codes.NotFound, "push: not found")
-	statusAlreadyExists                  = gstatus.New(codes.AlreadyExists, "push: already exists")
-	statusFCMServiceAccountAlreadyExists = gstatus.New(codes.AlreadyExists, "push: fcm service account already exists")
-	statusTagAlreadyExists               = gstatus.New(codes.AlreadyExists, "push: tag already exists")
-	statusUnauthenticated                = gstatus.New(codes.Unauthenticated, "push: unauthenticated")
-	statusPermissionDenied               = gstatus.New(codes.PermissionDenied, "push: permission denied")
+	statusNameRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "name must be specified", "name"),
+	)
+	statusFCMServiceAccountRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "fcm service account must be specified", "fcm_service_account"),
+	)
+	statusFCMServiceAccountInvalid = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "fcm service account is invalid", "fcm_service_account"),
+	)
+	statusTagsRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "tags must be specified", "tags"),
+	)
+	statusInvalidCursor = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "cursor is invalid", "cursor"),
+	)
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		err.NewErrorInvalidArgUnknown(err.PushPackageName, "order_by is invalid", "order_by"),
+	)
+	statusNotFound = api.NewGRPCStatus(
+		err.NewErrorNotFound(err.PushPackageName, "not found", "push"),
+	)
+	statusAlreadyExists = api.NewGRPCStatus(
+		err.NewErrorAlreadyExists(err.PushPackageName, "already exists"),
+	)
+	statusFCMServiceAccountAlreadyExists = api.NewGRPCStatus(
+		err.NewErrorAlreadyExists(err.PushPackageName, "fcm service account already exists"),
+	)
+	statusTagAlreadyExists = api.NewGRPCStatus(
+		err.NewErrorAlreadyExists(err.PushPackageName, "tag already exists"),
+	)
+	statusUnauthenticated = api.NewGRPCStatus(
+		err.NewErrorUnauthenticated(err.PushPackageName, "unauthenticated"),
+	)
+	statusPermissionDenied = api.NewGRPCStatus(err.NewErrorPermissionDenied(err.PushPackageName, "permission denied"))
 )
