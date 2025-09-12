@@ -864,6 +864,7 @@ func newBatchService(t *testing.T,
 			redisMockClient,
 		),
 		deleter.NewTagDeleter(mysqlMockClient),
+		deleter.NewDemoOrganizationDeleter(mysqlMockClient, environmentMockClient),
 		logger,
 	)
 	return service

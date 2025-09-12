@@ -41,6 +41,10 @@ var (
 	selectEnvironmentsSQL string
 	//go:embed sql/environment/count_environments.sql
 	countEnvironmentsSQL string
+	//go:embed sql/environment/delete_target_from_environment.sql
+	deleteTargetFromEnvironmentSQL string
+	//go:embed sql/environment/delete_environment.sql
+	deleteEnvironmentSQL string
 )
 
 type EnvironmentStorage interface {
@@ -51,6 +55,12 @@ type EnvironmentStorage interface {
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.EnvironmentV2, int, int64, error)
+	DeleteTargetFromEnvironmentV2(
+		ctx context.Context,
+		environmentID string,
+		targetID string,
+	) error
+	DeleteEnvironmentV2(ctx context.Context, whereParts []mysql.WherePart) error
 }
 
 type environmentStorage struct {
@@ -199,4 +209,39 @@ func (s *environmentStorage) ListEnvironmentsV2(
 		return nil, 0, 0, err
 	}
 	return environments, nextOffset, totalCount, nil
+}
+
+func (s *environmentStorage) DeleteTargetFromEnvironmentV2(
+	ctx context.Context,
+	environmentID string,
+	target string,
+) error {
+	args := []interface{}{
+		environmentID,
+	}
+
+	query := fmt.Sprintf(deleteTargetFromEnvironmentSQL, target)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		args...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *environmentStorage) DeleteEnvironmentV2(ctx context.Context, whereParts []mysql.WherePart) error {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(deleteEnvironmentSQL, whereSQL)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }

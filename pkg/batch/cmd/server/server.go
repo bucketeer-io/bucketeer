@@ -573,6 +573,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		deleter.NewDemoOrganizationDeleter(
+			mysqlClient,
+			environmentClient,
+			jobs.WithTimeout(10*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 
