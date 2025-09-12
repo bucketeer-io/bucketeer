@@ -25,6 +25,8 @@ const (
 	NotificationPackageName = "notification"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
+	AuditlogPackageName     = "auditlog"
+	AutoopsPackageName      = "autoops"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
@@ -45,6 +47,8 @@ const (
 	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal                 ErrorType = "internal"
 	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
+	ErrorTypeUnavailable              ErrorType = "unavailable"
+	ErrorTypeAborted                  ErrorType = "aborted"
 	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
@@ -143,6 +147,18 @@ func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
 }
 
+func NewErrorFailedPrecondition(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
+}
+
+func NewErrorUnavailable(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeUnavailable, message)
+}
+
+func NewErrorAborted(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeAborted, message)
+}
+
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
 }
@@ -161,8 +177,4 @@ func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) 
 
 func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
-}
-
-func NewErrorFailedPrecondition(pkg string, message string) *BktError {
-	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }

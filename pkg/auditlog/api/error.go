@@ -15,16 +15,22 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal         = gstatus.New(codes.Internal, "auditlog: internal")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "auditlog: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "auditlog: permission denied")
-	statusMissingID        = gstatus.New(codes.InvalidArgument, "auditlog: missing ID")
-	statusNotFound         = gstatus.New(codes.NotFound, "auditlog: not found")
-	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "auditlog: cursor is invalid")
-	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "auditlog: order_by is invalid")
+	statusInternal        = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		pkgErr.NewErrorUnauthenticated(pkgErr.AuditlogPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuditlogPackageName, "permission denied"))
+	statusMissingID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing ID", "ID"))
+	statusNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "not found", "auditlog"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "cursor is invalid", "cursor"))
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "order_by is invalid", "order_by"))
 )

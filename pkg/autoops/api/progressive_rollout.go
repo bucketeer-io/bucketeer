@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
@@ -78,14 +79,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewProgressiveRolloutCommandHandler(
@@ -120,14 +114,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.CreateProgressiveRolloutResponse{
 		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
@@ -195,14 +182,7 @@ func (s *AutoOpsService) createProgressiveRolloutNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.CreateProgressiveRolloutResponse{
 		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
@@ -243,14 +223,7 @@ func (s *AutoOpsService) GetProgressiveRollout(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.GetProgressiveRolloutResponse{
 		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
@@ -351,14 +324,7 @@ func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.publisher.Publish(ctx, event)
 	if err != nil {
@@ -370,14 +336,7 @@ func (s *AutoOpsService) stopProgressiveRolloutNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.StopProgressiveRolloutResponse{}, nil
 }
@@ -428,14 +387,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 			}
 			return dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -497,14 +449,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.publisher.Publish(ctx, event)
 	if err != nil {
@@ -516,14 +461,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.DeleteProgressiveRolloutResponse{}, nil
 }
@@ -713,14 +651,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if event != nil {
 		if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
@@ -913,14 +844,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if len(events) > 0 {
 		if errs := s.publisher.PublishMulti(ctx, events); len(errs) > 0 {
@@ -1046,14 +970,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, 0, 0, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, 0, 0, dt.Err()
+		return nil, 0, 0, api.NewGRPCStatus(err).Err()
 	}
 	return progressiveRollouts, totalCount, nextOffset, nil
 }
@@ -1116,14 +1033,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	// This operation is not the atomic. We may have the problem.
 	f, err := s.getFeature(ctx, req.EnvironmentId, req.Command.FeatureId, localizer)
 	if err != nil {
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if err := s.validateTargetFeature(ctx, f, localizer); err != nil {
 		return err
@@ -1189,14 +1099,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequestNoCommand(
 	// This operation is not the atomic. We may have the problem.
 	f, err := s.getFeature(ctx, req.EnvironmentId, req.FeatureId, localizer)
 	if err != nil {
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if err := s.validateTargetFeature(ctx, f, localizer); err != nil {
 		return err
@@ -1382,14 +1285,7 @@ func (s *AutoOpsService) checkIfHasExperiment(
 		},
 	})
 	if err != nil {
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if len(resp.Experiments) > 0 {
 		dt, err := statusProgressiveRolloutWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{

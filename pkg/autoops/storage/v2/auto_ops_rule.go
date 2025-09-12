@@ -21,6 +21,7 @@ import (
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
@@ -37,9 +38,12 @@ var (
 )
 
 var (
-	ErrAutoOpsRuleAlreadyExists          = errors.New("autoOpsRule: already exists")
-	ErrAutoOpsRuleNotFound               = errors.New("autoOpsRule: not found")
-	ErrAutoOpsRuleUnexpectedAffectedRows = errors.New("autoOpsRule: unexpected affected rows")
+	ErrAutoOpsRuleAlreadyExists          = err.NewErrorAlreadyExists(err.AutoopsPackageName, "already exists")
+	ErrAutoOpsRuleNotFound               = err.NewErrorNotFound(err.AutoopsPackageName, "not found", "autoOpsRule")
+	ErrAutoOpsRuleUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
+		err.AutoopsPackageName,
+		"unexpected affected rows",
+	)
 )
 
 type AutoOpsRuleStorage interface {

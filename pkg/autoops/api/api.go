@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -144,14 +145,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 	if err != nil {
@@ -162,26 +156,12 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	for _, c := range opsEventRateClauses {
 		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
 		if err != nil {
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		if !exist {
 			s.logger.Error(
@@ -227,14 +207,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.CreateAutoOpsRuleResponse{
 		AutoOpsRule: autoOpsRule.AutoOpsRule,
@@ -265,14 +238,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 	if err != nil {
@@ -283,26 +249,12 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	for _, c := range opsEventRateClauses {
 		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
 		if err != nil {
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		if !exist {
 			s.logger.Error(
@@ -363,14 +315,7 @@ func (s *AutoOpsService) createAutoOpsRuleNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.CreateAutoOpsRuleResponse{
 		AutoOpsRule: autoOpsRule.AutoOpsRule,
@@ -808,14 +753,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+
 	}
 	return &autoopsproto.DeleteAutoOpsRuleResponse{}, nil
 }
@@ -863,14 +801,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	for _, c := range opsEventRateClauses {
 		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
 		if err != nil {
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		if !exist {
 			s.logger.Error(
@@ -1143,14 +1074,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
@@ -1181,14 +1105,7 @@ func (s *AutoOpsService) returnUpdateAutoOpsRuleError(
 			zap.String("environmentId", req.EnvironmentId),
 		)...,
 	)
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return api.NewGRPCStatus(err).Err()
 }
 
 func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
@@ -1433,14 +1350,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if autoOpsRule.Deleted {
 		dt, err := statusAlreadyDeleted.WithDetails(&errdetails.LocalizedMessage{
@@ -1568,14 +1478,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, "", statusInternal.Err()
-		}
-		return nil, "", dt.Err()
+		return nil, "", api.NewGRPCStatus(err).Err()
 	}
 	return autoOpsRules, strconv.Itoa(nextCursor), nil
 }
@@ -1738,14 +1641,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
@@ -1912,14 +1808,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
@@ -1944,14 +1833,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 				zap.String("featureId", autoOpsRule.FeatureId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if hasScheduleOps {
 		stoppedBy = autoopsproto.ProgressiveRollout_OPS_SCHEDULE
@@ -1974,14 +1856,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 				zap.String("featureId", autoOpsRule.FeatureId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -2073,14 +1948,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return false, statusInternal.Err()
-		}
-		return false, dt.Err()
+		return false, api.NewGRPCStatus(err).Err()
 	}
 	if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() || autoOpsRule.Deleted {
 		s.logger.Warn(
@@ -2199,14 +2067,7 @@ func (s *AutoOpsService) listOpsCounts(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, "", statusInternal.Err()
-		}
-		return nil, "", dt.Err()
+		return nil, "", api.NewGRPCStatus(err).Err()
 	}
 	return opsCounts, strconv.Itoa(nextCursor), nil
 }
@@ -2306,14 +2167,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil

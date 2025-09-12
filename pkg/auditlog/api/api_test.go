@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,8 +28,10 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	v2asmock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	v2alsmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -110,7 +111,7 @@ func TestGetAuditLog(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 			},
 			input: &proto.GetAuditLogRequest{
 				Id:            "id-1",
@@ -118,7 +119,7 @@ func TestGetAuditLog(t *testing.T) {
 			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err()
 			},
 		},
 		{
@@ -225,12 +226,12 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("test"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 			},
 			input:    &proto.ListAuditLogsRequest{EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err()
 			},
 		},
 		{
@@ -420,11 +421,11 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("test"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 			},
 			input:       &proto.ListAdminAuditLogsRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -526,12 +527,12 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("test"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 			},
 			input:    &proto.ListFeatureHistoryRequest{EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err()
 			},
 		},
 		{
