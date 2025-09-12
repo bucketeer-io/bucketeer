@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -104,14 +105,7 @@ func (s *FeatureService) GetFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// TEMPORARY: Clean up any orphaned variation references before returning to UI
@@ -213,14 +207,7 @@ func (s *FeatureService) GetFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// TEMPORARY: Clean up any orphaned variation references before returning to UI
@@ -937,14 +924,7 @@ func (s *FeatureService) CreateFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -1049,14 +1029,7 @@ func (s *FeatureService) createFeatureNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.domainPublisher.Publish(ctx, event)
 	if err != nil {
@@ -1067,14 +1040,7 @@ func (s *FeatureService) createFeatureNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
@@ -1978,14 +1944,7 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 		}
 		return dt.Err()
 	default:
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 }
 
@@ -2502,14 +2461,7 @@ func (s *FeatureService) evaluateFeatures(
 				zap.String("tag", tag),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return userEvaluations, nil
 }
@@ -2607,12 +2559,12 @@ func (s *FeatureService) getSegmentUsers(
 		SegmentId:     segmentID,
 		EnvironmentId: EnvironmentId,
 	}
-	res, err := s.ListSegmentUsers(ctx, req)
-	if err != nil {
+	res, storageErr := s.ListSegmentUsers(ctx, req)
+	if storageErr != nil {
 		s.logger.Error(
 			"Failed to retrieve segment users from storage",
 			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
+				zap.Error(storageErr),
 				zap.String("environmentId", EnvironmentId),
 				zap.String("segmentId", segmentID),
 			)...,
@@ -2659,14 +2611,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 				zap.String("environmentId", EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	for _, f := range fluiList {
 		for _, feature := range features {
@@ -2714,14 +2659,7 @@ func (s *FeatureService) EvaluateFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// If the feature ID is set in the request, it will evaluate a single feature.
 	features, err := s.getTargetFeatures(fs.([]*featureproto.Feature), req.FeatureId, localizer)
@@ -2733,14 +2671,7 @@ func (s *FeatureService) EvaluateFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentId, req.Tag, localizer)
 	if err != nil {
@@ -2751,14 +2682,7 @@ func (s *FeatureService) EvaluateFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// If the feature ID is set, it will return a single evaluation
 	if req.FeatureId != "" {
@@ -2771,14 +2695,7 @@ func (s *FeatureService) EvaluateFeatures(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		return &featureproto.EvaluateFeaturesResponse{
 			UserEvaluations: &featureproto.UserEvaluations{
@@ -2826,14 +2743,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	features := fs.([]*featureproto.Feature)
@@ -2850,14 +2760,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 
@@ -2873,14 +2776,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 
 		evaluations = append(evaluations, userEvaluations.Evaluations...)
@@ -2995,14 +2891,7 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	domainFeature := &domain.Feature{
 		Feature: f.Feature,
@@ -3057,14 +2946,7 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -3125,14 +3007,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 				zap.String("targetEnvironmentId", req.TargetEnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	domainFeature := &domain.Feature{
 		Feature: f.Feature,
@@ -3209,14 +3084,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err = s.domainPublisher.Publish(ctx, event); err != nil {
 		s.logger.Error(
@@ -3227,14 +3095,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 				zap.String("targetEnvironmentId", req.TargetEnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil

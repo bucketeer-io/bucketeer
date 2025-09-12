@@ -17,7 +17,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -31,6 +30,8 @@ import (
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
@@ -50,16 +51,6 @@ func TestCreateFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(service *FeatureService)
@@ -71,7 +62,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.CreateFlagTriggerRequest{
 				EnvironmentId: "namespace",
@@ -81,7 +72,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 					Action:    proto.FlagTrigger_Action_ON,
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -138,15 +129,6 @@ func TestCreateFlagTriggerNoCommand(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -159,7 +141,7 @@ func TestCreateFlagTriggerNoCommand(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.CreateFlagTriggerRequest{
 				EnvironmentId: "namespace",
@@ -167,7 +149,7 @@ func TestCreateFlagTriggerNoCommand(t *testing.T) {
 				Type:          proto.FlagTrigger_Type_WEBHOOK,
 				Action:        proto.FlagTrigger_Action_ON,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -364,15 +346,6 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -385,7 +358,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.UpdateFlagTriggerRequest{
 				Id:            "id",
@@ -394,7 +367,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 					Description: "description",
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -453,15 +426,6 @@ func TestUpdateFlagTriggerNoCommand(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -474,14 +438,14 @@ func TestUpdateFlagTriggerNoCommand(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.UpdateFlagTriggerRequest{
 				Id:            "id",
 				EnvironmentId: "namespace",
 				Description:   wrapperspb.String("description"),
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success update description",
@@ -599,14 +563,14 @@ func TestEnableFlagTrigger(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.EnableFlagTriggerRequest{
 				Id:                       "id",
 				EnvironmentId:            "namespace",
 				EnableFlagTriggerCommand: &proto.EnableFlagTriggerCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -693,14 +657,14 @@ func TestDisableFlagTrigger(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.DisableFlagTriggerRequest{
 				Id:                        "id",
 				EnvironmentId:             "namespace",
 				DisableFlagTriggerCommand: &proto.DisableFlagTriggerCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -799,12 +763,12 @@ func TestResetFlagTrigger(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.ResetFlagTriggerRequest{
 				ResetFlagTriggerCommand: &proto.ResetFlagTriggerCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",
@@ -857,16 +821,6 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(service *FeatureService)
@@ -878,12 +832,12 @@ func TestDeleteFlagTrigger(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &proto.DeleteFlagTriggerRequest{
 				DeleteFlagTriggerCommand: &proto.DeleteFlagTriggerCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err(),
 		},
 		{
 			desc: "Success",

@@ -22,6 +22,7 @@ import (
 
 const (
 	AccountPackageName      = "account"
+	FeaturePackageName      = "feature"
 	NotificationPackageName = "notification"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
@@ -141,6 +142,10 @@ func NewErrorUnexpectedAffectedRows(pkg string, message string) *BktError {
 
 func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
+}
+
+func NewErrorFailedPrecondition(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }
 
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {

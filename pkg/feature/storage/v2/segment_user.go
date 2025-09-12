@@ -17,17 +17,17 @@ package v2
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
-	ErrSegmentUserNotFound = errors.New("segmentUser: not found")
+	ErrSegmentUserNotFound = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "segment user not found", "segment_user")
 )
 
 const (

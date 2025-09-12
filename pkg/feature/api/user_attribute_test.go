@@ -16,14 +16,15 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -63,13 +64,13 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().
 					GetUserAttributeKeyAll("ns0").
-					Return(nil, errors.New("cache error"))
+					Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "cache error"))
 			},
 			input: &featureproto.GetUserAttributeKeysRequest{
 				EnvironmentId: "ns0",
 			},
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "cache error")).Err()
 			},
 		},
 		{
