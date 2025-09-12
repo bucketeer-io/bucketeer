@@ -15,23 +15,27 @@
 package domain
 
 import (
-	"errors"
 	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/push"
 )
 
 var (
-	ErrNameRequired     = errors.New("push: name is required")
-	ErrTagRequired      = errors.New("push: tag is required")
-	ErrTagDuplicated    = errors.New("push: tag is duplicated")
-	ErrTagAlreadyExists = errors.New("push: tag already exists")
-	ErrTagNotFound      = errors.New("push: tag not found")
+	ErrNameRequired = err.NewErrorInvalidArgEmpty(
+		err.PushPackageName,
+		"name is required",
+		"name",
+	)
+	ErrTagRequired      = err.NewErrorInvalidArgEmpty(err.PushPackageName, "tag is required", "tag")
+	ErrTagDuplicated    = err.NewErrorInvalidArgDuplicated(err.PushPackageName, "tag is duplicated", "tag")
+	ErrTagAlreadyExists = err.NewErrorAlreadyExists(err.PushPackageName, "tag already exists")
+	ErrTagNotFound      = err.NewErrorNotFound(err.PushPackageName, "tag not found", "tag")
 )
 
 type Push struct {
