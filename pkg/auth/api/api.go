@@ -908,7 +908,7 @@ func (s *authService) checkAndOfferPasswordSetup(
 		// User already has password, no need to send setup email
 		return
 	}
-	if !errors.Is(err, storage.ErrCredentialsNotFound) {
+	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
 		// Real error occurred, log and return
 		s.logger.Warn("Failed to check credentials for password setup",
 			zap.Error(err),
