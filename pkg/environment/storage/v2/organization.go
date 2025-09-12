@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -42,9 +43,16 @@ var (
 )
 
 var (
-	ErrOrganizationAlreadyExists          = errors.New("organization: already exists")
-	ErrOrganizationNotFound               = errors.New("organization: not found")
-	ErrOrganizationUnexpectedAffectedRows = errors.New("organization: unexpected affected rows")
+	ErrOrganizationAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.EnvironmentPackageName,
+		"organization already exists")
+	ErrOrganizationNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.EnvironmentPackageName,
+		"organization not found",
+		"organization")
+	ErrOrganizationUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.EnvironmentPackageName,
+		"organization unexpected affected rows")
 )
 
 type OrganizationStorage interface {

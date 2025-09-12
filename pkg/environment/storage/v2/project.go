@@ -18,18 +18,24 @@ package v2
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 var (
-	ErrProjectAlreadyExists          = errors.New("project: already exists")
-	ErrProjectNotFound               = errors.New("project: not found")
-	ErrProjectUnexpectedAffectedRows = errors.New("project: unexpected affected rows")
+	ErrProjectAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.EnvironmentPackageName,
+		"project already exists")
+	ErrProjectNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.EnvironmentPackageName,
+		"project not found", "project")
+	ErrProjectUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.EnvironmentPackageName,
+		"project unexpected affected rows")
 
 	//go:embed sql/project/insert_project.sql
 	insertProjectSQL string

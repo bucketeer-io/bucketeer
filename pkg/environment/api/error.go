@@ -15,47 +15,109 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal      = gstatus.New(codes.Internal, "environment: internal")
-	statusNoCommand     = gstatus.New(codes.InvalidArgument, "environment: no command")
-	statusInvalidCursor = gstatus.New(codes.InvalidArgument, "environment: cursor is invalid")
+	statusInternal  = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
+	statusNoCommand = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNil(pkgErr.EnvironmentPackageName, "no command", "command"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "cursor is invalid", "cursor"))
 	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	//statusEnvironmentIDRequired = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
-	statusEnvironmentNameRequired         = gstatus.New(codes.InvalidArgument, "environment: environment name must be specified") // nolint:lll
-	statusInvalidEnvironmentName          = gstatus.New(codes.InvalidArgument, "environment: invalid environment name")           // nolint:lll
-	statusInvalidEnvironmentUrlCode       = gstatus.New(codes.InvalidArgument, "environment: invalid environment url code")       // nolint:lll
-	statusProjectIDRequired               = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")       // nolint:lll
-	statusProjectNameRequired             = gstatus.New(codes.InvalidArgument, "environment: project name must be specified")     // nolint:lll
-	statusInvalidProjectName              = gstatus.New(codes.InvalidArgument, "environment: invalid project name")               // nolint:lll
-	statusInvalidProjectUrlCode           = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")           // nolint:lll
-	statusInvalidProjectCreatorEmail      = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")      // nolint:lll
-	statusInvalidOrganizationCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid organization creator email") // nolint:lll
-	statusInvalidOrderBy                  = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")                // nolint:lll
-	statusOrganizationIDRequired          = gstatus.New(codes.InvalidArgument, "environment: organization id must be specified")  // nolint:lll
-	statusOrganizationNameRequired        = gstatus.New(
-		codes.InvalidArgument,
-		"environment: organization name must be specified",
-	)
-	statusInvalidOrganizationName    = gstatus.New(codes.InvalidArgument, "environment: invalid organization name")
-	statusInvalidOrganizationUrlCode = gstatus.New(codes.InvalidArgument, "environment: invalid organization url code")
-	statusCannotUpdateSystemAdmin    = gstatus.New(
-		codes.InvalidArgument,
-		"environment: cannot update system admin organization",
-	)
-	statusEnvironmentNotFound       = gstatus.New(codes.NotFound, "environment: environment not found")
-	statusProjectNotFound           = gstatus.New(codes.NotFound, "environment: project not found")
-	statusOrganizationNotFound      = gstatus.New(codes.NotFound, "environment: organization not found")
-	statusEnvironmentAlreadyExists  = gstatus.New(codes.AlreadyExists, "environment: environment already exists")
-	statusProjectAlreadyExists      = gstatus.New(codes.AlreadyExists, "environment: project already exists")
-	statusOrganizationAlreadyExists = gstatus.New(codes.AlreadyExists, "environment: organization already exists")
-	statusProjectDisabled           = gstatus.New(codes.FailedPrecondition, "environment: project disabled")
-	statusUnauthenticated           = gstatus.New(codes.Unauthenticated, "environment: unauthenticated")
-	statusPermissionDenied          = gstatus.New(codes.PermissionDenied, "environment: permission denied")
-	statusNotFound                  = gstatus.New(codes.NotFound, "environment: not found")
-	statusDemoSiteDisabled          = gstatus.New(codes.FailedPrecondition, "environment: demo site is not enabled")
-	statusUserAlreadyInOrganization = gstatus.New(codes.FailedPrecondition, "environment: user already in organization")
+	statusEnvironmentNameRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.EnvironmentPackageName,
+			"environment name must be specified",
+			"environment_name",
+		))
+	statusInvalidEnvironmentName = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid environment name",
+			"environment_name",
+		))
+	statusInvalidEnvironmentUrlCode = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName,
+			"invalid environment url code",
+			"environment_url_code",
+		))
+	statusProjectIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project id must be specified", "project_id"))
+	statusProjectNameRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project name must be specified", "project_name"))
+	statusInvalidProjectName = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "invalid project name", "project_name"))
+	statusInvalidProjectUrlCode = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid project url code",
+			"project_url_code",
+		))
+	statusInvalidProjectCreatorEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid project creator email",
+			"project_creator_email",
+		))
+	statusInvalidOrganizationCreatorEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid organization creator email",
+			"organization_creator_email",
+		))
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "order_by is invalid", "order_by"))
+	statusOrganizationIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "organization id must be specified", "organization_id"))
+	statusOrganizationNameRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.EnvironmentPackageName,
+			"organization name must be specified",
+			"organization_name",
+		))
+	statusInvalidOrganizationName = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid organization name",
+			"organization_name",
+		))
+	statusInvalidOrganizationUrlCode = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"invalid organization url code",
+			"organization_url_code",
+		))
+	statusCannotUpdateSystemAdmin = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"cannot update system admin organization",
+			"system_admin_organization",
+		))
+	statusEnvironmentNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "environment"))
+	statusProjectNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "project not found", "project"))
+	statusOrganizationNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "organization not found", "organization"))
+	statusEnvironmentAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.EnvironmentPackageName, "environment already exists"))
+	statusProjectAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.EnvironmentPackageName, "project already exists"))
+	statusOrganizationAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.EnvironmentPackageName, "organization already exists"))
+	statusProjectDisabled = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "project disabled"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		pkgErr.NewErrorUnauthenticated(pkgErr.EnvironmentPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.EnvironmentPackageName, "permission denied"))
+	statusNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "not found", "account"))
+	statusDemoSiteDisabled = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled"))
+	statusUserAlreadyInOrganization = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization"))
 )

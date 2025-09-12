@@ -20,12 +20,16 @@ import (
 	_ "embed"
 	"errors"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
-var ErrExperimentResultNotFound = errors.New("experimentResult: experiment result not found")
+var ErrExperimentResultNotFound = pkgErr.NewErrorNotFound(
+	pkgErr.EventCounterPackageName,
+	"experiment result not found",
+	"experiment_result")
 
 var (
 	//go:embed sql/select_experiment_result.sql

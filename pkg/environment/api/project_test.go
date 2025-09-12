@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -31,9 +30,11 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	pubmock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -91,10 +92,10 @@ func TestGetProjectMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
 					gomock.Any(), "err-id-1",
-				).Return(nil, errors.New("error"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			id:          "err-id-1",
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -162,11 +163,11 @@ func TestListProjectsMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			input:       &proto.ListProjectsRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -286,12 +287,12 @@ func TestCreateProjectMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-1", UrlCode: "id-1"},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -536,7 +537,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("internal error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error"))
 			},
 			req: &proto.CreateProjectRequest{
 				Name:           expected.Project.Name,
@@ -544,7 +545,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				OrganizationId: expected.Project.OrganizationId,
 				Description:    expected.Project.Description,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error")).Err(),
 		},
 		{
 			ctx:  ctx,
@@ -556,7 +557,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				// Simulate a failure when publishing the update event.
 				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("publish failed"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed"))
 			},
 			req: &proto.CreateProjectRequest{
 				Name:           expected.Project.Name,
@@ -564,10 +565,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				OrganizationId: expected.Project.OrganizationId,
 				Description:    expected.Project.Description,
 			},
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalize(locale.InternalServerError),
-			),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed")).Err(),
 		},
 		{
 			ctx:  ctx,
@@ -725,12 +723,12 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetTrialProjectByEmail(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-1", Email: "test@example.com"},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -861,7 +859,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return errors.New("update failed")
+					return pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "update failed")
 				})
 			},
 			req: &environmentproto.UpdateProjectRequest{
@@ -869,10 +867,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 				Name:        &wrappers.StringValue{Value: "ValidName"},
 				Description: &wrappers.StringValue{Value: "updated description"},
 			},
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalize(locale.InternalServerError),
-			),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "update failed")).Err(),
 		},
 		{
 			ctx:  ctx,
@@ -884,17 +879,14 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 				// Simulate a failure when publishing the update event.
 				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("publish failed"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed"))
 			},
 			req: &environmentproto.UpdateProjectRequest{
 				Id:          "project-id",
 				Name:        &wrappers.StringValue{Value: "ValidName"},
 				Description: &wrappers.StringValue{Value: "updated description"},
 			},
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalize(locale.InternalServerError),
-			),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed")).Err(),
 		},
 		{
 			ctx:  ctx,
@@ -1019,13 +1011,13 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.UpdateProjectRequest{
 				Id:                       "id-1",
 				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -1130,13 +1122,13 @@ func TestEnableProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.EnableProjectRequest{
 				Id:      "id-1",
 				Command: &proto.EnableProjectCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -1239,13 +1231,13 @@ func TestDisableProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.DisableProjectRequest{
 				Id:      "id-1",
 				Command: &proto.DisableProjectCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -1348,13 +1340,13 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.ConvertTrialProjectRequest{
 				Id:      "id-1",
 				Command: &proto.ConvertTrialProjectCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -1700,7 +1692,7 @@ func TestListProjectsV2(t *testing.T) {
 				}, nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("internal error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			input: &environmentproto.ListProjectsV2Request{
 				PageSize:       10,
@@ -1708,7 +1700,7 @@ func TestListProjectsV2(t *testing.T) {
 				OrganizationId: "org-1",
 			},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 	}
 	for _, p := range patterns {

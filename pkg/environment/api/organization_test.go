@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -18,9 +17,11 @@ import (
 	accountdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -75,10 +76,10 @@ func TestGetOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			id:          "err-id-1",
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -147,11 +148,11 @@ func TestListOrganizationsMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			input:       &proto.ListOrganizationsRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -280,12 +281,12 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
 			desc: "success",
@@ -431,13 +432,13 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:            "err-id-1",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-1"},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -546,13 +547,13 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:   "err-id-1",
 				Name: wrapperspb.String("id-1"),
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -642,13 +643,13 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.EnableOrganizationRequest{
 				Id:      "id-1",
 				Command: &proto.EnableOrganizationCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -759,13 +760,13 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.DisableOrganizationRequest{
 				Id:      "id-1",
 				Command: &proto.DisableOrganizationCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -876,13 +877,13 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.ArchiveOrganizationRequest{
 				Id:      "id-1",
 				Command: &proto.ArchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -980,13 +981,13 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.UnarchiveOrganizationRequest{
 				Id:      "id-1",
 				Command: &proto.UnarchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
 			desc: "success",
@@ -1084,13 +1085,13 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.ConvertTrialOrganizationRequest{
 				Id:      "id-1",
 				Command: &proto.ConvertTrialOrganizationCommand{},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
 			desc: "success",
@@ -1210,10 +1211,10 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "id-1"},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
 			desc: "success",

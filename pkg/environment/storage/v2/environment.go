@@ -22,14 +22,22 @@ import (
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 var (
-	ErrEnvironmentAlreadyExists          = errors.New("environment: already exists")
-	ErrEnvironmentNotFound               = errors.New("environment: not found")
-	ErrEnvironmentUnexpectedAffectedRows = errors.New("environment: unexpected affected rows")
+	ErrEnvironmentAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.EnvironmentPackageName,
+		"environment already exists")
+	ErrEnvironmentNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.EnvironmentPackageName,
+		"environment not found",
+		"environment")
+	ErrEnvironmentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.EnvironmentPackageName,
+		"environment unexpected affected rows")
 
 	//go:embed sql/environment/insert_environment.sql
 	insertEnvironmentSQL string
