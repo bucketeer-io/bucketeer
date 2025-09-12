@@ -22,6 +22,9 @@ import (
 
 const (
 	AccountPackageName      = "account"
+	NotificationPackageName = "notification"
+	PushPackageName         = "push"
+	TagPackageName          = "tag"
 	EventCounterPackageName = "eventcounter"
 	EnvironmentPackageName  = "environment"
 
@@ -29,6 +32,7 @@ const (
 	invalidTypeEmpty          = "empty"
 	invalidTypeNil            = "nil"
 	invalidTypeNotMatchFormat = "not_match_format"
+	invalidTypeDuplicated     = "duplicated"
 
 	invalidPrefix = "invalid"
 )
@@ -47,6 +51,7 @@ const (
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
 	ErrorTypeInvalidArgNotMatchFormat ErrorType = invalidPrefix + "_" + invalidTypeNotMatchFormat
+	ErrorTypeInvalidArgDuplicated     ErrorType = invalidPrefix + "_" + invalidTypeDuplicated
 )
 
 // Base error - no field needed
@@ -158,4 +163,8 @@ func NewErrorInvalidArgNil(pkg string, message string, field string) *BktFieldEr
 
 func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNotMatchFormat, message, field)
+}
+
+func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
 }

@@ -15,17 +15,25 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal           = gstatus.New(codes.Internal, "tag: internal")
-	statusNameRequired       = gstatus.New(codes.InvalidArgument, "tag: name must be specified")
-	statusEntityTypeRequired = gstatus.New(codes.InvalidArgument, "tag: entity_type must be specified")
-	statusTagInUsed          = gstatus.New(codes.FailedPrecondition, "tag: tag is in use")
-	statusInvalidCursor      = gstatus.New(codes.InvalidArgument, "tag: cursor is invalid")
-	statusInvalidOrderBy     = gstatus.New(codes.InvalidArgument, "tag: order_by is invalid")
-	statusUnauthenticated    = gstatus.New(codes.Unauthenticated, "tag: unauthenticated")
-	statusPermissionDenied   = gstatus.New(codes.PermissionDenied, "tag: permission denied")
+	statusInternal     = api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "internal"))
+	statusNameRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.TagPackageName, "name must be specified", "name"),
+	)
+	statusEntityTypeRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.TagPackageName, "entity_type must be specified", "entity_type"),
+	)
+	statusTagInUsed     = api.NewGRPCStatus(err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "cursor"),
+	)
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "order_by"),
+	)
+	statusUnauthenticated  = api.NewGRPCStatus(err.NewErrorUnauthenticated(err.TagPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(err.NewErrorPermissionDenied(err.TagPackageName, "permission denied"))
 )

@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/command"
@@ -55,14 +56,7 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Any("recipient", req.Command.Recipient),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -95,14 +89,7 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -111,14 +98,7 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Any("errors", errs),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &notificationproto.CreateAdminSubscriptionResponse{}, nil
 }
@@ -407,14 +387,7 @@ func (s *NotificationService) updateAdminSubscription(
 				zap.String("id", id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -424,14 +397,7 @@ func (s *NotificationService) updateAdminSubscription(
 				zap.String("id", id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -484,14 +450,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -501,14 +460,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &notificationproto.DeleteAdminSubscriptionResponse{}, nil
 }
@@ -587,14 +539,7 @@ func (s *NotificationService) GetAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &notificationproto.GetAdminSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
@@ -794,14 +739,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, api.NewGRPCStatus(err).Err()
 	}
 	return subscriptions, strconv.Itoa(nextCursor), totalCount, nil
 }

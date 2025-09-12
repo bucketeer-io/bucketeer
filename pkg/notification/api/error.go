@@ -15,36 +15,56 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
 )
 
 var (
-	statusInternal            = gstatus.New(codes.Internal, "notification: internal")
-	statusIDRequired          = gstatus.New(codes.InvalidArgument, "notification: id must be specified")
-	statusNameRequired        = gstatus.New(codes.InvalidArgument, "notification: name must be specified")
-	statusSourceTypesRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: notification types must be specified",
+	statusInternal   = api.NewGRPCStatus(err.NewErrorInternal(err.NotificationPackageName, "internal"))
+	statusIDRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "id must be specified", "id"),
 	)
-	statusUnknownRecipient  = gstatus.New(codes.InvalidArgument, "notification: unknown recipient")
-	statusRecipientRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: recipient must be specified",
+	statusNameRequired = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "name must be specified", "name"),
 	)
-	statusSlackRecipientRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: slack recipient must be specified",
+	statusSourceTypesRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
+		err.NotificationPackageName,
+		"notification types must be specified",
+		"notification_types",
+	))
+	statusUnknownRecipient = api.NewGRPCStatus(
+		err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown recipient", "recipient"),
 	)
-	statusSlackRecipientWebhookURLRequired = gstatus.New(
-		codes.InvalidArgument,
-		"notification: webhook URL must be specified",
+	statusRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
+		err.NotificationPackageName,
+		"recipient must be specified",
+		"recipient",
+	))
+	statusSlackRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
+		err.NotificationPackageName,
+		"slack recipient must be specified",
+		"slack_recipient",
+	))
+	statusSlackRecipientWebhookURLRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
+		err.NotificationPackageName,
+		"webhook URL must be specified",
+		"webhook_url",
+	))
+	statusInvalidCursor = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "cursor is invalid", "cursor"),
 	)
-	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "notification: cursor is invalid")
-	statusNoCommand        = gstatus.New(codes.InvalidArgument, "notification: no command")
-	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
-	statusNotFound         = gstatus.New(codes.NotFound, "notification: not found")
-	statusAlreadyExists    = gstatus.New(codes.AlreadyExists, "notification: already exists")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "notification: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "notification: permission denied")
+	statusNoCommand = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "no command", "command"),
+	)
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "order_by is invalid", "order_by"),
+	)
+	statusNotFound      = api.NewGRPCStatus(err.NewErrorNotFound(err.NotificationPackageName, "not found", "id"))
+	statusAlreadyExists = api.NewGRPCStatus(
+		err.NewErrorAlreadyExists(err.NotificationPackageName, "already exists"),
+	)
+	statusUnauthenticated  = api.NewGRPCStatus(err.NewErrorUnauthenticated(err.NotificationPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		err.NewErrorPermissionDenied(err.NotificationPackageName, "permission denied"),
+	)
 )
