@@ -36,7 +36,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/pkg/auth/email"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
+	"github.com/bucketeer-io/bucketeer/pkg/auth/storage"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -105,6 +107,8 @@ type authService struct {
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
+	credentialsStorage  storage.CredentialsStorage
+	emailService        email.EmailService
 	opts                *options
 	logger              *zap.Logger
 }
@@ -124,6 +128,20 @@ func NewAuthService(
 		opt(&options)
 	}
 	logger := options.logger.Named("api")
+
+	// Initialize email service if password auth and email are enabled
+	var emailService email.EmailService
+	if config.PasswordAuth.Enabled && config.PasswordAuth.EmailServiceEnabled {
+		var err error
+		emailService, err = email.NewEmailService(config.PasswordAuth.EmailServiceConfig, logger)
+		if err != nil {
+			logger.Warn("Failed to initialize email service", zap.Error(err))
+			emailService = email.NewNoOpEmailService(logger)
+		}
+	} else {
+		emailService = email.NewNoOpEmailService(logger)
+	}
+
 	service := &authService{
 		issuer:              issuer,
 		audience:            audience,
@@ -138,8 +156,10 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		opts:   &options,
-		logger: logger,
+		credentialsStorage: storage.NewCredentialsStorage(mysqlClient),
+		emailService:       emailService,
+		opts:               &options,
+		logger:             logger,
 	}
 	service.PrepareDemoUser()
 	return service
@@ -300,6 +320,9 @@ func (s *authService) ExchangeToken(
 		)
 		return nil, err
 	}
+
+	// Check and offer password setup for existing users without credentials
+	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations, localizer)
 
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
@@ -974,5 +997,120 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 	}
+
+	// Create credentials for demo user if not exists
+	_, err = s.credentialsStorage.GetCredentials(ctx, config.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			passwordHash, hashErr := auth.HashPassword(config.Password)
+			if hashErr != nil {
+				s.logger.Error("Failed to hash demo user password", zap.Error(hashErr))
+				return
+			}
+			err = s.credentialsStorage.CreateCredentials(ctx, config.Email, passwordHash)
+			if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+				s.logger.Error("Failed to create credentials for demo user", zap.Error(err))
+				return
+			}
+		} else {
+			s.logger.Error("Failed to check credentials for demo user", zap.Error(err))
+			return
+		}
+	}
 	s.logger.Info("Demo environment prepared successfully")
+}
+
+// checkAndOfferPasswordSetup checks if user lacks password credentials and sends setup email
+func (s *authService) checkAndOfferPasswordSetup(
+	ctx context.Context,
+	email string,
+	organizations []*envproto.Organization,
+	localizer locale.Localizer,
+) {
+	// Only proceed if password auth and email service are enabled
+	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
+		return
+	}
+
+	// Ensure the user has organizations (account exists)
+	if len(organizations) == 0 {
+		return
+	}
+
+	// Check if user already has password credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
+		// User already has password, no need to send setup email
+		return
+	}
+	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
+		// Real error occurred, log and return
+		s.logger.Warn("Failed to check credentials for password setup",
+			zap.Error(err),
+			zap.String("email", email))
+		return
+	}
+
+	// User doesn't have password credentials, initiate setup
+	err = s.initiatePasswordSetupInternal(ctx, email, localizer)
+	if err != nil {
+		s.logger.Warn("Failed to initiate password setup for OAuth user",
+			zap.Error(err),
+			zap.String("email", email))
+		// Don't fail the OAuth flow if password setup email fails
+	}
+}
+
+// initiatePasswordSetupInternal handles the internal password setup process
+func (s *authService) initiatePasswordSetupInternal(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) error {
+	// Generate secure setup token
+	setupToken, err := auth.GenerateSecureToken()
+	if err != nil {
+		return fmt.Errorf("failed to generate setup token: %w", err)
+	}
+
+	// Create empty credentials record if it doesn't exist
+	err = s.credentialsStorage.CreateCredentials(ctx, email, "")
+	if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+		return fmt.Errorf("failed to create credentials: %w", err)
+	}
+
+	// Store setup token with 24-hour expiration
+	expiresAt := time.Now().Add(s.config.PasswordAuth.PasswordSetupTokenTTL).Unix()
+	err = s.credentialsStorage.SetPasswordResetToken(ctx, email, setupToken, expiresAt)
+	if err != nil {
+		return fmt.Errorf("failed to store setup token: %w", err)
+	}
+
+	// Send setup email
+	if s.emailService != nil {
+		setupPath := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupPath
+		if setupPath == "" {
+			return fmt.Errorf("password setup path not configured")
+		}
+		setupParam := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupParam
+		if setupParam == "" {
+			return fmt.Errorf("password setup parameter not configured")
+		}
+		setupURL := fmt.Sprintf("%s%s?%s=%s",
+			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
+
+		err = s.emailService.SendPasswordSetupEmail(
+			ctx,
+			email,
+			setupURL,
+			s.config.PasswordAuth.PasswordSetupTokenTTL,
+			localizer.GetLocale(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to send password setup email: %w", err)
+		}
+	}
+
+	s.logger.Info("Password setup initiated for OAuth user", zap.String("email", email))
+	return nil
 }

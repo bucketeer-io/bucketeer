@@ -405,6 +405,461 @@ export namespace GetDemoSiteStatusResponse {
   };
 }
 
+export class UpdatePasswordRequest extends jspb.Message {
+  getCurrentPassword(): string;
+  setCurrentPassword(value: string): void;
+
+  getNewPassword(): string;
+  setNewPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdatePasswordRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdatePasswordRequest
+  ): UpdatePasswordRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdatePasswordRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdatePasswordRequest;
+  static deserializeBinaryFromReader(
+    message: UpdatePasswordRequest,
+    reader: jspb.BinaryReader
+  ): UpdatePasswordRequest;
+}
+
+export namespace UpdatePasswordRequest {
+  export type AsObject = {
+    currentPassword: string;
+    newPassword: string;
+  };
+}
+
+export class UpdatePasswordResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdatePasswordResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdatePasswordResponse
+  ): UpdatePasswordResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdatePasswordResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdatePasswordResponse;
+  static deserializeBinaryFromReader(
+    message: UpdatePasswordResponse,
+    reader: jspb.BinaryReader
+  ): UpdatePasswordResponse;
+}
+
+export namespace UpdatePasswordResponse {
+  export type AsObject = {};
+}
+
+export class InitiatePasswordSetupRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordSetupRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordSetupRequest
+  ): InitiatePasswordSetupRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordSetupRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordSetupRequest;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordSetupRequest,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordSetupRequest;
+}
+
+export namespace InitiatePasswordSetupRequest {
+  export type AsObject = {
+    email: string;
+  };
+}
+
+export class InitiatePasswordSetupResponse extends jspb.Message {
+  getMessage(): string;
+  setMessage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordSetupResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordSetupResponse
+  ): InitiatePasswordSetupResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordSetupResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordSetupResponse;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordSetupResponse,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordSetupResponse;
+}
+
+export namespace InitiatePasswordSetupResponse {
+  export type AsObject = {
+    message: string;
+  };
+}
+
+export class SetupPasswordRequest extends jspb.Message {
+  getSetupToken(): string;
+  setSetupToken(value: string): void;
+
+  getNewPassword(): string;
+  setNewPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetupPasswordRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SetupPasswordRequest
+  ): SetupPasswordRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SetupPasswordRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SetupPasswordRequest;
+  static deserializeBinaryFromReader(
+    message: SetupPasswordRequest,
+    reader: jspb.BinaryReader
+  ): SetupPasswordRequest;
+}
+
+export namespace SetupPasswordRequest {
+  export type AsObject = {
+    setupToken: string;
+    newPassword: string;
+  };
+}
+
+export class SetupPasswordResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SetupPasswordResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SetupPasswordResponse
+  ): SetupPasswordResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SetupPasswordResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SetupPasswordResponse;
+  static deserializeBinaryFromReader(
+    message: SetupPasswordResponse,
+    reader: jspb.BinaryReader
+  ): SetupPasswordResponse;
+}
+
+export namespace SetupPasswordResponse {
+  export type AsObject = {};
+}
+
+export class ValidatePasswordSetupTokenRequest extends jspb.Message {
+  getSetupToken(): string;
+  setSetupToken(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordSetupTokenRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordSetupTokenRequest
+  ): ValidatePasswordSetupTokenRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordSetupTokenRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordSetupTokenRequest;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordSetupTokenRequest,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordSetupTokenRequest;
+}
+
+export namespace ValidatePasswordSetupTokenRequest {
+  export type AsObject = {
+    setupToken: string;
+  };
+}
+
+export class ValidatePasswordSetupTokenResponse extends jspb.Message {
+  getIsValid(): boolean;
+  setIsValid(value: boolean): void;
+
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordSetupTokenResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordSetupTokenResponse
+  ): ValidatePasswordSetupTokenResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordSetupTokenResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordSetupTokenResponse;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordSetupTokenResponse,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordSetupTokenResponse;
+}
+
+export namespace ValidatePasswordSetupTokenResponse {
+  export type AsObject = {
+    isValid: boolean;
+    email: string;
+  };
+}
+
+export class InitiatePasswordResetRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordResetRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordResetRequest
+  ): InitiatePasswordResetRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordResetRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordResetRequest;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordResetRequest,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordResetRequest;
+}
+
+export namespace InitiatePasswordResetRequest {
+  export type AsObject = {
+    email: string;
+  };
+}
+
+export class InitiatePasswordResetResponse extends jspb.Message {
+  getMessage(): string;
+  setMessage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): InitiatePasswordResetResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: InitiatePasswordResetResponse
+  ): InitiatePasswordResetResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: InitiatePasswordResetResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): InitiatePasswordResetResponse;
+  static deserializeBinaryFromReader(
+    message: InitiatePasswordResetResponse,
+    reader: jspb.BinaryReader
+  ): InitiatePasswordResetResponse;
+}
+
+export namespace InitiatePasswordResetResponse {
+  export type AsObject = {
+    message: string;
+  };
+}
+
+export class ResetPasswordRequest extends jspb.Message {
+  getResetToken(): string;
+  setResetToken(value: string): void;
+
+  getNewPassword(): string;
+  setNewPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ResetPasswordRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ResetPasswordRequest
+  ): ResetPasswordRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ResetPasswordRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ResetPasswordRequest;
+  static deserializeBinaryFromReader(
+    message: ResetPasswordRequest,
+    reader: jspb.BinaryReader
+  ): ResetPasswordRequest;
+}
+
+export namespace ResetPasswordRequest {
+  export type AsObject = {
+    resetToken: string;
+    newPassword: string;
+  };
+}
+
+export class ResetPasswordResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ResetPasswordResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ResetPasswordResponse
+  ): ResetPasswordResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ResetPasswordResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ResetPasswordResponse;
+  static deserializeBinaryFromReader(
+    message: ResetPasswordResponse,
+    reader: jspb.BinaryReader
+  ): ResetPasswordResponse;
+}
+
+export namespace ResetPasswordResponse {
+  export type AsObject = {};
+}
+
+export class ValidatePasswordResetTokenRequest extends jspb.Message {
+  getResetToken(): string;
+  setResetToken(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordResetTokenRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordResetTokenRequest
+  ): ValidatePasswordResetTokenRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordResetTokenRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordResetTokenRequest;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordResetTokenRequest,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordResetTokenRequest;
+}
+
+export namespace ValidatePasswordResetTokenRequest {
+  export type AsObject = {
+    resetToken: string;
+  };
+}
+
+export class ValidatePasswordResetTokenResponse extends jspb.Message {
+  getIsValid(): boolean;
+  setIsValid(value: boolean): void;
+
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ValidatePasswordResetTokenResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ValidatePasswordResetTokenResponse
+  ): ValidatePasswordResetTokenResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ValidatePasswordResetTokenResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ValidatePasswordResetTokenResponse;
+  static deserializeBinaryFromReader(
+    message: ValidatePasswordResetTokenResponse,
+    reader: jspb.BinaryReader
+  ): ValidatePasswordResetTokenResponse;
+}
+
+export namespace ValidatePasswordResetTokenResponse {
+  export type AsObject = {
+    isValid: boolean;
+    email: string;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;
