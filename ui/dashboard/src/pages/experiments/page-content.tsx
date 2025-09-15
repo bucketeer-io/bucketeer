@@ -70,24 +70,20 @@ const PageContent = ({
     return undefined;
   }, [filters]);
 
-  const isHiddenTab = useMemo(
-    () =>
-      (!!filters.searchQuery ||
-        filters?.isFilter ||
-        filters?.filterBySummary) &&
-      !filters.filterByTab,
-    [filters]
-  );
+  const isHiddenTab = useMemo(() => {
+    return (
+      (!!filters.searchQuery || filters.isFilter || filters.filterBySummary) &&
+      !filters.filterByTab
+    );
+  }, [filters]);
 
   const onChangeFilters = useCallback(
     (values: Partial<ExperimentFilters>, isChangeParams = true) => {
-      values.page = values?.page || 1;
-      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-
-      if (isChangeParams) {
-        onChangSearchParams(options);
-      }
-      setFilters({ ...values });
+      const nextPage = values.page || 1;
+      const merged = { ...filters, ...values, page: nextPage };
+      const options = pickBy(merged, v => isNotEmpty(v));
+      if (isChangeParams) onChangSearchParams(options);
+      setFilters(merged);
     },
     [filters]
   );
@@ -109,7 +105,7 @@ const PageContent = ({
     (status: ExperimentTab) => {
       onChangeFilters({
         status,
-        searchQuery: filters?.searchQuery ?? '',
+        searchQuery: filters.searchQuery ?? '',
         isFilter: undefined,
         maintainer: undefined,
         filterByTab: true,
@@ -126,8 +122,7 @@ const PageContent = ({
 
   const onFilterBySummary = useCallback(
     (statuses: ExperimentStatus[], summaryFilterValue: SummaryType) => {
-      const isSameSummaryValue =
-        filters?.filterBySummary === summaryFilterValue;
+      const isSameSummaryValue = filters.filterBySummary === summaryFilterValue;
       onChangeFilters({
         statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
         filterBySummary: isSameSummaryValue ? undefined : summaryFilterValue,
