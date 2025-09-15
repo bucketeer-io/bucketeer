@@ -179,7 +179,7 @@ func (s *authService) InitiatePasswordSetup(
 			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
 		}, nil
 	}
-	if !errors.Is(err, storage.ErrCredentialsNotFound) {
+	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
 		s.logger.Error("Failed to check credentials for password setup", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
 	}
@@ -319,7 +319,7 @@ func (s *authService) SetupPassword(
 		}
 		return nil, dt.Err()
 	}
-	if !errors.Is(err, storage.ErrCredentialsNotFound) {
+	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
 		s.logger.Error("Failed to check credentials during setup", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
 	}
@@ -404,11 +404,12 @@ func (s *authService) ValidatePasswordSetupToken(
 		if err == nil && credentials.PasswordHash != "" {
 			// Credentials already exist, token is no longer valid for setup
 			isValid = false
-		} else if !errors.Is(err, storage.ErrCredentialsNotFound) {
+		} else if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
 			s.logger.Error("Failed to check credentials during token validation", zap.Error(err))
 			return nil, auth.StatusInternal.Err()
 		} else {
-			// Credentials don't exist, token is valid for setup
+			// Either credentials don't exist OR credentials exist but no password set
+			// In both cases, token is valid for setup
 			email = setupToken.Email
 		}
 	}
@@ -419,7 +420,7 @@ func (s *authService) ValidatePasswordSetupToken(
 	}, nil
 }
 
-// extractEmailFromContext extracts email from the authentication context
+// InitiatePasswordReset extractEmailFromContext extracts email from the authentication context
 func (s *authService) InitiatePasswordReset(
 	ctx context.Context,
 	request *authproto.InitiatePasswordResetRequest,
