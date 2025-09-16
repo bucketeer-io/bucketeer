@@ -59,7 +59,7 @@ const PrerequisiteRule = ({
                 />
               </div>
               <div
-                className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-500"
+                className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
                 onClick={() =>
                   handleDiscardChanges(DiscardChangesType.PREREQUISITE)
                 }
@@ -71,9 +71,9 @@ const PrerequisiteRule = ({
                 />
               </div>
             </div>
-            {prerequisites.map((_, prerequisiteIndex) => (
+            {prerequisites.map((item, prerequisiteIndex) => (
               <ConditionForm
-                key={prerequisiteIndex}
+                key={`${item.featureId}.${prerequisiteIndex}`}
                 features={features}
                 featureId={feature.id}
                 prerequisiteIndex={prerequisiteIndex}
