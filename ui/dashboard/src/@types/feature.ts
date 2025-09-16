@@ -73,7 +73,7 @@ export interface FeatureRuleClause {
   attribute: string;
   operator: FeatureRuleClauseOperator;
   values: string[];
-  type?: RuleClauseType;
+  type: RuleClauseType;
 }
 
 export interface FeatureRule {

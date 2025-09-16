@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { autoOpsCreator } from '@api/auto-ops';
 import { FeatureResponse, featureUpdater } from '@api/features';
@@ -17,7 +17,8 @@ import { useToast, useToggleOpen } from 'hooks';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
-import { Evaluation, Feature, FeatureRule } from '@types';
+import { v4 as uuid } from 'uuid';
+import { Evaluation, Feature, FeatureRule, FeatureRuleStrategy } from '@types';
 import { isEmpty } from 'utils/data-type';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
@@ -54,7 +55,9 @@ import {
   RuleCategory
 } from './types';
 import {
+  checkDefaultRuleDiscardChanges,
   getDefaultRule,
+  getFeatureRuleLabels,
   handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
   handleCheckPrerequisiteDiscardChanges,
@@ -66,7 +69,11 @@ import {
   handleCreatePrerequisites,
   handleCreateSegmentRules,
   handleGetDefaultRuleStrategy,
-  handleSwapRuleFeature
+  handleSwapRuleFeature,
+  hasChangePosition,
+  hasSameRelativeOrder,
+  normalizeSegmentRules,
+  reorderWithReset
 } from './utils';
 
 export const TargetingDivider = () => (
@@ -103,7 +110,11 @@ const TargetingPage = ({
   const [debuggerForm, setDebuggerForm] = useState<AddDebuggerFormType | null>(
     null
   );
-  const featureRef = useRef<Feature>(cloneDeep(feature));
+  const [featureRef, setFeatureRef] = useState<Feature>(cloneDeep(feature));
+  const [actionRuleSegment, setActionRuleSegment] = useState<
+    'new-rule' | 'edit-rule' | undefined
+  >(undefined);
+  const [reorderRule, setReorderRule] = useState<boolean>(false);
   const [isShowRules, setIsShowRules] = useState<boolean>(feature.enabled);
   const [discardChangesState, setDiscardChangesState] =
     useState<DiscardChangesState>({
@@ -157,7 +168,6 @@ const TargetingPage = ({
     formState: { isDirty, isValid, dirtyFields },
     watch,
     reset,
-    setValue,
     getValues
   } = form;
 
@@ -236,33 +246,41 @@ const TargetingPage = ({
         );
       }
       segmentRulesAppend(getDefaultRule(feature));
-      featureRef.current.rules.push(getDefaultRule(featureRef.current));
+      setFeatureRef(prev => ({
+        ...prev,
+        rules: [...prev.rules, getDefaultRule(prev)]
+      }));
     },
     [feature]
   );
-
+  const handleSegmentRuleRemove = (segmentIndex: number) => {
+    segmentRulesRemove(segmentIndex);
+    setFeatureRef(prev => ({
+      ...prev,
+      rules: prev.rules.filter((_, index) => index !== segmentIndex)
+    }));
+  };
   const handleSwapSegmentRule = useCallback(
     (indexA: number, indexB: number) => {
       segmentRulesUpdate(indexA, {
-        ...segmentRulesWatch[indexA]
+        ...segmentRulesWatch[indexA],
+        id: uuid()
       });
       segmentRulesUpdate(indexB, {
-        ...segmentRulesWatch[indexB]
+        ...segmentRulesWatch[indexB],
+        id: uuid()
       });
       segmentRulesSwap(indexA, indexB);
-      const featureRuleSwap = handleSwapRuleFeature(
-        featureRef.current,
-        indexA,
-        indexB
-      );
-      featureRef.current = featureRuleSwap;
+      const featureRuleSwap = handleSwapRuleFeature(featureRef, indexA, indexB);
+      setFeatureRef(featureRuleSwap);
     },
     [segmentRulesWatch]
   );
 
   const handleDiscardChanges = useCallback(
     (type: DiscardChangesType, index?: number) => {
-      const { prerequisites, individualRules, segmentRules } = getValues();
+      const { prerequisites, individualRules, segmentRules, defaultRule } =
+        getValues();
       let discardData: DiscardChangesStateData[] | null = null;
       if (type === DiscardChangesType.PREREQUISITE) {
         discardData = handleCheckPrerequisiteDiscardChanges(
@@ -277,21 +295,59 @@ const TargetingPage = ({
           individualRules as IndividualRuleItem[]
         );
       }
-
       if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
         if (segmentRules) {
+          const isOrder = hasSameRelativeOrder(feature.rules, featureRef.rules);
           const variationFeatures = feature.variations;
+          const preRules = feature.rules.find(
+            r => r.id === featureRef.rules[index].id
+          );
+
           discardData = handleCheckSegmentRulesDiscardChanges(
-            featureRef.current?.rules[index] || [],
+            preRules || null,
             segmentCollection?.segments || [],
             segmentRules[index] as unknown as FeatureRule,
             situationOptions,
             features,
             operatorOptions,
             variationFeatures,
-            t
+            t,
+            setActionRuleSegment
           );
+          const isChangePosition = hasChangePosition(
+            featureRef.rules[index].id,
+            feature,
+            featureRef
+          );
+          if (!isOrder && isChangePosition) {
+            setReorderRule(true);
+            const fr = normalizeSegmentRules(featureRef.rules, segmentRules);
+            const cloneFeatureRef = { ...featureRef, rules: fr };
+            const labelRuleOrders = getFeatureRuleLabels(
+              cloneFeatureRef as Feature,
+              features,
+              segmentCollection!.segments,
+              situationOptions,
+              operatorOptions,
+              t,
+              variationFeatures
+            );
+            discardData.push({
+              label: '',
+              labelType: 'REORDER',
+              changeType: 'reorder',
+              variationIndex: 0,
+              ruleOrders: labelRuleOrders
+            });
+          }
         }
+      }
+      if (type === DiscardChangesType.DEFAULT) {
+        discardData = checkDefaultRuleDiscardChanges(
+          feature.defaultStrategy,
+          defaultRule as FeatureRuleStrategy,
+          feature.variations
+        );
       }
       if (isEmpty(discardData)) return onDiscardChanges(type);
       setDiscardChangesState({
@@ -301,7 +357,7 @@ const TargetingPage = ({
         ruleIndex: index
       });
     },
-    [activeFeatures, feature, segmentRulesWatch, featureRef.current]
+    [activeFeatures, feature, segmentRulesWatch, featureRef]
   );
 
   const handleOnCloseDiscardModal = useCallback(() => {
@@ -321,23 +377,19 @@ const TargetingPage = ({
           ? handleCreatePrerequisites(prerequisites)
           : [];
 
-        setValue('prerequisites', resetPrerequisites, {
-          shouldDirty: resetPrerequisites.length === 0
-        });
+        reset({ ...getValues(), prerequisites: resetPrerequisites });
       }
       if (type === DiscardChangesType.INDIVIDUAL) {
         const { targets, variations } = feature;
         const resetIndividualRules = targets.length
           ? handleCreateIndividualRules(targets, variations)
           : [];
-        setValue('individualRules', resetIndividualRules, {
-          shouldDirty: resetIndividualRules.length === 0
-        });
+        reset({ ...getValues(), individualRules: resetIndividualRules });
       }
       if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
-        const currentRule = featureRef.current.rules[index] as FeatureRule;
+        setActionRuleSegment(undefined);
+        const currentRule = featureRef.rules[index] as FeatureRule;
 
-        console.log('check rule index curren t::: ', currentRule);
         const matchedRuleIndex = feature.rules.findIndex(
           r => r.id === currentRule.id
         );
@@ -347,18 +399,38 @@ const TargetingPage = ({
           const resetSwap = resetSegmentRules.find(
             r => r.id === currentRule.id
           );
-          segmentRulesUpdate(index, resetSwap!);
+          if (resetSwap) {
+            const fr = normalizeSegmentRules(
+              featureRef.rules,
+              segmentRulesWatch
+            );
+            const reordered = reorderWithReset(
+              feature.rules,
+              fr as FeatureRule[],
+              currentRule.id,
+              resetSwap
+            );
+            reset({ ...getValues(), segmentRules: reordered });
+
+            setFeatureRef(prev => ({ ...prev, rules: reordered }));
+          }
         } else {
           segmentRulesRemove(index);
-          featureRef.current = {
-            ...featureRef.current,
-            rules: featureRef.current.rules.filter((_, i) => i !== index)
-          };
+          setFeatureRef(() => ({
+            ...featureRef,
+            rules: featureRef.rules.filter((_, i) => i !== index)
+          }));
         }
+      }
+      if (type === DiscardChangesType.DEFAULT) {
+        reset({
+          ...getValues(),
+          defaultRule: handleCreateDefaultValues(feature).defaultRule
+        });
       }
       handleOnCloseDiscardModal();
     },
-    [feature, featureRef.current, segmentRulesWatch]
+    [feature, featureRef, segmentRulesWatch]
   );
 
   const onSubmit = useCallback(
@@ -525,7 +597,7 @@ const TargetingPage = ({
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
                     onAddRule={onAddRule}
-                    segmentRulesRemove={segmentRulesRemove}
+                    segmentRulesRemove={handleSegmentRuleRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
                     handleDiscardChanges={handleDiscardChanges}
                   />
@@ -545,6 +617,7 @@ const TargetingPage = ({
             urlCode={currentEnvironment.urlCode}
             feature={feature}
             waitingRunningRollouts={waitingRunningRollouts}
+            handleDiscardChanges={handleDiscardChanges}
           />
           <ButtonBar
             primaryButton={
@@ -624,6 +697,8 @@ const TargetingPage = ({
       {discardChangesState.isOpen && (
         <DiscardChangeModal
           {...discardChangesState}
+          actionRule={actionRuleSegment}
+          reorderRule={reorderRule}
           onClose={handleOnCloseDiscardModal}
           onSubmit={onDiscardChanges}
         />
