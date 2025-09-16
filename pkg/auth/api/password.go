@@ -331,21 +331,10 @@ func (s *authService) SetupPassword(
 		return nil, auth.StatusInternal.Err()
 	}
 
-	// Create credentials
-	err = s.credentialsStorage.CreateCredentials(ctx, setupToken.Email, passwordHash)
+	// Update credentials with password
+	err = s.credentialsStorage.UpdatePassword(ctx, setupToken.Email, passwordHash)
 	if err != nil {
-		if errors.Is(err, storage.ErrCredentialsAlreadyExists) {
-			s.logger.Error("Password setup attempted but credentials already exist", zap.String("email", setupToken.Email))
-			dt, err := auth.StatusPasswordAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error("Failed to create credentials during setup", zap.Error(err))
+		s.logger.Error("Failed to update password during setup", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
 	}
 
