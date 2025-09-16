@@ -20,15 +20,20 @@ import (
 	_ "embed"
 	"errors"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
+
 	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/push"
 )
 
 var (
-	ErrPushAlreadyExists          = errors.New("push: push already exists")
-	ErrPushNotFound               = errors.New("push: push not found")
-	ErrPushUnexpectedAffectedRows = errors.New("push: push unexpected affected rows")
+	ErrPushAlreadyExists          = err.NewErrorAlreadyExists(err.PushPackageName, "push already exists")
+	ErrPushNotFound               = err.NewErrorNotFound(err.PushPackageName, "push not found", "push")
+	ErrPushUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
+		err.PushPackageName,
+		"push unexpected affected rows",
+	)
 
 	//go:embed sql/push/insert_push.sql
 	insertPushSQL string

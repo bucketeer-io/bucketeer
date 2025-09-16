@@ -27,6 +27,7 @@ import (
 
 	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -105,14 +106,7 @@ func (s *EnvironmentService) getOrganization(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return org, nil
 }
@@ -192,14 +186,7 @@ func (s *EnvironmentService) ListOrganizations(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ListOrganizationsResponse{
 		Organizations: organizations,
@@ -286,26 +273,12 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		nil,
 	)
 	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err = s.publisher.Publish(ctx, event); err != nil {
 		s.logger.Error("failed to publish event",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.CreateDemoOrganizationResponse{
 		Organization: organization.Organization,
@@ -580,14 +553,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		s.logger.Error(
 			"Failed to create a domain organization",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -653,14 +619,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// Create the admin account using the environment roles created in the last step
 	// Because the account storage has a different implementation,
@@ -775,14 +734,7 @@ func (s *EnvironmentService) createOrganization(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -966,14 +918,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// Update the organization role when the owner email changes
@@ -985,14 +930,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 				zap.String("prevOwnerEmail", prevOwnerEmail),
 				zap.String("newOwnerEmail", newOwnerEmail),
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 
@@ -1030,14 +968,7 @@ func (s *EnvironmentService) reportUpdateOrganizationError(
 		}
 		return dt.Err()
 	}
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return api.NewGRPCStatus(err).Err()
 }
 
 func (s *EnvironmentService) getUpdateOrganizationCommands(
@@ -1181,14 +1112,7 @@ func (s *EnvironmentService) updateOrganization(
 				zap.String("prevOwnerEmail", prevOwnerEmail),
 				zap.String("newOwnerEmail", newOwnerEmail),
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return api.NewGRPCStatus(err).Err()
 		}
 	}
 	return nil
