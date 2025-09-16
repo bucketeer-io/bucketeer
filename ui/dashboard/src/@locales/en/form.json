@@ -387,7 +387,14 @@
   "discard-unsaved-changes": "Discard unsaved changes",
   "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
   "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user",
-  "custom-rule-discard-desc": "{{action}} clause with <b>{{clauseLabel}}</b>",
-  "custom-rule-clause-value-discard-desc": "{{action}} value {{value}} from clause <b>{{clauseLabel}}</b>",
-  "custom-rule-strategy-discard-desc": "{{action}} rule variation to"
+  "custom-rule-discard-desc": "{{action}} clause with ",
+  "custom-rule-clause-value-discard-desc": "{{action}} value <b>{{value}}</b> from clause ",
+  "custom-rule-strategy-discard-desc": "{{action}} rule variation to",
+  "custom-rule-strategy-add-new-discard-desc" :"Add rule {{clauseLabel}} serve",
+  "custom-rule-reorder-discard-desc":"Reorder rules",
+  "custom-rule-audience-discard-desc":"{{action}} audience traffic allocation with",
+  "custom-rule-audience-not-include-desc":"Not included in this allocation <b>{{percent}}%</b> will be served <b>{{variation}}</b>",
+  "custom-rule-audience-include-desc":"Included in this allocation <b>{{percent}}%</b> will be served",
+  "custom-rule-default-strategy-discard-desc": "Set default rule to",
+  "custom-rule-default-audience-discard-desc": "Set default audience to"
 }

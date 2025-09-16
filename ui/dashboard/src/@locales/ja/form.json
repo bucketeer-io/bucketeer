@@ -385,9 +385,17 @@
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
   },
   "discard-unsaved-changes": "保存されていない変更を破棄",
-  "prerequisite-discard-desc": "{{action}} prerequisite flag <b>{{flagName}}</b> with variation",
   "individual-discard-desc": "{{action}} <b>{{flagName}}</b> to <variantElement /> for user",
   "custom-rule-discard-desc": "<b>{{clauseLabel}}</b>を含む条項を{{action}}",
   "custom-rule-clause-value-discard-desc": "条項 <b>{{clauseLabel}}</b> から値 {{value}} を{{action}}",
-  "custom-rule-strategy-discard-desc": "{{action}} rule variation to"
+  "discard-form:discard-rule.discard-unsaved-changes": "未保存の変更を破棄しますか？",
+  "prerequisite-discard-desc": "前提フラグ <b>{{flagName}}</b>（バリエーション付き）を{{action}}",
+  "custom-rule-strategy-discard-desc": "{{action}} ルールのバリエーションを",
+  "custom-rule-strategy-add-new-discard-desc": "ルール {{clauseLabel}} を追加して配信",
+  "custom-rule-reorder-discard-desc": "ルールを並べ替える",
+  "custom-rule-audience-discard-desc": "{{action}} オーディエンスのトラフィック配分を",
+  "custom-rule-audience-not-include-desc": "<p>この配分に含まれていない <b>{{percent}}%</b> には <b>{{variation}}</b> が提供されます</p>",
+  "custom-rule-audience-include-desc": "<p>この配分に含まれている <b>{{percent}}%</b> には提供されます</p>",
+  "custom-rule-default-strategy-discard-desc": "デフォルトルールに設定",
+  "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します"
 }

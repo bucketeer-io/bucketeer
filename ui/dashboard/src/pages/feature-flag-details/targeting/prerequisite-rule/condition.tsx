@@ -1,4 +1,4 @@
-import { forwardRef, Ref, useMemo } from 'react';
+import { forwardRef, Ref, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
@@ -68,6 +68,18 @@ const ConditionForm = forwardRef(
         })),
       [currentFeature]
     );
+    useEffect(() => {
+      const firstVariationId = currentFeature?.variations?.[0]?.id;
+      const currentVariationId = watch(`${commonName}.variationId`);
+
+      const isCurrentValid = currentFeature?.variations?.some(
+        v => v.id === currentVariationId
+      );
+
+      if ((!currentVariationId || !isCurrentValid) && firstVariationId) {
+        methods.setValue(`${commonName}.variationId`, firstVariationId);
+      }
+    }, [currentFeatureId, currentFeature, methods.setValue, commonName]);
 
     return (
       <div ref={ref} className="flex items-center w-full gap-x-4">
@@ -134,6 +146,11 @@ const ConditionForm = forwardRef(
                     <Dropdown
                       options={variationOptions}
                       value={field.value}
+                      labelCustom={
+                        variationOptions?.find(
+                          item => field.value === item.value
+                        )?.label || variationOptions?.[0]?.label
+                      }
                       onChange={field.onChange}
                       placeholder={t('experiments.select-variation')}
                       disabled={!variationOptions?.length}
