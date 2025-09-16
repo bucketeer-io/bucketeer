@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -554,14 +555,7 @@ func (s *TagService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -627,14 +621,7 @@ func (s *TagService) checkOrganizationRole(
 					zap.String("organizationID", organizationID),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -714,7 +701,8 @@ func (s *TagService) reportInternalServerError(
 			zap.String("environmentId", environmentId),
 		)...,
 	)
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+	st := api.NewGRPCStatus(err)
+	dt, err := st.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
 		Message: localizer.MustLocalize(locale.InternalServerError),
 	})
