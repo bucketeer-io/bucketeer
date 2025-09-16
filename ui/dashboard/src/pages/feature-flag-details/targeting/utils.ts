@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+import { TFunction } from 'i18next';
 import { get } from 'lodash';
 import isEqual from 'lodash/isEqual';
 import omit from 'lodash/omit';
@@ -19,6 +21,7 @@ import {
   TargetChange,
   UserSegment
 } from '@types';
+import { formatLongDateTime } from 'utils/date-time';
 import {
   DefaultRuleSchema,
   RuleSchema,
@@ -26,12 +29,65 @@ import {
   TargetingSchema
 } from './form-schema';
 import {
+  ClauseLabel,
   DiscardChangesStateData,
   DiscardFeaturePrerequisiteChange,
   IndividualRuleItem,
   PrerequisiteSchema,
-  RuleClauseType
+  RuleClauseType,
+  VariationPercent
 } from './types';
+
+const createAudienceConfig = (audience?: {
+  percentage?: number;
+  defaultVariation?: string;
+}) => ({
+  percentage: audience?.percentage || 0,
+  defaultVariation: audience?.defaultVariation || ''
+});
+
+const getDefaultAudienceConfig = () => ({
+  percentage: 100,
+  defaultVariation: ''
+});
+
+const convertVariationWeights = (
+  variations: FeatureRuleStrategy['rolloutStrategy']['variations'],
+  factor: number
+) =>
+  variations?.map(item => ({
+    ...item,
+    weight: item.weight * factor
+  })) || [];
+
+const findVariationWithIndex = <T extends { id: string }>(
+  variations: T[],
+  targetId: string
+): { variation?: T; index: number } => {
+  const index = variations.findIndex(v => v?.id === targetId);
+  const variation = index !== -1 ? variations[index] : undefined;
+
+  return { variation, index };
+};
+
+const createClauseLabelParams = (
+  segmentUsers: UserSegment[],
+  clause: FeatureRuleClause,
+  situationOptions: VariationFeatures[],
+  operatorOptions: VariationFeatures[],
+  features: Feature[],
+  t: TFunction
+) => {
+  const variationFeatures = getVariation(features, clause);
+  return {
+    segmentUsers,
+    clause,
+    situationOptions,
+    variationFeatures,
+    operatorOptions,
+    t
+  };
+};
 
 export const getAlreadyTargetedVariation = (
   targets: IndividualRuleItem[],
@@ -66,20 +122,11 @@ export const getDefaultStrategy = (
     },
     rolloutStrategy: {
       variations: rolloutStrategy?.variations?.length
-        ? rolloutStrategy.variations?.map(item => ({
-            ...item,
-            weight: item.weight / 1000 || 0
-          }))
+        ? convertVariationWeights(rolloutStrategy.variations, 1 / 1000)
         : getDefaultRolloutStrategy(feature),
       audience: rolloutStrategy?.audience
-        ? {
-            percentage: rolloutStrategy?.audience?.percentage || 0,
-            defaultVariation: rolloutStrategy?.audience?.defaultVariation || ''
-          }
-        : {
-            percentage: 100,
-            defaultVariation: ''
-          }
+        ? createAudienceConfig(rolloutStrategy.audience)
+        : getDefaultAudienceConfig()
     },
     currentOption:
       type === StrategyType.FIXED
@@ -140,7 +187,7 @@ export const handleCreateIndividualRules = (
   return [];
 };
 
-const getClauseType = (operator: FeatureRuleClauseOperator) => {
+export const getClauseType = (operator: FeatureRuleClauseOperator) => {
   const { FEATURE_FLAG, BEFORE, AFTER, SEGMENT } = FeatureRuleClauseOperator;
   if (operator === FEATURE_FLAG) return RuleClauseType.FEATURE_FLAG;
   if ([BEFORE, AFTER].includes(operator)) return RuleClauseType.DATE;
@@ -154,10 +201,12 @@ export const handleCreateSegmentRules = (feature: Feature) => {
     .map(({ id, strategy, clauses }) => ({
       id,
       strategy: getDefaultStrategy(feature, strategy),
-      clauses: (clauses || []).map(clause => ({
-        ...clause,
-        type: getClauseType(clause.operator)
-      }))
+      clauses: (clauses || [])
+        .filter(clause => clause !== undefined && clause !== null)
+        .map(clause => ({
+          ...clause,
+          type: getClauseType(clause.operator)
+        }))
     }));
 };
 
@@ -231,23 +280,14 @@ const handleGetStrategy = (
     return {
       type,
       rolloutStrategy: {
-        variations:
-          (
-            rolloutStrategy as FeatureRuleStrategy['rolloutStrategy']
-          )?.variations?.map(item => ({
-            ...item,
-            weight: item.weight * 1000
-          })) || [],
+        variations: convertVariationWeights(
+          (rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])
+            ?.variations || [],
+          1000
+        ),
         audience: rolloutStrategy?.audience
-          ? {
-              percentage: rolloutStrategy?.audience?.percentage || 0,
-              defaultVariation:
-                rolloutStrategy?.audience?.defaultVariation || ''
-            }
-          : {
-              percentage: 100,
-              defaultVariation: ''
-            }
+          ? createAudienceConfig(rolloutStrategy.audience)
+          : getDefaultAudienceConfig()
       }
     };
   }
@@ -261,21 +301,13 @@ export const handleGetDefaultRuleStrategy = (
     return {
       type: StrategyType.ROLLOUT,
       rolloutStrategy: {
-        variations:
-          rolloutStrategy?.variations?.map(item => ({
-            ...item,
-            weight: item.weight * 1000
-          })) || [],
+        variations: convertVariationWeights(
+          rolloutStrategy?.variations || [],
+          1000
+        ),
         audience: rolloutStrategy?.audience
-          ? {
-              percentage: rolloutStrategy?.audience?.percentage || 0,
-              defaultVariation:
-                rolloutStrategy?.audience?.defaultVariation || ''
-            }
-          : {
-              percentage: 100,
-              defaultVariation: ''
-            }
+          ? createAudienceConfig(rolloutStrategy.audience)
+          : getDefaultAudienceConfig()
       }
     };
   }
@@ -455,13 +487,10 @@ const getPrerequisiteDiscardChangeData = (
   const currentFeature = activeFeatures.find(
     feature => feature.id === item.prerequisite.featureId
   );
-  let variationIndex = -1;
-  const variation = currentFeature?.variations.find((variation, index) => {
-    if (variation.id === item.prerequisite.variationId) {
-      variationIndex = index;
-      return variation;
-    }
-  });
+  const { variation, index: variationIndex } = findVariationWithIndex(
+    currentFeature?.variations || [],
+    item.prerequisite.variationId
+  );
   return {
     label: currentFeature?.name || '',
     featureId: currentFeature?.id || '',
@@ -523,13 +552,10 @@ const getIndividualDiscardChangeData = (
   feature: Feature,
   individual: FeatureTarget
 ) => {
-  let variationIndex = -1;
-  const variation = feature?.variations.find((variation, index) => {
-    if (variation.id === individual.variation) {
-      variationIndex = index;
-      return variation;
-    }
-  });
+  const { variation, index: variationIndex } = findVariationWithIndex(
+    feature?.variations || [],
+    individual.variation
+  );
 
   return {
     label: individual.users?.join(', ') || '',
@@ -589,20 +615,16 @@ const getVariationLabel = (
   variations: VariationFeatures[],
   variationId: string
 ) => {
-  return variations.find(item => item.value === variationId)?.label || '';
-};
+  const { variation, index } = findVariationWithIndex(
+    variations.map(v => ({ id: v.value, ...v })),
+    variationId
+  );
 
-const formatTimestamp = (ts: number): string => {
-  const date = new Date(ts * 1000);
-  const pad = (n: number) => String(n).padStart(2, '0');
+  if (index === -1) {
+    return { label: '', index: -1 };
+  }
 
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-
-  return `${year}/${month}/${day} ${hours}:${minutes}`;
+  return { label: variation?.label || '', index };
 };
 
 const getValueLabel = (
@@ -611,17 +633,25 @@ const getValueLabel = (
   variations: { label: string; value: string }[],
   values: string[]
 ) => {
-  if (operator === FeatureRuleClauseOperator.SEGMENT && segmentUsers) {
+  const { SEGMENT, FEATURE_FLAG, BEFORE, AFTER } = FeatureRuleClauseOperator;
+  if (operator === SEGMENT && segmentUsers) {
     return segmentUsers.find(item => values.includes(item.id))?.name || '';
   }
-  if (
-    operator === FeatureRuleClauseOperator.BEFORE ||
-    operator === FeatureRuleClauseOperator.AFTER
-  ) {
-    return formatTimestamp(Number(values[0]));
+  if ([BEFORE, AFTER].includes(operator as FeatureRuleClauseOperator)) {
+    return values[0]
+      ? formatLongDateTime({
+          value: values[0],
+          overrideOptions: {
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+          }
+        })
+      : '';
   }
-  if (operator === FeatureRuleClauseOperator.FEATURE_FLAG && variations) {
-    return getVariationLabel(variations, values[0]);
+  if (operator === FEATURE_FLAG && variations) {
+    return getVariationLabel(variations, values[0]).label;
   }
   return values.join(', ');
 };
@@ -640,17 +670,18 @@ const getVariation = (features: Feature[], clause: FeatureRuleClause) => {
   return variationFeatures || [];
 };
 
-const getLabelClause = (
+export const getClauseLabel = (
   segmentUsers: UserSegment[],
   clause: FeatureRuleClause,
   situationOptions: VariationFeatures[],
   variations: VariationFeatures[],
   operatorOptions: VariationFeatures[],
-  t: (key: string) => string
-) => {
+  t: TFunction<['common', 'form', 'message'], undefined>
+): ClauseLabel => {
   const operator = get(clause, 'operator', '');
+
   const attribute = get(clause, 'attribute', '');
-  const situationLabel = situationOptions.find(
+  const situationText = situationOptions.find(
     s => s.value === clause.type
   )?.label;
 
@@ -662,240 +693,550 @@ const getLabelClause = (
     clause.operator === FeatureRuleClauseOperator.EQUALS ||
     getClauseType(clause.operator) === RuleClauseType.COMPARE;
 
-  const operatorLabel = () => {
-    if (isUserSegment) {
-      return t('is-included-in');
-    }
-    if (isFeatureFlag) {
-      return '=';
-    }
-    return (
-      operatorOptions?.find(operatorOption => {
-        return operatorOption.value === operator;
-      })?.label || operator
-    );
-  };
+  const operatorText = isUserSegment
+    ? t('is-included-in')
+    : isFeatureFlag
+      ? '='
+      : operatorOptions.find(opt => opt.value === operator)?.label || operator;
 
   const values = !isCompare
     ? getValueLabel(clause.operator, segmentUsers, variations, clause.values)
     : clause.values?.join(', ') || '';
 
-  const labelRule = [situationLabel, attribute, operatorLabel(), values]
+  const fullLabel = [situationText, attribute, operatorText, values]
     .filter(Boolean)
     .join(' ');
 
-  const labelField = values;
-  return { labelRule, labelField };
+  const valueLabel = values;
+  return { fullLabel, valueLabel };
 };
 
-export const handleCheckSegmentRulesDiscardChanges = (
-  preRule: FeatureRule,
-  segmentUsers: UserSegment[],
-  currentRule: FeatureRule,
-  situationOptions: VariationFeatures[],
-  features: Feature[],
-  operatorOptions: VariationFeatures[],
+const getVariationInfo = (
   variationFeatures: FeatureVariation[],
-  t: (key: string) => string
-): DiscardChangesStateData[] => {
-  const changeClause: DiscardChangesStateData[] = [];
-
-  const preClauses = new Map(preRule?.clauses?.map(c => [c.id, c]));
-  const currentClauses = new Map(currentRule.clauses.map(c => [c.id, c]));
-  const preStrategy = preRule.strategy;
-  const currentStrategy = currentRule.strategy;
-  const variationFeatureLabelFc = (variationId: string) => {
-    return variationFeatures.find(item => item.id === variationId)?.name || '';
-  };
-
-  if (preClauses.size) {
-    preRule.clauses.forEach(preClause => {
-      const currentClause = currentClauses.get(preClause.id);
-      const variationFeatures = getVariation(
-        features,
-        currentClause || preClause
-      );
-      const preVariationFeatures = getVariation(features, preClause);
-      const isUpdate = currentClause
-        ? getClauseType(preClause.operator) !== currentClause.type ||
-          preClause.operator !== currentClause.operator ||
-          preClause.attribute !== currentClause.attribute
-        : false;
-
-      const preValues = preClause.values || [];
-      const currentValues = currentClause ? currentClause.values || [] : [];
-      const isCompare = currentClause
-        ? currentClause.operator === FeatureRuleClauseOperator.EQUALS ||
-          currentClause.type === RuleClauseType.COMPARE
-        : false;
-      const removedValue = preValues.filter(
-        value => !currentValues.includes(value)
-      );
-      const addValue = currentValues.filter(
-        value => !preValues.includes(value)
-      );
-
-      if (!currentClause) {
-        changeClause.push({
-          label: getLabelClause(
-            segmentUsers,
-            preClause,
-            situationOptions,
-            preVariationFeatures || [],
-            operatorOptions,
-            t
-          ).labelRule,
-          changeField: 'clause',
-          labelType: 'REMOVE',
-          variationIndex: 0
-        });
-        return;
-      }
-
-      if (isUpdate) {
-        changeClause.push({
-          label: getLabelClause(
-            segmentUsers,
-            currentClause,
-            situationOptions,
-            variationFeatures || [],
-            operatorOptions,
-            t
-          ).labelRule,
-          labelType: 'UPDATE',
-          changeField: 'clause',
-          variationIndex: 0
-        });
-        return;
-      }
-
-      if (removedValue.length && isCompare) {
-        changeClause.push({
-          label: getLabelClause(
-            segmentUsers,
-            currentClause,
-            situationOptions,
-            variationFeatures || [],
-            operatorOptions,
-            t
-          ).labelRule,
-          labelType: 'REMOVE',
-          changeField: 'value',
-          valueLabel: getValueLabel(
-            preClause.operator,
-            segmentUsers,
-            variationFeatures || [],
-            removedValue
-          ),
-          variationIndex: 0
-        });
-      }
-
-      if (addValue.length) {
-        changeClause.push({
-          valueLabel: getValueLabel(
-            preClause.operator,
-            segmentUsers,
-            variationFeatures || [],
-            addValue
-          ),
-          label: getLabelClause(
-            segmentUsers,
-            currentClause,
-            situationOptions,
-            variationFeatures || [],
-            operatorOptions,
-            t
-          ).labelRule,
-          labelType: isCompare ? 'ADD' : 'UPDATE',
-          changeField: isCompare ? 'value' : 'clause',
-          variationIndex: 0
-        });
-      }
-    });
-  }
-
-  currentRule.clauses.forEach(currentClause => {
-    if (!preClauses.has(currentClause.id)) {
-      const variationFeatures = getVariation(features, currentClause);
-      changeClause.push({
-        label: getLabelClause(
-          segmentUsers,
-          currentClause,
-          situationOptions,
-          variationFeatures,
-          operatorOptions,
-          t
-        ).labelRule,
-        changeField: 'clause',
-        labelType: 'ADD',
-        variationIndex: 0
-      });
-    }
-  });
-
-  if (currentStrategy.type === StrategyType.FIXED && preStrategy) {
-    if (
-      preStrategy.fixedStrategy?.variation ===
-      currentStrategy.fixedStrategy?.variation
-    ) {
-      return changeClause;
-    }
-    const variationFeatureLabel = variationFeatureLabelFc(
-      currentStrategy.fixedStrategy.variation
+  variationId: string
+) => {
+  const { variation, index: indexVariation } = findVariationWithIndex(
+    variationFeatures,
+    variationId
+  );
+  return indexVariation === -1
+    ? { variationLabel: '', indexVariation: -1, variationId: '' }
+    : {
+        variationLabel: variation?.name || '',
+        indexVariation,
+        variationId: variation?.id || ''
+      };
+};
+const getStrategyVariationWeight = (
+  strategy: FeatureRuleStrategy,
+  variationFeatures: FeatureVariation[]
+): VariationPercent[] => {
+  const { ROLLOUT, FIXED, MANUAL } = StrategyType;
+  if (strategy.type === FIXED) {
+    const { variationLabel, indexVariation, variationId } = getVariationInfo(
+      variationFeatures,
+      strategy.fixedStrategy.variation
     );
-    changeClause.push({
-      label: variationFeatureLabel,
-      variationPercent: [{ variation: variationFeatureLabel || '' }],
-      labelType: 'UPDATE',
-      changeField: 'strategy',
-      variationIndex: 0
-    });
+    return [
+      {
+        variationId: variationId,
+        variation: variationLabel,
+        weight: null,
+        variationIndex: indexVariation
+      }
+    ];
   }
-  if (currentStrategy.type === StrategyType.ROLLOUT) {
-    const preRolloutStrategy = preStrategy.rolloutStrategy?.variations.map(
-      v => ({ ...v, weight: v.weight > 0 ? v.weight / 1000 : 0 })
-    );
-    if (
-      isEqual(preRolloutStrategy, currentStrategy.rolloutStrategy.variations)
-    ) {
-      return changeClause;
-    }
-    const variationWeight = currentStrategy.rolloutStrategy.variations
+  if ([ROLLOUT, MANUAL].includes(strategy.type)) {
+    return strategy.rolloutStrategy.variations
       .map(variation => {
-        const variationFeatureLabel = variationFeatureLabelFc(
-          variation.variation
-        );
-        if (variationFeatureLabel) {
+        const { variationLabel, indexVariation, variationId } =
+          getVariationInfo(variationFeatures, variation.variation);
+
+        if (variationLabel) {
           return {
-            variation: variationFeatureLabel,
-            weight: variation.weight
+            variationId: variationId,
+            variation: variationLabel,
+            weight: variation.weight,
+            variationIndex: indexVariation
           };
         }
       })
-      .filter(Boolean) as { variation: string; weight: number }[];
-    changeClause.push({
-      label: '',
-      variationPercent: variationWeight,
-      labelType: 'UPDATE',
-      changeField: 'strategy',
-      variationIndex: 0
-    });
+      .filter(Boolean) as VariationPercent[];
   }
+  return [];
+};
 
-  return changeClause;
+export const getClauseLabelsFromRule = (
+  rule: FeatureRule,
+  features: Feature[],
+  segmentUsers: UserSegment[],
+  situationOptions: VariationFeatures[],
+  operatorOptions: VariationFeatures[],
+  t: TFunction<['common', 'form', 'message'], undefined>
+): string[] =>
+  rule.clauses.map(clause => {
+    const variationFeaturesLabel = getVariation(features, clause);
+    const { fullLabel } = getClauseLabel(
+      segmentUsers,
+      clause,
+      situationOptions,
+      variationFeaturesLabel,
+      operatorOptions,
+      t
+    );
+    return `${t('common:if')} ${fullLabel}`;
+  });
+
+export const hasChangePosition = (
+  ruleId: string,
+  originFeatures: Feature,
+  currentFeature: Feature
+) => {
+  const originIndex = originFeatures.rules.findIndex(
+    item => item.id === ruleId
+  );
+  const currentIndex = currentFeature.rules.findIndex(
+    item => item.id === ruleId
+  );
+  return originIndex !== currentIndex;
+};
+
+export const getFeatureRuleLabels = (
+  feature: Feature,
+  features: Feature[],
+  segmentUsers: UserSegment[],
+  situationOptions: VariationFeatures[],
+  operatorOptions: VariationFeatures[],
+  t: TFunction<['common', 'form', 'message'], undefined>,
+  variationFeatures: FeatureVariation[]
+) => {
+  const filteredRules = feature.rules;
+
+  const variations: VariationPercent[][] = [];
+  const labels: string[][] = [];
+
+  filteredRules.forEach(rule => {
+    variations.push(
+      getStrategyVariationWeight(
+        rule.strategy,
+        variationFeatures
+      ) as VariationPercent[]
+    );
+    labels.push(
+      getClauseLabelsFromRule(
+        rule,
+        features,
+        segmentUsers,
+        situationOptions,
+        operatorOptions,
+        t
+      )
+    );
+  });
+
+  return { variations, labels };
 };
 
 export const handleSwapRuleFeature = (
   feature: Feature,
   indexA: number,
   indexB: number
+): Feature => {
+  const newRules = [...feature.rules];
+  [newRules[indexA], newRules[indexB]] = [newRules[indexB], newRules[indexA]];
+
+  return { ...feature, rules: newRules };
+};
+
+export function reorderWithReset(
+  rulesA: FeatureRule[],
+  currentRules: FeatureRule[],
+  resetRuleId: string,
+  resetRule: FeatureRule
+): FeatureRule[] {
+  const withoutReset = currentRules.filter(r => r.id !== resetRuleId);
+
+  const resetIndex = rulesA.findIndex(r => r.id === resetRuleId);
+  if (resetIndex < 0) return withoutReset;
+
+  const result = [...withoutReset];
+  result.splice(Math.min(resetIndex, result.length), 0, resetRule);
+  return result;
+}
+
+export function normalizeSegmentRules(
+  featureRefRules: FeatureRule[],
+  segmentRules?: TargetingSchema['segmentRules'] | undefined
+) {
+  if (!segmentRules) return [];
+  return segmentRules.map((segRule, i) => {
+    const originalRule = featureRefRules[i];
+    if (!originalRule) return segRule;
+    return {
+      ...segRule,
+      id: originalRule.id,
+      clauses: segRule.clauses.map((clause, j) => {
+        const originalClause = originalRule.clauses[j];
+        return originalClause ? { ...clause, id: originalClause.id } : clause;
+      })
+    };
+  });
+}
+
+export function hasSameRelativeOrder(
+  rulesA: FeatureRule[],
+  currentRules: FeatureRule[]
+): boolean {
+  for (let i = 0; i < rulesA.length; i++) {
+    if (rulesA[i].id !== currentRules[i].id) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+const getAudienceChangeData = (
+  strategy: FeatureRuleStrategy,
+  variationFeatures: FeatureVariation[]
 ) => {
-  let tmp = null;
-  const ruleA = feature.rules[indexA];
-  const ruleB = feature.rules[indexB];
-  tmp = ruleA;
-  feature.rules[indexA] = ruleB;
-  feature.rules[indexB] = tmp;
-  return feature;
+  const variationPercents = getStrategyVariationWeight(
+    strategy,
+    variationFeatures
+  );
+
+  const defaultVariation = strategy.rolloutStrategy?.audience?.defaultVariation;
+  const includedPercent = strategy.rolloutStrategy?.audience?.percentage;
+
+  const audienceExcluded = variationPercents.find(
+    v => v.variationId === defaultVariation
+  );
+
+  return {
+    variationPercents,
+    audienceExcluded: {
+      ...audienceExcluded,
+      weight: Number(100 - (includedPercent ?? 0))
+    } as VariationPercent
+  };
+};
+
+const diffClauses = (
+  preRule: FeatureRule,
+  currentRule: FeatureRule,
+  features: Feature[],
+  segmentUsers: UserSegment[],
+  situationOptions: VariationFeatures[],
+  operatorOptions: VariationFeatures[],
+  t: TFunction,
+  setActionRuleSegment: Dispatch<
+    SetStateAction<'new-rule' | 'edit-rule' | undefined>
+  >
+): DiscardChangesStateData[] => {
+  const changes: DiscardChangesStateData[] = [];
+
+  const preClauses = new Map(preRule.clauses.map(c => [c.id, c]));
+  const currentClauses = new Map(currentRule.clauses.map(c => [c.id, c]));
+
+  preRule.clauses.forEach(preClause => {
+    const currentClause = currentClauses.get(preClause.id);
+
+    if (!currentClause) {
+      const preParams = createClauseLabelParams(
+        segmentUsers,
+        preClause,
+        situationOptions,
+        operatorOptions,
+        features,
+        t
+      );
+      changes.push({
+        label: getClauseLabel(
+          preParams.segmentUsers,
+          preParams.clause,
+          preParams.situationOptions,
+          preParams.variationFeatures,
+          preParams.operatorOptions,
+          preParams.t
+        ).fullLabel,
+        changeType: 'clause',
+        labelType: 'REMOVE',
+        variationIndex: 0
+      });
+      return;
+    }
+
+    const isUpdate =
+      getClauseType(preClause.operator) !==
+        getClauseType(currentClause.operator) ||
+      preClause.operator !== currentClause.operator ||
+      preClause.attribute !== currentClause.attribute;
+
+    if (isUpdate) {
+      const currentParams = createClauseLabelParams(
+        segmentUsers,
+        currentClause,
+        situationOptions,
+        operatorOptions,
+        features,
+        t
+      );
+      changes.push({
+        label: getClauseLabel(
+          currentParams.segmentUsers,
+          currentParams.clause,
+          currentParams.situationOptions,
+          currentParams.variationFeatures,
+          currentParams.operatorOptions,
+          currentParams.t
+        ).fullLabel,
+        labelType: 'UPDATE',
+        changeType: 'clause',
+        variationIndex: 0
+      });
+      return;
+    }
+
+    const preValues = preClause.values || [];
+    const currentValues = currentClause.values || [];
+
+    const isCompare =
+      currentClause.operator === FeatureRuleClauseOperator.EQUALS ||
+      currentClause.type === RuleClauseType.COMPARE;
+
+    const removedValue = preValues.filter(v => !currentValues.includes(v));
+    const addValue = currentValues.filter(v => !preValues.includes(v));
+
+    if (removedValue.length && isCompare) {
+      setActionRuleSegment('edit-rule');
+      const currentParams = createClauseLabelParams(
+        segmentUsers,
+        currentClause,
+        situationOptions,
+        operatorOptions,
+        features,
+        t
+      );
+      changes.push({
+        label: getClauseLabel(
+          currentParams.segmentUsers,
+          currentParams.clause,
+          currentParams.situationOptions,
+          currentParams.variationFeatures,
+          currentParams.operatorOptions,
+          currentParams.t
+        ).fullLabel,
+        labelType: 'REMOVE',
+        changeType: 'value',
+        valueLabel: getValueLabel(
+          preClause.operator,
+          segmentUsers,
+          currentParams.variationFeatures,
+          removedValue
+        ),
+        variationIndex: 0
+      });
+    }
+
+    if (addValue.length) {
+      const currentParams = createClauseLabelParams(
+        segmentUsers,
+        currentClause,
+        situationOptions,
+        operatorOptions,
+        features,
+        t
+      );
+      changes.push({
+        valueLabel: getValueLabel(
+          preClause.operator,
+          segmentUsers,
+          currentParams.variationFeatures,
+          addValue
+        ),
+        label: getClauseLabel(
+          currentParams.segmentUsers,
+          currentParams.clause,
+          currentParams.situationOptions,
+          currentParams.variationFeatures,
+          currentParams.operatorOptions,
+          currentParams.t
+        ).fullLabel,
+        labelType: isCompare ? 'ADD' : 'UPDATE',
+        changeType: isCompare ? 'value' : 'clause',
+        variationIndex: 0
+      });
+    }
+  });
+
+  currentRule.clauses.forEach(currentClause => {
+    if (!preClauses.has(currentClause.id)) {
+      const currentParams = createClauseLabelParams(
+        segmentUsers,
+        currentClause,
+        situationOptions,
+        operatorOptions,
+        features,
+        t
+      );
+      changes.push({
+        label: getClauseLabel(
+          currentParams.segmentUsers,
+          currentParams.clause,
+          currentParams.situationOptions,
+          currentParams.variationFeatures,
+          currentParams.operatorOptions,
+          currentParams.t
+        ).fullLabel,
+        changeType: 'clause',
+        labelType: 'ADD',
+        variationIndex: 0
+      });
+    }
+  });
+
+  return changes;
+};
+
+const diffStrategy = (
+  preStrategy: FeatureRuleStrategy,
+  currentStrategy: FeatureRuleStrategy,
+  variationFeatures: FeatureVariation[],
+  isDefaultRule?: boolean
+): DiscardChangesStateData[] => {
+  const changes: DiscardChangesStateData[] = [];
+
+  if (currentStrategy.type === StrategyType.FIXED) {
+    if (
+      preStrategy?.fixedStrategy?.variation !==
+      currentStrategy.fixedStrategy?.variation
+    ) {
+      changes.push({
+        label: '',
+        variationPercent: getStrategyVariationWeight(
+          currentStrategy,
+          variationFeatures
+        ),
+        labelType: 'UPDATE',
+        changeType: isDefaultRule ? 'default-strategy' : 'strategy',
+        variationIndex: 0
+      });
+    }
+  }
+
+  if (
+    currentStrategy.type === StrategyType.ROLLOUT ||
+    currentStrategy.type === StrategyType.MANUAL
+  ) {
+    const { variationPercents, audienceExcluded } = getAudienceChangeData(
+      currentStrategy,
+      variationFeatures
+    );
+    const preRollout = preStrategy.rolloutStrategy?.variations.map(v => ({
+      ...v,
+      weight: v.weight >= 0 && v.weight <= 100 ? v.weight : v.weight / 1000
+    }));
+
+    if (
+      !isEqual(
+        preStrategy.rolloutStrategy?.audience,
+        currentStrategy.rolloutStrategy?.audience
+      )
+    ) {
+      changes.push({
+        label: '',
+        audienceExcluded,
+        labelType: 'UPDATE',
+        changeType: isDefaultRule ? 'default-audience' : 'audience',
+        variationIndex: 0
+      });
+    }
+
+    if (!isEqual(preRollout, currentStrategy.rolloutStrategy.variations)) {
+      changes.push({
+        label: '',
+        variationPercent: variationPercents,
+        labelType: 'UPDATE',
+        changeType: isDefaultRule ? 'default-strategy' : 'strategy',
+        variationIndex: 0
+      });
+    }
+  }
+
+  return changes;
+};
+
+export const checkDefaultRuleDiscardChanges = (
+  preStrategy: FeatureRuleStrategy,
+  currentStrategy: FeatureRuleStrategy,
+  variationFeatures: FeatureVariation[]
+) => {
+  return diffStrategy(preStrategy, currentStrategy, variationFeatures, true);
+};
+export const handleCheckSegmentRulesDiscardChanges = (
+  preRule: FeatureRule | null,
+  segmentUsers: UserSegment[],
+  currentRule: FeatureRule,
+  situationOptions: VariationFeatures[],
+  features: Feature[],
+  operatorOptions: VariationFeatures[],
+  variationFeatures: FeatureVariation[],
+  t: TFunction,
+  setActionRuleSegment: Dispatch<
+    SetStateAction<'new-rule' | 'edit-rule' | undefined>
+  >
+): DiscardChangesStateData[] => {
+  const { variationPercents, audienceExcluded } = getAudienceChangeData(
+    currentRule.strategy,
+    variationFeatures
+  );
+  if (!preRule) {
+    setActionRuleSegment('new-rule');
+    return [
+      {
+        label: '',
+        audienceExcluded: audienceExcluded,
+        labelType: 'ADD',
+        changeType: 'audience',
+        variationIndex: 0
+      } as DiscardChangesStateData,
+
+      {
+        label: getClauseLabelsFromRule(
+          currentRule,
+          features,
+          segmentUsers,
+          situationOptions,
+          operatorOptions,
+          t
+        ).join(` ${t('common:and')} `),
+        variationPercent: variationPercents,
+        changeType: 'new-rule',
+        labelType: 'ADD',
+        variationIndex: 0
+      }
+    ];
+  }
+
+  const clauseChanges = diffClauses(
+    preRule,
+    currentRule,
+    features,
+    segmentUsers,
+    situationOptions,
+    operatorOptions,
+    t,
+    setActionRuleSegment
+  );
+  const strategyChanges = diffStrategy(
+    preRule.strategy,
+    currentRule.strategy,
+    variationFeatures
+  );
+
+  if (clauseChanges.length || strategyChanges.length) {
+    setActionRuleSegment('edit-rule');
+  }
+
+  return [...clauseChanges, ...strategyChanges];
 };

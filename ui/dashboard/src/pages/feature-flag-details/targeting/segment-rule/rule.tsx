@@ -183,7 +183,6 @@ const RuleForm = ({
           const isHaveError = isNotEmptyObject(
             errors?.segmentRules?.[segmentIndex]?.clauses?.[clauseIndex] || {}
           );
-
           return (
             <div
               key={clause.clauseId}
