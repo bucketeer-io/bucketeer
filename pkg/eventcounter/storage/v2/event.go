@@ -18,7 +18,6 @@ package v2
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"time"
 
@@ -26,6 +25,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 )
@@ -45,8 +45,12 @@ var (
 	//go:embed sql/goal_count.sql
 	goalCountSQL string
 
-	ErrUnexpectedMultipleResults = errors.New("bigquery: unexpected multiple results")
-	ErrNoResultsFound            = errors.New("bigquery: no results found")
+	ErrUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"bigquery: unexpected multiple results")
+	ErrNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"bigquery: no results found")
 )
 
 type EventStorage interface {

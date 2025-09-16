@@ -30,6 +30,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
@@ -448,7 +450,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
 			},
 			input: &ecproto.ListExperimentResultsRequest{
 				FeatureId:      "fid",
@@ -456,7 +458,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -821,11 +823,11 @@ func TestGetMAUCount(t *testing.T) {
 			setup: func(s *eventCounterService) {
 				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
 					ctx, input.EnvironmentId, input.YearMonth,
-				).Return(int64(0), int64(0), errors.New("internal"))
+				).Return(int64(0), int64(0), pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
 			},
 			input:       input,
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
 			desc:        "error: ErrPermissionDenied",
@@ -912,11 +914,11 @@ func TestSummarizeMAUCounts(t *testing.T) {
 				).Return([]*ecproto.MAUSummary{}, nil)
 				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
 					ctx, input.YearMonth,
-				).Return(nil, errors.New("internal"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
 			},
 			input:       input,
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success get mau counts",
@@ -1261,14 +1263,14 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 							Id:         "fid",
 							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
 						},
-					}, errors.New("error"))
+					}, pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentId: environmentId,
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
 			desc: "error: get event counts failed",

@@ -25,6 +25,8 @@ const (
 	NotificationPackageName = "notification"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
+	EventCounterPackageName = "eventcounter"
+	EnvironmentPackageName  = "environment"
 	ExperimentPackageName   = "experiment"
 
 	invalidTypeUnknown        = "unknown"
@@ -144,6 +146,10 @@ func NewErrorInternal(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeInternal, message)
 }
 
+func NewErrorFailedPrecondition(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
+}
+
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
 }
@@ -162,8 +168,4 @@ func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) 
 
 func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
-}
-
-func NewErrorFailedPrecondition(pkg string, message string) *BktError {
-	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }
