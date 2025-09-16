@@ -66,7 +66,7 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
           />
         </div>
         <div
-          className="flex-center h-8 w-8 px-2 border-gray-500 border rounded-md cursor-pointer group"
+          className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
           onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
         >
           <Icon
