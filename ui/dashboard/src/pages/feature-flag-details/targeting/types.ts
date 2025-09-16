@@ -24,23 +24,46 @@ export interface IndividualRuleItem {
   users: string[];
 }
 
+export interface VariationPercent {
+  variation: string;
+  weight?: number | null;
+  variationIndex?: number;
+  variationId?: string;
+}
+
+export interface RuleOrders {
+  variations: VariationPercent[][];
+  labels: string[][];
+}
+
 export interface DiscardChangesStateData {
-  labelType: 'ADD' | 'UPDATE' | 'REMOVE';
+  labelType: 'ADD' | 'UPDATE' | 'REMOVE' | 'REORDER';
   label: string;
   featureId?: string;
   variationIndex: number;
-  // rule segment
   valueLabel?: string;
-  changeField?: 'value' | 'clause' | 'strategy';
+  changeType?:
+    | 'value'
+    | 'clause'
+    | 'strategy'
+    | 'default-strategy'
+    | 'default-audience'
+    | 'audience'
+    | 'new-rule'
+    | 'reorder';
+  ruleOrders?: RuleOrders;
   variation?: FeatureVariation;
   ruleIndex?: number;
-  variationPercent?: { variation: string; weight?: number }[];
+  audienceExcluded?: VariationPercent;
+  variationPercent?: VariationPercent[];
+  isAddNew?: boolean;
 }
 
 export enum DiscardChangesType {
   PREREQUISITE = 'prerequisite',
   INDIVIDUAL = 'individual',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
+  DEFAULT = 'default'
 }
 
 export type DiscardFeaturePrerequisiteChange = {
@@ -53,4 +76,9 @@ export interface DiscardChangesState {
   isOpen: boolean;
   data: DiscardChangesStateData[];
   ruleIndex?: number;
+}
+
+export interface ClauseLabel {
+  fullLabel: string;
+  valueLabel: string;
 }

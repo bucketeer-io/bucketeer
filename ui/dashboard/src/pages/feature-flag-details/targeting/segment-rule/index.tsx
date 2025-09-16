@@ -128,7 +128,7 @@ const TargetSegmentRule = ({
 
                 <div className="flex items-center gap-x-2">
                   <div
-                    className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-500"
+                    className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
                     onClick={() =>
                       handleDiscardChanges(
                         DiscardChangesType.CUSTOM,
