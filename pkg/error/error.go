@@ -25,6 +25,8 @@ const (
 	NotificationPackageName = "notification"
 	PushPackageName         = "push"
 	TagPackageName          = "tag"
+	EventCounterPackageName = "eventcounter"
+	EnvironmentPackageName  = "environment"
 	AuditlogPackageName     = "auditlog"
 	AutoopsPackageName      = "autoops"
 
