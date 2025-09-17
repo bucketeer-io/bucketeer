@@ -28,6 +28,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	v2als "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -148,13 +149,7 @@ func (s *auditlogService) GetAuditLog(
 				return nil, statusInternal.Err()
 			}
 		} else {
-			dt, err = statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		return nil, dt.Err()
 	}
@@ -280,14 +275,7 @@ func (s *auditlogService) ListAuditLogs(
 			"Failed to list auditlogs",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	editorEmails := make([]string, 0, len(auditlogs))
 	for _, auditlog := range auditlogs {
@@ -429,14 +417,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 			"Failed to list admin auditlogs",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	for _, auditlog := range auditlogs {
 		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
@@ -575,14 +556,7 @@ func (s *auditlogService) ListFeatureHistory(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	for _, auditlog := range auditlogs {
 		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
@@ -636,14 +610,7 @@ func (s *auditlogService) getAccountMapByEmails(
 				zap.String("environmentId", environmentID),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return accountMap, statusInternal.Err()
-		}
-		return accountMap, dt.Err()
+		return accountMap, api.NewGRPCStatus(err).Err()
 	}
 	for i := range accounts {
 		accountMap[accounts[i].Email] = accounts[i]
@@ -740,14 +707,7 @@ func (s *auditlogService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -791,14 +751,7 @@ func (s *auditlogService) checkSystemAdminRole(
 				"Failed to check role",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
