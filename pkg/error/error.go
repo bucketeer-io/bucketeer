@@ -27,6 +27,8 @@ const (
 	TagPackageName          = "tag"
 	EventCounterPackageName = "eventcounter"
 	EnvironmentPackageName  = "environment"
+	AuditlogPackageName     = "auditlog"
+	AutoopsPackageName      = "autoops"
 	AuthPackageName         = "auth"
 
 	invalidTypeUnknown        = "unknown"
@@ -48,6 +50,8 @@ const (
 	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal                 ErrorType = "internal"
 	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
+	ErrorTypeUnavailable              ErrorType = "unavailable"
+	ErrorTypeAborted                  ErrorType = "aborted"
 	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
@@ -148,6 +152,14 @@ func NewErrorInternal(pkg string, message string) *BktError {
 
 func NewErrorFailedPrecondition(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
+}
+
+func NewErrorUnavailable(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeUnavailable, message)
+}
+
+func NewErrorAborted(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeAborted, message)
 }
 
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
