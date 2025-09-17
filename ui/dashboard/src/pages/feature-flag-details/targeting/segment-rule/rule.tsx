@@ -67,7 +67,7 @@ const RuleForm = ({
     () =>
       compact(
         feature.rules
-          ?.flatMap(item => item.clauses)
+          ?.flatMap(item => item?.clauses || [])
           .map(clause => clause.attribute)
       ),
     [feature.rules]
@@ -183,7 +183,6 @@ const RuleForm = ({
           const isHaveError = isNotEmptyObject(
             errors?.segmentRules?.[segmentIndex]?.clauses?.[clauseIndex] || {}
           );
-
           return (
             <div
               key={clause.clauseId}
