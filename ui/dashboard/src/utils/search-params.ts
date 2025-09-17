@@ -10,7 +10,7 @@ export function useSearchParams() {
 
   const searchOptions = useMemo<SearchParams>((): SearchParams => {
     return queryString.parse(location.search);
-  }, [location.search]);
+  }, [location]);
 
   const onChangSearchParams = useCallback(
     (
