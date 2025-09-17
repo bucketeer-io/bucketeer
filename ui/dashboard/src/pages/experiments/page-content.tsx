@@ -79,11 +79,13 @@ const PageContent = ({
 
   const onChangeFilters = useCallback(
     (values: Partial<ExperimentFilters>, isChangeParams = true) => {
-      const nextPage = values.page || 1;
-      const merged = { ...filters, ...values, page: nextPage };
-      const options = pickBy(merged, v => isNotEmpty(v));
-      if (isChangeParams) onChangSearchParams(options);
-      setFilters(merged);
+      values.page = values?.page || 1;
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+
+      if (isChangeParams) {
+        onChangSearchParams(options);
+      }
+      setFilters({ ...values });
     },
     [filters]
   );
