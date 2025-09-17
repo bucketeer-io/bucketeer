@@ -63,8 +63,8 @@ func (s *Segment) UpdateSegment(
 }
 
 func (s *Segment) SetDeleted() error {
-	s.Segment.Deleted = true
-	s.Segment.UpdatedAt = time.Now().Unix()
+	s.Deleted = true
+	s.UpdatedAt = time.Now().Unix()
 	return nil
 }
 

@@ -39,6 +39,10 @@ var (
 	deleteCodeReferenceSQL string
 )
 
+type contextKey string
+
+const transactionKey contextKey = "transaction"
+
 var (
 	ErrCodeReferenceNotFound               = errors.New("coderef: code reference not found")
 	ErrCodeReferenceUnexpectedAffectedRows = errors.New("coderef: code reference unexpected affected rows")

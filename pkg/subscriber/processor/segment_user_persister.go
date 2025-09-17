@@ -118,9 +118,10 @@ func NewSegmentUserPersister(
 	opts = append(opts, factory.WithPubSubType(pubSubType))
 	opts = append(opts, factory.WithLogger(logger))
 
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		opts = append(opts, factory.WithProjectID(segmentPersisterConfig.Project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		// Create Redis client internally
 		redisClient, err := createRedisClientForSegmentPersister(ctx, segmentPersisterConfig, logger, registerer)
 		if err != nil {

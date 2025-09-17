@@ -156,7 +156,7 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 	case RedisStream:
 		// Handle RedisStream type
 		if options.redisClient == nil {
-			return nil, fmt.Errorf("Redis client is required for Redis Stream")
+			return nil, fmt.Errorf("redis client is required for Redis Stream")
 		}
 		streamOpts := []redis.StreamOption{}
 		if options.metrics != nil {

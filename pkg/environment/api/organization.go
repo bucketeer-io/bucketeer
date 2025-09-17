@@ -558,7 +558,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Check if there is already a system admin organization
-		if organization.Organization.SystemAdmin {
+		if organization.SystemAdmin {
 			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err
@@ -699,7 +699,7 @@ func (s *EnvironmentService) createOrganization(
 	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if organization.Organization.SystemAdmin {
+		if organization.SystemAdmin {
 			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err

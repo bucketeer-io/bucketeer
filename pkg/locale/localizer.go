@@ -177,7 +177,7 @@ func init() {
 	for _, f := range files {
 		data, err := localizedata.ReadFile(fmt.Sprintf("localizedata/%s", f))
 		if err != nil {
-			panic(fmt.Errorf("Failed to load translation data: %s", f))
+			panic(fmt.Errorf("failed to load translation data: %s", f))
 		}
 		bundle.MustParseMessageFileBytes(data, f)
 	}
