@@ -293,8 +293,6 @@ func (s *authService) ExchangeToken(
 		return nil, err
 	}
 
-	// Check and offer password setup for existing users without credentials
-	s.checkAndOfferPasswordSetup(ctx, userInfo.Email, organizations, localizer)
 
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
@@ -885,46 +883,6 @@ func (s *authService) PrepareDemoUser() {
 	s.logger.Info("Demo environment prepared successfully")
 }
 
-// checkAndOfferPasswordSetup checks if user lacks password credentials and sends setup email
-func (s *authService) checkAndOfferPasswordSetup(
-	ctx context.Context,
-	email string,
-	organizations []*envproto.Organization,
-	localizer locale.Localizer,
-) {
-	// Only proceed if password auth and email service are enabled
-	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
-		return
-	}
-
-	// Ensure the user has organizations (account exists)
-	if len(organizations) == 0 {
-		return
-	}
-
-	// Check if user already has password credentials
-	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
-	if err == nil && credentials.PasswordHash != "" {
-		// User already has password, no need to send setup email
-		return
-	}
-	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
-		// Real error occurred, log and return
-		s.logger.Warn("Failed to check credentials for password setup",
-			zap.Error(err),
-			zap.String("email", email))
-		return
-	}
-
-	// User doesn't have password credentials, initiate setup
-	err = s.initiatePasswordSetupInternal(ctx, email, localizer)
-	if err != nil {
-		s.logger.Warn("Failed to initiate password setup for OAuth user",
-			zap.Error(err),
-			zap.String("email", email))
-		// Don't fail the OAuth flow if password setup email fails
-	}
-}
 
 // initiatePasswordSetupInternal handles the internal password setup process
 func (s *authService) initiatePasswordSetupInternal(
