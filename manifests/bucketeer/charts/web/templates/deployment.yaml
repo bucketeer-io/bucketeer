@@ -67,6 +67,8 @@ spec:
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_WEB_DEMO_SITE_ENABLED
               value: "{{.Values.env.demoSiteEnabled}}"
+            - name: BUCKETEER_WEB_MAINTENANCE_MODE_ENABLED
+              value: "{{.Values.env.maintenanceModeEnabled}}"
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
