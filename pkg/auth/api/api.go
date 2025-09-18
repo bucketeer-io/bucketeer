@@ -321,7 +321,6 @@ func (s *authService) ExchangeToken(
 		return nil, err
 	}
 
-
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
@@ -1017,7 +1016,6 @@ func (s *authService) PrepareDemoUser() {
 	}
 	s.logger.Info("Demo environment prepared successfully")
 }
-
 
 // initiatePasswordSetupInternal handles the internal password setup process
 func (s *authService) initiatePasswordSetupInternal(
