@@ -65,6 +65,7 @@ type AccountService struct {
 	authClient           authclient.Client
 	mysqlClient          mysql.Client
 	accountStorage       v2.AccountStorage
+	credentialsStorage   authstorage.CredentialsStorage
 	tagStorage           tagstorage.TagStorage
 	teamStorage          teamstorage.TeamStorage
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
@@ -89,6 +90,7 @@ func NewAccountService(
 		authClient:           authClient,
 		mysqlClient:          mysqlClient,
 		accountStorage:       v2.NewAccountStorage(mysqlClient),
+		credentialsStorage:   authstorage.NewCredentialsStorage(mysqlClient),
 		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
 		teamStorage:          teamstorage.NewTeamStorage(mysqlClient),
 		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),

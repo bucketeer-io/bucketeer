@@ -32,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 )
 
 func (s *AccountService) GetMe(
@@ -146,6 +147,7 @@ func (s *AccountService) GetMe(
 			LastName:         sysAdminAccount.LastName,
 			Language:         sysAdminAccount.Language,
 			LastSeen:         lastSeen,
+			PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
 		}}, nil
 	}
 	// non admin account response
@@ -193,7 +195,27 @@ func (s *AccountService) GetMe(
 		LastName:         account.LastName,
 		Language:         account.Language,
 		LastSeen:         lastSeen,
+		PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
 	}}, nil
+}
+
+// checkPasswordSetupRequired determines if the user needs to set up a password
+func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string) bool {
+	// Check if user already has password credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
+		// User already has password, no setup required
+		return false
+	}
+	if err != nil && !errors.Is(err, authstorage.ErrCredentialsNotFound) {
+		// Real error occurred, log and assume no setup required to be safe
+		s.logger.Warn("Failed to check credentials for password setup status",
+			zap.Error(err),
+			zap.String("email", email))
+		return false
+	}
+	// User doesn't have password credentials, setup required
+	return true
 }
 
 // getAccount also checks if the account exists or is disabled
