@@ -9720,6 +9720,8 @@ definitions:
       lastSeen:
         type: string
         format: int64
+      passwordSetupRequired:
+        type: boolean
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
