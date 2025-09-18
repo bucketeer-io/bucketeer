@@ -37,6 +37,7 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 )
 
 const (
@@ -64,6 +65,7 @@ type AccountService struct {
 	dbClient             database.Client
 	authClient           authclient.Client
 	accountStorage       v2.AccountStorage
+	credentialsStorage   authstorage.CredentialsStorage
 	tagStorage           tagstorage.TagStorage
 	teamStorage          teamstorage.TeamStorage
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
@@ -77,6 +79,7 @@ func NewAccountService(
 	dbClient database.Client,
 	accountStorage v2.AccountStorage,
 	authClient authclient.Client,
+	credentialsStorage authstorage.CredentialsStorage,
 	tagStorage tagstorage.TagStorage,
 	teamStorage teamstorage.TeamStorage,
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage,
@@ -92,6 +95,7 @@ func NewAccountService(
 		dbClient:             dbClient,
 		authClient:           authClient,
 		accountStorage:       accountStorage,
+		credentialsStorage:   credentialsStorage,
 		tagStorage:           tagStorage,
 		teamStorage:          teamStorage,
 		adminAuditLogStorage: adminAuditLogStorage,
