@@ -45,6 +45,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -804,6 +805,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		dbClient,
 		accountStorage,
 		authClient,
+		authstorage.NewCredentialsStorage(mysqlClient),
 		tagStorage,
 		teamStorage,
 		adminAuditLogStorage,
