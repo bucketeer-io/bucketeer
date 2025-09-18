@@ -317,6 +317,11 @@
                 "id": 14,
                 "name": "last_seen",
                 "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "password_setup_required",
+                "type": "bool"
               }
             ],
             "messages": [
