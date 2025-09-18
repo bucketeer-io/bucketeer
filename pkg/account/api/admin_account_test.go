@@ -27,11 +27,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 )
 
 func TestGetMeMySQL(t *testing.T) {
@@ -258,6 +260,9 @@ func TestGetMeMySQL(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().GetCredentials(
+					gomock.Any(), "bucketeer@example.com",
+				).Return(nil, authstorage.ErrCredentialsNotFound)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
@@ -300,6 +305,7 @@ func TestGetMeMySQL(t *testing.T) {
 							Id: "search-filter-id",
 						},
 					},
+					PasswordSetupRequired: true,
 				},
 			},
 			expectedErr: nil,
