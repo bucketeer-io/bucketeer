@@ -27,6 +27,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	authstorage "github.com/bucketeer-io/bucketeer/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -148,20 +149,21 @@ func (s *AccountService) GetMe(
 		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
-			Email:            sysAdminAccount.Email,
-			Name:             sysAdminAccount.Name,
-			AvatarUrl:        sysAdminAccount.AvatarImageUrl,
-			AvatarFileType:   sysAdminAccount.AvatarFileType,
-			AvatarImage:      sysAdminAccount.AvatarImage,
-			IsSystemAdmin:    true,
-			Organization:     organization,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: adminEnvRoles,
-			SearchFilters:    sysAdminAccount.SearchFilters,
-			FirstName:        sysAdminAccount.FirstName,
-			LastName:         sysAdminAccount.LastName,
-			Language:         sysAdminAccount.Language,
-			LastSeen:         sysAdminAccount.LastSeen,
+			Email:                 sysAdminAccount.Email,
+			Name:                  sysAdminAccount.Name,
+			AvatarUrl:             sysAdminAccount.AvatarImageUrl,
+			AvatarFileType:        sysAdminAccount.AvatarFileType,
+			AvatarImage:           sysAdminAccount.AvatarImage,
+			IsSystemAdmin:         true,
+			Organization:          organization,
+			OrganizationRole:      accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles:      adminEnvRoles,
+			SearchFilters:         sysAdminAccount.SearchFilters,
+			FirstName:             sysAdminAccount.FirstName,
+			LastName:              sysAdminAccount.LastName,
+			Language:              sysAdminAccount.Language,
+			LastSeen:              sysAdminAccount.LastSeen,
+			PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
 		}}, nil
 	}
 	// non admin account response
@@ -191,21 +193,41 @@ func (s *AccountService) GetMe(
 	}
 
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
-		Email:            account.Email,
-		Name:             account.Name,
-		AvatarUrl:        account.AvatarImageUrl,
-		AvatarFileType:   account.AvatarFileType,
-		AvatarImage:      account.AvatarImage,
-		IsSystemAdmin:    false,
-		Organization:     organization,
-		OrganizationRole: account.OrganizationRole,
-		EnvironmentRoles: envRoles,
-		SearchFilters:    account.SearchFilters,
-		FirstName:        account.FirstName,
-		LastName:         account.LastName,
-		Language:         account.Language,
-		LastSeen:         account.LastSeen,
+		Email:                 account.Email,
+		Name:                  account.Name,
+		AvatarUrl:             account.AvatarImageUrl,
+		AvatarFileType:        account.AvatarFileType,
+		AvatarImage:           account.AvatarImage,
+		IsSystemAdmin:         false,
+		Organization:          organization,
+		OrganizationRole:      account.OrganizationRole,
+		EnvironmentRoles:      envRoles,
+		SearchFilters:         account.SearchFilters,
+		FirstName:             account.FirstName,
+		LastName:              account.LastName,
+		Language:              account.Language,
+		LastSeen:              account.LastSeen,
+		PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
 	}}, nil
+}
+
+// checkPasswordSetupRequired determines if the user needs to set up a password
+func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string) bool {
+	// Check if user already has password credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
+		// User already has password, no setup required
+		return false
+	}
+	if err != nil && !errors.Is(err, authstorage.ErrCredentialsNotFound) {
+		// Real error occurred, log and assume no setup required to be safe
+		s.logger.Warn("Failed to check credentials for password setup status",
+			zap.Error(err),
+			zap.String("email", email))
+		return false
+	}
+	// User doesn't have password credentials, setup required
+	return true
 }
 
 // getAccount also checks if the account exists or is disabled
