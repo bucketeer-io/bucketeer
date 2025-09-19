@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -70,14 +71,7 @@ func (s *EnvironmentService) GetEnvironmentV2(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.GetEnvironmentV2Response{
 		Environment: environment.EnvironmentV2,
@@ -185,14 +179,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ListEnvironmentsV2Response{
 		Environments: environments,
@@ -371,14 +358,7 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 			"Failed to create environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.CreateEnvironmentV2Response{
 		Environment: newEnvironment.EnvironmentV2,
@@ -536,14 +516,7 @@ func (s *EnvironmentService) createEnvironmentV2(
 			"Failed to create environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -633,14 +606,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 			"Failed to update environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.UpdateEnvironmentV2Response{}, nil
 }
@@ -683,14 +649,7 @@ func (s *EnvironmentService) updateEnvironmentV2(
 			"Failed to update environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -815,14 +774,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 			"Failed to archive environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ArchiveEnvironmentV2Response{}, nil
 }
@@ -891,14 +843,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 			"Failed to unarchive environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.UnarchiveEnvironmentV2Response{}, nil
 }

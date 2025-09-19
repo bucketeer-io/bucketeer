@@ -22,14 +22,15 @@ import (
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 var (
-	ErrAuditLogAlreadyExists = errors.New("auditlog: auditlog already exists")
-	ErrAuditLogNotFound      = errors.New("auditlog: auditlog not found")
+	ErrAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(pkgErr.AuditlogPackageName, "auditlog already exists")
+	ErrAuditLogNotFound      = pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "auditlog not found", "auditlog")
 	//go:embed sql/auditlog/select_audit_log_v2.sql
 	selectAuditLogV2SQL string
 	//go:embed sql/auditlog/insert_audit_logs_v2.sql

@@ -15,7 +15,6 @@
 package domain
 
 import (
-	"errors"
 	"sort"
 	"time"
 
@@ -25,14 +24,16 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	err "github.com/bucketeer-io/bucketeer/pkg/error"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 var (
-	errClauseNotFound   = errors.New("autoOpsRule: clause not found")
-	errClauseEmpty      = errors.New("autoOpsRule: clause cannot be empty")
-	errClauseIDRequired = errors.New("autoOpsRule: clause id is required")
+	errClauseNotFound   = err.NewErrorNotFound(err.AutoopsPackageName, "clause not found", "clause")
+	errClauseEmpty      = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause cannot be empty", "clause")
+	errClauseIDRequired = err.NewErrorInvalidArgEmpty(err.AutoopsPackageName, "clause id is required", "clause_id")
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}

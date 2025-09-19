@@ -15,12 +15,12 @@
 package domain
 
 import (
-	"errors"
 	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -30,8 +30,14 @@ type Organization struct {
 }
 
 var (
-	ErrCannotDisableSystemAdmin = errors.New("environment: cannot disable system admin")
-	ErrCannotArchiveSystemAdmin = errors.New("environment: cannot archive system admin")
+	ErrCannotDisableSystemAdmin = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.EnvironmentPackageName,
+		"cannot disable system admin",
+		"system_admin_organization")
+	ErrCannotArchiveSystemAdmin = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.EnvironmentPackageName,
+		"cannot archive system admin",
+		"system_admin_organization")
 )
 
 func NewOrganization(name, urlCode, ownerEmail, description string, trial, systemAdmin bool) (*Organization, error) {

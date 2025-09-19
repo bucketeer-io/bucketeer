@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
@@ -254,14 +255,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentEvaluationCount result", zap.Any("rows", variationCounts))
@@ -371,14 +365,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// This timestamp will be used as `Timestamps` field in ecproto.Timeseries.
 	timestamps, timestampUnit, err := s.getTimestamps(req.TimeRange)
@@ -891,14 +878,7 @@ func (s *eventCounterService) GetExperimentResult(
 				zap.String("experimentId", req.ExperimentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &ecproto.GetExperimentResultResponse{
 		ExperimentResult: result.ExperimentResult,
@@ -949,14 +929,7 @@ func (s *eventCounterService) ListExperimentResults(
 			)...,
 		)
 		listExperimentCountsCounter.WithLabelValues(codeFail).Inc()
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	results := make(map[string]*ecproto.ExperimentResult, len(experiments))
 	for _, e := range experiments {
@@ -1049,14 +1022,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentGoalCount result", zap.Any("rows", variationCounts))
@@ -1182,14 +1148,7 @@ func (s *eventCounterService) GetMAUCount(
 				zap.String("yearMonth", req.YearMonth),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &ecproto.GetMAUCountResponse{
 		UserCount:  userCount,
@@ -1227,14 +1186,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 				zap.String("yearMonth", req.YearMonth),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	summaries = append(summaries, groupBySourceID...)
 	// Get the mau counts grouped by environmentID.
@@ -1247,14 +1199,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 				zap.String("yearMonth", req.YearMonth),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	summaries = append(summaries, groupByEnvID...)
 	s.logger.Debug("SummarizeMAUCounts result", zap.Any("summaries", summaries))
@@ -1335,14 +1280,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 				zap.String("variationId", req.VariationId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &ecproto.GetOpsEvaluationUserCountResponse{
 		OpsRuleId: req.OpsRuleId,
@@ -1457,14 +1395,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 				zap.String("variationId", req.VariationId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &ecproto.GetOpsGoalUserCountResponse{
 		OpsRuleId: req.OpsRuleId,
@@ -1604,14 +1535,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -1655,14 +1579,7 @@ func (s *eventCounterService) checkSystemAdminRole(
 				"Failed to check role",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
