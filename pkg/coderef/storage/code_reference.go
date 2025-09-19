@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
+	bkterr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
@@ -41,12 +41,12 @@ var (
 )
 
 var (
-	ErrCodeReferenceNotFound = err.NewErrorNotFound(
-		err.CoderefPackageName,
+	ErrCodeReferenceNotFound = bkterr.NewErrorNotFound(
+		bkterr.CoderefPackageName,
 		"code reference not found", "code_reference",
 	)
-	ErrCodeReferenceUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
-		err.CoderefPackageName,
+	ErrCodeReferenceUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.CoderefPackageName,
 		"code reference unexpected affected rows",
 	)
 )
