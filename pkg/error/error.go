@@ -29,6 +29,7 @@ const (
 	EnvironmentPackageName  = "environment"
 	AuditlogPackageName     = "auditlog"
 	AutoopsPackageName      = "autoops"
+	ExperimentPackageName   = "experiment"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"

@@ -15,13 +15,13 @@
 package domain
 
 import (
-	"errors"
 	"math"
 	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
@@ -29,14 +29,46 @@ import (
 )
 
 var (
-	ErrExperimentBeforeStart       = errors.New("experiment: start timestamp is greater than now")
-	ErrExperimentBeforeStop        = errors.New("experiment: stop timestamp is greater than now")
-	ErrExperimentStatusInvalid     = errors.New("experiment: experiment status is invalid")
-	ErrExperimentAlreadyStopped    = errors.New("experiment: experiment is already stopped")
-	ErrExperimentStartIsAfterStop  = errors.New("experiment: start is after stop timestamp")
-	ErrExperimentStopIsBeforeStart = errors.New("experiment: stop is before start timestamp")
-	ErrExperimentStopIsBeforeNow   = errors.New("experiment: stop is same or older than now timestamp")
-	ErrBaseVariationNotFound       = errors.New("experiment: base variation not found")
+	ErrExperimentBeforeStart = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"start timestamp is greater than now",
+		"start_at",
+	)
+	ErrExperimentBeforeStop = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"stop timestamp is greater than now",
+		"stop_at",
+	)
+	ErrExperimentStatusInvalid = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"experiment status is invalid",
+		"status",
+	)
+	ErrExperimentAlreadyStopped = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"experiment is already stopped",
+		"status",
+	)
+	ErrExperimentStartIsAfterStop = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"start is after stop timestamp",
+		"start_at",
+	)
+	ErrExperimentStopIsBeforeStart = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"stop is before start timestamp",
+		"stop_at",
+	)
+	ErrExperimentStopIsBeforeNow = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"stop is same or older than now timestamp",
+		"stop_at",
+	)
+	ErrBaseVariationNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.ExperimentPackageName,
+		"base variation not found",
+		"base_variation_id",
+	)
 )
 
 type Experiment struct {
