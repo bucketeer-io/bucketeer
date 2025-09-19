@@ -175,6 +175,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"description",
 		false,
 		false,
+		true,
 	)
 	require.NoError(t, err)
 	trialOrgExpected, err := domain.NewOrganization(
@@ -184,6 +185,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"description2",
 		true,
 		false,
+		true,
 	)
 	require.NoError(t, err)
 
@@ -1054,6 +1056,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 		"description",
 		false,
 		false,
+		true,
 	)
 	require.NoError(t, err)
 
