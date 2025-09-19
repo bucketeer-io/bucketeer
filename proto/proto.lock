@@ -13000,6 +13000,11 @@
                 "id": 14,
                 "name": "owner_email",
                 "type": "string"
+              },
+              {
+                "id": 15,
+                "name": "password_authentication_enabled",
+                "type": "bool"
               }
             ]
           }
@@ -13909,6 +13914,11 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "password_authentication_enabled",
+                "type": "bool"
               }
             ],
             "reserved_ids": [
@@ -13947,6 +13957,11 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 8,
+                "name": "password_authentication_enabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [
@@ -20236,6 +20251,10 @@
                 "integer": 1510
               },
               {
+                "name": "ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED",
+                "integer": 1511
+              },
+              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -23396,6 +23415,21 @@
                 "id": 2,
                 "name": "owner_email",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationPasswordAuthenticationChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "password_authentication_enabled",
+                "type": "bool"
               }
             ]
           },
