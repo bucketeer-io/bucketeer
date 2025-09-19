@@ -173,6 +173,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
+		true, // Enable password auth for demo organizations
 	)
 	if err != nil {
 		return nil, err
@@ -253,6 +254,7 @@ func (s *EnvironmentService) CreateOrganization(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
+		req.PasswordAuthenticationEnabled,
 	)
 	if err != nil {
 		return nil, err
@@ -318,6 +320,7 @@ func (s *EnvironmentService) createOrganization(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
+	passwordAuthenticationEnabled bool,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
 		name,
@@ -326,6 +329,7 @@ func (s *EnvironmentService) createOrganization(
 		description,
 		isTrial,
 		isSystemAdmin,
+		passwordAuthenticationEnabled,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -551,6 +555,7 @@ func (s *EnvironmentService) UpdateOrganization(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
+			req.PasswordAuthenticationEnabled,
 		)
 		if err != nil {
 			return err
