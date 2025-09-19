@@ -24,11 +24,18 @@ const (
 	AccountPackageName      = "account"
 	FeaturePackageName      = "feature"
 	NotificationPackageName = "notification"
+	PushPackageName         = "push"
+	TagPackageName          = "tag"
+	EventCounterPackageName = "eventcounter"
+	EnvironmentPackageName  = "environment"
+	AuditlogPackageName     = "auditlog"
+	AutoopsPackageName      = "autoops"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
 	invalidTypeNil            = "nil"
 	invalidTypeNotMatchFormat = "not_match_format"
+	invalidTypeDuplicated     = "duplicated"
 
 	invalidPrefix = "invalid"
 )
@@ -43,10 +50,13 @@ const (
 	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
 	ErrorTypeInternal                 ErrorType = "internal"
 	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
+	ErrorTypeUnavailable              ErrorType = "unavailable"
+	ErrorTypeAborted                  ErrorType = "aborted"
 	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
 	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
 	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
 	ErrorTypeInvalidArgNotMatchFormat ErrorType = invalidPrefix + "_" + invalidTypeNotMatchFormat
+	ErrorTypeInvalidArgDuplicated     ErrorType = invalidPrefix + "_" + invalidTypeDuplicated
 )
 
 // Base error - no field needed
@@ -144,6 +154,14 @@ func NewErrorFailedPrecondition(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeFailedPrecondition, message)
 }
 
+func NewErrorUnavailable(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeUnavailable, message)
+}
+
+func NewErrorAborted(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeAborted, message)
+}
+
 func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
 }
@@ -158,4 +176,8 @@ func NewErrorInvalidArgNil(pkg string, message string, field string) *BktFieldEr
 
 func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) *BktFieldError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNotMatchFormat, message, field)
+}
+
+func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
+	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
 }
