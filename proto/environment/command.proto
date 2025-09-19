@@ -88,6 +88,10 @@ message ChangeOwnerEmailOrganizationCommand {
   string owner_email = 1;
 }
 
+message ChangePasswordAuthenticationOrganizationCommand {
+  bool password_authentication_enabled = 1;
+}
+
 message ChangeRequireCommentCommand {
   bool require_comment = 1;
 }
