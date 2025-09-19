@@ -247,6 +247,7 @@ message Event {
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
     ORGANIZATION_UPDATED = 1509;
     DEMO_ORGANIZATION_CREATED = 1510;
+    ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED = 1511;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -1187,6 +1188,11 @@ message OrganizationDescriptionChangedEvent {
 message OrganizationOwnerEmailChangedEvent {
   string id = 1;
   string owner_email = 2;
+}
+
+message OrganizationPasswordAuthenticationChangedEvent {
+  string id = 1;
+  bool password_authentication_enabled = 2;
 }
 
 message OrganizationNameChangedEvent {
