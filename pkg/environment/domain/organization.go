@@ -40,24 +40,28 @@ var (
 		"system_admin_organization")
 )
 
-func NewOrganization(name, urlCode, ownerEmail, description string, trial, systemAdmin bool) (*Organization, error) {
+func NewOrganization(
+	name, urlCode, ownerEmail, description string,
+	trial, systemAdmin, passwordAuthenticationEnabled bool,
+) (*Organization, error) {
 	now := time.Now().Unix()
 	uid, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	return &Organization{&proto.Organization{
-		Id:          uid.String(),
-		Name:        name,
-		UrlCode:     urlCode,
-		OwnerEmail:  ownerEmail,
-		Description: description,
-		Disabled:    false,
-		Archived:    false,
-		Trial:       trial,
-		SystemAdmin: systemAdmin,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:                            uid.String(),
+		Name:                          name,
+		UrlCode:                       urlCode,
+		OwnerEmail:                    ownerEmail,
+		Description:                   description,
+		Disabled:                      false,
+		Archived:                      false,
+		Trial:                         trial,
+		SystemAdmin:                   systemAdmin,
+		PasswordAuthenticationEnabled: passwordAuthenticationEnabled,
+		CreatedAt:                     now,
+		UpdatedAt:                     now,
 	}}, nil
 }
 
@@ -65,6 +69,7 @@ func (p *Organization) Update(
 	name *wrapperspb.StringValue,
 	description *wrapperspb.StringValue,
 	ownerEmail *wrapperspb.StringValue,
+	passwordAuthenticationEnabled *wrapperspb.BoolValue,
 ) (*Organization, error) {
 	updated := &Organization{}
 	if err := copier.Copy(updated, p); err != nil {
@@ -78,6 +83,9 @@ func (p *Organization) Update(
 	}
 	if ownerEmail != nil {
 		updated.OwnerEmail = ownerEmail.Value
+	}
+	if passwordAuthenticationEnabled != nil {
+		updated.PasswordAuthenticationEnabled = passwordAuthenticationEnabled.Value
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
@@ -96,6 +104,11 @@ func (p *Organization) ChangeOwnerEmail(ownerEmail string) {
 func (p *Organization) ChangeName(name string) {
 	p.Name = name
 	p.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Organization) ChangePasswordAuthentication(enabled bool) {
+	p.Organization.PasswordAuthenticationEnabled = enabled
+	p.Organization.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) Enable() {

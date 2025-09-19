@@ -147,7 +147,7 @@ func (s *AccountService) GetMe(
 			LastName:         sysAdminAccount.LastName,
 			Language:         sysAdminAccount.Language,
 			LastSeen:         lastSeen,
-			PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
+			PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email, organization),
 		}}, nil
 	}
 	// non admin account response
@@ -195,12 +195,21 @@ func (s *AccountService) GetMe(
 		LastName:         account.LastName,
 		Language:         account.Language,
 		LastSeen:         lastSeen,
-		PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email),
+		PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email, organization),
 	}}, nil
 }
 
 // checkPasswordSetupRequired determines if the user needs to set up a password
-func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string) bool {
+// It checks both whether the user has existing credentials AND if the organization allows password authentication
+// When setup is required, it proactively creates empty credentials for the frontend password setup flow
+func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string,
+	organization *environmentproto.Organization) bool {
+	// First check if the organization allows password authentication
+	if organization != nil && !organization.PasswordAuthenticationEnabled {
+		// Organization has disabled password authentication, no setup required
+		return false
+	}
+
 	// Check if user already has password credentials
 	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
 	if err == nil && credentials.PasswordHash != "" {
@@ -214,7 +223,22 @@ func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email s
 			zap.String("email", email))
 		return false
 	}
-	// User doesn't have password credentials, setup required
+
+	// At this point: credentials either don't exist OR exist with empty password hash
+	// If credentials don't exist, create empty credentials record for frontend password setup flow
+	if err != nil && errors.Is(err, authstorage.ErrCredentialsNotFound) {
+		err = s.credentialsStorage.CreateCredentials(ctx, email, "")
+		if err != nil {
+			// If creation fails, log and assume no setup required to be safe
+			s.logger.Warn("Failed to create empty credentials for password setup",
+				zap.Error(err),
+				zap.String("email", email))
+			return false
+		}
+		s.logger.Info("Created empty credentials for password setup", zap.String("email", email))
+	}
+
+	// User needs password setup (either new credentials created or existing empty credentials)
 	return true
 }
 

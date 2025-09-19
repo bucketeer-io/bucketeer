@@ -10322,6 +10322,8 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+      passwordAuthenticationEnabled:
+        type: boolean
   bucketeereventcounterSummary:
     type: object
     properties:
@@ -10847,6 +10849,7 @@ definitions:
       - ORGANIZATION_OWNER_EMAIL_CHANGED
       - ORGANIZATION_UPDATED
       - DEMO_ORGANIZATION_CREATED
+      - ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED
       - FLAG_TRIGGER_CREATED
       - FLAG_TRIGGER_RESET
       - FLAG_TRIGGER_DESCRIPTION_CHANGED
@@ -10975,6 +10978,8 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
+      passwordAuthenticationEnabled:
+        type: boolean
     required:
       - name
       - urlCode
@@ -11315,6 +11320,8 @@ definitions:
         type: string
       ownerEmail:
         type: string
+      passwordAuthenticationEnabled:
+        type: boolean
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:
