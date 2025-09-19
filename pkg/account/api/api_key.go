@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -72,14 +73,7 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewAPIKeyCommandHandler(
@@ -114,14 +108,7 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.CreateAPIKeyResponse{
 		ApiKey: key.APIKey,
@@ -153,14 +140,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 				zap.String("maintainer", req.Maintainer),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -187,14 +167,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 				zap.String("maintainer", req.Maintainer),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	e, err := domainevent.NewEvent(
@@ -288,14 +261,7 @@ func (s *AccountService) ChangeAPIKeyName(
 				zap.String("name", req.Command.Name),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.ChangeAPIKeyNameResponse{}, nil
 }
@@ -349,14 +315,7 @@ func (s *AccountService) EnableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.EnableAPIKeyResponse{}, nil
 }
@@ -410,14 +369,7 @@ func (s *AccountService) DisableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.DisableAPIKeyResponse{}, nil
 }
@@ -482,14 +434,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if apiKey == nil {
 		s.logger.Error(
@@ -606,14 +551,7 @@ func (s *AccountService) ListAPIKeys(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
 	// for security, obfuscate the returned key
@@ -732,14 +670,7 @@ func (s *AccountService) GetEnvironmentAPIKey(
 				zap.String("apiKey", req.ApiKey),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// for security, obfuscate the returned key
 	shadowLen := int(float64(len(envAPIKey.ApiKey.ApiKey)) * apiKeyShadowPercentage)
@@ -811,14 +742,7 @@ func (s *AccountService) UpdateAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	e, err := domainevent.NewEvent(
 		editor,

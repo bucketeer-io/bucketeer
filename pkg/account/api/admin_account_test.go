@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -28,6 +27,8 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
 
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
@@ -91,12 +92,12 @@ func TestGetMeMySQL(t *testing.T) {
 					gomock.Any(),
 				).Return(
 					nil,
-					createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+					pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"),
 				)
 			},
 			input:       &accountproto.GetMeRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "err: account is disabled",
@@ -352,15 +353,6 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -374,11 +366,11 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "errInternal: GetOrganizations from environment service",
@@ -398,11 +390,11 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 				}, nil)
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -502,11 +494,11 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "errInternal: GetOrganizations from environment service",
@@ -526,11 +518,11 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 				}, nil)
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success",
@@ -603,14 +595,6 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -857,11 +841,11 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
 					gomock.Any(), "user@example.com",
-				).Return(nil, errors.New("database error"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 			},
 			email:       "user@example.com",
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err(),
 		},
 		{
 			desc: "success: system admin gets all organizations",
