@@ -8,6 +8,7 @@ SELECT
     archived,
     trial,
     system_admin,
+    password_authentication_enabled,
     created_at,
     updated_at
 FROM
