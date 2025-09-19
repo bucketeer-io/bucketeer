@@ -8651,7 +8651,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         description: jspb.Message.getFieldWithDefault(msg, 4, ''),
         isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
         isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
-        ownerEmail: jspb.Message.getFieldWithDefault(msg, 7, '')
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        passwordAuthenticationEnabled: jspb.Message.getBooleanFieldWithDefault(
+          msg,
+          8,
+          false
+        )
       };
 
     if (includeInstance) {
@@ -8725,6 +8730,10 @@ proto.bucketeer.environment.CreateOrganizationRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setOwnerEmail(value);
           break;
+        case 8:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setPasswordAuthenticationEnabled(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -8789,6 +8798,10 @@ proto.bucketeer.environment.CreateOrganizationRequest.serializeBinaryToWriter =
     f = message.getOwnerEmail();
     if (f.length > 0) {
       writer.writeString(7, f);
+    }
+    f = message.getPasswordAuthenticationEnabled();
+    if (f) {
+      writer.writeBool(8, f);
     }
   };
 
@@ -8952,6 +8965,26 @@ proto.bucketeer.environment.CreateOrganizationRequest.prototype.getOwnerEmail =
 proto.bucketeer.environment.CreateOrganizationRequest.prototype.setOwnerEmail =
   function (value) {
     return jspb.Message.setProto3StringField(this, 7, value);
+  };
+
+/**
+ * optional bool password_authentication_enabled = 8;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getPasswordAuthenticationEnabled =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 8, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setPasswordAuthenticationEnabled =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 8, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -9191,7 +9224,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         ownerEmail:
           (f = msg.getOwnerEmail()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        passwordAuthenticationEnabled:
+          (f = msg.getPasswordAuthenticationEnabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -9289,6 +9325,14 @@ proto.bucketeer.environment.UpdateOrganizationRequest.deserializeBinaryFromReade
           );
           msg.setOwnerEmail(value);
           break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setPasswordAuthenticationEnabled(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -9374,6 +9418,14 @@ proto.bucketeer.environment.UpdateOrganizationRequest.serializeBinaryToWriter =
         7,
         f,
         google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getPasswordAuthenticationEnabled();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
   };
@@ -9648,6 +9700,48 @@ proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearOwnerEmail 
 proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasOwnerEmail =
   function () {
     return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue password_authentication_enabled = 8;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.getPasswordAuthenticationEnabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.setPasswordAuthenticationEnabled =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 8, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearPasswordAuthenticationEnabled =
+  function () {
+    return this.setPasswordAuthenticationEnabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasPasswordAuthenticationEnabled =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

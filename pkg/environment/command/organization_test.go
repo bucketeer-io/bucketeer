@@ -26,6 +26,7 @@ func TestHandleCreateOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 
@@ -48,6 +49,7 @@ func TestHandleChangeNameOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 
@@ -72,6 +74,7 @@ func TestHandleChangeDescriptionOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 
@@ -96,6 +99,7 @@ func TestHandleEnableOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 	organization.Disabled = true
@@ -120,6 +124,7 @@ func TestHandleDisableOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 
@@ -143,6 +148,7 @@ func TestHandleArchiveOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 
@@ -166,6 +172,7 @@ func TestHandleUnarchiveOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		true,
 	)
 	assert.NoError(t, err)
 	organization.Archive()

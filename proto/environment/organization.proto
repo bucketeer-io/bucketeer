@@ -32,4 +32,5 @@ message Organization {
   int32 environment_count = 12;
   int32 user_count = 13;
   string owner_email = 14;
+  bool password_authentication_enabled = 15;
 }

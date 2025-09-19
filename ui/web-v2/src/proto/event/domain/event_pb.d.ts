@@ -302,6 +302,7 @@ export namespace Event {
     ORGANIZATION_OWNER_EMAIL_CHANGED: 1508;
     ORGANIZATION_UPDATED: 1509;
     DEMO_ORGANIZATION_CREATED: 1510;
+    ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED: 1511;
     FLAG_TRIGGER_CREATED: 1601;
     FLAG_TRIGGER_RESET: 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED: 1603;
@@ -6750,6 +6751,45 @@ export namespace OrganizationOwnerEmailChangedEvent {
   export type AsObject = {
     id: string;
     ownerEmail: string;
+  };
+}
+
+export class OrganizationPasswordAuthenticationChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getPasswordAuthenticationEnabled(): boolean;
+  setPasswordAuthenticationEnabled(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): OrganizationPasswordAuthenticationChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: OrganizationPasswordAuthenticationChangedEvent
+  ): OrganizationPasswordAuthenticationChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: OrganizationPasswordAuthenticationChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): OrganizationPasswordAuthenticationChangedEvent;
+  static deserializeBinaryFromReader(
+    message: OrganizationPasswordAuthenticationChangedEvent,
+    reader: jspb.BinaryReader
+  ): OrganizationPasswordAuthenticationChangedEvent;
+}
+
+export namespace OrganizationPasswordAuthenticationChangedEvent {
+  export type AsObject = {
+    id: string;
+    passwordAuthenticationEnabled: boolean;
   };
 }
 
