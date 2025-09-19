@@ -70,14 +70,12 @@ const PageContent = ({
     return undefined;
   }, [filters]);
 
-  const isHiddenTab = useMemo(
-    () =>
-      (!!filters.searchQuery ||
-        filters?.isFilter ||
-        filters?.filterBySummary) &&
-      !filters.filterByTab,
-    [filters]
-  );
+  const isHiddenTab = useMemo(() => {
+    return (
+      (!!filters.searchQuery || filters.isFilter || filters.filterBySummary) &&
+      !filters.filterByTab
+    );
+  }, [filters]);
 
   const onChangeFilters = useCallback(
     (values: Partial<ExperimentFilters>, isChangeParams = true) => {
@@ -109,7 +107,7 @@ const PageContent = ({
     (status: ExperimentTab) => {
       onChangeFilters({
         status,
-        searchQuery: filters?.searchQuery ?? '',
+        searchQuery: filters.searchQuery ?? '',
         isFilter: undefined,
         maintainer: undefined,
         filterByTab: true,
@@ -126,8 +124,7 @@ const PageContent = ({
 
   const onFilterBySummary = useCallback(
     (statuses: ExperimentStatus[], summaryFilterValue: SummaryType) => {
-      const isSameSummaryValue =
-        filters?.filterBySummary === summaryFilterValue;
+      const isSameSummaryValue = filters.filterBySummary === summaryFilterValue;
       onChangeFilters({
         statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
         filterBySummary: isSameSummaryValue ? undefined : summaryFilterValue,
