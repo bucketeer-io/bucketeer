@@ -264,6 +264,9 @@ func TestGetMeMySQL(t *testing.T) {
 				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().GetCredentials(
 					gomock.Any(), "bucketeer@example.com",
 				).Return(nil, authstorage.ErrCredentialsNotFound)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().CreateCredentials(
+					gomock.Any(), "bucketeer@example.com", "",
+				).Return(nil)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
