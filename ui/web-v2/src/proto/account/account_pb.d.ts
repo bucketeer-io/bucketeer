@@ -330,6 +330,9 @@ export class ConsoleAccount extends jspb.Message {
   getLastSeen(): number;
   setLastSeen(value: number): void;
 
+  getPasswordSetupRequired(): boolean;
+  setPasswordSetupRequired(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
   static toObject(
@@ -367,6 +370,7 @@ export namespace ConsoleAccount {
     avatarFileType: string;
     avatarImage: Uint8Array | string;
     lastSeen: number;
+    passwordSetupRequired: boolean;
   };
 
   export class EnvironmentRole extends jspb.Message {

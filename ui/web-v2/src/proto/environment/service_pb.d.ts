@@ -1391,6 +1391,9 @@ export class CreateOrganizationRequest extends jspb.Message {
   getOwnerEmail(): string;
   setOwnerEmail(value: string): void;
 
+  getPasswordAuthenticationEnabled(): boolean;
+  setPasswordAuthenticationEnabled(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateOrganizationRequest.AsObject;
   static toObject(
@@ -1421,6 +1424,7 @@ export namespace CreateOrganizationRequest {
     isTrial: boolean;
     isSystemAdmin: boolean;
     ownerEmail: string;
+    passwordAuthenticationEnabled: boolean;
   };
 }
 
@@ -1503,6 +1507,15 @@ export class UpdateOrganizationRequest extends jspb.Message {
   getOwnerEmail(): google_protobuf_wrappers_pb.StringValue | undefined;
   setOwnerEmail(value?: google_protobuf_wrappers_pb.StringValue): void;
 
+  hasPasswordAuthenticationEnabled(): boolean;
+  clearPasswordAuthenticationEnabled(): void;
+  getPasswordAuthenticationEnabled():
+    | google_protobuf_wrappers_pb.BoolValue
+    | undefined;
+  setPasswordAuthenticationEnabled(
+    value?: google_protobuf_wrappers_pb.BoolValue
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateOrganizationRequest.AsObject;
   static toObject(
@@ -1533,6 +1546,7 @@ export namespace UpdateOrganizationRequest {
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
     ownerEmail?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    passwordAuthenticationEnabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

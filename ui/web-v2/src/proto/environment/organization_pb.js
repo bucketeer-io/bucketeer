@@ -97,7 +97,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         projectCount: jspb.Message.getFieldWithDefault(msg, 11, 0),
         environmentCount: jspb.Message.getFieldWithDefault(msg, 12, 0),
         userCount: jspb.Message.getFieldWithDefault(msg, 13, 0),
-        ownerEmail: jspb.Message.getFieldWithDefault(msg, 14, '')
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 14, ''),
+        passwordAuthenticationEnabled: jspb.Message.getBooleanFieldWithDefault(
+          msg,
+          15,
+          false
+        )
       };
 
     if (includeInstance) {
@@ -192,6 +197,10 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setOwnerEmail(value);
           break;
+        case 15:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setPasswordAuthenticationEnabled(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -281,6 +290,10 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function (
   f = message.getOwnerEmail();
   if (f.length > 0) {
     writer.writeString(14, f);
+  }
+  f = message.getPasswordAuthenticationEnabled();
+  if (f) {
+    writer.writeBool(15, f);
   }
 };
 
@@ -546,5 +559,25 @@ proto.bucketeer.environment.Organization.prototype.setOwnerEmail = function (
 ) {
   return jspb.Message.setProto3StringField(this, 14, value);
 };
+
+/**
+ * optional bool password_authentication_enabled = 15;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.Organization.prototype.getPasswordAuthenticationEnabled =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 15, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setPasswordAuthenticationEnabled =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 15, value);
+  };
 
 goog.object.extend(exports, proto.bucketeer.environment);

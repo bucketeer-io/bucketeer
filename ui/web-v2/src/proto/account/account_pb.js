@@ -1668,7 +1668,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         language: jspb.Message.getFieldWithDefault(msg, 11, ''),
         avatarFileType: jspb.Message.getFieldWithDefault(msg, 12, ''),
         avatarImage: msg.getAvatarImage_asB64(),
-        lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0)
+        lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0),
+        passwordSetupRequired: jspb.Message.getBooleanFieldWithDefault(
+          msg,
+          15,
+          false
+        )
       };
 
     if (includeInstance) {
@@ -1784,6 +1789,10 @@ proto.bucketeer.account.ConsoleAccount.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setLastSeen(value);
         break;
+      case 15:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setPasswordSetupRequired(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1882,6 +1891,10 @@ proto.bucketeer.account.ConsoleAccount.serializeBinaryToWriter = function (
   f = message.getLastSeen();
   if (f !== 0) {
     writer.writeInt64(14, f);
+  }
+  f = message.getPasswordSetupRequired();
+  if (f) {
+    writer.writeBool(15, f);
   }
 };
 
@@ -2522,5 +2535,25 @@ proto.bucketeer.account.ConsoleAccount.prototype.setLastSeen = function (
 ) {
   return jspb.Message.setProto3IntField(this, 14, value);
 };
+
+/**
+ * optional bool password_setup_required = 15;
+ * @return {boolean}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getPasswordSetupRequired =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 15, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setPasswordSetupRequired =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 15, value);
+  };
 
 goog.object.extend(exports, proto.bucketeer.account);

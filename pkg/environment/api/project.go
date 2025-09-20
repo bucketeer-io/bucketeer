@@ -569,6 +569,7 @@ func (s *EnvironmentService) CreateTrialProject(
 		"",
 		true,
 		false,
+		true, // Default password auth enabled
 	)
 	if err != nil {
 		s.logger.Error(

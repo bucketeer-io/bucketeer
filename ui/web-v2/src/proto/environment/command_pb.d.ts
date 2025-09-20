@@ -550,6 +550,41 @@ export namespace ChangeOwnerEmailOrganizationCommand {
   };
 }
 
+export class ChangePasswordAuthenticationOrganizationCommand extends jspb.Message {
+  getPasswordAuthenticationEnabled(): boolean;
+  setPasswordAuthenticationEnabled(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ChangePasswordAuthenticationOrganizationCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangePasswordAuthenticationOrganizationCommand
+  ): ChangePasswordAuthenticationOrganizationCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangePasswordAuthenticationOrganizationCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ChangePasswordAuthenticationOrganizationCommand;
+  static deserializeBinaryFromReader(
+    message: ChangePasswordAuthenticationOrganizationCommand,
+    reader: jspb.BinaryReader
+  ): ChangePasswordAuthenticationOrganizationCommand;
+}
+
+export namespace ChangePasswordAuthenticationOrganizationCommand {
+  export type AsObject = {
+    passwordAuthenticationEnabled: boolean;
+  };
+}
+
 export class ChangeRequireCommentCommand extends jspb.Message {
   getRequireComment(): boolean;
   setRequireComment(value: boolean): void;

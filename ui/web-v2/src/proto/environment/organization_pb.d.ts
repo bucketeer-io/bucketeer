@@ -46,6 +46,9 @@ export class Organization extends jspb.Message {
   getOwnerEmail(): string;
   setOwnerEmail(value: string): void;
 
+  getPasswordAuthenticationEnabled(): boolean;
+  setPasswordAuthenticationEnabled(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Organization.AsObject;
   static toObject(
@@ -83,5 +86,6 @@ export namespace Organization {
     environmentCount: number;
     userCount: number;
     ownerEmail: string;
+    passwordAuthenticationEnabled: boolean;
   };
 }
