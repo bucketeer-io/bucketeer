@@ -197,6 +197,7 @@ func TestHandleConvertTrialOrganizationCommand(t *testing.T) {
 		"organization desc",
 		true,
 		false,
+		false,
 	)
 	assert.NoError(t, err)
 
