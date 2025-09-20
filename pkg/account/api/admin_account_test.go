@@ -57,7 +57,7 @@ func TestGetMeMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
-	org := environmentproto.Organization{Id: "org0"}
+	org := environmentproto.Organization{Id: "org0", PasswordAuthenticationEnabled: true}
 
 	patterns := []struct {
 		desc        string
@@ -274,6 +274,9 @@ func TestGetMeMySQL(t *testing.T) {
 				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().GetCredentials(
 					gomock.Any(), "bucketeer@example.com",
 				).Return(nil, authstorage.ErrCredentialsNotFound)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().CreateCredentials(
+					gomock.Any(), "bucketeer@example.com", "",
+				).Return(nil)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
