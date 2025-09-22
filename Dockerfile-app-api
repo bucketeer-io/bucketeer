@@ -1,5 +1,0 @@
-FROM gcr.io/distroless/base
-
-COPY bin/api /usr/local/bin/
-
-ENTRYPOINT ["api"]
