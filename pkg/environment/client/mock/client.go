@@ -234,6 +234,26 @@ func (mr *MockClientMockRecorder) CreateTrialProject(ctx, in any, opts ...any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrialProject", reflect.TypeOf((*MockClient)(nil).CreateTrialProject), varargs...)
 }
 
+// DeleteBucketeerData mocks base method.
+func (m *MockClient) DeleteBucketeerData(ctx context.Context, in *environment.DeleteBucketeerDataRequest, opts ...grpc.CallOption) (*environment.DeleteBucketeerDataResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteBucketeerData", varargs...)
+	ret0, _ := ret[0].(*environment.DeleteBucketeerDataResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteBucketeerData indicates an expected call of DeleteBucketeerData.
+func (mr *MockClientMockRecorder) DeleteBucketeerData(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBucketeerData", reflect.TypeOf((*MockClient)(nil).DeleteBucketeerData), varargs...)
+}
+
 // DisableOrganization mocks base method.
 func (m *MockClient) DisableOrganization(ctx context.Context, in *environment.DisableOrganizationRequest, opts ...grpc.CallOption) (*environment.DisableOrganizationResponse, error) {
 	m.ctrl.T.Helper()

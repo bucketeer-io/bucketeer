@@ -411,6 +411,13 @@ message CreateDemoOrganizationResponse {
   Organization organization = 1;
 }
 
+message DeleteBucketeerDataRequest {
+  repeated string delete_organization_ids = 1;
+  repeated string delete_environment_ids = 2;
+}
+
+message DeleteBucketeerDataResponse {}
+
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {
@@ -1586,4 +1593,6 @@ service EnvironmentService {
       }
     };
   }
+  rpc DeleteBucketeerData(DeleteBucketeerDataRequest)
+      returns (DeleteBucketeerDataResponse) {}
 }

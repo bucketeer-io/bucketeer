@@ -339,7 +339,8 @@ proto.bucketeer.batch.BatchJob = {
   APIKEYCACHER: 15,
   AUTOOPSRULESCACHER: 16,
   EXPERIMENTCACHER: 17,
-  TAGDELETER: 18
+  TAGDELETER: 18,
+  DEMOORGANIZATIONDELETER: 19
 };
 
 goog.object.extend(exports, proto.bucketeer.batch);
