@@ -15,11 +15,15 @@ import { RuleCategory } from '../types';
 const AddRule = ({
   isDisableAddPrerequisite,
   isDisableAddIndividualRules,
+  isInsertSegmentRule,
+  indexInsertSegmentRule,
   onAddRule
 }: {
   isDisableAddPrerequisite: boolean;
   isDisableAddIndividualRules: boolean;
-  onAddRule: (rule: RuleCategory) => void;
+  isInsertSegmentRule?: boolean;
+  indexInsertSegmentRule?: number;
+  onAddRule: (rule: RuleCategory, index?: number) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
   const { consoleAccount } = useAuth();
@@ -50,6 +54,15 @@ const AddRule = ({
     ],
     [isDisableAddIndividualRules, isDisableAddPrerequisite]
   );
+
+  const getRuleCategoryCall = (value: RuleCategory) => {
+    if (value === RuleCategory.CUSTOM) {
+      if (isInsertSegmentRule) {
+        return onAddRule(RuleCategory.CUSTOM, indexInsertSegmentRule);
+      }
+    }
+    return onAddRule(value);
+  };
 
   return (
     <Dropdown
