@@ -18,25 +18,27 @@ import VariationLabel from 'elements/variation-label';
 import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
-import { DiscardChangesType } from '../types';
+import { DiscardChangesType, RuleCategory } from '../types';
 
 const DefaultRule = ({
   editable,
   urlCode,
   feature,
   waitingRunningRollouts,
-  handleDiscardChanges
+  handleDiscardChanges,
+  handleCheckEdit
 }: {
   editable: boolean;
   urlCode: string;
   feature: Feature;
   waitingRunningRollouts: Rollout[];
   handleDiscardChanges: (type: DiscardChangesType) => void;
+  handleCheckEdit?: (type: RuleCategory) => boolean;
 }) => {
   const { t } = useTranslation(['form']);
 
   const { control, watch } = useFormContext<TargetingSchema>();
-
+  const editableDefaultRule = handleCheckEdit?.(RuleCategory.DEFAULT);
   const commonName = 'defaultRule';
   const defaultRule = watch(commonName);
   const rolloutStrategy = watch('defaultRule.rolloutStrategy');
@@ -123,18 +125,20 @@ const DefaultRule = ({
             {t('targeting.default-rule-desc')}
           </p>
         </div>
-        <div
-          className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
-          onClick={() => {
-            handleDiscardChanges(DiscardChangesType.DEFAULT);
-          }}
-        >
-          <Icon
-            icon={IconUndoOutlined}
-            size={'sm'}
-            className="flex-center text-gray-500 group-hover:text-gray-700"
-          />
-        </div>
+        {editableDefaultRule && (
+          <div
+            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+            onClick={() => {
+              handleDiscardChanges(DiscardChangesType.DEFAULT);
+            }}
+          >
+            <Icon
+              icon={IconUndoOutlined}
+              size={'sm'}
+              className="flex-center text-gray-500 group-hover:text-gray-700"
+            />
+          </div>
+        )}
       </div>
       <Form.Field
         control={control}
