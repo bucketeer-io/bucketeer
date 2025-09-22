@@ -1,5 +1,5 @@
 import { forwardRef, Ref, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
@@ -36,15 +36,22 @@ const ConditionForm = forwardRef(
     const { t } = useTranslation(['form', 'common', 'table']);
 
     const methods = useFormContext();
-    const { control, watch } = methods;
+    const { control } = methods;
 
-    const prerequisitesWatch = [...watch('prerequisites')];
+    const prerequisitesWatch = useWatch({ control, name: 'prerequisites' });
 
     const commonName = useMemo(
       () => `prerequisites.${prerequisiteIndex}`,
       [prerequisiteIndex]
     );
-    const currentFeatureId = watch(`${commonName}.featureId`);
+    const currentFeatureId = useWatch({
+      control,
+      name: `${commonName}.featureId`
+    });
+    const currentVariationId = useWatch({
+      control,
+      name: `${commonName}.variationId`
+    });
     const currentFeature = useMemo(
       () => features.find(item => item.id === currentFeatureId),
       [currentFeatureId, features]
@@ -75,7 +82,6 @@ const ConditionForm = forwardRef(
     );
     useEffect(() => {
       const firstVariationId = currentFeature?.variations?.[0]?.id;
-      const currentVariationId = watch(`${commonName}.variationId`);
 
       const isCurrentValid = currentFeature?.variations?.some(
         v => v.id === currentVariationId
@@ -152,7 +158,7 @@ const ConditionForm = forwardRef(
                       <DropdownMenuTrigger
                         label={
                           variationOptions?.find(
-                            item => field.value === item.value
+                            item => currentVariationId === item.value
                           )?.label || variationOptions?.[0]?.label
                         }
                         placeholder={t('experiments.select-variation')}

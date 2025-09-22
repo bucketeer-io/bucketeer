@@ -290,11 +290,10 @@
   "admin-role-description": "Has access to all environments and can do anything",
   "teams": "Teams",
   "docs": "Docs",
+  "new": "New",
   "new-console": "New console",
   "old-console": "Old console",
   "discard": "Discard changes",
   "edit-rule": "Edit rule",
-  "add-rule":"Add rule",
-  "include":"include",
-  "not-include":"not include"
+  "add-rule":"Add rule"
 }

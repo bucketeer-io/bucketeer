@@ -290,6 +290,7 @@
   "admin-role-description": "すべての環境にアクセスでき、すべての操作を実行できます。",
   "teams": "チーム",
   "docs": "ドキュメント",
+  "new":"新規",
   "new-console": "新コンソール",
   "old-console": "旧コンソール",
   "discard": "変更を破棄",
