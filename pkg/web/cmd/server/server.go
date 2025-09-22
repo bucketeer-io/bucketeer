@@ -95,6 +95,7 @@ type server struct {
 	port                            *int
 	project                         *string
 	isDemoSiteEnabled               *bool
+	isMaintenanceModeEnabled        *bool
 	timezone                        *string
 	certPath                        *string
 	keyPath                         *string
@@ -191,6 +192,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		isDemoSiteEnabled: cmd.Flag(
 			"demo-site-enabled",
 			"Is demo site enabled").Default("false").Bool(),
+		isMaintenanceModeEnabled: cmd.Flag(
+			"maintenance-mode-enabled",
+			"Enable maintenance mode for web console").Default("false").Bool(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -827,7 +831,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
 		rest.WithPort(*s.dashboardServicePort),
-		rest.WithService(NewDashboardService(*s.webConsoleEnvJSPath)),
+		rest.WithService(NewDashboardService(*s.webConsoleEnvJSPath, *s.isMaintenanceModeEnabled)),
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()

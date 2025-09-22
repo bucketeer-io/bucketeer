@@ -8,6 +8,7 @@ env:
   profile: true
   bucketeerTestEnabled:
   demoSiteEnabled: false
+  maintenanceModeEnabled: true
   gcpEnabled: true
   enablePprof: false
   pprofAddr: 127.0.0.1:6060

@@ -15,6 +15,7 @@
 package server
 
 import (
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -114,12 +115,36 @@ func webConsoleEnvJSHandler(path string) http.Handler {
 	return http.FileServer(http.Dir(path))
 }
 
+// maintenancePageHandler returns the embedded dashboard maintenance page
+func maintenancePageHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		w.WriteHeader(http.StatusServiceUnavailable)
+
+		// Serve the embedded maintenance.html from dashboard
+		file, err := dashboard.FS.Open("maintenance.html")
+		if err != nil {
+			// Fallback to simple message if file not found
+			_, _ = w.Write([]byte("<h1>Maintenance Mode</h1><p>System is temporarily unavailable.</p>"))
+			return
+		}
+		defer file.Close()
+
+		_, _ = io.Copy(w, file)
+	})
+}
+
 type WebConsoleService struct {
 	consoleEnvJSPath string
 }
 
 func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
-	return WebConsoleService{consoleEnvJSPath: consoleEnvJSPath}
+	return WebConsoleService{
+		consoleEnvJSPath: consoleEnvJSPath,
+	}
 }
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
@@ -129,15 +154,24 @@ func (c WebConsoleService) Register(mux *http.ServeMux) {
 }
 
 type DashboardService struct {
-	consoleEnvJSPath string
+	consoleEnvJSPath       string
+	maintenanceModeEnabled bool
 }
 
-func NewDashboardService(consoleEnvJSPath string) DashboardService {
-	return DashboardService{consoleEnvJSPath: consoleEnvJSPath}
+func NewDashboardService(consoleEnvJSPath string, maintenanceModeEnabled bool) DashboardService {
+	return DashboardService{
+		consoleEnvJSPath:       consoleEnvJSPath,
+		maintenanceModeEnabled: maintenanceModeEnabled,
+	}
 }
 
 // Register sets up handlers for assets, fonts, the SPA, and env-JS.
 func (d DashboardService) Register(mux *http.ServeMux) {
+	if d.maintenanceModeEnabled {
+		mux.Handle("/", maintenancePageHandler())
+		return
+	}
+
 	// Subtree for embedded assets
 	embedded := dashboard.FS
 	assetsSub, err := fs.Sub(embedded, "assets")
