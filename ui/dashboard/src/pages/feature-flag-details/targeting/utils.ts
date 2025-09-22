@@ -35,7 +35,8 @@ import {
   IndividualRuleItem,
   PrerequisiteSchema,
   RuleClauseType,
-  VariationPercent
+  VariationPercent,
+  VariationFeatures
 } from './types';
 
 const createAudienceConfig = (audience?: {
@@ -606,11 +607,6 @@ export const handleCheckIndividualDiscardChanges = (
   return individualChanges.length ? individualChanges : null;
 };
 
-interface VariationFeatures {
-  label: string;
-  value: string;
-}
-
 const getVariationLabel = (
   variations: VariationFeatures[],
   variationId: string
@@ -802,7 +798,8 @@ export const hasChangePosition = (
 };
 
 export const getFeatureRuleLabels = (
-  feature: Feature,
+  originFeature: Feature,
+  currentFeature: Feature,
   features: Feature[],
   segmentUsers: UserSegment[],
   situationOptions: VariationFeatures[],
@@ -810,12 +807,15 @@ export const getFeatureRuleLabels = (
   t: TFunction<['common', 'form', 'message'], undefined>,
   variationFeatures: FeatureVariation[]
 ) => {
-  const filteredRules = feature.rules;
+  const originFeatueRuleIds = originFeature.rules.map(r => r.id);
+  const filteredRules = currentFeature.rules;
 
   const variations: VariationPercent[][] = [];
   const labels: string[][] = [];
+  const isNewRules: boolean[] = [];
 
   filteredRules.forEach(rule => {
+    isNewRules.push(!originFeatueRuleIds.includes(rule.id));
     variations.push(
       getStrategyVariationWeight(
         rule.strategy,
@@ -834,7 +834,7 @@ export const getFeatureRuleLabels = (
     );
   });
 
-  return { variations, labels };
+  return { variations, labels, isNewRules };
 };
 
 export const handleSwapRuleFeature = (
@@ -849,19 +849,19 @@ export const handleSwapRuleFeature = (
 };
 
 export function reorderWithReset(
-  rulesA: FeatureRule[],
+  originRules: FeatureRule[],
   currentRules: FeatureRule[],
   resetRuleId: string,
   resetRule: FeatureRule
-): FeatureRule[] {
+): { reordered: FeatureRule[]; resetIndex: number } {
   const withoutReset = currentRules.filter(r => r.id !== resetRuleId);
 
-  const resetIndex = rulesA.findIndex(r => r.id === resetRuleId);
-  if (resetIndex < 0) return withoutReset;
+  const resetIndex = originRules.findIndex(r => r.id === resetRuleId);
+  if (resetIndex < 0) return { reordered: withoutReset, resetIndex };
 
-  const result = [...withoutReset];
-  result.splice(Math.min(resetIndex, result.length), 0, resetRule);
-  return result;
+  const reordered = [...withoutReset];
+  reordered.splice(Math.min(resetIndex, reordered.length), 0, resetRule);
+  return { reordered, resetIndex };
 }
 
 export function normalizeSegmentRules(
@@ -884,11 +884,11 @@ export function normalizeSegmentRules(
 }
 
 export function hasSameRelativeOrder(
-  rulesA: FeatureRule[],
+  originRules: FeatureRule[],
   currentRules: FeatureRule[]
 ): boolean {
-  for (let i = 0; i < rulesA.length; i++) {
-    if (rulesA[i].id !== currentRules[i].id) {
+  for (let i = 0; i < originRules.length; i++) {
+    if (originRules[i].id !== currentRules[i].id) {
       return false;
     }
   }
@@ -1173,6 +1173,7 @@ export const checkDefaultRuleDiscardChanges = (
 ) => {
   return diffStrategy(preStrategy, currentStrategy, variationFeatures, true);
 };
+
 export const handleCheckSegmentRulesDiscardChanges = (
   preRule: FeatureRule | null,
   segmentUsers: UserSegment[],
@@ -1194,14 +1195,6 @@ export const handleCheckSegmentRulesDiscardChanges = (
     setActionRuleSegment('new-rule');
     return [
       {
-        label: '',
-        audienceExcluded: audienceExcluded,
-        labelType: 'ADD',
-        changeType: 'audience',
-        variationIndex: 0
-      } as DiscardChangesStateData,
-
-      {
         label: getClauseLabelsFromRule(
           currentRule,
           features,
@@ -1214,7 +1207,14 @@ export const handleCheckSegmentRulesDiscardChanges = (
         changeType: 'new-rule',
         labelType: 'ADD',
         variationIndex: 0
-      }
+      },
+      {
+        label: '',
+        audienceExcluded: audienceExcluded,
+        labelType: 'ADD',
+        changeType: 'audience',
+        variationIndex: 0
+      } as DiscardChangesStateData
     ];
   }
 
@@ -1239,4 +1239,23 @@ export const handleCheckSegmentRulesDiscardChanges = (
   }
 
   return [...clauseChanges, ...strategyChanges];
+};
+
+export const checkFiledDirty = (obj: { [key: string]: boolean }): boolean => {
+  if (!obj) return false;
+  if (typeof obj === 'boolean' && obj === true) return true;
+  for (const value of Object.values(obj)) {
+    if (typeof value === 'boolean' && value === true) return true;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'object') {
+          checkFiledDirty(item as { [key: string]: boolean });
+        }
+      }
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (checkFiledDirty(value)) return true;
+    }
+  }
+  return false;
 };

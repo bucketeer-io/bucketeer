@@ -167,3 +167,7 @@ export const isUniqueValue = (text1: string, text2: string, type: string) => {
       return text1.trim() !== text2.trim();
   }
 };
+type BooleanValue = boolean | BooleanRecord | BooleanRecord[];
+interface BooleanRecord {
+  [key: string]: boolean | BooleanValue;
+}

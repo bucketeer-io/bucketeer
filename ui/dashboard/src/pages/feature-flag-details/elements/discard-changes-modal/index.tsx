@@ -1,8 +1,8 @@
 import { Trans } from 'react-i18next';
 import { IconRemoveOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import { capitalize } from 'lodash';
-import { cn } from 'utils/style';
+import { isNil } from 'lodash';
+import { capitalize, cn } from 'utils/style';
 import { IconArrowUpDown, IconPlus, IconWarningOutline } from '@icons';
 import {
   DiscardChangesStateData,
@@ -173,8 +173,13 @@ const RuleHeader = ({
 
 const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
   const { t } = useTranslation(['common', 'form']);
-  const RuleLabel = (ruleLabel: string[]) => (
+  const RuleLabel = (ruleLabel: string[], isNewRule: boolean) => (
     <p>
+      {isNewRule && (
+        <span className="px-1 font-bold text-accent-red-400">
+          ({t('common:new')})
+        </span>
+      )}
       {ruleLabel.reduce<React.ReactNode[]>((acc, label, i) => {
         if (i > 0) {
           acc.push(<b key={`and-${i}`}> {t('common:and').toLowerCase()} </b>);
@@ -194,7 +199,11 @@ const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
           <li key={`label-${index}`}>
             <div className="flex gap-1">
               <span>{index + 1}.</span>
-              {RuleLabel(ruleLabel)}
+              {RuleLabel(
+                ruleLabel,
+                (ruleOrders.isNewRules && ruleOrders?.isNewRules[index]) ||
+                  false
+              )}
             </div>
             {ruleOrders.variations[index].map((v, vIndex: number) => (
               <div
@@ -265,9 +274,8 @@ const StrategyList = ({
     {variationPercent.map((vp, index: number) => (
       <div className="flex items-center gap-1" key={index}>
         <VariationLabel label={vp.variation} index={vp.variationIndex || 0} />
-        {vp.weight !== null && (
+        {!isNil(vp.weight) && (
           <p className="text-gray-700">
-            {' '}
             - <span>({vp.weight?.toString()}%)</span>
           </p>
         )}
@@ -368,7 +376,7 @@ const DiscardChangeModal = ({
               )
           )}
         <>
-          {ruleIndex! >= 0 && actionRule === 'edit-rule' && isEdit && (
+          {!isNil(ruleIndex) && actionRule === 'edit-rule' && isEdit && (
             <div className="flex gap-1 items-center">
               <Trans i18nKey={'common:edit-rule'} />
               <Trans

@@ -141,11 +141,11 @@ const RuleForm = ({
           break;
       }
 
-      setValue(getFieldName('operator', index), _value);
+      setValue(getFieldName('operator', index), _value, { shouldDirty: true });
       const currentType = watch(getFieldName('type', index));
       if (currentType !== value) {
-        setValue(getFieldName('values', index), []);
-        setValue(getFieldName('attribute', index), '');
+        setValue(getFieldName('values', index), [], { shouldDirty: true });
+        setValue(getFieldName('attribute', index), '', { shouldDirty: true });
       }
       onChange(value);
     },

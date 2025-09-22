@@ -67,7 +67,11 @@
 }
 
 .react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
-  @apply !fill-gray-50 !stroke-gray-200 !text-gray-50 !z-[5];
+  @apply !fill-gray-50 !stroke-gray-200 !text-gray-50;
+}
+
+.react-datepicker-popper {
+   @apply !z-50;
 }
 
 .react-datepicker__day--disabled {

@@ -15,7 +15,8 @@ export interface PrerequisiteSchema {
 export enum RuleCategory {
   PREREQUISITE = 'PREREQUISITE',
   INDIVIDUAL = 'INDIVIDUAL',
-  CUSTOM = 'CUSTOM'
+  CUSTOM = 'CUSTOM',
+  DEFAULT = 'DEFAULT'
 }
 
 export interface IndividualRuleItem {
@@ -30,10 +31,14 @@ export interface VariationPercent {
   variationIndex?: number;
   variationId?: string;
 }
-
+export interface VariationFeatures {
+  label: string;
+  value: string;
+}
 export interface RuleOrders {
   variations: VariationPercent[][];
   labels: string[][];
+  isNewRules?: boolean[];
 }
 
 export interface DiscardChangesStateData {
