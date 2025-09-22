@@ -1,8 +1,7 @@
 import { Trans } from 'react-i18next';
 import { IconRemoveOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import { capitalize } from 'lodash';
-import { cn } from 'utils/style';
+import { capitalize, cn } from 'utils/style';
 import { IconArrowUpDown, IconPlus, IconWarningOutline } from '@icons';
 import {
   DiscardChangesStateData,
