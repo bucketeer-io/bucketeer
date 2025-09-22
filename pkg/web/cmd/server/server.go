@@ -126,7 +126,6 @@ type server struct {
 	featureServicePort              *int
 	notificationServicePort         *int
 	pushServicePort                 *int
-	webConsoleServicePort           *int
 	dashboardServicePort            *int
 	tagServicePort                  *int
 	codeReferenceServicePort        *int
@@ -278,10 +277,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"push-service-port",
 			"Port to bind to push service.",
 		).Default("9101").Int(),
-		webConsoleServicePort: cmd.Flag(
-			"web-console-service-port",
-			"Port to bind to console service.",
-		).Default("9102").Int(),
 		dashboardServicePort: cmd.Flag(
 			"dashboard-service-port",
 			"Port to bind to dashboard service.",
