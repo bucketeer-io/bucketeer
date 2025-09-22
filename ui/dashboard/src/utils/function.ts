@@ -143,3 +143,7 @@ export const checkFieldDirty = (obj: { [key: string]: boolean }): boolean => {
   }
   return false;
 };
+type BooleanValue = boolean | BooleanRecord | BooleanRecord[];
+interface BooleanRecord {
+  [key: string]: boolean | BooleanValue;
+}
