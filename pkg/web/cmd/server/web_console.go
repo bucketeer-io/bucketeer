@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/ui/dashboard"
-	webv2 "github.com/bucketeer-io/bucketeer/ui/web-v2"
 )
 
 type spaFileSystem struct {
@@ -50,11 +49,6 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 
 	// If still not found, return index.html
 	return fs.root.Open("index.html")
-}
-
-// webConsoleHandler returns a http.Handler for the old web console UI.
-func webConsoleHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS), prefix: "/legacy/"})
 }
 
 // fontCacheHandler adds cache headers for font files
@@ -108,24 +102,6 @@ func compressedFileServer(root http.FileSystem) http.Handler {
 func dashboardHandler() http.Handler {
 	fs := http.FS(dashboard.FS)
 	return http.FileServer(&spaFileSystem{root: fs})
-}
-
-func webConsoleEnvJSHandler(path string) http.Handler {
-	return http.FileServer(http.Dir(path))
-}
-
-type WebConsoleService struct {
-	consoleEnvJSPath string
-}
-
-func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
-	return WebConsoleService{consoleEnvJSPath: consoleEnvJSPath}
-}
-
-func (c WebConsoleService) Register(mux *http.ServeMux) {
-	mux.Handle("/", webConsoleHandler())
-	mux.Handle("/legacy/static/js/",
-		http.StripPrefix("/legacy/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)))
 }
 
 type DashboardService struct {

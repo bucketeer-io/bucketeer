@@ -814,15 +814,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go teamServer.Run()
 
-	// Start the web console and dashboard servers
-	webConsoleServer := rest.NewServer(
-		*s.certPath, *s.keyPath,
-		rest.WithLogger(logger),
-		rest.WithPort(*s.webConsoleServicePort),
-		rest.WithService(NewWebConsoleService(*s.webConsoleEnvJSPath)),
-		rest.WithMetrics(registerer),
-	)
-	go webConsoleServer.Run()
+	// Start the dashboard servers
 	dashboardServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -868,7 +860,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
 		go tagServer.Stop(serverShutDownTimeout)
-		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
 		go teamServer.Stop(serverShutDownTimeout)
 		go webGrpcGateway.Stop(serverShutDownTimeout)
