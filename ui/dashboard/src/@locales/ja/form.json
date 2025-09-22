@@ -367,5 +367,5 @@
   "custom-rule-audience-not-include-desc": "<p>この配分に含まれていない <b>{{percent}}%</b> には <b>{{variation}}</b> が提供されます</p>",
   "custom-rule-audience-include-desc": "<p>この配分に含まれている <b>{{percent}}%</b> には提供されます</p>",
   "custom-rule-default-strategy-discard-desc": "デフォルトルールに設定",
-    "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します"
+  "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します"
 }

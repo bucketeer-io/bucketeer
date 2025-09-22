@@ -294,7 +294,5 @@
   "old-console": "Old console",
   "discard": "Discard changes",
   "edit-rule": "Edit rule",
-  "add-rule":"Add rule",
-  "include":"include",
-  "not-include":"not include"
+  "add-rule":"Add rule"
 }
