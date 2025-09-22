@@ -88,10 +88,6 @@ proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-openapi-gen
 proto-go:
 	make -C proto go
 
-.PHONY: proto-web
-proto-web:
-	make -C ui/web-v2 gen_proto
-
 .PHONY: proto-go-check
 proto-go-check:
 	make -C proto go-check
@@ -143,16 +139,12 @@ $(GO_APP_BUILD_TARGETS): build-%:
 
 .PHONY: clean-web-console
 clean-web-console:
-	rm -rf ui/web-v2/dist/*
 	rm -rf ui/dashboard/build/*
-	touch ui/web-v2/dist/DONT-EDIT-FILES-IN-THIS-DIRECTORY
 	touch ui/dashboard/build/DONT-EDIT-FILES-IN-THIS-DIRECTORY
 
 .PHONY: build-web-console
 build-web-console:
-	rm -rf ui/web-v2/dist/*
 	rm -rf ui/dashboard/build/*
-	make -C ui/web-v2 install build
 	make -C ui/dashboard install build
 
 .PHONY: build-go

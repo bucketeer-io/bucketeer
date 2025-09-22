@@ -27,7 +27,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: "npm"
-    directory: "/ui/web-v2"
+    directory: "/ui/dashboard"
     schedule:
       interval: "monthly"
       time: "10:00"
@@ -39,4 +39,3 @@ updates:
       dependencies:
         patterns:
           - "*"
-
