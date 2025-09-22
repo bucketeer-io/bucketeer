@@ -142,7 +142,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		return nil, dt.Err()
 	}
 	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
-	flagTrigger.FlagTrigger.Token = ""
+	flagTrigger.Token = ""
 	return &featureproto.CreateFlagTriggerResponse{
 		FlagTrigger: flagTrigger.FlagTrigger,
 		Url:         triggerURL,
@@ -237,7 +237,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 		return nil, dt.Err()
 	}
 	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
-	flagTrigger.FlagTrigger.Token = ""
+	flagTrigger.Token = ""
 
 	if err = s.domainPublisher.Publish(ctx, event); err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -714,7 +714,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		return nil, dt.Err()
 	}
 	triggerURL := s.generateTriggerURL(ctx, trigger.Token, false)
-	trigger.FlagTrigger.Token = ""
+	trigger.Token = ""
 	return &featureproto.ResetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,
@@ -857,7 +857,7 @@ func (s *FeatureService) GetFlagTrigger(
 		return nil, err
 	}
 	triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
-	trigger.FlagTrigger.Token = ""
+	trigger.Token = ""
 	return &featureproto.GetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,

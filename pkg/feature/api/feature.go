@@ -887,7 +887,7 @@ func (s *FeatureService) CreateFeature(
 	if err != nil {
 		return nil, err
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	var handler = command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if err := s.upsertTags(contextWithTx, req.Command.Tags, req.EnvironmentId); err != nil {
 			return err
@@ -1328,7 +1328,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	var handler = command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -1847,7 +1847,7 @@ func (s *FeatureService) updateFeature(
 		}
 		return dt.Err()
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	var handler = command.NewEmptyFeatureCommandHandler()
 
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		feature, err := s.featureStorage.GetFeature(contextWithTx, id, environmentId)
@@ -2031,7 +2031,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		}
 		commands = append(commands, cmd)
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	handler := command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		filters := []*mysql.FilterV2{
 			{
@@ -2211,7 +2211,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	// Also:
 	// Normally each command should be usable alone (load the feature from the repository change it and save it).
 	// Also here because many commands are run sequentially they all expect the same version of the feature.
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	handler := command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		filters := []*mysql.FilterV2{
 			{
@@ -2670,7 +2670,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	}
 	for _, f := range fluiList {
 		for _, feature := range features {
-			if feature.Id == f.FeatureLastUsedInfo.FeatureId {
+			if feature.Id == f.FeatureId {
 				feature.LastUsedInfo = f.FeatureLastUsedInfo
 				break
 			}
@@ -3011,7 +3011,7 @@ func (s *FeatureService) CloneFeature(
 	if err != nil {
 		return nil, err
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	handler := command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		if err := s.featureStorage.CreateFeature(ctxWithTx, feature, req.Command.EnvironmentId); err != nil {
 			s.logger.Error(

@@ -205,7 +205,7 @@ func (c *Client) topic(id string) (*pubsub.Topic, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	c.createTopicForEmulator(ctx, id)
-	topic := c.Client.Topic(id)
+	topic := c.Topic(id)
 	ok, err := topic.Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	c.createTopicForEmulator(ctx, topicID)
-	topic := c.Client.TopicInProject(topicID, projectID)
+	topic := c.TopicInProject(topicID, projectID)
 	ok, err := topic.Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -234,14 +234,14 @@ func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error
 // createTopicForEmulator create topic when using pubsub emulator.
 func (c *Client) createTopicForEmulator(ctx context.Context, id string) {
 	if emulator := os.Getenv("PUBSUB_EMULATOR_HOST"); emulator != "" {
-		_, _ = c.Client.CreateTopic(ctx, id)
+		_, _ = c.CreateTopic(ctx, id)
 	}
 }
 
 // TODO: add metrics
 func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) {
-	sub := c.Client.Subscription(id)
-	topic := c.Client.Topic(topicID)
+	sub := c.Subscription(id)
+	topic := c.Topic(topicID)
 	var lastErr error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -255,7 +255,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 		if ok {
 			return sub, nil
 		}
-		_, err = c.Client.CreateSubscription(ctx, id, pubsub.SubscriptionConfig{
+		_, err = c.CreateSubscription(ctx, id, pubsub.SubscriptionConfig{
 			Topic: topic,
 		})
 		if err == nil {
@@ -274,7 +274,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 }
 
 func (c *Client) SubscriptionExists(id string) (bool, error) {
-	sub := c.Client.Subscription(id)
+	sub := c.Subscription(id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	exists, err := sub.Exists(ctx)
@@ -285,7 +285,7 @@ func (c *Client) SubscriptionExists(id string) (bool, error) {
 }
 
 func (c *Client) DeleteSubscription(id string) error {
-	sub := c.Client.Subscription(id)
+	sub := c.Subscription(id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return sub.Delete(ctx)

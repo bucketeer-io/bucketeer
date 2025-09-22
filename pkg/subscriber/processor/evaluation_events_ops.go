@@ -193,7 +193,7 @@ func (u *evalEvtUpdater) linkOpsRulesByFeatureID(
 		r := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// Ignore already triggered ops rules
 		if aor.FeatureId == featureID &&
-			!(r.IsFinished() || r.IsStopped()) {
+			!r.IsFinished() && !r.IsStopped() {
 			rules = append(rules, aor)
 		}
 	}

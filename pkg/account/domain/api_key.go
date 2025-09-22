@@ -60,19 +60,19 @@ func NewAPIKey(
 }
 
 func (a *APIKey) Rename(name string) error {
-	a.APIKey.Name = name
+	a.Name = name
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *APIKey) Enable() error {
-	a.APIKey.Disabled = false
+	a.Disabled = false
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *APIKey) Disable() error {
-	a.APIKey.Disabled = true
+	a.Disabled = true
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
