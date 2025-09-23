@@ -61,12 +61,13 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type metrics struct {
-	mux         *http.ServeMux
-	server      *http.Server
-	defaultPath string
-	registries  map[string]*registry
-	opts        *options
-	logger      *zap.Logger
+	mux          *http.ServeMux
+	server       *http.Server
+	defaultPath  string
+	registries   map[string]*registry
+	opts         *options
+	logger       *zap.Logger
+	healthClient *http.Client
 }
 
 type registry struct {
@@ -92,6 +93,9 @@ func NewMetrics(port int, path string, opts ...Option) Metrics {
 		registries:  make(map[string]*registry),
 		opts:        dopts,
 		logger:      dopts.logger.Named("metrics"),
+		healthClient: &http.Client{
+			Timeout: 2 * time.Second,
+		},
 	}
 	r := m.Registerer(path)
 	r.MustRegister(
@@ -138,11 +142,6 @@ func (m *metrics) Stop() {
 func (m *metrics) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
 	go func() {
-		// Create HTTP client with timeout from context
-		client := &http.Client{
-			Timeout: 2 * time.Second,
-		}
-
 		req, err := http.NewRequestWithContext(ctx, "GET", m.opts.healthCheckURL, nil)
 		if err != nil {
 			m.logger.Error("Failed to create health check request", zap.Error(err))
@@ -150,7 +149,7 @@ func (m *metrics) Check(ctx context.Context) health.Status {
 			return
 		}
 
-		resp, err := client.Do(req)
+		resp, err := m.healthClient.Do(req)
 		if resp != nil {
 			defer resp.Body.Close()
 		}
