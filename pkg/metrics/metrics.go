@@ -148,7 +148,6 @@ func (m *metrics) Check(ctx context.Context) health.Status {
 			resultCh <- health.Unhealthy
 			return
 		}
-
 		resp, err := m.healthClient.Do(req)
 		if resp != nil {
 			defer resp.Body.Close()
