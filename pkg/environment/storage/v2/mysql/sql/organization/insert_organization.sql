@@ -8,7 +8,7 @@ INSERT INTO organization (
     archived,
     trial,
     system_admin,
-    password_authentication_enabled,
+    authentication_settings,
     created_at,
     updated_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
