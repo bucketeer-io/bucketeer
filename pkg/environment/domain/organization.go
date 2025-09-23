@@ -49,19 +49,28 @@ func NewOrganization(
 	if err != nil {
 		return nil, err
 	}
+
+	// Set default authentication settings: Google is always enabled, Password based on parameter
+	authTypes := []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE}
+	if passwordAuthenticationEnabled {
+		authTypes = append(authTypes, proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
+	}
+
 	return &Organization{&proto.Organization{
-		Id:                            uid.String(),
-		Name:                          name,
-		UrlCode:                       urlCode,
-		OwnerEmail:                    ownerEmail,
-		Description:                   description,
-		Disabled:                      false,
-		Archived:                      false,
-		Trial:                         trial,
-		SystemAdmin:                   systemAdmin,
-		PasswordAuthenticationEnabled: passwordAuthenticationEnabled,
-		CreatedAt:                     now,
-		UpdatedAt:                     now,
+		Id:          uid.String(),
+		Name:        name,
+		UrlCode:     urlCode,
+		OwnerEmail:  ownerEmail,
+		Description: description,
+		Disabled:    false,
+		Archived:    false,
+		Trial:       trial,
+		SystemAdmin: systemAdmin,
+		AuthenticationSettings: &proto.AuthenticationSettings{
+			EnabledTypes: authTypes,
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
 	}}, nil
 }
 
@@ -69,7 +78,7 @@ func (p *Organization) Update(
 	name *wrapperspb.StringValue,
 	description *wrapperspb.StringValue,
 	ownerEmail *wrapperspb.StringValue,
-	passwordAuthenticationEnabled *wrapperspb.BoolValue,
+	authenticationSettings *proto.AuthenticationSettings,
 ) (*Organization, error) {
 	updated := &Organization{}
 	if err := copier.Copy(updated, p); err != nil {
@@ -84,8 +93,8 @@ func (p *Organization) Update(
 	if ownerEmail != nil {
 		updated.OwnerEmail = ownerEmail.Value
 	}
-	if passwordAuthenticationEnabled != nil {
-		updated.PasswordAuthenticationEnabled = passwordAuthenticationEnabled.Value
+	if authenticationSettings != nil {
+		updated.AuthenticationSettings = authenticationSettings
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
@@ -106,9 +115,61 @@ func (p *Organization) ChangeName(name string) {
 	p.UpdatedAt = time.Now().Unix()
 }
 
-func (p *Organization) ChangePasswordAuthentication(enabled bool) {
-	p.Organization.PasswordAuthenticationEnabled = enabled
+func (p *Organization) UpdateAuthenticationSettings(settings *proto.AuthenticationSettings) {
+	p.Organization.AuthenticationSettings = settings
 	p.Organization.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Organization) EnablePasswordAuthentication() {
+	if p.Organization.AuthenticationSettings == nil {
+		p.Organization.AuthenticationSettings = &proto.AuthenticationSettings{
+			EnabledTypes: []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE},
+		}
+	}
+
+	// Check if password auth is already enabled
+	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+		if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
+			return // Already enabled
+		}
+	}
+
+	// Add password authentication
+	p.Organization.AuthenticationSettings.EnabledTypes = append(
+		p.Organization.AuthenticationSettings.EnabledTypes,
+		proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+	)
+	p.Organization.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Organization) DisablePasswordAuthentication() {
+	if p.Organization.AuthenticationSettings == nil {
+		return
+	}
+
+	// Remove password authentication but keep Google
+	var newTypes []proto.AuthenticationType
+	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+		if authType != proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
+			newTypes = append(newTypes, authType)
+		}
+	}
+
+	p.Organization.AuthenticationSettings.EnabledTypes = newTypes
+	p.Organization.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Organization) IsPasswordAuthenticationEnabled() bool {
+	if p.Organization.AuthenticationSettings == nil {
+		return false
+	}
+
+	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+		if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Organization) Enable() {
