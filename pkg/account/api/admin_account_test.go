@@ -59,7 +59,15 @@ func TestGetMeMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
-	org := environmentproto.Organization{Id: "org0", PasswordAuthenticationEnabled: true}
+	org := environmentproto.Organization{
+		Id: "org0",
+		AuthenticationSettings: &environmentproto.AuthenticationSettings{
+			EnabledTypes: []environmentproto.AuthenticationType{
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+			},
+		},
+	}
 
 	patterns := []struct {
 		desc        string
