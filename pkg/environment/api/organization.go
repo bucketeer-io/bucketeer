@@ -611,11 +611,25 @@ func (s *EnvironmentService) UpdateOrganization(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
+		// Convert boolean password auth to authentication settings
+		var authSettings *environmentproto.AuthenticationSettings
+		if req.PasswordAuthenticationEnabled != nil {
+			// Start with Google authentication always enabled
+			authTypes := []environmentproto.AuthenticationType{environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE}
+			// Add password auth if enabled
+			if req.PasswordAuthenticationEnabled.Value {
+				authTypes = append(authTypes, environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
+			}
+			authSettings = &environmentproto.AuthenticationSettings{
+				EnabledTypes: authTypes,
+			}
+		}
+
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
-			req.PasswordAuthenticationEnabled,
+			authSettings,
 		)
 		if err != nil {
 			return err

@@ -768,6 +768,12 @@ func (s *authService) PrepareDemoUser() {
 						CreatedAt:   now.Unix(),
 						UpdatedAt:   now.Unix(),
 						SystemAdmin: config.IsSystemAdmin,
+						AuthenticationSettings: &envproto.AuthenticationSettings{
+							EnabledTypes: []envproto.AuthenticationType{
+								envproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+								envproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+							},
+						},
 					},
 				})
 			}
