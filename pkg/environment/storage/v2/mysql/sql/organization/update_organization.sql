@@ -7,7 +7,7 @@ SET
     disabled = ?,
     archived = ?,
     trial = ?,
-    password_authentication_enabled = ?,
+    authentication_settings = ?,
     created_at = ?,
     updated_at = ?
 WHERE
