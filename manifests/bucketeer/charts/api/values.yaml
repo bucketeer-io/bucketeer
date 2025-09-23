@@ -93,13 +93,13 @@ ingress:
 health:
   livenessProbe:
     initialDelaySeconds: 30
-    periodSeconds: 15
-    failureThreshold: 10
+    periodSeconds: 10
+    failureThreshold: 6
     timeoutSeconds: 10
   readinessProbe:
     initialDelaySeconds: 20
     periodSeconds: 10
-    failureThreshold: 5
+    failureThreshold: 3
     timeoutSeconds: 5
 resources: {}
 serviceAccount:
