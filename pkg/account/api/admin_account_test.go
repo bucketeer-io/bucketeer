@@ -46,7 +46,14 @@ func TestGetMeMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{lang},
 	})
-	org := environmentproto.Organization{Id: "org0"}
+	org := environmentproto.Organization{Id: "org0",
+		AuthenticationSettings: &environmentproto.AuthenticationSettings{
+			EnabledTypes: []environmentproto.AuthenticationType{
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+			},
+		},
+		}
 
 	patterns := []struct {
 		desc        string
