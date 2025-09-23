@@ -9,13 +9,11 @@ require (
 	cloud.google.com/go/pubsub v1.50.1
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/VividCortex/mysqlerr v1.0.0
-	github.com/aws/aws-sdk-go-v2 v1.38.3
-	github.com/aws/aws-sdk-go-v2/config v1.31.6
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.10
-	github.com/aws/aws-sdk-go-v2/service/kms v1.45.1
-	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
+	github.com/aws/aws-sdk-go-v2 v1.39.0
 	github.com/aws/aws-sdk-go-v2/config v1.31.8
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.12
 	github.com/aws/aws-sdk-go-v2/service/kms v1.45.3
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-gota/gota v0.12.0
@@ -34,9 +32,9 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mna/redisc v1.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
-	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.14.0
+	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/slack-go/slack v0.17.3
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.11.1
@@ -76,8 +74,6 @@ require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/aws/aws-sdk-go v1.49.6 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.39.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.12 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.7 // indirect
@@ -137,7 +133,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
