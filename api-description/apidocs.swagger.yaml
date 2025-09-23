@@ -5590,8 +5590,8 @@ definitions:
         format: int32
       ownerEmail:
         type: string
-      passwordAuthenticationEnabled:
-        type: boolean
+      authenticationSettings:
+        $ref: '#/definitions/environmentAuthenticationSettings'
   bucketeereventcounterSummary:
     type: object
     properties:
@@ -7069,6 +7069,23 @@ definitions:
       newVersion:
         type: integer
         format: int32
+  environmentAuthenticationSettings:
+    type: object
+    properties:
+      enabledTypes:
+        type: array
+        items:
+          $ref: '#/definitions/environmentAuthenticationType'
+        description: |-
+          Future authentication-specific settings can be added here
+           For example: password_policy, google_domain_restrictions, etc.
+  environmentAuthenticationType:
+    type: string
+    enum:
+      - AUTHENTICATION_TYPE_UNSPECIFIED
+      - AUTHENTICATION_TYPE_GOOGLE
+      - AUTHENTICATION_TYPE_PASSWORD
+    default: AUTHENTICATION_TYPE_UNSPECIFIED
   environmentEnvironmentV2:
     type: object
     properties:

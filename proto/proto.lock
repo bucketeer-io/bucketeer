@@ -12675,7 +12675,36 @@
     {
       "protopath": "environment:/:organization.proto",
       "def": {
+        "enums": [
+          {
+            "name": "AuthenticationType",
+            "enum_fields": [
+              {
+                "name": "AUTHENTICATION_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_GOOGLE",
+                "integer": 1
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_PASSWORD",
+                "integer": 2
+              }
+            ]
+          }
+        ],
         "messages": [
+          {
+            "name": "AuthenticationSettings",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled_types",
+                "type": "AuthenticationType",
+                "is_repeated": true
+              }
+            ]
+          },
           {
             "name": "Organization",
             "fields": [
@@ -12751,8 +12780,8 @@
               },
               {
                 "id": 15,
-                "name": "password_authentication_enabled",
-                "type": "bool"
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           }
