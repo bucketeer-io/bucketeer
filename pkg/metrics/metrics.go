@@ -138,7 +138,19 @@ func (m *metrics) Stop() {
 func (m *metrics) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
 	go func() {
-		resp, err := http.Get(m.opts.healthCheckURL)
+		// Create HTTP client with timeout from context
+		client := &http.Client{
+			Timeout: 2 * time.Second,
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", m.opts.healthCheckURL, nil)
+		if err != nil {
+			m.logger.Error("Failed to create health check request", zap.Error(err))
+			resultCh <- health.Unhealthy
+			return
+		}
+
+		resp, err := client.Do(req)
 		if resp != nil {
 			defer resp.Body.Close()
 		}

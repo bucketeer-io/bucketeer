@@ -92,13 +92,15 @@ ingress:
             number: 9000
 health:
   livenessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 3
-    failureThreshold: 5
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    failureThreshold: 10
+    timeoutSeconds: 10
   readinessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 3
-    failureThreshold: 2
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 5
+    timeoutSeconds: 5
 resources: {}
 serviceAccount:
   annotations: {}
