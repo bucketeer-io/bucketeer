@@ -116,55 +116,55 @@ func (p *Organization) ChangeName(name string) {
 }
 
 func (p *Organization) UpdateAuthenticationSettings(settings *proto.AuthenticationSettings) {
-	p.Organization.AuthenticationSettings = settings
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.AuthenticationSettings = settings
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) EnablePasswordAuthentication() {
-	if p.Organization.AuthenticationSettings == nil {
-		p.Organization.AuthenticationSettings = &proto.AuthenticationSettings{
+	if p.AuthenticationSettings == nil {
+		p.AuthenticationSettings = &proto.AuthenticationSettings{
 			EnabledTypes: []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE},
 		}
 	}
 
 	// Check if password auth is already enabled
-	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+	for _, authType := range p.AuthenticationSettings.EnabledTypes {
 		if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
 			return // Already enabled
 		}
 	}
 
 	// Add password authentication
-	p.Organization.AuthenticationSettings.EnabledTypes = append(
-		p.Organization.AuthenticationSettings.EnabledTypes,
+	p.AuthenticationSettings.EnabledTypes = append(
+		p.AuthenticationSettings.EnabledTypes,
 		proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
 	)
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) DisablePasswordAuthentication() {
-	if p.Organization.AuthenticationSettings == nil {
+	if p.AuthenticationSettings == nil {
 		return
 	}
 
 	// Remove password authentication but keep Google
 	var newTypes []proto.AuthenticationType
-	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+	for _, authType := range p.AuthenticationSettings.EnabledTypes {
 		if authType != proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
 			newTypes = append(newTypes, authType)
 		}
 	}
 
-	p.Organization.AuthenticationSettings.EnabledTypes = newTypes
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.AuthenticationSettings.EnabledTypes = newTypes
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) IsPasswordAuthenticationEnabled() bool {
-	if p.Organization.AuthenticationSettings == nil {
+	if p.AuthenticationSettings == nil {
 		return false
 	}
 
-	for _, authType := range p.Organization.AuthenticationSettings.EnabledTypes {
+	for _, authType := range p.AuthenticationSettings.EnabledTypes {
 		if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
 			return true
 		}
