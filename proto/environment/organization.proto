@@ -17,6 +17,18 @@ syntax = "proto3";
 package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/environment";
 
+enum AuthenticationType {
+  AUTHENTICATION_TYPE_UNSPECIFIED = 0;
+  AUTHENTICATION_TYPE_GOOGLE = 1;
+  AUTHENTICATION_TYPE_PASSWORD = 2;
+}
+
+message AuthenticationSettings {
+  repeated AuthenticationType enabled_types = 1;
+  // Future authentication-specific settings can be added here
+  // For example: password_policy, google_domain_restrictions, etc.
+}
+
 message Organization {
   string id = 1;
   string name = 2;
@@ -32,5 +44,5 @@ message Organization {
   int32 environment_count = 12;
   int32 user_count = 13;
   string owner_email = 14;
-  bool password_authentication_enabled = 15;
+  AuthenticationSettings authentication_settings = 15;
 }
