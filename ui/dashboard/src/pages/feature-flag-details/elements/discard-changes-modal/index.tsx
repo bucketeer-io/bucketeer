@@ -172,8 +172,13 @@ const RuleHeader = ({
 
 const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
   const { t } = useTranslation(['common', 'form']);
-  const RuleLabel = (ruleLabel: string[]) => (
+  const RuleLabel = (ruleLabel: string[], isNewRule: boolean) => (
     <p>
+      {isNewRule && (
+        <span className="px-1 font-bold text-accent-red-400">
+          ({t('common:new')})
+        </span>
+      )}
       {ruleLabel.reduce<React.ReactNode[]>((acc, label, i) => {
         if (i > 0) {
           acc.push(<b key={`and-${i}`}> {t('common:and').toLowerCase()} </b>);
@@ -193,7 +198,11 @@ const ReorderList = ({ ruleOrders }: { ruleOrders: RuleOrders }) => {
           <li key={`label-${index}`}>
             <div className="flex gap-1">
               <span>{index + 1}.</span>
-              {RuleLabel(ruleLabel)}
+              {RuleLabel(
+                ruleLabel,
+                (ruleOrders.isNewRules && ruleOrders?.isNewRules[index]) ||
+                  false
+              )}
             </div>
             {ruleOrders.variations[index].map((v, vIndex: number) => (
               <div

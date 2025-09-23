@@ -124,3 +124,8 @@ export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
     );
   }
 };
+
+type BooleanValue = boolean | BooleanRecord | BooleanRecord[];
+interface BooleanRecord {
+  [key: string]: boolean | BooleanValue;
+}

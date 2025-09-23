@@ -290,6 +290,7 @@
   "admin-role-description": "Has access to all environments and can do anything",
   "teams": "Teams",
   "docs": "Docs",
+  "new": "New",
   "new-console": "New console",
   "old-console": "Old console",
   "discard": "Discard changes",

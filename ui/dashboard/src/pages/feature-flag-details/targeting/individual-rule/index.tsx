@@ -16,12 +16,13 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { TargetingSchema } from '../form-schema';
-import { DiscardChangesType, IndividualRuleItem } from '../types';
+import { DiscardChangesType, IndividualRuleItem, RuleCategory } from '../types';
 import { getAlreadyTargetedVariation } from '../utils';
 
 interface Props {
   individualRules: IndividualRuleItem[];
   handleDiscardChanges: (type: DiscardChangesType) => void;
+  handleCheckEdit?: (type: RuleCategory) => boolean;
 }
 
 export const UserMessage = ({ message }: { message: ReactNode }) => {
@@ -30,7 +31,11 @@ export const UserMessage = ({ message }: { message: ReactNode }) => {
   );
 };
 
-const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
+const IndividualRule = ({
+  individualRules,
+  handleDiscardChanges,
+  handleCheckEdit
+}: Props) => {
   const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const { notify } = useToast();
 
@@ -38,7 +43,7 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
 
   const { control, watch } = methods;
   const individualRulesWatch = watch('individualRules') as IndividualRuleItem[];
-
+  const editIndividual = handleCheckEdit?.(RuleCategory.INDIVIDUAL);
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
     notify({
@@ -48,7 +53,7 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
 
   return (
     <Card>
-      <div className="flex items-center w-full justify-between">
+      <div className="w-full h-8 flex items-center justify-between">
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium leading-4 text-gray-700">
             {t('form:targeting.individual-target')}
@@ -65,16 +70,18 @@ const IndividualRule = ({ individualRules, handleDiscardChanges }: Props) => {
             className="max-w-[400px]"
           />
         </div>
-        <div
-          className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
-          onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
-        >
-          <Icon
-            icon={IconUndoOutlined}
-            size={'sm'}
-            className="flex-center text-gray-500 group-hover:text-gray-700"
-          />
-        </div>
+        {editIndividual && (
+          <div
+            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+            onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
+          >
+            <Icon
+              icon={IconUndoOutlined}
+              size={'sm'}
+              className="flex-center text-gray-500 group-hover:text-gray-700"
+            />
+          </div>
+        )}
       </div>
       {individualRules.map((item, index) => (
         <div key={index} className="flex flex-col w-full gap-y-4">

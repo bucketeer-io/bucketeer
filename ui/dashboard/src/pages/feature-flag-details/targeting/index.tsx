@@ -19,7 +19,7 @@ import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
 import { Evaluation, Feature, FeatureRule, FeatureRuleStrategy } from '@types';
-import { isEmpty } from 'utils/data-type';
+import { isEmpty, isNotEmpty } from 'utils/data-type';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -71,9 +71,14 @@ import {
   handleGetDefaultRuleStrategy,
   handleSwapRuleFeature,
   hasChangePosition,
+  hasSameFeatureTargets,
+  hasSamePrerequisites,
   hasSameRelativeOrder,
+  hasSameStrategy,
   normalizeSegmentRules,
-  reorderWithReset
+  reorderWithReset,
+  checkFiledDirty,
+  hasSameSegmentRule
 } from './utils';
 
 export const TargetingDivider = () => (
@@ -167,7 +172,9 @@ const TargetingPage = ({
     control,
     formState: { isDirty, isValid, dirtyFields },
     watch,
+    setValue,
     reset,
+    resetField,
     getValues
   } = form;
 
@@ -221,7 +228,7 @@ const TargetingPage = ({
 
   const {
     fields: segmentRules,
-    append: segmentRulesAppend,
+    insert: segmentRulesInsert,
     remove: segmentRulesRemove,
     update: segmentRulesUpdate,
     swap: segmentRulesSwap
@@ -232,7 +239,7 @@ const TargetingPage = ({
   });
 
   const onAddRule = useCallback(
-    (rule: RuleCategory) => {
+    (rule: RuleCategory, index?: number) => {
       if (rule === RuleCategory.PREREQUISITE) {
         return prerequisiteAppend(cloneDeep(initialPrerequisite));
       }
@@ -245,14 +252,78 @@ const TargetingPage = ({
           }))
         );
       }
-      segmentRulesAppend(getDefaultRule(feature));
+      const segmentIndex = isNotEmpty(index)
+        ? index
+        : segmentRulesWatch.length + 1;
+      const newSegmentRule = getDefaultRule(feature);
+      segmentRulesInsert(segmentIndex!, newSegmentRule);
       setFeatureRef(prev => ({
         ...prev,
-        rules: [...prev.rules, getDefaultRule(prev)]
+        rules: [
+          ...prev.rules.slice(0, segmentIndex),
+          newSegmentRule,
+          ...prev.rules.slice(segmentIndex)
+        ]
       }));
+      return;
     },
-    [feature]
+    [feature, segmentRulesWatch]
   );
+
+  const checkEditRule = useCallback(
+    (type: RuleCategory, index?: number): boolean => {
+      const handleCheckDirty = (obj?: { [key: string]: boolean }) =>
+        checkFiledDirty(obj ?? {});
+      const isSameSegmentRule = hasSameSegmentRule(
+        feature.rules[index || 0],
+        segmentRulesWatch[index || 0]
+      );
+      const isSameDefaultValue = hasSameStrategy(
+        feature.defaultStrategy,
+        getValues().defaultRule,
+        true
+      );
+      switch (type) {
+        case RuleCategory.CUSTOM:
+          if (isEmpty(index)) return false;
+          return !isSameSegmentRule;
+
+        case RuleCategory.PREREQUISITE:
+          return (
+            handleCheckDirty(
+              dirtyFields.prerequisites as unknown as { [key: string]: boolean }
+            ) || !hasSamePrerequisites(prerequisites, feature.prerequisites)
+          );
+
+        case RuleCategory.INDIVIDUAL:
+          return (
+            handleCheckDirty(
+              dirtyFields.individualRules as unknown as {
+                [key: string]: boolean;
+              }
+            ) || !hasSameFeatureTargets(individualRules, feature.targets)
+          );
+
+        case RuleCategory.DEFAULT:
+          return (
+            handleCheckDirty(
+              dirtyFields.defaultRule as unknown as { [key: string]: boolean }
+            ) || !isSameDefaultValue
+          );
+
+        default:
+          return false;
+      }
+    },
+    [
+      segmentRulesWatch,
+      individualRules,
+      prerequisitesWatch,
+      dirtyFields,
+      feature
+    ]
+  );
+
   const handleSegmentRuleRemove = (segmentIndex: number) => {
     segmentRulesRemove(segmentIndex);
     setFeatureRef(prev => ({
@@ -324,6 +395,7 @@ const TargetingPage = ({
             const fr = normalizeSegmentRules(featureRef.rules, segmentRules);
             const cloneFeatureRef = { ...featureRef, rules: fr };
             const labelRuleOrders = getFeatureRuleLabels(
+              feature,
               cloneFeatureRef as Feature,
               features,
               segmentCollection!.segments,
@@ -370,21 +442,23 @@ const TargetingPage = ({
 
   const onDiscardChanges = useCallback(
     (type: DiscardChangesType, index?: number) => {
+      const handleResetField = (field: keyof TargetingSchema, data: object) => {
+        resetField(field);
+        reset({ ...getValues(), [field]: data }, { keepDirty: true });
+      };
       if (type === DiscardChangesType.PREREQUISITE) {
         const { prerequisites } = feature;
-
         const resetPrerequisites = prerequisites.length
-          ? handleCreatePrerequisites(prerequisites)
+          ? handleCreatePrerequisites(feature.prerequisites)
           : [];
-
-        reset({ ...getValues(), prerequisites: resetPrerequisites });
+        handleResetField('prerequisites', resetPrerequisites);
       }
       if (type === DiscardChangesType.INDIVIDUAL) {
         const { targets, variations } = feature;
         const resetIndividualRules = targets.length
           ? handleCreateIndividualRules(targets, variations)
           : [];
-        reset({ ...getValues(), individualRules: resetIndividualRules });
+        handleResetField('individualRules', resetIndividualRules);
       }
       if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
         setActionRuleSegment(undefined);
@@ -410,8 +484,8 @@ const TargetingPage = ({
               currentRule.id,
               resetSwap
             );
-            reset({ ...getValues(), segmentRules: reordered });
-
+            resetField(`segmentRules.${index}`);
+            setValue('segmentRules', reordered);
             setFeatureRef(prev => ({ ...prev, rules: reordered }));
           }
         } else {
@@ -423,10 +497,10 @@ const TargetingPage = ({
         }
       }
       if (type === DiscardChangesType.DEFAULT) {
-        reset({
-          ...getValues(),
-          defaultRule: handleCreateDefaultValues(feature).defaultRule
-        });
+        handleResetField(
+          'defaultRule',
+          handleCreateDefaultValues(feature).defaultRule
+        );
       }
       handleOnCloseDiscardModal();
     },
@@ -556,6 +630,7 @@ const TargetingPage = ({
                     hasPrerequisiteFlags={hasPrerequisiteFlags}
                     onRemovePrerequisite={prerequisiteRemove}
                     handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
                     onAddPrerequisite={() =>
                       onAddRule(RuleCategory.PREREQUISITE)
                     }
@@ -568,6 +643,8 @@ const TargetingPage = ({
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={0}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -578,11 +655,14 @@ const TargetingPage = ({
                   <IndividualRule
                     individualRules={individualRules}
                     handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
                   />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={0}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -600,11 +680,14 @@ const TargetingPage = ({
                     segmentRulesRemove={handleSegmentRuleRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
                     handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
                   />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={segmentRulesWatch.length + 1}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -618,6 +701,7 @@ const TargetingPage = ({
             feature={feature}
             waitingRunningRollouts={waitingRunningRollouts}
             handleDiscardChanges={handleDiscardChanges}
+            handleCheckEdit={checkEditRule}
           />
           <ButtonBar
             primaryButton={

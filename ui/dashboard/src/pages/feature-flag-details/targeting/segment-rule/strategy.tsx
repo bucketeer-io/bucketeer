@@ -148,12 +148,17 @@ const Strategy = ({
     if (isActiveCustomExperiment && experimentPercentage > 0) {
       setIsCustomExperiment(true);
     }
+
+    if (!isActiveCustomExperiment && experimentPercentage > 0) {
+      setIsCustomExperiment(false);
+    }
+
     if (variationsTotal > 0) {
       setSplitOptionType(
         isEquallyVariations(variations) ? 'equally' : 'percentage'
       );
     }
-  }, []);
+  }, [variations, rolloutStrategy, isCustomExperiment]);
 
   return (
     <div className="px-2">
@@ -408,9 +413,9 @@ const Strategy = ({
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">
-                <RadioGroupItem value={value} id={value} />
+                <RadioGroupItem value={value} id={`${value}-${rootName}`} />
                 <label
-                  htmlFor={value}
+                  htmlFor={`${value}-${rootName}`}
                   className="typo-para-medium leading-4 text-gray-600 cursor-pointer"
                 >
                   {label}

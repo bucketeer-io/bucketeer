@@ -35,7 +35,8 @@ import {
   IndividualRuleItem,
   PrerequisiteSchema,
   RuleClauseType,
-  VariationPercent
+  VariationPercent,
+  VariationFeatures
 } from './types';
 
 const createAudienceConfig = (audience?: {
@@ -606,11 +607,6 @@ export const handleCheckIndividualDiscardChanges = (
   return individualChanges.length ? individualChanges : null;
 };
 
-interface VariationFeatures {
-  label: string;
-  value: string;
-}
-
 const getVariationLabel = (
   variations: VariationFeatures[],
   variationId: string
@@ -802,7 +798,8 @@ export const hasChangePosition = (
 };
 
 export const getFeatureRuleLabels = (
-  feature: Feature,
+  originFeature: Feature,
+  currentFeature: Feature,
   features: Feature[],
   segmentUsers: UserSegment[],
   situationOptions: VariationFeatures[],
@@ -810,12 +807,15 @@ export const getFeatureRuleLabels = (
   t: TFunction<['common', 'form', 'message'], undefined>,
   variationFeatures: FeatureVariation[]
 ) => {
-  const filteredRules = feature.rules;
+  const originFeatueRuleIds = originFeature.rules.map(r => r.id);
+  const filteredRules = currentFeature.rules;
 
   const variations: VariationPercent[][] = [];
   const labels: string[][] = [];
+  const isNewRules: boolean[] = [];
 
   filteredRules.forEach(rule => {
+    isNewRules.push(!originFeatueRuleIds.includes(rule.id));
     variations.push(
       getStrategyVariationWeight(
         rule.strategy,
@@ -834,7 +834,7 @@ export const getFeatureRuleLabels = (
     );
   });
 
-  return { variations, labels };
+  return { variations, labels, isNewRules };
 };
 
 export const handleSwapRuleFeature = (
@@ -849,14 +849,14 @@ export const handleSwapRuleFeature = (
 };
 
 export function reorderWithReset(
-  rulesA: FeatureRule[],
+  originRules: FeatureRule[],
   currentRules: FeatureRule[],
   resetRuleId: string,
   resetRule: FeatureRule
 ): FeatureRule[] {
   const withoutReset = currentRules.filter(r => r.id !== resetRuleId);
 
-  const resetIndex = rulesA.findIndex(r => r.id === resetRuleId);
+  const resetIndex = originRules.findIndex(r => r.id === resetRuleId);
   if (resetIndex < 0) return withoutReset;
 
   const result = [...withoutReset];
@@ -884,11 +884,11 @@ export function normalizeSegmentRules(
 }
 
 export function hasSameRelativeOrder(
-  rulesA: FeatureRule[],
+  originRules: FeatureRule[],
   currentRules: FeatureRule[]
 ): boolean {
-  for (let i = 0; i < rulesA.length; i++) {
-    if (rulesA[i].id !== currentRules[i].id) {
+  for (let i = 0; i < originRules.length; i++) {
+    if (originRules[i].id !== currentRules[i].id) {
       return false;
     }
   }
@@ -1239,4 +1239,164 @@ export const handleCheckSegmentRulesDiscardChanges = (
   }
 
   return [...clauseChanges, ...strategyChanges];
+};
+
+export const isNewRule = (
+  currentRuleId: string,
+  originRules: FeatureRule[]
+) => {
+  const originRuleIds = originRules.map(r => r.id);
+  return !originRuleIds.includes(currentRuleId);
+};
+
+export const hasSameClause = (
+  clauseA: FeatureRuleClause,
+  clauseB: FeatureRuleClause
+) => {
+  return (
+    getClauseType(clauseA?.operator) === getClauseType(clauseB?.operator) &&
+    clauseA?.attribute === clauseB?.attribute &&
+    clauseA?.operator === clauseB?.operator &&
+    isEqual(clauseA?.values, clauseB?.values)
+  );
+};
+
+export const hasSameStrategy = (
+  originStrategy: RuleSchema['strategy'],
+  currentStrategy: RuleSchema['strategy'],
+  isDefaultRule?: boolean
+): boolean => {
+  if (!originStrategy || !currentStrategy) return false;
+
+  const { type: originType } = originStrategy;
+  const { type: currentType } = currentStrategy;
+
+  if (isDefaultRule) {
+    if (
+      originType !== currentType &&
+      originType !== StrategyType.ROLLOUT &&
+      currentType === StrategyType.MANUAL
+    ) {
+      return false;
+    }
+  } else if (originType !== currentType) {
+    return false;
+  }
+
+  if (originType === StrategyType.FIXED) {
+    return (
+      originStrategy.fixedStrategy?.variation ===
+      currentStrategy.fixedStrategy?.variation
+    );
+  }
+
+  if (
+    originType === StrategyType.ROLLOUT ||
+    currentType === StrategyType.MANUAL
+  ) {
+    const originRollout = originStrategy.rolloutStrategy;
+    const currentRollout = currentStrategy.rolloutStrategy;
+
+    if (!originRollout || !currentRollout) return false;
+
+    const { audience: oAud, variations: oVars } = originRollout;
+    const { audience: cAud, variations: cVars } = currentRollout;
+
+    if (
+      oAud?.percentage !== undefined &&
+      cAud?.percentage !== undefined &&
+      oAud.percentage !== cAud.percentage
+    ) {
+      return false;
+    }
+
+    if (
+      oAud?.defaultVariation !== undefined &&
+      cAud?.defaultVariation !== undefined &&
+      oAud.defaultVariation !== cAud.defaultVariation
+    ) {
+      return false;
+    }
+
+    if (oVars?.length !== cVars?.length) return false;
+
+    if (oVars && cVars) {
+      const normalizedOriginVars = oVars.map(v => ({
+        ...v,
+        weight: v.weight >= 0 && v.weight <= 100 ? v.weight : v.weight / 1000
+      }));
+      return isEqual(normalizedOriginVars, cVars);
+    }
+
+    return false;
+  }
+
+  return true;
+};
+
+export const hasSameSegmentRule = (
+  originRule: RuleSchema,
+  currentRule: RuleSchema
+): boolean => {
+  const isSameClause = currentRule?.clauses?.every((clause, clauseIndex) =>
+    hasSameClause(
+      clause as FeatureRuleClause,
+      originRule?.clauses?.[clauseIndex] as FeatureRuleClause
+    )
+  );
+  const isSameStrategy = hasSameStrategy(
+    originRule?.strategy,
+    currentRule?.strategy
+  );
+  return isSameClause && isSameStrategy;
+};
+
+export function hasSamePrerequisites(
+  originPrerequisites: FeaturePrerequisite[],
+  currentPrerequisites: FeaturePrerequisite[]
+): boolean {
+  if (originPrerequisites.length !== currentPrerequisites.length) return false;
+  const sortFn = (a: FeaturePrerequisite, b: FeaturePrerequisite) =>
+    a.featureId.localeCompare(b.featureId) ||
+    a.variationId.localeCompare(b.variationId);
+
+  const sortedOrigin = [...originPrerequisites].sort(sortFn);
+  const sortedCurrent = [...currentPrerequisites].sort(sortFn);
+
+  return sortedOrigin.every(
+    (item, i) =>
+      item.featureId === sortedCurrent[i].featureId &&
+      item.variationId === sortedCurrent[i].variationId
+  );
+}
+
+export function hasSameFeatureTargets(
+  originTargets: { variationId: string; users: string[] }[],
+  currentTargets: FeatureTarget[]
+): boolean {
+  if (originTargets.length !== currentTargets.length) return false;
+  return originTargets.every(
+    (item, i) =>
+      item.variationId === currentTargets[i].variation &&
+      isEqual([...item.users], [...currentTargets[i].users])
+  );
+}
+
+export const checkFiledDirty = (obj: { [key: string]: boolean }): boolean => {
+  if (!obj) return false;
+  if (typeof obj === 'boolean' && obj === true) return true;
+  for (const value of Object.values(obj)) {
+    if (typeof value === 'boolean' && value === true) return true;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'object') {
+          checkFiledDirty(item as { [key: string]: boolean });
+        }
+      }
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (checkFiledDirty(value)) return true;
+    }
+  }
+  return false;
 };
