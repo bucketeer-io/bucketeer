@@ -1040,6 +1040,67 @@ paths:
           type: string
       tags:
         - API Key
+  /v1/account/list_user_api_keys:
+    get:
+      summary: List User API Keys
+      description: List all API keys maintained by a user in an organization.
+      operationId: web.v1.account.list_user_api_keys
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountListUserAPIKeysResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: The specified resource was not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+        - name: email
+          in: query
+          required: true
+          type: string
+      tags:
+        - API Key
   /v1/account/my_organizations:
     get:
       summary: Get My Organizations
@@ -9310,6 +9371,14 @@ definitions:
       totalCount:
         type: string
         format: int64
+  accountListUserAPIKeysResponse:
+    type: object
+    properties:
+      apiKeys:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAPIKey'
   accountSearchFilter:
     type: object
     properties:
