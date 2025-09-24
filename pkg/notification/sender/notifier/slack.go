@@ -34,7 +34,6 @@ import (
 	notificationdomain "github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	"github.com/bucketeer-io/bucketeer/proto/notification/sender"
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
 
@@ -114,7 +113,7 @@ func (n *slackNotifier) Notify(
 
 func (n *slackNotifier) notify(
 	ctx context.Context,
-	notification *sender.Notification,
+	notification *senderproto.Notification,
 	slackRecipient *notificationproto.SlackChannelRecipient,
 	language notificationproto.Recipient_Language,
 ) error {
@@ -153,7 +152,7 @@ func (n *slackNotifier) newLocalizer(
 }
 
 func (n *slackNotifier) createMessage(
-	notification *sender.Notification,
+	notification *senderproto.Notification,
 	slackRecipient *notificationproto.SlackChannelRecipient,
 	localizer locale.Localizer,
 ) (*slack.WebhookMessage, error) {
@@ -168,19 +167,19 @@ func (n *slackNotifier) createMessage(
 }
 
 func (n *slackNotifier) createAttachment(
-	notification *sender.Notification,
+	notification *senderproto.Notification,
 	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
 	switch notification.Type {
-	case sender.Notification_DomainEvent:
+	case senderproto.Notification_DomainEvent:
 		return n.createDomainEventAttachment(notification.DomainEventNotification, localizer)
-	case sender.Notification_FeatureStale:
+	case senderproto.Notification_FeatureStale:
 		return n.createFeatureStaleAttachment(notification.FeatureStaleNotification)
-	case sender.Notification_ExperimentRunning:
+	case senderproto.Notification_ExperimentRunning:
 		return n.createExperimentRunningAttachment(notification.ExperimentRunningNotification)
-	case sender.Notification_MauCount:
+	case senderproto.Notification_MauCount:
 		return n.createMAUCountAttachment(notification.MauCountNotification)
-	case sender.Notification_DemoOrganizationCreation:
+	case senderproto.Notification_DemoOrganizationCreation:
 		return n.createDemoOrganizationCreationAttachment(notification.DemoOrganizationCreationNotification)
 	}
 	return nil, ErrUnknownNotification

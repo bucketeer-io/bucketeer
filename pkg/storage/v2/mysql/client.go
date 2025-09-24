@@ -28,7 +28,10 @@ import (
 )
 
 const dsnParams = "collation=utf8mb4_bin"
-const transactionKey = "transaction"
+
+type contextKey string
+
+const transactionKey contextKey = "transaction"
 
 type options struct {
 	connMaxLifetime time.Duration

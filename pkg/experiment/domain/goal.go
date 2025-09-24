@@ -53,38 +53,38 @@ func (g *Goal) Update(
 	}
 
 	if name != nil {
-		updated.Goal.Name = name.Value
+		updated.Name = name.Value
 	}
 	if description != nil {
-		updated.Goal.Description = description.Value
+		updated.Description = description.Value
 	}
 	if archived != nil {
-		updated.Goal.Archived = archived.Value
+		updated.Archived = archived.Value
 	}
-	updated.Goal.UpdatedAt = time.Now().Unix()
+	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
 }
 
 func (g *Goal) Rename(name string) error {
-	g.Goal.Name = name
-	g.Goal.UpdatedAt = time.Now().Unix()
+	g.Name = name
+	g.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (g *Goal) ChangeDescription(description string) error {
-	g.Goal.Description = description
-	g.Goal.UpdatedAt = time.Now().Unix()
+	g.Description = description
+	g.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (g *Goal) SetArchived() error {
-	g.Goal.Archived = true
-	g.Goal.UpdatedAt = time.Now().Unix()
+	g.Archived = true
+	g.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (g *Goal) SetDeleted() error {
-	g.Goal.Deleted = true
-	g.Goal.UpdatedAt = time.Now().Unix()
+	g.Deleted = true
+	g.UpdatedAt = time.Now().Unix()
 	return nil
 }

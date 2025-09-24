@@ -384,7 +384,7 @@ func (s *authService) SwitchOrganization(
 				zap.String("organizationID", newOrganizationID),
 			)
 		}
-		accountDomain.AccountV2.OrganizationId = newOrganizationID
+		accountDomain.OrganizationId = newOrganizationID
 		token, err := s.generateToken(
 			ctx,
 			accessToken.Email,
@@ -657,7 +657,7 @@ func (s *authService) generateToken(
 	}
 
 	// Use the account's organization ID
-	organizationID := accountDomain.AccountV2.OrganizationId
+	organizationID := accountDomain.OrganizationId
 
 	// Create access token
 	timeNow := time.Now()

@@ -172,68 +172,68 @@ func (a *AccountV2) RemoveTeam(team string) error {
 }
 
 func (a *AccountV2) ChangeName(newName string) error {
-	a.AccountV2.Name = newName
+	a.Name = newName
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeFirstName(newFirstName string) error {
-	a.AccountV2.FirstName = newFirstName
+	a.FirstName = newFirstName
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeLastName(newLastName string) error {
-	a.AccountV2.LastName = newLastName
+	a.LastName = newLastName
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeLanguage(newLanguage string) error {
-	a.AccountV2.Language = newLanguage
+	a.Language = newLanguage
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeAvatarImageURL(url string) error {
-	a.AccountV2.AvatarImageUrl = url
+	a.AvatarImageUrl = url
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeAvatar(image []byte, fileType string) error {
-	a.AccountV2.AvatarImage = image
-	a.AccountV2.AvatarFileType = fileType
+	a.AvatarImage = image
+	a.AvatarFileType = fileType
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeTags(tags []string) error {
-	a.AccountV2.Tags = tags
+	a.Tags = tags
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeOrganizationRole(role proto.AccountV2_Role_Organization) error {
-	a.AccountV2.OrganizationRole = role
+	a.OrganizationRole = role
 	if role >= proto.AccountV2_Role_Organization_ADMIN {
-		a.AccountV2.EnvironmentRoles = []*proto.AccountV2_EnvironmentRole{}
+		a.EnvironmentRoles = []*proto.AccountV2_EnvironmentRole{}
 	}
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) ChangeEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole) error {
-	a.AccountV2.EnvironmentRoles = roles
+	a.EnvironmentRoles = roles
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_EnvironmentRole) error {
 	for _, p := range patchRoles {
-		e := getEnvironmentRole(a.AccountV2.EnvironmentRoles, p.EnvironmentId)
+		e := getEnvironmentRole(a.EnvironmentRoles, p.EnvironmentId)
 		if e == nil {
-			a.AccountV2.EnvironmentRoles = append(a.AccountV2.EnvironmentRoles, p)
+			a.EnvironmentRoles = append(a.EnvironmentRoles, p)
 			continue
 		}
 		e.Role = p.Role
@@ -243,7 +243,7 @@ func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_Environme
 }
 
 func (a *AccountV2) ChangeLastSeen(lastSeen int64) error {
-	a.AccountV2.LastSeen = lastSeen
+	a.LastSeen = lastSeen
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -258,13 +258,13 @@ func getEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole, envID string) 
 }
 
 func (a *AccountV2) Enable() error {
-	a.AccountV2.Disabled = false
+	a.Disabled = false
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) Disable() error {
-	a.AccountV2.Disabled = true
+	a.Disabled = true
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -291,17 +291,17 @@ func (a *AccountV2) AddSearchFilter(
 		EnvironmentId:    environmentID,
 		DefaultFilter:    defaultFilter,
 	}
-	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
+	a.SearchFilters = append(a.SearchFilters, searchFilter)
 	a.UpdatedAt = time.Now().Unix()
 	return searchFilter, nil
 }
 
 func (a *AccountV2) DeleteSearchFilter(id string) error {
-	for i, f := range a.AccountV2.SearchFilters {
+	for i, f := range a.SearchFilters {
 		if f.Id == id {
-			a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters[:i], a.AccountV2.SearchFilters[i+1:]...)
-			if len(a.AccountV2.SearchFilters) == 0 {
-				a.AccountV2.SearchFilters = nil
+			a.SearchFilters = append(a.SearchFilters[:i], a.SearchFilters[i+1:]...)
+			if len(a.SearchFilters) == 0 {
+				a.SearchFilters = nil
 			}
 			a.UpdatedAt = time.Now().Unix()
 			return nil
@@ -311,7 +311,7 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 }
 
 func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
-	for _, f := range a.AccountV2.SearchFilters {
+	for _, f := range a.SearchFilters {
 		if f.Id == id {
 			f.Name = name
 			a.UpdatedAt = time.Now().Unix()
@@ -322,7 +322,7 @@ func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
 }
 
 func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
-	for _, f := range a.AccountV2.SearchFilters {
+	for _, f := range a.SearchFilters {
 		if f.Id == id {
 			f.Query = query
 			a.UpdatedAt = time.Now().Unix()
@@ -333,7 +333,7 @@ func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
 }
 
 func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) error {
-	for _, f := range a.AccountV2.SearchFilters {
+	for _, f := range a.SearchFilters {
 		if f.Id == id {
 			// Since there is only one default setting for a filter target, set the existing default to OFF.
 			if defaultFilter {
@@ -349,7 +349,7 @@ func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) err
 }
 
 func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, environmentID string) {
-	for _, f := range a.AccountV2.SearchFilters {
+	for _, f := range a.SearchFilters {
 		if f.DefaultFilter &&
 			targetFilter == f.FilterTargetType &&
 			environmentID == f.EnvironmentId {

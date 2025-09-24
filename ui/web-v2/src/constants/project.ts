@@ -1,3 +1,0 @@
-export const PROJECT_NAME_MAX_LENGTH = 50;
-export const PROJECT_URL_CODE_MAX_LENGTH = 50;
-export const PROJECT_LIST_PAGE_SIZE = 50;

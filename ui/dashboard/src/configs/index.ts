@@ -17,7 +17,6 @@ declare global {
       DEMO_SIGN_IN_PASSWORD?: string;
       GOOGLE_TAG_MANAGER_ID?: string;
       API_ENDPOINT?: string;
-      OLD_CONSOLE_ENDPOINT?: string;
     };
   }
 }
@@ -40,11 +39,7 @@ export const urls = {
   API_ENDPOINT:
     releaseMode !== 'prod'
       ? import.meta.env.VITE_API_ENDPOINT
-      : window.env?.API_ENDPOINT,
-  OLD_CONSOLE_ENDPOINT:
-    releaseMode !== 'prod'
-      ? import.meta.env.VITE_OLD_CONSOLE_ENDPOINT
-      : `${window.location.origin}/legacy` // TODO: Remove the `/legacy` when the new console is released
+      : window.env?.API_ENDPOINT
 };
 
 export const GOOGLE_TAG_MANAGER_ID = window.env?.GOOGLE_TAG_MANAGER_ID || '';

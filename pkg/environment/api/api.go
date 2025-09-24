@@ -28,7 +28,6 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	v2acc "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
@@ -558,10 +557,10 @@ func (s *EnvironmentService) getAccountV2ByEnvironmentID(
 	email, environmentID string,
 	localizer locale.Localizer,
 ) (*accdomain.AccountV2, error) {
-	storage := accstorage.NewAccountStorage(s.mysqlClient)
+	storage := v2acc.NewAccountStorage(s.mysqlClient)
 	account, err := storage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
-		if errors.Is(err, accstorage.ErrAccountNotFound) {
+		if errors.Is(err, v2acc.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

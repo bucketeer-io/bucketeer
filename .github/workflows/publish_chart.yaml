@@ -18,7 +18,7 @@ on:
       - "v*"
     paths-ignore:
       - "README.md"
-      - "ui/web-v2/README.md"
+      - "ui/dashboard/README.md"
       - "CLA.md"
       - "CONTRIBUTING.md"
       - "DEPLOYMENT.md"

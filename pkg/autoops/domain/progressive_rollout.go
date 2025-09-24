@@ -231,7 +231,7 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 	default:
 		return ErrProgressiveRolloutInvalidType
 	}
-	p.ProgressiveRollout.UpdatedAt = now
+	p.UpdatedAt = now
 	return nil
 }
 
