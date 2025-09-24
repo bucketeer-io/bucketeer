@@ -1,36 +1,48 @@
+version: "2"
 run:
   tests: false
-linters-settings:
-  goimports:
-    # put imports beginning with prefix after 3rd-party packages;
-    # it's a comma-separated list of prefixes
-    local-prefixes: github.com/bucketeer-io/bucketeer
-  goheader:
-    # template does not contains the comment indicator '//' or '/*' '*/'
-    template: |-
-      Copyright {{mod-year-range}} The Bucketeer Authors.
-
-      Licensed under the Apache License, Version 2.0 (the "License");
-      you may not use this file except in compliance with the License.
-      You may obtain a copy of the License at
-
-          http://www.apache.org/licenses/LICENSE-2.0
-
-      Unless required by applicable law or agreed to in writing, software
-      distributed under the License is distributed on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-      See the License for the specific language governing permissions and
-      limitations under the License.
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - goheader
-    - gosimple
     - govet
     - ineffassign
-    - typecheck
+    - lll
+    - staticcheck
     - unused
+  settings:
+    goheader:
+      template: |-
+        Copyright {{mod-year-range}} The Bucketeer Authors.
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
+    staticcheck:
+      checks: ["all", "-SA1019", "-ST1003","-ST1012"] # ignore deprecated, ignore poorly chosen identifier and ignore poorly chosen name for error variable
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+formatters:
+  enable:
     - gofmt
     - goimports
-    - lll
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/bucketeer-io/bucketeer
+  exclusions:
+    generated: lax

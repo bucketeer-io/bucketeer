@@ -127,8 +127,8 @@ func (s *CodeReferenceService) GetCodeReference(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	codeRef.CodeReference.SourceUrl = generateSourceURL(&codeRef.CodeReference)
-	codeRef.CodeReference.BranchUrl = generateBranchURL(&codeRef.CodeReference)
+	codeRef.SourceUrl = generateSourceURL(&codeRef.CodeReference)
+	codeRef.BranchUrl = generateBranchURL(&codeRef.CodeReference)
 	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -211,8 +211,8 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
-		ref.CodeReference.SourceUrl = generateSourceURL(&ref.CodeReference)
-		ref.CodeReference.BranchUrl = generateBranchURL(&ref.CodeReference)
+		ref.SourceUrl = generateSourceURL(&ref.CodeReference)
+		ref.BranchUrl = generateBranchURL(&ref.CodeReference)
 		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{

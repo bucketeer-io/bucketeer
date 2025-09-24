@@ -40,6 +40,10 @@ var (
 	deleteCodeReferenceSQL string
 )
 
+type contextKey string
+
+const transactionKey contextKey = "transaction"
+
 var (
 	ErrCodeReferenceNotFound = bkterr.NewErrorNotFound(
 		bkterr.CoderefPackageName,

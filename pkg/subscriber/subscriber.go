@@ -183,9 +183,10 @@ func (s pubSubSubscriber) createPuller(
 	}
 
 	// Add provider-specific options
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		// Create Redis client
 		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger, s.opts.metrics)
 		if redisErr != nil {
