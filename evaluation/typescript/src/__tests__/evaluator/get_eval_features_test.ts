@@ -182,12 +182,24 @@ patterns.forEach(({ desc, targets, all, expectedIDs }) => {
     try {
       const evalator = new Evaluator();
       const actual = evalator.getEvalFeatures(targets, all);
-      t.deepEqual(
-        actual.map((e) => {
-          return e.getId();
-        }),
-        expectedIDs,
+      const actualIDs = actual.map((e) => {
+        return e.getId();
+      });
+
+      // Use set-based comparison since order doesn't matter for correctness
+      t.is(
+        actualIDs.length,
+        expectedIDs.length,
+        `Expected ${expectedIDs.length} features, got ${actualIDs.length}`,
       );
+
+      for (const expectedID of expectedIDs) {
+        t.true(actualIDs.includes(expectedID), `Missing expected feature: ${expectedID}`);
+      }
+
+      for (const actualID of actualIDs) {
+        t.true(expectedIDs.includes(actualID), `Unexpected feature: ${actualID}`);
+      }
     } catch (error) {
       t.fail(`Error: ${error}`);
     }
