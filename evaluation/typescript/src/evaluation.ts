@@ -454,25 +454,35 @@ function getFeaturesDependsOnTargets(
   // Step 2: Ensure complete transitive closure
   // The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
   // Example: If target C → dependent A → dependency D, we found A but missed D.
-  // Iteratively find dependencies until closure is complete.
-  while (true) {
-    const currentFeatures: Feature[] = [];
-    for (const f of Object.values(evals)) {
-      currentFeatures.push(f);
+  // Efficiently process only newly discovered features in each iteration.
+  const processed = new Set<string>();
+  let queue: Feature[] = [];
+  for (const f of Object.values(evals)) {
+    queue.push(f);
+  }
+
+  const maxIterations = 100; // Prevent infinite loops in case of circular dependencies
+  let iteration = 0;
+  while (queue.length > 0 && iteration < maxIterations) {
+    iteration++;
+    const nextQueue: Feature[] = [];
+    for (const f of queue) {
+      if (processed.has(f.getId())) {
+        continue;
+      }
+      processed.add(f.getId());
+
+      // Find dependencies of f
+      const featureDependencies = getFeatureIDsDependsOn(f);
+      for (const depID of featureDependencies) {
+        const dep = all.get(depID);
+        if (dep && !evals[depID]) {
+          evals[depID] = dep;
+          nextQueue.push(dep);
+        }
+      }
     }
-
-    const moreDeps = getFeaturesDependedOnTargets(currentFeatures, all);
-    const sizeBefore = Object.keys(evals).length;
-
-    for (const [id, f] of Object.entries(moreDeps)) {
-      evals[id] = f;
-    }
-
-    const sizeAfter = Object.keys(evals).length;
-
-    if (sizeBefore === sizeAfter) {
-      break;
-    }
+    queue = nextQueue;
   }
 
   return evals;

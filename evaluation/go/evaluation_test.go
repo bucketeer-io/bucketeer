@@ -1673,6 +1673,34 @@ func TestGetEvalFeatures_IncrementalEvaluationTransitiveDependencies(t *testing.
 			expectedIDs: []string{"test-prereq-a", "test-dependent-feature", "test-prereq-b"},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: handles deep dependency chains within iteration limit",
+			setupFunc: func() ([]*ftproto.Feature, []*ftproto.Feature) {
+				// Create a chain of 10 features to test iteration limit
+				features := make([]*ftproto.Feature, 10)
+				for i := 0; i < 10; i++ {
+					id := fmt.Sprintf("chain-feature-%d", i)
+					features[i] = &ftproto.Feature{Id: id}
+
+					// Each feature depends on the next one (except the last)
+					if i < 9 {
+						features[i].Prerequisites = []*ftproto.Prerequisite{
+							{FeatureId: fmt.Sprintf("chain-feature-%d", i+1), VariationId: "var1"},
+						}
+					}
+				}
+
+				// Target is the first feature in the chain
+				targets := []*ftproto.Feature{features[0]}
+
+				return targets, features
+			},
+			expectedIDs: []string{
+				"chain-feature-0", "chain-feature-1", "chain-feature-2", "chain-feature-3", "chain-feature-4",
+				"chain-feature-5", "chain-feature-6", "chain-feature-7", "chain-feature-8", "chain-feature-9",
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, p := range patterns {

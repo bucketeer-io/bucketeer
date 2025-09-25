@@ -1472,27 +1472,36 @@ func GetFeaturesDependsOnTargets(
 	// Step 2: Ensure complete transitive closure
 	// The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
 	// Example: If target C → dependent A → dependency D, we found A but missed D.
-	// Iteratively find dependencies until closure is complete.
-	for {
-		currentFeatures := make([]*feature.Feature, 0, len(evals))
-		for _, f := range evals {
-			currentFeatures = append(currentFeatures, f)
+	// Efficiently process only newly discovered features in each iteration.
+	processed := make(map[string]struct{})
+	queue := make([]*feature.Feature, 0, len(evals))
+	for _, f := range evals {
+		queue = append(queue, f)
+	}
+
+	const maxIterations = 100 // Prevent infinite loops in case of circular dependencies
+	iteration := 0
+	for len(queue) > 0 && iteration < maxIterations {
+		iteration++
+		nextQueue := make([]*feature.Feature, 0)
+		for _, f := range queue {
+			if _, ok := processed[f.Id]; ok {
+				continue
+			}
+			processed[f.Id] = struct{}{}
+
+			// Find dependencies of f
+			dmn := &Feature{Feature: f}
+			for _, depID := range dmn.FeatureIDsDependsOn() {
+				if dep, ok := all[depID]; ok {
+					if _, exists := evals[depID]; !exists {
+						evals[depID] = dep
+						nextQueue = append(nextQueue, dep)
+					}
+				}
+			}
 		}
-
-		moreDeps := GetFeaturesDependedOnTargets(currentFeatures, all)
-		sizeBefore := len(evals)
-
-		// Merge the new dependencies
-		for id, f := range moreDeps {
-			evals[id] = f
-		}
-
-		sizeAfter := len(evals)
-
-		// If no new dependencies were found, we're done
-		if sizeBefore == sizeAfter {
-			break
-		}
+		queue = nextQueue
 	}
 
 	return evals
