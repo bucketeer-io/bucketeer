@@ -171,7 +171,8 @@ const patterns: TestCase[] = [
       }),
     ],
     // order is different with golang test but the result is same
-    expectedIDs: ['featureD', 'featureB', 'featureA', 'featureE', 'featureF'],
+    // After transitive closure fix, featureC should be included as it's a dependency of featureE
+    expectedIDs: ['featureD', 'featureB', 'featureA', 'featureC', 'featureE', 'featureF'],
   },
 ];
 
