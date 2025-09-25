@@ -1348,6 +1348,11 @@ func ValidateVariationUsage(
 
 // This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.
 // Note: This algorithm is not an exact topological sort because the order is reversed (=from upstream to downstream).
+// TODO: DEBUG - Remove after investigation
+var depDebugCount = 0
+
+const maxDepDebugLogs = 5
+
 func TopologicalSort(features []*feature.Feature) ([]*feature.Feature, error) {
 	marks := map[string]Mark{}
 	mapFeatures := map[string]*feature.Feature{}
@@ -1369,6 +1374,13 @@ func TopologicalSort(features []*feature.Feature) ([]*feature.Feature, error) {
 		for _, fid := range df.FeatureIDsDependsOn() {
 			pf, ok := mapFeatures[fid]
 			if !ok {
+				// TODO: DEBUG - Remove this debug block after investigation
+				if depDebugCount < maxDepDebugLogs {
+					depDebugCount++
+					fmt.Printf("[DEBUG-TOPO-%d/%d] feature not found: featureID=%s, missingDependencyID=%s\n",
+						depDebugCount, maxDepDebugLogs, f.Id, fid)
+				}
+				// TODO: DEBUG - End of debug block
 				return ErrFeatureNotFound
 			}
 			if err := sort(pf); err != nil {
