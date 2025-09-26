@@ -26,13 +26,13 @@ import (
 	"testing"
 	"time"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	teamclient "github.com/bucketeer-io/bucketeer/pkg/team/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	teamproto "github.com/bucketeer-io/bucketeer/proto/team"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	teamproto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 const (

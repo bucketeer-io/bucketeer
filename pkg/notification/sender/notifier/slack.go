@@ -27,14 +27,14 @@ import (
 	"golang.org/x/text/message"
 	"google.golang.org/grpc/metadata"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	notificationdomain "github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationdomain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 const (

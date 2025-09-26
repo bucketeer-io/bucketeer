@@ -1,4 +1,4 @@
-module github.com/bucketeer-io/bucketeer
+module github.com/bucketeer-io/bucketeer/v2
 
 go 1.25.1
 

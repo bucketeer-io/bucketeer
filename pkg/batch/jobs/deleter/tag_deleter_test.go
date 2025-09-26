@@ -24,12 +24,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	ftstoragemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func TestRun(t *testing.T) {

@@ -22,9 +22,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestCreateGetDeleteAdminSubscription(t *testing.T) {

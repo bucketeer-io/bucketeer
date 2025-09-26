@@ -25,12 +25,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func TestListTagsMySQL(t *testing.T) {

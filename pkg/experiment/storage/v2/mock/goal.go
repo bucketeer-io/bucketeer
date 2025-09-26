@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	experiment "github.com/bucketeer-io/bucketeer/proto/experiment"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 // MockGoalStorage is a mock of GoalStorage interface.

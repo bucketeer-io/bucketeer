@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"time"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type Mark int
@@ -1404,7 +1404,12 @@ func GetFeaturesDependedOnTargets(
 		evals[f.Id] = f
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
-			dfs(all[fid])
+			// Check if the dependency exists in the all map
+			if dep, ok := all[fid]; ok {
+				dfs(dep)
+			}
+			// If dependency is missing from all map, silently skip it
+			// This can happen when features are filtered at the API layer
 		}
 	}
 	for _, f := range targets {
@@ -1415,6 +1420,24 @@ func GetFeaturesDependedOnTargets(
 
 // getFeaturesDependsOnTargets returns the features that depend on the target features.
 // targetFeatures are included in the result.
+// This function ensures complete transitive closure for incremental evaluation.
+//
+// Example scenario:
+//
+//	Feature Dependencies: A ← B ← C, A ← D, E ← D
+//	Target: [C] (recently updated)
+//
+// Step 1 - DFS finds direct/transitive dependents of targets:
+//   - A depends on B, B depends on C (target) → Add A, B
+//   - E depends on D, D doesn't depend on C → Skip E
+//     Result: {C, A, B}
+//
+// Step 2 - Find dependencies of discovered dependents:
+//   - A depends on D (new!) → Add D
+//     Result: {C, A, B, D}
+//
+// Without Step 2: Evaluating A would fail with "feature D not found"
+// With Step 2: Complete closure ensures all dependencies are available
 func GetFeaturesDependsOnTargets(
 	targets []*feature.Feature, all map[string]*feature.Feature,
 ) map[string]*feature.Feature {
@@ -1422,6 +1445,7 @@ func GetFeaturesDependsOnTargets(
 	for _, f := range targets {
 		evals[f.Id] = f
 	}
+
 	var dfs func(f *feature.Feature) bool
 	dfs = func(f *feature.Feature) bool {
 		if _, ok := evals[f.Id]; ok {
@@ -1429,10 +1453,14 @@ func GetFeaturesDependsOnTargets(
 		}
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
-			if dfs(all[fid]) {
-				evals[f.Id] = f
-				return true
+			// Check if the dependency exists in the all map
+			if dep, ok := all[fid]; ok {
+				if dfs(dep) {
+					evals[f.Id] = f
+					return true
+				}
 			}
+			// If dependency is missing from all map, silently skip it
 		}
 		return false
 	}
@@ -1440,6 +1468,42 @@ func GetFeaturesDependsOnTargets(
 		// Skip if the f is target feature.
 		dfs(f)
 	}
+
+	// Step 2: Ensure complete transitive closure
+	// The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
+	// Example: If target C → dependent A → dependency D, we found A but missed D.
+	// Efficiently process only newly discovered features in each iteration.
+	processed := make(map[string]struct{})
+	queue := make([]*feature.Feature, 0, len(evals))
+	for _, f := range evals {
+		queue = append(queue, f)
+	}
+
+	const maxIterations = 100 // Prevent infinite loops in case of circular dependencies
+	iteration := 0
+	for len(queue) > 0 && iteration < maxIterations {
+		iteration++
+		nextQueue := make([]*feature.Feature, 0)
+		for _, f := range queue {
+			if _, ok := processed[f.Id]; ok {
+				continue
+			}
+			processed[f.Id] = struct{}{}
+
+			// Find dependencies of f
+			dmn := &Feature{Feature: f}
+			for _, depID := range dmn.FeatureIDsDependsOn() {
+				if dep, ok := all[depID]; ok {
+					if _, exists := evals[depID]; !exists {
+						evals[depID] = dep
+						nextQueue = append(nextQueue, dep)
+					}
+				}
+			}
+		}
+		queue = nextQueue
+	}
+
 	return evals
 }
 

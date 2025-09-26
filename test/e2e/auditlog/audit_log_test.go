@@ -13,12 +13,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/proto/auditlog"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

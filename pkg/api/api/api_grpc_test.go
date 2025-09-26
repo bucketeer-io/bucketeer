@@ -30,32 +30,32 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	auditlogclientmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/client/mock"
-	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	coderefclientmock "github.com/bucketeer-io/bucketeer/pkg/coderef/client/mock"
-	environmentclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	eventcounterclientmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
-	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	notificationclientmock "github.com/bucketeer-io/bucketeer/pkg/notification/client/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	pushclientmock "github.com/bucketeer-io/bucketeer/pkg/push/client/mock"
-	tagclientmock "github.com/bucketeer-io/bucketeer/pkg/tag/client/mock"
-	teamclientmock "github.com/bucketeer-io/bucketeer/pkg/team/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	coderefclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/client/mock"
+	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	eventcounterclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	tagclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client/mock"
+	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestWithAPIKeyMemoryCacheTTL(t *testing.T) {
@@ -3920,21 +3920,21 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					{
 						Id: uuid0,
 						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
+							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.GoalEvent",
 							Value:   bGoalEvent,
 						},
 					},
 					{
 						Id: uuid1,
 						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
+							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
 							Value:   bEvaluationEvent,
 						},
 					},
 					{
 						Id: uuid2,
 						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
+							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 							Value:   bMetricsEvent,
 						},
 					},

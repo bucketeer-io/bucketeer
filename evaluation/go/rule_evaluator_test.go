@@ -21,8 +21,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestRuleEvaluator(t *testing.T) {

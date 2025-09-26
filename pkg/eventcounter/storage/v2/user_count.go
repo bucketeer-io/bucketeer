@@ -18,9 +18,9 @@ package v2
 import (
 	"context"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 type UserCountStorage interface {

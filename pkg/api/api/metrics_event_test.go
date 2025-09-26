@@ -23,7 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 func TestSaveMetrics(t *testing.T) {

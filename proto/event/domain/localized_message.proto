@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.event.domain;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/event/domain";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/event/domain";
 
 message LocalizedMessage {
   // The locale used following the specification defined at

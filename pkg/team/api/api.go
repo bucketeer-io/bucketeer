@@ -28,44 +28,44 @@ import (
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
 
-	accclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/team/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/team/storage"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/team"
+	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 var (
-	statusInternal     = api.NewGRPCStatus(err.NewErrorInternal(err.TeamPackageName, "internal"))
+	statusInternal     = api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.TeamPackageName, "internal"))
 	statusNameRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.TeamPackageName, "name must be specified", "name"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "name"),
 	)
 	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TeamPackageName, "cursor is invalid", "cursor"),
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "cursor"),
 	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TeamPackageName, "order_by is invalid", "order_by"),
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "order_by"),
 	)
 	statusUnauthenticated = api.NewGRPCStatus(
-		err.NewErrorUnauthenticated(err.TeamPackageName, "unauthenticated"),
+		bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"),
 	)
 	statusPermissionDenied = api.NewGRPCStatus(
-		err.NewErrorPermissionDenied(err.TeamPackageName, "permission denied"),
+		bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"),
 	)
 	statusTeamNotFound = api.NewGRPCStatus(
-		err.NewErrorNotFound(err.TeamPackageName, "not found", "team"),
+		bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "team"),
 	)
 	statusTeamInUsed = api.NewGRPCStatus(
-		err.NewErrorUnexpectedAffectedRows(err.TeamPackageName, "team is in use by an account"),
+		bkterr.NewErrorUnexpectedAffectedRows(bkterr.TeamPackageName, "team is in use by an account"),
 	)
 )
 

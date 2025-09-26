@@ -19,10 +19,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func (s *grpcGatewayService) GetExperimentEvaluationCount(

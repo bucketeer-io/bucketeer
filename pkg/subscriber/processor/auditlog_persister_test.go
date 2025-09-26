@@ -22,11 +22,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/proto/event/domain"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestExtractAuditLogs(t *testing.T) {

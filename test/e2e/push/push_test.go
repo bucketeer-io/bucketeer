@@ -25,12 +25,12 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 const (

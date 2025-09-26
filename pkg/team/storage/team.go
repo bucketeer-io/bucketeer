@@ -20,16 +20,16 @@ import (
 	_ "embed"
 	"errors"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/team/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/team"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 var (
-	ErrTeamNotFound               = err.NewErrorNotFound(err.TeamPackageName, "not found", "team")
-	ErrTeamUnexpectedAffectedRows = err.NewErrorUnexpectedAffectedRows(
-		err.TeamPackageName,
+	ErrTeamNotFound               = bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "team")
+	ErrTeamUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.TeamPackageName,
 		"unexpected affected rows",
 	)
 

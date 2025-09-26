@@ -22,12 +22,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	teamclientmock "github.com/bucketeer-io/bucketeer/pkg/team/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	teamproto "github.com/bucketeer-io/bucketeer/proto/team"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	teamproto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 func TestGrpcGatewayService_CreateTeam(t *testing.T) {

@@ -15,46 +15,46 @@
 package api
 
 import (
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
-	statusInternal      = api.NewGRPCStatus(error.NewErrorInternal(error.CoderefPackageName, "internal"))
+	statusInternal      = api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.CoderefPackageName, "internal"))
 	statusInvalidCursor = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "invalid cursor", "cursor"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "invalid cursor", "cursor"),
 	)
 	statusMissingID = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing id", "id"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing id", "id"),
 	)
 	statusMissingFeatureID = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing feature_id", "feature_id"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing feature_id", "feature_id"),
 	)
 	statusMissingFilePath = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing file_path", "file_path"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing file_path", "file_path"),
 	)
 	statusMissingLineNumber = api.NewGRPCStatus(
-		error.NewErrorInvalidArgNotMatchFormat(error.CoderefPackageName, "missing line_number", "line_number"),
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.CoderefPackageName, "missing line_number", "line_number"),
 	)
 	statusMissingCodeSnippet = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing code_snippet", "code_snippet"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing code_snippet", "code_snippet"),
 	)
 	statusMissingContentHash = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing content_hash", "content_hash"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing content_hash", "content_hash"),
 	)
 	statusMissingRepositoryInfo = api.NewGRPCStatus(
-		error.NewErrorInvalidArgEmpty(error.CoderefPackageName, "missing repository info", "repository_info"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing repository info", "repository_info"),
 	)
 	statusInvalidRepositoryType = api.NewGRPCStatus(
-		error.NewErrorInvalidArgUnknown(error.CoderefPackageName, "invalid repository type", "repository_type"),
+		bkterr.NewErrorInvalidArgUnknown(bkterr.CoderefPackageName, "invalid repository type", "repository_type"),
 	)
 	statusNotFound = api.NewGRPCStatus(
-		error.NewErrorNotFound(error.CoderefPackageName, "not found", "coderef"),
+		bkterr.NewErrorNotFound(bkterr.CoderefPackageName, "not found", "coderef"),
 	)
 	statusUnauthenticated = api.NewGRPCStatus(
-		error.NewErrorUnauthenticated(error.CoderefPackageName, "unauthenticated"),
+		bkterr.NewErrorUnauthenticated(bkterr.CoderefPackageName, "unauthenticated"),
 	)
 	statusPermissionDenied = api.NewGRPCStatus(
-		error.NewErrorPermissionDenied(error.CoderefPackageName, "permission denied"),
+		bkterr.NewErrorPermissionDenied(bkterr.CoderefPackageName, "permission denied"),
 	)
 )

@@ -16,7 +16,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	v2 "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
 )
 
 // MockEventStorage is a mock of EventStorage interface.

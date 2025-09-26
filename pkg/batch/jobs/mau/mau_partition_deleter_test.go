@@ -24,8 +24,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/mau/storage/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/mau/storage/mock"
 )
 
 func TestMAUPartitionDeleterRun(t *testing.T) {

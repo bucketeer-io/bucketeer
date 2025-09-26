@@ -25,11 +25,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ec "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/api"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 const (

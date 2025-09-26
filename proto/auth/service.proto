@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.auth;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/auth";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/auth";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";

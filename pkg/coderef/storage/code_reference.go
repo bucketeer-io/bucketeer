@@ -20,9 +20,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	bkterr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 var (

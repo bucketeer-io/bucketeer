@@ -23,14 +23,14 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
-	ustorage "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	ustorage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
 )
 
 type userEventPersisterConfig struct {

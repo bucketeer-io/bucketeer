@@ -22,13 +22,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/tag/domain"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func (s *FeatureService) ListTags(

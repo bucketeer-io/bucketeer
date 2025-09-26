@@ -17,8 +17,8 @@ package command
 import (
 	"context"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 var (

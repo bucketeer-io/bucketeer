@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 func TestRenameGoal(t *testing.T) {

@@ -15,10 +15,10 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	v2 "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	experiment "github.com/bucketeer-io/bucketeer/proto/experiment"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 // MockExperimentStorage is a mock of ExperimentStorage interface.

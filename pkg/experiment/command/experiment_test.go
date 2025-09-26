@@ -23,12 +23,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestChangePeriod(t *testing.T) {

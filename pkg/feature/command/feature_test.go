@@ -25,10 +25,10 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestAddFixedStrategyRule(t *testing.T) {

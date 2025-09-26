@@ -24,8 +24,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {

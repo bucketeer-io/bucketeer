@@ -24,9 +24,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 var (

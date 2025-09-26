@@ -28,17 +28,17 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestCreateSegmentMySQL(t *testing.T) {

@@ -29,23 +29,23 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/push"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
-	v2ps "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
+	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 var fcmServiceAccountDummy = []byte(`

@@ -20,8 +20,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 type Storage interface {

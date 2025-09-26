@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 )
 
 type CodeReference struct {

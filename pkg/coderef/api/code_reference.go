@@ -23,16 +23,16 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/storage"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 // generateSourceURL generates a URL to view the code in the repository web interface

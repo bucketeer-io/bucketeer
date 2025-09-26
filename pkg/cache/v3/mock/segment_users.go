@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	feature "github.com/bucketeer-io/bucketeer/proto/feature"
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockSegmentUsersCache is a mock of SegmentUsersCache interface.

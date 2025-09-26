@@ -22,7 +22,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 type Server struct {

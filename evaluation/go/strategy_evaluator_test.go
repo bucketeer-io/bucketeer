@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestStrategyEvaluator_Evaluate_Fixed(t *testing.T) {

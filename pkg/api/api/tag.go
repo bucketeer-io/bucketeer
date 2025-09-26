@@ -20,11 +20,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func (s *grpcGatewayService) CreateTag(

@@ -22,8 +22,8 @@ import (
 	"github.com/mna/redisc"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 const (

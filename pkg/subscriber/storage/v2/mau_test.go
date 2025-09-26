@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 )
 
 func TestNewMysqlMAUStorage(t *testing.T) {

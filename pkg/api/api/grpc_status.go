@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 const (

@@ -20,7 +20,7 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 type Goal struct {

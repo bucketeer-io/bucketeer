@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestHandleCreateOrganizationCommand(t *testing.T) {

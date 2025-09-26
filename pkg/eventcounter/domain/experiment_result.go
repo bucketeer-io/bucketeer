@@ -15,7 +15,7 @@
 package domain
 
 import (
-	eventcounterproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 type ExperimentResult struct {

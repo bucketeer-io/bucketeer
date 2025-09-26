@@ -26,13 +26,13 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestBulkUploadSegmentUsersMySQL(t *testing.T) {

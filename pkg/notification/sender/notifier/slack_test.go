@@ -23,9 +23,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	domainproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 func TestLastDays(t *testing.T) {

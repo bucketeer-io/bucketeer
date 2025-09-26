@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	user "github.com/bucketeer-io/bucketeer/proto/user"
+	user "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 // MockUserAttributesCache is a mock of UserAttributesCache interface.
