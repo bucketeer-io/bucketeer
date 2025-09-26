@@ -88,7 +88,11 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
       </div>
 
       <ButtonBar
-        primaryButton={<Button onClick={onClose}>{t(`close`)}</Button>}
+        primaryButton={
+          <Button type="button" onClick={onClose}>
+            {t(`close`)}
+          </Button>
+        }
       />
     </DialogModal>
   );

@@ -24,6 +24,7 @@ import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import useFormSchema from 'hooks/use-form-schema';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { IconInfo, IconPlus } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
@@ -220,6 +221,12 @@ const ExperimentCreateUpdateModal = ({
     watch,
     formState: { isDirty, isSubmitting }
   } = form;
+
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
   const featureId = watch('featureId');
 
   const variationOptions = useMemo(
@@ -703,7 +710,7 @@ const ExperimentCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button type="button" variant="secondary" onClick={onClose}>
                       {t(`common:cancel`)}
                     </Button>
                   }

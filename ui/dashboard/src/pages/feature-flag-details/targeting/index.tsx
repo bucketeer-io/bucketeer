@@ -10,6 +10,7 @@ import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
@@ -114,10 +115,16 @@ const TargetingPage = ({
 
   const {
     control,
-    formState: { isDirty, isValid, dirtyFields },
+    formState: { isDirty, isValid, dirtyFields, isSubmitting },
     watch,
     reset
   } = form;
+
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
 
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];

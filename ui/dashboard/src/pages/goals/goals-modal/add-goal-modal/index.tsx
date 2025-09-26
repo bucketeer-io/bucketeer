@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
@@ -96,7 +97,11 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const {
     formState: { isDirty, isSubmitting }
   } = form;
-
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
   return (
     <SlideModal title={t('new-goal')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5">
@@ -224,7 +229,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
-                  <Button variant="secondary" onClick={onClose}>
+                  <Button type="button" variant="secondary" onClick={onClose}>
                     {t(`cancel`)}
                   </Button>
                 }
