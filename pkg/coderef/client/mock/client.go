@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
 
-	coderef "github.com/bucketeer-io/bucketeer/proto/coderef"
+	coderef "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 )
 
 // MockClient is a mock of Client interface.

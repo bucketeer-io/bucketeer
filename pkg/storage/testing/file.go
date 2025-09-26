@@ -17,7 +17,7 @@ package testing
 import (
 	"context"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 )
 
 type inMemoryStorageBucket struct {

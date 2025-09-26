@@ -19,7 +19,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	uproto "github.com/bucketeer-io/bucketeer/proto/user"
+	uproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 type eventDWHMap map[string]proto.Message

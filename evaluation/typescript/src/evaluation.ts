@@ -96,6 +96,15 @@ class Evaluator {
     const archivedIDs: string[] = [];
 
     for (const feature of sortedFeatures) {
+      const segmentUsers = this.listSegmentIDs(feature).flatMap(
+        (id) => mapSegmentUsers.get(id) || [],
+      );
+
+      const [reason, variation] = this.assignUser(feature, user, segmentUsers, flagVariations);
+      // VariationId is used to check if prerequisite flag's result is what user expects it to be.
+      // This must be set for ALL features (including archived) for dependency resolution to work
+      flagVariations[feature.getId()] = variation.getId();
+
       if (feature.getArchived()) {
         // To keep response size small, the feature flags archived long time ago are excluded.
         if (!this.isArchivedBeforeLastThirtyDays(feature)) {
@@ -103,14 +112,6 @@ class Evaluator {
         }
         continue;
       }
-
-      const segmentUsers = this.listSegmentIDs(feature).flatMap(
-        (id) => mapSegmentUsers.get(id) || [],
-      );
-
-      const [reason, variation] = this.assignUser(feature, user, segmentUsers, flagVariations);
-      // VariationId is used to check if prerequisite flag's result is what user expects it to be.
-      flagVariations[feature.getId()] = variation.getId();
       // When the tag is set in the request,
       // it will return only the evaluations of flags that match the tag configured on the dashboard.
       // When empty, it will return all the evaluations of the flags in the environment.
@@ -398,6 +399,24 @@ function getFeaturesDependedOnTargets(
 
 // getFeaturesDependsOnTargets returns the features that depend on the target features.
 // targetFeatures are included in the result.
+//
+// This function ensures complete transitive closure for incremental evaluation.
+//
+// Example scenario:
+//   Feature Dependencies: A ← B ← C, A ← D, E ← D
+//   Target: [C] (recently updated)
+//
+// Step 1 - DFS finds direct/transitive dependents of targets:
+//   - A depends on B, B depends on C (target) → Add A, B
+//   - E depends on D, D doesn't depend on C → Skip E
+//     Result: {C, A, B}
+//
+// Step 2 - Find dependencies of discovered dependents:
+//   - A depends on D (new!) → Add D
+//     Result: {C, A, B, D}
+//
+// Without Step 2: Evaluating A would fail with "feature D not found"
+// With Step 2: Complete closure ensures all dependencies are available
 function getFeaturesDependsOnTargets(
   targets: Array<Feature>,
   all: Map<string, Feature>,
@@ -431,6 +450,40 @@ function getFeaturesDependsOnTargets(
   all.forEach((f) => {
     dfs(f);
   });
+
+  // Step 2: Ensure complete transitive closure
+  // The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
+  // Example: If target C → dependent A → dependency D, we found A but missed D.
+  // Efficiently process only newly discovered features in each iteration.
+  const processed = new Set<string>();
+  let queue: Feature[] = [];
+  for (const f of Object.values(evals)) {
+    queue.push(f);
+  }
+
+  const maxIterations = 100; // Prevent infinite loops in case of circular dependencies
+  let iteration = 0;
+  while (queue.length > 0 && iteration < maxIterations) {
+    iteration++;
+    const nextQueue: Feature[] = [];
+    for (const f of queue) {
+      if (processed.has(f.getId())) {
+        continue;
+      }
+      processed.add(f.getId());
+
+      // Find dependencies of f
+      const featureDependencies = getFeatureIDsDependsOn(f);
+      for (const depID of featureDependencies) {
+        const dep = all.get(depID);
+        if (dep && !evals[depID]) {
+          evals[depID] = dep;
+          nextQueue.push(dep);
+        }
+      }
+    }
+    queue = nextQueue;
+  }
 
   return evals;
 }

@@ -17,7 +17,7 @@ package domain
 import (
 	"time"
 
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 type OpsCount struct {

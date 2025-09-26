@@ -22,9 +22,9 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/command"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 func TestValidateCreateAccountV2Request(t *testing.T) {

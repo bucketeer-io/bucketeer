@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.tag;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/tag";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/tag";
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";

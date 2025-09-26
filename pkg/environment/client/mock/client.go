@@ -16,7 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
 
-	environment "github.com/bucketeer-io/bucketeer/proto/environment"
+	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 // MockClient is a mock of Client interface.

@@ -22,14 +22,14 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	aodomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	aoclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	aodomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const opsGoalKeyPrefix = "autoops:goal"

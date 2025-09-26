@@ -22,10 +22,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 )
 
 const (

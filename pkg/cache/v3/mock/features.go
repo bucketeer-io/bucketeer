@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	feature "github.com/bucketeer-io/bucketeer/proto/feature"
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockFeaturesCache is a mock of FeaturesCache interface.

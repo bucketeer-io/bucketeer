@@ -22,14 +22,14 @@ import (
 
 	"go.uber.org/zap"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type featureFlagCacher struct {

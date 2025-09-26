@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestCacheUserAttributes(t *testing.T) {

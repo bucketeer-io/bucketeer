@@ -26,7 +26,7 @@ import (
 	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/gonum/stat/distuv"
 
-	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 const (

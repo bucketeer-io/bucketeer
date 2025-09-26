@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	experiment "github.com/bucketeer-io/bucketeer/proto/experiment"
+	experiment "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 // MockExperimentsCache is a mock of ExperimentsCache interface.

@@ -21,10 +21,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	storagetesting "github.com/bucketeer-io/bucketeer/pkg/storage/testing"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	storagetesting "github.com/bucketeer-io/bucketeer/v2/pkg/storage/testing"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestNewFeatureLastUsedStorage(t *testing.T) {

@@ -24,9 +24,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 func TestExecuteProgressiveRollout(t *testing.T) {

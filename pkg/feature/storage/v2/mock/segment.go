@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	feature "github.com/bucketeer-io/bucketeer/proto/feature"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // MockSegmentStorage is a mock of SegmentStorage interface.

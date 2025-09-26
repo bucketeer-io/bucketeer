@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* add v2 module path for Go modules v2+ semantic versioning ([#2137](https://github.com/bucketeer-io/bucketeer/issues/2137)) ([5bde96c](https://github.com/bucketeer-io/bucketeer/commit/5bde96c7920e82cb4407cdbe308d16861d017425))
+
+## [2.1.0](https://github.com/bucketeer-io/bucketeer/compare/v2.0.0...v2.1.0) (2025-09-26)
+
+
+### Features
+
+* add pprof debug option ([#2083](https://github.com/bucketeer-io/bucketeer/issues/2083)) ([ef15387](https://github.com/bucketeer-io/bucketeer/commit/ef15387c5bf5bae905a1891daf5b6481eb7ac1b3))
+* support not equal operator for evaluation ([#2095](https://github.com/bucketeer-io/bucketeer/issues/2095)) ([6b263fc](https://github.com/bucketeer-io/bucketeer/commit/6b263fc6c4cafd894c4643276bb675df60228add))
+
+
+### Bug Fixes
+
+* change log target to cloned feature ([#2107](https://github.com/bucketeer-io/bucketeer/issues/2107)) ([e2164fd](https://github.com/bucketeer-io/bucketeer/commit/e2164fd8656e69c52ad8e8992d62078934f7d682))
+* **dashboard/ui:** new operation progressive rollout ([#2094](https://github.com/bucketeer-io/bucketeer/issues/2094)) ([dc70be2](https://github.com/bucketeer-io/bucketeer/commit/dc70be2370b84853788b67c7b87fe29c4747e910))
+* resolve missing dependencies in incremental feature flag evaluation ([#2135](https://github.com/bucketeer-io/bucketeer/issues/2135)) ([7dc9b2b](https://github.com/bucketeer-io/bucketeer/commit/7dc9b2b358e7437d097fb81967b74df6df6b6896))
+* **ui/dashboard:** experiment filter search params ([#2123](https://github.com/bucketeer-io/bucketeer/issues/2123)) ([8489257](https://github.com/bucketeer-io/bucketeer/commit/84892578a20c2b411db65f9b86350d1b525288d6))
+* **ui/dashboard:** progressive rollout manual validate ([#2111](https://github.com/bucketeer-io/bucketeer/issues/2111)) ([338ac00](https://github.com/bucketeer-io/bucketeer/commit/338ac00561806bced420c5691ca87f472fd0fff5))
+
+
+### Miscellaneous
+
+* correcting tags for event counter APIs ([#2108](https://github.com/bucketeer-io/bucketeer/issues/2108)) ([2cd751d](https://github.com/bucketeer-io/bucketeer/commit/2cd751d26d81daaf16d95023c3252d8b8a0737eb))
+* fix typo in locales ([#2091](https://github.com/bucketeer-io/bucketeer/issues/2091)) ([b998a47](https://github.com/bucketeer-io/bucketeer/commit/b998a479680384b8534904e4d6052f2b0d74110b))
+* remove old console ([#2126](https://github.com/bucketeer-io/bucketeer/issues/2126)) ([a87501c](https://github.com/bucketeer-io/bucketeer/commit/a87501c94892943a6db622f5334312ed16b4c195))
+* update new url for new console ([#2085](https://github.com/bucketeer-io/bucketeer/issues/2085)) ([a80039b](https://github.com/bucketeer-io/bucketeer/commit/a80039b8e69da41ddf740045bee4c4307114288d))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 7.0.6 to 7.0.7 in /ui/dashboard ([#2117](https://github.com/bucketeer-io/bucketeer/issues/2117)) ([ec2d34b](https://github.com/bucketeer-io/bucketeer/commit/ec2d34b0f7563a323456aac2fb3e552e4fd384b2))
+* **deps:** bump axios from 1.11.0 to 1.12.0 in /ui/dashboard ([#2122](https://github.com/bucketeer-io/bucketeer/issues/2122)) ([c75bc33](https://github.com/bucketeer-io/bucketeer/commit/c75bc33ce1b90405c4190bacf22cb1dbabe5ad4d))
+* **deps:** bump the dependencies group with 14 updates ([#2100](https://github.com/bucketeer-io/bucketeer/issues/2100)) ([d62102f](https://github.com/bucketeer-io/bucketeer/commit/d62102fad6c6ca998f7c1015e3f29c156a8fc0e9))
+* **deps:** bump the dependencies group with 14 updates ([#2129](https://github.com/bucketeer-io/bucketeer/issues/2129)) ([cd69a01](https://github.com/bucketeer-io/bucketeer/commit/cd69a01030abdf660d653f4b6abdaa6cb8db6f29))
+
 ## [2.0.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v2.0.0) (2025-08-27)
 
 

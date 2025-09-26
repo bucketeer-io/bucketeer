@@ -23,13 +23,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ftclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type segmentUserCacher struct {

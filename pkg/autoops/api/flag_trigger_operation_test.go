@@ -24,11 +24,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestEnableFeature(t *testing.T) {

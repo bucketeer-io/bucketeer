@@ -21,11 +21,11 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 type command struct {

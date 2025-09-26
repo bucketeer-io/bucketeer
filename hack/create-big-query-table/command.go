@@ -22,8 +22,8 @@ import (
 	"google.golang.org/api/option"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 type command struct {

@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 // MockCache is a mock of Cache interface.

@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	notification "github.com/bucketeer-io/bucketeer/proto/notification"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 // MockAdminSubscriptionStorage is a mock of AdminSubscriptionStorage interface.

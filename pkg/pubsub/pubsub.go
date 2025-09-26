@@ -24,10 +24,10 @@ import (
 	"cloud.google.com/go/pubsub"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/backoff"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/backoff"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 )
 
 var (

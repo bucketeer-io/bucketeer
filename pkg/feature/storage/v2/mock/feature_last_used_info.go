@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 )
 
 // MockFeatureLastUsedInfoStorage is a mock of FeatureLastUsedInfoStorage interface.

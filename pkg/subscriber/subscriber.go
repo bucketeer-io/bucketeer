@@ -20,11 +20,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 type options struct {

@@ -18,7 +18,7 @@ package experimentcalc
 import (
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 const (

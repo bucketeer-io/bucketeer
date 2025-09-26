@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	eventcounter "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	eventcounter "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 // MockMAUSummaryStorage is a mock of MAUSummaryStorage interface.

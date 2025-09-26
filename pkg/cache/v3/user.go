@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (

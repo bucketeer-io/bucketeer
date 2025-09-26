@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/metadata"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/metadata"
 )
 
 type Fields []zap.Field

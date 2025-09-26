@@ -17,8 +17,8 @@ package api
 import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 )
 
 func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, localizer locale.Localizer) error {

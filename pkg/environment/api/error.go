@@ -15,8 +15,8 @@
 package api
 
 import (
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (

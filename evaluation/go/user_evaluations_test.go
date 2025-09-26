@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestNewUserEvaluations(t *testing.T) {

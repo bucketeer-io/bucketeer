@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestFeatureLastUsedInfoID(t *testing.T) {

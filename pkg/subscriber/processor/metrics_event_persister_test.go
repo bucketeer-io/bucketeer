@@ -25,10 +25,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/mock"
-	clientevent "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/mock"
+	clientevent "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 func TestUnmarshalMessage(t *testing.T) {

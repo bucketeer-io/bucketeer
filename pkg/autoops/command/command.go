@@ -17,7 +17,7 @@ package command
 import (
 	"context"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
