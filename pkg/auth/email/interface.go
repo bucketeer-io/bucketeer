@@ -21,7 +21,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 )
 
 // EmailService defines the interface for sending emails
