@@ -1,6 +1,6 @@
 global:
   image:
-    tag: v2.1.0 # x-release-please-version
+    tag: v2.1.1 # x-release-please-version
     imagePullSecrets:
   
   # Global data warehouse configuration
@@ -49,7 +49,7 @@ global:
 migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
-    tag: v2.1.0 # x-release-please-version
+    tag: v2.1.1 # x-release-please-version
 
   imagePullSecrets: []
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* add v2 module path for Go modules v2+ semantic versioning ([#2137](https://github.com/bucketeer-io/bucketeer/issues/2137)) ([5bde96c](https://github.com/bucketeer-io/bucketeer/commit/5bde96c7920e82cb4407cdbe308d16861d017425))
+
 ## [2.1.0](https://github.com/bucketeer-io/bucketeer/compare/v2.0.0...v2.1.0) (2025-09-26)
 
 
