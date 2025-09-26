@@ -26,6 +26,8 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -36,8 +38,6 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
-	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
-	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 const (
