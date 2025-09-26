@@ -849,3 +849,92 @@ func (s *AccountService) UpdateAPIKey(
 
 	return &proto.UpdateAPIKeyResponse{}, nil
 }
+
+func (s *AccountService) ListUserAPIKeys(
+	ctx context.Context,
+	req *proto.ListUserAPIKeysRequest,
+) (*proto.ListUserAPIKeysResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkOrganizationRole(
+		ctx, proto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	err = validateListUserAPIKeysRequest(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_v2.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		},
+		{
+			Column:   "api_key.maintainer",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Email,
+		},
+	}
+
+	listOptions := &mysql.ListOptions{
+		Filters:     filters,
+		InFilters:   nil,
+		SearchQuery: nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+		Orders:      nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+	}
+
+	apiKeys, _, _, err := s.accountStorage.ListAPIKeys(ctx, listOptions)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list user api keys",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationId", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	for i := range apiKeys {
+		// do not return the API key value
+		apiKeys[i].ApiKey = ""
+		apiKeys[i].Id = ""
+	}
+
+	return &proto.ListUserAPIKeysResponse{
+		ApiKeys: apiKeys,
+	}, nil
+}
+
+func validateListUserAPIKeysRequest(
+	req *proto.ListUserAPIKeysRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Email == "" {
+		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	return nil
+}
