@@ -23,7 +23,7 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 )
 
 // SendGridEmailService implements EmailService using SendGrid
