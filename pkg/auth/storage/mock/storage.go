@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/auth/domain"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 )
 
 // MockCredentialsStorage is a mock of CredentialsStorage interface.
