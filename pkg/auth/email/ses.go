@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 )
 
 // SESEmailService implements EmailService using Amazon SES

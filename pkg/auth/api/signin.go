@@ -21,8 +21,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func (s *authService) SignIn(

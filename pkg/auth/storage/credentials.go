@@ -20,8 +20,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 var (

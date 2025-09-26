@@ -23,11 +23,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/auth/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func (s *authService) UpdatePassword(
