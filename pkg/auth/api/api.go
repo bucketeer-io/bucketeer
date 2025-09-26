@@ -31,6 +31,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/email"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -44,8 +47,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
-	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
