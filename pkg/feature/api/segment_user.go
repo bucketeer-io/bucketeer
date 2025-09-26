@@ -27,18 +27,19 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	serviceeventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	serviceeventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func (s *FeatureService) AddSegmentUser(
@@ -216,14 +217,7 @@ func (s *FeatureService) updateSegmentUser(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }
@@ -269,14 +263,7 @@ func (s *FeatureService) GetSegmentUser(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &featureproto.GetSegmentUserResponse{
 		User: user.SegmentUser,
@@ -346,14 +333,7 @@ func (s *FeatureService) ListSegmentUsers(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &featureproto.ListSegmentUsersResponse{
 		Users:  users,
@@ -462,14 +442,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &featureproto.BulkUploadSegmentUsersResponse{}, nil
 }
@@ -564,14 +537,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &featureproto.BulkUploadSegmentUsersResponse{}, nil
 }
@@ -639,14 +605,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if segment.Status != featureproto.Segment_SUCEEDED {
 		dt, err := statusSegmentStatusNotSuceeded.WithDetails(&errdetails.LocalizedMessage{
@@ -679,14 +638,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var buf bytes.Buffer
 	for _, user := range users {

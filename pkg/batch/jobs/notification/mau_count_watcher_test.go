@@ -25,12 +25,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	ecclientmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
-	sendermock "github.com/bucketeer-io/bucketeer/pkg/notification/sender/mock"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	ecclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	sendermock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 var (

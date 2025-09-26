@@ -22,15 +22,15 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 type mauCountWatcher struct {

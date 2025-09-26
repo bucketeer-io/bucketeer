@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/tag"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func TestNewTag(t *testing.T) {

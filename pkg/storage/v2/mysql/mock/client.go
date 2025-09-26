@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 // MockQueryer is a mock of Queryer interface.

@@ -26,16 +26,16 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
-	staragemock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	staragemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestCreateAdminSubscriptionMySQL(t *testing.T) {

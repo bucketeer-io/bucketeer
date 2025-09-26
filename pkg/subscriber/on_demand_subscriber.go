@@ -22,10 +22,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 )
 
 const (
@@ -215,9 +215,10 @@ func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 	}
 
 	// Add provider-specific options
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		// Create Redis client
 		redisClient, redisErr := createRedisClient(ctx, s.configuration.Configuration, s.logger, s.opts.metrics)
 		if redisErr != nil {

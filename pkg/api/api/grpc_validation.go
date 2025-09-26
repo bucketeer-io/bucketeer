@@ -22,10 +22,10 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (

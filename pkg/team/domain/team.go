@@ -17,8 +17,8 @@ package domain
 import (
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/team"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 type Team struct {

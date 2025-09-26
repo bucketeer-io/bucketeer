@@ -16,8 +16,8 @@ import (
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	gomock "go.uber.org/mock/gomock"
 
-	health "github.com/bucketeer-io/bucketeer/pkg/health"
-	metrics "github.com/bucketeer-io/bucketeer/pkg/metrics"
+	health "github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	metrics "github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 // MockRegisterer is a mock of Registerer interface.

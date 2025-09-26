@@ -23,14 +23,14 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/command"
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 func (s *AccountService) CreateSearchFilter(

@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type UserEvaluations struct {

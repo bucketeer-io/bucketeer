@@ -20,10 +20,10 @@ import (
 	_ "embed"
 	"errors"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 var (

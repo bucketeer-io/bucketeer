@@ -21,9 +21,9 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (
@@ -118,13 +118,6 @@ func (e *evaluator) evaluate(
 	evaluations := make([]*ftproto.Evaluation, 0, len(fs))
 	archivedIDs := make([]string, 0)
 	for _, feature := range sortedFs {
-		if feature.Archived {
-			// To keep response size small, the feature flags archived long time ago are excluded.
-			if !e.isArchivedBeforeLastThirtyDays(feature) {
-				archivedIDs = append(archivedIDs, feature.Id)
-			}
-			continue
-		}
 		var segmentUsers []*ftproto.SegmentUser
 		for _, id := range e.ListSegmentIDs(feature) {
 			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
@@ -134,7 +127,16 @@ func (e *evaluator) evaluate(
 			return nil, err
 		}
 		// VariationId is used to check if prerequisite flag's result is what user expects it to be.
+		// This must be set for ALL features (including archived) for dependency resolution to work
 		flagVariations[feature.Id] = variation.Id
+
+		if feature.Archived {
+			// To keep response size small, the feature flags archived long time ago are excluded.
+			if !e.isArchivedBeforeLastThirtyDays(feature) {
+				archivedIDs = append(archivedIDs, feature.Id)
+			}
+			continue
+		}
 		// When the tag is set in the request,
 		// it will return only the evaluations of flags that match the tag configured on the dashboard.
 		// When empty, it will return all the evaluations of the flags in the environment.

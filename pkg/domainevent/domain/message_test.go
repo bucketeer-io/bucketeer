@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	proto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestLocalizedMessage(t *testing.T) {

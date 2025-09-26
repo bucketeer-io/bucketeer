@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestURL(t *testing.T) {

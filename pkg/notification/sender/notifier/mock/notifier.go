@@ -15,8 +15,8 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	notification "github.com/bucketeer-io/bucketeer/proto/notification"
-	sender "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	notification "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	sender "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 // MockNotifier is a mock of Notifier interface.

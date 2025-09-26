@@ -9,11 +9,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcCreateAccountV2(t *testing.T) {

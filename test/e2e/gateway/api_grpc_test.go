@@ -30,17 +30,17 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/api/client"
-	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gatewayproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
-	"github.com/bucketeer-io/bucketeer/test/util"
+	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
+	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (

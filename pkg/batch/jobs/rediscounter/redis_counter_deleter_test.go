@@ -27,11 +27,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 
-	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
-	evmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	evproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	evmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	evproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 var (

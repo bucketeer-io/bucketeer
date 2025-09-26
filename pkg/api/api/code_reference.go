@@ -22,11 +22,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
-	gatewayproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	coderefproto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
+	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func (s *grpcGatewayService) GetCodeReference(

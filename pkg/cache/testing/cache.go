@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	redis "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 type inMemoryCache struct {

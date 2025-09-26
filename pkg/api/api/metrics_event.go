@@ -20,7 +20,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 const (

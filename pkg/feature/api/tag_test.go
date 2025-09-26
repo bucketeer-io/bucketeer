@@ -25,10 +25,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 func TestListTagsMySQL(t *testing.T) {
@@ -69,11 +71,11 @@ func TestListTagsMySQL(t *testing.T) {
 			setup: func(fs *FeatureService) {
 				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("test"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "test"))
 			},
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId},
 			expected:    nil,
-			expectedErr: createError(localizer.MustLocalize(locale.InternalServerError), statusInternal),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "test")).Err(),
 		},
 		{
 			desc: "success",

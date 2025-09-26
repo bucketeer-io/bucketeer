@@ -20,9 +20,9 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 type Organization struct {
@@ -84,49 +84,49 @@ func (p *Organization) Update(
 }
 
 func (p *Organization) ChangeDescription(description string) {
-	p.Organization.Description = description
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Description = description
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) ChangeOwnerEmail(ownerEmail string) {
-	p.Organization.OwnerEmail = ownerEmail
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.OwnerEmail = ownerEmail
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) ChangeName(name string) {
-	p.Organization.Name = name
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Name = name
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) Enable() {
-	p.Organization.Disabled = false
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Disabled = false
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) Disable() error {
-	if p.Organization.SystemAdmin {
+	if p.SystemAdmin {
 		return ErrCannotDisableSystemAdmin
 	}
-	p.Organization.Disabled = true
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Disabled = true
+	p.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (p *Organization) Archive() error {
-	if p.Organization.SystemAdmin {
+	if p.SystemAdmin {
 		return ErrCannotArchiveSystemAdmin
 	}
-	p.Organization.Archived = true
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Archived = true
+	p.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (p *Organization) Unarchive() {
-	p.Organization.Archived = false
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Archived = false
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Organization) ConvertTrial() {
-	p.Organization.Trial = false
-	p.Organization.UpdatedAt = time.Now().Unix()
+	p.Trial = false
+	p.UpdatedAt = time.Now().Unix()
 }

@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 type ParentCommand interface {

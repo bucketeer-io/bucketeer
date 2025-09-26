@@ -25,9 +25,9 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/redis"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/redis"
 )
 
 const (

@@ -26,11 +26,11 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (

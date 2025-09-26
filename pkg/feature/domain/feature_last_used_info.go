@@ -19,7 +19,7 @@ import (
 
 	"github.com/blang/semver"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type FeatureLastUsedInfo struct {

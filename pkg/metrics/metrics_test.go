@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 )
 
 func TestCheckHealthy(t *testing.T) {

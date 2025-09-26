@@ -20,11 +20,11 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type apiKeyCommandHandler struct {

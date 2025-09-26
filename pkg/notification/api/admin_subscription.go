@@ -23,15 +23,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/command"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func (s *NotificationService) CreateAdminSubscription(
@@ -58,7 +58,7 @@ func (s *NotificationService) CreateAdminSubscription(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if err := s.adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
@@ -349,7 +349,7 @@ func (s *NotificationService) updateAdminSubscription(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
 		if err != nil {
@@ -414,7 +414,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	if err := validateDeleteAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
+	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {

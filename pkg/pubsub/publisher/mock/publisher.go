@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	publisher "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
+	publisher "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 )
 
 // MockMessage is a mock of Message interface.

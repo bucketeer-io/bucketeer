@@ -32,21 +32,21 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
-	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	envstotage "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	acproto "github.com/bucketeer-io/bucketeer/proto/account"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
+	envdomain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 const (
@@ -418,7 +418,7 @@ func (s *authService) SwitchOrganization(
 				zap.String("organizationID", newOrganizationID),
 			)
 		}
-		accountDomain.AccountV2.OrganizationId = newOrganizationID
+		accountDomain.OrganizationId = newOrganizationID
 		token, err := s.generateToken(
 			ctx,
 			accessToken.Email,
@@ -705,7 +705,7 @@ func (s *authService) generateToken(
 	}
 
 	// Use the account's organization ID
-	organizationID := accountDomain.AccountV2.OrganizationId
+	organizationID := accountDomain.OrganizationId
 
 	// Create access token
 	timeNow := time.Now()

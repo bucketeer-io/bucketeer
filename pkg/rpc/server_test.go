@@ -30,9 +30,9 @@ import (
 	pb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	proto "github.com/bucketeer-io/bucketeer/proto/test"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/test"
 )
 
 const certPath = "testdata/server.crt"

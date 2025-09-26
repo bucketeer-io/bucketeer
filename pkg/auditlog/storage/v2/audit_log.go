@@ -21,11 +21,11 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/auditlog"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 var (

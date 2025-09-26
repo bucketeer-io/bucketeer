@@ -23,15 +23,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
-	ErrSegmentAlreadyExists          = errors.New("segment: already exists")
-	ErrSegmentNotFound               = errors.New("segment: not found")
-	ErrSegmentUnexpectedAffectedRows = errors.New("segment: unexpected affected rows")
+	ErrSegmentAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.FeaturePackageName, "segment already exists")
+	ErrSegmentNotFound               = pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "segment not found", "segment")
+	ErrSegmentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.FeaturePackageName,
+		"segment unexpected affected rows",
+	)
 
 	//go:embed sql/segment/select_segments.sql
 	selectSegmentsSQL string

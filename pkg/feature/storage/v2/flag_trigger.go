@@ -21,9 +21,11 @@ import (
 	_ "embed"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
@@ -44,9 +46,19 @@ var (
 )
 
 var (
-	ErrFlagTriggerAlreadyExists          = errors.New("flag trigger: already exists")
-	ErrFlagTriggerNotFound               = errors.New("flag trigger: not found")
-	ErrFlagTriggerUnexpectedAffectedRows = errors.New("flag trigger: unexpected affected rows")
+	ErrFlagTriggerAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.FeaturePackageName,
+		"flag trigger already exists",
+	)
+	ErrFlagTriggerNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName,
+		"flag trigger not found",
+		"flag_trigger",
+	)
+	ErrFlagTriggerUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.FeaturePackageName,
+		"flag trigger unexpected affected rows",
+	)
 )
 
 type FlagTriggerStorage interface {

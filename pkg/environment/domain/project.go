@@ -20,8 +20,8 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 type Project struct {
@@ -49,28 +49,28 @@ func NewProject(name, urlCode, description, creatorEmail, organizationID string,
 }
 
 func (p *Project) ChangeDescription(description string) {
-	p.Project.Description = description
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.Description = description
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Project) Rename(name string) {
-	p.Project.Name = name
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.Name = name
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Project) Enable() {
-	p.Project.Disabled = false
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.Disabled = false
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Project) Disable() {
-	p.Project.Disabled = true
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.Disabled = true
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Project) ConvertTrial() {
-	p.Project.Trial = false
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.Trial = false
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func (p *Project) Update(name, description *wrapperspb.StringValue) (*Project, error) {
@@ -84,6 +84,6 @@ func (p *Project) Update(name, description *wrapperspb.StringValue) (*Project, e
 	if description != nil {
 		updated.Description = description.Value
 	}
-	p.Project.UpdatedAt = time.Now().Unix()
+	p.UpdatedAt = time.Now().Unix()
 	return updated, nil
 }

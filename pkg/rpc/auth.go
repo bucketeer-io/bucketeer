@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/token"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 )
 
 type contextKey int

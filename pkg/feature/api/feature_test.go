@@ -29,29 +29,31 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
-	btclientmock "github.com/bucketeer-io/bucketeer/pkg/batch/client/mock"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	envclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	exprclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	exprproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/command"
+	btclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client/mock"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	exprclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	exprproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestGetFeatureMySQL(t *testing.T) {
@@ -862,8 +864,8 @@ func TestConvUpdateFeatureError(t *testing.T) {
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
-			input:       errors.New("test"),
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			input:       pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "test"),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "test")).Err(),
 		},
 	}
 	for _, p := range patterns {
@@ -919,15 +921,15 @@ func TestEvaluateFeatures(t *testing.T) {
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
-					nil, errors.New("error"))
+					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
 		{
@@ -1250,15 +1252,15 @@ func TestEvaluateFeatures(t *testing.T) {
 							},
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, errors.New("random error"))
+					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, 0, errors.New("error"))
+				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
 			},
 		},
 		{
@@ -1444,10 +1446,10 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
-					nil, errors.New("error"))
+					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
+				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
 				FeatureIds:    []string{"feature-id-1", "feature-id-2"},
@@ -1456,7 +1458,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
 		{
@@ -1652,10 +1654,10 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 							},
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					nil, errors.New("random error"))
+					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error"))
 				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, 0, errors.New("error"))
+				).Return(nil, 0, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error"))
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
 				FeatureIds:    []string{"feature-id-1"},
@@ -1664,7 +1666,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
 			},
 		},
 		{
@@ -3996,14 +3998,11 @@ func TestChangeDefaultStrategy(t *testing.T) {
 						Cursor:        "",
 						FeatureIds:    []string{f.Id},
 					},
-				).Return(nil, errors.New("internal"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
 			},
-			from:     featureproto.UpdateFeatureTargetingRequest_USER,
-			strategy: nil,
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
-			),
+			from:        featureproto.UpdateFeatureTargetingRequest_USER,
+			strategy:    nil,
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal")).Err(),
 		},
 		{
 			desc: "err: there is a progressive in progressive",
@@ -4242,7 +4241,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 						Cursor:        "",
 						FeatureIds:    []string{fID0},
 					},
-				).Return(nil, errors.New("internal"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
 			},
 			cmd: &featureproto.RemoveVariationCommand{
 				Id: "variation-A",
@@ -4252,10 +4251,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID0,
 				},
 			},
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
-			),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal")).Err(),
 		},
 		{
 			desc: "err AddVariationCommand: internal error while getting the progressive rollout list",
@@ -4268,7 +4264,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 						Cursor:        "",
 						FeatureIds:    []string{fID0},
 					},
-				).Return(nil, errors.New("internal"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
 			},
 			cmd: &featureproto.AddVariationCommand{
 				Name: "variation-A",
@@ -4278,10 +4274,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID0,
 				},
 			},
-			expectedErr: createError(
-				statusInternal,
-				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
-			),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal")).Err(),
 		},
 		{
 			desc: "err RemoveVariationCommand: there is a progressive in progressive",
@@ -4552,12 +4545,14 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 		},
 	}
 	for _, p := range pattens {
-		service := createFeatureServiceNew(mockController)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", &featureproto.Feature{Id: fID0}, p.cmd, localizer)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureServiceNew(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", &featureproto.Feature{Id: fID0}, p.cmd, localizer)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
 	}
 }
 
@@ -5298,7 +5293,7 @@ func TestUpdateFeature(t *testing.T) {
 			desc: "fail: validateFeatureStatus",
 			setup: func(s *FeatureService) {
 				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
-					nil, errors.New("internal"),
+					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"),
 				)
 			},
 			ctx: createContextWithToken(),
@@ -5309,7 +5304,7 @@ func TestUpdateFeature(t *testing.T) {
 				Name:          wrapperspb.String("name"),
 				Description:   wrapperspb.String("desc"),
 			},
-			expectedErr: internalErr.Err(),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal")).Err(),
 		},
 		{
 			desc: "fail: validateEnvironmentSettings",
@@ -5320,7 +5315,7 @@ func TestUpdateFeature(t *testing.T) {
 				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
 					gomock.Any(),
 					&envproto.GetEnvironmentV2Request{Id: "eid"},
-				).Return(nil, errors.New("internal"))
+				).Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
 			},
 			ctx: createContextWithToken(),
 			input: &featureproto.UpdateFeatureRequest{
@@ -5330,7 +5325,7 @@ func TestUpdateFeature(t *testing.T) {
 				Name:          wrapperspb.String("name"),
 				Description:   wrapperspb.String("desc"),
 			},
-			expectedErr: internalErr.Err(),
+			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal")).Err(),
 		},
 		{
 			desc: "fail: publish domain event",
@@ -5457,12 +5452,15 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
+
 	for _, p := range patterns {
-		service := createFeatureServiceNew(mockController)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.UpdateFeature(p.ctx, p.input)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureServiceNew(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.UpdateFeature(p.ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }

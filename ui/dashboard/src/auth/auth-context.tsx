@@ -3,19 +3,16 @@ import React, {
   useContext,
   useEffect,
   ReactNode,
-  useState,
-  useCallback
+  useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
-import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import { Undefinable } from 'option-t/undefinable';
-import { clearConsoleVersion, getConsoleVersion } from 'storage/console';
 import {
   clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
@@ -38,7 +35,6 @@ import {
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 import { onChangeFontWithLocalized } from 'utils/function';
-import { useSearchParams } from 'utils/search-params';
 import { getAccountAccess } from './utils';
 
 interface AuthContextType {
@@ -72,7 +68,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
   const { errorNotify } = useToast();
-  const { searchOptions } = useSearchParams();
 
   const [isInitialLoading, setIsInitialLoading] = useState(
     !!authToken?.accessToken
@@ -92,22 +87,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     clearCurrentProjectEnvironmentStorage();
   };
 
-  const handleCheckConsoleVersion = useCallback(
-    (account: ConsoleAccount) => {
-      const backFromOldConsole = !!searchOptions?.fromOldConsole;
-      const consoleVersion = getConsoleVersion();
-      const isRedirectToOldConsole =
-        consoleVersion?.version === 'old' &&
-        consoleVersion?.email === account.email;
-      if (!isRedirectToOldConsole || backFromOldConsole)
-        return clearConsoleVersion();
-
-      if (isRedirectToOldConsole)
-        return (window.location.href = urls.OLD_CONSOLE_ENDPOINT as string);
-    },
-    [searchOptions]
-  );
-
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
       const response = await accountMeFetcher(params);
@@ -117,7 +96,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         errorNotify(null, t('message:env-are-empty'));
         return logout();
       }
-      handleCheckConsoleVersion(response.account);
       setConsoleAccount(response.account);
       setIsLogin(true);
       if (response.account.lastSeen === '0' || !response.account.lastSeen)

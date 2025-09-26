@@ -1,1 +1,0 @@
-export const AUDITLOG_LIST_PAGE_SIZE = 50;

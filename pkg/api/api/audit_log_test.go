@@ -22,13 +22,13 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	auditlogclientmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/client/mock"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	"github.com/bucketeer-io/bucketeer/proto/event/domain"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcGetAuditLog(t *testing.T) {

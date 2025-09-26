@@ -22,7 +22,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 func TestNewGRPCStatus(t *testing.T) {

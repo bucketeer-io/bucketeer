@@ -24,10 +24,10 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	ecclientmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	ecclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 func TestRun(t *testing.T) {

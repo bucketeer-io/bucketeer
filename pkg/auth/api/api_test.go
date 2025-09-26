@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func TestAuthService_GetDeploymentStatus(t *testing.T) {

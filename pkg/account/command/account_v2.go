@@ -20,11 +20,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type accountV2CommandHandler struct {
@@ -223,11 +223,12 @@ func (h *accountV2CommandHandler) changeEnvironmentRoles(
 	ctx context.Context,
 	cmd *accountproto.ChangeAccountV2EnvironmentRolesCommand,
 ) error {
-	if cmd.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_OVERRIDE {
+	switch cmd.WriteType {
+	case accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_OVERRIDE:
 		if err := h.account.ChangeEnvironmentRole(cmd.Roles); err != nil {
 			return err
 		}
-	} else if cmd.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH {
+	case accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH:
 		if err := h.account.PatchEnvironmentRole(cmd.Roles); err != nil {
 			return err
 		}

@@ -21,12 +21,12 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/redis"
-	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/redis"
+	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 // PubSubType represents the type of PubSub implementation.
@@ -156,7 +156,7 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 	case RedisStream:
 		// Handle RedisStream type
 		if options.redisClient == nil {
-			return nil, fmt.Errorf("Redis client is required for Redis Stream")
+			return nil, fmt.Errorf("redis client is required for Redis Stream")
 		}
 		streamOpts := []redis.StreamOption{}
 		if options.metrics != nil {

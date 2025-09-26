@@ -25,9 +25,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	"github.com/bucketeer-io/bucketeer/test/util"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (

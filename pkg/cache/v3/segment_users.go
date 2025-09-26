@@ -20,8 +20,8 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

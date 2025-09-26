@@ -26,9 +26,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const totalVariationWeight = int32(100000)

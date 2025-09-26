@@ -29,23 +29,22 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/push/command"
-	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
-	v2ps "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/push/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
+	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 var errTagDuplicated = errors.New("push: tag is duplicated")
@@ -201,7 +200,7 @@ func (s *PushService) CreatePush(
 	}
 
 	// For security reasons we remove the service account from the API response
-	push.Push.FcmServiceAccount = ""
+	push.FcmServiceAccount = ""
 
 	return &pushproto.CreatePushResponse{
 		Push: push.Push,
@@ -317,7 +316,7 @@ func (s *PushService) createPushNoCommand(
 	}
 
 	// For security reasons we remove the service account from the API response
-	push.Push.FcmServiceAccount = ""
+	push.FcmServiceAccount = ""
 
 	return &pushproto.CreatePushResponse{
 		Push: push.Push,
@@ -753,7 +752,7 @@ func (s *PushService) GetPush(
 
 	if push.Push != nil {
 		// For security reasons we remove the service account from the API response
-		push.Push.FcmServiceAccount = ""
+		push.FcmServiceAccount = ""
 	}
 
 	return &pushproto.GetPushResponse{
@@ -1237,20 +1236,23 @@ func (s *PushService) checkEnvironmentRole(
 
 func (s *PushService) checkOrganizationRole(
 	ctx context.Context,
-	requiredRole proto.AccountV2_Role_Organization,
+	requiredRole accountproto.AccountV2_Role_Organization,
 	organizationID string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(email string) (*proto.GetAccountV2Response, error) {
-		resp, err := s.accountClient.GetAccountV2(ctx, &proto.GetAccountV2Request{
-			Email:          email,
-			OrganizationId: organizationID,
+	editor, err := role.CheckOrganizationRole(
+		ctx,
+		requiredRole,
+		func(email string) (*accountproto.GetAccountV2Response, error) {
+			resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+				Email:          email,
+				OrganizationId: organizationID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp, nil
 		})
-		if err != nil {
-			return nil, err
-		}
-		return resp, nil
-	})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

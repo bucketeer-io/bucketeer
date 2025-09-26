@@ -24,24 +24,25 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	v2ts "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	v2ts "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type options struct {
@@ -190,14 +191,7 @@ func (s *FeatureService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil
@@ -216,12 +210,5 @@ func (s *FeatureService) reportInternalServerError(
 			zap.String("environmentId", environmentId),
 		)...,
 	)
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return api.NewGRPCStatus(err).Err()
 }
