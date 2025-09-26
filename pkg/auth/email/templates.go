@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 )
 
 // Default email templates
