@@ -28,14 +28,14 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 )
 
 func TestGetMeMySQL(t *testing.T) {

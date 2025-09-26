@@ -27,12 +27,12 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 )
 
 func (s *AccountService) GetMe(
