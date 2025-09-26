@@ -18,7 +18,7 @@ package storage
 import (
 	"context"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 )
 
 // CredentialsStorage defines the interface for managing account credentials
