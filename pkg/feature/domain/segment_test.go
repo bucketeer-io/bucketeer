@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestUpdateSegment(t *testing.T) {

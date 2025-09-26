@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	auditlog "github.com/bucketeer-io/bucketeer/proto/auditlog"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	auditlog "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 )
 
 // MockAuditLogStorage is a mock of AuditLogStorage interface.

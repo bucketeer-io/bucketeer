@@ -21,13 +21,13 @@ import (
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

@@ -24,11 +24,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
-	"github.com/bucketeer-io/bucketeer/test/e2e/util"
+	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {

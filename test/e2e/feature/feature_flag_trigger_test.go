@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestCreateFeatureFlagTrigger(t *testing.T) {

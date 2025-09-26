@@ -23,7 +23,7 @@ import (
 	"gonum.org/v1/gonum/floats"
 	"gonum.org/v1/gonum/stat"
 
-	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 )
 
 func createCvrProb(

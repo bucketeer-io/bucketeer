@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.batch;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/batch";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/batch";
 
 enum BatchJob {
   ExperimentStatusUpdater = 0;

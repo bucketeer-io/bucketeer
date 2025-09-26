@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	domainevent "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestNewAuditLog(t *testing.T) {

@@ -19,11 +19,11 @@ import (
 	_ "embed"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 var (

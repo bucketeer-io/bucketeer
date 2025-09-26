@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 )
 
 func TestValidateGoalEvent(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/runtime/protoiface"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 const (

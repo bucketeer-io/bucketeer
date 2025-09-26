@@ -8,11 +8,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcGatewayService_GetEnvironmentV2(t *testing.T) {

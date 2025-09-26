@@ -24,10 +24,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	featuredoman "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	featuredoman "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 func TestEvaluateFeature(t *testing.T) {

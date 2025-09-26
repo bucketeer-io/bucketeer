@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.account;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/account";
 
 message SearchFilter {
   string id = 1;

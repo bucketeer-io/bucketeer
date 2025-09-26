@@ -17,7 +17,7 @@ package evaluation
 import (
 	"fmt"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type strategyEvaluator struct {

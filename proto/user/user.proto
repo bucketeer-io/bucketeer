@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.user;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/user";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/user";
 
 message User {
   message Data {

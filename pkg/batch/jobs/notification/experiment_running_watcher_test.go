@@ -23,12 +23,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	sendermock "github.com/bucketeer-io/bucketeer/pkg/notification/sender/mock"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	sendermock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/mock"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 func TestCreateExperimentRunningNotification(t *testing.T) {

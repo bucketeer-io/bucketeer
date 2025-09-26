@@ -18,8 +18,8 @@ import (
 	"context"
 	"encoding/json"
 
-	storagev2 "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
+	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
 type mysqlEvalEventWriter struct {

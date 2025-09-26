@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoiface"
 
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 func TestNewProgressiveRollout(t *testing.T) {

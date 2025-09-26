@@ -28,18 +28,18 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestCreateFlagTrigger(t *testing.T) {

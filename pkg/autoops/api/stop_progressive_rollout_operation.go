@@ -17,10 +17,10 @@ package api
 import (
 	"context"
 
-	prdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	prdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 func executeStopProgressiveRolloutOperation(

@@ -23,8 +23,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
 func TestCreateBatch(t *testing.T) {

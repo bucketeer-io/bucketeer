@@ -21,9 +21,9 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (

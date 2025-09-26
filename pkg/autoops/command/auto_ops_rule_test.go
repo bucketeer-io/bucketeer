@@ -22,11 +22,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestDelete(t *testing.T) {

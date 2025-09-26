@@ -23,16 +23,16 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
-	storage "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	storage "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 type eventsOPSPersisterConfig struct {

@@ -20,8 +20,8 @@ import (
 
 	"go.uber.org/zap"
 
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 type ProgressiveRolloutExecutor interface {

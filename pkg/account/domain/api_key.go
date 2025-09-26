@@ -22,7 +22,7 @@ import (
 	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/jinzhu/copier"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 const keyBytes = 32

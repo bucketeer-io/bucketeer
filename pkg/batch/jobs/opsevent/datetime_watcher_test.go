@@ -25,13 +25,13 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	aoclientemock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	envclientemock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	executormock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	aoclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	envclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	executormock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestNewDatetimeWatcher(t *testing.T) {

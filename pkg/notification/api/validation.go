@@ -17,8 +17,8 @@ package api
 import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func (s *NotificationService) validateCreateSubscriptionRequest(

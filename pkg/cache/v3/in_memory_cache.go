@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 )
 
 const (

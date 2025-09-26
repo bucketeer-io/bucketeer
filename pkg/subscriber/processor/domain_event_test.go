@@ -21,9 +21,9 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 func TestCreateNotificationEvent(t *testing.T) {

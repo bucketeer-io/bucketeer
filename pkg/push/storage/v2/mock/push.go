@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	push "github.com/bucketeer-io/bucketeer/proto/push"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	push "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 // MockPushStorage is a mock of PushStorage interface.

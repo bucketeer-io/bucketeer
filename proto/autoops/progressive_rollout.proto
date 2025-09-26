@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.autoops;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/autoops";
 
 import "google/protobuf/any.proto";
 

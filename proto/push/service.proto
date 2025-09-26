@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.push;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/push";
 
 import "google/protobuf/wrappers.proto";
 import "google/api/annotations.proto";

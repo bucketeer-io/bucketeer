@@ -17,7 +17,7 @@ package domain
 import (
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // VariationCleanupResult contains details about what was cleaned up

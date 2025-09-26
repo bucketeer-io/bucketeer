@@ -24,8 +24,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type FlagTrigger struct {

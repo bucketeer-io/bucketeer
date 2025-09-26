@@ -33,7 +33,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 )
 
 // HandlerRegistrar is a function that registers a gRPC-Gateway handler

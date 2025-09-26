@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/opsevent/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	autoops "github.com/bucketeer-io/bucketeer/proto/autoops"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 // MockOpsCountStorage is a mock of OpsCountStorage interface.

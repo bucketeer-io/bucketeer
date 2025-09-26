@@ -24,7 +24,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 )
 
 func LogServerMiddleware(logger *zap.Logger) middleware {

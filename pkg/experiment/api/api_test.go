@@ -24,16 +24,16 @@ import (
 	"go.uber.org/zap"
 	md "google.golang.org/grpc/metadata"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2/mock"
-	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
+	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestNewExperimentService(t *testing.T) {

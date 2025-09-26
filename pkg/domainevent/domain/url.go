@@ -18,7 +18,7 @@ import (
 	"errors"
 	"fmt"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 const (

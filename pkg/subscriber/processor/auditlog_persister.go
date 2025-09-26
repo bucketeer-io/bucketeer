@@ -23,14 +23,14 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
-	v2als "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
-	domainevent "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
+	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type auditLogPersisterConfig struct {

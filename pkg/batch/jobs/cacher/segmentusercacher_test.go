@@ -23,10 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	mockcachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	mockcachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestSegmentUserPutCache(t *testing.T) {

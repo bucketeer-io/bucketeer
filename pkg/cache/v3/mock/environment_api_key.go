@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	account "github.com/bucketeer-io/bucketeer/proto/account"
+	account "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 // MockEnvironmentAPIKeyCache is a mock of EnvironmentAPIKeyCache interface.

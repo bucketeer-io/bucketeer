@@ -363,7 +363,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
           }
         ]
       }
@@ -508,7 +508,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
           }
         ]
       }
@@ -842,7 +842,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
           }
         ]
       }
@@ -907,7 +907,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
           }
         ]
       }
@@ -5468,7 +5468,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
           }
         ]
       }
@@ -5555,7 +5555,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/auditlog"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
           }
         ]
       }
@@ -6479,7 +6479,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/auditlog"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
           }
         ]
       }
@@ -7376,7 +7376,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/auth"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/auth"
           }
         ]
       }
@@ -7417,7 +7417,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/auth"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/auth"
           }
         ]
       }
@@ -7544,7 +7544,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -7760,7 +7760,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -7963,7 +7963,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -8019,7 +8019,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -8144,7 +8144,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -11323,7 +11323,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
           }
         ]
       }
@@ -11446,7 +11446,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/batch"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/batch"
           }
         ]
       }
@@ -11584,7 +11584,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
           }
         ]
       }
@@ -12892,7 +12892,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
           }
         ]
       }
@@ -12919,7 +12919,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/common"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/common"
           }
         ]
       }
@@ -13171,7 +13171,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
           }
         ]
       }
@@ -13247,7 +13247,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
           }
         ]
       }
@@ -13338,7 +13338,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
           }
         ]
       }
@@ -13419,7 +13419,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
           }
         ]
       }
@@ -19286,7 +19286,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
           }
         ]
       }
@@ -20096,7 +20096,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/client"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
           }
         ]
       }
@@ -24836,7 +24836,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/domain"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
           }
         ]
       }
@@ -24867,7 +24867,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/domain"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
           }
         ]
       }
@@ -24917,7 +24917,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/service"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
           }
         ]
       }
@@ -24979,7 +24979,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/service"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
           }
         ]
       }
@@ -25050,7 +25050,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/event/service"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
           }
         ]
       }
@@ -25111,7 +25111,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25169,7 +25169,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25284,7 +25284,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25336,7 +25336,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25416,7 +25416,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25449,7 +25449,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -25530,7 +25530,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -27739,7 +27739,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -27811,7 +27811,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -27872,7 +27872,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -28030,7 +28030,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -28109,7 +28109,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -28198,7 +28198,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
           }
         ]
       }
@@ -28364,7 +28364,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/experiment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
           }
         ]
       }
@@ -28564,7 +28564,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/experiment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
           }
         ]
       }
@@ -28725,7 +28725,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/experiment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
           }
         ]
       }
@@ -30995,7 +30995,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/experiment"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
           }
         ]
       }
@@ -31099,7 +31099,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -31789,7 +31789,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -31925,7 +31925,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32191,7 +32191,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32264,7 +32264,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32378,7 +32378,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32409,7 +32409,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32504,7 +32504,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32549,7 +32549,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32685,7 +32685,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -32884,7 +32884,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -39297,7 +39297,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -39405,7 +39405,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -39437,7 +39437,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -39478,7 +39478,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/feature"
           }
         ]
       }
@@ -46777,7 +46777,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/gateway"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
           },
           {
             "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
@@ -47163,7 +47163,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
           }
         ]
       }
@@ -47231,7 +47231,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
           }
         ]
       }
@@ -47466,7 +47466,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
           }
         ]
       }
@@ -47523,7 +47523,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
           }
         ]
       }
@@ -49099,7 +49099,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
           }
         ]
       }
@@ -49279,7 +49279,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/notification"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/notification"
           }
         ]
       }
@@ -49298,7 +49298,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto"
           },
           {
             "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
@@ -49465,7 +49465,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/push"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
           }
         ]
       }
@@ -49546,7 +49546,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/push"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
           }
         ]
       }
@@ -50673,7 +50673,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/push"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
           }
         ]
       }
@@ -51284,7 +51284,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/tag"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/tag"
           }
         ]
       }
@@ -51374,7 +51374,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/tag"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/tag"
           }
         ]
       }
@@ -52013,7 +52013,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/team"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/team"
           }
         ]
       }
@@ -52069,7 +52069,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/team"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/team"
           }
         ]
       }
@@ -52117,7 +52117,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/test"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/test"
           }
         ]
       }
@@ -52218,7 +52218,7 @@
         "options": [
           {
             "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/user"
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/user"
           }
         ]
       }
