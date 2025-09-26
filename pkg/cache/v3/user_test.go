@@ -23,9 +23,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
-	redismock "github.com/bucketeer-io/bucketeer/pkg/redis/v3/mock"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3/mock"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (

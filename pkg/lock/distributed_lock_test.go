@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/redis/v3/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3/mock"
 )
 
 func TestNewDistributedLock(t *testing.T) {

@@ -25,14 +25,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func (s *AccountService) GetMe(
@@ -374,12 +374,12 @@ func (s *AccountService) getMyOrganizations(
 	}
 	myOrgs := make([]*environmentproto.Organization, 0, len(accountsWithOrg))
 	for _, accWithOrg := range accountsWithOrg {
-		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
+		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Archived {
 			continue
 		}
 		// Add the organization if the account is an admin or owner.
 		// Otherwise, we check if the account is enabled in any environment in this organization.
-		if accWithOrg.AccountV2.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
+		if accWithOrg.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 			myOrgs = append(myOrgs, accWithOrg.Organization)
 			continue
 		}
@@ -391,7 +391,7 @@ func (s *AccountService) getMyOrganizations(
 		// When the new console is ready, we will use the DisableAccount API instead,
 		// which will update the `disabled` column in the DB.
 		var enabled bool
-		for _, role := range accWithOrg.AccountV2.EnvironmentRoles {
+		for _, role := range accWithOrg.EnvironmentRoles {
 			if role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
 				enabled = true
 			}
@@ -408,7 +408,7 @@ func (s *AccountService) containsSystemAdminOrganization(
 	organizations []*domain.AccountWithOrganization,
 ) bool {
 	for _, org := range organizations {
-		if org.Organization.SystemAdmin {
+		if org.SystemAdmin {
 			return true
 		}
 	}

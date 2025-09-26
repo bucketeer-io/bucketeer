@@ -22,12 +22,12 @@ import (
 
 	"go.uber.org/zap"
 
-	accstorage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 type apiKeyCacher struct {

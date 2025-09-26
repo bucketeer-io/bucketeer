@@ -22,12 +22,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	mocknotificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	"github.com/bucketeer-io/bucketeer/proto/notification"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	mocknotificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestGrpcGatewayService_GetSubscription(t *testing.T) {

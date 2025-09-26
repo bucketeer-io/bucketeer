@@ -15,8 +15,8 @@
 package domain
 
 import (
-	proto "github.com/bucketeer-io/bucketeer/proto/auditlog"
-	domainevent "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type AuditLog struct {

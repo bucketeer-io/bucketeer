@@ -25,9 +25,9 @@ import (
 	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

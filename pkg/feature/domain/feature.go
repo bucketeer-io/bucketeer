@@ -21,8 +21,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type Mark int
@@ -39,55 +40,95 @@ const (
 )
 
 var (
-	errNameEmpty                              = errors.New("feature: name cannot be empty")
-	errClauseNotFound                         = errors.New("feature: clause not found")
-	errClauseAttributeNotEmpty                = errors.New("feature: clause attribute must be empty")
-	errClauseAttributeEmpty                   = errors.New("feature: clause attribute cannot be empty")
-	errClauseValuesEmpty                      = errors.New("feature: clause values cannot be empty")
-	errClauseAlreadyExists                    = errors.New("feature: clause already exists")
-	errRuleMustHaveAtLeastOneClause           = errors.New("feature: rule must have at least one clause")
-	errClauseMustHaveAtLeastOneValue          = errors.New("feature: clause must have at least one value")
-	errRuleAlreadyExists                      = errors.New("feature: rule already exists")
-	errRuleIDRequired                         = errors.New("feature: rule id required")
-	errRuleRequired                           = errors.New("feature: rule required")
-	errRuleNotFound                           = errors.New("feature: rule not found")
-	errTargetNotFound                         = errors.New("feature: target not found")
-	errVariationRequired                      = errors.New("feature: variation required")
-	errValueNotFound                          = errors.New("feature: value not found")
-	errVariationIDRequired                    = errors.New("feature: variation id required")
-	errVariationNameRequired                  = errors.New("feature: variation name required")
-	errVariationValueRequired                 = errors.New("feature: variation value required")
-	errVariationValueUnique                   = errors.New("feature: variation value must be unique")
-	errVariationsMustHaveAtLeastTwoVariations = errors.New("feature: variations must have at least two variations")
-	errInvalidDefaultOnVariationIndex         = errors.New(
-		"feature: invalid default on variation index. Index is out of range")
-	errInvalidDefaultOffVariationIndex = errors.New(
-		"feature: invalid default off variation index. Index is out of range")
-	errTargetUsersRequired                        = errors.New("feature: target users required")
-	errTargetUserRequired                         = errors.New("feature: target user required")
-	ErrVariationInUse                             = errors.New("feature: variation in use")
-	errVariationNotFound                          = errors.New("feature: variation not found")
-	errVariationTypeUnmatched                     = errors.New("feature: variation value and type are unmatched")
-	errStrategyRequired                           = errors.New("feature: strategy required")
-	errUnsupportedStrategy                        = errors.New("feature: unsupported strategy")
-	errPrerequisiteAlreadyExists                  = errors.New("feature: prerequisite already exists")
-	errPrerequisiteNotFound                       = errors.New("feature: prerequisite not found")
-	ErrLastUsedInfoNotFound                       = errors.New("feature: last used info not found")
-	errRulesOrderSizeNotEqual                     = errors.New("feature: rules order size not equal")
-	errRulesOrderDuplicateIDs                     = errors.New("feature: rules order contains duplicate ids")
-	ErrCycleExists                                = errors.New("feature: cycle exists in features")
-	errFeatureIDRequired                          = errors.New("feature: feature id required")
-	ErrFeatureNotFound                            = errors.New("feature: feature not found")
-	ErrDefaultStrategyCannotBeBothFixedAndRollout = errors.New(
-		"feature: default strategy cannot be both fixed and rollout",
-	)
-	ErrRuleStrategyCannotBeEmpty       = errors.New("feature: rule strategy cannot be empty")
-	ErrInvalidAudiencePercentage       = errors.New("feature: audience percentage must be between 0 and 100")
-	ErrDefaultVariationNotFound        = errors.New("feature: default variation not found")
-	ErrInvalidAudienceDefaultVariation = errors.New(
+	errNameEmpty = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: name cannot be empty", "name")
+	errClauseNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: clause not found", "clause")
+	errClauseAttributeNotEmpty = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: clause attribute must be empty", "clause")
+	errClauseAttributeEmpty = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: clause attribute cannot be empty", "clause")
+	errClauseValuesEmpty = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: clause values cannot be empty", "clause_values")
+	errClauseAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.FeaturePackageName, "feature: clause already exists")
+	errRuleMustHaveAtLeastOneClause = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: rule must have at least one clause", "rule")
+	errClauseMustHaveAtLeastOneValue = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: clause must have at least one value", "clause")
+	errRuleAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.FeaturePackageName, "feature: rule already exists")
+	errRuleIDRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: rule id required", "rule_id")
+	errRuleRequired = pkgErr.NewErrorInvalidArgNil(
+		pkgErr.FeaturePackageName, "feature: rule required", "rule")
+	errRuleNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: rule not found", "rule")
+	errTargetNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: target not found", "target")
+	errVariationRequired = pkgErr.NewErrorInvalidArgNil(
+		pkgErr.FeaturePackageName, "feature: variation required", "variation")
+	errValueNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: value not found", "value")
+	errVariationIDRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: variation id required", "variation_id")
+	errVariationNameRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: variation name required", "variation_name")
+	errVariationValueRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: variation value required", "variation_value")
+	errVariationValueUnique = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value must be unique", "variation")
+	errVariationsMustHaveAtLeastTwoVariations = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variations must have at least two variations", "variations")
+	errInvalidDefaultOnVariationIndex = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: invalid default on variation index. Index is out of range", "variation")
+	errInvalidDefaultOffVariationIndex = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: invalid default off variation index. Index is out of range", "variation")
+	errTargetUsersRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: target users required", "target_users")
+	errTargetUserRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: target user required", "target_user")
+	ErrVariationInUse = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation in use", "variation")
+	errVariationNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: variation not found", "variation")
+	errVariationTypeUnmatched = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation value and type are unmatched", "variation")
+	errStrategyRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: strategy required", "strategy")
+	errUnsupportedStrategy = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: unsupported strategy", "strategy")
+	errPrerequisiteAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.FeaturePackageName, "feature: prerequisite already exists")
+	errPrerequisiteNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: prerequisite not found", "prerequisite")
+	ErrLastUsedInfoNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: last used info not found", "last_used_info")
+	errRulesOrderSizeNotEqual = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: rules order size not equal", "rules")
+	errRulesOrderDuplicateIDs = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: rules order contains duplicate ids", "rules")
+	ErrCycleExists = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: cycle exists in features", "features")
+	errFeatureIDRequired = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: feature id required", "feature_id")
+	ErrFeatureNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: feature not found", "feature")
+	ErrDefaultStrategyCannotBeBothFixedAndRollout = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: default strategy cannot be both fixed and rollout", "strategy")
+	ErrRuleStrategyCannotBeEmpty = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: rule strategy cannot be empty", "strategy")
+	ErrInvalidAudiencePercentage = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: audience percentage must be between 0 and 100", "audience")
+	ErrDefaultVariationNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.FeaturePackageName, "feature: default variation not found", "default_variation")
+	ErrInvalidAudienceDefaultVariation = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName,
 		"feature: default variation required when audience percentage is between 1 and 99",
+		"variation",
 	)
-	ErrInvalidVariationWeightTotal = errors.New("feature: variation weights must sum to 100%")
+	ErrInvalidVariationWeightTotal = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.FeaturePackageName, "feature: variation weights must sum to 100%", "variation")
 )
 
 const (
@@ -728,7 +769,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 	if len(f.Targets[idx].Users) > 0 {
 		return ErrVariationInUse
 	}
-	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
+	if strategyContainsVariation(id, f.DefaultStrategy) {
 		return ErrVariationInUse
 	}
 	if f.rulesContainsVariation(id) {
@@ -738,7 +779,7 @@ func (f *Feature) validateRemoveVariation(id string) error {
 }
 
 func (f *Feature) rulesContainsVariation(id string) bool {
-	for _, r := range f.Feature.Rules {
+	for _, r := range f.Rules {
 		if ok := strategyContainsVariation(id, r.Strategy); ok {
 			return true
 		}
@@ -747,11 +788,12 @@ func (f *Feature) rulesContainsVariation(id string) bool {
 }
 
 func strategyContainsVariation(id string, strategy *feature.Strategy) bool {
-	if strategy.Type == feature.Strategy_FIXED {
+	switch strategy.Type {
+	case feature.Strategy_FIXED:
 		if strategy.FixedStrategy.Variation == id {
 			return true
 		}
-	} else if strategy.Type == feature.Strategy_ROLLOUT {
+	case feature.Strategy_ROLLOUT:
 		for _, v := range strategy.RolloutStrategy.Variations {
 			if v.Variation == id && v.Weight > 0 {
 				return true
@@ -1362,7 +1404,12 @@ func GetFeaturesDependedOnTargets(
 		evals[f.Id] = f
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
-			dfs(all[fid])
+			// Check if the dependency exists in the all map
+			if dep, ok := all[fid]; ok {
+				dfs(dep)
+			}
+			// If dependency is missing from all map, silently skip it
+			// This can happen when features are filtered at the API layer
 		}
 	}
 	for _, f := range targets {
@@ -1373,6 +1420,24 @@ func GetFeaturesDependedOnTargets(
 
 // getFeaturesDependsOnTargets returns the features that depend on the target features.
 // targetFeatures are included in the result.
+// This function ensures complete transitive closure for incremental evaluation.
+//
+// Example scenario:
+//
+//	Feature Dependencies: A ← B ← C, A ← D, E ← D
+//	Target: [C] (recently updated)
+//
+// Step 1 - DFS finds direct/transitive dependents of targets:
+//   - A depends on B, B depends on C (target) → Add A, B
+//   - E depends on D, D doesn't depend on C → Skip E
+//     Result: {C, A, B}
+//
+// Step 2 - Find dependencies of discovered dependents:
+//   - A depends on D (new!) → Add D
+//     Result: {C, A, B, D}
+//
+// Without Step 2: Evaluating A would fail with "feature D not found"
+// With Step 2: Complete closure ensures all dependencies are available
 func GetFeaturesDependsOnTargets(
 	targets []*feature.Feature, all map[string]*feature.Feature,
 ) map[string]*feature.Feature {
@@ -1380,6 +1445,7 @@ func GetFeaturesDependsOnTargets(
 	for _, f := range targets {
 		evals[f.Id] = f
 	}
+
 	var dfs func(f *feature.Feature) bool
 	dfs = func(f *feature.Feature) bool {
 		if _, ok := evals[f.Id]; ok {
@@ -1387,10 +1453,14 @@ func GetFeaturesDependsOnTargets(
 		}
 		dmn := &Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
-			if dfs(all[fid]) {
-				evals[f.Id] = f
-				return true
+			// Check if the dependency exists in the all map
+			if dep, ok := all[fid]; ok {
+				if dfs(dep) {
+					evals[f.Id] = f
+					return true
+				}
 			}
+			// If dependency is missing from all map, silently skip it
 		}
 		return false
 	}
@@ -1398,6 +1468,42 @@ func GetFeaturesDependsOnTargets(
 		// Skip if the f is target feature.
 		dfs(f)
 	}
+
+	// Step 2: Ensure complete transitive closure
+	// The DFS above finds dependents (who depends on targets), but misses dependencies of those dependents.
+	// Example: If target C → dependent A → dependency D, we found A but missed D.
+	// Efficiently process only newly discovered features in each iteration.
+	processed := make(map[string]struct{})
+	queue := make([]*feature.Feature, 0, len(evals))
+	for _, f := range evals {
+		queue = append(queue, f)
+	}
+
+	const maxIterations = 100 // Prevent infinite loops in case of circular dependencies
+	iteration := 0
+	for len(queue) > 0 && iteration < maxIterations {
+		iteration++
+		nextQueue := make([]*feature.Feature, 0)
+		for _, f := range queue {
+			if _, ok := processed[f.Id]; ok {
+				continue
+			}
+			processed[f.Id] = struct{}{}
+
+			// Find dependencies of f
+			dmn := &Feature{Feature: f}
+			for _, depID := range dmn.FeatureIDsDependsOn() {
+				if dep, ok := all[depID]; ok {
+					if _, exists := evals[depID]; !exists {
+						evals[depID] = dep
+						nextQueue = append(nextQueue, dep)
+					}
+				}
+			}
+		}
+		queue = nextQueue
+	}
+
 	return evals
 }
 

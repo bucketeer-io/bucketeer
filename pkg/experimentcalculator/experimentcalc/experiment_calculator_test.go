@@ -24,15 +24,15 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
-	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	metricsmock "github.com/bucketeer-io/bucketeer/v2/pkg/metrics/mock"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (

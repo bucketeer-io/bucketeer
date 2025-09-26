@@ -26,16 +26,16 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestGetMeMySQL(t *testing.T) {

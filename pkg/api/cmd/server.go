@@ -24,31 +24,31 @@ import (
 	"google.golang.org/grpc"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/rest"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
-	tagclient "github.com/bucketeer-io/bucketeer/pkg/tag/client"
-	teamclient "github.com/bucketeer-io/bucketeer/pkg/team/client"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	coderefclient "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/client"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	eventcounterclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
+	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
+	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 const command = "server"
@@ -230,9 +230,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	// Add provider-specific options
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		redisClient, err := redisv3.NewClient(
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),

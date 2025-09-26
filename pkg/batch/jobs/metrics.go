@@ -24,9 +24,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 const (

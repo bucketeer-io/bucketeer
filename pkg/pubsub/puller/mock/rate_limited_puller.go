@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	puller "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	puller "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 )
 
 // MockRateLimitedPuller is a mock of RateLimitedPuller interface.

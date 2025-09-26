@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	esproto "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
 )
 
 const (

@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func (s *FeatureService) ScheduleFlagChange(

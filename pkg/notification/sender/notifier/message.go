@@ -19,7 +19,7 @@ import (
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 )
 
 type msgType int

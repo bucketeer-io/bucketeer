@@ -20,11 +20,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/factory"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 type options struct {
@@ -183,9 +183,10 @@ func (s pubSubSubscriber) createPuller(
 	}
 
 	// Add provider-specific options
-	if pubSubType == factory.Google {
+	switch pubSubType {
+	case factory.Google:
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
-	} else if pubSubType == factory.RedisStream {
+	case factory.RedisStream:
 		// Create Redis client
 		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger, s.opts.metrics)
 		if redisErr != nil {

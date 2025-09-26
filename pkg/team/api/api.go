@@ -26,22 +26,20 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	gstatus "google.golang.org/grpc/status"
 
-	accclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/team/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/team/storage"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	accproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/team"
+	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 var (
@@ -109,7 +107,7 @@ func (s *TeamService) CreateTeam(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accproto.AccountV2_Role_Organization_ADMIN, localizer)
+		accountproto.AccountV2_Role_Organization_ADMIN, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +250,7 @@ func (s *TeamService) DeleteTeam(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accproto.AccountV2_Role_Organization_ADMIN, localizer)
+		accountproto.AccountV2_Role_Organization_ADMIN, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -346,8 +344,8 @@ func (s *TeamService) DeleteTeam(
 func (s *TeamService) listAccountsFromOrganization(
 	ctx context.Context,
 	organizationID string,
-) ([]*accproto.AccountV2, error) {
-	resp, err := s.accountClient.ListAccountsV2(ctx, &accproto.ListAccountsV2Request{
+) ([]*accountproto.AccountV2, error) {
+	resp, err := s.accountClient.ListAccountsV2(ctx, &accountproto.ListAccountsV2Request{
 		OrganizationId: organizationID,
 	})
 	if err != nil {
@@ -396,7 +394,7 @@ func (s *TeamService) ListTeams(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accproto.AccountV2_Role_Organization_MEMBER, localizer)
+		accountproto.AccountV2_Role_Organization_MEMBER, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +521,7 @@ func (s *TeamService) checkOrganizationRole(
 		},
 	)
 	if err != nil {
-		switch status.Code(err) {
+		switch gstatus.Code(err) {
 		case codes.Unauthenticated:
 			s.logger.Error(
 				"Unauthenticated",

@@ -20,10 +20,10 @@ import (
 	_ "embed"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 var (

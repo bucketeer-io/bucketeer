@@ -26,28 +26,27 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	v2os "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 type options struct {
@@ -1545,7 +1544,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return dt.Err()
 		}
-		ftStorage := ftstorage.NewFeatureStorage(tx)
+		ftStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -1698,7 +1697,7 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 			return dt.Err()
 		}
 
-		ftStorage := ftstorage.NewFeatureStorage(tx)
+		ftStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err

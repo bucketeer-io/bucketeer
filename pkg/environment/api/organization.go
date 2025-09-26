@@ -25,20 +25,20 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2acc "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
-	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 var (
@@ -558,7 +558,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Check if there is already a system admin organization
-		if organization.Organization.SystemAdmin {
+		if organization.SystemAdmin {
 			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err
@@ -699,7 +699,7 @@ func (s *EnvironmentService) createOrganization(
 	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if organization.Organization.SystemAdmin {
+		if organization.SystemAdmin {
 			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err

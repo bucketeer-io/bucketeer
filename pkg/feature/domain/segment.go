@@ -20,8 +20,8 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type Segment struct {
@@ -63,8 +63,8 @@ func (s *Segment) UpdateSegment(
 }
 
 func (s *Segment) SetDeleted() error {
-	s.Segment.Deleted = true
-	s.Segment.UpdatedAt = time.Now().Unix()
+	s.Deleted = true
+	s.UpdatedAt = time.Now().Unix()
 	return nil
 }
 

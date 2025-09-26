@@ -20,8 +20,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 var (
@@ -38,6 +38,10 @@ var (
 	//go:embed sql/code_reference/delete_code_reference.sql
 	deleteCodeReferenceSQL string
 )
+
+type contextKey string
+
+const transactionKey contextKey = "transaction"
 
 var (
 	ErrCodeReferenceNotFound               = errors.New("coderef: code reference not found")

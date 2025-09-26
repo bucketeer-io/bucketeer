@@ -15,8 +15,8 @@
 package domain
 
 import (
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	proto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *proto.LocalizedMessage {

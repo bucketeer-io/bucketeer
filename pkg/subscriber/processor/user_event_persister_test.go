@@ -27,12 +27,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
 )
 
 func TestValidateEvent(t *testing.T) {

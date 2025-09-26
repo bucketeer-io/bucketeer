@@ -25,16 +25,16 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 func TestCreateAPIKeyMySQL(t *testing.T) {

@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	domain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
-	tag "github.com/bucketeer-io/bucketeer/proto/tag"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
+	tag "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
 // MockTagStorage is a mock of TagStorage interface.

@@ -22,10 +22,9 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
@@ -85,7 +84,7 @@ func NewExperiment(
 	}, nil
 }
 
-func validateBaseVariation(v string, vs []*feature.Variation) bool {
+func validateBaseVariation(v string, vs []*featureproto.Variation) bool {
 	for i := range vs {
 		if vs[i].Id == v {
 			return true
@@ -123,11 +122,11 @@ func (e *Experiment) Update(
 	now := time.Now().Unix()
 
 	if name != nil {
-		updated.Experiment.Name = name.Value
+		updated.Name = name.Value
 	}
 
 	if description != nil {
-		updated.Experiment.Description = description.Value
+		updated.Description = description.Value
 	}
 
 	if startAt != nil && stopAt != nil {
@@ -135,12 +134,12 @@ func (e *Experiment) Update(
 		if err != nil {
 			return nil, err
 		}
-		updated.Experiment.StartAt = startAt.Value
-		updated.Experiment.StopAt = stopAt.Value
+		updated.StartAt = startAt.Value
+		updated.StopAt = stopAt.Value
 	}
 
 	if archived != nil {
-		updated.Experiment.Archived = archived.Value
+		updated.Archived = archived.Value
 	}
 
 	if status != nil {
@@ -192,8 +191,8 @@ func (e *Experiment) Start() error {
 	if e.StartAt > now {
 		return ErrExperimentBeforeStart
 	}
-	e.Experiment.Status = experimentproto.Experiment_RUNNING
-	e.Experiment.UpdatedAt = now
+	e.Status = experimentproto.Experiment_RUNNING
+	e.UpdatedAt = now
 	return nil
 }
 
@@ -205,8 +204,8 @@ func (e *Experiment) Finish() error {
 	if e.StopAt > now {
 		return ErrExperimentBeforeStop
 	}
-	e.Experiment.Status = experimentproto.Experiment_STOPPED
-	e.Experiment.UpdatedAt = now
+	e.Status = experimentproto.Experiment_STOPPED
+	e.UpdatedAt = now
 	return nil
 }
 
@@ -215,10 +214,10 @@ func (e *Experiment) Stop() error {
 		return ErrExperimentAlreadyStopped
 	}
 	now := time.Now().Unix()
-	e.Experiment.Stopped = true
-	e.Experiment.Status = experimentproto.Experiment_FORCE_STOPPED
-	e.Experiment.StoppedAt = now
-	e.Experiment.UpdatedAt = now
+	e.Stopped = true
+	e.Status = experimentproto.Experiment_FORCE_STOPPED
+	e.StoppedAt = now
+	e.UpdatedAt = now
 	return nil
 }
 
@@ -226,9 +225,9 @@ func (e *Experiment) ChangePeriod(startAt, stopAt int64) error {
 	if err := e.validatePeriod(startAt, stopAt); err != nil {
 		return err
 	}
-	e.Experiment.StartAt = startAt
-	e.Experiment.StopAt = stopAt
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.StartAt = startAt
+	e.StopAt = stopAt
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
@@ -246,13 +245,13 @@ func (e *Experiment) ChangeStartAt(startAt int64) error {
 	if err := e.validateStartAt(startAt); err != nil {
 		return err
 	}
-	e.Experiment.StartAt = startAt
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.StartAt = startAt
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (e *Experiment) validateStartAt(startAt int64) error {
-	if startAt >= e.Experiment.StopAt {
+	if startAt >= e.StopAt {
 		return ErrExperimentStartIsAfterStop
 	}
 	return nil
@@ -262,25 +261,25 @@ func (e *Experiment) ChangeStopAt(stopAt int64) error {
 	if err := e.validateStopAt(stopAt); err != nil {
 		return err
 	}
-	e.Experiment.StopAt = stopAt
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.StopAt = stopAt
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (e *Experiment) ChangeName(name string) error {
-	e.Experiment.Name = name
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.Name = name
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (e *Experiment) ChangeDescription(description string) error {
-	e.Experiment.Description = description
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.Description = description
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (e *Experiment) validateStopAt(stopAt int64) error {
-	if stopAt <= e.Experiment.StartAt {
+	if stopAt <= e.StartAt {
 		return ErrExperimentStopIsBeforeStart
 	}
 	if stopAt <= time.Now().Unix() {
@@ -290,14 +289,14 @@ func (e *Experiment) validateStopAt(stopAt int64) error {
 }
 
 func (e *Experiment) SetArchived() error {
-	e.Experiment.Archived = true
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.Archived = true
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (e *Experiment) SetDeleted() error {
-	e.Experiment.Deleted = true
-	e.Experiment.UpdatedAt = time.Now().Unix()
+	e.Deleted = true
+	e.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
@@ -318,13 +317,13 @@ func SyncGoalIDs(goalID string, goalIDs []string) (string, []string) {
 
 // IsNotFinished returns true if the status is either waiting or running.
 func (e *Experiment) IsNotFinished(t time.Time) bool {
-	if e.Experiment.Deleted {
+	if e.Deleted {
 		return false
 	}
-	if e.Experiment.StopAt <= t.Unix() {
+	if e.StopAt <= t.Unix() {
 		return false
 	}
-	if e.Experiment.StoppedAt <= t.Unix() {
+	if e.StoppedAt <= t.Unix() {
 		return false
 	}
 	return true

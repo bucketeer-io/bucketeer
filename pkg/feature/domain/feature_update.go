@@ -23,8 +23,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/proto/common"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // Update returns a new Feature with the updated values.
@@ -478,7 +478,7 @@ func (f *Feature) updateValidateRemoveVariation(id string) error {
 	if len(f.Targets[idx].Users) > 0 {
 		return ErrVariationInUse
 	}
-	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
+	if strategyContainsVariation(id, f.DefaultStrategy) {
 		return ErrVariationInUse
 	}
 	if f.updateRulesContainsVariation(id) {
@@ -489,7 +489,7 @@ func (f *Feature) updateValidateRemoveVariation(id string) error {
 
 // updateRulesContainsVariation checks if any rule contains the specified variation
 func (f *Feature) updateRulesContainsVariation(id string) bool {
-	for _, r := range f.Feature.Rules {
+	for _, r := range f.Rules {
 		if ok := strategyContainsVariation(id, r.Strategy); ok {
 			return true
 		}

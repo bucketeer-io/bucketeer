@@ -21,9 +21,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 var (

@@ -21,8 +21,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 type EnvironmentV2 struct {
@@ -87,26 +87,26 @@ func (e *EnvironmentV2) Update(
 }
 
 func (e *EnvironmentV2) Rename(name string) {
-	e.EnvironmentV2.Name = name
-	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+	e.Name = name
+	e.UpdatedAt = time.Now().Unix()
 }
 
 func (e *EnvironmentV2) ChangeDescription(description string) {
-	e.EnvironmentV2.Description = description
-	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+	e.Description = description
+	e.UpdatedAt = time.Now().Unix()
 }
 
 func (e *EnvironmentV2) ChangeRequireComment(state bool) {
-	e.EnvironmentV2.RequireComment = state
-	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+	e.RequireComment = state
+	e.UpdatedAt = time.Now().Unix()
 }
 
 func (e *EnvironmentV2) SetArchived() {
-	e.EnvironmentV2.Archived = true
-	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+	e.Archived = true
+	e.UpdatedAt = time.Now().Unix()
 }
 
 func (e *EnvironmentV2) SetUnarchived() {
-	e.EnvironmentV2.Archived = false
-	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+	e.Archived = false
+	e.UpdatedAt = time.Now().Unix()
 }

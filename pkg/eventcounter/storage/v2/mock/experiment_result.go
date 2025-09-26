@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/eventcounter/domain"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/domain"
 )
 
 // MockExperimentResultStorage is a mock of ExperimentResultStorage interface.

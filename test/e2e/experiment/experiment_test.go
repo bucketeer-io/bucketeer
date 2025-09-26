@@ -29,14 +29,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

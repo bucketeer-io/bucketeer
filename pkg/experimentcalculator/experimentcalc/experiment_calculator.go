@@ -26,17 +26,17 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
 
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
-	"github.com/bucketeer-io/bucketeer/proto/experiment"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 var (

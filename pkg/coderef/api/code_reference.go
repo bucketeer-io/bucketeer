@@ -23,15 +23,15 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/storage"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 // generateSourceURL generates a URL to view the code in the repository web interface
@@ -133,8 +133,8 @@ func (s *CodeReferenceService) GetCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	codeRef.CodeReference.SourceUrl = generateSourceURL(&codeRef.CodeReference)
-	codeRef.CodeReference.BranchUrl = generateBranchURL(&codeRef.CodeReference)
+	codeRef.SourceUrl = generateSourceURL(&codeRef.CodeReference)
+	codeRef.BranchUrl = generateBranchURL(&codeRef.CodeReference)
 	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -224,8 +224,8 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
-		ref.CodeReference.SourceUrl = generateSourceURL(&ref.CodeReference)
-		ref.CodeReference.BranchUrl = generateBranchURL(&ref.CodeReference)
+		ref.SourceUrl = generateSourceURL(&ref.CodeReference)
+		ref.BranchUrl = generateBranchURL(&ref.CodeReference)
 		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{

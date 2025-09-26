@@ -1,22 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { IconLaunchOutlined } from 'react-icons-material-design';
 import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { urls } from 'configs';
 import { useToast, useToggleOpen } from 'hooks';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { setConsoleVersion } from 'storage/console';
 import { onChangeFontWithLocalized } from 'utils/function';
-import {
-  IconBucketWhite,
-  IconBuilding,
-  IconChevronRight,
-  IconLogout,
-  IconUser
-} from '@icons';
+import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import { DropdownOption } from 'components/dropdown';
@@ -98,18 +89,6 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   );
 
   const menuItems = compact([
-    {
-      label: t('old-console'),
-      icon: IconBucketWhite,
-      actIcon: IconLaunchOutlined,
-      onClick: () => {
-        setConsoleVersion({
-          version: 'old',
-          email: consoleAccount!.email
-        });
-        window.location.href = urls.OLD_CONSOLE_ENDPOINT;
-      }
-    },
     !isHiddenProfileMenu && {
       label: t(`navigation.user-profile`),
       icon: IconUser,

@@ -27,18 +27,17 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
-	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	evdomain "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 var (
@@ -313,7 +312,7 @@ func (s *EnvironmentService) createProjectNoCommand(
 	if err != nil {
 		return nil, err
 	}
-	var domainEvent *evdomain.Event
+	var domainEvent *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
 		domainEvent, err = s.newCreateDomainEvent(newProj.Project, editor)
@@ -413,7 +412,7 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 func (s *EnvironmentService) newCreateDomainEvent(
 	newProj *environmentproto.Project,
 	editor *eventproto.Editor,
-) (*evdomain.Event, error) {
+) (*eventproto.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PROJECT,
@@ -868,7 +867,7 @@ func (s *EnvironmentService) updateProjectNoCommand(
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateProjectResponse, error) {
-	var domainEvent *evdomain.Event
+	var domainEvent *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
 		updated, err := project.Update(
@@ -972,7 +971,7 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 	req *environmentproto.UpdateProjectRequest,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
-) (*evdomain.Event, error) {
+) (*eventproto.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PROJECT,

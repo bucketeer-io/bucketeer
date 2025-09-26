@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestGreaterFloat(t *testing.T) {

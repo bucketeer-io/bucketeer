@@ -9,12 +9,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	pushclientmock "github.com/bucketeer-io/bucketeer/pkg/push/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 func TestGrpcListPushes(t *testing.T) {

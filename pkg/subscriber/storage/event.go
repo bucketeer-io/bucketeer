@@ -19,8 +19,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
 type EvalEventWriter interface {

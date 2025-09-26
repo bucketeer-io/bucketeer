@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	service "github.com/bucketeer-io/bucketeer/proto/event/service"
+	service "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
 )
 
 // MockMAUStorage is a mock of MAUStorage interface.

@@ -21,10 +21,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 const (

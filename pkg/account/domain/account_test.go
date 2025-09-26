@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
-	"github.com/bucketeer-io/bucketeer/proto/common"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 )
 
 func TestNewMemberAccount(t *testing.T) {
