@@ -17,6 +17,7 @@ import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -135,7 +136,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
 
   const {
     watch,
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isDirty, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
   const roleWatch = watch('memberRole');
@@ -193,6 +194,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       .catch(error => errorNotify(error));
   };
 
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal title={t('invite-member')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">

@@ -1,6 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_ORGANIZATIONS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { usePartialState, useToggleOpen } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
@@ -18,12 +21,8 @@ const OrganizationProjects = () => {
   const { t } = useTranslation(['form']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
-  const [selectedProject, setSelectedProject] = useState<Project>();
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
     useToggleOpen(false);
 
   const defaultFilters = {
@@ -34,7 +33,17 @@ const OrganizationProjects = () => {
   } as ProjectFilters;
 
   const [filters, setFilters] = usePartialState<ProjectFilters>(defaultFilters);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const commonPath = useMemo(
+    () => `${PAGE_PATH_ORGANIZATIONS}/${organizationId}${PAGE_PATH_PROJECTS}`,
+    [currentEnvironment]
+  );
+  const { isEdit, onOpenEditModal, onCloseActionModal } = useActionWithURL({
+    closeModalPath: commonPath,
+    idKey: 'projectId'
+  });
   const onChangeFilters = useCallback(
     (values: Partial<ProjectFilters>) => {
       values.page = values?.page || 1;
@@ -46,8 +55,9 @@ const OrganizationProjects = () => {
   );
 
   const onActionHandler = useCallback((project: Project) => {
-    setSelectedProject(project);
-    onOpenEditModal();
+    onOpenEditModal(
+      `${PAGE_PATH_ORGANIZATIONS}/${organizationId}${PAGE_PATH_PROJECTS}/${project.id}`
+    );
   }, []);
 
   const onClearFilters = useCallback(() => {
@@ -83,11 +93,10 @@ const OrganizationProjects = () => {
           }}
         />
       )}
-      {isOpenEditModal && (
+      {!!isEdit && (
         <ProjectCreateUpdateModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          project={selectedProject}
+          isOpen={!!isEdit}
+          onClose={onCloseActionModal}
         />
       )}
       <TableListContainer className="self-stretch">

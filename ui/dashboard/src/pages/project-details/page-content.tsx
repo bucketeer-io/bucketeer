@@ -67,6 +67,14 @@ const PageContent = ({
               element={<ProjectEnvironments organizationId={organizationId} />}
             />
             <Route
+              path={`${PAGE_PATH_ENVIRONMENTS}/new`}
+              element={<ProjectEnvironments organizationId={organizationId} />}
+            />
+            <Route
+              path={`${PAGE_PATH_ENVIRONMENTS}/:environmentId`}
+              element={<ProjectEnvironments organizationId={organizationId} />}
+            />
+            <Route
               path={PAGE_PATH_SETTINGS}
               element={<ProjectSettings project={project} />}
             />

@@ -6,6 +6,7 @@ import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { Evaluation } from '@types';
 import { ExpandOrCollapse } from 'pages/audit-logs/types';
 import Form from 'components/form';
@@ -181,7 +182,8 @@ const PageContent = () => {
     },
     [evaluations, groupBy, features, expandOrCollapseAllState]
   );
-
+  const { isDirty, isSubmitting } = form.formState;
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <PageLayout.Content className={!isShowResults ? 'pt-0' : ''}>
       {!isShowResults ? (
