@@ -27,13 +27,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 )
 
 func TestGetMeMySQL(t *testing.T) {
