@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestValidateVariationReferences(t *testing.T) {

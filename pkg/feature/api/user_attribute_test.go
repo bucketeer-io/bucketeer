@@ -22,13 +22,13 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestGetUserAttributeKeys(t *testing.T) {

@@ -20,9 +20,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestAdminCreate(t *testing.T) {

@@ -22,12 +22,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcGatewayService_GetAutoOpsRule(t *testing.T) {

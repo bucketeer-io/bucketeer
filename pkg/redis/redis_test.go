@@ -22,7 +22,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/stretchr/testify/assert"

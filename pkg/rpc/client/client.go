@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/stats"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
 type options struct {

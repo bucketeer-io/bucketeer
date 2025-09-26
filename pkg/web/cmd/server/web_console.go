@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/ui/dashboard"
+	"github.com/bucketeer-io/bucketeer/v2/ui/dashboard"
 )
 
 type spaFileSystem struct {

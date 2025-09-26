@@ -18,8 +18,8 @@ package notifier
 import (
 	"context"
 
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 type Notifier interface {

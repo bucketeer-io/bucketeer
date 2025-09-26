@@ -22,12 +22,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	mockfeatureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	mockfeatureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcGatewayService_GetFlagTrigger(t *testing.T) {

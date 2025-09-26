@@ -17,11 +17,11 @@ package api
 import (
 	"github.com/golang/protobuf/ptypes"
 
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var errVariationNotFound = err.NewErrorNotFound(

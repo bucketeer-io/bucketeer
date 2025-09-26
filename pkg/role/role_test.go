@@ -24,10 +24,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestCheckSystemAdminRole(t *testing.T) {

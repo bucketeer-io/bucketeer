@@ -31,15 +31,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
-	"github.com/bucketeer-io/bucketeer/test/util"
+	aoclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (

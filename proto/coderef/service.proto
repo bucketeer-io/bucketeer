@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.coderef;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/coderef";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/coderef";
 
 import "proto/coderef/code_reference.proto";
 import "google/api/annotations.proto";

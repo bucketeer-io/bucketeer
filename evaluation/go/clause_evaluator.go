@@ -20,7 +20,7 @@ import (
 
 	"github.com/blang/semver"
 
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type clauseEvaluator struct {

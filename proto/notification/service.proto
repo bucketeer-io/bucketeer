@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.notification;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/notification";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/notification";
 
 import "google/protobuf/wrappers.proto";
 import "google/api/annotations.proto";

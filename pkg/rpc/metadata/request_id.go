@@ -19,7 +19,7 @@ import (
 
 	gmetadata "google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 )
 
 const xRequestIDKey = "x-request-id"

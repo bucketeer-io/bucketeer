@@ -20,11 +20,11 @@ import (
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/push"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 type pushCommandHandler struct {

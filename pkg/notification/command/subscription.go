@@ -20,10 +20,10 @@ import (
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 type subscriptionCommandHandler struct {

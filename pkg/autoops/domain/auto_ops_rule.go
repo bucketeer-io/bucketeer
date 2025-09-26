@@ -24,10 +24,10 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 var (

@@ -23,8 +23,8 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	err "github.com/bucketeer-io/bucketeer/pkg/error"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 var (

@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.common;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/common";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/common";
 
 message StringListValue {
   repeated string values = 1;

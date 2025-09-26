@@ -20,8 +20,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gatewayproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestJSONPMarshaller(t *testing.T) {

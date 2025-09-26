@@ -25,18 +25,18 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	v2mock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	v2mock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 const (

@@ -19,9 +19,9 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (

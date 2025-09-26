@@ -27,14 +27,14 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 func TestGetExperimentMySQL(t *testing.T) {

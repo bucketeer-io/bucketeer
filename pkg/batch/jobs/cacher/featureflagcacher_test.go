@@ -26,10 +26,10 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	mockcachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	mockcachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (

@@ -21,9 +21,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/mau/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/mau/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 type mauPartitionCreator struct {

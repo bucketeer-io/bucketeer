@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	environment "github.com/bucketeer-io/bucketeer/proto/environment"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 // MockEnvironmentStorage is a mock of EnvironmentStorage interface.

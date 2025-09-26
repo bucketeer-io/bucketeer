@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	storage "github.com/bucketeer-io/bucketeer/pkg/storage"
+	storage "github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 )
 
 // MockIterator is a mock of Iterator interface.

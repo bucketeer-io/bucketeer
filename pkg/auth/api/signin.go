@@ -20,10 +20,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func (s *authService) SignIn(

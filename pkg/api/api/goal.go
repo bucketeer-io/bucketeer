@@ -20,11 +20,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func (s *grpcGatewayService) GetGoal(

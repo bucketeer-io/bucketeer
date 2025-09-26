@@ -24,9 +24,9 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 func TestUpdateStatus(t *testing.T) {

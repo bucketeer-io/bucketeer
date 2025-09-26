@@ -29,32 +29,32 @@ import (
 	gmetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
-	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	eventcounterclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	tagclient "github.com/bucketeer-io/bucketeer/pkg/tag/client"
-	teamclient "github.com/bucketeer-io/bucketeer/pkg/team/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	coderefclient "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/client"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	eventcounterclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
+	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 const (
@@ -405,8 +405,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	spanGetFeatures.End()
 	features := f.([]*featureproto.Feature)
-	activeFeatures := s.filterOutArchivedFeatures(features)
-	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
+	filteredByTag := s.filterByTag(features, req.Tag)
+
 	if len(features) == 0 {
 		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures).Inc()
@@ -426,7 +426,6 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.String("environmentID", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(features)),
-				zap.Int("activeFeaturesLength", len(activeFeatures)),
 				zap.Int("filteredByTagLength", len(filteredByTag)),
 			)...,
 		)
@@ -436,6 +435,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: ueid,
 		}, nil
 	}
+
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
 		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
@@ -461,7 +461,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
-			activeFeatures,
+			features,
 			req.User,
 			segmentUsersMap,
 			req.Tag,
@@ -469,12 +469,27 @@ func (s *grpcGatewayService) GetEvaluations(
 		if err != nil {
 			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+
+			// Extract feature IDs for debugging dependency issues
+			featureIDs := make([]string, len(features))
+			archivedFeatureIDs := make([]string, 0)
+			for i, f := range features {
+				featureIDs[i] = f.Id
+				if f.Archived {
+					archivedFeatureIDs = append(archivedFeatureIDs, f.Id)
+				}
+			}
+
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
+					zap.String("tag", req.Tag),
+					zap.Int("totalFeatures", len(features)),
+					zap.Strings("featureIDs", featureIDs),
+					zap.Strings("archivedFeatureIDs", archivedFeatureIDs),
 				)...,
 			)
 			return nil, ErrInternal
@@ -494,12 +509,30 @@ func (s *grpcGatewayService) GetEvaluations(
 		if err != nil {
 			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+
+			// Extract feature IDs for debugging dependency issues
+			featureIDs := make([]string, len(features))
+			archivedFeatureIDs := make([]string, 0)
+			for i, f := range features {
+				featureIDs[i] = f.Id
+				if f.Archived {
+					archivedFeatureIDs = append(archivedFeatureIDs, f.Id)
+				}
+			}
+
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
+					zap.String("tag", req.Tag),
+					zap.Int("totalFeatures", len(features)),
+					zap.Strings("featureIDs", featureIDs),
+					zap.Strings("archivedFeatureIDs", archivedFeatureIDs),
+					zap.String("userEvaluationsId", req.UserEvaluationsId),
+					zap.Int64("evaluatedAt", req.UserEvaluationCondition.EvaluatedAt),
+					zap.Bool("userAttributesUpdated", req.UserEvaluationCondition.UserAttributesUpdated),
 				)...,
 			)
 			return nil, ErrInternal
@@ -518,7 +551,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			zap.String("environmentID", environmentId),
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(features)),
-			zap.Int("activeFeaturesLength", len(activeFeatures)),
+			zap.Int("activeFeaturesLength", len(features)),
 			zap.Int("filteredByTagLength", len(filteredByTag)),
 			zap.Int("evaluationsLength", len(evaluations.Evaluations)),
 		)...,

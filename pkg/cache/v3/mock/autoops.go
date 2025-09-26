@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	autoops "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoops "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 // MockAutoOpsRulesCache is a mock of AutoOpsRulesCache interface.

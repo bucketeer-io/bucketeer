@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.auditlog;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/auditlog";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/auditlog";
 
 import "google/protobuf/any.proto";
 

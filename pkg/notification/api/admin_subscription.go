@@ -23,15 +23,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/command"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func (s *NotificationService) CreateAdminSubscription(

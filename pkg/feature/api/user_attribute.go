@@ -20,11 +20,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func (s *FeatureService) GetUserAttributeKeys(

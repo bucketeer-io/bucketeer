@@ -19,10 +19,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func (s *grpcGatewayService) GetAuditLog(

@@ -25,9 +25,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 )
 
 const (

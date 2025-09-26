@@ -21,11 +21,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func (s *grpcGatewayService) DebugEvaluateFeatures(

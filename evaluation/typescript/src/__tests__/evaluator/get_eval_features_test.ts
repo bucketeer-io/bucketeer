@@ -171,7 +171,70 @@ const patterns: TestCase[] = [
       }),
     ],
     // order is different with golang test but the result is same
-    expectedIDs: ['featureD', 'featureB', 'featureA', 'featureE', 'featureF'],
+    // After transitive closure fix, featureC should be included as it's a dependency of featureE
+    expectedIDs: ['featureD', 'featureB', 'featureA', 'featureC', 'featureE', 'featureF'],
+  },
+  {
+    desc: 'success: handles deep dependency chains within iteration limit',
+    targets: [
+      createFeature({
+        id: 'chain-feature-0',
+        prerequisitesList: [createPrerequisite('chain-feature-1', '')],
+      }),
+    ],
+    all: [
+      createFeature({
+        id: 'chain-feature-0',
+        prerequisitesList: [createPrerequisite('chain-feature-1', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-1',
+        prerequisitesList: [createPrerequisite('chain-feature-2', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-2',
+        prerequisitesList: [createPrerequisite('chain-feature-3', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-3',
+        prerequisitesList: [createPrerequisite('chain-feature-4', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-4',
+        prerequisitesList: [createPrerequisite('chain-feature-5', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-5',
+        prerequisitesList: [createPrerequisite('chain-feature-6', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-6',
+        prerequisitesList: [createPrerequisite('chain-feature-7', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-7',
+        prerequisitesList: [createPrerequisite('chain-feature-8', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-8',
+        prerequisitesList: [createPrerequisite('chain-feature-9', '')],
+      }),
+      createFeature({
+        id: 'chain-feature-9',
+      }),
+    ],
+    expectedIDs: [
+      'chain-feature-0',
+      'chain-feature-1',
+      'chain-feature-2',
+      'chain-feature-3',
+      'chain-feature-4',
+      'chain-feature-5',
+      'chain-feature-6',
+      'chain-feature-7',
+      'chain-feature-8',
+      'chain-feature-9',
+    ],
   },
 ];
 
@@ -181,12 +244,24 @@ patterns.forEach(({ desc, targets, all, expectedIDs }) => {
     try {
       const evalator = new Evaluator();
       const actual = evalator.getEvalFeatures(targets, all);
-      t.deepEqual(
-        actual.map((e) => {
-          return e.getId();
-        }),
-        expectedIDs,
+      const actualIDs = actual.map((e) => {
+        return e.getId();
+      });
+
+      // Use set-based comparison since order doesn't matter for correctness
+      t.is(
+        actualIDs.length,
+        expectedIDs.length,
+        `Expected ${expectedIDs.length} features, got ${actualIDs.length}`,
       );
+
+      for (const expectedID of expectedIDs) {
+        t.true(actualIDs.includes(expectedID), `Missing expected feature: ${expectedID}`);
+      }
+
+      for (const actualID of actualIDs) {
+        t.true(expectedIDs.includes(actualID), `Unexpected feature: ${actualID}`);
+      }
     } catch (error) {
       t.fail(`Error: ${error}`);
     }

@@ -23,9 +23,8 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (

@@ -24,17 +24,17 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/command"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 var goalIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")

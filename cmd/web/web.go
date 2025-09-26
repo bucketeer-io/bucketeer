@@ -17,8 +17,8 @@ package main
 import (
 	"log"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/web/cmd/server"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/web/cmd/server"
 )
 
 var (

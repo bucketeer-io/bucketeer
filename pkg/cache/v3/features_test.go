@@ -23,9 +23,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (

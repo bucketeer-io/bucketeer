@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	v2 "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
+	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
 )
 
 // MockGoalEventStorageV2 is a mock of GoalEventStorageV2 interface.

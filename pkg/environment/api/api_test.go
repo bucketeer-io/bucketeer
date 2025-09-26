@@ -24,16 +24,16 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
+	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 )
 
 func TestNewEnvironmentService(t *testing.T) {
