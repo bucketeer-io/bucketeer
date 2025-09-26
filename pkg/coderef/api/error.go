@@ -15,22 +15,46 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
-	statusInternal              = status.New(codes.Internal, "coderef: internal")
-	statusInvalidCursor         = status.New(codes.InvalidArgument, "coderef: invalid cursor")
-	statusMissingID             = status.New(codes.InvalidArgument, "coderef: missing id")
-	statusMissingFeatureID      = status.New(codes.InvalidArgument, "coderef: missing feature_id")
-	statusMissingFilePath       = status.New(codes.InvalidArgument, "coderef: missing file_path")
-	statusMissingLineNumber     = status.New(codes.InvalidArgument, "coderef: missing line_number")
-	statusMissingCodeSnippet    = status.New(codes.InvalidArgument, "coderef: missing code_snippet")
-	statusMissingContentHash    = status.New(codes.InvalidArgument, "coderef: missing content_hash")
-	statusMissingRepositoryInfo = status.New(codes.InvalidArgument, "coderef: missing repository info")
-	statusInvalidRepositoryType = status.New(codes.InvalidArgument, "coderef: invalid repository type")
-	statusNotFound              = status.New(codes.NotFound, "coderef: not found")
-	statusUnauthenticated       = status.New(codes.Unauthenticated, "coderef: unauthenticated")
-	statusPermissionDenied      = status.New(codes.PermissionDenied, "coderef: permission denied")
+	statusInternal      = api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.CoderefPackageName, "internal"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "invalid cursor", "cursor"),
+	)
+	statusMissingID = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing id", "id"),
+	)
+	statusMissingFeatureID = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing feature_id", "feature_id"),
+	)
+	statusMissingFilePath = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing file_path", "file_path"),
+	)
+	statusMissingLineNumber = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.CoderefPackageName, "missing line_number", "line_number"),
+	)
+	statusMissingCodeSnippet = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing code_snippet", "code_snippet"),
+	)
+	statusMissingContentHash = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing content_hash", "content_hash"),
+	)
+	statusMissingRepositoryInfo = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing repository info", "repository_info"),
+	)
+	statusInvalidRepositoryType = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgUnknown(bkterr.CoderefPackageName, "invalid repository type", "repository_type"),
+	)
+	statusNotFound = api.NewGRPCStatus(
+		bkterr.NewErrorNotFound(bkterr.CoderefPackageName, "not found", "coderef"),
+	)
+	statusUnauthenticated = api.NewGRPCStatus(
+		bkterr.NewErrorUnauthenticated(bkterr.CoderefPackageName, "unauthenticated"),
+	)
+	statusPermissionDenied = api.NewGRPCStatus(
+		bkterr.NewErrorPermissionDenied(bkterr.CoderefPackageName, "permission denied"),
+	)
 )

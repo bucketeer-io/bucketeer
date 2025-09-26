@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
@@ -44,8 +45,14 @@ type contextKey string
 const transactionKey contextKey = "transaction"
 
 var (
-	ErrCodeReferenceNotFound               = errors.New("coderef: code reference not found")
-	ErrCodeReferenceUnexpectedAffectedRows = errors.New("coderef: code reference unexpected affected rows")
+	ErrCodeReferenceNotFound = bkterr.NewErrorNotFound(
+		bkterr.CoderefPackageName,
+		"code reference not found", "code_reference",
+	)
+	ErrCodeReferenceUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.CoderefPackageName,
+		"code reference unexpected affected rows",
+	)
 )
 
 type codeReferenceStorage struct {

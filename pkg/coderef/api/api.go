@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -135,21 +136,7 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 			}
 			return nil, dt.Err()
 		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentID),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
 	return editor, nil

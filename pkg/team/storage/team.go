@@ -20,14 +20,18 @@ import (
 	_ "embed"
 	"errors"
 
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 var (
-	ErrTeamNotFound               = errors.New("team: not found")
-	ErrTeamUnexpectedAffectedRows = errors.New("team: unexpected affected rows")
+	ErrTeamNotFound               = bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "team")
+	ErrTeamUnexpectedAffectedRows = bkterr.NewErrorUnexpectedAffectedRows(
+		bkterr.TeamPackageName,
+		"unexpected affected rows",
+	)
 
 	//go:embed sql/insert_team.sql
 	insertTeamSQL string
