@@ -13,6 +13,7 @@ import {
 } from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation } from '@types';
@@ -77,7 +78,11 @@ const FlagForm = () => {
   const {
     formState: { isDirty, isValid, isSubmitting }
   } = form;
-
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
   const onBack = useCallback(
     () => navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`),
     [currentEnvironment]
@@ -141,7 +146,7 @@ const FlagForm = () => {
         <ButtonBar
           className="!border-0 p-0"
           primaryButton={
-            <Button variant="secondary" onClick={onBack}>
+            <Button type="button" variant="secondary" onClick={onBack}>
               {t(`cancel`)}
             </Button>
           }
