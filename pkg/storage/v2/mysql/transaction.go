@@ -14,7 +14,7 @@
 
 // nolint:lll
 //
-//go:generate mockgen -source=$GOFILE -aux_files=github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql=client.go -package=mock -destination=./mock/$GOFILE
+//go:generate mockgen -source=$GOFILE -aux_files=github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql=client.go -package=mock -destination=./mock/$GOFILE
 package mysql
 
 import (

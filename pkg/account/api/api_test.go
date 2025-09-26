@@ -26,15 +26,14 @@ import (
 
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	auditlogstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	teamstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 )
 
 func TestWithLogger(t *testing.T) {
