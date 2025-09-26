@@ -246,6 +246,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
+		true, // Enable password auth for demo organizations
 		localizer,
 	)
 	if err != nil {
@@ -397,6 +398,7 @@ func (s *EnvironmentService) CreateOrganization(
 		req.Command.Description,
 		req.Command.IsTrial,
 		req.Command.IsSystemAdmin,
+		true, // Default password auth enabled for backward compatibility
 	)
 	if err != nil {
 		s.logger.Error(
@@ -494,6 +496,7 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
+		req.PasswordAuthenticationEnabled,
 		localizer,
 	)
 	if err != nil {
@@ -539,6 +542,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
+	passwordAuthenticationEnabled bool,
 	localizer locale.Localizer,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
@@ -548,6 +552,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		description,
 		isTrial,
 		isSystemAdmin,
+		passwordAuthenticationEnabled,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -876,10 +881,25 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
+		// Convert boolean password auth to authentication settings
+		var authSettings *environmentproto.AuthenticationSettings
+		if req.PasswordAuthenticationEnabled != nil {
+			// Start with Google authentication always enabled
+			authTypes := []environmentproto.AuthenticationType{environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE}
+			// Add password auth if enabled
+			if req.PasswordAuthenticationEnabled.Value {
+				authTypes = append(authTypes, environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
+			}
+			authSettings = &environmentproto.AuthenticationSettings{
+				EnabledTypes: authTypes,
+			}
+		}
+
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
+			authSettings,
 		)
 		if err != nil {
 			return err

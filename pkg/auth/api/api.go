@@ -32,6 +32,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/email"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -105,6 +108,8 @@ type authService struct {
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
+	credentialsStorage  storage.CredentialsStorage
+	emailService        email.EmailService
 	opts                *options
 	logger              *zap.Logger
 }
@@ -124,6 +129,20 @@ func NewAuthService(
 		opt(&options)
 	}
 	logger := options.logger.Named("api")
+
+	// Initialize email service if password auth and email are enabled
+	var emailService email.EmailService
+	if config.PasswordAuth.Enabled && config.PasswordAuth.EmailServiceEnabled {
+		var err error
+		emailService, err = email.NewEmailService(config.PasswordAuth.EmailServiceConfig, logger)
+		if err != nil {
+			logger.Warn("Failed to initialize email service", zap.Error(err))
+			emailService = email.NewNoOpEmailService(logger)
+		}
+	} else {
+		emailService = email.NewNoOpEmailService(logger)
+	}
+
 	service := &authService{
 		issuer:              issuer,
 		audience:            audience,
@@ -138,8 +157,10 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		opts:   &options,
-		logger: logger,
+		credentialsStorage: storage.NewCredentialsStorage(mysqlClient),
+		emailService:       emailService,
+		opts:               &options,
+		logger:             logger,
 	}
 	service.PrepareDemoUser()
 	return service
@@ -883,6 +904,12 @@ func (s *authService) PrepareDemoUser() {
 						CreatedAt:   now.Unix(),
 						UpdatedAt:   now.Unix(),
 						SystemAdmin: config.IsSystemAdmin,
+						AuthenticationSettings: &envproto.AuthenticationSettings{
+							EnabledTypes: []envproto.AuthenticationType{
+								envproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+								envproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+							},
+						},
 					},
 				})
 			}
@@ -972,6 +999,26 @@ func (s *authService) PrepareDemoUser() {
 			if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
 				s.logger.Error("Create account for demo user error", zap.Error(err))
 			}
+		}
+	}
+
+	// Create credentials for demo user if not exists
+	_, err = s.credentialsStorage.GetCredentials(ctx, config.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			passwordHash, hashErr := auth.HashPassword(config.Password)
+			if hashErr != nil {
+				s.logger.Error("Failed to hash demo user password", zap.Error(hashErr))
+				return
+			}
+			err = s.credentialsStorage.CreateCredentials(ctx, config.Email, passwordHash)
+			if err != nil && !errors.Is(err, storage.ErrCredentialsAlreadyExists) {
+				s.logger.Error("Failed to create credentials for demo user", zap.Error(err))
+				return
+			}
+		} else {
+			s.logger.Error("Failed to check credentials for demo user", zap.Error(err))
+			return
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")

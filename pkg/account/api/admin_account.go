@@ -27,6 +27,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -148,20 +149,21 @@ func (s *AccountService) GetMe(
 		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
-			Email:            sysAdminAccount.Email,
-			Name:             sysAdminAccount.Name,
-			AvatarUrl:        sysAdminAccount.AvatarImageUrl,
-			AvatarFileType:   sysAdminAccount.AvatarFileType,
-			AvatarImage:      sysAdminAccount.AvatarImage,
-			IsSystemAdmin:    true,
-			Organization:     organization,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: adminEnvRoles,
-			SearchFilters:    sysAdminAccount.SearchFilters,
-			FirstName:        sysAdminAccount.FirstName,
-			LastName:         sysAdminAccount.LastName,
-			Language:         sysAdminAccount.Language,
-			LastSeen:         sysAdminAccount.LastSeen,
+			Email:                 sysAdminAccount.Email,
+			Name:                  sysAdminAccount.Name,
+			AvatarUrl:             sysAdminAccount.AvatarImageUrl,
+			AvatarFileType:        sysAdminAccount.AvatarFileType,
+			AvatarImage:           sysAdminAccount.AvatarImage,
+			IsSystemAdmin:         true,
+			Organization:          organization,
+			OrganizationRole:      accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles:      adminEnvRoles,
+			SearchFilters:         sysAdminAccount.SearchFilters,
+			FirstName:             sysAdminAccount.FirstName,
+			LastName:              sysAdminAccount.LastName,
+			Language:              sysAdminAccount.Language,
+			LastSeen:              sysAdminAccount.LastSeen,
+			PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email, organization),
 		}}, nil
 	}
 	// non admin account response
@@ -191,21 +193,80 @@ func (s *AccountService) GetMe(
 	}
 
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
-		Email:            account.Email,
-		Name:             account.Name,
-		AvatarUrl:        account.AvatarImageUrl,
-		AvatarFileType:   account.AvatarFileType,
-		AvatarImage:      account.AvatarImage,
-		IsSystemAdmin:    false,
-		Organization:     organization,
-		OrganizationRole: account.OrganizationRole,
-		EnvironmentRoles: envRoles,
-		SearchFilters:    account.SearchFilters,
-		FirstName:        account.FirstName,
-		LastName:         account.LastName,
-		Language:         account.Language,
-		LastSeen:         account.LastSeen,
+		Email:                 account.Email,
+		Name:                  account.Name,
+		AvatarUrl:             account.AvatarImageUrl,
+		AvatarFileType:        account.AvatarFileType,
+		AvatarImage:           account.AvatarImage,
+		IsSystemAdmin:         false,
+		Organization:          organization,
+		OrganizationRole:      account.OrganizationRole,
+		EnvironmentRoles:      envRoles,
+		SearchFilters:         account.SearchFilters,
+		FirstName:             account.FirstName,
+		LastName:              account.LastName,
+		Language:              account.Language,
+		LastSeen:              account.LastSeen,
+		PasswordSetupRequired: s.checkPasswordSetupRequired(ctx, t.Email, organization),
 	}}, nil
+}
+
+// isPasswordAuthenticationEnabled checks if password authentication is enabled in the organization
+func (s *AccountService) isPasswordAuthenticationEnabled(organization *environmentproto.Organization) bool {
+	if organization.AuthenticationSettings == nil {
+		return false
+	}
+
+	// Check if PASSWORD authentication type is in the enabled types
+	for _, authType := range organization.AuthenticationSettings.EnabledTypes {
+		if authType == environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
+			return true
+		}
+	}
+	return false
+}
+
+// checkPasswordSetupRequired determines if the user needs to set up a password
+// It checks both whether the user has existing credentials AND if the organization allows password authentication
+// When setup is required, it proactively creates empty credentials for the frontend password setup flow
+func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string,
+	organization *environmentproto.Organization) bool {
+	// First check if the organization allows password authentication
+	if organization != nil && !s.isPasswordAuthenticationEnabled(organization) {
+		// Organization has disabled password authentication, no setup required
+		return false
+	}
+
+	// Check if user already has password credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err == nil && credentials.PasswordHash != "" {
+		// User already has password, no setup required
+		return false
+	}
+	if err != nil && !errors.Is(err, authstorage.ErrCredentialsNotFound) {
+		// Real error occurred, log and assume no setup required to be safe
+		s.logger.Warn("Failed to check credentials for password setup status",
+			zap.Error(err),
+			zap.String("email", email))
+		return false
+	}
+
+	// At this point: credentials either don't exist OR exist with empty password hash
+	// If credentials don't exist, create empty credentials record for frontend password setup flow
+	if err != nil && errors.Is(err, authstorage.ErrCredentialsNotFound) {
+		err = s.credentialsStorage.CreateCredentials(ctx, email, "")
+		if err != nil {
+			// If creation fails, log and assume no setup required to be safe
+			s.logger.Warn("Failed to create empty credentials for password setup",
+				zap.Error(err),
+				zap.String("email", email))
+			return false
+		}
+		s.logger.Info("Created empty credentials for password setup", zap.String("email", email))
+	}
+
+	// User needs password setup (either new credentials created or existing empty credentials)
+	return true
 }
 
 // getAccount also checks if the account exists or is disabled
