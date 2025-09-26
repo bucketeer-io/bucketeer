@@ -16,11 +16,12 @@ package command
 
 import (
 	"context"
-	"errors"
+
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
-	ErrUnknownCommand = errors.New("command: unknown command")
+	ErrUnknownCommand = pkgErr.NewErrorInvalidArgUnknown(pkgErr.ExperimentPackageName, "unknown command", "command")
 )
 
 type Command interface{}

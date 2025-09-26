@@ -20,16 +20,31 @@ import (
 	_ "embed"
 	"errors"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 var (
-	ErrExperimentAlreadyExists          = errors.New("experiment: already exists")
-	ErrExperimentNotFound               = errors.New("experiment: not found")
-	ErrExperimentUnexpectedAffectedRows = errors.New("experiment: unexpected affected rows")
-	ErrExperimentCannotBeArchived       = errors.New("experiment: cannot be archived")
+	ErrExperimentAlreadyExists = pkgErr.NewErrorAlreadyExists(
+		pkgErr.ExperimentPackageName,
+		"already exists",
+	)
+	ErrExperimentNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.ExperimentPackageName,
+		"not found",
+		"experiment",
+	)
+	ErrExperimentUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.ExperimentPackageName,
+		"unexpected affected rows",
+	)
+	ErrExperimentCannotBeArchived = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.ExperimentPackageName,
+		"cannot be archived",
+		"experiment_status",
+	)
 
 	//go:embed sql/experiment/select_experiment.sql
 	selectExperimentSQL string
