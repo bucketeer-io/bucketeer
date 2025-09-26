@@ -39,8 +39,8 @@ import (
 	tagdomain "github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	teamdomain "github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
