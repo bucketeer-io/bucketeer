@@ -20,15 +20,19 @@ import (
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 var (
-	ErrAPIKeyAlreadyExists          = errors.New("apiKey: api key already exists")
-	ErrAPIKeyNotFound               = errors.New("apiKey: api key not found")
-	ErrAPIKeyUnexpectedAffectedRows = errors.New("apiKey: api key unexpected affected rows")
+	ErrAPIKeyAlreadyExists          = pkgErr.NewErrorAlreadyExists(pkgErr.AccountPackageName, "api key already exists")
+	ErrAPIKeyNotFound               = pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "api key not found", "api_key")
+	ErrAPIKeyUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
+		pkgErr.AccountPackageName,
+		"api key unexpected affected rows",
+	)
 )
 
 var (

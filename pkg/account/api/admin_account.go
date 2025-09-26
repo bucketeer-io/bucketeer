@@ -27,6 +27,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -70,14 +71,7 @@ func (s *AccountService) GetMe(
 			"Failed to get project list",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	environments, err := s.listEnvironmentsByOrganizationID(ctx, req.OrganizationId)
 	if err != nil {
@@ -85,14 +79,7 @@ func (s *AccountService) GetMe(
 			"Failed to get environment list",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+
 	}
 	organization, err := s.getOrganization(ctx, req.OrganizationId)
 	if err != nil {
@@ -117,14 +104,7 @@ func (s *AccountService) GetMe(
 			"Failed to get organization",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// system admin account response
 	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, t.Email, localizer)
@@ -231,14 +211,7 @@ func (s *AccountService) getAccount(
 			}
 			return nil, dt.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if account.Disabled {
 		s.logger.Error("Account is disabled",
@@ -381,14 +354,7 @@ func (s *AccountService) getMyOrganizations(
 			"Failed to get accounts with organization",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if s.containsSystemAdminOrganization(accountsWithOrg) {
 		resp, err := s.environmentClient.ListOrganizations(
@@ -402,14 +368,7 @@ func (s *AccountService) getMyOrganizations(
 				"Failed to get organizations",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, api.NewGRPCStatus(err).Err()
 		}
 		return resp.Organizations, nil
 	}
@@ -480,14 +439,6 @@ func (s *AccountService) getSystemAdminAccountV2(
 				zap.String("email", email),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	return account, nil
 }
