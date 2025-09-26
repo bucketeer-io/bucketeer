@@ -6,10 +6,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
+import { checkFieldDirty } from 'utils/function';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -94,8 +96,12 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   };
 
   const {
-    formState: { isDirty, isSubmitting }
+    formState: { isDirty, isSubmitting, dirtyFields }
   } = form;
+
+  useUnsavedLeavePage({
+    isShow: checkFieldDirty(dirtyFields) && !isSubmitting
+  });
 
   return (
     <SlideModal title={t('new-goal')} isOpen={isOpen} onClose={onClose}>
@@ -121,7 +127,10 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                         field.onChange(value);
                         form.setValue(
                           'id',
-                          isIdDirty ? id : onGenerateSlug(value)
+                          isIdDirty ? id : onGenerateSlug(value),
+                          isIdDirty
+                            ? { shouldDirty: true }
+                            : { shouldDirty: false }
                         );
                       }}
                       name="goal-name"
@@ -224,7 +233,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
-                  <Button variant="secondary" onClick={onClose}>
+                  <Button type="button" variant="secondary" onClick={onClose}>
                     {t(`cancel`)}
                   </Button>
                 }

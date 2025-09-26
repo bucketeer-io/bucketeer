@@ -53,7 +53,7 @@ const SegmentWarning = ({
           >
             <p>{index + 1}.</p>
             <Link
-              to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
+              to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${item.id}/targeting`}
               className="hover:underline"
             >
               {item.name}

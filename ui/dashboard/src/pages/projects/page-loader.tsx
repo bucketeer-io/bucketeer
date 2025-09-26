@@ -1,39 +1,45 @@
-import { useCallback, useState } from 'react';
-import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useCallback, useMemo } from 'react';
+import { useAuth } from 'auth/auth-context.tsx';
+import { getCurrentEnvironment } from 'auth/utils.ts';
+import { PAGE_PATH_PROJECTS } from 'constants/routing.ts';
+import useActionWithURL from 'hooks/use-action-with-url.tsx';
 import { Project } from '@types';
 import PageContent from './page-content';
 import ProjectCreateUpdateModal from './project-modal/project-create-update-modal/index.tsx';
 
 const PageLoader = () => {
-  const [selectedProject, setSelectedProject] = useState<Project>();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const [
-    isOpenCreateUpdateModal,
-    onOpenCreateUpdateModal,
-    onCloseCreateUpdateModal
-  ] = useToggleOpen(false);
+  const commonPath = useMemo(
+    () => `/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}`,
+    [currentEnvironment]
+  );
+  const { isAdd, isEdit, onOpenEditModal, onCloseActionModal, onOpenAddModal } =
+    useActionWithURL({
+      closeModalPath: commonPath
+    });
 
   const handleOnCloseCreateUpdateModal = useCallback(() => {
-    onCloseCreateUpdateModal();
-    setSelectedProject(undefined);
+    onCloseActionModal();
   }, []);
 
-  const handleOnEditProject = useCallback((value: Project) => {
-    setSelectedProject(value);
-    onOpenCreateUpdateModal();
-  }, []);
+  const handleOnEditProject = useCallback(
+    (value: Project) => {
+      onOpenEditModal(
+        `/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${value.id}`
+      );
+    },
+    [currentEnvironment]
+  );
 
   return (
     <>
-      <PageContent
-        onAdd={onOpenCreateUpdateModal}
-        onEdit={handleOnEditProject}
-      />
+      <PageContent onAdd={onOpenAddModal} onEdit={handleOnEditProject} />
 
-      {isOpenCreateUpdateModal && (
+      {(!!isAdd || !!isEdit) && (
         <ProjectCreateUpdateModal
-          isOpen={isOpenCreateUpdateModal}
-          project={selectedProject}
+          isOpen={!!isAdd || !!isEdit}
           onClose={handleOnCloseCreateUpdateModal}
         />
       )}
