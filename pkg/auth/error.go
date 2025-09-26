@@ -15,26 +15,34 @@
 package auth
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
-	StatusInternal                = gstatus.New(codes.Internal, "auth: internal")
-	StatusMissingCode             = gstatus.New(codes.InvalidArgument, "auth: code must not be empty")
-	StatusMissingState            = gstatus.New(codes.InvalidArgument, "auth: state must not be empty")
-	StatusMissingAuthType         = gstatus.New(codes.InvalidArgument, "auth: missing authType")
-	StatusUnknownAuthType         = gstatus.New(codes.InvalidArgument, "auth: unknown authType")
-	StatusMissingRedirectURL      = gstatus.New(codes.InvalidArgument, "auth: missing redirectURL")
-	StatusUnregisteredRedirectURL = gstatus.New(codes.InvalidArgument, "auth: unregistered redirectURL")
-	StatusMissingRefreshToken     = gstatus.New(codes.InvalidArgument, "auth: refreshToken must not be empty")
-	StatusInvalidCode             = gstatus.New(codes.InvalidArgument, "auth: invalid code")
-	StatusInvalidRefreshToken     = gstatus.New(codes.InvalidArgument, "auth: invalid refresh token")
-	StatusUnapprovedAccount       = gstatus.New(codes.PermissionDenied, "auth: unapproved account")
-	StatusAccessDeniedEmail       = gstatus.New(codes.PermissionDenied, "auth: access denied email")
-	StatusUnauthenticated         = gstatus.New(codes.Unauthenticated, "auth: not authenticated")
-	StateMissingUsername          = gstatus.New(codes.InvalidArgument, "auth: missing username")
-	StateMissingPassword          = gstatus.New(codes.InvalidArgument, "auth: missing password")
-	StatusAccessDenied            = gstatus.New(codes.PermissionDenied, "auth: access denied")
-	StatusInvalidOrganization     = gstatus.New(codes.InvalidArgument, "auth: invalid organization")
+	StatusInternal    = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuthPackageName, "internal"))
+	StatusMissingCode = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "code must not be empty", "code"))
+	StatusMissingState = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "state must not be empty", "state"))
+	StatusMissingAuthType = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "missing authType", "authType"))
+	StatusUnknownAuthType = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgUnknown(pkgErr.AuthPackageName, "unknown authType", "authType"))
+	StatusMissingRedirectURL = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "missing redirectURL", "redirectURL"))
+	StatusMissingRefreshToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "refreshToken must not be empty", "refreshToken"))
+	StatusUnapprovedAccount = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "unapproved account"))
+	StatusAccessDeniedEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied email"))
+	StatusUnauthenticated = api.NewGRPCStatus(
+		pkgErr.NewErrorUnauthenticated(pkgErr.AuthPackageName, "not authenticated"))
+	StateMissingUsername = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "missing username", "username"))
+	StateMissingPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "missing password", "password"))
+	StatusAccessDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
 )

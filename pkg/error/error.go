@@ -30,6 +30,7 @@ const (
 	EnvironmentPackageName  = "environment"
 	AuditlogPackageName     = "auditlog"
 	AutoopsPackageName      = "autoops"
+	AuthPackageName         = "auth"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
