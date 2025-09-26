@@ -17,9 +17,9 @@ import (
 	redis0 "github.com/redis/go-redis/v9"
 	gomock "go.uber.org/mock/gomock"
 
-	health "github.com/bucketeer-io/bucketeer/pkg/health"
-	redis "github.com/bucketeer-io/bucketeer/pkg/redis"
-	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	health "github.com/bucketeer-io/bucketeer/v2/pkg/health"
+	redis "github.com/bucketeer-io/bucketeer/v2/pkg/redis"
+	v3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 // MockClient is a mock of Client interface.

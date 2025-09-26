@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestNewNotification(t *testing.T) {

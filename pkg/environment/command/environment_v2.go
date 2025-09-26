@@ -21,11 +21,11 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	proto "github.com/bucketeer-io/bucketeer/proto/environment"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type environmentV2CommandHandler struct {

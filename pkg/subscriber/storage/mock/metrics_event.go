@@ -15,7 +15,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	client "github.com/bucketeer-io/bucketeer/proto/event/client"
+	client "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 )
 
 // MockStorage is a mock of Storage interface.

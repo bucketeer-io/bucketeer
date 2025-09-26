@@ -20,7 +20,7 @@ import (
 
 	"github.com/google/uuid"
 
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 )
 
 const (

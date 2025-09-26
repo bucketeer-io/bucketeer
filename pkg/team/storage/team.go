@@ -20,9 +20,9 @@ import (
 	_ "embed"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/team/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/team"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 var (

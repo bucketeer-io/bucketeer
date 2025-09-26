@@ -22,11 +22,11 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
-	"github.com/bucketeer-io/bucketeer/proto/common"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 // nolint:lll

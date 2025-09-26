@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 const (

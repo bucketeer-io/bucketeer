@@ -25,10 +25,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	"github.com/bucketeer-io/bucketeer/proto/common"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {

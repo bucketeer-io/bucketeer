@@ -22,13 +22,13 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func executeAutoOpsRuleOperation(

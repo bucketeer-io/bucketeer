@@ -8,12 +8,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
-	eventcounterclientmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	eventcounterproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	eventcounterclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 func TestGrpcGatewayService_GetExperimentEvaluationCount(t *testing.T) {

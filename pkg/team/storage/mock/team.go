@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	domain "github.com/bucketeer-io/bucketeer/pkg/team/domain"
-	team "github.com/bucketeer-io/bucketeer/proto/team"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
+	team "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 // MockTeamStorage is a mock of TeamStorage interface.

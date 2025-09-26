@@ -24,16 +24,16 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
-	storagev2 "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
-	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage"
+	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
+	exproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 const (

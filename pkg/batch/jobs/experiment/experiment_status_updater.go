@@ -21,12 +21,12 @@ import (
 	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 const (

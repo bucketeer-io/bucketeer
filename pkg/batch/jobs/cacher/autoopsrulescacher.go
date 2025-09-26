@@ -21,13 +21,13 @@ import (
 
 	"go.uber.org/zap"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	aoclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 type autoOpsRulesCacher struct {

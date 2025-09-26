@@ -18,9 +18,9 @@ package storage
 import (
 	"context"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type FeatureLastUsedStorage interface {

@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 func TestNewAPIKey(t *testing.T) {

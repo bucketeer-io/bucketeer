@@ -26,11 +26,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 const (

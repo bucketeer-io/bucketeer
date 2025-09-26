@@ -22,9 +22,9 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (

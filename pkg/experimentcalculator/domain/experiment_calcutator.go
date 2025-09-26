@@ -14,7 +14,7 @@
 
 package domain
 
-import "github.com/bucketeer-io/bucketeer/proto/experiment"
+import "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 
 type ExperimentCalculatorReq struct {
 	EnvironmentId string

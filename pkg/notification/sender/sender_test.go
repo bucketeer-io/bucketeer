@@ -25,13 +25,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	ncmock "github.com/bucketeer-io/bucketeer/pkg/notification/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
-	nmock "github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	ncmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
+	nmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 func TestHandle(t *testing.T) {

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	redis "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 )
 
 var (

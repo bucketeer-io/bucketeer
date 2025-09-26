@@ -21,12 +21,12 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender/notifier"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 type options struct {

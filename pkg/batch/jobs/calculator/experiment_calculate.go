@@ -23,17 +23,17 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/experimentcalc"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/proto/environment"
-	"github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ecclient "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/experimentcalc"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/experimentcalculator/stan"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
 const (

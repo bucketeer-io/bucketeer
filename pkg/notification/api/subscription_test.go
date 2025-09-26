@@ -26,16 +26,16 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
+	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func TestCreateSubscriptionMySQL(t *testing.T) {

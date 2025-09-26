@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestGetRolloutStrategyVariations(t *testing.T) {

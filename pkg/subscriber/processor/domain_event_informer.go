@@ -24,16 +24,16 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
-	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
+	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/sender"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/notification/sender"
 )
 
 var (

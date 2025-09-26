@@ -26,8 +26,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
 
 const (

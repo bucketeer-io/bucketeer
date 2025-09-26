@@ -23,8 +23,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/proto/common"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/proto/common"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 // Update returns a new Feature with the updated values.

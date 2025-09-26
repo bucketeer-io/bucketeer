@@ -15,9 +15,9 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	account "github.com/bucketeer-io/bucketeer/proto/account"
+	domain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	account "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 // MockAccountStorage is a mock of AccountStorage interface.

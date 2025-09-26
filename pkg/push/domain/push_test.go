@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 func TestNewPush(t *testing.T) {

@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.push;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/push";
 
 message CreatePushCommand {
   reserved 1;  // string fcm_api_key = 1

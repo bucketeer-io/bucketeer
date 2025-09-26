@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 )
 
 func TestNewAutoOpsRule(t *testing.T) {

@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 package bucketeer.eventcounter;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/eventcounter";
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter";
 
 import "proto/eventcounter/variation_result.proto";
 

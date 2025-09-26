@@ -28,9 +28,9 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 const (

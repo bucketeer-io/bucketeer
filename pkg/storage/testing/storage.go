@@ -23,7 +23,7 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 )
 
 var (

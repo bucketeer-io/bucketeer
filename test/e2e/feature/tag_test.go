@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestCreateAndListTag(t *testing.T) {

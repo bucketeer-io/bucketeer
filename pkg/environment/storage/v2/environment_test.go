@@ -22,10 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestNewEnvironmentStorage(t *testing.T) {

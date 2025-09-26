@@ -17,8 +17,8 @@ package command
 import (
 	"context"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func (h *FeatureCommandHandler) RenameFeature(ctx context.Context, cmd *proto.RenameFeatureCommand) error {

@@ -31,20 +31,20 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
-	"github.com/bucketeer-io/bucketeer/pkg/rest"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
 type gatewayService struct {
@@ -945,7 +945,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 /* Because we got the following error, `nolint` is added. After solving it, we'll remove it.
 
 pkg/gateway/api/api.go:829:47: cannot use ev
-(variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
+(variable of type *"github.com/bucketeer-io/bucketeer/v2/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
 `if err := protojson.Unmarshal(event.Event, ev); err != nil {`
@@ -973,7 +973,7 @@ func (s *gatewayService) getGoalEvent(ctx context.Context, event event) (*eventp
 /* Because we got the following error, `nolint` is added. After solving it, we'll remove it.
 
 pkg/gateway/api/api.go:829:47: cannot use ev
-(variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
+(variable of type *"github.com/bucketeer-io/bucketeer/v2/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
 `if err := protojson.Unmarshal(event.Event, ev); err != nil {`
@@ -1004,7 +1004,7 @@ func (s *gatewayService) getEvaluationEvent(
 /* Because we got the following error, `nolint` is added. After solving it, we'll remove it.
 
 pkg/gateway/api/api.go:829:47: cannot use ev
-(variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
+(variable of type *"github.com/bucketeer-io/bucketeer/v2/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
 `if err := protojson.Unmarshal(event.Event, ev); err != nil {`

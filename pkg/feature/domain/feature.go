@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"time"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/pkg/error"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type Mark int

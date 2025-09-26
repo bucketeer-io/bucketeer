@@ -19,9 +19,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 func TestExtractFeatureID(t *testing.T) {

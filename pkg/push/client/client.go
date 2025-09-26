@@ -18,8 +18,8 @@ package client
 import (
 	"google.golang.org/grpc"
 
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	proto "github.com/bucketeer-io/bucketeer/proto/push"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
 type Client interface {

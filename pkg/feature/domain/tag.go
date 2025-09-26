@@ -17,8 +17,8 @@ package domain
 import (
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 type Tag struct {
