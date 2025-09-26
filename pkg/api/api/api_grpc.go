@@ -405,8 +405,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	spanGetFeatures.End()
 	features := f.([]*featureproto.Feature)
-	activeFeatures := s.filterOutArchivedFeatures(features)
-	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
+	filteredByTag := s.filterByTag(features, req.Tag)
+
 	if len(features) == 0 {
 		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, req.Tag, codeNoFeatures).Inc()
@@ -426,7 +426,6 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.String("environmentID", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(features)),
-				zap.Int("activeFeaturesLength", len(activeFeatures)),
 				zap.Int("filteredByTagLength", len(filteredByTag)),
 			)...,
 		)
@@ -436,6 +435,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: ueid,
 		}, nil
 	}
+
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
 		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
@@ -461,7 +461,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
-			activeFeatures,
+			features,
 			req.User,
 			segmentUsersMap,
 			req.Tag,
@@ -469,12 +469,27 @@ func (s *grpcGatewayService) GetEvaluations(
 		if err != nil {
 			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+
+			// Extract feature IDs for debugging dependency issues
+			featureIDs := make([]string, len(features))
+			archivedFeatureIDs := make([]string, 0)
+			for i, f := range features {
+				featureIDs[i] = f.Id
+				if f.Archived {
+					archivedFeatureIDs = append(archivedFeatureIDs, f.Id)
+				}
+			}
+
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
+					zap.String("tag", req.Tag),
+					zap.Int("totalFeatures", len(features)),
+					zap.Strings("featureIDs", featureIDs),
+					zap.Strings("archivedFeatureIDs", archivedFeatureIDs),
 				)...,
 			)
 			return nil, ErrInternal
@@ -494,12 +509,30 @@ func (s *grpcGatewayService) GetEvaluations(
 		if err != nil {
 			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+
+			// Extract feature IDs for debugging dependency issues
+			featureIDs := make([]string, len(features))
+			archivedFeatureIDs := make([]string, 0)
+			for i, f := range features {
+				featureIDs[i] = f.Id
+				if f.Archived {
+					archivedFeatureIDs = append(archivedFeatureIDs, f.Id)
+				}
+			}
+
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
 					zap.String("environmentID", environmentId),
+					zap.String("tag", req.Tag),
+					zap.Int("totalFeatures", len(features)),
+					zap.Strings("featureIDs", featureIDs),
+					zap.Strings("archivedFeatureIDs", archivedFeatureIDs),
+					zap.String("userEvaluationsId", req.UserEvaluationsId),
+					zap.Int64("evaluatedAt", req.UserEvaluationCondition.EvaluatedAt),
+					zap.Bool("userAttributesUpdated", req.UserEvaluationCondition.UserAttributesUpdated),
 				)...,
 			)
 			return nil, ErrInternal
@@ -518,7 +551,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			zap.String("environmentID", environmentId),
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(features)),
-			zap.Int("activeFeaturesLength", len(activeFeatures)),
+			zap.Int("activeFeaturesLength", len(features)),
 			zap.Int("filteredByTagLength", len(filteredByTag)),
 			zap.Int("evaluationsLength", len(evaluations.Evaluations)),
 		)...,

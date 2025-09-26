@@ -21,8 +21,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	featuredoman "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
@@ -213,6 +215,32 @@ func TestEvaluateFeature(t *testing.T) {
 			proto.Equal(p.expected, actual)
 		}
 	}
+}
+
+func TestEvaluateFeaturesByEvaluatedAt_MissingPrerequisite(t *testing.T) {
+	t.Parallel()
+
+	evaluator := NewEvaluator()
+
+	features := []*ftproto.Feature{
+		makeDependentFeature(),
+	}
+
+	user := &userproto.User{Id: "user-1"}
+	segmentUsersMap := map[string][]*ftproto.SegmentUser{}
+
+	_, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+		features,
+		user,
+		segmentUsersMap,
+		"prev-ueid",
+		time.Now().Unix(),
+		false,
+		"test",
+	)
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, featuredoman.ErrFeatureNotFound)
 }
 
 func findEvaluation(es []*ftproto.Evaluation, fId string) (*ftproto.Evaluation, error) {
@@ -1151,7 +1179,7 @@ func TestGetEvalFeatures(t *testing.T) {
 				},
 			},
 			expectedIDs: []string{
-				"featureA", "featureB", "featureD", "featureE", "featureF",
+				"featureA", "featureB", "featureC", "featureD", "featureE", "featureF",
 			},
 		},
 	}
@@ -1538,5 +1566,547 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 	}
 	if variation.Id != f.DefaultStrategy.RolloutStrategy.Variations[0].Variation {
 		t.Fatalf("Failed to assign user. Variation id does not match. Current: %s, target: %s", variation.Id, f.DefaultStrategy.RolloutStrategy.Variations[0].Variation)
+	}
+}
+
+func TestEvaluateFeaturesByEvaluatedAt_MissingPrerequisiteActual(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc                  string
+		setupFunc             func() ([]*ftproto.Feature, *userproto.User)
+		prevUEID              string
+		evaluatedAt           int64
+		userAttributesUpdated bool
+		tag                   string
+		expectedErr           string // Expected error substring, empty if no error expected
+	}{
+		{
+			desc: "success: incremental evaluation with old prerequisites should not fail with 'feature not found'",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				// Test the REAL production scenario:
+				// - Main feature was updated recently
+				// - Prerequisites were NOT updated recently
+				// - ALL features are present in the input
+				mainFeature := makeDependentFeature()
+				mainFeature.UpdatedAt = time.Now().Unix() - 30 // Recently updated
+
+				prereq1 := makeTestPrereqA()
+				prereq1.UpdatedAt = time.Now().Unix() - 7200 // Updated 2 hours ago (old)
+
+				prereq2 := makeTestPrereqB()
+				prereq2.UpdatedAt = time.Now().Unix() - 7200 // Updated 2 hours ago (old)
+
+				// Include ALL features - this simulates what the API layer now passes
+				features := []*ftproto.Feature{mainFeature, prereq1, prereq2}
+				user := &userproto.User{Id: "user-1"}
+
+				return features, user
+			},
+			prevUEID:              "prev-ueid",
+			evaluatedAt:           time.Now().Unix() - 60, // 1 minute ago
+			userAttributesUpdated: false,
+			tag:                   "test",
+			expectedErr:           "", // Should not contain "feature not found"
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			features, user := p.setupFunc()
+			segmentUsersMap := map[string][]*ftproto.SegmentUser{}
+
+			result, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+				features,
+				user,
+				segmentUsersMap,
+				p.prevUEID,
+				p.evaluatedAt,
+				p.userAttributesUpdated,
+				p.tag,
+			)
+
+			// After our fix, dependency resolution should work and evaluation should succeed
+			assert.NoError(t, err, "Evaluation should succeed with proper dependency resolution")
+			assert.NotNil(t, result, "Result should not be nil")
+			assert.NotNil(t, result.Evaluations, "Evaluations should not be nil")
+		})
+	}
+}
+
+func TestGetEvalFeatures_IncrementalEvaluationTransitiveDependencies(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		setupFunc   func() ([]*ftproto.Feature, []*ftproto.Feature)
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success: transitive dependency resolution in incremental evaluation",
+			setupFunc: func() ([]*ftproto.Feature, []*ftproto.Feature) {
+				// Test scenario: dependent feature depends on BOTH prerequisites
+				mainFeature := &ftproto.Feature{
+					Id: "test-dependent-feature",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "test-prereq-a", VariationId: "var1"},
+						{FeatureId: "test-prereq-b", VariationId: "var2"},
+					},
+				}
+
+				prereq1 := &ftproto.Feature{
+					Id: "test-prereq-a",
+				}
+
+				prereq2 := &ftproto.Feature{
+					Id: "test-prereq-b",
+				}
+
+				// Simulate incremental evaluation: test-prereq-a was updated recently
+				targets := []*ftproto.Feature{prereq1} // Only this one is "updated"
+				allFeatures := []*ftproto.Feature{mainFeature, prereq1, prereq2}
+
+				return targets, allFeatures
+			},
+			expectedIDs: []string{"test-prereq-a", "test-dependent-feature", "test-prereq-b"},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: handles deep dependency chains within iteration limit",
+			setupFunc: func() ([]*ftproto.Feature, []*ftproto.Feature) {
+				// Create a chain of 10 features to test iteration limit
+				features := make([]*ftproto.Feature, 10)
+				for i := 0; i < 10; i++ {
+					id := fmt.Sprintf("chain-feature-%d", i)
+					features[i] = &ftproto.Feature{Id: id}
+
+					// Each feature depends on the next one (except the last)
+					if i < 9 {
+						features[i].Prerequisites = []*ftproto.Prerequisite{
+							{FeatureId: fmt.Sprintf("chain-feature-%d", i+1), VariationId: "var1"},
+						}
+					}
+				}
+
+				// Target is the first feature in the chain
+				targets := []*ftproto.Feature{features[0]}
+
+				return targets, features
+			},
+			expectedIDs: []string{
+				"chain-feature-0", "chain-feature-1", "chain-feature-2", "chain-feature-3", "chain-feature-4",
+				"chain-feature-5", "chain-feature-6", "chain-feature-7", "chain-feature-8", "chain-feature-9",
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			targets, allFeatures := p.setupFunc()
+
+			result, err := evaluator.getEvalFeatures(targets, allFeatures)
+
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				// Should include ALL 3 features:
+				// 1. test-prereq-a (target)
+				// 2. test-dependent-feature (depends on target)
+				// 3. test-prereq-b (transitive dependency of #2)
+				assert.Len(t, result, len(p.expectedIDs))
+
+				resultIDs := make([]string, len(result))
+				for i, f := range result {
+					resultIDs[i] = f.Id
+				}
+
+				assert.ElementsMatch(t, p.expectedIDs, resultIDs)
+			}
+		})
+	}
+}
+
+func TestGetEvalFeatures_FeatureFlagRuleDependencies(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		setupFunc   func() ([]*ftproto.Feature, []*ftproto.Feature)
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success: FEATURE_FLAG rule dependency resolution with transitive prerequisites",
+			setupFunc: func() ([]*ftproto.Feature, []*ftproto.Feature) {
+				// Feature with FEATURE_FLAG rule dependency
+				mainFeature := &ftproto.Feature{
+					Id: "feature-with-rule",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{
+									Operator:  feature.Clause_FEATURE_FLAG,
+									Attribute: "dependency-flag", // References another feature
+									Values:    []string{"true"},
+								},
+							},
+						},
+					},
+				}
+
+				// The dependency has its own prerequisites
+				dependencyFlag := &ftproto.Feature{
+					Id: "dependency-flag",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "deep-dependency", VariationId: "var1"},
+					},
+				}
+
+				deepDependency := &ftproto.Feature{
+					Id: "deep-dependency",
+				}
+
+				// Simulate: dependency-flag was updated recently
+				targets := []*ftproto.Feature{dependencyFlag}
+				allFeatures := []*ftproto.Feature{mainFeature, dependencyFlag, deepDependency}
+
+				return targets, allFeatures
+			},
+			expectedIDs: []string{"dependency-flag", "feature-with-rule", "deep-dependency"},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			targets, allFeatures := p.setupFunc()
+
+			result, err := evaluator.getEvalFeatures(targets, allFeatures)
+
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				resultIDs := make([]string, len(result))
+				for i, f := range result {
+					resultIDs[i] = f.Id
+				}
+
+				assert.ElementsMatch(t, p.expectedIDs, resultIDs)
+			}
+		})
+	}
+}
+
+func TestGetFeaturesDependedOnTargets_MissingDependency(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		setupFunc   func() ([]*ftproto.Feature, []*ftproto.Feature)
+		expectedLen int
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success: graceful handling of missing dependencies",
+			setupFunc: func() ([]*ftproto.Feature, []*ftproto.Feature) {
+				// Feature that depends on missing prerequisite (simulates data corruption)
+				mainFeature := &ftproto.Feature{
+					Id: "main-feature",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "missing-prereq", VariationId: "variation-1"},
+					},
+				}
+
+				// The prerequisite is missing from allFeatures (simulates cache miss/corruption)
+				targets := []*ftproto.Feature{mainFeature}
+				allFeatures := []*ftproto.Feature{mainFeature}
+
+				return targets, allFeatures
+			},
+			expectedLen: 1,
+			expectedIDs: []string{"main-feature"},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			targets, allFeatures := p.setupFunc()
+
+			evalFeatures, err := evaluator.getEvalFeatures(targets, allFeatures)
+
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				// Should handle gracefully (not panic) due to our nil pointer fix
+				assert.Len(t, evalFeatures, p.expectedLen)
+
+				resultIDs := make([]string, len(evalFeatures))
+				for i, f := range evalFeatures {
+					resultIDs[i] = f.Id
+				}
+
+				assert.ElementsMatch(t, p.expectedIDs, resultIDs)
+			}
+		})
+	}
+}
+
+// makeDependentFeature creates a feature that requires prerequisites for testing
+func makeDependentFeature() *ftproto.Feature {
+	return &ftproto.Feature{
+		Id:            "test-dependent-feature",
+		Name:          "Test Feature with Dependencies",
+		Version:       1,
+		Enabled:       true, // Enable the feature so it can be properly evaluated
+		Archived:      false,
+		CreatedAt:     1700000000,
+		UpdatedAt:     1700000100,
+		Tags:          []string{"test"},
+		VariationType: feature.Feature_BOOLEAN,
+		OffVariation:  "variation-false",
+		Variations: []*ftproto.Variation{
+			{
+				Id:    "variation-true",
+				Name:  "On",
+				Value: "true",
+			},
+			{
+				Id:    "variation-false",
+				Name:  "Off",
+				Value: "false",
+			},
+		},
+		Prerequisites: []*ftproto.Prerequisite{
+			{
+				FeatureId:   "test-prereq-a",
+				VariationId: "variation-true",
+			},
+			{
+				FeatureId:   "test-prereq-b",
+				VariationId: "variation-true",
+			},
+		},
+		Rules: []*ftproto.Rule{},
+		Targets: []*ftproto.Target{
+			{
+				Variation: "variation-true",
+				Users:     []string{},
+			},
+			{
+				Variation: "variation-false",
+				Users:     []string{},
+			},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type: ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{
+				Variation: "variation-false",
+			},
+		},
+	}
+}
+
+// makeTestPrereqA creates the first prerequisite for testing
+func makeTestPrereqA() *ftproto.Feature {
+	return &ftproto.Feature{
+		Id:            "test-prereq-a",
+		Name:          "Test Prerequisite A",
+		Version:       1,
+		Enabled:       true,
+		Archived:      false,
+		CreatedAt:     1700000000,
+		UpdatedAt:     1700000200,
+		Tags:          []string{"test"},
+		VariationType: feature.Feature_BOOLEAN,
+		OffVariation:  "variation-false",
+		Variations: []*ftproto.Variation{
+			{
+				Id:    "variation-true",
+				Name:  "On",
+				Value: "true",
+			},
+			{
+				Id:    "variation-false",
+				Name:  "Off",
+				Value: "false",
+			},
+		},
+		Prerequisites: []*ftproto.Prerequisite{},
+		Rules: []*ftproto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*ftproto.Clause{
+					{
+						Id:        "clause-1",
+						Values:    []string{"1.0.0"},
+						Operator:  ftproto.Clause_GREATER_OR_EQUAL,
+						Attribute: "app_version",
+					},
+				},
+				Strategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{Weight: 50000, Variation: "variation-true"},
+							{Weight: 50000, Variation: "variation-false"},
+						},
+					},
+				},
+			},
+		},
+		Targets: []*ftproto.Target{
+			{
+				Variation: "variation-true",
+				Users:     []string{"test-user-1", "test-user-2"},
+			},
+			{
+				Variation: "variation-false",
+				Users:     []string{},
+			},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type: ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{
+				Variation: "variation-true",
+			},
+		},
+	}
+}
+
+// makeTestPrereqB creates the second prerequisite for testing
+func makeTestPrereqB() *ftproto.Feature {
+	return &ftproto.Feature{
+		Id:            "test-prereq-b",
+		Name:          "Test Prerequisite B",
+		Version:       1,
+		Enabled:       true,
+		Archived:      false,
+		CreatedAt:     1700000000,
+		UpdatedAt:     1700000300,
+		Tags:          []string{"test"},
+		VariationType: feature.Feature_BOOLEAN,
+		OffVariation:  "variation-false",
+		Variations: []*ftproto.Variation{
+			{
+				Id:    "variation-true",
+				Name:  "On",
+				Value: "true",
+			},
+			{
+				Id:    "variation-false",
+				Name:  "Off",
+				Value: "false",
+			},
+		},
+		Prerequisites: []*ftproto.Prerequisite{},
+		Rules: []*ftproto.Rule{
+			{
+				Id: "rule-2",
+				Clauses: []*ftproto.Clause{
+					{
+						Id:        "clause-2",
+						Values:    []string{"2.0.0"},
+						Operator:  ftproto.Clause_GREATER_OR_EQUAL,
+						Attribute: "app_version",
+					},
+				},
+				Strategy: &ftproto.Strategy{
+					Type: ftproto.Strategy_ROLLOUT,
+					RolloutStrategy: &ftproto.RolloutStrategy{
+						Variations: []*ftproto.RolloutStrategy_Variation{
+							{Weight: 25000, Variation: "variation-true"},
+							{Weight: 75000, Variation: "variation-false"},
+						},
+					},
+				},
+			},
+		},
+		Targets: []*ftproto.Target{
+			{
+				Variation: "variation-true",
+				Users:     []string{"test-user-3", "test-user-4"},
+			},
+			{
+				Variation: "variation-false",
+				Users:     []string{},
+			},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type: ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{
+				Variation: "variation-true",
+			},
+		},
+	}
+}
+
+func TestEvaluateFeaturesByEvaluatedAt_TagMismatchScenario(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc                  string
+		setupFunc             func() ([]*ftproto.Feature, *userproto.User)
+		prevUEID              string
+		evaluatedAt           int64
+		userAttributesUpdated bool
+		tag                   string
+		expectedErr           string // Expected error substring, empty if no error expected
+	}{
+		{
+			desc: "success: tag mismatch should not cause 'feature not found' errors",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				// Test scenario: main feature has "test" tag, but prerequisite doesn't
+				mainFeature := makeDependentFeature()
+				mainFeature.UpdatedAt = time.Now().Unix() - 30 // Recently updated
+				mainFeature.Tags = []string{"test"}
+
+				prereq1 := makeTestPrereqA()
+				prereq1.UpdatedAt = time.Now().Unix() - 3600 // Updated 1 hour ago (old)
+				prereq1.Tags = []string{"mobile"}            // DIFFERENT TAG!
+
+				prereq2 := makeTestPrereqB()
+				prereq2.UpdatedAt = time.Now().Unix() - 3600 // Updated 1 hour ago (old)
+				prereq2.Tags = []string{"test"}
+
+				// Include all features but with tag mismatch
+				features := []*ftproto.Feature{mainFeature, prereq1, prereq2}
+				user := &userproto.User{Id: "user-1"}
+
+				return features, user
+			},
+			prevUEID:              "prev-ueid",
+			evaluatedAt:           time.Now().Unix() - 60, // 1 minute ago
+			userAttributesUpdated: false,
+			tag:                   "test", // Requesting test features only
+			expectedErr:           "",     // Should not contain "feature not found"
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			features, user := p.setupFunc()
+			segmentUsersMap := map[string][]*ftproto.SegmentUser{}
+
+			result, err := evaluator.EvaluateFeaturesByEvaluatedAt(
+				features,
+				user,
+				segmentUsersMap,
+				p.prevUEID,
+				p.evaluatedAt,
+				p.userAttributesUpdated,
+				p.tag,
+			)
+
+			// After our fix, evaluation should succeed even with tag mismatches in prerequisites
+			assert.NoError(t, err, "Evaluation should succeed despite tag mismatches")
+			assert.NotNil(t, result, "Result should not be nil")
+			assert.NotNil(t, result.Evaluations, "Evaluations should not be nil")
+		})
 	}
 }
