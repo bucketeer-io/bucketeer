@@ -173,6 +173,7 @@ const ScheduleList = ({
                                     key={index}
                                     label={label}
                                     value={value}
+                                    isSelectedItem={field.value === value}
                                     onSelectOption={value =>
                                       field.onChange(value)
                                     }

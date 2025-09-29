@@ -67,6 +67,7 @@ const ChartDataTypeDropdown = ({
             key={item.value}
             label={item.label}
             value={item.value}
+            isSelectedItem={item.value === chartType}
             onSelectOption={onSelectOption}
           />
         ))}

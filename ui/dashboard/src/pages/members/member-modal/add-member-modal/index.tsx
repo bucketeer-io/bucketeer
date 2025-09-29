@@ -249,6 +249,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                             value={item.value}
                             label={item.label}
                             description={item.description}
+                            isSelectedItem={item.value === field.value}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}

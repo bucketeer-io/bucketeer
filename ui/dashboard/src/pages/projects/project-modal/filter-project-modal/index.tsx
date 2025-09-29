@@ -87,6 +87,7 @@ const FilterProjectModal = ({
                   key={index}
                   value={item.value as string}
                   label={item.label}
+                  isSelectedItem={item.value === selectedFilterType?.value}
                   onSelectOption={() => setSelectedFilterType(item)}
                 />
               ))}
@@ -107,6 +108,7 @@ const FilterProjectModal = ({
                   key={index}
                   value={item.value as string}
                   label={item.label}
+                  isSelectedItem={item.value === valueOption?.value}
                   onSelectOption={() => setValueOption(item)}
                 />
               ))}

@@ -13,7 +13,7 @@ import { IconExpandMoreRound } from 'react-icons-material-design';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
-import { IconClose, IconSearch } from '@icons';
+import { IconChecked, IconClose, IconSearch } from '@icons';
 import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
@@ -202,6 +202,7 @@ const DropdownMenuItem = forwardRef<
     iconElement?: ReactNode;
     isMultiselect?: boolean;
     isSelected?: boolean;
+    isSelectedItem?: boolean;
     label?: ReactNode;
     value: DropdownValue;
     description?: string;
@@ -222,6 +223,7 @@ const DropdownMenuItem = forwardRef<
       description,
       isMultiselect,
       isSelected,
+      isSelectedItem,
       closeWhenSelected = true,
       additionalElement,
       disabled,
@@ -241,6 +243,7 @@ const DropdownMenuItem = forwardRef<
         disabled={disabled}
         className={cn(
           'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          { '!bg-gray-100': isSelectedItem },
           className
         )}
         onSelect={
@@ -298,6 +301,7 @@ const DropdownMenuItem = forwardRef<
           )}
         </div>
         {additionalElement}
+        {isSelectedItem && <IconChecked className="text-primary-500 w-6" />}
       </DropdownMenuPrimitive.Item>
     );
   }

@@ -121,6 +121,7 @@ const FlagType = () => {
                     icon={item.icon}
                     value={item.value}
                     label={item.label}
+                    isSelectedItem={field.value === item.value}
                     onSelectOption={value =>
                       handleOnChangeVariationType(
                         value as FeatureVariationType,

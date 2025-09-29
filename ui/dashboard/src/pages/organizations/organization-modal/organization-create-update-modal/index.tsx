@@ -239,6 +239,7 @@ const OrganizationCreateUpdateModal = ({
                           {...field}
                         >
                           <DropdownList
+                            itemSelected={field.value}
                             options={accountOptions as DropdownOption[]}
                             onSelectOption={field.onChange}
                           />

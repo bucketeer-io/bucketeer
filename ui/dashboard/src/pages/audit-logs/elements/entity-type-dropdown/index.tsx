@@ -125,6 +125,7 @@ const EntityTypeDropdown = memo(
               key={index}
               label={t(item.labelKey)}
               value={item.value}
+              isSelectedItem={item.value === Number(entityType)}
               onSelectOption={value =>
                 onChangeFilters({
                   entityType: +value

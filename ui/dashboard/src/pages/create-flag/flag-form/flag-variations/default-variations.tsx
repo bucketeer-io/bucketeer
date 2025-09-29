@@ -78,6 +78,7 @@ const DefaultVariations = () => {
                             />
                           </div>
                         }
+                        isSelectedItem={item.id === field.value}
                         onSelectOption={() => {
                           field.onChange(item.id);
                         }}
@@ -151,6 +152,7 @@ const DefaultVariations = () => {
                             </div>
                           </>
                         }
+                        isSelectedItem={item.id === field.value}
                         onSelectOption={() => {
                           field.onChange(item.id);
                         }}

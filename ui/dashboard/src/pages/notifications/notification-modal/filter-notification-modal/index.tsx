@@ -329,6 +329,9 @@ const FilterAPIKeyModal = ({
                   {valueOptions?.length > 0 ? (
                     <DropdownList
                       isMultiselect={isEnvironmentFilter}
+                      itemSelected={
+                        selectedFilters[filterIndex].filterValue as string
+                      }
                       selectedOptions={
                         isEnvironmentFilter &&
                         Array.isArray(filterOption?.filterValue)
