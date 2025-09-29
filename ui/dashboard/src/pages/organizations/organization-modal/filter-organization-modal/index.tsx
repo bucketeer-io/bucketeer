@@ -87,6 +87,7 @@ const FilterOrganizationModal = ({
                   key={index}
                   value={item.value as string}
                   label={item.label}
+                  isSelectedItem={item.value === selectedFilterType?.value}
                   onSelectOption={() => setSelectedFilterType(item)}
                 />
               ))}
@@ -107,6 +108,7 @@ const FilterOrganizationModal = ({
                   key={index}
                   value={item.value as string}
                   label={item.label}
+                  isSelectedItem={item.value === selectedValue?.value}
                   onSelectOption={() => setSelectedValue(item)}
                 />
               ))}

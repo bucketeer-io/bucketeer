@@ -201,6 +201,7 @@ const CreateTriggerForm = forwardRef(
                             label={item.label}
                             value={item.value}
                             icon={item.icon}
+                            isSelectedItem={field.value === item.value}
                             onSelectOption={field.onChange}
                           />
                         ))}
@@ -234,6 +235,7 @@ const CreateTriggerForm = forwardRef(
                             key={index}
                             label={item.label}
                             value={item.value}
+                            isSelectedItem={field.value === item.value}
                             onSelectOption={field.onChange}
                           />
                         ))}

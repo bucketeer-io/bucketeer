@@ -374,6 +374,7 @@ const FilterFlagModal = ({
                   {valueOptions?.length > 0 ? (
                     <DropdownList
                       isMultiselect={isTagFilter}
+                      itemSelected={filterOption?.filterValue as string}
                       selectedOptions={
                         isTagFilter && Array.isArray(filterOption?.filterValue)
                           ? filterOption.filterValue

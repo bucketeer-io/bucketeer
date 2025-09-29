@@ -201,6 +201,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                             key={index}
                             value={item.email}
                             label={item.email}
+                            isSelectedItem={item.email === field.value}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}

@@ -201,8 +201,7 @@ const OrganizationCreateUpdateModal = ({
                             const urlCode = form.getValues('urlCode');
                             form.setValue(
                               'urlCode',
-                              isUrlCodeDirty ? urlCode : onGenerateSlug(value),
-                              { shouldDirty: isUrlCodeDirty ? true : false }
+                              isUrlCodeDirty ? urlCode : onGenerateSlug(value)
                             );
                           }
                         }}
@@ -276,6 +275,7 @@ const OrganizationCreateUpdateModal = ({
                             {...field}
                           >
                             <DropdownList
+                              itemSelected={field.value}
                               options={accountOptions as DropdownOption[]}
                               onSelectOption={field.onChange}
                             />

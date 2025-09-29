@@ -197,16 +197,19 @@ const Strategy = ({
                       />
                     </div>
                     <DropdownMenuContent align="start">
-                      {variationOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          label={item.label}
-                          value={item.value}
-                          icon={item?.icon}
-                          onSelectOption={() => handleSelectStrategy(item)}
-                        />
-                      ))}
+                      {variationOptions.map((item, index) => {
+                        return (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            label={item.label}
+                            value={item.value}
+                            icon={item?.icon}
+                            isSelectedItem={option?.value === item.value}
+                            onSelectOption={() => handleSelectStrategy(item)}
+                          />
+                        );
+                      })}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </Form.Control>
@@ -364,6 +367,9 @@ const Strategy = ({
                                       label={item.label}
                                       value={item.value}
                                       icon={item?.icon}
+                                      isSelectedItem={
+                                        item.value === field.value
+                                      }
                                       onSelectOption={() => {
                                         field.onChange(item.value);
                                       }}

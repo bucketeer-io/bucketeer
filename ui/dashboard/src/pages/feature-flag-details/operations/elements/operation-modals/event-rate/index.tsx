@@ -268,6 +268,7 @@ const EventRateOperationModal = ({
                               item => item.value === field.value
                             )?.label || ''
                           }
+                          itemSelected={field.value}
                           disabled={isDisabled}
                           contentClassName="max-w-[427px] [&>div.wrapper-menu-items>div]:px-4"
                           options={variationOptions}
@@ -311,6 +312,7 @@ const EventRateOperationModal = ({
                             goalOptions.find(item => item.value === field.value)
                               ?.label || ''
                           }
+                          itemSelected={field.value}
                           disabled={isDisabled}
                           contentClassName="max-w-[427px] [&>div.wrapper-menu-items>div]:px-4"
                           options={goalOptions}
@@ -370,6 +372,7 @@ const EventRateOperationModal = ({
                                     key={index}
                                     label={item.label}
                                     value={item.value}
+                                    isSelectedItem={item.value === field.value}
                                     onSelectOption={field.onChange}
                                   />
                                 ))}

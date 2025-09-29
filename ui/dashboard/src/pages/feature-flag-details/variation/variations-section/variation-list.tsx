@@ -135,6 +135,7 @@ const VariationList = ({
                       key={index}
                       label={item.label}
                       value={item.value}
+                      isSelectedItem={field.value === item.value}
                       onSelectOption={value => field.onChange(value)}
                     />
                   ))}

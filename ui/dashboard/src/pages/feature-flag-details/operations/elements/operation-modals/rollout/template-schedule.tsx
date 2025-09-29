@@ -139,6 +139,7 @@ const TemplateSchedule = ({
                   variationOptions.find(item => item.value === field.value)
                     ?.label || ''
                 }
+                itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
                 disabled={isDisabled}
@@ -274,9 +275,9 @@ const TemplateSchedule = ({
                         key={index}
                         label={item.label}
                         value={item.value}
+                        isSelectedItem={item.value === field.value}
                         onSelectOption={value => {
                           field.onChange(value);
-
                           handleChangeScheduleList({
                             interval: value as IntervalMap
                           });

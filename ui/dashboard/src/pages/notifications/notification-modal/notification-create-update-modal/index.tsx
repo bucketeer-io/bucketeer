@@ -333,6 +333,7 @@ const NotificationCreateUpdateModal = ({
                               key={index}
                               value={item.value}
                               label={item.label}
+                              isSelectedItem={item.value === field.value}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}

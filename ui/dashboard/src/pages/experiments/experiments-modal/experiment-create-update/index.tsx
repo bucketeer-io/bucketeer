@@ -241,6 +241,7 @@ const ExperimentCreateUpdateModal = ({
         })) || [],
     [featureFlagOptions, featureId]
   );
+  const flagsSelected: string = watch('featureId');
 
   // const startOptions = [
   //   {
@@ -570,7 +571,8 @@ const ExperimentCreateUpdateModal = ({
                         options={featureFlagOptions?.map(flag => ({
                           label: flag.label,
                           value: flag.value,
-                          enabled: flag.enabled
+                          enabled: flag.enabled,
+                          disabled: flagsSelected.includes(flag.value)
                         }))}
                         selectedOptions={[field.value]}
                         additionalElement={item => (
@@ -631,6 +633,7 @@ const ExperimentCreateUpdateModal = ({
                                 key={index}
                                 value={item.value}
                                 label={item.label}
+                                isSelectedItem={field.value === item.value}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}

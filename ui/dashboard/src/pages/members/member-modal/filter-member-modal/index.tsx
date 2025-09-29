@@ -78,10 +78,10 @@ const FilterMemberModal = ({
 
   const isDisabledAddButton = useMemo(
     () =>
-      !remainingFilterOptions.length ||
+      !memberFilterOptions.length ||
       selectedFilters.length >= memberFilterOptions.length,
 
-    [memberFilterOptions, selectedFilters, remainingFilterOptions]
+    [memberFilterOptions, selectedFilters, memberFilterOptions]
   );
 
   const isDisabledSubmitButton = useMemo(() => {
@@ -277,6 +277,9 @@ const FilterMemberModal = ({
                       key={index}
                       value={item.value as string}
                       label={item.label}
+                      isSelectedItem={
+                        item.value === selectedFilters?.[filterIndex]?.value
+                      }
                       onSelectOption={() => {
                         selectedFilters[filterIndex] = item;
                         setSelectedFilters([...selectedFilters]);
@@ -322,6 +325,9 @@ const FilterMemberModal = ({
                   {valueOptions.length > 0 ? (
                     <DropdownList
                       isMultiselect={isTeamsFilter}
+                      itemSelected={
+                        selectedFilters[filterIndex].filterValue as string
+                      }
                       selectedOptions={
                         isTeamsFilter &&
                         Array.isArray(filterOption?.filterValue)

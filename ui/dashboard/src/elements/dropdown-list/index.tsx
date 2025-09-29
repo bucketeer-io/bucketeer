@@ -13,6 +13,7 @@ import {
 
 interface RowWithDataProps {
   options: DropdownOption[];
+  itemSelected?: string;
   selectedFieldValue?: string;
   isMultiselect?: boolean;
   selectedOptions?: string[];
@@ -34,14 +35,17 @@ const RowWithData = ({
     selectedOptions,
     selectedFieldValue = 'value',
     className,
+    itemSelected,
     additionalElement,
     onSelectOption
   } = data;
   const currentItem = options[index];
+
   return (
     <DropdownMenuItem
       key={index}
       style={style}
+      isSelectedItem={itemSelected === currentItem?.value}
       isSelected={selectedOptions?.includes(
         currentItem[selectedFieldValue] as string
       )}
@@ -61,7 +65,9 @@ const RowWithData = ({
 };
 
 interface DropdownListProps extends RowWithDataProps {
+  itemSelected?: string;
   height?: number;
+
   maxHeight?: number;
   width?: string | number;
   itemSize?: number;
@@ -76,6 +82,7 @@ const DropdownList = ({
   options,
   maxOptions = 15,
   isMultiselect = false,
+  itemSelected,
   selectedOptions,
   selectedFieldValue = 'value',
   className,
@@ -89,6 +96,7 @@ const DropdownList = ({
         : options.length * itemSize,
     [options, maxOptions, height, itemSize]
   );
+
   return (
     <List
       height={maxHeightList}
@@ -101,6 +109,7 @@ const DropdownList = ({
           'justify-between gap-x-4 [&>div:last-child]:mb-[2px]',
           className
         ),
+        itemSelected,
         isMultiselect,
         selectedOptions,
         selectedFieldValue,

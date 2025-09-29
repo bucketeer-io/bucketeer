@@ -183,7 +183,6 @@ const RuleForm = ({
           const isHaveError = isNotEmptyObject(
             errors?.segmentRules?.[segmentIndex]?.clauses?.[clauseIndex] || {}
           );
-
           return (
             <div
               key={clause.clauseId}
@@ -246,6 +245,10 @@ const RuleForm = ({
                                       key={index}
                                       label={item.label}
                                       value={item.value}
+                                      isSelectedItem={
+                                        clausesWatch[clauseIndex].type ===
+                                        item.value
+                                      }
                                       onSelectOption={value => {
                                         handleChangeConditioner(
                                           value as RuleClauseType,
@@ -397,6 +400,9 @@ const RuleForm = ({
                                       key={index}
                                       label={item.label}
                                       value={item.value}
+                                      isSelectedItem={
+                                        field.value === item.value
+                                      }
                                       onSelectOption={value =>
                                         field.onChange(value)
                                       }
@@ -513,16 +519,22 @@ const RuleForm = ({
                                       {(isFlag
                                         ? variationOptions
                                         : segmentOptions
-                                      )?.map((item, index) => (
-                                        <DropdownMenuItem
-                                          key={index}
-                                          label={item.label}
-                                          value={item.value}
-                                          onSelectOption={value =>
-                                            field.onChange([value])
-                                          }
-                                        />
-                                      ))}
+                                      )?.map((item, index) => {
+                                        return (
+                                          <DropdownMenuItem
+                                            key={index}
+                                            label={item.label}
+                                            value={item.value}
+                                            isSelectedItem={
+                                              clausesWatch[clauseIndex]
+                                                .values[0] === item.value
+                                            }
+                                            onSelectOption={value =>
+                                              field.onChange([value])
+                                            }
+                                          />
+                                        );
+                                      })}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 ) : (

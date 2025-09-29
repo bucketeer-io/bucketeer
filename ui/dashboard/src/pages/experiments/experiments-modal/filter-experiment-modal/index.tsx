@@ -310,6 +310,10 @@ const FilterExperimentModal = ({
                   {valueOptions?.length > 0 ? (
                     <DropdownList
                       isMultiselect={isStatusFilter}
+                      itemSelected={
+                        (selectedFilters[filterIndex].filterValue as string) ??
+                        ''
+                      }
                       selectedOptions={
                         isStatusFilter &&
                         Array.isArray(filterOption?.filterValue)

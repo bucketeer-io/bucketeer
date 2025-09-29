@@ -410,6 +410,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                               key={index}
                               value={item.value}
                               label={item.label}
+                              isSelectedItem={item.value === field.value}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}
@@ -455,6 +456,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                                 key={index}
                                 value={item.value}
                                 label={item.label}
+                                isSelectedItem={item.value === field.value}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}

@@ -217,6 +217,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                               key={index}
                               value={item.id}
                               label={item.name}
+                              isSelectedItem={field.value === item.id}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}
