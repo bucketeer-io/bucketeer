@@ -32,6 +32,7 @@ const (
 	AutoopsPackageName      = "autoops"
 	CoderefPackageName      = "coderef"
 	TeamPackageName         = "team"
+	ExperimentPackageName   = "experiment"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
