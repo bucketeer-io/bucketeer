@@ -98,7 +98,8 @@ func (h *organizationCommandHandler) changePasswordAuthentication(
 	if cmd.PasswordAuthenticationEnabled {
 		h.organization.EnableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
 	} else {
-		if err := h.organization.DisableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD); err != nil {
+		err := h.organization.DisableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
+		if err != nil {
 			return err
 		}
 	}
