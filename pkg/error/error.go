@@ -33,6 +33,7 @@ const (
 	CoderefPackageName      = "coderef"
 	TeamPackageName         = "team"
 	ExperimentPackageName   = "experiment"
+	AuthPackageName         = "auth"
 
 	invalidTypeUnknown        = "unknown"
 	invalidTypeEmpty          = "empty"
