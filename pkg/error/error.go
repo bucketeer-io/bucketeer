@@ -30,6 +30,8 @@ const (
 	EnvironmentPackageName  = "environment"
 	AuditlogPackageName     = "auditlog"
 	AutoopsPackageName      = "autoops"
+	CoderefPackageName      = "coderef"
+	TeamPackageName         = "team"
 	ExperimentPackageName   = "experiment"
 
 	invalidTypeUnknown        = "unknown"
