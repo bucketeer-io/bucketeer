@@ -82,7 +82,7 @@ proto-lock-commit-force:
 	make -C proto lock-commit-force
 
 .PHONY: proto-all
-proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-openapi-gen
+proto-all: proto-fmt proto-lock-commit proto-go proto-openapi-gen
 
 .PHONY: proto-go
 proto-go:
