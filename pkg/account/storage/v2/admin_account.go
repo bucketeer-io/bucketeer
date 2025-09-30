@@ -20,12 +20,17 @@ import (
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 var (
-	ErrSystemAdminAccountNotFound = errors.New("account: admin account not found")
+	ErrSystemAdminAccountNotFound = pkgErr.NewErrorNotFound(
+		pkgErr.AccountPackageName,
+		"admin account not found",
+		"admin_account",
+	)
 )
 
 var (
