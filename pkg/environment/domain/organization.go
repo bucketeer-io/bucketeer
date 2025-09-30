@@ -38,6 +38,10 @@ var (
 		pkgErr.EnvironmentPackageName,
 		"cannot archive system admin",
 		"system_admin_organization")
+	ErrCannotDisableGoogleAuthentication = pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.EnvironmentPackageName,
+		"cannot disable google authentication",
+		"google_authentication_required")
 )
 
 func NewOrganization(
@@ -120,43 +124,50 @@ func (p *Organization) UpdateAuthenticationSettings(settings *proto.Authenticati
 	p.UpdatedAt = time.Now().Unix()
 }
 
-func (p *Organization) EnablePasswordAuthentication() {
+func (p *Organization) EnableAuthenticationType(authType proto.AuthenticationType) {
 	if p.AuthenticationSettings == nil {
+		// Initialize with Google as the base authentication method
 		p.AuthenticationSettings = &proto.AuthenticationSettings{
 			EnabledTypes: []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE},
 		}
 	}
 
-	// Check if password auth is already enabled
-	for _, authType := range p.AuthenticationSettings.EnabledTypes {
-		if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
-			return // Already enabled
+	// Check if the authentication type is already enabled
+	for _, t := range p.AuthenticationSettings.EnabledTypes {
+		if t == authType {
+			return // Already enabled, nothing to do
 		}
 	}
 
-	// Add password authentication
+	// Add the authentication type
 	p.AuthenticationSettings.EnabledTypes = append(
 		p.AuthenticationSettings.EnabledTypes,
-		proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+		authType,
 	)
 	p.UpdatedAt = time.Now().Unix()
 }
 
-func (p *Organization) DisablePasswordAuthentication() {
-	if p.AuthenticationSettings == nil {
-		return
+func (p *Organization) DisableAuthenticationType(authType proto.AuthenticationType) error {
+	// Google authentication cannot be disabled as it's the required base authentication method
+	if authType == proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE {
+		return ErrCannotDisableGoogleAuthentication
 	}
 
-	// Remove password authentication but keep Google
+	if p.AuthenticationSettings == nil {
+		return nil // Nothing to disable
+	}
+
+	// Remove the specified authentication type
 	var newTypes []proto.AuthenticationType
-	for _, authType := range p.AuthenticationSettings.EnabledTypes {
-		if authType != proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
-			newTypes = append(newTypes, authType)
+	for _, t := range p.AuthenticationSettings.EnabledTypes {
+		if t != authType {
+			newTypes = append(newTypes, t)
 		}
 	}
 
 	p.AuthenticationSettings.EnabledTypes = newTypes
 	p.UpdatedAt = time.Now().Unix()
+	return nil
 }
 
 func (p *Organization) IsPasswordAuthenticationEnabled() bool {
