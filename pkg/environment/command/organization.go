@@ -96,9 +96,11 @@ func (h *organizationCommandHandler) changePasswordAuthentication(
 	cmd *proto.ChangePasswordAuthenticationOrganizationCommand,
 ) error {
 	if cmd.PasswordAuthenticationEnabled {
-		h.organization.EnablePasswordAuthentication()
+		h.organization.EnableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
 	} else {
-		h.organization.DisablePasswordAuthentication()
+		if err := h.organization.DisableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD); err != nil {
+			return err
+		}
 	}
 	return h.send(ctx, eventproto.Event_ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED,
 		&eventproto.OrganizationPasswordAuthenticationChangedEvent{
