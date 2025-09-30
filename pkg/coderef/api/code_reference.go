@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -124,14 +125,7 @@ func (s *CodeReferenceService) GetCodeReference(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	codeRef.SourceUrl = generateSourceURL(&codeRef.CodeReference)
 	codeRef.BranchUrl = generateBranchURL(&codeRef.CodeReference)
@@ -213,14 +207,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
@@ -274,14 +261,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
@@ -292,14 +272,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 				zap.String("id", codeRef.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	createEvent, err := domainevent.NewEvent(
 		editor,
@@ -334,14 +307,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err := s.publisher.Publish(ctx, createEvent); err != nil {
 		s.logger.Error(
@@ -350,14 +316,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.CreateCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
@@ -404,14 +363,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return api.NewGRPCStatus(err).Err()
 		}
 		updatedCodeRef, err = codeRef.Update(
 			req.FilePath,
@@ -431,14 +383,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 					zap.String("id", req.Id),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return api.NewGRPCStatus(err).Err()
 		}
 		if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
 			s.logger.Error(
@@ -448,14 +393,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 					zap.String("id", req.Id),
 				)...,
 			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return api.NewGRPCStatus(err).Err()
 		}
 		return nil
 	})
@@ -490,14 +428,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err := s.publisher.Publish(ctx, updateEvent); err != nil {
 		s.logger.Error(
@@ -506,14 +437,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.UpdateCodeReferenceResponse{CodeReference: &updatedCodeRef.CodeReference}, nil
 }
@@ -556,14 +480,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
 		s.logger.Error(
@@ -573,14 +490,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	deleteEvent, err := domainevent.NewEvent(
 		editor,
@@ -602,14 +512,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if err := s.publisher.Publish(ctx, deleteEvent); err != nil {
 		s.logger.Error(
@@ -618,14 +521,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 				zap.Error(err),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.DeleteCodeReferenceResponse{}, nil
 }
