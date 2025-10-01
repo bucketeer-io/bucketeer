@@ -514,6 +514,57 @@
       }
     },
     {
+      "protopath": "account:/:api_key_last_used_info.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "APIKeyLastUsedInfo",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_key_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "last_used_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/environment/environment.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.account"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/account"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "account:/:command.proto",
       "def": {
         "enums": [
@@ -20069,6 +20120,26 @@
                 "id": 3,
                 "name": "value",
                 "type": "double"
+              }
+            ]
+          },
+          {
+            "name": "APIKeyUsageEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_key_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "timestamp",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           }

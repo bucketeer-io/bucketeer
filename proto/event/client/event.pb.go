@@ -1855,6 +1855,69 @@ func (x *UserGoalEvent) GetValue() float64 {
 	return 0
 }
 
+type APIKeyUsageEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ApiKeyId      string `protobuf:"bytes,1,opt,name=api_key_id,json=apiKeyId,proto3" json:"api_key_id"`
+	Timestamp     int64  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp"`
+	EnvironmentId string `protobuf:"bytes,3,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+}
+
+func (x *APIKeyUsageEvent) Reset() {
+	*x = APIKeyUsageEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_event_client_event_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *APIKeyUsageEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*APIKeyUsageEvent) ProtoMessage() {}
+
+func (x *APIKeyUsageEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_event_client_event_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use APIKeyUsageEvent.ProtoReflect.Descriptor instead.
+func (*APIKeyUsageEvent) Descriptor() ([]byte, []int) {
+	return file_proto_event_client_event_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *APIKeyUsageEvent) GetApiKeyId() string {
+	if x != nil {
+		return x.ApiKeyId
+	}
+	return ""
+}
+
+func (x *APIKeyUsageEvent) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *APIKeyUsageEvent) GetEnvironmentId() string {
+	if x != nil {
+		return x.EnvironmentId
+	}
+	return ""
+}
+
 var File_proto_event_client_event_proto protoreflect.FileDescriptor
 
 var file_proto_event_client_event_proto_rawDesc = []byte{
@@ -2257,38 +2320,46 @@ var file_proto_event_client_event_proto_rawDesc = []byte{
 	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x17, 0x0a, 0x07, 0x67, 0x6f, 0x61, 0x6c, 0x5f,
 	0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x67, 0x6f, 0x61, 0x6c, 0x49, 0x64,
 	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x01, 0x52,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x2a, 0x94, 0x02, 0x0a, 0x08, 0x53, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x49, 0x64, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00,
-	0x12, 0x0b, 0x0a, 0x07, 0x41, 0x4e, 0x44, 0x52, 0x4f, 0x49, 0x44, 0x10, 0x01, 0x12, 0x07, 0x0a,
-	0x03, 0x49, 0x4f, 0x53, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x03, 0x57, 0x45, 0x42, 0x10, 0x03, 0x1a,
-	0x02, 0x08, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x47, 0x4f, 0x5f, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52,
-	0x10, 0x05, 0x12, 0x0f, 0x0a, 0x0b, 0x4e, 0x4f, 0x44, 0x45, 0x5f, 0x53, 0x45, 0x52, 0x56, 0x45,
-	0x52, 0x10, 0x06, 0x12, 0x0e, 0x0a, 0x0a, 0x4a, 0x41, 0x56, 0x41, 0x53, 0x43, 0x52, 0x49, 0x50,
-	0x54, 0x10, 0x07, 0x12, 0x0b, 0x0a, 0x07, 0x46, 0x4c, 0x55, 0x54, 0x54, 0x45, 0x52, 0x10, 0x08,
-	0x12, 0x09, 0x0a, 0x05, 0x52, 0x45, 0x41, 0x43, 0x54, 0x10, 0x09, 0x12, 0x10, 0x0a, 0x0c, 0x52,
-	0x45, 0x41, 0x43, 0x54, 0x5f, 0x4e, 0x41, 0x54, 0x49, 0x56, 0x45, 0x10, 0x0a, 0x12, 0x17, 0x0a,
-	0x13, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x4b, 0x4f,
-	0x54, 0x4c, 0x49, 0x4e, 0x10, 0x64, 0x12, 0x16, 0x0a, 0x12, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46,
-	0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x53, 0x57, 0x49, 0x46, 0x54, 0x10, 0x65, 0x12, 0x1b,
-	0x0a, 0x17, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x4a,
-	0x41, 0x56, 0x41, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54, 0x10, 0x66, 0x12, 0x13, 0x0a, 0x0f, 0x4f,
-	0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x47, 0x4f, 0x10, 0x67,
-	0x12, 0x15, 0x0a, 0x11, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45,
-	0x5f, 0x4e, 0x4f, 0x44, 0x45, 0x10, 0x68, 0x22, 0x04, 0x08, 0x04, 0x10, 0x04, 0x2a, 0x9b, 0x01,
-	0x0a, 0x05, 0x41, 0x70, 0x69, 0x49, 0x64, 0x12, 0x0f, 0x0a, 0x0b, 0x55, 0x4e, 0x4b, 0x4e, 0x4f,
-	0x57, 0x4e, 0x5f, 0x41, 0x50, 0x49, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x47, 0x45, 0x54, 0x5f,
-	0x45, 0x56, 0x41, 0x4c, 0x55, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f,
-	0x47, 0x45, 0x54, 0x5f, 0x45, 0x56, 0x41, 0x4c, 0x55, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x53, 0x10,
-	0x02, 0x12, 0x13, 0x0a, 0x0f, 0x52, 0x45, 0x47, 0x49, 0x53, 0x54, 0x45, 0x52, 0x5f, 0x45, 0x56,
-	0x45, 0x4e, 0x54, 0x53, 0x10, 0x03, 0x12, 0x15, 0x0a, 0x11, 0x47, 0x45, 0x54, 0x5f, 0x46, 0x45,
-	0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x46, 0x4c, 0x41, 0x47, 0x53, 0x10, 0x04, 0x12, 0x15, 0x0a,
-	0x11, 0x47, 0x45, 0x54, 0x5f, 0x53, 0x45, 0x47, 0x4d, 0x45, 0x4e, 0x54, 0x5f, 0x55, 0x53, 0x45,
-	0x52, 0x53, 0x10, 0x05, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x44, 0x4b, 0x5f, 0x47, 0x45, 0x54, 0x5f,
-	0x56, 0x41, 0x52, 0x49, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x64, 0x42, 0x39, 0x5a, 0x37, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2f, 0x76, 0x32, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2f,
-	0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x75, 0x0a, 0x10, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79,
+	0x55, 0x73, 0x61, 0x67, 0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x1c, 0x0a, 0x0a, 0x61, 0x70,
+	0x69, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x61, 0x70, 0x69, 0x4b, 0x65, 0x79, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65,
+	0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69, 0x6d,
+	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d,
+	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x2a, 0x94, 0x02,
+	0x0a, 0x08, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e,
+	0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x41, 0x4e, 0x44, 0x52, 0x4f,
+	0x49, 0x44, 0x10, 0x01, 0x12, 0x07, 0x0a, 0x03, 0x49, 0x4f, 0x53, 0x10, 0x02, 0x12, 0x0b, 0x0a,
+	0x03, 0x57, 0x45, 0x42, 0x10, 0x03, 0x1a, 0x02, 0x08, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x47, 0x4f,
+	0x5f, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52, 0x10, 0x05, 0x12, 0x0f, 0x0a, 0x0b, 0x4e, 0x4f, 0x44,
+	0x45, 0x5f, 0x53, 0x45, 0x52, 0x56, 0x45, 0x52, 0x10, 0x06, 0x12, 0x0e, 0x0a, 0x0a, 0x4a, 0x41,
+	0x56, 0x41, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54, 0x10, 0x07, 0x12, 0x0b, 0x0a, 0x07, 0x46, 0x4c,
+	0x55, 0x54, 0x54, 0x45, 0x52, 0x10, 0x08, 0x12, 0x09, 0x0a, 0x05, 0x52, 0x45, 0x41, 0x43, 0x54,
+	0x10, 0x09, 0x12, 0x10, 0x0a, 0x0c, 0x52, 0x45, 0x41, 0x43, 0x54, 0x5f, 0x4e, 0x41, 0x54, 0x49,
+	0x56, 0x45, 0x10, 0x0a, 0x12, 0x17, 0x0a, 0x13, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41,
+	0x54, 0x55, 0x52, 0x45, 0x5f, 0x4b, 0x4f, 0x54, 0x4c, 0x49, 0x4e, 0x10, 0x64, 0x12, 0x16, 0x0a,
+	0x12, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x53, 0x57,
+	0x49, 0x46, 0x54, 0x10, 0x65, 0x12, 0x1b, 0x0a, 0x17, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45,
+	0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x4a, 0x41, 0x56, 0x41, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54,
+	0x10, 0x66, 0x12, 0x13, 0x0a, 0x0f, 0x4f, 0x50, 0x45, 0x4e, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55,
+	0x52, 0x45, 0x5f, 0x47, 0x4f, 0x10, 0x67, 0x12, 0x15, 0x0a, 0x11, 0x4f, 0x50, 0x45, 0x4e, 0x5f,
+	0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x4e, 0x4f, 0x44, 0x45, 0x10, 0x68, 0x22, 0x04,
+	0x08, 0x04, 0x10, 0x04, 0x2a, 0x9b, 0x01, 0x0a, 0x05, 0x41, 0x70, 0x69, 0x49, 0x64, 0x12, 0x0f,
+	0x0a, 0x0b, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x5f, 0x41, 0x50, 0x49, 0x10, 0x00, 0x12,
+	0x12, 0x0a, 0x0e, 0x47, 0x45, 0x54, 0x5f, 0x45, 0x56, 0x41, 0x4c, 0x55, 0x41, 0x54, 0x49, 0x4f,
+	0x4e, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f, 0x47, 0x45, 0x54, 0x5f, 0x45, 0x56, 0x41, 0x4c, 0x55,
+	0x41, 0x54, 0x49, 0x4f, 0x4e, 0x53, 0x10, 0x02, 0x12, 0x13, 0x0a, 0x0f, 0x52, 0x45, 0x47, 0x49,
+	0x53, 0x54, 0x45, 0x52, 0x5f, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x53, 0x10, 0x03, 0x12, 0x15, 0x0a,
+	0x11, 0x47, 0x45, 0x54, 0x5f, 0x46, 0x45, 0x41, 0x54, 0x55, 0x52, 0x45, 0x5f, 0x46, 0x4c, 0x41,
+	0x47, 0x53, 0x10, 0x04, 0x12, 0x15, 0x0a, 0x11, 0x47, 0x45, 0x54, 0x5f, 0x53, 0x45, 0x47, 0x4d,
+	0x45, 0x4e, 0x54, 0x5f, 0x55, 0x53, 0x45, 0x52, 0x53, 0x10, 0x05, 0x12, 0x15, 0x0a, 0x11, 0x53,
+	0x44, 0x4b, 0x5f, 0x47, 0x45, 0x54, 0x5f, 0x56, 0x41, 0x52, 0x49, 0x41, 0x54, 0x49, 0x4f, 0x4e,
+	0x10, 0x64, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x76, 0x32, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x2f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2304,7 +2375,7 @@ func file_proto_event_client_event_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_event_client_event_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_event_client_event_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
+var file_proto_event_client_event_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
 var file_proto_event_client_event_proto_goTypes = []interface{}{
 	(SourceId)(0),                                // 0: bucketeer.event.client.SourceId
 	(ApiId)(0),                                   // 1: bucketeer.event.client.ApiId
@@ -2334,82 +2405,83 @@ var file_proto_event_client_event_proto_goTypes = []interface{}{
 	(*UnknownErrorMetricsEvent)(nil),             // 25: bucketeer.event.client.UnknownErrorMetricsEvent
 	(*OpsEvent)(nil),                             // 26: bucketeer.event.client.OpsEvent
 	(*UserGoalEvent)(nil),                        // 27: bucketeer.event.client.UserGoalEvent
-	nil,                                          // 28: bucketeer.event.client.EvaluationEvent.MetadataEntry
-	nil,                                          // 29: bucketeer.event.client.GoalEvent.MetadataEntry
-	nil,                                          // 30: bucketeer.event.client.MetricsEvent.MetadataEntry
-	nil,                                          // 31: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.LabelsEntry
-	nil,                                          // 32: bucketeer.event.client.GetEvaluationSizeMetricsEvent.LabelsEntry
-	nil,                                          // 33: bucketeer.event.client.LatencyMetricsEvent.LabelsEntry
-	nil,                                          // 34: bucketeer.event.client.SizeMetricsEvent.LabelsEntry
-	nil,                                          // 35: bucketeer.event.client.RedirectionRequestExceptionEvent.LabelsEntry
-	nil,                                          // 36: bucketeer.event.client.BadRequestErrorMetricsEvent.LabelsEntry
-	nil,                                          // 37: bucketeer.event.client.UnauthorizedErrorMetricsEvent.LabelsEntry
-	nil,                                          // 38: bucketeer.event.client.ForbiddenErrorMetricsEvent.LabelsEntry
-	nil,                                          // 39: bucketeer.event.client.NotFoundErrorMetricsEvent.LabelsEntry
-	nil,                                          // 40: bucketeer.event.client.PayloadTooLargeExceptionEvent.LabelsEntry
-	nil,                                          // 41: bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.LabelsEntry
-	nil,                                          // 42: bucketeer.event.client.InternalServerErrorMetricsEvent.LabelsEntry
-	nil,                                          // 43: bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.LabelsEntry
-	nil,                                          // 44: bucketeer.event.client.TimeoutErrorMetricsEvent.LabelsEntry
-	nil,                                          // 45: bucketeer.event.client.InternalErrorMetricsEvent.LabelsEntry
-	nil,                                          // 46: bucketeer.event.client.NetworkErrorMetricsEvent.LabelsEntry
-	nil,                                          // 47: bucketeer.event.client.InternalSdkErrorMetricsEvent.LabelsEntry
-	nil,                                          // 48: bucketeer.event.client.UnknownErrorMetricsEvent.LabelsEntry
-	(*anypb.Any)(nil),                            // 49: google.protobuf.Any
-	(*user.User)(nil),                            // 50: bucketeer.user.User
-	(*feature.Reason)(nil),                       // 51: bucketeer.feature.Reason
-	(*feature.Evaluation)(nil),                   // 52: bucketeer.feature.Evaluation
-	(*durationpb.Duration)(nil),                  // 53: google.protobuf.Duration
+	(*APIKeyUsageEvent)(nil),                     // 28: bucketeer.event.client.APIKeyUsageEvent
+	nil,                                          // 29: bucketeer.event.client.EvaluationEvent.MetadataEntry
+	nil,                                          // 30: bucketeer.event.client.GoalEvent.MetadataEntry
+	nil,                                          // 31: bucketeer.event.client.MetricsEvent.MetadataEntry
+	nil,                                          // 32: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.LabelsEntry
+	nil,                                          // 33: bucketeer.event.client.GetEvaluationSizeMetricsEvent.LabelsEntry
+	nil,                                          // 34: bucketeer.event.client.LatencyMetricsEvent.LabelsEntry
+	nil,                                          // 35: bucketeer.event.client.SizeMetricsEvent.LabelsEntry
+	nil,                                          // 36: bucketeer.event.client.RedirectionRequestExceptionEvent.LabelsEntry
+	nil,                                          // 37: bucketeer.event.client.BadRequestErrorMetricsEvent.LabelsEntry
+	nil,                                          // 38: bucketeer.event.client.UnauthorizedErrorMetricsEvent.LabelsEntry
+	nil,                                          // 39: bucketeer.event.client.ForbiddenErrorMetricsEvent.LabelsEntry
+	nil,                                          // 40: bucketeer.event.client.NotFoundErrorMetricsEvent.LabelsEntry
+	nil,                                          // 41: bucketeer.event.client.PayloadTooLargeExceptionEvent.LabelsEntry
+	nil,                                          // 42: bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.LabelsEntry
+	nil,                                          // 43: bucketeer.event.client.InternalServerErrorMetricsEvent.LabelsEntry
+	nil,                                          // 44: bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.LabelsEntry
+	nil,                                          // 45: bucketeer.event.client.TimeoutErrorMetricsEvent.LabelsEntry
+	nil,                                          // 46: bucketeer.event.client.InternalErrorMetricsEvent.LabelsEntry
+	nil,                                          // 47: bucketeer.event.client.NetworkErrorMetricsEvent.LabelsEntry
+	nil,                                          // 48: bucketeer.event.client.InternalSdkErrorMetricsEvent.LabelsEntry
+	nil,                                          // 49: bucketeer.event.client.UnknownErrorMetricsEvent.LabelsEntry
+	(*anypb.Any)(nil),                            // 50: google.protobuf.Any
+	(*user.User)(nil),                            // 51: bucketeer.user.User
+	(*feature.Reason)(nil),                       // 52: bucketeer.feature.Reason
+	(*feature.Evaluation)(nil),                   // 53: bucketeer.feature.Evaluation
+	(*durationpb.Duration)(nil),                  // 54: google.protobuf.Duration
 }
 var file_proto_event_client_event_proto_depIdxs = []int32{
-	49, // 0: bucketeer.event.client.Event.event:type_name -> google.protobuf.Any
-	50, // 1: bucketeer.event.client.EvaluationEvent.user:type_name -> bucketeer.user.User
-	51, // 2: bucketeer.event.client.EvaluationEvent.reason:type_name -> bucketeer.feature.Reason
+	50, // 0: bucketeer.event.client.Event.event:type_name -> google.protobuf.Any
+	51, // 1: bucketeer.event.client.EvaluationEvent.user:type_name -> bucketeer.user.User
+	52, // 2: bucketeer.event.client.EvaluationEvent.reason:type_name -> bucketeer.feature.Reason
 	0,  // 3: bucketeer.event.client.EvaluationEvent.source_id:type_name -> bucketeer.event.client.SourceId
-	28, // 4: bucketeer.event.client.EvaluationEvent.metadata:type_name -> bucketeer.event.client.EvaluationEvent.MetadataEntry
-	50, // 5: bucketeer.event.client.GoalEvent.user:type_name -> bucketeer.user.User
-	52, // 6: bucketeer.event.client.GoalEvent.evaluations:type_name -> bucketeer.feature.Evaluation
+	29, // 4: bucketeer.event.client.EvaluationEvent.metadata:type_name -> bucketeer.event.client.EvaluationEvent.MetadataEntry
+	51, // 5: bucketeer.event.client.GoalEvent.user:type_name -> bucketeer.user.User
+	53, // 6: bucketeer.event.client.GoalEvent.evaluations:type_name -> bucketeer.feature.Evaluation
 	0,  // 7: bucketeer.event.client.GoalEvent.source_id:type_name -> bucketeer.event.client.SourceId
-	29, // 8: bucketeer.event.client.GoalEvent.metadata:type_name -> bucketeer.event.client.GoalEvent.MetadataEntry
-	49, // 9: bucketeer.event.client.MetricsEvent.event:type_name -> google.protobuf.Any
+	30, // 8: bucketeer.event.client.GoalEvent.metadata:type_name -> bucketeer.event.client.GoalEvent.MetadataEntry
+	50, // 9: bucketeer.event.client.MetricsEvent.event:type_name -> google.protobuf.Any
 	0,  // 10: bucketeer.event.client.MetricsEvent.source_id:type_name -> bucketeer.event.client.SourceId
-	30, // 11: bucketeer.event.client.MetricsEvent.metadata:type_name -> bucketeer.event.client.MetricsEvent.MetadataEntry
-	31, // 12: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.labels:type_name -> bucketeer.event.client.GetEvaluationLatencyMetricsEvent.LabelsEntry
-	53, // 13: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.duration:type_name -> google.protobuf.Duration
-	32, // 14: bucketeer.event.client.GetEvaluationSizeMetricsEvent.labels:type_name -> bucketeer.event.client.GetEvaluationSizeMetricsEvent.LabelsEntry
+	31, // 11: bucketeer.event.client.MetricsEvent.metadata:type_name -> bucketeer.event.client.MetricsEvent.MetadataEntry
+	32, // 12: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.labels:type_name -> bucketeer.event.client.GetEvaluationLatencyMetricsEvent.LabelsEntry
+	54, // 13: bucketeer.event.client.GetEvaluationLatencyMetricsEvent.duration:type_name -> google.protobuf.Duration
+	33, // 14: bucketeer.event.client.GetEvaluationSizeMetricsEvent.labels:type_name -> bucketeer.event.client.GetEvaluationSizeMetricsEvent.LabelsEntry
 	1,  // 15: bucketeer.event.client.LatencyMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	33, // 16: bucketeer.event.client.LatencyMetricsEvent.labels:type_name -> bucketeer.event.client.LatencyMetricsEvent.LabelsEntry
-	53, // 17: bucketeer.event.client.LatencyMetricsEvent.duration:type_name -> google.protobuf.Duration
+	34, // 16: bucketeer.event.client.LatencyMetricsEvent.labels:type_name -> bucketeer.event.client.LatencyMetricsEvent.LabelsEntry
+	54, // 17: bucketeer.event.client.LatencyMetricsEvent.duration:type_name -> google.protobuf.Duration
 	1,  // 18: bucketeer.event.client.SizeMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	34, // 19: bucketeer.event.client.SizeMetricsEvent.labels:type_name -> bucketeer.event.client.SizeMetricsEvent.LabelsEntry
+	35, // 19: bucketeer.event.client.SizeMetricsEvent.labels:type_name -> bucketeer.event.client.SizeMetricsEvent.LabelsEntry
 	1,  // 20: bucketeer.event.client.RedirectionRequestExceptionEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	35, // 21: bucketeer.event.client.RedirectionRequestExceptionEvent.labels:type_name -> bucketeer.event.client.RedirectionRequestExceptionEvent.LabelsEntry
+	36, // 21: bucketeer.event.client.RedirectionRequestExceptionEvent.labels:type_name -> bucketeer.event.client.RedirectionRequestExceptionEvent.LabelsEntry
 	1,  // 22: bucketeer.event.client.BadRequestErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	36, // 23: bucketeer.event.client.BadRequestErrorMetricsEvent.labels:type_name -> bucketeer.event.client.BadRequestErrorMetricsEvent.LabelsEntry
+	37, // 23: bucketeer.event.client.BadRequestErrorMetricsEvent.labels:type_name -> bucketeer.event.client.BadRequestErrorMetricsEvent.LabelsEntry
 	1,  // 24: bucketeer.event.client.UnauthorizedErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	37, // 25: bucketeer.event.client.UnauthorizedErrorMetricsEvent.labels:type_name -> bucketeer.event.client.UnauthorizedErrorMetricsEvent.LabelsEntry
+	38, // 25: bucketeer.event.client.UnauthorizedErrorMetricsEvent.labels:type_name -> bucketeer.event.client.UnauthorizedErrorMetricsEvent.LabelsEntry
 	1,  // 26: bucketeer.event.client.ForbiddenErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	38, // 27: bucketeer.event.client.ForbiddenErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ForbiddenErrorMetricsEvent.LabelsEntry
+	39, // 27: bucketeer.event.client.ForbiddenErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ForbiddenErrorMetricsEvent.LabelsEntry
 	1,  // 28: bucketeer.event.client.NotFoundErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	39, // 29: bucketeer.event.client.NotFoundErrorMetricsEvent.labels:type_name -> bucketeer.event.client.NotFoundErrorMetricsEvent.LabelsEntry
+	40, // 29: bucketeer.event.client.NotFoundErrorMetricsEvent.labels:type_name -> bucketeer.event.client.NotFoundErrorMetricsEvent.LabelsEntry
 	1,  // 30: bucketeer.event.client.PayloadTooLargeExceptionEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	40, // 31: bucketeer.event.client.PayloadTooLargeExceptionEvent.labels:type_name -> bucketeer.event.client.PayloadTooLargeExceptionEvent.LabelsEntry
+	41, // 31: bucketeer.event.client.PayloadTooLargeExceptionEvent.labels:type_name -> bucketeer.event.client.PayloadTooLargeExceptionEvent.LabelsEntry
 	1,  // 32: bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	41, // 33: bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.LabelsEntry
+	42, // 33: bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.LabelsEntry
 	1,  // 34: bucketeer.event.client.InternalServerErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	42, // 35: bucketeer.event.client.InternalServerErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalServerErrorMetricsEvent.LabelsEntry
+	43, // 35: bucketeer.event.client.InternalServerErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalServerErrorMetricsEvent.LabelsEntry
 	1,  // 36: bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	43, // 37: bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.LabelsEntry
+	44, // 37: bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.labels:type_name -> bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.LabelsEntry
 	1,  // 38: bucketeer.event.client.TimeoutErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	44, // 39: bucketeer.event.client.TimeoutErrorMetricsEvent.labels:type_name -> bucketeer.event.client.TimeoutErrorMetricsEvent.LabelsEntry
+	45, // 39: bucketeer.event.client.TimeoutErrorMetricsEvent.labels:type_name -> bucketeer.event.client.TimeoutErrorMetricsEvent.LabelsEntry
 	1,  // 40: bucketeer.event.client.InternalErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	45, // 41: bucketeer.event.client.InternalErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalErrorMetricsEvent.LabelsEntry
+	46, // 41: bucketeer.event.client.InternalErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalErrorMetricsEvent.LabelsEntry
 	1,  // 42: bucketeer.event.client.NetworkErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	46, // 43: bucketeer.event.client.NetworkErrorMetricsEvent.labels:type_name -> bucketeer.event.client.NetworkErrorMetricsEvent.LabelsEntry
+	47, // 43: bucketeer.event.client.NetworkErrorMetricsEvent.labels:type_name -> bucketeer.event.client.NetworkErrorMetricsEvent.LabelsEntry
 	1,  // 44: bucketeer.event.client.InternalSdkErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	47, // 45: bucketeer.event.client.InternalSdkErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalSdkErrorMetricsEvent.LabelsEntry
+	48, // 45: bucketeer.event.client.InternalSdkErrorMetricsEvent.labels:type_name -> bucketeer.event.client.InternalSdkErrorMetricsEvent.LabelsEntry
 	1,  // 46: bucketeer.event.client.UnknownErrorMetricsEvent.api_id:type_name -> bucketeer.event.client.ApiId
-	48, // 47: bucketeer.event.client.UnknownErrorMetricsEvent.labels:type_name -> bucketeer.event.client.UnknownErrorMetricsEvent.LabelsEntry
+	49, // 47: bucketeer.event.client.UnknownErrorMetricsEvent.labels:type_name -> bucketeer.event.client.UnknownErrorMetricsEvent.LabelsEntry
 	48, // [48:48] is the sub-list for method output_type
 	48, // [48:48] is the sub-list for method input_type
 	48, // [48:48] is the sub-list for extension type_name
@@ -2735,6 +2807,18 @@ func file_proto_event_client_event_proto_init() {
 				return nil
 			}
 		}
+		file_proto_event_client_event_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*APIKeyUsageEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2742,7 +2826,7 @@ func file_proto_event_client_event_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_event_client_event_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   47,
+			NumMessages:   48,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

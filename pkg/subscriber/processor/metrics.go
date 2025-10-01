@@ -33,6 +33,7 @@ const (
 	subscriberSegmentUser           = "SegmentUser"
 	subscriberUserEvent             = "UserEvent"
 	subscriberDemoOrganizationEvent = "DemoOrganizationEvent"
+	subscriberAPIKeyLastUsedInfo    = "APIKeyLastUsedInfo"
 )
 
 const (
