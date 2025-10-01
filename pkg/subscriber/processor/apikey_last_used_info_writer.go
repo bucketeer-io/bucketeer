@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -44,18 +45,16 @@ type apikeyLastUsedInfoCache map[string]*domain.APIKeyLastUsedInfo
 
 type envAPIKeyLastUsedInfoCache map[string]apikeyLastUsedInfoCache
 
-type apiKeyUsageEventMap map[string]*eventproto.APIKeyUsageEvent
+type apikeyUsageEventMap map[string]*eventproto.APIKeyUsageEvent
 
-type envAPIKeyUsageEventMap map[string]apiKeyUsageEventMap
+type envAPIKeyUsageEventMap map[string]apikeyUsageEventMap
 
 type apikeyLastUsedInfoWriter struct {
 	config                   APIKeyLastUsedInfoWriterConfig
 	apikeyLastUsedInfoCacher envAPIKeyLastUsedInfoCache
-
-	envLastUsedCacheMutex sync.Mutex
-
-	mysqlClient mysql.Client
-	logger      *zap.Logger
+	envLastUsedCacheMutex    sync.Mutex
+	accountStorage           accountstotage.AccountStorage
+	logger                   *zap.Logger
 }
 
 func NewAPIKeyLastUsedInfoWriter(
@@ -80,10 +79,14 @@ func NewAPIKeyLastUsedInfoWriter(
 		return nil, ErrAPIKeyLastUsedInfoWriterInvalidConfig
 	}
 	w := &apikeyLastUsedInfoWriter{
-		config:      apikeyLastUsedInfoWriterConfig,
-		mysqlClient: mysqlClient,
-		logger:      logger,
+		config:                   apikeyLastUsedInfoWriterConfig,
+		apikeyLastUsedInfoCacher: make(envAPIKeyLastUsedInfoCache),
+		envLastUsedCacheMutex:    sync.Mutex{},
+		accountStorage:           accountstotage.NewAccountStorage(mysqlClient),
+		logger:                   logger,
 	}
+
+	go w.writeAPIKeyLastUsedInfoCache(context.Background())
 
 	return w, nil
 }
@@ -174,6 +177,7 @@ func (a *apikeyLastUsedInfoWriter) cacheEnvAPIKeyLastUsedInfo(
 	a.apikeyLastUsedInfoCacher[environmentID] = cache
 }
 
+// extractEvents extracts APIKeyUsageEvents from the batch and groups them by environment ID.
 func (a *apikeyLastUsedInfoWriter) extractEvents(messages map[string]*puller.Message) envAPIKeyUsageEventMap {
 	envEvents := envAPIKeyUsageEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
@@ -206,7 +210,94 @@ func (a *apikeyLastUsedInfoWriter) extractEvents(messages map[string]*puller.Mes
 			innerEvents[event.Id] = innerEvent
 			continue
 		}
-		envEvents[event.EnvironmentId] = apiKeyUsageEventMap{event.Id: innerEvent}
+		envEvents[event.EnvironmentId] = apikeyUsageEventMap{event.Id: innerEvent}
 	}
 	return envEvents
+}
+
+// writeAPIKeyLastUsedInfoCache writes the cached API key last used info to the database and clears the cache.
+func (a *apikeyLastUsedInfoWriter) writeAPIKeyLastUsedInfoCache(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(a.config.WriteCacheInterval) * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			a.logger.Debug("Writing API key last used info triggered")
+			a.writeAPIKeyLastUsedInfo(ctx)
+		}
+	}
+}
+
+func (a *apikeyLastUsedInfoWriter) writeAPIKeyLastUsedInfo(ctx context.Context) {
+	a.envLastUsedCacheMutex.Lock()
+	defer a.envLastUsedCacheMutex.Unlock()
+
+	for environmentID, cache := range a.apikeyLastUsedInfoCacher {
+		info := make([]*domain.APIKeyLastUsedInfo, 0, len(cache))
+		for _, v := range cache {
+			info = append(info, v)
+		}
+
+		infoIDs := make([]interface{}, 0, len(info))
+		for _, f := range info {
+			infoIDs = append(infoIDs, f.ApiKeyId)
+		}
+
+		options := &mysql.ListOptions{
+			Filters: []*mysql.FilterV2{
+				{
+					Column:   "environment_id",
+					Operator: mysql.OperatorEqual,
+					Value:    environmentID,
+				},
+			},
+			InFilters: []*mysql.InFilter{
+				{
+					Column: "api_key_id",
+					Values: infoIDs,
+				},
+			},
+			Limit:  mysql.QueryNoLimit,
+			Offset: mysql.QueryNoOffset,
+		}
+
+		currentInfo, err := a.accountStorage.GetAPIKeyLastUsedInfos(
+			ctx,
+			options,
+		)
+		if err != nil {
+			a.logger.Error("Failed to get API key last used info", zap.Error(err))
+			return
+		}
+
+		updatedInfo := make([]*domain.APIKeyLastUsedInfo, 0, len(currentInfo))
+		currentInfoMap := make(map[string]*domain.APIKeyLastUsedInfo, len(currentInfo))
+		for _, f := range currentInfo {
+			currentInfoMap[f.ApiKeyId] = &domain.APIKeyLastUsedInfo{
+				APIKeyLastUsedInfo: f,
+			}
+		}
+
+		// Compare the last used at and update only if the new one is more recent
+		for _, f := range info {
+			v, ok := currentInfoMap[f.ApiKeyId]
+			if !ok {
+				updatedInfo = append(updatedInfo, f)
+				continue
+			}
+			if v.LastUsedAt < f.LastUsedAt {
+				updatedInfo = append(updatedInfo, f)
+			}
+		}
+
+		for _, f := range updatedInfo {
+			if err := a.accountStorage.UpsertAPIKeyLastUsedInfo(ctx, f); err != nil {
+				a.logger.Error("Failed to upsert API key last used info", zap.Error(err))
+				return
+			}
+		}
+	}
+	// Clear the cache after writing to the database
+	a.apikeyLastUsedInfoCacher = make(envAPIKeyLastUsedInfoCache)
 }
