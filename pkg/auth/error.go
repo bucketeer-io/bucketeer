@@ -46,23 +46,34 @@ var (
 	StatusAccessDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
 
-	// Password-related errors
-	StatusPasswordTooWeak        = gstatus.New(codes.InvalidArgument, "auth: password too weak")
-	StatusPasswordMismatch       = gstatus.New(codes.InvalidArgument, "auth: password mismatch")
-	StatusPasswordAlreadyExists  = gstatus.New(codes.AlreadyExists, "auth: password already exists")
-	StatusPasswordNotFound       = gstatus.New(codes.NotFound, "auth: password not found")
-	StatusMissingCurrentPassword = gstatus.New(codes.InvalidArgument, "auth: current password must not be empty")
-	StatusMissingNewPassword     = gstatus.New(codes.InvalidArgument, "auth: new password must not be empty")
+	StatusPasswordTooWeak = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password too weak", "password"))
+	StatusPasswordMismatch = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password mismatch", "password"))
+	StatusPasswordAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.AuthPackageName, "password already exists"))
+	StatusPasswordNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "password not found", "password"))
+	StatusMissingCurrentPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "current password must not be empty", "currentPassword"))
+	StatusMissingNewPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "new password must not be empty", "newPassword"))
 
-	// Password reset errors
-	StatusInvalidResetToken  = gstatus.New(codes.InvalidArgument, "auth: invalid reset token")
-	StatusExpiredResetToken  = gstatus.New(codes.InvalidArgument, "auth: reset token expired")
-	StatusResetTokenNotFound = gstatus.New(codes.NotFound, "auth: reset token not found")
-	StatusMissingResetToken  = gstatus.New(codes.InvalidArgument, "auth: reset token must not be empty")
+	StatusInvalidResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid reset token", "resetToken"))
+	StatusExpiredResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.AuthPackageName, "reset token expired"))
+	StatusResetTokenNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "reset token not found", "resetToken"))
+	StatusMissingResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "reset token must not be empty", "resetToken"))
 
-	// Email service errors
-	StatusEmailServiceUnavailable = gstatus.New(codes.Unavailable, "auth: email service unavailable")
-	StatusTooManyEmailRequests    = gstatus.New(codes.ResourceExhausted, "auth: too many email requests")
-	StatusInvalidEmailConfig      = gstatus.New(codes.InvalidArgument, "auth: invalid email configuration")
-	StatusMissingEmail            = gstatus.New(codes.InvalidArgument, "auth: email must not be empty")
+	StatusEmailServiceUnavailable = api.NewGRPCStatus(
+		pkgErr.NewErrorUnavailable(pkgErr.AuthPackageName, "email service unavailable"))
+	StatusTooManyEmailRequests = api.NewGRPCStatus(
+		pkgErr.NewErrorAborted(pkgErr.AuthPackageName, "too many email requests"))
+	StatusInvalidEmailConfig = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid email configuration", "emailConfig"))
+	StatusMissingEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "email"))
 )
