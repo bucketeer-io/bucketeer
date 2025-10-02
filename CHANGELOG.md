@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.1.2](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.1.2) (2025-10-02)
+
+
+### Bug Fixes
+
+* **ui/dashboard:** experiment filter opens drawer add new ([#2140](https://github.com/bucketeer-io/bucketeer/issues/2140)) ([d764014](https://github.com/bucketeer-io/bucketeer/commit/d7640146f295cea53b338ec2767b2138ba6bc501))
+
+
+### Miscellaneous
+
+* remove make command of old console ([#2139](https://github.com/bucketeer-io/bucketeer/issues/2139)) ([70baf53](https://github.com/bucketeer-io/bucketeer/commit/70baf53cf0272e589d4a983b10376716c4ce956a))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 6 updates ([#2144](https://github.com/bucketeer-io/bucketeer/issues/2144)) ([c9c9ad6](https://github.com/bucketeer-io/bucketeer/commit/c9c9ad6db01433999c4a26b540086c6263a2eba5))
+
 ## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
 
 
