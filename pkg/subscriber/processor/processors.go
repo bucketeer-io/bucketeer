@@ -34,6 +34,7 @@ const (
 	SegmentUserPersisterName             = "segmentUserPersister"
 	UserEventPersisterName               = "userEventPersister"
 	DemoOrganizationCreationNotifierName = "demoOrganizationCreationNotifier"
+	APIKeyLastUsedInfoWriterName         = "apiKeyLastUsedInfoWriter"
 )
 
 var (

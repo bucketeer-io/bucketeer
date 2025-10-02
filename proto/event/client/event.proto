@@ -230,3 +230,9 @@ message UserGoalEvent {
   string goal_id = 2;
   double value = 3;
 }
+
+message APIKeyUsageEvent {
+  string api_key_id = 1;
+  int64 timestamp = 2;
+  string environment_id = 3;
+}

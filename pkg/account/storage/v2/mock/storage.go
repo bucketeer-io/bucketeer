@@ -115,6 +115,21 @@ func (mr *MockAccountStorageMockRecorder) GetAPIKeyByAPIKey(ctx, apiKey, environ
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKeyByAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKeyByAPIKey), ctx, apiKey, environmentID)
 }
 
+// GetAPIKeyLastUsedInfos mocks base method.
+func (m *MockAccountStorage) GetAPIKeyLastUsedInfos(ctx context.Context, options *mysql.ListOptions) ([]*account.APIKeyLastUsedInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAPIKeyLastUsedInfos", ctx, options)
+	ret0, _ := ret[0].([]*account.APIKeyLastUsedInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAPIKeyLastUsedInfos indicates an expected call of GetAPIKeyLastUsedInfos.
+func (mr *MockAccountStorageMockRecorder) GetAPIKeyLastUsedInfos(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKeyLastUsedInfos", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKeyLastUsedInfos), ctx, options)
+}
+
 // GetAccountV2 mocks base method.
 func (m *MockAccountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
 	m.ctrl.T.Helper()
@@ -280,4 +295,18 @@ func (m *MockAccountStorage) UpdateAccountV2(ctx context.Context, a *domain.Acco
 func (mr *MockAccountStorageMockRecorder) UpdateAccountV2(ctx, a any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountV2", reflect.TypeOf((*MockAccountStorage)(nil).UpdateAccountV2), ctx, a)
+}
+
+// UpsertAPIKeyLastUsedInfo mocks base method.
+func (m *MockAccountStorage) UpsertAPIKeyLastUsedInfo(ctx context.Context, f *domain.APIKeyLastUsedInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertAPIKeyLastUsedInfo", ctx, f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertAPIKeyLastUsedInfo indicates an expected call of UpsertAPIKeyLastUsedInfo.
+func (mr *MockAccountStorageMockRecorder) UpsertAPIKeyLastUsedInfo(ctx, f any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAPIKeyLastUsedInfo", reflect.TypeOf((*MockAccountStorage)(nil).UpsertAPIKeyLastUsedInfo), ctx, f)
 }
