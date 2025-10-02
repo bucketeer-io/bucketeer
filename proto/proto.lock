@@ -548,11 +548,6 @@
             ]
           }
         ],
-        "imports": [
-          {
-            "path": "proto/environment/environment.proto"
-          }
-        ],
         "package": {
           "name": "bucketeer.account"
         },
