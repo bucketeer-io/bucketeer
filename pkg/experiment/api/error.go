@@ -15,28 +15,47 @@
 package api
 
 import (
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 )
 
 var (
-	statusInternal               = gstatus.New(codes.Internal, "experiment: internal")
-	statusInvalidCursor          = gstatus.New(codes.InvalidArgument, "experiment: cursor is invalid")
-	statusNoCommand              = gstatus.New(codes.InvalidArgument, "experiment: must contain at least one command")
-	statusFeatureIDRequired      = gstatus.New(codes.InvalidArgument, "experiment: feature id must be specified")
-	statusExperimentIDRequired   = gstatus.New(codes.InvalidArgument, "experiment: experiment id must be specified")
-	statusExperimentNameRequired = gstatus.New(codes.InvalidArgument, "experiment: experiment name must be specified")
-	statusGoalIDRequired         = gstatus.New(codes.InvalidArgument, "experiment: goal id must be specified")
-	statusGoalTypeMismatch       = gstatus.New(codes.InvalidArgument, "experiment: goal type mismatch")
-	statusInvalidGoalID          = gstatus.New(codes.InvalidArgument, "experiment: invalid goal id")
-	statusGoalNameRequired       = gstatus.New(codes.InvalidArgument, "experiment: goal name must be specified")
-	statusPeriodTooLong          = gstatus.New(codes.InvalidArgument, "experiment: period too long")
-	statusPeriodInvalid          = gstatus.New(codes.InvalidArgument, "experiment: period is invalid")
-	statusInvalidOrderBy         = gstatus.New(codes.InvalidArgument, "expriment: order_by is invalid")
-	statusNotFound               = gstatus.New(codes.NotFound, "experiment: not found")
-	statusGoalNotFound           = gstatus.New(codes.NotFound, "experiment: goal not found")
-	statusFeatureNotFound        = gstatus.New(codes.NotFound, "experiment: feature not found")
-	statusAlreadyExists          = gstatus.New(codes.AlreadyExists, "experiment: already exists")
-	statusUnauthenticated        = gstatus.New(codes.Unauthenticated, "experiment: unauthenticated")
-	statusPermissionDenied       = gstatus.New(codes.PermissionDenied, "experiment: permission denied")
+	statusInternal = api.NewGRPCStatus(
+		pkgErr.NewErrorInternal(pkgErr.ExperimentPackageName, "internal error"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "cursor is invalid", "cursor"))
+	statusNoCommand = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNil(pkgErr.ExperimentPackageName, "must contain at least one command", "command"))
+	statusFeatureIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "feature id must be specified", "feature_id"))
+	statusExperimentIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "experiment id must be specified", "experiment_id"))
+	statusExperimentNameRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "experiment name must be specified", "experiment_name"))
+	statusGoalIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "goal id must be specified", "goal_id"))
+	statusGoalTypeMismatch = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "goal type mismatch", "goal_type"))
+	statusInvalidGoalID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "invalid goal id", "goal_id"))
+	statusGoalNameRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "goal name must be specified", "goal_name"))
+	statusPeriodTooLong = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "period too long", "period"))
+	statusPeriodInvalid = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "period is invalid", "period"))
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "order_by is invalid", "order_by"))
+	statusNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.ExperimentPackageName, "not found", "experiment"))
+	statusGoalNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.ExperimentPackageName, "goal not found", "goal_id"))
+	statusFeatureNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.ExperimentPackageName, "feature not found", "feature"))
+	statusAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.ExperimentPackageName, "already exists"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		pkgErr.NewErrorUnauthenticated(pkgErr.ExperimentPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.ExperimentPackageName, "permission denied"))
 )
