@@ -6,14 +6,21 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
-import { invalidateUserSegments } from '@queries/user-segments';
+import {
+  invalidateUserSegments,
+  useQueryUserSegments
+} from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
+import { isEqual, omit } from 'lodash';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
-import { Evaluation, Feature } from '@types';
+import { Evaluation, Feature, FeatureRule, FeatureRuleStrategy } from '@types';
+import { isEmpty, isNotEmpty } from 'utils/data-type';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -27,6 +34,7 @@ import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
+import DiscardChangeModal from '../elements/discard-changes-modal';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
@@ -39,14 +47,33 @@ import { formSchema, TargetingSchema } from './form-schema';
 import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
 import TargetSegmentRule from './segment-rule';
-import { PrerequisiteSchema, RuleCategory } from './types';
 import {
+  DiscardChangesState,
+  DiscardChangesStateData,
+  DiscardChangesType,
+  IndividualRuleItem,
+  PrerequisiteSchema,
+  RuleCategory
+} from './types';
+import {
+  checkDefaultRuleDiscardChanges,
   getDefaultRule,
+  getFeatureRuleLabels,
+  handleCheckIndividualDiscardChanges,
   handleCheckIndividualRules,
+  handleCheckPrerequisiteDiscardChanges,
   handleCheckPrerequisites,
   handleCheckSegmentRules,
+  handleCheckSegmentRulesDiscardChanges,
   handleCreateDefaultValues,
-  handleGetDefaultRuleStrategy
+  handleCreateSegmentRules,
+  handleGetDefaultRuleStrategy,
+  handleSwapRuleFeature,
+  hasChangePosition,
+  hasSameRelativeOrder,
+  normalizeSegmentRules,
+  reorderWithReset,
+  checkFiledDirty
 } from './utils';
 
 export const TargetingDivider = () => (
@@ -61,6 +88,11 @@ const TargetingPage = ({
   editable: boolean;
 }) => {
   const { consoleAccount } = useAuth();
+  const {
+    situationOptions,
+    conditionerCompareOptions,
+    conditionerDateOptions
+  } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
@@ -78,13 +110,32 @@ const TargetingPage = ({
   const [debuggerForm, setDebuggerForm] = useState<AddDebuggerFormType | null>(
     null
   );
+  const [featureRef, setFeatureRef] = useState<Feature>(cloneDeep(feature));
+  const [actionRuleSegment, setActionRuleSegment] = useState<
+    'new-rule' | 'edit-rule' | undefined
+  >(undefined);
+  const [reorderRule, setReorderRule] = useState<boolean>(false);
   const [isShowRules, setIsShowRules] = useState<boolean>(feature.enabled);
-
+  const [discardChangesState, setDiscardChangesState] =
+    useState<DiscardChangesState>({
+      type: undefined,
+      isOpen: false,
+      data: [],
+      ruleIndex: undefined
+    });
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
       environmentId: currentEnvironment.id,
       featureIds: [feature.id]
+    }
+  });
+
+  const { data: segmentCollection } = useQueryUserSegments({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
     }
   });
 
@@ -116,12 +167,19 @@ const TargetingPage = ({
     control,
     formState: { isDirty, isValid, dirtyFields },
     watch,
-    reset
+    setValue,
+    reset,
+    resetField,
+    getValues
   } = form;
 
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
+  const operatorOptions = useMemo(
+    () => [...conditionerCompareOptions, ...conditionerDateOptions],
+    [conditionerCompareOptions, conditionerDateOptions]
+  );
 
   const hasPrerequisiteFlags = activeFeatures.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
@@ -165,10 +223,11 @@ const TargetingPage = ({
 
   const {
     fields: segmentRules,
-    append: segmentRulesAppend,
+    insert: segmentRulesInsert,
     remove: segmentRulesRemove,
     update: segmentRulesUpdate,
-    swap: segmentRulesSwap
+    swap: segmentRulesSwap,
+    replace: segmetRulesReplace
   } = useFieldArray({
     control,
     name: 'segmentRules',
@@ -176,7 +235,7 @@ const TargetingPage = ({
   });
 
   const onAddRule = useCallback(
-    (rule: RuleCategory) => {
+    (rule: RuleCategory, index?: number) => {
       if (rule === RuleCategory.PREREQUISITE) {
         return prerequisiteAppend(cloneDeep(initialPrerequisite));
       }
@@ -189,11 +248,85 @@ const TargetingPage = ({
           }))
         );
       }
-      segmentRulesAppend(getDefaultRule(feature));
+      const segmentIndex = isNotEmpty(index)
+        ? index
+        : segmentRulesWatch.length + 1;
+      const newSegmentRule = getDefaultRule(feature);
+      segmentRulesInsert(segmentIndex!, newSegmentRule);
+      setFeatureRef(prev => ({
+        ...prev,
+        rules: [
+          ...prev.rules.slice(0, segmentIndex),
+          newSegmentRule,
+          ...prev.rules.slice(segmentIndex)
+        ]
+      }));
+      return;
     },
-    [feature]
+    [feature, segmentRulesWatch]
   );
 
+  const checkEditRule = useCallback(
+    (type: RuleCategory, index?: number): boolean => {
+      const segmentDirty = dirtyFields?.segmentRules?.[index!] || {};
+      delete segmentDirty.id;
+
+      const handleCheckDirty = (obj?: { [key: string]: boolean }) =>
+        checkFiledDirty(obj ?? {});
+      switch (type) {
+        case RuleCategory.CUSTOM:
+          if (isEmpty(index)) return false;
+          return (
+            checkFiledDirty(
+              segmentDirty as unknown as {
+                [key: string]: boolean;
+              }
+            ) ||
+            !isEqual(
+              segmentRulesWatch?.[index!]?.clauses?.map(item =>
+                omit(item, 'type')
+              ),
+              feature.rules?.[index!].clauses
+            )
+          );
+
+        case RuleCategory.PREREQUISITE:
+          return handleCheckDirty(
+            dirtyFields.prerequisites as unknown as { [key: string]: boolean }
+          );
+
+        case RuleCategory.INDIVIDUAL:
+          return handleCheckDirty(
+            dirtyFields.individualRules as unknown as {
+              [key: string]: boolean;
+            }
+          );
+
+        case RuleCategory.DEFAULT:
+          return handleCheckDirty(
+            dirtyFields.defaultRule as unknown as { [key: string]: boolean }
+          );
+
+        default:
+          return false;
+      }
+    },
+    [
+      segmentRulesWatch,
+      individualRules,
+      prerequisitesWatch,
+      dirtyFields,
+      feature
+    ]
+  );
+
+  const handleSegmentRuleRemove = (segmentIndex: number) => {
+    segmentRulesRemove(segmentIndex);
+    setFeatureRef(prev => ({
+      ...prev,
+      rules: prev.rules.filter((_, index) => index !== segmentIndex)
+    }));
+  };
   const handleSwapSegmentRule = useCallback(
     (indexA: number, indexB: number) => {
       segmentRulesUpdate(indexA, {
@@ -205,8 +338,156 @@ const TargetingPage = ({
         id: uuid()
       });
       segmentRulesSwap(indexA, indexB);
+      const featureRuleSwap = handleSwapRuleFeature(featureRef, indexA, indexB);
+      setFeatureRef(featureRuleSwap);
     },
     [segmentRulesWatch]
+  );
+
+  const handleDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      const { prerequisites, individualRules, segmentRules, defaultRule } =
+        getValues();
+      let discardData: DiscardChangesStateData[] | null = null;
+      if (type === DiscardChangesType.PREREQUISITE) {
+        discardData = handleCheckPrerequisiteDiscardChanges(
+          prerequisites as PrerequisiteSchema[],
+          feature,
+          activeFeatures
+        );
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        discardData = handleCheckIndividualDiscardChanges(
+          feature,
+          individualRules as IndividualRuleItem[]
+        );
+      }
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        if (segmentRules) {
+          const isOrder = hasSameRelativeOrder(feature.rules, featureRef.rules);
+          const variationFeatures = feature.variations;
+          const preRules = feature.rules.find(
+            r => r.id === featureRef.rules[index].id
+          );
+
+          discardData = handleCheckSegmentRulesDiscardChanges(
+            preRules || null,
+            segmentCollection?.segments || [],
+            segmentRules[index] as unknown as FeatureRule,
+            situationOptions,
+            features,
+            operatorOptions,
+            variationFeatures,
+            t,
+            setActionRuleSegment
+          );
+          const isChangePosition = hasChangePosition(
+            featureRef.rules[index].id,
+            feature,
+            featureRef
+          );
+          if (!isOrder && isChangePosition) {
+            setReorderRule(true);
+            const fr = normalizeSegmentRules(featureRef.rules, segmentRules);
+            const cloneFeatureRef = { ...featureRef, rules: fr };
+            const labelRuleOrders = getFeatureRuleLabels(
+              feature,
+              cloneFeatureRef as Feature,
+              features,
+              segmentCollection!.segments,
+              situationOptions,
+              operatorOptions,
+              t,
+              variationFeatures
+            );
+            discardData.push({
+              label: '',
+              labelType: 'REORDER',
+              changeType: 'reorder',
+              variationIndex: 0,
+              ruleOrders: labelRuleOrders
+            });
+          }
+        }
+      }
+      if (type === DiscardChangesType.DEFAULT) {
+        discardData = checkDefaultRuleDiscardChanges(
+          feature.defaultStrategy,
+          defaultRule as FeatureRuleStrategy,
+          feature.variations
+        );
+      }
+      if (isEmpty(discardData)) return onDiscardChanges(type);
+      setDiscardChangesState({
+        type,
+        isOpen: true,
+        data: discardData!,
+        ruleIndex: index
+      });
+    },
+    [activeFeatures, feature, segmentRulesWatch, featureRef]
+  );
+
+  const handleOnCloseDiscardModal = useCallback(() => {
+    setDiscardChangesState({
+      type: undefined,
+      isOpen: false,
+      data: []
+    });
+  }, []);
+
+  const onDiscardChanges = useCallback(
+    (type: DiscardChangesType, index?: number) => {
+      if (type === DiscardChangesType.PREREQUISITE) {
+        resetField('prerequisites');
+      }
+      if (type === DiscardChangesType.INDIVIDUAL) {
+        resetField('individualRules');
+      }
+      if (type === DiscardChangesType.CUSTOM && typeof index === 'number') {
+        setActionRuleSegment(undefined);
+        const currentRule = featureRef.rules[index] as FeatureRule;
+
+        const matchedRuleIndex = feature.rules.findIndex(
+          r => r.id === currentRule.id
+        );
+
+        if (matchedRuleIndex !== -1) {
+          const resetSegmentRules = handleCreateSegmentRules(feature);
+          const resetSwap = resetSegmentRules.find(
+            r => r.id === currentRule.id
+          );
+          if (resetSwap) {
+            const fr = normalizeSegmentRules(
+              featureRef.rules,
+              segmentRulesWatch
+            );
+            const { reordered, resetIndex } = reorderWithReset(
+              feature.rules,
+              fr as FeatureRule[],
+              currentRule.id,
+              resetSwap
+            );
+
+            resetField(`segmentRules.${resetIndex}`, { keepDirty: false });
+            segmetRulesReplace(reordered);
+            setValue('segmentRules', reordered);
+            setFeatureRef(prev => ({ ...prev, rules: reordered }));
+          }
+        } else {
+          segmentRulesRemove(index);
+          setFeatureRef(() => ({
+            ...featureRef,
+            rules: featureRef.rules.filter((_, i) => i !== index)
+          }));
+        }
+      }
+      if (type === DiscardChangesType.DEFAULT) {
+        resetField('defaultRule');
+      }
+      handleOnCloseDiscardModal();
+    },
+    [feature, featureRef, segmentRulesWatch]
   );
 
   const onSubmit = useCallback(
@@ -331,6 +612,8 @@ const TargetingPage = ({
                     prerequisites={prerequisites}
                     hasPrerequisiteFlags={hasPrerequisiteFlags}
                     onRemovePrerequisite={prerequisiteRemove}
+                    handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
                     onAddPrerequisite={() =>
                       onAddRule(RuleCategory.PREREQUISITE)
                     }
@@ -343,6 +626,8 @@ const TargetingPage = ({
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={0}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -350,11 +635,17 @@ const TargetingPage = ({
               {individualRules?.length > 0 && (
                 <>
                   <TargetingDivider />
-                  <IndividualRule individualRules={individualRules} />
+                  <IndividualRule
+                    individualRules={individualRules}
+                    handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
+                  />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={0}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -369,13 +660,17 @@ const TargetingPage = ({
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
                     onAddRule={onAddRule}
-                    segmentRulesRemove={segmentRulesRemove}
+                    segmentRulesRemove={handleSegmentRuleRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
+                    handleDiscardChanges={handleDiscardChanges}
+                    handleCheckEdit={checkEditRule}
                   />
                   <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
+                    isInsertSegmentRule={true}
+                    indexInsertSegmentRule={segmentRulesWatch.length + 1}
                     onAddRule={onAddRule}
                   />
                 </>
@@ -388,6 +683,8 @@ const TargetingPage = ({
             urlCode={currentEnvironment.urlCode}
             feature={feature}
             waitingRunningRollouts={waitingRunningRollouts}
+            handleDiscardChanges={handleDiscardChanges}
+            handleCheckEdit={checkEditRule}
           />
           <ButtonBar
             primaryButton={
@@ -462,6 +759,15 @@ const TargetingPage = ({
             setEvaluations([]);
             onOpenDebuggerModal();
           }}
+        />
+      )}
+      {discardChangesState.isOpen && (
+        <DiscardChangeModal
+          {...discardChangesState}
+          actionRule={actionRuleSegment}
+          reorderRule={reorderRule}
+          onClose={handleOnCloseDiscardModal}
+          onSubmit={onDiscardChanges}
         />
       )}
     </PageLayout.Content>

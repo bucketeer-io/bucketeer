@@ -70,6 +70,10 @@
   @apply !fill-gray-50 !stroke-gray-200 !text-gray-50;
 }
 
+.react-datepicker-popper {
+   @apply !z-50;
+}
+
 .react-datepicker__day--disabled {
   @apply text-gray-500;
 }
