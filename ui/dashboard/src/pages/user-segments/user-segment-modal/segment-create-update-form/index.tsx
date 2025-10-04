@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
@@ -78,7 +79,11 @@ const SegmentCreateUpdateModal = ({
     formState: { isValid, isDirty, isSubmitting },
     getFieldState
   } = form;
-
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
   const updateSuccess = (isUpload = false) => {
     if (!isUpload) {
       notify({

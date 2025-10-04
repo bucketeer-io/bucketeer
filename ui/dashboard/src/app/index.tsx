@@ -39,6 +39,7 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
+import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
 import { i18n } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import {
@@ -100,30 +101,35 @@ function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route
-                path={PAGE_PATH_AUTH_CALLBACK}
-                element={<AuthCallbackPage />}
-              />
-              <Route
-                path={PAGE_PATH_AUTH_DEMO_CALLBACK}
-                element={<AuthDemoCallbackPage />}
-              />
-              <Route
-                path={PAGE_PATH_AUTH_SIGNIN}
-                element={<SignInEmailPage />}
-              />
-              <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
-              <Route
-                path={`${PAGE_PATH_DEMO_SITE}/new`}
-                element={<CreateDemoPage />}
-              />
-              <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+        <ConfirmProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route
+                  path={PAGE_PATH_AUTH_CALLBACK}
+                  element={<AuthCallbackPage />}
+                />
+                <Route
+                  path={PAGE_PATH_AUTH_DEMO_CALLBACK}
+                  element={<AuthDemoCallbackPage />}
+                />
+                <Route
+                  path={PAGE_PATH_AUTH_SIGNIN}
+                  element={<SignInEmailPage />}
+                />
+                <Route
+                  path={PAGE_PATH_DEMO_SITE}
+                  element={<AccessDemoPage />}
+                />
+                <Route
+                  path={`${PAGE_PATH_DEMO_SITE}/new`}
+                  element={<CreateDemoPage />}
+                />
+                <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </ConfirmProvider>
         {/* {process.env.NODE_ENV === 'development' && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}

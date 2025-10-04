@@ -15,6 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useNavigationPage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { IconInfo } from '@icons';
@@ -133,9 +134,13 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
 
   const {
     watch,
-    formState: { isDirty, isValid }
+    formState: { isDirty, isValid, isSubmitting }
   } = form;
-
+  useNavigationPage({
+    isShow: isDirty && !isSubmitting,
+    title: t('message:leave-page-unsaved-changes'),
+    content: t('message:leave-page-unsaved-changes-content')
+  });
   const featureId = watch('featureId');
 
   const variationOptions =
