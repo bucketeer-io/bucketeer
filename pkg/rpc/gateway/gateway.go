@@ -372,9 +372,12 @@ func (g *Gateway) Start(ctx context.Context,
 
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
-		Addr:     g.restAddr,
-		Handler:  mux,
-		ErrorLog: stdlog.New(noOpWriter{}, "", 0),
+		Addr:         g.restAddr,
+		Handler:      mux,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		ErrorLog:     stdlog.New(noOpWriter{}, "", 0),
 	}
 
 	// Start the server in a goroutine
