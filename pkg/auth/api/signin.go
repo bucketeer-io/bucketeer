@@ -16,12 +16,14 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
@@ -35,14 +37,61 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
-	config := s.config.DemoSignIn
-	if !config.Enabled ||
-		request.Email != config.Email ||
-		request.Password != config.Password {
-		s.logger.Error(
-			"Sign in failed",
-			zap.Bool("enabled", config.Enabled),
-			zap.String("email", request.Email),
+
+	// Then, try password authentication if enabled
+	if s.config.PasswordAuth.Enabled {
+		return s.handlePasswordSignIn(ctx, request, localizer)
+	}
+
+	// If neither is enabled nor credentials don't match, deny access
+	s.logger.Error("Sign in failed - no valid authentication method",
+		zap.String("email", request.Email),
+		zap.Bool("passwordAuthEnabled", s.config.PasswordAuth.Enabled),
+	)
+	dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.PermissionDenied),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return nil, dt.Err()
+}
+
+func (s *authService) handlePasswordSignIn(
+	ctx context.Context,
+	request *authproto.SignInRequest,
+	localizer locale.Localizer,
+) (*authproto.SignInResponse, error) {
+	email := request.Email
+
+	// Get credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			s.logger.Error("Password sign in failed - no credentials found",
+				zap.String("email", email),
+			)
+		} else {
+			s.logger.Error("Password sign in failed - credentials lookup error",
+				zap.Error(err),
+				zap.String("email", email),
+			)
+		}
+		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Verify password
+	if !auth.ValidatePassword(request.Password, credentials.PasswordHash) {
+		s.logger.Error("Password sign in failed - invalid password",
+			zap.String("email", email),
 		)
 		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -53,27 +102,32 @@ func (s *authService) SignIn(
 		}
 		return nil, dt.Err()
 	}
-	organizations, err := s.getOrganizationsByEmail(ctx, config.Email, localizer)
+
+	// Get organizations for the user
+	organizations, err := s.getOrganizationsByEmail(ctx, email, localizer)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, config.Email, organizations, localizer)
+	// Check account status - user should have at least one enabled account
+	account, err := s.checkAccountStatus(ctx, email, organizations, localizer)
 	if err != nil {
-		s.logger.Error("Failed to check account",
+		s.logger.Error("Failed to check account status for password sign in",
 			zap.Error(err),
-			zap.String("email", config.Email),
-			zap.Any("organizations", organizations),
+			zap.String("email", email),
 		)
 		return nil, err
 	}
+
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin, localizer)
+	// Generate token for successful authentication
+	token, err := s.generateToken(ctx, email, accountDomain, isSystemAdmin, localizer)
 	if err != nil {
 		return nil, err
 	}
+
+	s.logger.Info("Successful password authentication", zap.String("email", email))
 	return &authproto.SignInResponse{Token: token}, nil
 }
