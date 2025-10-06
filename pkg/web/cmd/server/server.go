@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -156,6 +157,7 @@ type server struct {
 	pubSubRedisPartitionCount       *int
 	dataWarehouseType               *string
 	dataWarehouseConfigPath         *string
+	prometheusPushGatewayURL        *string
 }
 
 type DataWarehouseConfig struct {
@@ -336,6 +338,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		dataWarehouseConfigPath: cmd.Flag(
 			"data-warehouse-config-path",
 			"Path to data warehouse configuration file.",
+		).String(),
+		prometheusPushGatewayURL: cmd.Flag("prometheus-push-gateway-url",
+			"URL of the Prometheus Push Gateway for ephemeral metrics.",
 		).String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -845,22 +850,48 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer func() {
 		go healthcheckServer.Stop(serverShutDownTimeout)
 		time.Sleep(serverShutDownTimeout)
+
+		// Use WaitGroup to stop servers in parallel but wait for all to complete
+		var wg sync.WaitGroup
+
 		// Stop gRPC servers
-		go authServer.Stop(serverShutDownTimeout)
-		go accountServer.Stop(serverShutDownTimeout)
-		go auditLogServer.Stop(serverShutDownTimeout)
-		go autoOpsServer.Stop(serverShutDownTimeout)
-		go environmentServer.Stop(serverShutDownTimeout)
-		go experimentServer.Stop(serverShutDownTimeout)
-		go eventCounterServer.Stop(serverShutDownTimeout)
-		go featureServer.Stop(serverShutDownTimeout)
-		go notificationServer.Stop(serverShutDownTimeout)
-		go pushServer.Stop(serverShutDownTimeout)
-		go tagServer.Stop(serverShutDownTimeout)
-		go codeReferenceServer.Stop(serverShutDownTimeout)
-		go teamServer.Stop(serverShutDownTimeout)
-		go webGrpcGateway.Stop(serverShutDownTimeout)
-		// Close clients
+		servers := []interface {
+			Stop(time.Duration)
+		}{
+			authServer,
+			accountServer,
+			auditLogServer,
+			autoOpsServer,
+			environmentServer,
+			experimentServer,
+			eventCounterServer,
+			featureServer,
+			notificationServer,
+			pushServer,
+			tagServer,
+			codeReferenceServer,
+			teamServer,
+		}
+
+		for _, server := range servers {
+			wg.Add(1)
+			go func(s interface{ Stop(time.Duration) }) {
+				defer wg.Done()
+				s.Stop(serverShutDownTimeout)
+			}(server)
+		}
+
+		// Stop web gateway
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			webGrpcGateway.Stop(serverShutDownTimeout)
+		}()
+
+		// Wait for all servers to complete shutdown
+		wg.Wait()
+
+		// Close clients (can remain as goroutines since they're cleanup operations)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
