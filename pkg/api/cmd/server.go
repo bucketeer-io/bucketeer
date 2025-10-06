@@ -502,6 +502,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
+		rpc.WithTimeouts(30*time.Second, 30*time.Second, 60*time.Second), // Short timeouts for API
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()

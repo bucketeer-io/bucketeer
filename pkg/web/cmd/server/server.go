@@ -679,6 +679,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithTimeouts(120*time.Second, 120*time.Second, 180*time.Second),
 	)
 	go eventCounterServer.Run()
 
