@@ -133,6 +133,8 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_API_KEY
               value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_API_PROMETHEUS_PUSH_GATEWAY_URL
+              value: "{{ .Values.env.prometheusPushGatewayURL }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

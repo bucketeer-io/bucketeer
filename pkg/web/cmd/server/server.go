@@ -590,6 +590,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go authServer.Run()
 	// accountService
@@ -605,6 +606,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go accountServer.Run()
 
@@ -620,6 +622,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go auditLogServer.Run()
 
@@ -639,6 +642,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go autoOpsServer.Run()
 
@@ -661,6 +665,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go environmentServer.Run()
 
@@ -686,6 +691,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		// Longer timeouts for web server due to complex BigQuery operations and admin console analytics
 		rpc.WithTimeouts(120*time.Second, 120*time.Second, 180*time.Second),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go eventCounterServer.Run()
 
@@ -704,6 +710,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go experimentServer.Run()
 
@@ -731,6 +738,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go featureServer.Run()
 
@@ -747,6 +755,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go notificationServer.Run()
 
@@ -765,6 +774,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go pushServer.Run()
 
@@ -781,6 +791,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go tagServer.Run()
 
@@ -797,6 +808,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go codeReferenceServer.Run()
 
@@ -813,6 +825,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go teamServer.Run()
 

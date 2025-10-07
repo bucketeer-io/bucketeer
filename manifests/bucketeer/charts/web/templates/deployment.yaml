@@ -205,6 +205,8 @@ spec:
               value: "{{ .Values.webhook.kmsResourceName }}"
             - name: BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
+            - name: BUCKETEER_WEB_PROMETHEUS_PUSH_GATEWAY_URL
+              value: "{{ .Values.env.prometheusPushGatewayURL }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

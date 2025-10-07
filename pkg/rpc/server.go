@@ -88,6 +88,14 @@ func WithMetrics(registerer metrics.Registerer) Option {
 	}
 }
 
+func WithPrometheusPushGateway(url string) Option {
+	return func(s *Server) {
+		if url != "" {
+			s.shutdownTracker = NewShutdownTrackerWithPushGateway(s.name, s.logger, url)
+		}
+	}
+}
+
 func WithTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Option {
 	return func(s *Server) {
 		s.readTimeout = readTimeout
@@ -116,8 +124,11 @@ func NewServer(service Service, certPath, keyPath, serverName string, opt ...Opt
 	}
 	server.logger = server.logger.Named(fmt.Sprintf("rpc-server.%s", serverName))
 
-	// Initialize shutdown tracker
-	server.shutdownTracker = NewShutdownTracker(serverName, server.logger)
+	// Initialize default shutdown tracker (without Push Gateway)
+	// WithPrometheusPushGateway option can override this if needed
+	if server.shutdownTracker == nil {
+		server.shutdownTracker = NewShutdownTracker(serverName, server.logger)
+	}
 
 	if len(certPath) == 0 {
 		server.logger.Fatal("CertPath must not be empty")
@@ -231,6 +242,11 @@ func (s *Server) Stop(timeout time.Duration) {
 	close(shutdownErrors)
 	for err := range shutdownErrors {
 		s.logger.Error("Shutdown error", zap.Error(err))
+	}
+
+	// Push final shutdown metrics after all requests are processed
+	if s.shutdownTracker != nil {
+		s.shutdownTracker.PushFinalMetrics()
 	}
 }
 

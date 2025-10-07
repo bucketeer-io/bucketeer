@@ -118,6 +118,7 @@ type server struct {
 	nonPersistentChildRedisAddresses *[]string
 	nonPersistentRedisPoolMaxIdle    *int
 	nonPersistentRedisPoolMaxActive  *int
+	prometheusPushGatewayURL         *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -233,6 +234,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
 			"The ttl for experiment calculator lock").
 			Default("10m").Duration(),
+		prometheusPushGatewayURL: cmd.Flag("prometheus-push-gateway-url",
+			"URL of the Prometheus Push Gateway for ephemeral metrics.",
+		).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -591,6 +595,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
+		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	go server.Run()
 

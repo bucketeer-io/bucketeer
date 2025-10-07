@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -131,17 +132,28 @@ func registerMetrics(r metrics.Registerer) {
 
 // ShutdownTracker tracks shutdown metrics for a server
 type ShutdownTracker struct {
-	serverName   string
-	logger       *zap.Logger
-	isShutdown   int64 // atomic boolean
-	shutdownTime time.Time
+	serverName     string
+	logger         *zap.Logger
+	pushGatewayURL string
+	isShutdown     int64 // atomic boolean
+	shutdownTime   time.Time
 }
 
 // NewShutdownTracker creates a new shutdown tracker
 func NewShutdownTracker(serverName string, logger *zap.Logger) *ShutdownTracker {
 	return &ShutdownTracker{
-		serverName: serverName,
-		logger:     logger,
+		serverName:     serverName,
+		logger:         logger,
+		pushGatewayURL: "", // Will be set via environment variable if available
+	}
+}
+
+// NewShutdownTrackerWithPushGateway creates a new shutdown tracker with push gateway support
+func NewShutdownTrackerWithPushGateway(serverName string, logger *zap.Logger, pushGatewayURL string) *ShutdownTracker {
+	return &ShutdownTracker{
+		serverName:     serverName,
+		logger:         logger,
+		pushGatewayURL: pushGatewayURL,
 	}
 }
 
@@ -155,10 +167,19 @@ func (st *ShutdownTracker) StartShutdown(reason string) {
 	if atomic.CompareAndSwapInt64(&st.isShutdown, 0, 1) {
 		st.shutdownTime = time.Now()
 		shutdownStartedCounter.WithLabelValues(st.serverName, reason).Inc()
-		st.logger.Info("Shutdown tracking started",
+
+		// Push metrics to Push Gateway if configured
+		if st.pushGatewayURL != "" {
+			go st.pushShutdownMetrics(reason)
+		}
+
+		// Structured logging for better observability
+		st.logger.Info("shutdown_event",
+			zap.String("event_type", "shutdown_started"),
 			zap.String("server", st.serverName),
 			zap.String("reason", reason),
-			zap.Time("shutdown_time", st.shutdownTime))
+			zap.Time("shutdown_time", st.shutdownTime),
+			zap.String("log_type", "shutdown_tracking"))
 	}
 }
 
@@ -170,11 +191,14 @@ func (st *ShutdownTracker) TrackShutdownDuration(component string, duration time
 	}
 	shutdownDurationHistogram.WithLabelValues(st.serverName, component, status).Observe(duration.Seconds())
 
-	st.logger.Info("Shutdown component completed",
+	// Structured logging for shutdown component completion
+	st.logger.Info("shutdown_event",
+		zap.String("event_type", "component_completed"),
 		zap.String("server", st.serverName),
 		zap.String("component", component),
 		zap.Duration("duration", duration),
-		zap.String("status", status))
+		zap.String("status", status),
+		zap.String("log_type", "shutdown_tracking"))
 }
 
 // TrackInflightRequests updates the count of in-flight requests
@@ -192,6 +216,7 @@ func (st *ShutdownTracker) TrackShutdownRequest(protocol string, duration time.D
 	shutdownRequestsCounter.WithLabelValues(st.serverName, protocol, status).Inc()
 	shutdownRequestDurationHistogram.WithLabelValues(st.serverName, protocol, status).Observe(duration.Seconds())
 
+	// Only log, don't push on every request during shutdown
 	if st.IsShuttingDown() {
 		st.logger.Debug("Request processed during shutdown",
 			zap.String("server", st.serverName),
@@ -293,6 +318,38 @@ type responseRecorder struct {
 func (rr *responseRecorder) WriteHeader(code int) {
 	rr.statusCode = code
 	rr.ResponseWriter.WriteHeader(code)
+}
+
+// pushShutdownMetrics pushes shutdown metrics to Push Gateway
+func (st *ShutdownTracker) pushShutdownMetrics(reason string) {
+	pusher := push.New(st.pushGatewayURL, "shutdown_events").
+		Collector(shutdownStartedCounter).
+		Collector(shutdownDurationHistogram).
+		Collector(shutdownRequestsCounter).
+		Collector(shutdownRequestDurationHistogram).
+		Collector(droppedRequestsCounter).
+		// Note: Don't add shutdown_reason as grouping since it's already a metric label
+		Grouping("server", st.serverName)
+
+	if err := pusher.Push(); err != nil {
+		st.logger.Error("Failed to push shutdown metrics to Push Gateway",
+			zap.Error(err),
+			zap.String("push_gateway_url", st.pushGatewayURL),
+			zap.String("reason", reason))
+	} else {
+		st.logger.Info("Successfully pushed shutdown metrics to Push Gateway",
+			zap.String("push_gateway_url", st.pushGatewayURL),
+			zap.String("reason", reason))
+	}
+}
+
+// PushFinalMetrics pushes all accumulated shutdown metrics at the end
+func (st *ShutdownTracker) PushFinalMetrics() {
+	if st.pushGatewayURL != "" && st.IsShuttingDown() {
+		st.logger.Info("Pushing final shutdown metrics",
+			zap.String("server", st.serverName))
+		st.pushShutdownMetrics("sigterm")
+	}
 }
 
 func MetricsUnaryServerInterceptor() grpc.UnaryServerInterceptor {

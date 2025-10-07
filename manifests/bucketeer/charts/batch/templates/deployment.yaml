@@ -167,6 +167,8 @@ spec:
               value: "{{ .Values.env.experimentLockTTL }}"
             - name: BUCKETEER_BATCH_STAN_MODEL_ID
               value: "{{ .Values.httpstan.modelId }}"
+            - name: BUCKETEER_BATCH_PROMETHEUS_PUSH_GATEWAY_URL
+              value: "{{ .Values.env.prometheusPushGatewayURL }}"
 
           volumeMounts:
             - name: service-cert-secret
