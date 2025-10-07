@@ -190,7 +190,25 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - |
+                    # Fail Envoy health check immediately
+                    wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
+
+                    # For subscriber service, give time for PubSub message processing to complete
+                    # Check if subscriber process is still active (more reliable than netstat)
+                    timeout=25
+                    while [ $timeout -gt 0 ]; do
+                      # Check if subscriber main process is still running (processing messages)
+                      if ! pgrep -f "subscriber" > /dev/null; then
+                        echo "Subscriber process completed, ready for shutdown..."
+                        break
+                      fi
+                      sleep 1
+                      timeout=$((timeout-1))
+                    done
+
+                    # Additional drain time for any remaining connections
+                    sleep 3
           command: ["envoy"]
           args:
             - "-c"

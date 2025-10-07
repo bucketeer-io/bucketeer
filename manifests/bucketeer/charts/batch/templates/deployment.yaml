@@ -210,7 +210,23 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - |
+                    # Fail Envoy health check immediately
+                    wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
+
+                    # Wait for Batch service to signal ready for shutdown (max 25s)
+                    timeout=25
+                    while [ $timeout -gt 0 ]; do
+                      if wget -q -O- --no-check-certificate https://localhost:9090/internal/shutdown-ready 2>/dev/null | grep -q "ready"; then
+                        echo "Batch service ready for shutdown, draining connections..."
+                        break
+                      fi
+                      sleep 1
+                      timeout=$((timeout-1))
+                    done
+
+                    # Additional drain time
+                    sleep 3
           command: ["envoy"]
           args:
             - "-c"
