@@ -227,13 +227,13 @@ data:
                               prefix: /health
                             route:
                               cluster: api
-                              timeout: 45s
+                              timeout: 35s
                           # API REST v1 Gateway routes (Deprecated)
                           - match:
                               prefix: /v1/gateway
                             route:
                               cluster: api-rest-v1
-                              timeout: 30s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
                                 num_retries: 1
@@ -247,7 +247,7 @@ data:
                               prefix: /bucketeer.gateway.Gateway
                             route:
                               cluster: api
-                              timeout: 30s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
                                 num_retries: 1
@@ -257,7 +257,7 @@ data:
                               prefix: /
                             route:
                               cluster: api-grpc-gateway
-                              timeout: 30s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
                                 num_retries: 1
@@ -309,7 +309,7 @@ data:
                               prefix: /bucketeer.feature.FeatureService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -322,7 +322,7 @@ data:
                               prefix: /bucketeer.account.AccountService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -335,7 +335,7 @@ data:
                               prefix: /bucketeer.push.PushService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -348,7 +348,7 @@ data:
                               prefix: /bucketeer.coderef.CodeReferenceService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -361,7 +361,7 @@ data:
                               prefix: /bucketeer.auditlog.AuditLogService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -374,7 +374,7 @@ data:
                               prefix: /bucketeer.autoops.AutoOpsService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -387,7 +387,7 @@ data:
                               prefix: /bucketeer.tag.TagService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -400,7 +400,7 @@ data:
                               prefix: /bucketeer.team.TeamService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -413,7 +413,7 @@ data:
                               prefix: /bucketeer.notification.NotificationService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -426,7 +426,7 @@ data:
                               prefix: /bucketeer.experiment.ExperimentService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -439,7 +439,7 @@ data:
                               prefix: /bucketeer.eventcounter.EventCounterService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
@@ -452,7 +452,7 @@ data:
                               prefix: /bucketeer.environment.EnvironmentService
                             route:
                               cluster: web
-                              timeout: 45s
+                              timeout: 35s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 1
