@@ -91,6 +91,8 @@ type server struct {
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
+	// Prometheus Push Gateway
+	prometheusPushGatewayURL *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -193,6 +195,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		prometheusPushGatewayURL: cmd.Flag(
+			"prometheus-push-gateway-url",
+			"Prometheus Push Gateway URL for ephemeral metrics.",
+		).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -358,7 +364,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go healthcheckServer.Run()
 
+	// Start global continuous metrics pushing for subscriber service
+	if *s.prometheusPushGatewayURL != "" {
+		pushInterval := 30 * time.Second // Default 30s, can be made configurable
+		metrics.StartContinuousPushing(*s.prometheusPushGatewayURL, "subscriber", pushInterval)
+	}
+
 	defer func() {
+		// Push final metrics before stopping
+		if *s.prometheusPushGatewayURL != "" {
+			metrics.PushFinalMetrics()
+			metrics.StopContinuousPushing()
+		}
+
 		healthcheckServer.Stop(serverShutDownTimeout)
 		multiPubSub.Stop()
 		notificationClient.Close()

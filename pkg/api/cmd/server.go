@@ -511,6 +511,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer server.Stop(10 * time.Second)
 	go server.Run()
 
+	// Start global continuous metrics pushing
+	if *s.prometheusPushGatewayURL != "" {
+		pushInterval := 30 * time.Second // Default 30s, can be made configurable
+		metrics.StartContinuousPushing(*s.prometheusPushGatewayURL, "api-gateway", pushInterval)
+	}
+
 	// Set up gRPC Gateway for API service
 	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
@@ -576,6 +582,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// from the service load balancer.
 	defer healthChecker.Stop()
 	defer restHealthChecker.Stop()
+
+	// Ensure final metrics push happens after shutdown metrics are recorded
+	defer func() {
+		if *s.prometheusPushGatewayURL != "" {
+			metrics.PushFinalMetrics()
+			metrics.StopContinuousPushing()
+		}
+	}()
 
 	<-ctx.Done()
 	return nil

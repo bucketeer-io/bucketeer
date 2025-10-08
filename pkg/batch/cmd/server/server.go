@@ -623,7 +623,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to start batch gateway: %v", err)
 	}
 
+	// Start global continuous metrics pushing for batch service
+	if *s.prometheusPushGatewayURL != "" {
+		pushInterval := 30 * time.Second // Default 30s, can be made configurable
+		metrics.StartContinuousPushing(*s.prometheusPushGatewayURL, "batch-server", pushInterval)
+	}
+
 	defer func() {
+		// Push final metrics before stopping
+		if *s.prometheusPushGatewayURL != "" {
+			metrics.PushFinalMetrics()
+			metrics.StopContinuousPushing()
+		}
+
 		server.Stop(serverShutDownTimeout)
 		batchGateway.Stop(serverShutDownTimeout)
 		accountClient.Close()

@@ -857,6 +857,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
 	}
 
+	// Start global continuous metrics pushing for web service
+	if *s.prometheusPushGatewayURL != "" {
+		pushInterval := 30 * time.Second // Default 30s, can be made configurable
+		metrics.StartContinuousPushing(*s.prometheusPushGatewayURL, "web-server", pushInterval)
+	}
+
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -903,6 +909,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Wait for all servers to complete shutdown
 		wg.Wait()
+
+		// Push final metrics after all shutdown metrics are recorded
+		if *s.prometheusPushGatewayURL != "" {
+			metrics.PushFinalMetrics()
+			metrics.StopContinuousPushing()
+		}
 
 		// Close clients (can remain as goroutines since they're cleanup operations)
 		go mysqlClient.Close()
