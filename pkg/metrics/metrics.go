@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"go.uber.org/zap"
@@ -142,7 +143,7 @@ func (mp *ContinuousMetricsPusher) Start(interval time.Duration) {
 				mp.pushAllMetrics()
 			case <-mp.ctx.Done():
 				// Final push before shutdown
-				mp.logger.Info("Performing final global metrics push before shutdown")
+				mp.logger.Debug("Performing final global metrics push before shutdown")
 				mp.pushAllMetrics()
 				return
 			}
@@ -168,11 +169,6 @@ func (mp *ContinuousMetricsPusher) pushAllMetrics() {
 		if err := pusher.Push(); err != nil {
 			mp.logger.Error("Failed to push global metrics to Push Gateway",
 				zap.Error(err),
-				zap.String("pushgateway_url", mp.pushGatewayURL),
-				zap.String("service", mp.serviceName),
-				zap.String("path", path))
-		} else {
-			mp.logger.Debug("Successfully pushed global metrics to Push Gateway",
 				zap.String("pushgateway_url", mp.pushGatewayURL),
 				zap.String("service", mp.serviceName),
 				zap.String("path", path))
@@ -213,8 +209,8 @@ func NewMetrics(port int, path string, opts ...Option) Metrics {
 	}
 	r := m.Registerer(path)
 	r.MustRegister(
-		prometheus.NewGoCollector(),
-		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 	return m
 }
@@ -267,9 +263,7 @@ func (m *metrics) StartContinuousPushing(pushGatewayURL, serviceName string, int
 			m.registries,
 		)
 		m.continuousPusher.Start(interval)
-		m.logger.Info("Started global continuous metrics pushing",
-			zap.String("service", serviceName),
-			zap.Duration("interval", interval))
+		// Startup logging handled in ContinuousMetricsPusher.Start()
 	}
 }
 
@@ -284,7 +278,7 @@ func (m *metrics) StopContinuousPushing() {
 // PushFinalMetrics performs a final push of all metrics (including shutdown metrics)
 func (m *metrics) PushFinalMetrics() {
 	if m.continuousPusher != nil {
-		m.logger.Info("Performing final push of all metrics including shutdown metrics")
+		// Final push - logging handled in pushAllMetrics errors if needed
 		m.continuousPusher.pushAllMetrics()
 	}
 }
