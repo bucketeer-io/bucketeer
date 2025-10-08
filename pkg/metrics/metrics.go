@@ -250,7 +250,9 @@ func (m *metrics) Stop() {
 	// Stop continuous pushing before shutting down metrics server
 	m.StopContinuousPushing()
 
-	m.server.Shutdown(ctx) // nolint:errcheck
+	if err := m.server.Shutdown(ctx); err != nil {
+		m.logger.Error("Failed to shutdown metrics server", zap.Error(err))
+	}
 }
 
 // StartContinuousPushing begins continuous pushing of all metrics to pushgateway

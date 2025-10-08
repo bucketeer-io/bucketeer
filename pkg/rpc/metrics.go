@@ -132,28 +132,78 @@ func registerMetrics(r metrics.Registerer) {
 
 // ShutdownTracker tracks shutdown metrics for a server
 type ShutdownTracker struct {
-	serviceName    string
-	logger         *zap.Logger
-	pushGatewayURL string
-	isShutdown     int64 // atomic boolean
-	shutdownTime   time.Time
+	serviceName      string
+	serverName       string // Server name (api, web, batch, subscriber)
+	cleanServiceName string // Clean service name without -server suffix
+	logger           *zap.Logger
+	pushGatewayURL   string
+	isShutdown       int64 // atomic boolean
+	shutdownTime     time.Time
 }
 
 // NewShutdownTracker creates a new shutdown tracker
 func NewShutdownTracker(serviceName string, logger *zap.Logger) *ShutdownTracker {
+	serverName, cleanServiceName := inferServerAndServiceNames(serviceName)
 	return &ShutdownTracker{
-		serviceName:    serviceName,
-		logger:         logger,
-		pushGatewayURL: "", // Will be set via environment variable if available
+		serviceName:      serviceName,
+		serverName:       serverName,
+		cleanServiceName: cleanServiceName,
+		logger:           logger,
+		pushGatewayURL:   "", // Will be set via environment variable if available
 	}
 }
 
 // NewShutdownTrackerWithPushGateway creates a new shutdown tracker with push gateway support
 func NewShutdownTrackerWithPushGateway(serviceName string, logger *zap.Logger, pushGatewayURL string) *ShutdownTracker {
+	serverName, cleanServiceName := inferServerAndServiceNames(serviceName)
 	return &ShutdownTracker{
-		serviceName:    serviceName,
-		logger:         logger,
-		pushGatewayURL: pushGatewayURL,
+		serviceName:      serviceName,
+		serverName:       serverName,
+		cleanServiceName: cleanServiceName,
+		logger:           logger,
+		pushGatewayURL:   pushGatewayURL,
+	}
+}
+
+// inferServerAndServiceNames determines server and service names using static mapping
+func inferServerAndServiceNames(serviceName string) (serverName, cleanServiceName string) {
+	return inferServerAndServiceNamesStatic(serviceName)
+}
+
+// inferServerAndServiceNamesStatic provides static mapping
+func inferServerAndServiceNamesStatic(serviceName string) (serverName, cleanServiceName string) {
+	// Map web services to "web" server with clean service names (no -server suffix)
+	webServices := map[string]string{
+		"account-server":        "account",
+		"auth-server":           "auth",
+		"audit-log-server":      "audit-log",
+		"auto-ops-server":       "auto-ops",
+		"environment-server":    "environment",
+		"event-counter-server":  "event-counter",
+		"experiment-server":     "experiment",
+		"feature-server":        "feature",
+		"notification-server":   "notification",
+		"push-server":           "push",
+		"tag-server":            "tag",
+		"code-reference-server": "code-reference",
+		"team-server":           "team",
+	}
+
+	if cleanName, exists := webServices[serviceName]; exists {
+		return "web", cleanName
+	}
+
+	// For standalone services, map to clean names
+	switch serviceName {
+	case "api-gateway":
+		return "api", "api-gateway" // Keep as-is since it's already clean
+	case "batch-server":
+		return "batch", "batch" // Remove -server suffix
+	case "subscriber":
+		return "subscriber", "subscriber" // Already clean
+	default:
+		// Default fallback - use service name as both server and clean service
+		return serviceName, serviceName
 	}
 }
 
@@ -328,17 +378,22 @@ func (st *ShutdownTracker) pushShutdownMetrics(reason string) {
 		Collector(shutdownRequestsCounter).
 		Collector(shutdownRequestDurationHistogram).
 		Collector(droppedRequestsCounter).
-		// Note: Don't add shutdown_reason as grouping since it's already a metric label
-		Grouping("server", st.serviceName)
+		// Add hierarchical labels for flexible querying
+		Grouping("service", st.cleanServiceName). // Clean service name (account, auth, api-gateway, batch, etc.)
+		Grouping("server", st.serverName)         // Server name (web, api, batch, subscriber)
 
 	if err := pusher.Push(); err != nil {
 		st.logger.Error("Failed to push shutdown metrics to Push Gateway",
 			zap.Error(err),
 			zap.String("push_gateway_url", st.pushGatewayURL),
+			zap.String("service", st.cleanServiceName),
+			zap.String("server", st.serverName),
 			zap.String("reason", reason))
 	} else {
 		st.logger.Info("Successfully pushed shutdown metrics to Push Gateway",
 			zap.String("push_gateway_url", st.pushGatewayURL),
+			zap.String("service", st.cleanServiceName),
+			zap.String("server", st.serverName),
 			zap.String("reason", reason))
 	}
 }
