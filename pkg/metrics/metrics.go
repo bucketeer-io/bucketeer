@@ -163,7 +163,7 @@ func (mp *ContinuousMetricsPusher) pushAllMetrics() {
 
 		pusher := push.New(mp.pushGatewayURL, jobName).
 			Gatherer(registry.Registry). // Push all metrics from this registry
-			Grouping("service", mp.serviceName).
+			Grouping("bucketeer_service", mp.serviceName).
 			Grouping("metrics_path", path)
 
 		if err := pusher.Push(); err != nil {
