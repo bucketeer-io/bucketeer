@@ -68,7 +68,7 @@ var (
 			Subsystem: "server",
 			Name:      "shutdown_started_total",
 			Help:      "Total number of server shutdowns initiated.",
-		}, []string{"service", "shutdown_reason"})
+		}, []string{"server", "service", "shutdown_reason"})
 
 	shutdownDurationHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -77,7 +77,7 @@ var (
 			Name:      "shutdown_duration_seconds",
 			Help:      "Time taken for graceful shutdown by component.",
 			Buckets:   []float64{0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0},
-		}, []string{"service", "component", "status"})
+		}, []string{"server", "service", "component", "status"})
 
 	inflightRequestsGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -85,7 +85,7 @@ var (
 			Subsystem: "server",
 			Name:      "inflight_requests",
 			Help:      "Number of requests currently being processed.",
-		}, []string{"service", "protocol"})
+		}, []string{"server", "service", "protocol"})
 
 	shutdownRequestsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -93,7 +93,7 @@ var (
 			Subsystem: "server",
 			Name:      "shutdown_requests_total",
 			Help:      "Total number of requests processed during shutdown phase.",
-		}, []string{"service", "protocol", "status"})
+		}, []string{"server", "service", "protocol", "status"})
 
 	shutdownRequestDurationHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -102,7 +102,7 @@ var (
 			Name:      "shutdown_request_duration_seconds",
 			Help:      "Duration of requests processed during shutdown phase.",
 			Buckets:   []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0},
-		}, []string{"service", "protocol", "status"})
+		}, []string{"server", "service", "protocol", "status"})
 
 	droppedRequestsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -110,7 +110,7 @@ var (
 			Subsystem: "server",
 			Name:      "dropped_requests_total",
 			Help:      "Total number of requests dropped during shutdown.",
-		}, []string{"service", "protocol", "reason"})
+		}, []string{"server", "service", "protocol", "reason"})
 )
 
 func registerMetrics(r metrics.Registerer) {
@@ -216,7 +216,7 @@ func (st *ShutdownTracker) IsShuttingDown() bool {
 func (st *ShutdownTracker) StartShutdown(reason string) {
 	if atomic.CompareAndSwapInt64(&st.isShutdown, 0, 1) {
 		st.shutdownTime = time.Now()
-		shutdownStartedCounter.WithLabelValues(st.serviceName, reason).Inc()
+		shutdownStartedCounter.WithLabelValues(st.serverName, st.cleanServiceName, reason).Inc()
 
 		// Push metrics to Push Gateway if configured
 		if st.pushGatewayURL != "" {
@@ -239,7 +239,7 @@ func (st *ShutdownTracker) TrackShutdownDuration(component string, duration time
 	if !success {
 		status = "timeout"
 	}
-	shutdownDurationHistogram.WithLabelValues(st.serviceName, component, status).Observe(duration.Seconds())
+	shutdownDurationHistogram.WithLabelValues(st.serverName, st.cleanServiceName, component, status).Observe(duration.Seconds())
 
 	// Structured logging for shutdown component completion
 	st.logger.Info("shutdown_event",
@@ -253,7 +253,7 @@ func (st *ShutdownTracker) TrackShutdownDuration(component string, duration time
 
 // TrackInflightRequests updates the count of in-flight requests
 func (st *ShutdownTracker) TrackInflightRequests(protocol string, delta int) {
-	inflightRequestsGauge.WithLabelValues(st.serviceName, protocol).Add(float64(delta))
+	inflightRequestsGauge.WithLabelValues(st.serverName, st.cleanServiceName, protocol).Add(float64(delta))
 }
 
 // TrackShutdownRequest records a request processed during shutdown
@@ -263,8 +263,8 @@ func (st *ShutdownTracker) TrackShutdownRequest(protocol string, duration time.D
 		status = "failed"
 	}
 
-	shutdownRequestsCounter.WithLabelValues(st.serviceName, protocol, status).Inc()
-	shutdownRequestDurationHistogram.WithLabelValues(st.serviceName, protocol, status).Observe(duration.Seconds())
+	shutdownRequestsCounter.WithLabelValues(st.serverName, st.cleanServiceName, protocol, status).Inc()
+	shutdownRequestDurationHistogram.WithLabelValues(st.serverName, st.cleanServiceName, protocol, status).Observe(duration.Seconds())
 
 	// Only log, don't push on every request during shutdown
 	if st.IsShuttingDown() {
@@ -279,7 +279,7 @@ func (st *ShutdownTracker) TrackShutdownRequest(protocol string, duration time.D
 
 // TrackDroppedRequest records a request that was dropped
 func (st *ShutdownTracker) TrackDroppedRequest(protocol string, reason string) {
-	droppedRequestsCounter.WithLabelValues(st.serviceName, protocol, reason).Inc()
+	droppedRequestsCounter.WithLabelValues(st.serverName, st.cleanServiceName, protocol, reason).Inc()
 
 	st.logger.Warn("Request dropped during shutdown",
 		zap.String("server", st.serviceName),
