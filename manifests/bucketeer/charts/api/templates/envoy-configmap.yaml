@@ -201,6 +201,8 @@ data:
                     - name: envoy.filters.http.cors
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+                    # DEPRECATED: grpc-web filter for legacy Node.js SDK
+                    # TODO: Remove once Node.js SDK migrates to gRPC-Gateway (REST) or pure gRPC
                     - name: envoy.filters.http.grpc_web
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb

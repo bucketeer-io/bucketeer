@@ -569,8 +569,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
 	// 1. Stop health checks immediately to fail Kubernetes readiness probe ASAP
-	// 2. Gracefully drain all servers in parallel (allows in-flight requests to complete)
-	// 3. Close clients
+	// 2. Gracefully drain REST/HTTP servers first (apiGateway + httpServer)
+	// 3. Then stop gRPC server (after REST traffic completes)
+	// 4. Close clients
+	//
+	// Shutdown order is critical because apiGateway forwards requests to server (port 9090).
+	// If server stops while apiGateway is processing, those requests fail.
 	//
 	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
 	// to return 200 (set by rpc.Server after graceful shutdown completes).
@@ -581,15 +585,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		healthChecker.Stop()
 		restHealthChecker.Stop()
 
-		// Step 2: Gracefully stop all servers in parallel
-		// Each server will reject new requests and wait for existing requests to complete.
+		// Step 2: Gracefully stop REST/HTTP servers (these call the gRPC server internally)
+		// We run these in parallel since they don't depend on each other
 		var wg sync.WaitGroup
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			server.Stop(serverShutDownTimeout)
-		}()
 
 		wg.Add(1)
 		go func() {
@@ -603,8 +601,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			httpServer.Stop(serverShutDownTimeout)
 		}()
 
-		// Wait for all servers to complete shutdown
+		// Wait for REST/HTTP traffic to drain
 		wg.Wait()
+
+		// Step 3: Stop gRPC server (only pure gRPC connections remain)
+		server.Stop(serverShutDownTimeout)
 
 		// Step 3: Close clients
 		// These are fast cleanup operations that can run asynchronously.

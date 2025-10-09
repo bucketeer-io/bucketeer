@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -621,8 +620,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
 	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
-	// 2. Gracefully drain all servers in parallel (allows in-flight requests to complete)
-	// 3. Close database/cache/pubsub clients
+	// 2. Gracefully drain REST gateway first (batchGateway)
+	// 3. Then stop gRPC server (after REST traffic completes)
+	// 4. Close database/cache/pubsub clients
+	//
+	// Shutdown order is critical because batchGateway forwards requests to server (port 9000).
+	// If server stops while batchGateway is processing, those requests fail.
 	//
 	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
 	// to return 200 (set by rpc.Server after graceful shutdown completes).
@@ -632,24 +635,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
 
-		// Step 2: Gracefully stop all servers in parallel
-		// Each server will reject new requests and wait for existing requests to complete.
-		var wg sync.WaitGroup
+		// Step 2: Gracefully stop REST gateway (calls the gRPC server internally)
+		batchGateway.Stop(serverShutDownTimeout)
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			server.Stop(serverShutDownTimeout)
-		}()
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			batchGateway.Stop(serverShutDownTimeout)
-		}()
-
-		// Wait for all servers to complete shutdown
-		wg.Wait()
+		// Step 3: Stop gRPC server (only pure gRPC connections remain)
+		server.Stop(serverShutDownTimeout)
 
 		// Step 3: Close clients
 		// These are fast cleanup operations that can run asynchronously.

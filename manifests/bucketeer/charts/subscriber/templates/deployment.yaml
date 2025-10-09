@@ -197,27 +197,31 @@ spec:
                   - "/bin/sh"
                   - "-c"
                   - |
-                    # Fail Envoy health check immediately
+                    # Step 1: Fail Envoy health check so K8s removes pod from endpoints
                     wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
 
-                    # For subscriber service, give time for PubSub message processing to complete (max 22s)
-                    # This is coordinated with the app's 20s shutdown timeout.
-                    # Envoy must wait LONGER than the app timeout to ensure it doesn't exit
-                    # while the subscriber is still processing messages.
-                    # Note: Subscriber uses process detection instead of /internal/shutdown-ready endpoint
-                    timeout=22
-                    while [ $timeout -gt 0 ]; do
-                      # Check if subscriber main process is still running (processing messages)
-                      if ! pgrep -f "subscriber" > /dev/null; then
-                        echo "Subscriber process completed, ready for shutdown..."
+                    # Step 2: Stop accepting new inbound connections at Envoy
+                    wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/drain_listeners?inboundonly
+
+                    # Step 3: Wait for all active connections to drain (max 25s)
+                    # Uses Istio pattern: dynamically checks all connections excluding Envoy and TIME-WAIT
+                    elapsed=0
+                    max_wait=25
+                    while [ $elapsed -lt $max_wait ]; do
+                      # Count active connections excluding Envoy process and TIME-WAIT states
+                      active_conns=$(ss -Htlp state all | grep -vE '(envoy|TIME-WAIT)' | wc -l | xargs)
+                      if [ "$active_conns" -eq 0 ]; then
+                        echo "All connections drained after ${elapsed}s"
                         break
                       fi
+                      echo "Waiting for $active_conns connections to drain..."
                       sleep 1
-                      timeout=$((timeout-1))
+                      elapsed=$((elapsed + 1))
                     done
 
-                    # Additional drain time for remaining connections
-                    sleep 3
+                    if [ $elapsed -ge $max_wait ]; then
+                      echo "Timeout reached, forcing shutdown with $active_conns remaining connections"
+                    fi
           command: ["envoy"]
           args:
             - "-c"

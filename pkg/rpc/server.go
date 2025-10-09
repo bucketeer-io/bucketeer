@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -31,16 +30,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-)
-
-const (
-	// minGracefulTimeout is the minimum timeout for graceful shutdown operations.
-	// This ensures that shutdown operations have at least some time to complete.
-	minGracefulTimeout = 1 * time.Second
-
-	// httpServerBuffer is the additional time reserved for HTTP server shutdown
-	// after gRPC server completes. This prevents premature HTTP termination.
-	httpServerBuffer = 1 * time.Second
 )
 
 type Server struct {
@@ -55,7 +44,7 @@ type Server struct {
 	handlers         []httpHandler
 	rpcServer        *grpc.Server
 	httpServer       *http.Server
-	grpcWebServer    *grpcweb.WrappedGrpcServer
+	grpcWebServer    *grpcweb.WrappedGrpcServer // DEPRECATED: Remove once Node.js SDK migrates away from grpc-web
 	readTimeout      time.Duration
 	writeTimeout     time.Duration
 	idleTimeout      time.Duration
@@ -157,80 +146,41 @@ func (s *Server) Stop(timeout time.Duration) {
 		zap.String("server", s.name),
 		zap.Duration("timeout", timeout))
 
-	var wg sync.WaitGroup
-	shutdownErrors := make(chan error, 2)
+	// Shutdown order is critical:
+	// 1. HTTP server first (drains REST/gRPC-Gateway requests)
+	// 2. gRPC server second (only pure gRPC connections remain)
+	//
+	// This ensures HTTP requests that call s.rpcServer.ServeHTTP() can complete
+	// before we stop the underlying gRPC server.
 
-	// Shutdown gRPC server
-	if s.rpcServer != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			s.logger.Info("Starting gRPC server graceful shutdown")
-
-			// Use a shorter timeout for gRPC to leave time for HTTP
-			grpcTimeout := timeout - httpServerBuffer
-			if grpcTimeout < minGracefulTimeout {
-				grpcTimeout = minGracefulTimeout
-			}
-
-			done := make(chan struct{})
-			go func() {
-				s.rpcServer.GracefulStop()
-				close(done)
-			}()
-
-			select {
-			case <-done:
-				s.logger.Info("gRPC server shutdown completed gracefully")
-			case <-time.After(grpcTimeout):
-				s.logger.Warn("gRPC server graceful shutdown timed out, forcing stop")
-				s.rpcServer.Stop()
-			}
-		}()
-	}
-
-	// Shutdown HTTP server
+	// Step 1: Shutdown HTTP server gracefully
 	if s.httpServer != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			s.logger.Info("Starting HTTP server graceful shutdown")
+		s.logger.Info("Starting HTTP server graceful shutdown")
 
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-			if err := s.httpServer.Shutdown(ctx); err != nil {
-				s.logger.Error("HTTP server failed to shut down gracefully", zap.Error(err))
-				shutdownErrors <- err
-			} else {
-				s.logger.Info("HTTP server shutdown completed gracefully")
-			}
-		}()
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			s.logger.Error("HTTP server failed to shut down gracefully", zap.Error(err))
+		} else {
+			s.logger.Info("HTTP server shutdown completed gracefully")
+		}
 	}
 
-	// Wait for all shutdowns to complete or timeout
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		s.logger.Info("Server shutdown completed",
-			zap.String("server", s.name),
-			zap.Duration("total_duration", time.Since(shutdownStart)))
-	case <-time.After(timeout):
-		s.logger.Warn("Server shutdown timed out",
-			zap.String("server", s.name),
-			zap.Duration("timeout", timeout))
+	// Step 2: Stop gRPC server
+	// Note: We use Stop() instead of GracefulStop() because:
+	// - GracefulStop() panics on HTTP-served connections (serverHandlerTransport.Drain not implemented)
+	// - HTTP-served connections were already drained in step 1
+	// - Pure gRPC clients have retry logic and Envoy connection draining to handle this
+	if s.rpcServer != nil {
+		s.logger.Info("Stopping gRPC server")
+		s.rpcServer.Stop()
+		s.logger.Info("gRPC server stopped")
 	}
 
-	// Log any shutdown errors
-	close(shutdownErrors)
-	for err := range shutdownErrors {
-		s.logger.Error("Shutdown error", zap.Error(err))
-	}
+	s.logger.Info("Server shutdown completed",
+		zap.String("server", s.name),
+		zap.Duration("total_duration", time.Since(shutdownStart)))
 
 	// Mark shutdown as complete for Envoy coordination
 	atomic.StoreInt32(&s.shutdownComplete, 1)
@@ -260,7 +210,9 @@ func (s *Server) setupRPC() {
 		service.Register(s.rpcServer)
 	}
 
-	// Create gRPC-Web wrapper
+	// DEPRECATED: grpc-web support for legacy Node.js SDK
+	// TODO: Remove once Node.js SDK migrates to gRPC-Gateway (REST) or pure gRPC
+	// This is an abandoned library (last updated 2021) with known issues.
 	s.grpcWebServer = grpcweb.WrapServer(s.rpcServer)
 }
 
@@ -287,6 +239,8 @@ func (s *Server) setupHTTP() {
 
 	// Wrap the main handler with shutdown tracking middleware
 	mainHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		// DEPRECATED: grpc-web support for legacy Node.js SDK
+		// This check should be removed once Node.js SDK migrates away from grpc-web
 		if s.grpcWebServer.IsGrpcWebRequest(req) {
 			s.grpcWebServer.ServeHTTP(resp, req)
 		} else if isRPC(req) {

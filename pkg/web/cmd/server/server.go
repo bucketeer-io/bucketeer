@@ -847,9 +847,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
 	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
-	// 2. Gracefully drain all application servers (allows in-flight requests to complete)
-	// 3. Stop dashboard and gateway servers
+	// 2. Stop REST servers first (dashboardServer, webGrpcGateway)
+	// 3. Then stop gRPC servers (after REST traffic completes)
 	// 4. Close database/cache/pubsub clients
+	//
+	// Shutdown order is critical because webGrpcGateway forwards REST requests to gRPC servers
+	// (authServer, accountServer, etc.). If gRPC servers stop while webGrpcGateway is processing,
+	// those requests fail.
 	//
 	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
 	// to return 200 (set by rpc.Server after graceful shutdown completes).
@@ -859,8 +863,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// preventing new traffic from being routed to this pod.
 		healthcheckServer.Stop(5 * time.Second)
 
-		// Step 2: Gracefully stop all gRPC servers in parallel
-		// Each server will reject new requests and wait for existing requests to complete.
+		// Step 2: Stop REST servers (these call gRPC servers internally)
+		// Stop these first to drain REST traffic before stopping gRPC
+		dashboardServer.Stop(5 * time.Second)
+		webGrpcGateway.Stop(5 * time.Second)
+
+		// Step 3: Gracefully stop all gRPC servers in parallel
+		// Now safe to stop since REST traffic has drained
 		var wg sync.WaitGroup
 
 		servers := []GracefulStopper{
@@ -887,13 +896,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			}(server)
 		}
 
-		// Wait for all gRPC servers to complete graceful shutdown
+		// Wait for all gRPC servers to complete shutdown
 		wg.Wait()
-
-		// Step 3: Stop REST servers
-		// Dashboard and gateway can stop after gRPC servers complete
-		dashboardServer.Stop(5 * time.Second)
-		webGrpcGateway.Stop(5 * time.Second)
 
 		// Step 4: Close clients
 		// These are fast cleanup operations that can run in parallel (non-blocking).
