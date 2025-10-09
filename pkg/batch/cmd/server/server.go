@@ -65,9 +65,16 @@ import (
 )
 
 const (
-	command               = "server"
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 20 * time.Second
+	command           = "server"
+	clientDialTimeout = 30 * time.Second
+
+	// Shutdown timing must fit within K8s terminationGracePeriodSeconds (30s):
+	// - 10s: Wait for K8s endpoint propagation (readiness probe + propagation)
+	// - 15s: Drain REST gateway (batchGateway)
+	// - 5s: Stop gRPC server (Stop() is fast since REST already drained)
+	propagationDelay      = 10 * time.Second
+	serverShutDownTimeout = 15 * time.Second
+	grpcStopTimeout       = 5 * time.Second
 )
 
 type server struct {
@@ -635,11 +642,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
 
+		// After health check fails, readiness probe needs 2 failures (6s) + propagation (4s).
+		// This 10s delay ensures all K8s nodes stop routing traffic before we start shutdown.
+		// This prevents "context deadline exceeded" errors during high traffic.
+		logger.Info("Waiting for endpoint propagation before shutdown")
+		time.Sleep(propagationDelay)
+		logger.Info("Starting graceful shutdown")
+
 		// Step 2: Gracefully stop REST gateway (calls the gRPC server internally)
 		batchGateway.Stop(serverShutDownTimeout)
 
 		// Step 3: Stop gRPC server (only pure gRPC connections remain)
-		server.Stop(serverShutDownTimeout)
+		// Use shorter timeout since REST traffic already drained
+		server.Stop(grpcStopTimeout)
 
 		// Step 3: Close clients
 		// These are fast cleanup operations that can run asynchronously.

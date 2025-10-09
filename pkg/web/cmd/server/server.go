@@ -88,7 +88,14 @@ const (
 	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
-	serverShutDownTimeout         = 20 * time.Second
+
+	// Shutdown timing must fit within K8s terminationGracePeriodSeconds (30s):
+	// - 10s: Wait for K8s endpoint propagation (readiness probe + propagation)
+	// - 15s: Drain REST servers (dashboardServer, webGrpcGateway)
+	// - 5s: Stop gRPC servers (all in parallel, fast since REST already drained)
+	propagationDelay      = 10 * time.Second
+	serverShutDownTimeout = 15 * time.Second
+	grpcStopTimeout       = 5 * time.Second
 )
 
 // GracefulStopper defines the interface for components that support graceful shutdown.
@@ -863,6 +870,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// preventing new traffic from being routed to this pod.
 		healthcheckServer.Stop(5 * time.Second)
 
+		// After health check fails, readiness probe needs 2 failures (6s) + propagation (4s).
+		// This 10s delay ensures all K8s nodes stop routing traffic before we start shutdown.
+		// This prevents "context deadline exceeded" errors during high traffic.
+		logger.Info("Waiting for endpoint propagation before shutdown")
+		time.Sleep(propagationDelay)
+		logger.Info("Starting graceful shutdown")
+
 		// Step 2: Stop REST servers (these call gRPC servers internally)
 		// Stop these first to drain REST traffic before stopping gRPC
 		dashboardServer.Stop(5 * time.Second)
@@ -892,7 +906,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			wg.Add(1)
 			go func(s GracefulStopper) {
 				defer wg.Done()
-				s.Stop(serverShutDownTimeout)
+				// Use shorter timeout since REST traffic already drained
+				s.Stop(grpcStopTimeout)
 			}(server)
 		}
 
