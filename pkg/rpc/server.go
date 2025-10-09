@@ -277,11 +277,11 @@ func (s *Server) setupHTTP() {
 		if atomic.LoadInt32(&s.shutdownComplete) == 1 {
 			// Shutdown is complete, Envoy can now terminate
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("ready"))
+			w.Write([]byte("ready")) // nolint:errcheck
 		} else {
 			// Still running or shutting down, Envoy must wait
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("not ready"))
+			w.Write([]byte("not ready")) // nolint:errcheck
 		}
 	})
 
