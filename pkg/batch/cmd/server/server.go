@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -633,15 +634,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Step 2: Gracefully stop all servers in parallel
 		// Each server will reject new requests and wait for existing requests to complete.
-		done := make(chan struct{})
+		var wg sync.WaitGroup
+
+		wg.Add(1)
 		go func() {
-			defer close(done)
+			defer wg.Done()
 			server.Stop(serverShutDownTimeout)
 		}()
-		go batchGateway.Stop(serverShutDownTimeout)
 
-		// Wait for gRPC server to complete shutdown
-		<-done
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			batchGateway.Stop(serverShutDownTimeout)
+		}()
+
+		// Wait for all servers to complete shutdown
+		wg.Wait()
 
 		// Step 3: Close clients
 		// These are fast cleanup operations that can run asynchronously.
