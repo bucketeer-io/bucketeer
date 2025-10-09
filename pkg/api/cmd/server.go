@@ -490,7 +490,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// We don't check the Redis health status because if the check fails,
 	// the Kubernetes will restart the container and it might cause internal errors.
 	healthChecker := health.NewGrpcChecker(
-		health.WithTimeout(time.Second),
+		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
 	)
 	go healthChecker.Run(ctx)
@@ -536,7 +536,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
-		health.WithTimeout(time.Second),
+		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
 	)
 	go restHealthChecker.Run(ctx)

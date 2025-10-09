@@ -44,6 +44,9 @@ type Server struct {
 	rpcServer     *grpc.Server
 	httpServer    *http.Server
 	grpcWebServer *grpcweb.WrappedGrpcServer
+	readTimeout   time.Duration
+	writeTimeout  time.Duration
+	idleTimeout   time.Duration
 }
 
 type httpHandler struct {
@@ -83,6 +86,14 @@ func WithMetrics(registerer metrics.Registerer) Option {
 	}
 }
 
+func WithTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Option {
+	return func(s *Server) {
+		s.readTimeout = readTimeout
+		s.writeTimeout = writeTimeout
+		s.idleTimeout = idleTimeout
+	}
+}
+
 func WithHandler(path string, handler http.Handler) Option {
 	return func(s *Server) {
 		s.handlers = append(s.handlers, httpHandler{Handler: handler, path: path})
@@ -91,9 +102,12 @@ func WithHandler(path string, handler http.Handler) Option {
 
 func NewServer(service Service, certPath, keyPath, serverName string, opt ...Option) *Server {
 	server := &Server{
-		port:   9000,
-		name:   serverName,
-		logger: zap.NewNop(),
+		port:         9000,
+		name:         serverName,
+		logger:       zap.NewNop(),
+		readTimeout:  30 * time.Second, // Default timeout
+		writeTimeout: 30 * time.Second, // Default timeout
+		idleTimeout:  60 * time.Second, // Default timeout
 	}
 	for _, o := range opt {
 		o(server)
@@ -162,7 +176,10 @@ func (s *Server) setupHTTP() {
 		mux.Handle(handler.path, handler)
 	}
 	s.httpServer = &http.Server{
-		Addr: fmt.Sprintf(":%d", s.port),
+		Addr:         fmt.Sprintf(":%d", s.port),
+		ReadTimeout:  s.readTimeout,
+		WriteTimeout: s.writeTimeout,
+		IdleTimeout:  s.idleTimeout,
 		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			if s.grpcWebServer.IsGrpcWebRequest(req) {
 				s.grpcWebServer.ServeHTTP(resp, req)

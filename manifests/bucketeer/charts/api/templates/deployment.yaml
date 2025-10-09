@@ -149,6 +149,7 @@ spec:
             initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: /health
               port: service
@@ -157,6 +158,7 @@ spec:
             initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /health
               port: service
