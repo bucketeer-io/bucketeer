@@ -362,7 +362,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
 	// 2. Stop PubSub subscription (allows in-flight messages to complete processing)
 	// 3. Close database/cache/gRPC clients
-	// Note: Subscriber service doesn't use Envoy sidecar, so no /internal/shutdown-ready coordination needed.
+	// Note: Subscriber service doesn't use Envoy sidecar.
 	defer func() {
 		// Step 1: Stop health check immediately
 		// This ensures Kubernetes readiness probe fails on next check (within ~3s),

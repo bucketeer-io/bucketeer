@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -33,22 +32,21 @@ import (
 )
 
 type Server struct {
-	certPath         string
-	keyPath          string
-	name             string
-	logger           *zap.Logger
-	port             int
-	metrics          metrics.Registerer
-	verifier         token.Verifier
-	services         []Service
-	handlers         []httpHandler
-	rpcServer        *grpc.Server
-	httpServer       *http.Server
-	grpcWebServer    *grpcweb.WrappedGrpcServer // DEPRECATED: Remove once Node.js SDK migrates away from grpc-web
-	readTimeout      time.Duration
-	writeTimeout     time.Duration
-	idleTimeout      time.Duration
-	shutdownComplete int32 // atomic flag: 0 = running, 1 = shutdown complete
+	certPath      string
+	keyPath       string
+	name          string
+	logger        *zap.Logger
+	port          int
+	metrics       metrics.Registerer
+	verifier      token.Verifier
+	services      []Service
+	handlers      []httpHandler
+	rpcServer     *grpc.Server
+	httpServer    *http.Server
+	grpcWebServer *grpcweb.WrappedGrpcServer // DEPRECATED: Remove once Node.js SDK migrates away from grpc-web
+	readTimeout   time.Duration
+	writeTimeout  time.Duration
+	idleTimeout   time.Duration
 }
 
 type httpHandler struct {
@@ -181,10 +179,6 @@ func (s *Server) Stop(timeout time.Duration) {
 	s.logger.Info("Server shutdown completed",
 		zap.String("server", s.name),
 		zap.Duration("total_duration", time.Since(shutdownStart)))
-
-	// Mark shutdown as complete for Envoy coordination
-	atomic.StoreInt32(&s.shutdownComplete, 1)
-	s.logger.Info("Shutdown complete flag set, Envoy can now terminate")
 }
 
 func (s *Server) setupRPC() {
@@ -222,22 +216,7 @@ func (s *Server) setupHTTP() {
 		mux.Handle(handler.path, handler)
 	}
 
-	// Envoy graceful shutdown coordination endpoint
-	// Returns 503 during normal operation and 200 only when graceful shutdown is complete
-	// This allows Envoy to wait for the application to finish shutting down before terminating
-	mux.HandleFunc("/internal/shutdown-ready", func(w http.ResponseWriter, r *http.Request) {
-		if atomic.LoadInt32(&s.shutdownComplete) == 1 {
-			// Shutdown is complete, Envoy can now terminate
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("ready")) // nolint:errcheck
-		} else {
-			// Still running or shutting down, Envoy must wait
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("not ready")) // nolint:errcheck
-		}
-	})
-
-	// Wrap the main handler with shutdown tracking middleware
+	// Wrap the main handler with gRPC-web support and routing
 	mainHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		// DEPRECATED: grpc-web support for legacy Node.js SDK
 		// This check should be removed once Node.js SDK migrates away from grpc-web

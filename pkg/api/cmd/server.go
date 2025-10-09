@@ -587,8 +587,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Shutdown order is critical because apiGateway forwards requests to server (port 9090).
 	// If server stops while apiGateway is processing, those requests fail.
 	//
-	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
-	// to return 200 (set by rpc.Server after graceful shutdown completes).
+	// This coordinates with Envoy's preStop hook which waits for connections to drain
+	// before terminating the pod.
 	defer func() {
 		// Step 1: Stop health checks immediately
 		// This ensures Kubernetes readiness probe fails on next check (within ~3s),
