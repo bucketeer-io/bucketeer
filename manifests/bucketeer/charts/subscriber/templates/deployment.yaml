@@ -200,10 +200,7 @@ spec:
                     # Step 1: Fail Envoy health check so K8s removes pod from endpoints
                     wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
 
-                    # Step 2: Stop accepting new inbound connections at Envoy
-                    wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/drain_listeners?inboundonly
-
-                    # Step 3: Wait for all active connections to drain (max 25s)
+                    # Step 2: Wait for all active connections to drain (max 25s)
                     # Uses Istio pattern: dynamically checks all connections excluding Envoy and TIME-WAIT
                     elapsed=0
                     max_wait=25
