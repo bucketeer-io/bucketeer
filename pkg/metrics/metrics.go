@@ -24,7 +24,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus/push"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
@@ -41,10 +40,6 @@ type Metrics interface {
 	Check(ctx context.Context) health.Status
 	Run() error
 	Stop()
-	// Global metrics pushing
-	StartContinuousPushing(pushGatewayURL, serviceName string, interval time.Duration)
-	StopContinuousPushing()
-	PushFinalMetrics()
 }
 
 type options struct {
@@ -74,114 +69,10 @@ type metrics struct {
 	opts         *options
 	logger       *zap.Logger
 	healthClient *http.Client
-	// Global metrics pusher
-	continuousPusher *ContinuousMetricsPusher
 }
 
 type registry struct {
 	*prometheus.Registry
-}
-
-// ContinuousMetricsPusher handles continuous pushing of all metrics to pushgateway
-type ContinuousMetricsPusher struct {
-	pushGatewayURL string
-	serviceName    string
-	logger         *zap.Logger
-	registries     map[string]*registry
-	ticker         *time.Ticker
-	done           chan struct{}
-	ctx            context.Context
-	cancel         context.CancelFunc
-}
-
-// NewContinuousMetricsPusher creates a new continuous metrics pusher
-func NewContinuousMetricsPusher(
-	pushGatewayURL string,
-	serviceName string,
-	logger *zap.Logger,
-	registries map[string]*registry,
-) *ContinuousMetricsPusher {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	return &ContinuousMetricsPusher{
-		pushGatewayURL: pushGatewayURL,
-		serviceName:    serviceName,
-		logger:         logger.Named("global-metrics-pusher"),
-		registries:     registries,
-		done:           make(chan struct{}),
-		ctx:            ctx,
-		cancel:         cancel,
-	}
-}
-
-// Start begins continuous metrics pushing for all registries
-func (mp *ContinuousMetricsPusher) Start(interval time.Duration) {
-	if mp.pushGatewayURL == "" {
-		mp.logger.Info("Push gateway URL not configured, skipping continuous metrics pushing")
-		close(mp.done)
-		return
-	}
-
-	mp.logger.Info("Starting global continuous metrics pusher",
-		zap.String("service", mp.serviceName),
-		zap.String("pushgateway_url", mp.pushGatewayURL),
-		zap.Duration("interval", interval),
-		zap.Int("registries_count", len(mp.registries)))
-
-	mp.ticker = time.NewTicker(interval)
-
-	go func() {
-		defer mp.ticker.Stop()
-		defer close(mp.done)
-
-		// Push immediately on start
-		mp.pushAllMetrics()
-
-		for {
-			select {
-			case <-mp.ticker.C:
-				mp.pushAllMetrics()
-			case <-mp.ctx.Done():
-				// Final push before shutdown
-				mp.logger.Debug("Performing final global metrics push before shutdown")
-				mp.pushAllMetrics()
-				return
-			}
-		}
-	}()
-}
-
-// pushAllMetrics pushes all metrics from all registries to pushgateway
-func (mp *ContinuousMetricsPusher) pushAllMetrics() {
-	for path, registry := range mp.registries {
-		// Create a unique job name for each registry path
-		jobName := fmt.Sprintf("global_metrics_%s", mp.serviceName)
-		if path != "/metrics" {
-			// Add path suffix for non-default paths
-			jobName = fmt.Sprintf("global_metrics_%s_%s", mp.serviceName, path)
-		}
-
-		pusher := push.New(mp.pushGatewayURL, jobName).
-			Gatherer(registry.Registry). // Push all metrics from this registry
-			Grouping("bucketeer_service", mp.serviceName).
-			Grouping("metrics_path", path)
-
-		if err := pusher.Push(); err != nil {
-			mp.logger.Error("Failed to push global metrics to Push Gateway",
-				zap.Error(err),
-				zap.String("pushgateway_url", mp.pushGatewayURL),
-				zap.String("service", mp.serviceName),
-				zap.String("path", path))
-		}
-	}
-}
-
-// Stop gracefully stops the continuous metrics pusher
-func (mp *ContinuousMetricsPusher) Stop() {
-	mp.logger.Info("Stopping global continuous metrics pusher")
-	mp.cancel()
-	<-mp.done
-	mp.logger.Info("Global continuous metrics pusher stopped")
 }
 
 func NewMetrics(port int, path string, opts ...Option) Metrics {
@@ -247,41 +138,8 @@ func (m *metrics) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	// Stop continuous pushing before shutting down metrics server
-	m.StopContinuousPushing()
-
 	if err := m.server.Shutdown(ctx); err != nil {
 		m.logger.Error("Failed to shutdown metrics server", zap.Error(err))
-	}
-}
-
-// StartContinuousPushing begins continuous pushing of all metrics to pushgateway
-func (m *metrics) StartContinuousPushing(pushGatewayURL, serviceName string, interval time.Duration) {
-	if pushGatewayURL != "" && m.continuousPusher == nil {
-		m.continuousPusher = NewContinuousMetricsPusher(
-			pushGatewayURL,
-			serviceName,
-			m.logger,
-			m.registries,
-		)
-		m.continuousPusher.Start(interval)
-		// Startup logging handled in ContinuousMetricsPusher.Start()
-	}
-}
-
-// StopContinuousPushing stops the continuous metrics pusher
-func (m *metrics) StopContinuousPushing() {
-	if m.continuousPusher != nil {
-		m.continuousPusher.Stop()
-		m.continuousPusher = nil
-	}
-}
-
-// PushFinalMetrics performs a final push of all metrics (including shutdown metrics)
-func (m *metrics) PushFinalMetrics() {
-	if m.continuousPusher != nil {
-		// Final push - logging handled in pushAllMetrics errors if needed
-		m.continuousPusher.pushAllMetrics()
 	}
 }
 

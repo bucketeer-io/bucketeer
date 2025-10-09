@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -33,22 +34,22 @@ import (
 )
 
 type Server struct {
-	certPath        string
-	keyPath         string
-	name            string
-	logger          *zap.Logger
-	port            int
-	metrics         metrics.Registerer
-	verifier        token.Verifier
-	services        []Service
-	handlers        []httpHandler
-	rpcServer       *grpc.Server
-	httpServer      *http.Server
-	grpcWebServer   *grpcweb.WrappedGrpcServer
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	idleTimeout     time.Duration
-	shutdownTracker *ShutdownTracker
+	certPath         string
+	keyPath          string
+	name             string
+	logger           *zap.Logger
+	port             int
+	metrics          metrics.Registerer
+	verifier         token.Verifier
+	services         []Service
+	handlers         []httpHandler
+	rpcServer        *grpc.Server
+	httpServer       *http.Server
+	grpcWebServer    *grpcweb.WrappedGrpcServer
+	readTimeout      time.Duration
+	writeTimeout     time.Duration
+	idleTimeout      time.Duration
+	shutdownComplete int32 // atomic flag: 0 = running, 1 = shutdown complete
 }
 
 type httpHandler struct {
@@ -88,14 +89,6 @@ func WithMetrics(registerer metrics.Registerer) Option {
 	}
 }
 
-func WithPrometheusPushGateway(url string) Option {
-	return func(s *Server) {
-		if url != "" {
-			s.shutdownTracker = NewShutdownTrackerWithPushGateway(s.name, s.logger, url)
-		}
-	}
-}
-
 func WithTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Option {
 	return func(s *Server) {
 		s.readTimeout = readTimeout
@@ -124,12 +117,6 @@ func NewServer(service Service, certPath, keyPath, serverName string, opt ...Opt
 	}
 	server.logger = server.logger.Named(fmt.Sprintf("rpc-server.%s", serverName))
 
-	// Initialize default shutdown tracker (without Push Gateway)
-	// WithPrometheusPushGateway option can override this if needed
-	if server.shutdownTracker == nil {
-		server.shutdownTracker = NewShutdownTracker(serverName, server.logger)
-	}
-
 	if len(certPath) == 0 {
 		server.logger.Fatal("CertPath must not be empty")
 	}
@@ -155,9 +142,6 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	// Start shutdown tracking
-	s.shutdownTracker.StartShutdown("sigterm")
-
 	shutdownStart := time.Now()
 	s.logger.Info("Starting server graceful shutdown",
 		zap.String("server", s.name),
@@ -171,7 +155,6 @@ func (s *Server) Stop(timeout time.Duration) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			grpcStart := time.Now()
 			s.logger.Info("Starting gRPC server graceful shutdown")
 
 			// Use a shorter timeout for gRPC to leave time for HTTP
@@ -188,12 +171,10 @@ func (s *Server) Stop(timeout time.Duration) {
 
 			select {
 			case <-done:
-				s.shutdownTracker.TrackShutdownDuration("grpc", time.Since(grpcStart), true)
 				s.logger.Info("gRPC server shutdown completed gracefully")
 			case <-time.After(grpcTimeout):
 				s.logger.Warn("gRPC server graceful shutdown timed out, forcing stop")
 				s.rpcServer.Stop()
-				s.shutdownTracker.TrackShutdownDuration("grpc", time.Since(grpcStart), false)
 			}
 		}()
 	}
@@ -203,7 +184,6 @@ func (s *Server) Stop(timeout time.Duration) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			httpStart := time.Now()
 			s.logger.Info("Starting HTTP server graceful shutdown")
 
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -211,10 +191,8 @@ func (s *Server) Stop(timeout time.Duration) {
 
 			if err := s.httpServer.Shutdown(ctx); err != nil {
 				s.logger.Error("HTTP server failed to shut down gracefully", zap.Error(err))
-				s.shutdownTracker.TrackShutdownDuration("http", time.Since(httpStart), false)
 				shutdownErrors <- err
 			} else {
-				s.shutdownTracker.TrackShutdownDuration("http", time.Since(httpStart), true)
 				s.logger.Info("HTTP server shutdown completed gracefully")
 			}
 		}()
@@ -244,10 +222,9 @@ func (s *Server) Stop(timeout time.Duration) {
 		s.logger.Error("Shutdown error", zap.Error(err))
 	}
 
-	// Push final shutdown metrics after all requests are processed
-	if s.shutdownTracker != nil {
-		s.shutdownTracker.PushFinalMetrics()
-	}
+	// Mark shutdown as complete for Envoy coordination
+	atomic.StoreInt32(&s.shutdownComplete, 1)
+	s.logger.Info("Shutdown complete flag set, Envoy can now terminate")
 }
 
 func (s *Server) setupRPC() {
@@ -258,7 +235,6 @@ func (s *Server) setupRPC() {
 
 	interceptors := []grpc.UnaryServerInterceptor{
 		MetricsUnaryServerInterceptor(),
-		s.shutdownTracker.ShutdownAwareUnaryInterceptor(), // Add shutdown tracking
 	}
 
 	if s.verifier != nil {
@@ -284,14 +260,16 @@ func (s *Server) setupHTTP() {
 		mux.Handle(handler.path, handler)
 	}
 
-	// Add simple internal shutdown coordination endpoint
+	// Envoy graceful shutdown coordination endpoint
+	// Returns 503 during normal operation and 200 only when graceful shutdown is complete
+	// This allows Envoy to wait for the application to finish shutting down before terminating
 	mux.HandleFunc("/internal/shutdown-ready", func(w http.ResponseWriter, r *http.Request) {
-		if s.shutdownTracker.IsShuttingDown() {
-			w.Header().Set("Content-Type", "text/plain")
+		if atomic.LoadInt32(&s.shutdownComplete) == 1 {
+			// Shutdown is complete, Envoy can now terminate
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("ready"))
 		} else {
-			w.Header().Set("Content-Type", "text/plain")
+			// Still running or shutting down, Envoy must wait
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte("not ready"))
 		}
@@ -313,7 +291,7 @@ func (s *Server) setupHTTP() {
 		ReadTimeout:  s.readTimeout,
 		WriteTimeout: s.writeTimeout,
 		IdleTimeout:  s.idleTimeout,
-		Handler:      s.shutdownTracker.ShutdownAwareHTTPMiddleware(mainHandler),
+		Handler:      mainHandler,
 	}
 }
 

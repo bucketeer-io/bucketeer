@@ -93,7 +93,6 @@ type server struct {
 	pubSubRedisPoolSize       *int
 	pubSubRedisMinIdle        *int
 	pubSubRedisPartitionCount *int
-	prometheusPushGatewayURL  *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -211,9 +210,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
 			"Number of partitions for Redis Streams PubSub.",
 		).Default("16").Int(),
-		prometheusPushGatewayURL: cmd.Flag("prometheus-push-gateway-url",
-			"URL of the Prometheus Push Gateway for ephemeral metrics.",
-		).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -506,16 +502,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
-		rpc.WithPrometheusPushGateway(*s.prometheusPushGatewayURL),
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
-
-	// Start global continuous metrics pushing
-	if *s.prometheusPushGatewayURL != "" {
-		pushInterval := 30 * time.Second // Default 30s, can be made configurable
-		metrics.StartContinuousPushing(*s.prometheusPushGatewayURL, "api-gateway", pushInterval)
-	}
 
 	// Set up gRPC Gateway for API service
 	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
@@ -582,14 +571,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// from the service load balancer.
 	defer healthChecker.Stop()
 	defer restHealthChecker.Stop()
-
-	// Ensure final metrics push happens after shutdown metrics are recorded
-	defer func() {
-		if *s.prometheusPushGatewayURL != "" {
-			metrics.PushFinalMetrics()
-			metrics.StopContinuousPushing()
-		}
-	}()
 
 	<-ctx.Done()
 	return nil
