@@ -92,10 +92,12 @@ health:
     initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 5
+    timeoutSeconds: 5
   readinessProbe:
     initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 2
+    timeoutSeconds: 3
 
 resources: {}
 
@@ -250,7 +252,7 @@ processors:
     domainEventTopic:
     flushSize: 100
     flushInterval: 10
-    # PubSub configuration  
+    # PubSub configuration
     pubSubType: google
     redisServerName: ""
     redisAddr: ""

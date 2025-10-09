@@ -33,6 +33,16 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 )
 
+const (
+	// minGracefulTimeout is the minimum timeout for graceful shutdown operations.
+	// This ensures that shutdown operations have at least some time to complete.
+	minGracefulTimeout = 1 * time.Second
+
+	// httpServerBuffer is the additional time reserved for HTTP server shutdown
+	// after gRPC server completes. This prevents premature HTTP termination.
+	httpServerBuffer = 1 * time.Second
+)
+
 type Server struct {
 	certPath         string
 	keyPath          string
@@ -158,9 +168,9 @@ func (s *Server) Stop(timeout time.Duration) {
 			s.logger.Info("Starting gRPC server graceful shutdown")
 
 			// Use a shorter timeout for gRPC to leave time for HTTP
-			grpcTimeout := timeout - time.Second
-			if grpcTimeout < time.Second {
-				grpcTimeout = time.Second
+			grpcTimeout := timeout - httpServerBuffer
+			if grpcTimeout < minGracefulTimeout {
+				grpcTimeout = minGracefulTimeout
 			}
 
 			done := make(chan struct{})

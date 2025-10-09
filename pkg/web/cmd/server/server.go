@@ -91,6 +91,11 @@ const (
 	serverShutDownTimeout         = 20 * time.Second
 )
 
+// GracefulStopper defines the interface for components that support graceful shutdown.
+type GracefulStopper interface {
+	Stop(timeout time.Duration)
+}
+
 type server struct {
 	*kingpin.CmdClause
 	port                            *int
@@ -858,9 +863,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Each server will reject new requests and wait for existing requests to complete.
 		var wg sync.WaitGroup
 
-		servers := []interface {
-			Stop(time.Duration)
-		}{
+		servers := []GracefulStopper{
 			authServer,
 			accountServer,
 			auditLogServer,
@@ -878,7 +881,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		for _, server := range servers {
 			wg.Add(1)
-			go func(s interface{ Stop(time.Duration) }) {
+			go func(s GracefulStopper) {
 				defer wg.Done()
 				s.Stop(serverShutDownTimeout)
 			}(server)
