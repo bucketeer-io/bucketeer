@@ -51,7 +51,10 @@ import (
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
-const command = "server"
+const (
+	command               = "server"
+	serverShutDownTimeout = 20 * time.Second
+)
 
 type server struct {
 	*kingpin.CmdClause
@@ -503,7 +506,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
 	)
-	defer server.Stop(10 * time.Second)
 	go server.Run()
 
 	// Set up gRPC Gateway for API service
@@ -532,7 +534,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
 		return fmt.Errorf("failed to start API gateway: %v", err)
 	}
-	defer apiGateway.Stop(10 * time.Second)
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
@@ -563,14 +564,59 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithService(restHealthChecker),
 		rest.WithMetrics(registerer),
 	)
-	defer httpServer.Stop(10 * time.Second)
 	go httpServer.Run()
 
-	// Ensure to stop the health check before stopping the application
-	// so the Kubernetes Readiness can detect it faster and remove the pod
-	// from the service load balancer.
-	defer healthChecker.Stop()
-	defer restHealthChecker.Stop()
+	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
+	// 1. Stop health checks immediately to fail Kubernetes readiness probe ASAP
+	// 2. Gracefully drain all servers in parallel (allows in-flight requests to complete)
+	// 3. Close clients
+	//
+	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
+	// to return 200 (set by rpc.Server after graceful shutdown completes).
+	defer func() {
+		// Step 1: Stop health checks immediately
+		// This ensures Kubernetes readiness probe fails on next check (within ~3s),
+		// preventing new traffic from being routed to this pod.
+		healthChecker.Stop()
+		restHealthChecker.Stop()
+
+		// Step 2: Gracefully stop all servers in parallel
+		// Each server will reject new requests and wait for existing requests to complete.
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.Stop(serverShutDownTimeout)
+		}()
+		go apiGateway.Stop(serverShutDownTimeout)
+		go httpServer.Stop(serverShutDownTimeout)
+
+		// Wait for all servers to complete shutdown
+		<-done
+
+		// Step 3: Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go goalPublisher.Stop()
+		go evaluationPublisher.Stop()
+		if userPublisher != nil {
+			go userPublisher.Stop()
+		}
+		if metricsPublisher != nil {
+			go metricsPublisher.Stop()
+		}
+		go featureClient.Close()
+		go accountClient.Close()
+		go pushClient.Close()
+		go codeRefClient.Close()
+		go auditLogClient.Close()
+		go autoOpsClient.Close()
+		go tagClient.Close()
+		go teamClient.Close()
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go eventCounterClient.Close()
+		go environmentClient.Close()
+		go redisV3Client.Close()
+	}()
 
 	<-ctx.Done()
 	return nil

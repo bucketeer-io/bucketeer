@@ -88,7 +88,7 @@ const (
 	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
-	serverShutDownTimeout         = 10 * time.Second
+	serverShutDownTimeout         = 20 * time.Second
 )
 
 type server struct {
@@ -840,17 +840,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
 	}
 
-	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
-	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
-	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
+	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
+	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
+	// 2. Gracefully drain all application servers (allows in-flight requests to complete)
+	// 3. Stop dashboard and gateway servers
+	// 4. Close database/cache/pubsub clients
+	//
+	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
+	// to return 200 (set by rpc.Server after graceful shutdown completes).
 	defer func() {
-		go healthcheckServer.Stop(serverShutDownTimeout)
-		time.Sleep(serverShutDownTimeout)
+		// Step 1: Stop health check service immediately
+		// This ensures Kubernetes readiness probe fails on next check (within ~3s),
+		// preventing new traffic from being routed to this pod.
+		healthcheckServer.Stop(5 * time.Second)
 
-		// Use WaitGroup to stop servers in parallel but wait for all to complete
+		// Step 2: Gracefully stop all gRPC servers in parallel
+		// Each server will reject new requests and wait for existing requests to complete.
 		var wg sync.WaitGroup
 
-		// Stop gRPC servers
 		servers := []interface {
 			Stop(time.Duration)
 		}{
@@ -877,17 +884,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			}(server)
 		}
 
-		// Stop web gateway
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			webGrpcGateway.Stop(serverShutDownTimeout)
-		}()
-
-		// Wait for all servers to complete shutdown
+		// Wait for all gRPC servers to complete graceful shutdown
 		wg.Wait()
 
-		// Close clients (can remain as goroutines since they're cleanup operations)
+		// Step 3: Stop REST servers
+		// Dashboard and gateway can stop after gRPC servers complete
+		dashboardServer.Stop(5 * time.Second)
+		webGrpcGateway.Stop(5 * time.Second)
+
+		// Step 4: Close clients
+		// These are fast cleanup operations that can run in parallel (non-blocking).
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()

@@ -67,7 +67,7 @@ import (
 const (
 	command               = "server"
 	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	serverShutDownTimeout = 20 * time.Second
 )
 
 type server struct {
@@ -618,19 +618,43 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to start batch gateway: %v", err)
 	}
 
+	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
+	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
+	// 2. Gracefully drain all servers in parallel (allows in-flight requests to complete)
+	// 3. Close database/cache/pubsub clients
+	//
+	// This coordinates with Envoy's preStop hook which waits for /internal/shutdown-ready
+	// to return 200 (set by rpc.Server after graceful shutdown completes).
 	defer func() {
-		server.Stop(serverShutDownTimeout)
-		batchGateway.Stop(serverShutDownTimeout)
-		accountClient.Close()
-		notificationClient.Close()
-		experimentClient.Close()
-		environmentClient.Close()
-		eventCounterClient.Close()
-		featureClient.Close()
-		autoOpsClient.Close()
-		mysqlClient.Close()
+		// Step 1: Stop health check immediately
+		// This ensures Kubernetes readiness probe fails on next check (within ~3s),
+		// preventing new traffic from being routed to this pod.
+		healthChecker.Stop()
+
+		// Step 2: Gracefully stop all servers in parallel
+		// Each server will reject new requests and wait for existing requests to complete.
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			server.Stop(serverShutDownTimeout)
+		}()
+		go batchGateway.Stop(serverShutDownTimeout)
+
+		// Wait for gRPC server to complete shutdown
+		<-done
+
+		// Step 3: Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go accountClient.Close()
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go environmentClient.Close()
+		go eventCounterClient.Close()
+		go featureClient.Close()
+		go autoOpsClient.Close()
+		go mysqlClient.Close()
 		for _, client := range childRedisClients {
-			client.Close()
+			go client.Close()
 		}
 	}()
 

@@ -22,6 +22,12 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
+      # Ensure pod has sufficient time for graceful shutdown before SIGKILL
+      # This matches GCP Spot VM termination window (30s) and allows:
+      # - 3s for K8s to detect pod is not ready
+      # - 20s for application graceful shutdown
+      # - 7s safety margin
+      terminationGracePeriodSeconds: 30
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -194,9 +200,12 @@ spec:
                     # Fail Envoy health check immediately
                     wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
 
-                    # For subscriber service, give time for PubSub message processing to complete
-                    # Check if subscriber process is still active (more reliable than netstat)
-                    timeout=25
+                    # For subscriber service, give time for PubSub message processing to complete (max 22s)
+                    # This is coordinated with the app's 20s shutdown timeout.
+                    # Envoy must wait LONGER than the app timeout to ensure it doesn't exit
+                    # while the subscriber is still processing messages.
+                    # Note: Subscriber uses process detection instead of /internal/shutdown-ready endpoint
+                    timeout=22
                     while [ $timeout -gt 0 ]; do
                       # Check if subscriber main process is still running (processing messages)
                       if ! pgrep -f "subscriber" > /dev/null; then
@@ -207,7 +216,7 @@ spec:
                       timeout=$((timeout-1))
                     done
 
-                    # Additional drain time for any remaining connections
+                    # Additional drain time for remaining connections
                     sleep 3
           command: ["envoy"]
           args:

@@ -67,7 +67,6 @@ env:
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
-  prometheusPushGatewayURL:
 affinity: {}
 nodeSelector: {}
 pdb:

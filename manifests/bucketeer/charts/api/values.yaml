@@ -43,7 +43,6 @@ env:
   eventCounterService: localhost:9001
   environmentService: localhost:9001
   traceSamplingProbability: 0.0001
-  prometheusPushGatewayURL:
 affinity: {}
 nodeSelector: {}
 pdb:
@@ -93,15 +92,13 @@ ingress:
             number: 9000
 health:
   livenessProbe:
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    failureThreshold: 6
-    timeoutSeconds: 10
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
   readinessProbe:
-    initialDelaySeconds: 20
-    periodSeconds: 10
-    failureThreshold: 3
-    timeoutSeconds: 5
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 2
 resources: {}
 serviceAccount:
   annotations: {}

@@ -51,7 +51,6 @@ env:
   nonPersistentChildRedis:
     addresses:
   experimentLockTTL: 10m
-  prometheusPushGatewayURL:
 
 affinity: {}
 

@@ -21,6 +21,12 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
+      # Ensure pod has sufficient time for graceful shutdown before SIGKILL
+      # This matches GCP Spot VM termination window (30s) and allows:
+      # - 3s for K8s to detect pod is not ready
+      # - 20s for application graceful shutdown
+      # - 7s safety margin
+      terminationGracePeriodSeconds: 30
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -205,8 +211,6 @@ spec:
               value: "{{ .Values.webhook.kmsResourceName }}"
             - name: BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
-            - name: BUCKETEER_WEB_PROMETHEUS_PUSH_GATEWAY_URL
-              value: "{{ .Values.env.prometheusPushGatewayURL }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
@@ -266,8 +270,11 @@ spec:
                     # Fail Envoy health check immediately
                     wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
 
-                    # Wait for Web services to signal ready for shutdown (max 25s)
-                    timeout=25
+                    # Wait for Web services to signal ready for shutdown (max 22s)
+                    # This is coordinated with the app's 20s shutdown timeout.
+                    # Envoy must wait LONGER than the app timeout to ensure it doesn't
+                    # start draining while the app is still processing requests.
+                    timeout=22
                     while [ $timeout -gt 0 ]; do
                       if wget -q -O- --no-check-certificate https://localhost:9090/internal/shutdown-ready 2>/dev/null | grep -q "ready"; then
                         echo "Web services ready for shutdown, draining connections..."
@@ -277,7 +284,7 @@ spec:
                       timeout=$((timeout-1))
                     done
 
-                    # Additional drain time
+                    # Additional drain time for remaining connections
                     sleep 3
           command: ["envoy"]
           args:
