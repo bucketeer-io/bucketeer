@@ -7,13 +7,7 @@ import { IconInfo } from '@icons';
 import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
 import { IntervalMap } from 'pages/feature-flag-details/operations/types';
 import { ReactDatePicker } from 'components/date-time-picker';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -260,32 +254,20 @@ const TemplateSchedule = ({
                 />
               </Form.Label>
               <Form.Control>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    label={
-                      intervalOptions.find(item => item.value === field.value)
-                        ?.label || ''
-                    }
-                    isExpand
-                    disabled={isDisabled}
-                  />
-                  <DropdownMenuContent align="end" className="min-w-[243px]">
-                    {intervalOptions.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        label={item.label}
-                        value={item.value}
-                        isSelectedItem={item.value === field.value}
-                        onSelectOption={value => {
-                          field.onChange(value);
-                          handleChangeScheduleList({
-                            interval: value as IntervalMap
-                          });
-                        }}
-                      />
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Dropdown
+                  options={intervalOptions}
+                  value={field.value as DropdownValue}
+                  onChange={val => {
+                    field.onChange(val);
+                    handleChangeScheduleList({
+                      interval: val as IntervalMap
+                    });
+                  }}
+                  placeholder={t('select-frequency')}
+                  disabled={isDisabled}
+                  alignContent="end"
+                  className="min-w-[243px]"
+                />
               </Form.Control>
             </Form.Item>
           )}

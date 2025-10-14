@@ -16,12 +16,7 @@ import { isNotEmptyObject } from 'utils/data-type';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -262,46 +257,26 @@ const UserInformation = () => {
                   <Form.Item className="py-0">
                     <Form.Label required>{t('common:language')}</Form.Label>
                     <Form.Control className="w-full">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t('form:select-language')}
-                          trigger={
+                      <Dropdown
+                        placeholder={t('form:select-language')}
+                        className="w-full"
+                        contentClassName="w-[400px]"
+                        options={languageList.map(item => ({
+                          value: item.value,
+                          label: (
                             <div className="flex items-center gap-x-2">
-                              {currentItem?.icon && (
+                              {item?.icon && (
                                 <div className="flex-center size-fit mt-0.5">
-                                  <Icon icon={currentItem?.icon} size={'sm'} />
+                                  <Icon icon={item?.icon} size={'sm'} />
                                 </div>
                               )}
-                              {currentItem?.label}
+                              {item?.label}
                             </div>
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          isExpand
-                          className="w-[400px]"
-                          align="start"
-                          {...field}
-                        >
-                          {languageList.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.value}
-                              label={item.label}
-                              iconElement={
-                                <div className="flex-center size-fit mt-0.5">
-                                  <Icon icon={item.icon} size={'sm'} />
-                                </div>
-                              }
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          )
+                        }))}
+                        value={currentItem?.value}
+                        onChange={field.onChange}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

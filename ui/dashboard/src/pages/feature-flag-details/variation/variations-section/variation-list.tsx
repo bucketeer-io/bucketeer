@@ -7,12 +7,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import { IconInfo } from '@icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -119,28 +114,16 @@ const VariationList = ({
               />
             </Form.Label>
             <Form.Control>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  label={
-                    variationOptions.find(item => item.value === offVariationId)
-                      ?.label || ''
-                  }
-                  isExpand
-                  disabled={isRunningExperiment || !editable}
-                />
-                <DropdownMenuContent align="start">
-                  {variationOptions?.map((item, index) => (
-                    <DropdownMenuItem
-                      {...field}
-                      key={index}
-                      label={item.label}
-                      value={item.value}
-                      isSelectedItem={field.value === item.value}
-                      onSelectOption={value => field.onChange(value)}
-                    />
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dropdown
+                options={variationOptions}
+                value={field.value}
+                onChange={field.onChange}
+                labelCustom={
+                  variationOptions.find(item => item.value === offVariationId)
+                    ?.label || ''
+                }
+                disabled={isRunningExperiment || !editable}
+              />
             </Form.Control>
           </Form.Item>
         )}

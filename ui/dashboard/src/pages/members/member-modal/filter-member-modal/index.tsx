@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryTeams } from '@queries/teams';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import debounce from 'lodash/debounce';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
@@ -11,17 +10,9 @@ import { MembersFilters } from 'pages/members/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSearch,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
-import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<MembersFilters>) => void;
@@ -46,10 +37,6 @@ const FilterMemberModal = ({
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     memberFilterOptions[0]
   ]);
-  const [searchValue, setSearchValue] = useState('');
-  const [debounceValue, setDebounceValue] = useState('');
-
-  const inputSearchRef = useRef<HTMLInputElement>(null);
 
   const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
     params: {
@@ -114,36 +101,18 @@ const FilterMemberModal = ({
     [teams]
   );
 
-  const debouncedSearch = useCallback(
-    debounce(value => {
-      setSearchValue(value);
-    }, 500),
-    []
-  );
-
   const getValueOptions = useCallback(
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
       const isRoleFilter = filterOption.value === FilterTypes.ROLE;
       const isTeamsFilter = filterOption.value === FilterTypes.TEAMS;
 
-      if (isTeamsFilter)
-        return teamOptions.filter(item =>
-          searchValue
-            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
-            : item
-        );
+      if (isTeamsFilter) return teamOptions;
       if (isRoleFilter) return roleOptions;
       return booleanOptions;
     },
-    [searchValue, teamOptions]
+    [teamOptions]
   );
-
-  const handleFocusSearchInput = useCallback(() => {
-    let timerId: NodeJS.Timeout | null = null;
-    if (timerId) clearTimeout(timerId);
-    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
-  }, []);
 
   const handleChangeFilterValue = useCallback(
     (value: string | number, filterIndex: number) => {
@@ -152,6 +121,13 @@ const FilterMemberModal = ({
       const isTeamsFilter = filterType === FilterTypes.TEAMS;
       if (isTeamsFilter) {
         const values = filterValue as string[];
+        if (Array.isArray(value) && value.length === 0) {
+          selectedFilters[filterIndex] = {
+            ...selectedFilters[filterIndex],
+            filterValue: []
+          };
+          return setSelectedFilters([...selectedFilters]);
+        }
         const isExisted = values.find(item => item === value);
         const newValue: string[] = isExisted
           ? values.filter(item => item !== value)
@@ -264,88 +240,49 @@ const FilterMemberModal = ({
                 {t(filterIndex === 0 ? `if` : 'and')}
               </div>
               <Divider vertical={true} className="border-primary-500" />
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  placeholder={t(`select-filter`)}
-                  label={label}
-                  variant="secondary"
-                  className="w-full"
-                />
-                <DropdownMenuContent className="w-[235px]" align="start">
-                  {remainingFilterOptions.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      value={item.value as string}
-                      label={item.label}
-                      isSelectedItem={
-                        item.value === selectedFilters?.[filterIndex]?.value
-                      }
-                      onSelectOption={() => {
-                        selectedFilters[filterIndex] = item;
-                        setSelectedFilters([...selectedFilters]);
-                      }}
-                    />
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">is</p>
-              <DropdownMenu
-                onOpenChange={open => {
-                  if (open) return handleFocusSearchInput();
-                  setDebounceValue('');
-                  setSearchValue('');
+              <Dropdown
+                placeholder={t(`select-filter`)}
+                labelCustom={label}
+                options={remainingFilterOptions as DropdownOption[]}
+                value={filterType}
+                onChange={value => {
+                  const selected = remainingFilterOptions.find(
+                    item => item.value === value
+                  );
+                  if (selected) {
+                    selectedFilters[filterIndex] = {
+                      ...selected,
+                      filterValue: value === FilterTypes.TEAMS ? [] : ''
+                    };
+                    setSelectedFilters([...selectedFilters]);
+                  }
                 }}
-              >
-                <DropdownMenuTrigger
-                  placeholder={t(`select-value`)}
-                  label={handleGetLabelFilterValue(filterOption)}
-                  disabled={(isTeamsFilter && isLoadingTeams) || !filterType}
-                  loading={isTeamsFilter && isLoadingTeams}
-                  variant="secondary"
-                  className="w-full truncate"
-                />
-                <DropdownMenuContent
-                  className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isTeamsFilter,
-                    'hidden-scroll': valueOptions?.length > 15
-                  })}
-                  align="start"
-                >
-                  {isTeamsFilter && (
-                    <DropdownMenuSearch
-                      ref={inputSearchRef}
-                      value={debounceValue}
-                      onChange={value => {
-                        setDebounceValue(value);
-                        debouncedSearch(value);
-                        handleFocusSearchInput();
-                      }}
-                    />
-                  )}
-                  {valueOptions.length > 0 ? (
-                    <DropdownList
-                      isMultiselect={isTeamsFilter}
-                      itemSelected={
-                        selectedFilters[filterIndex].filterValue as string
-                      }
-                      selectedOptions={
-                        isTeamsFilter &&
-                        Array.isArray(filterOption?.filterValue)
-                          ? filterOption.filterValue
-                          : undefined
-                      }
-                      options={valueOptions as DropdownOption[]}
-                      onSelectOption={value =>
-                        handleChangeFilterValue(value, filterIndex)
-                      }
-                    />
-                  ) : (
-                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
-                      {t('no-options-found')}
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              />
+
+              <p className="typo-para-medium text-gray-600">is</p>
+              <Dropdown
+                placeholder={t(`select-value`)}
+                labelCustom={handleGetLabelFilterValue(filterOption)}
+                disabled={(isTeamsFilter && isLoadingTeams) || !filterType}
+                loading={isTeamsFilter && isLoadingTeams}
+                multiselect={isTeamsFilter}
+                isSearchable={isTeamsFilter}
+                value={
+                  isTeamsFilter && Array.isArray(filterOption?.filterValue)
+                    ? (filterOption.filterValue as string[])
+                    : (filterOption.filterValue as string)
+                }
+                options={valueOptions as DropdownOption[]}
+                onChange={value =>
+                  handleChangeFilterValue(value as string, filterIndex)
+                }
+                className="w-full truncate"
+                contentClassName={cn('w-[235px]', {
+                  'pt-0 w-[300px]': isTeamsFilter,
+                  'hidden-scroll': valueOptions?.length > 15
+                })}
+                menuContentSide="bottom"
+              />
               <Button
                 variant={'grey'}
                 className="px-0 w-fit"

@@ -10,12 +10,7 @@ import { ActionTypeMap } from 'pages/feature-flag-details/operations/types';
 import { createDatetimeClausesList } from 'pages/feature-flag-details/operations/utils';
 import Button from 'components/button';
 import { ReactDatePicker } from 'components/date-time-picker';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 
@@ -153,35 +148,14 @@ const ScheduleList = ({
                         <Form.Item className="py-0">
                           <Form.Label required>{t('common:state')}</Form.Label>
                           <Form.Control>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                label={
-                                  stateOptions.find(
-                                    item => item.value === field.value
-                                  )?.label
-                                }
-                                className="w-[124px] uppercase"
-                                disabled={isDisabledField(item.wasPassed)}
-                              />
-                              <DropdownMenuContent
-                                align="start"
-                                className="min-w-[124px]"
-                                {...field}
-                              >
-                                {stateOptions.map(({ label, value }, index) => (
-                                  <DropdownMenuItem
-                                    key={index}
-                                    label={label}
-                                    value={value}
-                                    isSelectedItem={field.value === value}
-                                    onSelectOption={value =>
-                                      field.onChange(value)
-                                    }
-                                    className="uppercase"
-                                  />
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Dropdown
+                              value={field.value}
+                              options={stateOptions}
+                              onChange={field.onChange}
+                              className="w-[124px] uppercase"
+                              disabled={isDisabledField(item.wasPassed)}
+                              contentClassName="min-w-[124px]"
+                            />
                           </Form.Control>
                           <Form.Message />
                         </Form.Item>

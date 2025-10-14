@@ -67,7 +67,6 @@ const RowWithData = ({
 interface DropdownListProps extends RowWithDataProps {
   itemSelected?: string;
   height?: number;
-
   maxHeight?: number;
   width?: string | number;
   itemSize?: number;
