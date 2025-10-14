@@ -33,12 +33,7 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -610,37 +605,15 @@ const ExperimentCreateUpdateModal = ({
                         {t('experiments.base-variation')}
                       </Form.Label>
                       <Form.Control>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            disabled={!!isEdit || disabled}
-                            placeholder={t(`experiments.select-variation`)}
-                            label={
-                              variationOptions?.find(
-                                item => item.value === field.value
-                              )?.label || ''
-                            }
-                            variant="secondary"
-                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                          />
-                          <DropdownMenuContent
-                            className="w-[502px]"
-                            align="start"
-                            {...field}
-                          >
-                            {variationOptions.map((item, index) => (
-                              <DropdownMenuItem
-                                {...field}
-                                key={index}
-                                value={item.value}
-                                label={item.label}
-                                isSelectedItem={field.value === item.value}
-                                onSelectOption={value => {
-                                  field.onChange(value);
-                                }}
-                              />
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Dropdown
+                          disabled={!!isEdit || disabled}
+                          placeholder={t(`experiments.select-variation`)}
+                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                          contentClassName="min-w-[502px]"
+                          options={variationOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </Form.Control>
                       <Form.Message />
                     </Form.Item>

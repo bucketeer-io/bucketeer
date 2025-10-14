@@ -5,12 +5,7 @@ import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { IconInfo } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Switch from 'components/switch';
@@ -104,26 +99,15 @@ const FlagSwitch = ({
           render={({ field }) => (
             <Form.Item>
               <Form.Control>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    label={
-                      options.find(item => item.value === field.value)?.label ||
-                      ''
-                    }
-                    disabled={!editable}
-                    className="max-w-[400px] truncate"
-                  />
-                  <DropdownMenuContent align="end" className="max-w-[400px]">
-                    {options.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        label={item.label}
-                        value={item.value}
-                        onSelectOption={field.onChange}
-                      />
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Dropdown
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={options}
+                  disabled={!editable}
+                  className="max-w-[400px] truncate"
+                  contentClassName="max-w-[400px]"
+                  alignContent="end"
+                />
               </Form.Control>
               <Form.Message />
             </Form.Item>

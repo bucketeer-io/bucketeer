@@ -25,12 +25,7 @@ import * as yup from 'yup';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
@@ -196,35 +191,21 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                   <Form.Item className="py-2">
                     <Form.Label required>{t('form:origin-env')}</Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:select-environment`)}
-                          label={getCurrentLabelEnv(
-                            currentEnvironment?.id || emptyEnvironmentId
-                          )}
-                          disabled
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className="w-[502px]"
-                          align="start"
-                          {...field}
-                        >
-                          {formattedEnvironments.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={item.name}
-                              isSelectedItem={field.value === item.id}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Dropdown
+                        options={formattedEnvironments.map(item => ({
+                          label: item.name,
+                          value: item.id
+                        }))}
+                        labelCustom={getCurrentLabelEnv(
+                          currentEnvironment?.id || emptyEnvironmentId
+                        )}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={t(`form:select-environment`)}
+                        disabled
+                        className="w-full"
+                        contentClassName="min-w-[502px]"
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

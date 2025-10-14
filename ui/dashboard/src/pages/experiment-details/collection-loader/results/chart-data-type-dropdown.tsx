@@ -1,11 +1,5 @@
 import { useTranslation } from 'i18n';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownValue
-} from 'components/dropdown';
+import Dropdown, { DropdownValue } from 'components/dropdown';
 import { GoalResultTab } from '.';
 
 const ChartDataTypeDropdown = ({
@@ -54,25 +48,13 @@ const ChartDataTypeDropdown = ({
   const options = tab === 'EVALUATION' ? evaluationOptions : conversionOptions;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        isExpand
-        label={options.find(item => item.value === chartType)?.label || ''}
-        placeholder={t('common:select-value')}
-        className="max-w-[528px]"
-      />
-      <DropdownMenuContent align="start">
-        {options.map(item => (
-          <DropdownMenuItem
-            key={item.value}
-            label={item.label}
-            value={item.value}
-            isSelectedItem={item.value === chartType}
-            onSelectOption={onSelectOption}
-          />
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Dropdown
+      options={options}
+      value={chartType}
+      placeholder={t('common:select-value')}
+      onChange={val => onSelectOption(val as DropdownValue)}
+      className="max-w-[528px]"
+    />
   );
 };
 

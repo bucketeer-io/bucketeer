@@ -7,12 +7,7 @@ import { truncateBySide } from 'utils/converts';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
@@ -136,31 +131,14 @@ const ConditionForm = forwardRef(
                     {t('table:feature-flags.variation')}
                   </Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        label={
-                          variationOptions?.find(
-                            item => field.value === item.value
-                          )?.label
-                        }
-                        placeholder={t('experiments.select-variation')}
-                        className="w-full"
-                        disabled={!variationOptions?.length}
-                      />
-                      <DropdownMenuContent align="start" {...field}>
-                        {variationOptions?.map((item, index) => (
-                          <DropdownMenuItem
-                            key={index}
-                            label={item.label}
-                            value={item.value}
-                            isSelectedItem={field.value === item.value}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      options={variationOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t('experiments.select-variation')}
+                      disabled={!variationOptions?.length}
+                      className="w-full"
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

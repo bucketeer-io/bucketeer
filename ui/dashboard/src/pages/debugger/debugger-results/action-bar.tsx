@@ -3,12 +3,7 @@ import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { IconCollapse, IconExpand } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
 import { GroupByType } from '../page-content';
 
@@ -51,30 +46,22 @@ const ActionBar = ({
         {t('debugger-results')}
       </p>
       <div className="flex items-center gap-x-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            label={
-              <Trans
-                i18nKey="common:group-by-type"
-                values={{
-                  type: t(groupBy === 'FLAG' ? 'flag' : 'user')
-                }}
-              />
-            }
-          />
-          <DropdownMenuContent align="end" className="min-w-[173px]">
-            {groupByOptions.map((item, index) => (
-              <DropdownMenuItem
-                key={index}
-                label={item.label}
-                value={item.value}
-                onSelectOption={value => {
-                  onChangeGroupBy(value as GroupByType);
-                }}
-              />
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dropdown
+          labelCustom={
+            <Trans
+              i18nKey="common:group-by-type"
+              values={{
+                type: t(groupBy === 'FLAG' ? 'flag' : 'user')
+              }}
+            />
+          }
+          value={groupBy}
+          options={groupByOptions}
+          onChange={value => onChangeGroupBy(value as GroupByType)}
+          alignContent="end"
+          contentClassName="w-[173px]"
+        />
+
         <Button
           variant={'secondary'}
           className="max-w-[154px]"

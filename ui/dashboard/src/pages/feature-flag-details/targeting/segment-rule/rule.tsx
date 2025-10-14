@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
+import { FieldPath, useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -19,12 +19,7 @@ import { IconInfo, IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -230,36 +225,18 @@ const RuleForm = ({
                               {t('feature-flags.context-kind')}
                             </Form.Label>
                             <Form.Control>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  label={
-                                    situationOptions.find(
-                                      item => item.value === field.value
-                                    )?.label
-                                  }
-                                  className="w-full"
-                                />
-                                <DropdownMenuContent align="start" {...field}>
-                                  {situationOptions.map((item, index) => (
-                                    <DropdownMenuItem
-                                      key={index}
-                                      label={item.label}
-                                      value={item.value}
-                                      isSelectedItem={
-                                        clausesWatch[clauseIndex].type ===
-                                        item.value
-                                      }
-                                      onSelectOption={value => {
-                                        handleChangeConditioner(
-                                          value as RuleClauseType,
-                                          clauseIndex,
-                                          field.onChange
-                                        );
-                                      }}
-                                    />
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              <Dropdown
+                                options={situationOptions}
+                                value={field.value}
+                                className="w-full"
+                                onChange={value => {
+                                  handleChangeConditioner(
+                                    value as RuleClauseType,
+                                    clauseIndex,
+                                    field.onChange
+                                  );
+                                }}
+                              />
                             </Form.Control>
                             <Form.Message />
                           </Form.Item>
@@ -377,39 +354,18 @@ const RuleForm = ({
                           )}
                           <Form.Control>
                             {isDate || isCompare ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  label={
-                                    (isDate
-                                      ? conditionerDateOptions
-                                      : conditionerCompareOptions
-                                    ).find(item =>
-                                      [field.value, clause.operator].includes(
-                                        item.value
-                                      )
-                                    )?.label
-                                  }
-                                  className="w-full"
-                                />
-                                <DropdownMenuContent align="start" {...field}>
-                                  {(isDate
+                              <Dropdown
+                                options={
+                                  isDate
                                     ? conditionerDateOptions
                                     : conditionerCompareOptions
-                                  ).map((item, index) => (
-                                    <DropdownMenuItem
-                                      key={index}
-                                      label={item.label}
-                                      value={item.value}
-                                      isSelectedItem={
-                                        field.value === item.value
-                                      }
-                                      onSelectOption={value =>
-                                        field.onChange(value)
-                                      }
-                                    />
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                }
+                                value={field.value ?? clause.operator}
+                                onChange={value => field.onChange(value)}
+                                placeholder="Select condition"
+                                className="w-full"
+                                alignContent="start"
+                              />
                             ) : isEmptySegment ? (
                               <div className="flex items-end mb-4 h-full typo-para-small text-gray-700">
                                 <Trans
@@ -495,48 +451,20 @@ const RuleForm = ({
                                     }}
                                   />
                                 ) : isFlag || isUserSegment ? (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                      disabled={
-                                        isFlag
-                                          ? !variationOptions?.length
-                                          : !segmentOptions?.length
-                                      }
-                                      label={
-                                        (isFlag
-                                          ? variationOptions
-                                          : segmentOptions
-                                        )?.find(item => item.value === value[0])
-                                          ?.label || ''
-                                      }
-                                      placeholder={t('common:select-value')}
-                                      className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                                    />
-                                    <DropdownMenuContent
-                                      align="start"
-                                      {...field}
-                                    >
-                                      {(isFlag
-                                        ? variationOptions
-                                        : segmentOptions
-                                      )?.map((item, index) => {
-                                        return (
-                                          <DropdownMenuItem
-                                            key={index}
-                                            label={item.label}
-                                            value={item.value}
-                                            isSelectedItem={
-                                              clausesWatch[clauseIndex]
-                                                .values[0] === item.value
-                                            }
-                                            onSelectOption={value =>
-                                              field.onChange([value])
-                                            }
-                                          />
-                                        );
-                                      })}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <Dropdown
+                                    options={
+                                      isFlag ? variationOptions : segmentOptions
+                                    }
+                                    value={value?.[0] ?? ''}
+                                    onChange={val => field.onChange([val])}
+                                    placeholder={t('common:select-value')}
+                                    disabled={
+                                      isFlag
+                                        ? !variationOptions?.length
+                                        : !segmentOptions?.length
+                                    }
+                                    className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                                  />
                                 ) : (
                                   <CreatableSelect
                                     value={value?.map((item: string) => ({

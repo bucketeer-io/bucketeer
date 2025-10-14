@@ -22,12 +22,7 @@ import { createEventRate } from 'pages/feature-flag-details/operations/utils';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -353,31 +348,15 @@ const EventRateOperationModal = ({
                             />
                           </Form.Label>
                           <Form.Control>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                label={
-                                  conditionOptions.find(
-                                    item => item.value === field.value
-                                  )?.label || ''
-                                }
-                                isExpand
-                                disabled={isDisabled}
-                              />
-                              <DropdownMenuContent
-                                align="end"
-                                className="min-w-[132px]"
-                              >
-                                {conditionOptions.map((item, index) => (
-                                  <DropdownMenuItem
-                                    key={index}
-                                    label={item.label}
-                                    value={item.value}
-                                    isSelectedItem={item.value === field.value}
-                                    onSelectOption={field.onChange}
-                                  />
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Dropdown
+                              options={conditionOptions}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder={t('form:select-condition')}
+                              disabled={isDisabled}
+                              className="w-full"
+                              contentClassName="min-w-[132px]"
+                            />
                           </Form.Control>
                         </Form.Item>
                       )}

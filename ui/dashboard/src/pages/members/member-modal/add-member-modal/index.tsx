@@ -27,13 +27,7 @@ import { IconEnglishFlag, IconInfo, IconJapanFlag } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -233,37 +227,14 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                 <Form.Item>
                   <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control className="w-full">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('form:select-role')}
-                        label={
-                          organizationRoles.find(
-                            item => item.value === field.value
-                          )?.label
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[500px]"
-                        align="start"
-                        {...field}
-                      >
-                        {organizationRoles.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            description={item.description}
-                            isSelectedItem={item.value === field.value}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      options={organizationRoles}
+                      value={field.value}
+                      placeholder={t('form:select-role')}
+                      onChange={field.onChange}
+                      className="w-full"
+                      contentClassName="w-[500px]"
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

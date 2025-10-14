@@ -8,12 +8,7 @@ import { Environment, EnvironmentRoleType } from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import EnvironmentEditorList from 'elements/environment-editor-list';
@@ -128,48 +123,29 @@ const EnvironmentRoles = ({
             <Form.Field
               control={control}
               name={`environmentRoles.${envIndex}.role`}
-              render={({ field }) => (
+              render={() => (
                 <Form.Item className="py-2">
                   <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:select-role`)}
-                        label={
-                          environmentRoleOptions.find(
-                            item => item.value === environment.role
-                          )?.label
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className={
-                          isJapaneseLanguage ? 'min-w-[170px]' : 'min-w-[140px]'
-                        }
-                        align="start"
-                        {...field}
-                      >
-                        {environmentRoleOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            onSelectOption={value => {
-                              setValue(
-                                `environmentRoles.${envIndex}.role`,
-                                value as EnvironmentRoleType,
-                                {
-                                  shouldDirty: true,
-                                  shouldValidate: true
-                                }
-                              );
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      placeholder={t(`form:select-role`)}
+                      options={environmentRoleOptions}
+                      value={environment.role}
+                      className="w-full"
+                      contentClassName={
+                        isJapaneseLanguage ? 'min-w-[170px]' : 'min-w-[140px]'
+                      }
+                      onChange={val => {
+                        setValue(
+                          `environmentRoles.${envIndex}.role`,
+                          val as EnvironmentRoleType,
+                          {
+                            shouldDirty: true,
+                            shouldValidate: true
+                          }
+                        );
+                      }}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

@@ -18,12 +18,7 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -178,37 +173,20 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 <Form.Item>
                   <Form.Label required>{t('form:owner-email')}</Form.Label>
                   <Form.Control className="w-full">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('form:owner-email')}
-                        label={
-                          accounts?.accounts.find(
-                            item => item.email === field.value
-                          )?.email
-                        }
-                        variant="secondary"
-                        className="w-full"
-                        disabled={isLoadingAccounts || disabled}
-                      />
-                      <DropdownMenuContent
-                        className="w-[400px]"
-                        align="start"
-                        {...field}
-                      >
-                        {accounts?.accounts?.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.email}
-                            label={item.email}
-                            isSelectedItem={item.email === field.value}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      options={
+                        accounts?.accounts.map(item => ({
+                          value: item.email,
+                          label: item.email
+                        })) || []
+                      }
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t('form:owner-email')}
+                      disabled={isLoadingAccounts || disabled}
+                      className="w-full"
+                      contentClassName="w-[400px]"
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
