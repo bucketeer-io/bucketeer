@@ -174,7 +174,19 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail; while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - |
+                    # Wait for active requests to finish (not idle keep-alive connections)
+                    elapsed=0
+                    max_wait=30
+                    while [ $elapsed -lt $max_wait ]; do
+                      active_reqs=$(wget -q -O- http://localhost:{{ .Values.envoy.adminPort }}/stats 2>/dev/null | grep "ingress_http.downstream_rq_active" | awk '{print $2}')
+                      [ -z "$active_reqs" ] && active_reqs=0
+                      [ "$active_reqs" -eq 0 ] && echo "All active requests completed in ${elapsed}s" && break
+                      sleep 1
+                      elapsed=$((elapsed + 1))
+                    done
+                    [ $elapsed -ge $max_wait ] && echo "Timeout: $active_reqs active requests remain"
+                    exit 0
           command: ["envoy"]
           args:
             - "-c"
