@@ -224,9 +224,14 @@ data:
                             allow_credentials: true
                             max_age: "86400"
                         routes:
-                          # Health check endpoint
+                          # Health check endpoints
                           - match:
                               prefix: /health
+                            route:
+                              cluster: api
+                              timeout: 35s
+                          - match:
+                              prefix: /ready
                             route:
                               cluster: api
                               timeout: 35s

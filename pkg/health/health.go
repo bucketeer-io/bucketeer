@@ -121,11 +121,18 @@ func (hc *checker) check(ctx context.Context) {
 	hc.setStatus(Healthy)
 }
 
-func (hc *checker) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+func (hc *checker) ServeReadyHTTP(resp http.ResponseWriter, req *http.Request) {
+	// Readiness check: return 503 if health checks fail
 	if hc.getStatus() == Unhealthy {
 		resp.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (hc *checker) ServeLiveHTTP(resp http.ResponseWriter, req *http.Request) {
+	// Liveness check: always return 200 unless the app is completely broken
+	// It's meant to detect if the process is alive, not if it's ready to serve traffic
 	resp.WriteHeader(http.StatusOK)
 }
 

@@ -72,6 +72,11 @@ nodeSelector: {}
 pdb:
   enabled:
   maxUnavailable: 50%
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 10%
+    maxSurge: 1
 hpa:
   enabled:
   minReplicas:
@@ -124,16 +129,20 @@ service:
   grpcPort: 9000
   httpPort: 9003
 health:
-  livenessProbe:
-    initialDelaySeconds: 10
+  startupProbe:
     periodSeconds: 3
+    failureThreshold: 10
+    timeoutSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 15
     failureThreshold: 5
     timeoutSeconds: 5
   readinessProbe:
-    initialDelaySeconds: 10
+    initialDelaySeconds: 15
     periodSeconds: 3
-    failureThreshold: 2
-    timeoutSeconds: 3
+    failureThreshold: 1
+    timeoutSeconds: 5
 resources: {}
 serviceAccount:
   annotations: {}
@@ -164,3 +173,4 @@ gcpMultiCluster:
         backend:
           serviceName: web-multi-cluster-service
           servicePort: 9003
+terminationGracePeriodSeconds: 60

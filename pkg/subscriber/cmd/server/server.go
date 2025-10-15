@@ -44,10 +44,9 @@ import (
 )
 
 const (
-	command               = "server"
-	healthCheckTimeout    = 1 * time.Second
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 20 * time.Second
+	command            = "server"
+	healthCheckTimeout = 1 * time.Second
+	clientDialTimeout  = 30 * time.Second
 )
 
 type server struct {
@@ -342,12 +341,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	// healthCheckService
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
+	defer healthCheckCancel() // Ensure cleanup on all paths (including early returns)
+
 	restHealthChecker := health.NewRestChecker(
 		"", "",
 		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go restHealthChecker.Run(ctx)
+	go restHealthChecker.Run(healthCheckCtx)
 	// healthcheckService
 	healthcheckServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -358,22 +361,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go healthcheckServer.Run()
 
-	// Graceful shutdown sequence optimized for GCP Spot VM constraints (30s termination window):
-	// 1. Stop health check immediately to fail Kubernetes readiness probe ASAP
-	// 2. Stop PubSub subscription (allows in-flight messages to complete processing)
-	// 3. Close database/cache/gRPC clients
-	// Note: Subscriber service doesn't use Envoy sidecar.
 	defer func() {
-		// Step 1: Stop health check immediately
-		// This ensures Kubernetes readiness probe fails on next check (within ~3s),
-		// preventing new traffic from being routed to this pod.
-		healthcheckServer.Stop(5 * time.Second)
+		shutdownStartTime := time.Now()
+		logger.Info("Starting graceful shutdown sequence")
 
-		// Step 2: Stop PubSub subscription
+		// Cancel the health checker goroutines to prevent connection errors during shutdown
+		healthCheckCancel()
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		restHealthChecker.Stop()
+		logger.Info("Health check marked as unhealthy (readiness will fail)")
+
+		// Stop PubSub subscription
 		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
 
-		// Step 3: Close clients
+		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
 		go notificationClient.Close()
 		go experimentClient.Close()
@@ -381,6 +385,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureClient.Close()
 		go autoOpsClient.Close()
 		go mysqlClient.Close()
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+		)
 	}()
 
 	<-ctx.Done()

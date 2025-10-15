@@ -186,7 +186,8 @@ func TestHTTPHealthHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != http.StatusServiceUnavailable {
+	// Health checker with no checks should be healthy (200 OK)
+	if resp.StatusCode != http.StatusOK {
 		t.Fatal(resp)
 	}
 }

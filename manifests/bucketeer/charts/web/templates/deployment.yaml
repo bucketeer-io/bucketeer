@@ -21,12 +21,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
-      # Ensure pod has sufficient time for graceful shutdown before SIGKILL
-      # This matches GCP Spot VM termination window (30s) and allows:
-      # - 3s for K8s to detect pod is not ready
-      # - 20s for application graceful shutdown
-      # - 7s safety margin
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -239,10 +234,19 @@ spec:
               containerPort: {{ .Values.env.authServicePort }}
             - name: metrics
               containerPort: {{ .Values.env.metricsPort }}
+          startupProbe:
+            periodSeconds: {{ .Values.health.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.startupProbe.timeoutSeconds }}
+            httpGet:
+              path: /ready
+              port: health-check
+              scheme: HTTPS
           livenessProbe:
             initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: /health
               port: health-check
@@ -251,8 +255,9 @@ spec:
             initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
-              path: /health
+              path: /ready
               port: health-check
               scheme: HTTPS
           resources:
@@ -264,31 +269,42 @@ spec:
             preStop:
               exec:
                 command:
-                  - "/bin/sh"
-                  - "-c"
+                  - /bin/sh
+                  - -c
                   - |
-                    # Step 1: Fail Envoy health check so K8s removes pod from endpoints
-                    wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail
+                    admin_port={{ .Values.envoy.adminPort }}
+                    max_wait=45
+                    sleep_interval=1
 
-                    # Step 2: Wait for all active connections to drain (max 25s)
-                    # Uses Istio pattern: dynamically checks all connections excluding Envoy and TIME-WAIT
+                    echo "[preStop] Starting graceful shutdown for Envoy (admin port: ${admin_port})"
+
+                    # 1. Mark pod unready (stop new LB traffic)
+                    echo "[preStop] Marking Envoy unhealthy..."
+                    wget -q -O- --post-data='{}' "http://localhost:${admin_port}/healthcheck/fail" || echo "[preStop] Warning: failed to mark unhealthy"
+
+                    # 2. Wait until all active inbound requests are finished
                     elapsed=0
-                    max_wait=25
-                    while [ $elapsed -lt $max_wait ]; do
-                      # Count active connections excluding Envoy process and TIME-WAIT states
-                      active_conns=$(ss -Htlp state all | grep -vE '(envoy|TIME-WAIT)' | wc -l | xargs)
-                      if [ "$active_conns" -eq 0 ]; then
-                        echo "All connections drained after ${elapsed}s"
+                    while [ "$elapsed" -lt "$max_wait" ]; do
+                      active_reqs=$(wget -q -O- "http://localhost:${admin_port}/stats" 2>/dev/null \
+                        | grep "http.ingress_http.downstream_rq_active" | awk '{print $2}' || echo "0")
+                      [ -z "$active_reqs" ] && active_reqs=0
+
+                      if [ "$active_reqs" -eq 0 ]; then
+                        echo "[preStop] All active requests drained after ${elapsed}s"
                         break
                       fi
-                      echo "Waiting for $active_conns connections to drain..."
-                      sleep 1
-                      elapsed=$((elapsed + 1))
+
+                      echo "[preStop] Waiting for ${active_reqs} active requests..."
+                      sleep "$sleep_interval"
+                      elapsed=$((elapsed + sleep_interval))
                     done
 
-                    if [ $elapsed -ge $max_wait ]; then
-                      echo "Timeout reached, forcing shutdown with $active_conns remaining connections"
+                    if [ "$elapsed" -ge "$max_wait" ]; then
+                      echo "[preStop] Timeout reached (${max_wait}s): ${active_reqs} active requests remain"
                     fi
+
+                    echo "[preStop] Graceful shutdown complete."
+                    exit 0
           command: ["envoy"]
           args:
             - "-c"
@@ -312,10 +328,19 @@ spec:
               containerPort: {{ .Values.envoy.httpPort }}
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
+          startupProbe:
+            periodSeconds: {{ .Values.health.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.startupProbe.timeoutSeconds }}
+            httpGet:
+              path: /ready
+              port: admin
+              scheme: HTTP
           livenessProbe:
             initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: /ready
               port: admin
@@ -324,6 +349,7 @@ spec:
             initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /ready
               port: admin
@@ -331,4 +357,4 @@ spec:
           resources:
 {{ toYaml .Values.envoy.resources | indent 12 }}
   strategy:
-    type: RollingUpdate
+{{ toYaml .Values.strategy | indent 4 }}

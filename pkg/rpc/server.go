@@ -150,8 +150,6 @@ func (s *Server) Stop(timeout time.Duration) {
 	//
 	// This ensures HTTP requests that call s.rpcServer.ServeHTTP() can complete
 	// before we stop the underlying gRPC server.
-
-	// Step 1: Shutdown HTTP server gracefully
 	if s.httpServer != nil {
 		s.logger.Info("Starting HTTP server graceful shutdown")
 
@@ -165,7 +163,6 @@ func (s *Server) Stop(timeout time.Duration) {
 		}
 	}
 
-	// Step 2: Stop gRPC server
 	// Note: We use Stop() instead of GracefulStop() because:
 	// - GracefulStop() panics on HTTP-served connections (serverHandlerTransport.Drain not implemented)
 	// - HTTP-served connections were already drained in step 1
@@ -173,7 +170,6 @@ func (s *Server) Stop(timeout time.Duration) {
 	if s.rpcServer != nil {
 		s.logger.Info("Stopping gRPC server")
 		s.rpcServer.Stop()
-		s.logger.Info("gRPC server stopped")
 	}
 
 	s.logger.Info("Server shutdown completed",
