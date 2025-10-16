@@ -91,7 +91,7 @@ const (
 
 	// Shutdown timing for graceful termination:
 	// During normal operations (rolling updates, scale down), the pod gets the full
-	// terminationGracePeriodSeconds (30s). During Spot VM preemption, kubelet enforces
+	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
 	// a best-effort 15s limit. We optimize for the common case (normal operations).
 	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
 	propagationDelay      = 10 * time.Second
