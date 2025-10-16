@@ -308,15 +308,15 @@ func (c *client) Close() error {
 
 func (c *client) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
-	go func() {
-		_, err := c.rc.Ping(context.TODO()).Result()
+	go func(ctx context.Context) {
+		_, err := c.rc.Ping(ctx).Result()
 		if err != nil {
 			c.logger.Error("Unhealthy", zap.Error(err))
 			resultCh <- health.Unhealthy
 			return
 		}
 		resultCh <- health.Healthy
-	}()
+	}(ctx)
 	select {
 	case <-ctx.Done():
 		c.logger.Error("Unhealthy due to context Done is closed", zap.Error(ctx.Err()))

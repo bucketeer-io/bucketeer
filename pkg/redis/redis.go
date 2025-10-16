@@ -203,7 +203,13 @@ func NewCluster(nodes []string, opts ...Option) (Cluster, error) {
 
 func (c *cluster) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
-	go func() {
+	go func(ctx context.Context) {
+		// Check context cancellation first
+		if err := ctx.Err(); err != nil {
+			c.logger.Error("Unhealthy due to context cancellation", zap.Error(err))
+			resultCh <- health.Unhealthy
+			return
+		}
 		conn := c.Get(WithoutRetry())
 		defer conn.Close()
 		_, err := conn.Do("PING")
@@ -213,7 +219,7 @@ func (c *cluster) Check(ctx context.Context) health.Status {
 			return
 		}
 		resultCh <- health.Healthy
-	}()
+	}(ctx)
 	select {
 	case <-ctx.Done():
 		c.logger.Error("Unhealthy due to context Done is closed", zap.Error(ctx.Err()))
