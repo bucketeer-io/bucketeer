@@ -73,7 +73,7 @@ const (
 	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
 	// a best-effort 15s limit. We optimize for the common case (normal operations).
 	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
-	propagationDelay      = 10 * time.Second
+	propagationDelay      = 15 * time.Second
 	serverShutDownTimeout = 30 * time.Second
 	grpcStopTimeout       = 5 * time.Second
 )

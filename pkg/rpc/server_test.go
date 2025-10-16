@@ -101,18 +101,21 @@ func (c dummyPerRPCCredentials) RequireTransportSecurity() bool {
 
 func newServer(ctx context.Context) *Server {
 	logger := zap.NewExample()
-	health := health.NewGrpcChecker()
+	healthChecker := health.NewGrpcChecker()
+	// Start the health checker's periodic check loop
+	// This ensures the health status is updated from Unhealthy to Healthy
+	go healthChecker.Run(ctx)
 	server := NewServer(
 		&testService{},
 		certPath,
 		keyPath,
 		"test-server",
-		WithService(health),
+		WithService(healthChecker),
 		WithVerifier(&dummyVerifier{}),
 		WithMetrics(&dummyRegisterer{}),
 		WithLogger(logger),
 		WithPort(4443),
-		WithHandler("/health", health),
+		WithHandler("/health", healthChecker),
 	)
 	return server
 }
@@ -156,8 +159,9 @@ func TestGRPCHealthHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Status != pb.HealthCheckResponse_NOT_SERVING {
-		t.Fatal(resp)
+	// Health checker with no checks should be healthy (SERVING) after initialization
+	if resp.Status != pb.HealthCheckResponse_SERVING {
+		t.Fatalf("Expected SERVING, got %v", resp)
 	}
 }
 
@@ -235,6 +239,9 @@ func testMain(m *testing.M) int {
 	defer server.Stop(time.Second)
 	go server.Run()
 	waitForServer()
+	// Give the health checker time to run its first check cycle
+	// The health checker starts as Unhealthy and needs at least one check to become Healthy
+	time.Sleep(100 * time.Millisecond)
 	return m.Run()
 }
 

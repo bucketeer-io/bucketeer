@@ -185,37 +185,22 @@ spec:
                   - -c
                   - |
                     admin_port={{ .Values.envoy.adminPort }}
-                    max_wait=45
-                    sleep_interval=1
+                    max_wait=35
+                    propagation_delay=15
 
-                    echo "[preStop] Starting graceful shutdown for Envoy (admin port: ${admin_port})"
+                    # Mark unhealthy and wait for LB propagation
+                    wget -q -O- --post-data='{}' "http://localhost:${admin_port}/healthcheck/fail" >/dev/null 2>&1 || true
 
-                    # 1. Mark pod unready (stop new LB traffic)
-                    echo "[preStop] Marking Envoy unhealthy..."
-                    wget -q -O- --post-data='{}' "http://localhost:${admin_port}/healthcheck/fail" || echo "[preStop] Warning: failed to mark unhealthy"
+                    # Wait for GCLB to detect unhealthy status and stop routing
+                    sleep "$propagation_delay"
 
-                    # 2. Wait until all active inbound requests are finished
-                    elapsed=0
-                    while [ "$elapsed" -lt "$max_wait" ]; do
-                      active_reqs=$(wget -q -O- "http://localhost:${admin_port}/stats" 2>/dev/null \
-                        | grep "http.ingress_http.downstream_rq_active" | awk '{print $2}' || echo "0")
-                      [ -z "$active_reqs" ] && active_reqs=0
-
-                      if [ "$active_reqs" -eq 0 ]; then
-                        echo "[preStop] All active requests drained after ${elapsed}s"
-                        break
-                      fi
-
-                      echo "[preStop] Waiting for ${active_reqs} active requests..."
-                      sleep "$sleep_interval"
-                      elapsed=$((elapsed + sleep_interval))
+                    # Wait for active requests to drain
+                    for i in $(seq 1 "$max_wait"); do
+                      active=$(wget -q -O- "http://localhost:${admin_port}/stats" 2>/dev/null | grep "http.ingress_http.downstream_rq_active" | awk '{print $2}' || echo "0")
+                      [ -z "$active" ] && active=0
+                      [ "$active" -eq 0 ] && break
+                      sleep 1
                     done
-
-                    if [ "$elapsed" -ge "$max_wait" ]; then
-                      echo "[preStop] Timeout reached (${max_wait}s): ${active_reqs} active requests remain"
-                    fi
-
-                    echo "[preStop] Graceful shutdown complete."
                     exit 0
           command: ["envoy"]
           args:

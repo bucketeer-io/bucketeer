@@ -131,8 +131,12 @@ func (hc *checker) ServeReadyHTTP(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (hc *checker) ServeLiveHTTP(resp http.ResponseWriter, req *http.Request) {
-	// Liveness check: always return 200 unless the app is completely broken
-	// It's meant to detect if the process is alive, not if it's ready to serve traffic
+	// Liveness check: return 503 during shutdown to stop GCLB routing
+	// This ensures load balancers stop sending traffic when the pod is shutting down
+	if hc.getStatus() == Unhealthy {
+		resp.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
 	resp.WriteHeader(http.StatusOK)
 }
 

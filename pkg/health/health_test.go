@@ -137,7 +137,7 @@ func TestHTTPReadyUnhealthy(t *testing.T) {
 	}
 }
 
-func TestHTTPHealthUnaffectedByStop(t *testing.T) {
+func TestHTTPHealthAffectedByStop(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc           string
@@ -146,7 +146,7 @@ func TestHTTPHealthUnaffectedByStop(t *testing.T) {
 		expectedAfter  int
 	}{
 		{
-			desc: "health endpoint always returns 200, even after Stop()",
+			desc: "health endpoint returns 503 after Stop() with healthy check",
 			setupFunc: func() *restChecker {
 				healthyCheck := func(ctx context.Context) Status {
 					return Healthy
@@ -156,17 +156,17 @@ func TestHTTPHealthUnaffectedByStop(t *testing.T) {
 				return c
 			},
 			expectedBefore: http.StatusOK,
-			expectedAfter:  http.StatusOK,
+			expectedAfter:  http.StatusServiceUnavailable,
 		},
 		{
-			desc: "health endpoint returns 200 with no checks after Stop()",
+			desc: "health endpoint returns 503 after Stop() with no checks",
 			setupFunc: func() *restChecker {
 				c := NewRestChecker(version, service)
 				c.check(context.Background())
 				return c
 			},
 			expectedBefore: http.StatusOK,
-			expectedAfter:  http.StatusOK,
+			expectedAfter:  http.StatusServiceUnavailable,
 		},
 	}
 
@@ -185,7 +185,7 @@ func TestHTTPHealthUnaffectedByStop(t *testing.T) {
 			// Call Stop()
 			checker.Stop()
 
-			// Test after Stop() - health should still return 200
+			// Test after Stop() - health should return 503 to stop GCLB routing
 			req = httptest.NewRequest("GET", fmt.Sprintf("%s%s%s", version, service, healthPath), nil)
 			resp = httptest.NewRecorder()
 			checker.ServeLiveHTTP(resp, req)
@@ -255,16 +255,16 @@ func TestHTTPReadyAffectedByStop(t *testing.T) {
 	}
 }
 
-func TestGRPCHealthUnaffectedByStop(t *testing.T) {
+func TestGRPCHealthAffectedByStop(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc           string
 		setupFunc      func() *grpcChecker
-		expectedBefore pb.HealthCheckResponse_ServingStatus
-		expectedAfter  pb.HealthCheckResponse_ServingStatus
+		expectedBefore int
+		expectedAfter  int
 	}{
 		{
-			desc: "gRPC health endpoint always returns SERVING, even after Stop()",
+			desc: "gRPC health endpoint returns 503 after Stop() with healthy check",
 			setupFunc: func() *grpcChecker {
 				healthyCheck := func(ctx context.Context) Status {
 					return Healthy
@@ -273,18 +273,18 @@ func TestGRPCHealthUnaffectedByStop(t *testing.T) {
 				c.check(context.Background())
 				return c
 			},
-			expectedBefore: pb.HealthCheckResponse_SERVING,
-			expectedAfter:  pb.HealthCheckResponse_SERVING,
+			expectedBefore: http.StatusOK,
+			expectedAfter:  http.StatusServiceUnavailable,
 		},
 		{
-			desc: "gRPC health endpoint returns SERVING with no checks after Stop()",
+			desc: "gRPC health endpoint returns 503 after Stop() with no checks",
 			setupFunc: func() *grpcChecker {
 				c := NewGrpcChecker()
 				c.check(context.Background())
 				return c
 			},
-			expectedBefore: pb.HealthCheckResponse_SERVING,
-			expectedAfter:  pb.HealthCheckResponse_SERVING,
+			expectedBefore: http.StatusOK,
+			expectedAfter:  http.StatusServiceUnavailable,
 		},
 	}
 
@@ -296,19 +296,19 @@ func TestGRPCHealthUnaffectedByStop(t *testing.T) {
 			req := httptest.NewRequest("GET", "/health", nil)
 			resp := httptest.NewRecorder()
 			checker.ServeHTTP(resp, req)
-			if resp.Code != http.StatusOK {
-				t.Errorf("Before Stop(): Expected status %d, got %d", http.StatusOK, resp.Code)
+			if resp.Code != p.expectedBefore {
+				t.Errorf("Before Stop(): Expected status %d, got %d", p.expectedBefore, resp.Code)
 			}
 
 			// Call Stop()
 			checker.Stop()
 
-			// Test after Stop() - health should still return 200
+			// Test after Stop() - health should return 503 to stop GCLB routing
 			req = httptest.NewRequest("GET", "/health", nil)
 			resp = httptest.NewRecorder()
 			checker.ServeHTTP(resp, req)
-			if resp.Code != http.StatusOK {
-				t.Errorf("After Stop(): Expected status %d, got %d", http.StatusOK, resp.Code)
+			if resp.Code != p.expectedAfter {
+				t.Errorf("After Stop(): Expected status %d, got %d", p.expectedAfter, resp.Code)
 			}
 		})
 	}
