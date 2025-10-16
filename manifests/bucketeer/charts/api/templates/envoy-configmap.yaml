@@ -245,8 +245,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           # All gRPC requests
                           - match:
                               headers:
@@ -259,8 +259,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           # All other requests for API REST v1
                           - match:
                               prefix: /
@@ -269,8 +269,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
@@ -321,8 +321,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -334,8 +334,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -347,8 +347,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -360,8 +360,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -373,8 +373,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -386,8 +386,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -399,8 +399,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -412,8 +412,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -425,8 +425,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -438,8 +438,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -451,8 +451,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -464,8 +464,8 @@ data:
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 25s
+                                num_retries: 3
+                                per_try_timeout: 15s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
