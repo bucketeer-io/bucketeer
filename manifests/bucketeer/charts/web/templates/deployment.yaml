@@ -276,9 +276,6 @@ spec:
                     max_wait=35
                     propagation_delay=15
 
-                    # Mark unhealthy and wait for LB propagation
-                    wget -q -O- --post-data='{}' "http://localhost:${admin_port}/healthcheck/fail" >/dev/null 2>&1 || true
-
                     # Wait for GCLB to detect unhealthy status and stop routing
                     sleep "$propagation_delay"
 
