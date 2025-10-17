@@ -584,6 +584,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		shutdownStartTime := time.Now()
 		logger.Info("Starting graceful shutdown sequence")
 
+		waitBeforeUnready := 10 * time.Second
+		logger.Info("Waiting before marking unready",
+			zap.Duration("wait_before_unready", waitBeforeUnready))
+		time.Sleep(waitBeforeUnready)
+
 		// Cancel the health checker goroutines to prevent connection errors during shutdown
 		healthCheckCancel()
 		// Mark as unhealthy so readiness probes fail

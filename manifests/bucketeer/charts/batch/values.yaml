@@ -203,4 +203,4 @@ cronjob:
     - name: tag-deleter
       jobId: TagDeleter
       schedule: "0 0 * * *"
-terminationGracePeriodSeconds: 60
+terminationGracePeriodSeconds: 75

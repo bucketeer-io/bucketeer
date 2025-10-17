@@ -185,11 +185,7 @@ spec:
                   - -c
                   - |
                     admin_port={{ .Values.envoy.adminPort }}
-                    max_wait=35
-                    propagation_delay=15
-
-                    # Wait for GCLB to detect unhealthy status and stop routing
-                    sleep "$propagation_delay"
+                    max_wait=60
 
                     # Wait for active requests to drain
                     for i in $(seq 1 "$max_wait"); do

@@ -173,4 +173,4 @@ gcpMultiCluster:
         backend:
           serviceName: web-multi-cluster-service
           servicePort: 9003
-terminationGracePeriodSeconds: 60
+terminationGracePeriodSeconds: 75

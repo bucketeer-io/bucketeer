@@ -92,7 +92,7 @@ gcpMultiCluster:
   configCluster: false
   enabled: false
 
-terminationGracePeriodSeconds: 60
+terminationGracePeriodSeconds: 75
 health:
   startupProbe:
     periodSeconds: 3
