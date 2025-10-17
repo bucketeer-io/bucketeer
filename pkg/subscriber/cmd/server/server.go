@@ -59,6 +59,7 @@ type server struct {
 	keyPath          *string
 	serviceTokenPath *string
 	webURL           *string
+	demoSiteEnabled  *bool
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -99,6 +100,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		demoSiteEnabled:  cmd.Flag("demo-site-enabled", "Enable demo site.").Default("false").Bool(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -534,15 +536,17 @@ func (s *server) registerPubSubProcessorMap(
 			userEventPersister,
 		)
 
-		demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
-			processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
-			*s.webURL,
-			logger,
-		)
-		processors.RegisterProcessor(
-			processor.DemoOrganizationCreationNotifierName,
-			demoOrganizationCreationNotifier,
-		)
+		if *s.demoSiteEnabled {
+			demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
+				processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
+				*s.webURL,
+				logger,
+			)
+			processors.RegisterProcessor(
+				processor.DemoOrganizationCreationNotifierName,
+				demoOrganizationCreationNotifier,
+			)
+		}
 
 		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(

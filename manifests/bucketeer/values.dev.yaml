@@ -292,6 +292,7 @@ subscriber:
   env:
     project: bucketeer-test
     profile: false
+    demoSiteEnabled: false
     gcpEnabled: false
     enablePprof: false
     pprofAddr: 127.0.0.1:6060
