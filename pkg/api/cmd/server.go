@@ -230,9 +230,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
 
-	pubsubCtx, pubsubCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer pubsubCancel()
-
 	// Create PubSub client using the factory
 	pubSubType := factory.PubSubType(*s.pubSubType)
 	factoryOpts := []factory.Option{
@@ -261,6 +258,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
 	}
 
+	pubsubCtx, pubsubCancel := context.WithCancel(context.Background())
+	defer pubsubCancel()
 	pubsubClient, err := factory.NewClient(pubsubCtx, factoryOpts...)
 	if err != nil {
 		return err
@@ -388,7 +387,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer auditLogClient.Close()
+	defer autoOpsClient.Close()
 
 	tagClient, err := tagclient.NewClient(*s.tagService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -502,8 +501,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// We don't check the Redis health status because if the check fails,
 	// the Kubernetes will restart the container and it might cause internal errors.
 	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
-	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
-	defer healthCheckCancel() // Ensure cleanup on all paths (including early returns)
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
 
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(5*time.Second),
@@ -545,7 +544,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create API gateway: %v", err)
 	}
 
-	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
+	serverCtx, serverCtxCancel := context.WithCancel(context.Background())
+	defer serverCtxCancel()
+	if err := apiGateway.Start(serverCtx, gatewayHandler); err != nil {
 		return fmt.Errorf("failed to start API gateway: %v", err)
 	}
 
@@ -584,27 +585,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		shutdownStartTime := time.Now()
 		logger.Info("Starting graceful shutdown sequence")
 
-		waitBeforeUnready := 10 * time.Second
-		logger.Info("Waiting before marking unready",
-			zap.Duration("wait_before_unready", waitBeforeUnready))
-		time.Sleep(waitBeforeUnready)
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
+		logger.Info("Starting HTTP/gRPC server shutdown")
 
-		// Cancel the health checker goroutines to prevent connection errors during shutdown
-		healthCheckCancel()
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
 		restHealthChecker.Stop()
 
-		// Wait for K8s endpoint propagation
-		// This prevents "context deadline exceeded" errors during high traffic.
-		time.Sleep(propagationDelay)
-		logger.Info("Starting HTTP/gRPC server shutdown")
-
-		// CRITICAL: Shutdown order matters due to dependencies:
+		// Shutdown order matters due to dependencies:
 		// 1. apiGateway/httpServer make gRPC calls to the backend server
-		// 2. We MUST drain them BEFORE stopping the backend
+		// 2. We MUST drain them BEFORE stopping the backend sever
 		// 3. Otherwise their handlers hang waiting for a dead backend
 		// We run apiGateway and httpServer in parallel since they don't depend on each other
 		var wg sync.WaitGroup
@@ -623,9 +617,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Wait for HTTP/REST traffic to fully drain
 		wg.Wait()
+		logger.Info("gRPC-gateway and HTTP server shutdown completed")
 
 		// Now it's safe to stop the gRPC server (no more HTTP→gRPC calls)
 		server.Stop(grpcStopTimeout)
+		logger.Info("gRPC server shutdown completed")
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.

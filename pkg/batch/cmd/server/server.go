@@ -584,8 +584,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 
 	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
-	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
-	defer healthCheckCancel() // Ensure cleanup on all paths (including early returns)
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
 
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
@@ -627,7 +627,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create batch gateway: %v", err)
 	}
 
-	if err := batchGateway.Start(ctx, batchHandler); err != nil {
+	batchCtx, batchCancel := context.WithCancel(context.Background())
+	defer batchCancel()
+	if err := batchGateway.Start(batchCtx, batchHandler); err != nil {
 		return fmt.Errorf("failed to start batch gateway: %v", err)
 	}
 
@@ -635,23 +637,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		shutdownStartTime := time.Now()
 		logger.Info("Starting graceful shutdown sequence")
 
-		// Cancel the health checker goroutines to prevent connection errors during shutdown
-		healthCheckCancel()
-		// Mark as unhealthy so readiness probes fail
-		// This ensures Kubernetes readiness probe fails on next check,
-		// preventing new traffic from being routed to this pod.
-		healthChecker.Stop()
-
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
 		logger.Info("Starting HTTP/gRPC server shutdown")
 
-		// Gracefully stop REST gateway (calls the gRPC server internally)
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		healthChecker.Stop()
+
+		// Gracefully stop gRPC Gateway (calls the gRPC server internally)
 		batchGateway.Stop(serverShutDownTimeout)
+		logger.Info("gRPC-gateway server shutdown completed")
 
 		// Stop gRPC server (only pure gRPC connections remain)
 		server.Stop(grpcStopTimeout)
+		logger.Info("gRPC server shutdown completed")
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.

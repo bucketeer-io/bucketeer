@@ -273,19 +273,39 @@ spec:
                   - -c
                   - |
                     admin_port={{ .Values.envoy.adminPort }}
-                    max_wait=35
+                    max_wait=45
                     propagation_delay=15
 
-                    # Wait for GCLB to detect unhealthy status and stop routing
                     sleep "$propagation_delay"
 
                     # Wait for active requests to drain
                     for i in $(seq 1 "$max_wait"); do
-                      active=$(wget -q -O- "http://localhost:${admin_port}/stats" 2>/dev/null | grep "http.ingress_http.downstream_rq_active" | awk '{print $2}' || echo "0")
-                      [ -z "$active" ] && active=0
-                      [ "$active" -eq 0 ] && break
+                      # Fetch stats and check if request succeeded
+                      stats=$(wget -q -T 1 -O- "http://127.0.0.1:${admin_port}/stats" 2>/dev/null)
+                      if [ $? -ne 0 ] || [ -z "$stats" ]; then
+                        echo "Check $i/$max_wait: Failed to fetch stats, retrying..."
+                        sleep 1
+                        continue
+                      fi
+
+                      # Extract active requests metric
+                      active=$(echo "$stats" | grep -E '^http\.ingress_http\.downstream_rq_active:' | awk '{print $2}')
+                      if [ -z "$active" ]; then
+                        echo "Check $i/$max_wait: Metric not found, retrying..."
+                        sleep 1
+                        continue
+                      fi
+
+                      echo "Check $i/$max_wait: Active requests: $active"
+                      [ "$active" -eq 0 ] && echo "No active requests, exiting gracefully" && break
                       sleep 1
                     done
+
+                    if [ -n "$active" ] && [ "$active" -eq 0 ]; then
+                      echo "Graceful shutdown completed successfully"
+                    else
+                      echo "Warning: Timed out after ${max_wait}s - active=${active:-unknown}"
+                    fi
                     exit 0
           command: ["envoy"]
           args:

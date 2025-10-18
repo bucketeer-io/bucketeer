@@ -201,8 +201,9 @@ func (s pubSubSubscriber) createPuller(
 		}
 	}
 
-	// Create the PubSub client using the factory
-	pubsubClient, err = factory.NewClient(ctx, factoryOpts...)
+	// Create the PubSub client using the factory with context.Background()
+	// to ensure connections remain healthy until explicitly stopped during graceful shutdown
+	pubsubClient, err = factory.NewClient(context.Background(), factoryOpts...)
 	if err != nil {
 		s.logger.Error("Failed to create pubsub client",
 			zap.Error(err),

@@ -343,7 +343,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// healthCheckService
 	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
 	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
-	defer healthCheckCancel() // Ensure cleanup on all paths (including early returns)
+	defer healthCheckCancel()
 
 	restHealthChecker := health.NewRestChecker(
 		"", "",
@@ -365,8 +365,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		shutdownStartTime := time.Now()
 		logger.Info("Starting graceful shutdown sequence")
 
-		// Cancel the health checker goroutines to prevent connection errors during shutdown
-		healthCheckCancel()
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
@@ -376,6 +374,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Stop PubSub subscription
 		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
+		logger.Info("PubSub subscription stopped, all messages processed")
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.

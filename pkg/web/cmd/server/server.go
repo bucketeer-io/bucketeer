@@ -404,14 +404,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	registerer := metrics.DefaultRegisterer()
 
 	// dataWarehouse config
-	dataWarehouseConfig, err := s.readDataWarehouseConfig(ctx, logger)
+	dataWarehouseConfig, err := s.readDataWarehouseConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read dataWarehouse config", zap.Error(err))
 		return err
 	}
 
 	// oauth config
-	oAuthConfig, err := s.readOAuthConfig(ctx, logger)
+	oAuthConfig, err := s.readOAuthConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read OAuth config", zap.Error(err))
 		return err
@@ -427,16 +427,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	// healthCheckService
-	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
-	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
-	defer healthCheckCancel() // Ensure cleanup on all paths (including early returns)
 
 	restHealthChecker := health.NewRestChecker(
 		"", "",
 		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
+
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
+
 	go restHealthChecker.Run(healthCheckCtx)
 	// healthcheckService
 	healthcheckServer := rest.NewServer(
@@ -500,13 +501,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+
+	pubsubCtx, pubsubCancel := context.WithCancel(context.Background())
+	defer pubsubCancel()
 	// domainTopicPublisher
-	domainTopicPublisher, err := s.createPublisher(ctx, *s.domainTopic, registerer, logger)
+	domainTopicPublisher, err := s.createPublisher(pubsubCtx, *s.domainTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
 	// segmentUsersPublisher
-	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
+	segmentUsersPublisher, err := s.createPublisher(pubsubCtx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
@@ -722,7 +726,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// featureService
 	featureService, err := s.createFeatureService(
-		ctx,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -861,17 +864,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		shutdownStartTime := time.Now()
 		logger.Info("Starting graceful shutdown sequence")
 
-		// Cancel the health checker goroutines to prevent connection errors during shutdown
-		healthCheckCancel()
-		// Mark as unhealthy so readiness probes fail
-		// This ensures Kubernetes readiness probe fails on next check,
-		// preventing new traffic from being routed to this pod.
-		restHealthChecker.Stop()
-
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
 		logger.Info("Starting HTTP/gRPC server shutdown")
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		healthcheckServer.Stop(5 * time.Second)
+		restHealthChecker.Stop()
 
 		// Stop REST servers in parallel (these call gRPC servers internally)
 		// Stop these first to drain REST traffic before stopping gRPC
@@ -993,9 +995,6 @@ func (s *server) createPublisher(
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (publisher.Publisher, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
 	// Create PubSub client using the factory
 	pubSubType := factory.PubSubType(*s.pubSubType)
 	factoryOpts := []factory.Option{
@@ -1035,7 +1034,6 @@ func (s *server) createPublisher(
 }
 
 func (s *server) readOAuthConfig(
-	ctx context.Context,
 	logger *zap.Logger,
 ) (*auth.OAuthConfig, error) {
 	bytes, err := os.ReadFile(*s.oauthConfigPath)
@@ -1129,7 +1127,6 @@ func (s *server) createEnvironmentService(
 }
 
 func (s *server) createFeatureService(
-	ctx context.Context,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1218,7 +1215,6 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 }
 
 func (s *server) readDataWarehouseConfig(
-	ctx context.Context,
 	logger *zap.Logger,
 ) (*DataWarehouseConfig, error) {
 	// If config path is provided, read from file
