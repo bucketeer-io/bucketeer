@@ -48,6 +48,11 @@ nodeSelector: {}
 pdb:
   enabled:
   maxUnavailable: 20%
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 10%
+    maxSurge: 1
 hpa:
   enabled:
   minReplicas:
@@ -90,16 +95,21 @@ ingress:
           name: api
           port:
             number: 9000
+terminationGracePeriodSeconds: 60
 health:
+  startupProbe:
+    periodSeconds: 3
+    failureThreshold: 20
+    timeoutSeconds: 5
   livenessProbe:
     initialDelaySeconds: 30
-    periodSeconds: 10
-    failureThreshold: 6
-    timeoutSeconds: 10
+    periodSeconds: 15
+    failureThreshold: 8
+    timeoutSeconds: 5
   readinessProbe:
-    initialDelaySeconds: 20
-    periodSeconds: 10
-    failureThreshold: 3
+    initialDelaySeconds: 15
+    periodSeconds: 3
+    failureThreshold: 1
     timeoutSeconds: 5
 resources: {}
 serviceAccount:

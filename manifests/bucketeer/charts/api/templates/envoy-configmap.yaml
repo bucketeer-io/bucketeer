@@ -193,14 +193,18 @@ data:
                       path: /dev/stdout
                   codec_type: auto
                   common_http_protocol_options:
-                    # set longer timeout than lb session timeout (600s)
-                    idle_timeout: 620s
-                  stream_idle_timeout: 30s
-                  request_timeout: 30s
+                    # Set to 60s to prevent stale connections during rolling updates
+                    # This ensures clients reconnect before pods terminate
+                    # Previous: 620s (10min) caused 499 errors when clients held idle connections to terminating pods
+                    idle_timeout: 60s
+                  stream_idle_timeout: 60s
+                  request_timeout: 60s
                   http_filters:
                     - name: envoy.filters.http.cors
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+                    # DEPRECATED: grpc-web filter for legacy Node.js SDK
+                    # TODO: Remove once Node.js SDK migrates to gRPC-Gateway (REST) or pure gRPC
                     - name: envoy.filters.http.grpc_web
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
@@ -222,21 +226,26 @@ data:
                             allow_credentials: true
                             max_age: "86400"
                         routes:
-                          # Health check endpoint
+                          # Health check endpoints
                           - match:
                               prefix: /health
                             route:
                               cluster: api
-                              timeout: 35s
+                              timeout: 60s
+                          - match:
+                              prefix: /ready
+                            route:
+                              cluster: api
+                              timeout: 60s
                           # API REST v1 Gateway routes (Deprecated)
                           - match:
                               prefix: /v1/gateway
                             route:
                               cluster: api-rest-v1
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
+                                num_retries: 3
                                 per_try_timeout: 15s
                           # All gRPC requests
                           - match:
@@ -247,20 +256,20 @@ data:
                               prefix: /bucketeer.gateway.Gateway
                             route:
                               cluster: api
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
+                                num_retries: 3
                                 per_try_timeout: 15s
                           # All other requests for API REST v1
                           - match:
                               prefix: /
                             route:
                               cluster: api-grpc-gateway
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx,connect-failure,reset,gateway-error
-                                num_retries: 1
+                                num_retries: 3
                                 per_try_timeout: 15s
               transport_socket:
                 name: envoy.transport_sockets.tls
@@ -309,11 +318,11 @@ data:
                               prefix: /bucketeer.feature.FeatureService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -322,11 +331,11 @@ data:
                               prefix: /bucketeer.account.AccountService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -335,11 +344,11 @@ data:
                               prefix: /bucketeer.push.PushService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -348,11 +357,11 @@ data:
                               prefix: /bucketeer.coderef.CodeReferenceService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -361,11 +370,11 @@ data:
                               prefix: /bucketeer.auditlog.AuditLogService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -374,11 +383,11 @@ data:
                               prefix: /bucketeer.autoops.AutoOpsService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -387,11 +396,11 @@ data:
                               prefix: /bucketeer.tag.TagService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -400,11 +409,11 @@ data:
                               prefix: /bucketeer.team.TeamService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -413,11 +422,11 @@ data:
                               prefix: /bucketeer.notification.NotificationService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -426,11 +435,11 @@ data:
                               prefix: /bucketeer.experiment.ExperimentService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -439,11 +448,11 @@ data:
                               prefix: /bucketeer.eventcounter.EventCounterService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
                           - match:
                               headers:
                                 - name: content-type
@@ -452,11 +461,11 @@ data:
                               prefix: /bucketeer.environment.EnvironmentService
                             route:
                               cluster: web
-                              timeout: 35s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
-                                num_retries: 1
-                                per_try_timeout: 20s
+                                num_retries: 3
+                                per_try_timeout: 15s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:

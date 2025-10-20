@@ -121,7 +121,18 @@ func (hc *checker) check(ctx context.Context) {
 	hc.setStatus(Healthy)
 }
 
-func (hc *checker) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+func (hc *checker) ServeReadyHTTP(resp http.ResponseWriter, req *http.Request) {
+	// Readiness check: return 503 if health checks fail
+	if hc.getStatus() == Unhealthy {
+		resp.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	resp.WriteHeader(http.StatusOK)
+}
+
+func (hc *checker) ServeLiveHTTP(resp http.ResponseWriter, req *http.Request) {
+	// Liveness check: return 503 during shutdown to stop GCLB routing
+	// This ensures load balancers stop sending traffic when the pod is shutting down
 	if hc.getStatus() == Unhealthy {
 		resp.WriteHeader(http.StatusServiceUnavailable)
 		return

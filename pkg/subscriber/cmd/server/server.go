@@ -44,10 +44,9 @@ import (
 )
 
 const (
-	command               = "server"
-	healthCheckTimeout    = 1 * time.Second
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	command            = "server"
+	healthCheckTimeout = 1 * time.Second
+	clientDialTimeout  = 30 * time.Second
 )
 
 type server struct {
@@ -281,7 +280,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -294,7 +292,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
@@ -316,7 +313,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer batchClient.Close()
 
 	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
@@ -342,12 +338,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	// healthCheckService
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
+	defer healthCheckCancel()
+
 	restHealthChecker := health.NewRestChecker(
 		"", "",
 		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go restHealthChecker.Run(ctx)
+	go restHealthChecker.Run(healthCheckCtx)
 	// healthcheckService
 	healthcheckServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -359,14 +359,36 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go healthcheckServer.Run()
 
 	defer func() {
-		healthcheckServer.Stop(serverShutDownTimeout)
+		shutdownStartTime := time.Now()
+		logger.Info("Starting graceful shutdown sequence")
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		restHealthChecker.Stop()
+		logger.Info("Health check marked as unhealthy (readiness will fail)")
+
+		// Stop PubSub subscription
+		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
-		notificationClient.Close()
-		experimentClient.Close()
-		environmentClient.Close()
-		featureClient.Close()
-		autoOpsClient.Close()
-		mysqlClient.Close()
+		logger.Info("PubSub subscription stopped, all messages processed")
+
+		// Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go environmentClient.Close()
+		go featureClient.Close()
+		go autoOpsClient.Close()
+		go batchClient.Close()
+		go mysqlClient.Close()
+		go nonPersistentRedisClient.Close()
+		go persistentRedisClient.Close()
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+		)
 	}()
 
 	<-ctx.Done()

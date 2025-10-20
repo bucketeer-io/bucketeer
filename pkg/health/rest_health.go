@@ -19,7 +19,10 @@ import (
 	"net/http"
 )
 
-const healthPath = "/health"
+const (
+	healthPath = "/health"
+	readyPath  = "/ready"
+)
 
 type restChecker struct {
 	*checker
@@ -37,5 +40,9 @@ func NewRestChecker(version, service string, opts ...option) *restChecker {
 }
 
 func (c *restChecker) Register(mux *http.ServeMux) {
-	mux.HandleFunc(fmt.Sprintf("%s%s%s", c.version, c.service, healthPath), c.ServeHTTP)
+	// Register /ready endpoint for readiness probe
+	mux.HandleFunc(fmt.Sprintf("%s%s%s", c.version, c.service, readyPath), c.ServeReadyHTTP)
+
+	// Register /health endpoint for liveness probe
+	mux.HandleFunc(fmt.Sprintf("%s%s%s", c.version, c.service, healthPath), c.ServeLiveHTTP)
 }

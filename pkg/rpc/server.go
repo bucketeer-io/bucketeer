@@ -43,7 +43,7 @@ type Server struct {
 	handlers      []httpHandler
 	rpcServer     *grpc.Server
 	httpServer    *http.Server
-	grpcWebServer *grpcweb.WrappedGrpcServer
+	grpcWebServer *grpcweb.WrappedGrpcServer // DEPRECATED: Remove once Node.js SDK migrates away from grpc-web
 	readTimeout   time.Duration
 	writeTimeout  time.Duration
 	idleTimeout   time.Duration
@@ -113,6 +113,7 @@ func NewServer(service Service, certPath, keyPath, serverName string, opt ...Opt
 		o(server)
 	}
 	server.logger = server.logger.Named(fmt.Sprintf("rpc-server.%s", serverName))
+
 	if len(certPath) == 0 {
 		server.logger.Fatal("CertPath must not be empty")
 	}
@@ -138,12 +139,42 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	err := s.httpServer.Shutdown(ctx)
-	if err != nil {
-		s.logger.Error("Server failed to shut down", zap.Error(err))
+	shutdownStart := time.Now()
+	s.logger.Info("Starting server graceful shutdown",
+		zap.String("server", s.name),
+		zap.Duration("timeout", timeout))
+
+	// Shutdown order is critical:
+	// 1. HTTP server first (drains REST/gRPC-Gateway requests)
+	// 2. gRPC server second (only pure gRPC connections remain)
+	//
+	// This ensures HTTP requests that call s.rpcServer.ServeHTTP() can complete
+	// before we stop the underlying gRPC server.
+	if s.httpServer != nil {
+		s.logger.Info("Starting HTTP server graceful shutdown")
+
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			s.logger.Error("HTTP server failed to shut down gracefully", zap.Error(err))
+		} else {
+			s.logger.Info("HTTP server shutdown completed gracefully")
+		}
 	}
+
+	// Note: We use Stop() instead of GracefulStop() because:
+	// - GracefulStop() panics on HTTP-served connections (serverHandlerTransport.Drain not implemented)
+	// - HTTP-served connections were already drained in step 1
+	// - Pure gRPC clients have retry logic and Envoy connection draining to handle this
+	if s.rpcServer != nil {
+		s.logger.Info("Stopping gRPC server")
+		s.rpcServer.Stop()
+	}
+
+	s.logger.Info("Server shutdown completed",
+		zap.String("server", s.name),
+		zap.Duration("total_duration", time.Since(shutdownStart)))
 }
 
 func (s *Server) setupRPC() {
@@ -151,12 +182,15 @@ func (s *Server) setupRPC() {
 	if err != nil {
 		s.logger.Fatal("Failed to read credentials: %v", zap.Error(err))
 	}
+
 	interceptors := []grpc.UnaryServerInterceptor{
 		MetricsUnaryServerInterceptor(),
 	}
+
 	if s.verifier != nil {
 		interceptors = append(interceptors, AuthUnaryServerInterceptor(s.verifier))
 	}
+
 	s.rpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(interceptors...),
@@ -166,7 +200,9 @@ func (s *Server) setupRPC() {
 		service.Register(s.rpcServer)
 	}
 
-	// Create gRPC-Web wrapper
+	// DEPRECATED: grpc-web support for legacy Node.js SDK
+	// TODO: Remove once Node.js SDK migrates to gRPC-Gateway (REST) or pure gRPC
+	// This is an abandoned library (last updated 2021) with known issues.
 	s.grpcWebServer = grpcweb.WrapServer(s.rpcServer)
 }
 
@@ -175,20 +211,26 @@ func (s *Server) setupHTTP() {
 	for _, handler := range s.handlers {
 		mux.Handle(handler.path, handler)
 	}
+
+	// Wrap the main handler with gRPC-web support and routing
+	mainHandler := http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		// DEPRECATED: grpc-web support for legacy Node.js SDK
+		// This check should be removed once Node.js SDK migrates away from grpc-web
+		if s.grpcWebServer.IsGrpcWebRequest(req) {
+			s.grpcWebServer.ServeHTTP(resp, req)
+		} else if isRPC(req) {
+			s.rpcServer.ServeHTTP(resp, req)
+		} else {
+			mux.ServeHTTP(resp, req)
+		}
+	})
+
 	s.httpServer = &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.port),
 		ReadTimeout:  s.readTimeout,
 		WriteTimeout: s.writeTimeout,
 		IdleTimeout:  s.idleTimeout,
-		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			if s.grpcWebServer.IsGrpcWebRequest(req) {
-				s.grpcWebServer.ServeHTTP(resp, req)
-			} else if isRPC(req) {
-				s.rpcServer.ServeHTTP(resp, req)
-			} else {
-				mux.ServeHTTP(resp, req)
-			}
-		}),
+		Handler:      mainHandler,
 	}
 }
 

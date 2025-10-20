@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
@@ -99,8 +100,8 @@ func NewMetrics(port int, path string, opts ...Option) Metrics {
 	}
 	r := m.Registerer(path)
 	r.MustRegister(
-		prometheus.NewGoCollector(),
-		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 	return m
 }
@@ -136,7 +137,10 @@ func (m *metrics) Run() error {
 func (m *metrics) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	m.server.Shutdown(ctx) // nolint:errcheck
+
+	if err := m.server.Shutdown(ctx); err != nil {
+		m.logger.Error("Failed to shutdown metrics server", zap.Error(err))
+	}
 }
 
 func (m *metrics) Check(ctx context.Context) health.Status {
@@ -148,7 +152,6 @@ func (m *metrics) Check(ctx context.Context) health.Status {
 			resultCh <- health.Unhealthy
 			return
 		}
-
 		resp, err := m.healthClient.Do(req)
 		if resp != nil {
 			defer resp.Body.Close()

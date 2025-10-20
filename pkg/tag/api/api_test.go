@@ -285,10 +285,16 @@ func TestCreateTagMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			resp, err := s.CreateTag(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
 			if p.expectedErr == nil {
+				assert.NoError(t, err)
 				require.NotNil(t, resp)
 				assert.Equal(t, p.expectedTag, resp.Tag)
+			} else {
+				assert.Error(t, err)
+				expectedStatus, _ := gstatus.FromError(p.expectedErr)
+				actualStatus, _ := gstatus.FromError(err)
+				assert.Equal(t, expectedStatus.Code(), actualStatus.Code())
+				assert.Equal(t, expectedStatus.Message(), actualStatus.Message())
 			}
 		})
 	}
@@ -371,9 +377,15 @@ func TestListTagsMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			resp, err := service.ListTags(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
 			if p.expectedErr == nil {
+				assert.NoError(t, err)
 				assert.Equal(t, p.expected, resp)
+			} else {
+				assert.Error(t, err)
+				expectedStatus, _ := gstatus.FromError(p.expectedErr)
+				actualStatus, _ := gstatus.FromError(err)
+				assert.Equal(t, expectedStatus.Code(), actualStatus.Code())
+				assert.Equal(t, expectedStatus.Message(), actualStatus.Message())
 			}
 		})
 	}
@@ -504,7 +516,15 @@ func TestDeleteTagMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.DeleteTag(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				expectedStatus, _ := gstatus.FromError(p.expectedErr)
+				actualStatus, _ := gstatus.FromError(err)
+				assert.Equal(t, expectedStatus.Code(), actualStatus.Code())
+				assert.Equal(t, expectedStatus.Message(), actualStatus.Message())
+			}
 		})
 	}
 }

@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -51,7 +52,18 @@ import (
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
-const command = "server"
+const (
+	command = "server"
+
+	// Shutdown timing for graceful termination:
+	// During normal operations (rolling updates, scale down), the pod gets the full
+	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
+	// a best-effort 15s limit. We optimize for the common case (normal operations).
+	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
+	propagationDelay      = 15 * time.Second
+	serverShutDownTimeout = 30 * time.Second
+	grpcStopTimeout       = 5 * time.Second
+)
 
 type server struct {
 	*kingpin.CmdClause
@@ -218,9 +230,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
 
-	pubsubCtx, pubsubCancel := context.WithTimeout(ctx, 5*time.Second)
-	defer pubsubCancel()
-
 	// Create PubSub client using the factory
 	pubSubType := factory.PubSubType(*s.pubSubType)
 	factoryOpts := []factory.Option{
@@ -249,6 +258,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
 	}
 
+	pubsubCtx, pubsubCancel := context.WithCancel(context.Background())
+	defer pubsubCancel()
 	pubsubClient, err := factory.NewClient(pubsubCtx, factoryOpts...)
 	if err != nil {
 		return err
@@ -264,7 +275,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer goalPublisher.Stop()
 
 	var evaluationTopicProject string
 	if *s.evaluationTopicProject == "" {
@@ -279,7 +289,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return nil
 	}
-	defer evaluationPublisher.Stop()
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var userPublisher publisher.Publisher
@@ -288,7 +297,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
-		defer userPublisher.Stop()
 	}
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
@@ -298,7 +306,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
-		defer metricsPublisher.Stop()
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -316,7 +323,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 
 	accountClient, err := accountclient.NewClient(*s.accountService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -328,7 +334,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer accountClient.Close()
 
 	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -340,7 +345,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer pushClient.Close()
 
 	codeRefClient, err := coderefclient.NewClient(*s.codeRefService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -352,7 +356,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer codeRefClient.Close()
 
 	auditLogClient, err := auditlogclient.NewClient(*s.auditLogService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -364,7 +367,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer auditLogClient.Close()
 
 	autoOpsClient, err := autoopsclient.NewClient(*s.auditLogService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -376,7 +378,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer auditLogClient.Close()
 
 	tagClient, err := tagclient.NewClient(*s.tagService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -388,7 +389,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer tagClient.Close()
 
 	teamClient, err := teamclient.NewClient(*s.teamService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -400,7 +400,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer teamClient.Close()
 
 	notificationClient, err := notificationclient.NewClient(*s.notificationService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -412,7 +411,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer notificationClient.Close()
 
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -424,7 +422,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer experimentClient.Close()
 
 	eventCounterClient, err := eventcounterclient.NewClient(*s.eventCounterService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -436,7 +433,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer eventCounterClient.Close()
 
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -448,7 +444,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer environmentClient.Close()
 
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
@@ -461,7 +456,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
 	service := api.NewGrpcGatewayService(
@@ -489,11 +483,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// We don't check the Redis health status because if the check fails,
 	// the Kubernetes will restart the container and it might cause internal errors.
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
+
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go healthChecker.Run(ctx)
+	go healthChecker.Run(healthCheckCtx)
 
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
 		"api-gateway",
@@ -501,9 +499,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
-		rpc.WithHandler("/health", healthChecker),
+		rpc.WithHandler("/health", healthChecker), // Liveness probe
+		rpc.WithHandler("/ready", healthChecker),  // Readiness probe
 	)
-	defer server.Stop(10 * time.Second)
 	go server.Run()
 
 	// Set up gRPC Gateway for API service
@@ -529,17 +527,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create API gateway: %v", err)
 	}
 
-	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
+	serverCtx, serverCtxCancel := context.WithCancel(context.Background())
+	defer serverCtxCancel()
+	if err := apiGateway.Start(serverCtx, gatewayHandler); err != nil {
 		return fmt.Errorf("failed to start API gateway: %v", err)
 	}
-	defer apiGateway.Stop(10 * time.Second)
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
 		health.WithTimeout(5*time.Second),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go restHealthChecker.Run(ctx)
+	go restHealthChecker.Run(healthCheckCtx)
 
 	gatewayService := api.NewGatewayService(
 		featureClient,
@@ -563,14 +562,82 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithService(restHealthChecker),
 		rest.WithMetrics(registerer),
 	)
-	defer httpServer.Stop(10 * time.Second)
 	go httpServer.Run()
 
-	// Ensure to stop the health check before stopping the application
-	// so the Kubernetes Readiness can detect it faster and remove the pod
-	// from the service load balancer.
-	defer healthChecker.Stop()
-	defer restHealthChecker.Stop()
+	defer func() {
+		shutdownStartTime := time.Now()
+		logger.Info("Starting graceful shutdown sequence")
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
+		logger.Info("Starting HTTP/gRPC server shutdown")
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		healthChecker.Stop()
+		restHealthChecker.Stop()
+
+		// Shutdown order matters due to dependencies:
+		// 1. apiGateway/httpServer make gRPC calls to the backend server
+		// 2. We MUST drain them BEFORE stopping the backend sever
+		// 3. Otherwise their handlers hang waiting for a dead backend
+		// We run apiGateway and httpServer in parallel since they don't depend on each other
+		var wg sync.WaitGroup
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			apiGateway.Stop(serverShutDownTimeout)
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			httpServer.Stop(serverShutDownTimeout)
+		}()
+
+		// Wait for HTTP/REST traffic to fully drain
+		wg.Wait()
+		logger.Info("gRPC-gateway and HTTP server shutdown completed")
+
+		// Now it's safe to stop the gRPC server (no more HTTP→gRPC calls)
+		server.Stop(grpcStopTimeout)
+		logger.Info("gRPC server shutdown completed")
+
+		// Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go goalPublisher.Stop()
+		go evaluationPublisher.Stop()
+		if userPublisher != nil {
+			go userPublisher.Stop()
+		}
+		if metricsPublisher != nil {
+			go metricsPublisher.Stop()
+		}
+		go featureClient.Close()
+		go accountClient.Close()
+		go pushClient.Close()
+		go codeRefClient.Close()
+		go auditLogClient.Close()
+		go autoOpsClient.Close()
+		go tagClient.Close()
+		go teamClient.Close()
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go eventCounterClient.Close()
+		go environmentClient.Close()
+		go redisV3Client.Close()
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+			zap.Duration("propagation_delay", propagationDelay),
+			zap.Duration("server_shutdown_timeout", serverShutDownTimeout),
+			zap.Duration("grpc_stop_timeout", grpcStopTimeout),
+		)
+	}()
 
 	<-ctx.Done()
 	return nil
