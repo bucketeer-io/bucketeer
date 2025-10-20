@@ -95,7 +95,7 @@ ingress:
           name: api
           port:
             number: 9000
-terminationGracePeriodSeconds: 75
+terminationGracePeriodSeconds: 60
 health:
   startupProbe:
     periodSeconds: 3
