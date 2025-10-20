@@ -584,7 +584,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 	// autoOpsClient
 	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -596,7 +595,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer autoOpsClient.Close()
 	// authService
 	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
 	if err != nil {
@@ -942,6 +940,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go environmentClient.Close()
 		go experimentClient.Close()
 		go featureClient.Close()
+		go autoOpsClient.Close()
 
 		// Log total shutdown duration
 		logger.Info("Graceful shutdown sequence completed",

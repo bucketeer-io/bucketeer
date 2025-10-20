@@ -275,7 +275,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer goalPublisher.Stop()
 
 	var evaluationTopicProject string
 	if *s.evaluationTopicProject == "" {
@@ -290,7 +289,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return nil
 	}
-	defer evaluationPublisher.Stop()
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var userPublisher publisher.Publisher
@@ -299,7 +297,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
-		defer userPublisher.Stop()
 	}
 
 	// FIXME: This condition won't be necessary once user feature is fully released.
@@ -309,7 +306,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
-		defer metricsPublisher.Stop()
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -327,7 +323,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 
 	accountClient, err := accountclient.NewClient(*s.accountService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -339,7 +334,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer accountClient.Close()
 
 	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -351,7 +345,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer pushClient.Close()
 
 	codeRefClient, err := coderefclient.NewClient(*s.codeRefService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -363,7 +356,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer codeRefClient.Close()
 
 	auditLogClient, err := auditlogclient.NewClient(*s.auditLogService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -375,7 +367,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer auditLogClient.Close()
 
 	autoOpsClient, err := autoopsclient.NewClient(*s.auditLogService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -387,7 +378,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer autoOpsClient.Close()
 
 	tagClient, err := tagclient.NewClient(*s.tagService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -399,7 +389,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer tagClient.Close()
 
 	teamClient, err := teamclient.NewClient(*s.teamService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -411,7 +400,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer teamClient.Close()
 
 	notificationClient, err := notificationclient.NewClient(*s.notificationService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -423,7 +411,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer notificationClient.Close()
 
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -435,7 +422,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer experimentClient.Close()
 
 	eventCounterClient, err := eventcounterclient.NewClient(*s.eventCounterService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -447,7 +433,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer eventCounterClient.Close()
 
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -459,7 +444,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer environmentClient.Close()
 
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
@@ -472,7 +456,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
 	service := api.NewGrpcGatewayService(

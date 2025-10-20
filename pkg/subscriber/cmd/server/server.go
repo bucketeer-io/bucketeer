@@ -280,7 +280,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -293,7 +292,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
@@ -315,7 +313,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer batchClient.Close()
 
 	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
@@ -383,7 +380,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go environmentClient.Close()
 		go featureClient.Close()
 		go autoOpsClient.Close()
+		go batchClient.Close()
 		go mysqlClient.Close()
+		go nonPersistentRedisClient.Close()
+		go persistentRedisClient.Close()
 
 		// Log total shutdown duration
 		logger.Info("Graceful shutdown sequence completed",

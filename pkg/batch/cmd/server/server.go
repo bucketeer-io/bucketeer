@@ -323,7 +323,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer pushClient.Close()
 
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -393,7 +392,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 
 	nonPersistentRedisClient, err := redisv3.NewClient(
 		*s.nonPersistentRedisAddr,
@@ -406,7 +404,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 
 	// This slice contains all Redis instance caches
 	nonPersistentRedisCaches := make(
@@ -453,7 +450,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer batchClient.Close()
 
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
@@ -662,9 +658,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go experimentClient.Close()
 		go environmentClient.Close()
 		go eventCounterClient.Close()
+		go pushClient.Close()
 		go featureClient.Close()
 		go autoOpsClient.Close()
+		go batchClient.Close()
 		go mysqlClient.Close()
+		go persistentRedisClient.Close()
+		go nonPersistentRedisClient.Close()
 		for _, client := range childRedisClients {
 			go client.Close()
 		}
