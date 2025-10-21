@@ -60,6 +60,8 @@ spec:
               value: "{{ .Values.global.pubsub.project }}"
             - name: BUCKETEER_SUBSCRIBER_PROFILE
               value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_SUBSCRIBER_DEMO_SITE_ENABLED
+              value: "{{.Values.env.demoSiteEnabled}}"
             - name: BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: PUBSUB_EMULATOR_HOST
