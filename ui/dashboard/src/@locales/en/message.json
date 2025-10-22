@@ -57,5 +57,12 @@
   "demo-not-available": "The Demo feature is not available at the moment.",
   "demo-available": "Authenticate with Google and get started!",
   "demo-privacy-description": "We collect your name and email address to analyze demo usage, and we may contact you for feedback about Bucketeer.<br />We will not share your information with any third parties. For any questions or to delete your information, please contact us via <comp>Slack</comp>.",
-  "required-agreement-terms": "The agreement to the Terms of Use and Privacy Policy is required to proceed."
+  "required-agreement-terms": "The agreement to the Terms of Use and Privacy Policy is required to proceed.",
+  "invalid-reset-token-password":"Invalid password reset token. Please check the link or request a new one.",
+  "invalid-setup-token-password":"Invalid password setup token. Please check the link or request a new one.",
+  "reset-password-faild":"An unexpected error occurred while resetting your password. Please truy again later.",
+  "setup-password-success": "Your password has been set successfully. Please sign in with your new password.",
+  "setup-password-faild":"An unexpected error occurred while setup your password. Please truy again later.",
+  "reset-password-success": "Your password has been reset successfully. Please sign in with your new password.",
+  "update-password-faild":"An unexpected error occurred while updating your password. Please truy again later."
 }

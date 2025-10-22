@@ -30,6 +30,25 @@ export interface SignInForm {
   password: string;
 }
 
+export interface SetupPasswordForm {
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordForm {
+  email: string;
+}
+
+export interface ResetPassword {
+  resetToken: string;
+  newPassword: string;
+}
+
+export interface UpdatePasswordForm {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface AuthToken {
   accessToken: string;
   tokenType: string;

@@ -152,7 +152,11 @@ const theme = {
       'slide-left':
         '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-left',
       'slide-up':
-        '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-up'
+        '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-up',
+      'translate-left':
+        '500ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running translate-left',
+      'translate-right':
+        '500ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running translate-right'
     },
     keyframes: {
       fade: {
@@ -182,6 +186,26 @@ const theme = {
           opacity: '1',
           right: '0',
           transform: 'scale(1)'
+        }
+      },
+      'translate-left': {
+        '0%': {
+          opacity: '0',
+          transform: 'translateX(50%)'
+        },
+        '100%': {
+          opacity: '1',
+          transform: 'translateX(0)'
+        }
+      },
+      'translate-right': {
+        '0%': {
+          opacity: '0',
+          transform: 'translateX(-50%)'
+        },
+        '100%': {
+          opacity: '1',
+          transform: 'translateX(0)'
         }
       },
       'slide-up': {

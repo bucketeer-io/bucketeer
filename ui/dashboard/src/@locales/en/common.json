@@ -289,5 +289,8 @@
   "member-role-description": "Can only access specific environments and cannot create or update organization settings, projects, environments, API keys, or members.",
   "admin-role-description": "Has access to all environments and can do anything",
   "teams": "Teams",
-  "docs": "Docs"
+  "docs": "Docs",
+  "update-password":"Update password",
+  "change-profile":"Change profile",
+  "change-password":"Change password"
 }

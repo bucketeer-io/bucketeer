@@ -1,0 +1,16 @@
+{
+  "already_exists": "The same data already exists",
+  "invalid_not_match_format": "The value for {{field}} has an invalid format",
+  "invalid_empty": "{{field}} is required and cannot be empty",
+  "invalid_nil": "{{field}} cannot be null",
+  "invalid_unknown": "Invalid value provided for {{field}}",
+  "invalid_duplicated": "Duplicate value found for {{field}}",
+  "internal": "An unexpected internal error occurred. Please try again later.",
+  "not_found": "The requested {{field}} was not found",
+  "unauthenticated": "Authentication is required",
+  "permission_denied": "You do not have permission to perform this action",
+  "unexpected_affected_rows": "Unexpected result while updating data. Please try again.",
+  "failed_precondition": "The operation cannot be completed due to unmet conditions",
+  "unavailable": "The service is currently unavailable. Please try again later.",
+  "aborted": "The operation was aborted. Please retry or contact support."
+}

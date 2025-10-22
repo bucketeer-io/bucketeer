@@ -1,0 +1,16 @@
+{
+  "already_exists": "同じデータが既に存在しています",
+  "invalid_not_match_format": "{{field}} の形式が正しくありません",
+  "invalid_empty": "{{field}} は必須項目です",
+  "invalid_nil": "{{field}} を空にすることはできません",
+  "invalid_unknown": "{{field}} の値が無効です",
+  "invalid_duplicated": "{{field}} の値が重複しています",
+  "internal": "予期しない内部エラーが発生しました。しばらくしてからもう一度お試しください。",
+  "not_found": "指定された {{field}} が見つかりませんでした",
+  "unauthenticated": "認証が必要です",
+  "permission_denied": "この操作を実行する権限がありません",
+  "unexpected_affected_rows": "データ更新の結果が予期したものと異なります。再度お試しください。",
+  "failed_precondition": "必要な条件が満たされていないため、操作を完了できません。",
+  "unavailable": "サービスは現在利用できません。しばらくしてからもう一度お試しください。",
+  "aborted": "操作が中断されました。再試行するか、サポートにお問い合わせください。"
+}

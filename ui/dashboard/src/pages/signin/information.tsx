@@ -28,6 +28,7 @@ import Input from 'components/input';
 import EditPhotoProfileModal from 'components/navigation/edit-photo';
 import UploadAvatarModal from 'components/navigation/upload-avatar';
 import AuthWrapper from './elements/auth-wrapper';
+import UpdatePassword from './update-password';
 
 const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
   yup.object().shape({
@@ -318,6 +319,8 @@ const UserInformation = () => {
             </Button>
           </Form>
         </FormProvider>
+        <p>pass</p>
+        <UpdatePassword className="animate-slide-left" />
       </div>
       {isOpenUploadAvatarModal && (
         <UploadAvatarModal

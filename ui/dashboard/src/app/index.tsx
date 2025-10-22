@@ -23,6 +23,7 @@ import {
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_DEMO_CALLBACK,
+  PAGE_PATH_AUTH_FORGOT_PASSWORD,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_DEBUGGER,
   PAGE_PATH_DEMO_SITE,
@@ -33,6 +34,8 @@ import {
   PAGE_PATH_NEW,
   PAGE_PATH_NOTIFICATIONS,
   PAGE_PATH_ORGANIZATIONS,
+  PAGE_PATH_PASSWORD_RESET,
+  PAGE_PATH_PASSWORD_SETUP,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_PUSHES,
   PAGE_PATH_ROOT,
@@ -69,8 +72,11 @@ import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
+import ForgotPassword from 'pages/signin/forgot-password';
 import UserInformation from 'pages/signin/information';
 import SelectOrganizationPage from 'pages/signin/organization';
+import ResetPassword from 'pages/signin/reset-password';
+import SetupPassword from 'pages/signin/setup-password';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
@@ -103,6 +109,19 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              <Route
+                path={PAGE_PATH_PASSWORD_RESET}
+                element={<ResetPassword />}
+              />
+              <Route
+                path={PAGE_PATH_PASSWORD_SETUP}
+                element={<SetupPassword />}
+              />
+              <Route
+                path={PAGE_PATH_AUTH_FORGOT_PASSWORD}
+                element={<ForgotPassword />}
+              />
+
               <Route
                 path={PAGE_PATH_AUTH_CALLBACK}
                 element={<AuthCallbackPage />}

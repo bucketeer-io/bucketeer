@@ -4,7 +4,7 @@ import {
   IconRemoveRedEyeOutlined,
   IconVisibilityOffOutlined
 } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { signIn } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
@@ -13,7 +13,10 @@ import {
   DEMO_SIGN_IN_ENABLED,
   DEMO_SIGN_IN_PASSWORD
 } from 'configs';
-import { PAGE_PATH_ROOT } from 'constants/routing';
+import {
+  PAGE_PATH_AUTH_FORGOT_PASSWORD,
+  PAGE_PATH_ROOT
+} from 'constants/routing';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -173,6 +176,12 @@ const SignInWithEmail = () => {
           >
             {t('auth:sign-in-title')}
           </Button>
+          <Link
+            to={PAGE_PATH_AUTH_FORGOT_PASSWORD}
+            className="w-full mt-3 flex items-center justify-center underline text-primary-500 hover:text-primary-600"
+          >
+            {t('forgot-password.title')}
+          </Link>
         </Form>
       </FormProvider>
     </AuthWrapper>
