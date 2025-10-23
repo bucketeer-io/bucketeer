@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.1.2](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.1.2) (2025-10-23)
+
+
+### Bug Fixes
+
+* app and envoy container not shutting down gracefully ([#2155](https://github.com/bucketeer-io/bucketeer/issues/2155)) ([c78bb7e](https://github.com/bucketeer-io/bucketeer/commit/c78bb7ea605e21b4910875262a2d4c845a22f7c7))
+* failed to create puller log for none-demo deployment ([#2158](https://github.com/bucketeer-io/bucketeer/issues/2158)) ([6927c51](https://github.com/bucketeer-io/bucketeer/commit/6927c515b363a6e0cfd8be0bfa5ef8188050a4fe))
+* improve timeout handling and health check resilience during traffic spikes ([#2131](https://github.com/bucketeer-io/bucketeer/issues/2131)) ([b2a5065](https://github.com/bucketeer-io/bucketeer/commit/b2a50655be320a803444df4cdfe136e9520b6aa3))
+* **ui/dashboard:** experiment filter opens drawer add new ([#2140](https://github.com/bucketeer-io/bucketeer/issues/2140)) ([d764014](https://github.com/bucketeer-io/bucketeer/commit/d7640146f295cea53b338ec2767b2138ba6bc501))
+
+
+### Miscellaneous
+
+* **evaluation:** update typescript evaluation version to 0.0.5 ([#2161](https://github.com/bucketeer-io/bucketeer/issues/2161)) ([34837f9](https://github.com/bucketeer-io/bucketeer/commit/34837f9c5f65b925de7579b43e9702163569f2b8))
+* remove make command of old console ([#2139](https://github.com/bucketeer-io/bucketeer/issues/2139)) ([70baf53](https://github.com/bucketeer-io/bucketeer/commit/70baf53cf0272e589d4a983b10376716c4ce956a))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 7.0.7 to 7.0.8 in /ui/dashboard ([#2159](https://github.com/bucketeer-io/bucketeer/issues/2159)) ([e71e995](https://github.com/bucketeer-io/bucketeer/commit/e71e99586e448b5b81088c17c5be449f24a008e3))
+* **deps:** bump the dependencies group across 1 directory with 5 updates ([#2143](https://github.com/bucketeer-io/bucketeer/issues/2143)) ([d9c0560](https://github.com/bucketeer-io/bucketeer/commit/d9c05601fdc6b36514d2af7ac78100ec9b702da5))
+* **deps:** bump the dependencies group with 6 updates ([#2144](https://github.com/bucketeer-io/bucketeer/issues/2144)) ([c9c9ad6](https://github.com/bucketeer-io/bucketeer/commit/c9c9ad6db01433999c4a26b540086c6263a2eba5))
+
 ## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
 
 
