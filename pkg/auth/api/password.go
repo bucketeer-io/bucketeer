@@ -409,7 +409,8 @@ func (s *authService) ValidatePasswordSetupToken(
 	}, nil
 }
 
-// InitiatePasswordReset extractEmailFromContext extracts email from the authentication context
+// InitiatePasswordReset initiates the password reset process for a user by validating the request
+// and, if appropriate, sending a password reset email to the specified address.
 func (s *authService) InitiatePasswordReset(
 	ctx context.Context,
 	request *authproto.InitiatePasswordResetRequest,
