@@ -142,6 +142,7 @@ const ManualSchedule = ({
                   variationOptions.find(item => item.value === field.value)
                     ?.label || ''
                 }
+                itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
                 disabled={isDisabled}
