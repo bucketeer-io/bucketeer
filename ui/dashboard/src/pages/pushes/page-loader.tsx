@@ -80,9 +80,12 @@ const PageLoader = () => {
     [commonPath]
   );
 
-  const handleOnCloseModal = useCallback(() => {
+  const handleOnCloseModal = useCallback((isRefresh?: boolean) => {
+    const checkReset = isRefresh ?? true;
     onCloseActionModal();
-    setSelectedPush(undefined);
+    if (checkReset) {
+      setSelectedPush(undefined);
+    }
     setIsDeletePush(false);
     setIsDisabling(false);
     onCloseConfirmModal();
@@ -148,6 +151,7 @@ const PageLoader = () => {
           pushId={pushId}
           isLoadingPush={isLoadingPush}
           push={selectedPush}
+          resetPush={() => setSelectedPush(undefined)}
           onClose={handleOnCloseModal}
         />
       )}

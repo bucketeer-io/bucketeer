@@ -10,6 +10,7 @@ import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
@@ -70,7 +71,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       ownerEmail: organization.ownerEmail
     }
   });
-
+  const { isDirty, isSubmitting } = form.formState;
   const onSubmit: SubmitHandler<PageContentForm> = async values => {
     try {
       const resp = await organizationUpdater({
@@ -96,6 +97,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
     }
   };
 
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <PageLayout.Content className="p-6">
       <div className="p-5 shadow-card rounded-lg bg-white">

@@ -124,3 +124,22 @@ export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
     );
   }
 };
+
+export const checkFiledDirty = (obj: { [key: string]: boolean }): boolean => {
+  if (!obj) return false;
+  if (typeof obj === 'boolean' && obj === true) return true;
+  for (const value of Object.values(obj)) {
+    if (typeof value === 'boolean' && value === true) return true;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === 'object') {
+          checkFiledDirty(item as { [key: string]: boolean });
+        }
+      }
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (checkFiledDirty(value)) return true;
+    }
+  }
+  return false;
+};

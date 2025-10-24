@@ -8,6 +8,10 @@ import {
 } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
+import {
+  invalidateEnvironmentDetails,
+  useQueryEnvironmentDetails
+} from '@queries/environments-details';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryProjectDetails } from '@queries/project-details';
 import { invalidateProjects } from '@queries/projects';
@@ -15,6 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Environment } from '@types';
@@ -33,6 +38,7 @@ import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import FormLoading from 'elements/form-loading';
 
 interface EnvironmentCreateUpdateModalProps {
   organizationId: string;
@@ -69,11 +75,10 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
 const EnvironmentCreateUpdateModal = ({
   organizationId,
   isOpen,
-  onClose,
-  environment
+  onClose
 }: EnvironmentCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
-  const { projectId } = useParams();
+  const { projectId, environmentId } = useParams();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
@@ -98,16 +103,29 @@ const EnvironmentCreateUpdateModal = ({
       enabled: !!projectId && !!organizationId
     });
 
+  const { data: envCollections, isLoading: isLoadingEnv } =
+    useQueryEnvironmentDetails({
+      params: {
+        id: environmentId as string
+      },
+      enabled: !!environmentId
+    });
+
+  const environmentDetail = useMemo(
+    () => envCollections?.environment,
+    [envCollections]
+  );
+
   const project = collection?.project;
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
     values: {
-      name: environment?.name || '',
-      description: environment?.description,
-      requireComment: environment?.requireComment || false,
+      name: environmentDetail?.name || '',
+      description: environmentDetail?.description,
+      requireComment: environmentDetail?.requireComment || false,
       projectId: projectId || '',
-      urlCode: environment?.urlCode || ''
+      urlCode: environmentDetail?.urlCode || ''
     },
     mode: 'onChange'
   });
@@ -120,9 +138,9 @@ const EnvironmentCreateUpdateModal = ({
     async values => {
       try {
         let resp: EnvironmentResponse | null = null;
-        if (environment) {
+        if (environmentDetail) {
           resp = await environmentUpdater({
-            id: environment!.id,
+            id: environmentDetail!.id,
             name: values.name,
             description: values.description,
             requireComment: values.requireComment
@@ -137,12 +155,13 @@ const EnvironmentCreateUpdateModal = ({
           notify({
             message: t('message:collection-action-success', {
               collection: t('source-type.environment'),
-              action: t(environment ? 'updated' : 'created')
+              action: t(environmentDetail ? 'updated' : 'created')
             })
           });
           invalidateOrganizations(queryClient);
           invalidateProjects(queryClient);
           invalidateEnvironments(queryClient);
+          invalidateEnvironmentDetails(queryClient);
           onMeFetcher({ organizationId: currentEnvironment.organizationId });
           onClose();
         }
@@ -150,172 +169,180 @@ const EnvironmentCreateUpdateModal = ({
         errorNotify(error);
       }
     },
-    [environment, currentEnvironment]
+    [environmentDetail, currentEnvironment]
   );
-
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal
-      title={t(environment ? 'update-env' : 'new-env')}
+      title={t(environmentDetail ? 'update-env' : 'new-env')}
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-full p-5">
-        <p className="text-gray-800 typo-head-bold-small">
-          {t('form:general-info')}
-        </p>
-        <FormProvider {...form}>
-          <Form onSubmit={form.handleSubmit(onSubmit)}>
-            <Form.Field
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('name')}</Form.Label>
-                  <Form.Control>
-                    <Input
-                      disabled={disabled}
-                      placeholder={`${t('form:placeholder-name')}`}
-                      {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        if (!environment) {
-                          const isUrlCodeDirty =
-                            form.getFieldState('urlCode').isDirty;
-                          const urlCode = form.getValues('urlCode');
-                          form.setValue(
-                            'urlCode',
-                            isUrlCodeDirty ? urlCode : onGenerateSlug(value)
-                          );
-                        }
-                      }}
-                      name="environment-name"
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-
-            <Form.Field
-              control={form.control}
-              name="urlCode"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required className="relative w-fit">
-                    {t('form:url-code')}
-                    <Tooltip
-                      align="start"
-                      alignOffset={-76}
-                      trigger={
-                        <div className="flex-center absolute top-0 -right-6">
-                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                        </div>
-                      }
-                      content={t('form:env-url-tooltip')}
-                      className="!z-[100] max-w-[400px]"
-                    />
-                  </Form.Label>
-                  <Form.Control>
-                    <Input
-                      {...field}
-                      value={field.value}
-                      placeholder={`${t('form:placeholder-code')}`}
-                      disabled={disabled || !!environment}
-                      name="environment-code"
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-
-            <Form.Item>
-              <Form.Label required>{`${t(`project`)}`}</Form.Label>
-              <Form.Control>
-                <InputGroup
-                  addon={isLoadingProject ? <Spinner size="sm" /> : null}
-                  addonSize="sm"
-                  addonSlot="right"
-                  className="w-full"
-                >
-                  <Input
-                    value={project?.name || ''}
-                    placeholder={`${t(`project`)}`}
-                    disabled
-                  />
-                </InputGroup>
-              </Form.Control>
-              <Form.Message />
-            </Form.Item>
-
-            <Form.Field
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label optional>{t('form:description')}</Form.Label>
-                  <Form.Control>
-                    <TextArea
-                      placeholder={t('form:placeholder-desc')}
-                      rows={4}
-                      disabled={disabled}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-
-            <Divider className="mb-5" />
-            <h3 className="typo-head-bold-small text-gray-900">
-              {t(`form:env-settings`)}
-            </h3>
-            <Form.Field
-              control={form.control}
-              name="requireComment"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <Checkbox
-                      disabled={disabled}
-                      onCheckedChange={checked => field.onChange(checked)}
-                      checked={field.value}
-                      title={`${t(`form:require-comments-flag`)}`}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-
-            <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
-              <ButtonBar
-                primaryButton={
-                  <Button variant="secondary" onClick={onClose}>
-                    {t(`cancel`)}
-                  </Button>
-                }
-                secondaryButton={
-                  <DisabledButtonTooltip
-                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
-                    hidden={!disabled}
-                    trigger={
-                      <Button
-                        type="submit"
-                        disabled={!isDirty || !isValid || disabled}
-                        loading={isSubmitting}
-                      >
-                        {t(environment ? `update-env` : 'create-env')}
-                      </Button>
-                    }
-                  />
-                }
+      {isLoadingEnv ? (
+        <FormLoading />
+      ) : (
+        <div className="w-full p-5">
+          <p className="text-gray-800 typo-head-bold-small">
+            {t('form:general-info')}
+          </p>
+          <FormProvider {...form}>
+            <Form onSubmit={form.handleSubmit(onSubmit)}>
+              <Form.Field
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label required>{t('name')}</Form.Label>
+                    <Form.Control>
+                      <Input
+                        disabled={disabled}
+                        placeholder={`${t('form:placeholder-name')}`}
+                        {...field}
+                        onChange={value => {
+                          field.onChange(value);
+                          if (!environmentDetail) {
+                            const isUrlCodeDirty =
+                              form.getFieldState('urlCode').isDirty;
+                            const urlCode = form.getValues('urlCode');
+                            form.setValue(
+                              'urlCode',
+                              isUrlCodeDirty ? urlCode : onGenerateSlug(value)
+                            );
+                          }
+                        }}
+                        name="environment-name"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
               />
-            </div>
-          </Form>
-        </FormProvider>
-      </div>
+
+              <Form.Field
+                control={form.control}
+                name="urlCode"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label required className="relative w-fit">
+                      {t('form:url-code')}
+                      <Tooltip
+                        align="start"
+                        alignOffset={-76}
+                        trigger={
+                          <div className="flex-center absolute top-0 -right-6">
+                            <Icon
+                              icon={IconInfo}
+                              size={'sm'}
+                              color="gray-500"
+                            />
+                          </div>
+                        }
+                        content={t('form:env-url-tooltip')}
+                        className="!z-[100] max-w-[400px]"
+                      />
+                    </Form.Label>
+                    <Form.Control>
+                      <Input
+                        {...field}
+                        value={field.value}
+                        placeholder={`${t('form:placeholder-code')}`}
+                        disabled={disabled || !!environmentDetail}
+                        name="environment-code"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
+              <Form.Item>
+                <Form.Label required>{`${t(`project`)}`}</Form.Label>
+                <Form.Control>
+                  <InputGroup
+                    addon={isLoadingProject ? <Spinner size="sm" /> : null}
+                    addonSize="sm"
+                    addonSlot="right"
+                    className="w-full"
+                  >
+                    <Input
+                      value={project?.name || ''}
+                      placeholder={`${t(`project`)}`}
+                      disabled
+                    />
+                  </InputGroup>
+                </Form.Control>
+                <Form.Message />
+              </Form.Item>
+
+              <Form.Field
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label optional>{t('form:description')}</Form.Label>
+                    <Form.Control>
+                      <TextArea
+                        placeholder={t('form:placeholder-desc')}
+                        rows={4}
+                        disabled={disabled}
+                        {...field}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
+              <Divider className="mb-5" />
+              <h3 className="typo-head-bold-small text-gray-900">
+                {t(`form:env-settings`)}
+              </h3>
+              <Form.Field
+                control={form.control}
+                name="requireComment"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Control>
+                      <Checkbox
+                        disabled={disabled}
+                        onCheckedChange={checked => field.onChange(checked)}
+                        checked={field.value}
+                        title={`${t(`form:require-comments-flag`)}`}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
+              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+                <ButtonBar
+                  primaryButton={
+                    <Button type="button" variant="secondary" onClick={onClose}>
+                      {t(`cancel`)}
+                    </Button>
+                  }
+                  secondaryButton={
+                    <DisabledButtonTooltip
+                      type={!isOrganizationAdmin ? 'admin' : 'editor'}
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isDirty || !isValid || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(environmentDetail ? `update-env` : 'create-env')}
+                        </Button>
+                      }
+                    />
+                  }
+                />
+              </div>
+            </Form>
+          </FormProvider>
+        </div>
+      )}
     </SlideModal>
   );
 };

@@ -3,6 +3,7 @@ import { GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
@@ -63,7 +64,9 @@ const GoalUpdateForm = ({
   const {
     formState: { isValid, isDirty, isSubmitting }
   } = form;
-
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting
+  });
   return (
     <div className="p-5 shadow-card rounded-lg bg-white">
       <p className="text-gray-800 typo-head-bold-small">

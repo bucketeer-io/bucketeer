@@ -8,6 +8,7 @@ import { invalidateTriggers } from '@queries/triggers';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { TriggerActionType, TriggerItemType, TriggerType } from '@types';
 import { IconWebhook } from '@icons';
@@ -161,6 +162,7 @@ const CreateTriggerForm = forwardRef(
       [featureId, environmentId, selectedTrigger, isEdit, disabled]
     );
 
+    useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
     return (
       <div ref={ref} className="w-full  p-6 border border-gray-400 rounded-lg">
         <FormProvider {...form}>

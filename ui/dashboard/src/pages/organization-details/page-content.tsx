@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import {
   PAGE_PATH_MEMBERS,
+  PAGE_PATH_NEW,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_SETTINGS
@@ -53,6 +54,14 @@ const PageContent = ({ organization }: { organization: Organization }) => {
             />
             <Route
               path={PAGE_PATH_PROJECTS}
+              element={<OrganizationProjects />}
+            />
+            <Route
+              path={`${PAGE_PATH_PROJECTS}${PAGE_PATH_NEW}`}
+              element={<OrganizationProjects />}
+            />
+            <Route
+              path={`${PAGE_PATH_PROJECTS}/:projectId`}
               element={<OrganizationProjects />}
             />
             <Route path={PAGE_PATH_MEMBERS} element={<OrganizationUsers />} />

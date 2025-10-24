@@ -28,6 +28,7 @@ const AddDebuggerForm = ({
         <div className="flex items-center w-full gap-x-4">
           {evaluations.length > 0 && (
             <Button
+              type="button"
               variant={'secondary-2'}
               className="w-fit"
               onClick={onCancel}

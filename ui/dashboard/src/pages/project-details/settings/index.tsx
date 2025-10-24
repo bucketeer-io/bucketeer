@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Project } from '@types';
@@ -80,6 +81,10 @@ const ProjectSettings = ({ project }: { project: Project }) => {
       errorNotify(error);
     }
   };
+
+  const isShowPopup = form.formState.isDirty && !form.formState.isSubmitting;
+
+  useUnsavedLeavePage({ isShow: isShowPopup });
 
   return (
     <div className="flex flex-col w-full p-6">

@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
 import { IconInfo } from '@icons';
@@ -76,7 +77,7 @@ const GeneralInfoForm = ({
     mode: 'onChange'
   });
   const {
-    formState: { isValid, isDirty },
+    formState: { isValid, isDirty, isSubmitting },
     watch,
     getValues,
     setError,
@@ -178,7 +179,7 @@ const GeneralInfoForm = ({
       );
     }
   }, [tags]);
-
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <FormProvider {...form}>
       <Form onSubmit={form.handleSubmit(onSubmit)}>

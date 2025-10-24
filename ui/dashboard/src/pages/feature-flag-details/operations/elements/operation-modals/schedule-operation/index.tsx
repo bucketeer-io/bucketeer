@@ -10,6 +10,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
 import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
@@ -87,7 +88,7 @@ const ScheduleOperationModal = ({
   });
 
   const {
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isDirty, isSubmitting }
   } = form;
 
   const handleCheckDateTimeClauses = useCallback(
@@ -199,6 +200,7 @@ const ScheduleOperationModal = ({
     },
     [isCreate, actionType, selectedData, editable]
   );
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
 
   return (
     <SlideModal
@@ -240,7 +242,7 @@ const ScheduleOperationModal = ({
           <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
-                <Button variant="secondary" onClick={onClose}>
+                <Button type="button" variant="secondary" onClick={onClose}>
                   {t(`common:cancel`)}
                 </Button>
               }

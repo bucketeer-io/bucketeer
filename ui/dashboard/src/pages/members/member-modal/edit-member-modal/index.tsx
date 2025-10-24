@@ -131,17 +131,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       useFormSchema(formSchema)
     ) as Resolver<EditMemberForm>,
     values: {
-      firstName: member.firstName,
-      lastName: member.lastName,
-      language: member.language,
-      memberRole: member.organizationRole,
-      environmentRoles: member.environmentRoles?.length
-        ? member.environmentRoles.map(item => ({
+      firstName: member?.firstName,
+      lastName: member?.lastName,
+      language: member?.language,
+      memberRole: member?.organizationRole,
+      environmentRoles: member?.environmentRoles?.length
+        ? member?.environmentRoles.map(item => ({
             ...item,
             environmentId: item.environmentId || emptyEnvironmentId
           }))
         : [defaultEnvironmentRole],
-      teams: member.teams
+      teams: member?.teams
     },
     mode: 'onChange'
   });

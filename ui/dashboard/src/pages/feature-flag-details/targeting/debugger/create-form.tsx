@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { Evaluation, Feature } from '@types';
 import AddDebuggerForm from 'pages/debugger/add-debugger-form';
 import {
@@ -97,7 +98,7 @@ const CreateDebuggerForm = ({
     },
     [currentEnvironment]
   );
-
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal
       title={t(`navigation.debugger`)}
@@ -117,6 +118,7 @@ const CreateDebuggerForm = ({
             <ButtonBar
               primaryButton={
                 <Button
+                  type="button"
                   variant={'secondary'}
                   className="w-fit"
                   onClick={() => {
