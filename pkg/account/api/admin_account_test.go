@@ -32,6 +32,8 @@ import (
 
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -57,7 +59,15 @@ func TestGetMeMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
-	org := environmentproto.Organization{Id: "org0"}
+	org := environmentproto.Organization{
+		Id: "org0",
+		AuthenticationSettings: &environmentproto.AuthenticationSettings{
+			EnabledTypes: []environmentproto.AuthenticationType{
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+			},
+		},
+	}
 
 	patterns := []struct {
 		desc        string
@@ -271,6 +281,12 @@ func TestGetMeMySQL(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().GetCredentials(
+					gomock.Any(), "bucketeer@example.com",
+				).Return(nil, authstorage.ErrCredentialsNotFound)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().CreateCredentials(
+					gomock.Any(), "bucketeer@example.com", "",
+				).Return(nil)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
@@ -313,6 +329,7 @@ func TestGetMeMySQL(t *testing.T) {
 							Id: "search-filter-id",
 						},
 					},
+					PasswordSetupRequired: true,
 				},
 			},
 			expectedErr: nil,
@@ -321,7 +338,7 @@ func TestGetMeMySQL(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -446,7 +463,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -574,7 +591,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -910,7 +927,7 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAccountService(t, mockController, nil)
+			service := createAccountService(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
