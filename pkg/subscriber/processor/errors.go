@@ -27,6 +27,7 @@ var (
 	ErrEvaluationCountInvalidConfig              = errors.New("evaluation count: invalid config")
 	ErrEventsDWHPersisterInvalidConfig           = errors.New("eventpersister: invalid config")
 	ErrEventsOPSPersisterInvalidConfig           = errors.New("eventpersister: invalid config")
+	ErrAPIKeyLastUsedInfoWriterInvalidConfig     = errors.New("apikeyLastUsedInfoWriter: invalid config")
 	ErrExperimentNotFound                        = errors.New("eventpersister: experiment not found")
 	ErrReasonNil                                 = errors.New("eventpersister: reason is nil")
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")

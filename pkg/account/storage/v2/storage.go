@@ -43,6 +43,11 @@ type AccountStorage interface {
 	GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error)
 	ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error)
 	ListAPIKeys(ctx context.Context, options *mysql.ListOptions) ([]*proto.APIKey, int, int64, error)
+	UpsertAPIKeyLastUsedInfo(ctx context.Context, f *domain.APIKeyLastUsedInfo) error
+	GetAPIKeyLastUsedInfos(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*proto.APIKeyLastUsedInfo, error)
 }
 
 type accountStorage struct {

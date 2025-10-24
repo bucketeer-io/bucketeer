@@ -570,6 +570,19 @@ func (s *server) registerPubSubProcessorMap(
 			)
 		}
 
+		apiKeyLastUsedInfoWriter, err := processor.NewAPIKeyLastUsedInfoWriter(
+			processorsConfigMap[processor.APIKeyLastUsedInfoWriterName],
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.APIKeyLastUsedInfoWriterName,
+			apiKeyLastUsedInfoWriter,
+		)
+
 		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
