@@ -137,6 +137,7 @@ const (
 	// password setup/reset messages
 	PasswordSetupEmailSent = "PasswordSetupEmailSent"
 	PasswordResetEmailSent = "PasswordResetEmailSent"
+	PasswordsIdentical     = "PasswordsIdentical"
 )
 
 // domain events
