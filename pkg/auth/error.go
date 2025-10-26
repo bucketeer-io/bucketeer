@@ -58,6 +58,9 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "current password must not be empty", "currentPassword"))
 	StatusMissingNewPassword = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "new password must not be empty", "newPassword"))
+	StatusPasswordsIdentical = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName,
+			"new password must be different from current password", "newPassword"))
 
 	StatusInvalidResetToken = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid reset token", "resetToken"))
