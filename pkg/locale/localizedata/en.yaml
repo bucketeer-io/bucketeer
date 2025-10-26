@@ -116,6 +116,7 @@ ProjectDisabled: "Project is disabled"
 # Password setup/reset messages
 PasswordSetupEmailSent: "If an account with this email exists and needs password setup, a setup link has been sent."
 PasswordResetEmailSent: "If an account with this email exists and has a password, a reset link has been sent."
+PasswordsIdentical: "The new password must be different from the current password"
 
 #############################
 # Domain Events
