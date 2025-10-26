@@ -46,6 +46,16 @@ func validateUpdatePasswordRequest(
 		}
 		return dt.Err()
 	}
+	if req.CurrentPassword == req.NewPassword {
+		dt, err := auth.StatusPasswordsIdentical.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PasswordsIdentical),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
