@@ -368,12 +368,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
 		restHealthChecker.Stop()
-		logger.Info("Health check marked as unhealthy (readiness will fail)")
 
 		// Stop PubSub subscription
 		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
-		logger.Info("PubSub subscription stopped, all messages processed")
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.

@@ -135,7 +135,7 @@ func (e *experimentCalculate) runCalculation() {
 			return
 		}
 		if experiments == nil {
-			e.logger.Info("There are no experiments for calculation in the specified environment",
+			e.logger.Debug("There are no experiments for calculation in the specified environment",
 				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 				)...,

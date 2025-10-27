@@ -636,7 +636,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.
 		time.Sleep(propagationDelay)
-		logger.Info("Starting HTTP/gRPC server shutdown")
 
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
@@ -645,11 +644,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Gracefully stop gRPC Gateway (calls the gRPC server internally)
 		batchGateway.Stop(serverShutDownTimeout)
-		logger.Info("gRPC-gateway server shutdown completed")
 
 		// Stop gRPC server (only pure gRPC connections remain)
 		server.Stop(grpcStopTimeout)
-		logger.Info("gRPC server shutdown completed")
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
