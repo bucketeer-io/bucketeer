@@ -21,6 +21,10 @@ spec:
     spec:
       backoffLimit: 0
       template:
+        metadata:
+          labels:
+            app: {{ template "batch-server.name" $ }}
+            job-type: cronjob
         spec:
           volumes:
             - name: service-cert-secret
@@ -43,18 +47,34 @@ spec:
               env:
                 - name: WEB_GATEWAY_ADDRESS
                   value: "{{ $.Values.cronjob.webGatewayAddress }}"
+                - name: JOB_NAME
+                  value: "{{ .name }}"
+                - name: JOB_ID
+                  value: "{{ .jobId }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
-                  echo "Start {{ .name }} job."
+                  START_TIME=$(date +%s)
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "{{ .jobId }}"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
-                  echo "{{ .name }} job result: ${RES}"
-                  if [ "$RES" = 200 ] || [ "$RES" = 503 ] || [ "$RES" = 000 ]
-                  then
+                  RESPONSE=$(mktemp)
+                  RES=$(curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "'${JOB_ID}'"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o ${RESPONSE} -w '%{http_code}' ${ENDPOINT})
+                  BODY=$(cat ${RESPONSE})
+                  rm -f ${RESPONSE}
+                  END_TIME=$(date +%s)
+                  DURATION=$((END_TIME - START_TIME))
+                  # API returns empty {} on success, or error details on failure
+                  if [ "${RES}" = "200" ]; then
+                    # Success - use DEBUG to avoid verbose logs
+                    echo '{"severity":"DEBUG","message":"'${JOB_NAME}' job completed successfully","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}'}'
+                  else
+                    # Failure - log as ERROR with response details for debugging
+                    BODY_ESCAPED=$(echo "${BODY}" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n\r\t' '   ')
+                    echo '{"severity":"ERROR","message":"'${JOB_NAME}' job failed","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}',"responseBody":"'${BODY_ESCAPED}'"}'
+                  fi
+                  if [ "${RES}" = "200" ] || [ "${RES}" = "503" ] || [ "${RES}" = "000" ]; then
                     exit 0
                   else
                     exit 1
