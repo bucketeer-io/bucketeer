@@ -92,11 +92,16 @@ type SESConfig struct {
 	SESSecretKey string `json:"sesSecretKey"`
 }
 
+type MailerSendConfig struct {
+	MailerSendAPIKey string `json:"mailersendAPIKey"`
+}
+
 type EmailServiceConfig struct {
-	Provider           string               `json:"provider"` // "smtp", "sendgrid", "ses"
+	Provider           string               `json:"provider"` // "smtp", "sendgrid", "ses", "mailersend"
 	SMTP               SMTPConfig           `json:"smtp"`
 	SendGrid           SendGridConfig       `json:"sendgrid"`
 	SES                SESConfig            `json:"ses"`
+	MailerSend         MailerSendConfig     `json:"mailersend"`
 	FromEmail          string               `json:"fromEmail"`
 	FromName           string               `json:"fromName"`
 	BaseURL            string               `json:"baseURL"`            // For constructing reset URLs
