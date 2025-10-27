@@ -142,6 +142,8 @@ web:
           sesRegion: ""
           sesAccessKey: ""
           sesSecretKey: ""
+        mailersend:
+          mailersendAPIKey: ""
         fromEmail: "bucketeer@example.com"
         fromName: "Bucketeer Development"
         baseURL: "https://localhost"
