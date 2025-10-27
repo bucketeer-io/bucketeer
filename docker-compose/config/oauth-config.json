@@ -25,10 +25,23 @@
     "emailServiceEnabled": true,
     "emailServiceConfig": {
       "provider": "smtp",
-      "smtpHost": "smtp.gmail.com",
-      "smtpPort": 587,
-      "smtpUsername": "bucketeer@example.com",
-      "smtpPassword": "${SMTP_PASSWORD}",
+      "smtp": {
+        "smtpHost": "smtp.gmail.com",
+        "smtpPort": 587,
+        "smtpUsername": "bucketeer@example.com",
+        "smtpPassword": "${SMTP_PASSWORD}"
+      },
+      "sendgrid": {
+        "sendgridAPIKey": ""
+      },
+      "ses": {
+        "sesRegion": "",
+        "sesAccessKey": "",
+        "sesSecretKey": ""
+      },
+      "mailersend": {
+        "mailersendAPIKey": ""
+      },
       "fromEmail": "bucketeer@example.com",
       "fromName": "Bucketeer",
       "baseURL": "https://localhost",
