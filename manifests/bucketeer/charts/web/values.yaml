@@ -160,6 +160,8 @@ oauth:
         sesRegion:
         sesAccessKey:
         sesSecretKey:
+      mailersend:
+        mailersendAPIKey:
       fromEmail:
       fromName:
       baseURL:
