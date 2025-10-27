@@ -40,6 +40,8 @@ func NewEmailService(config auth.EmailServiceConfig, logger *zap.Logger) (EmailS
 		return NewSendGridEmailService(config, logger), nil
 	case "ses":
 		return NewSESEmailService(config, logger)
+	case "mailersend":
+		return NewMailerSendEmailService(config, logger), nil
 	default:
 		return nil, fmt.Errorf("unsupported email provider: %s", config.Provider)
 	}
