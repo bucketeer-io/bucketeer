@@ -45,7 +45,11 @@ func NewMailerSendEmailService(config auth.EmailServiceConfig, logger *zap.Logge
 	}
 }
 
-func (s *MailerSendEmailService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
+func (s *MailerSendEmailService) SendPasswordChangedNotification(
+	ctx context.Context,
+	to string,
+	language string,
+) error {
 	subject, body := s.renderer.RenderPasswordChangedEmail(language)
 
 	err := s.sendEmail(ctx, to, subject, body)
