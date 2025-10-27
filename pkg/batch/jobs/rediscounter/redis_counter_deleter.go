@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -204,12 +205,26 @@ func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, e
 	return keys, nil
 }
 
+func (r *redisCounterDeleter) isTemporaryKey(key string) bool {
+	// Check if the key contains patterns for temporary keys
+	// pfmerge-key: temporary key used for HyperLogLog PFMERGE operations
+	return strings.Contains(key, "pfmerge-key")
+}
+
 func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 	environmentId, kind string,
 	keys []string,
 ) ([]string, error) {
 	filteredKeys := make([]string, 0, len(keys))
+	skippedKeys := make([]string, 0)
 	for _, key := range keys {
+		// Skip temporary keys like pfmerge-key
+		// These keys have TTL (10 minutes) and will be automatically deleted
+		if r.isTemporaryKey(key) {
+			skippedKeys = append(skippedKeys, key)
+			continue
+		}
+
 		// E.g. environment_id:uc:1689835532:feature_id:variation_id
 		var regex string
 		if environmentId == "" {
@@ -243,6 +258,21 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 		}
 		filteredKeys = append(filteredKeys, key)
 	}
+
+	if len(skippedKeys) > 0 {
+		// Log only a sample of skipped keys to avoid log flooding
+		sampleSize := len(skippedKeys)
+		if sampleSize > 5 {
+			sampleSize = 5
+		}
+		r.logger.Warn("Skipped temporary keys",
+			zap.String("environmentId", environmentId),
+			zap.String("kind", kind),
+			zap.Int("skippedCount", len(skippedKeys)),
+			zap.Strings("examples", skippedKeys[:sampleSize]),
+		)
+	}
+
 	return filteredKeys, nil
 }
 
