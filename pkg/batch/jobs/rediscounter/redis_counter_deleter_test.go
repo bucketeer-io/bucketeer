@@ -308,6 +308,34 @@ func TestFilterKeysOlderThanThirtyOneDays(t *testing.T) {
 		expectedError     error
 	}{
 		{
+			desc:              "success: skip pfmerge keys",
+			inputEnvNamespace: "",
+			inputKind:         "uc",
+			inputKeys: []string{
+				"uc:pfmerge-key:ios-premium-tab-enabled",
+				"uc:pfmerge-key:android-feature",
+				fmt.Sprintf("uc:%d:feature_id:variation_id", now.Unix()-31*day),
+			},
+			expected: []string{
+				fmt.Sprintf("uc:%d:feature_id:variation_id", now.Unix()-31*day),
+			},
+			expectedError: nil,
+		},
+		{
+			desc:              "success: skip pfmerge keys with environment id",
+			inputEnvNamespace: "dev",
+			inputKind:         "uc",
+			inputKeys: []string{
+				"dev:pfmerge:uc:pfmerge-key:feature_id:variation_id",
+				fmt.Sprintf("dev:uc:%d:feature_id_1:variation_id", now.Unix()-3*day),
+				fmt.Sprintf("dev:uc:%d:feature_id_2:variation_id", now.Unix()-31*day),
+			},
+			expected: []string{
+				fmt.Sprintf("dev:uc:%d:feature_id_2:variation_id", now.Unix()-31*day),
+			},
+			expectedError: nil,
+		},
+		{
 			desc:              "errSubmatchStringNotFound",
 			inputEnvNamespace: "dev",
 			inputKind:         "uc",
