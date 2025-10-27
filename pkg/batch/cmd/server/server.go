@@ -631,7 +631,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		shutdownStartTime := time.Now()
-		logger.Info("Starting graceful shutdown sequence")
 
 		// Wait for K8s endpoint propagation
 		// This prevents "context deadline exceeded" errors during high traffic.

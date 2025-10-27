@@ -362,7 +362,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		shutdownStartTime := time.Now()
-		logger.Info("Starting graceful shutdown sequence")
 
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,

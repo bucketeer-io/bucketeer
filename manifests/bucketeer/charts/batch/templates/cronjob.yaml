@@ -65,11 +65,8 @@ spec:
                   rm -f ${RESPONSE}
                   END_TIME=$(date +%s)
                   DURATION=$((END_TIME - START_TIME))
-                  # API returns empty {} on success, or error details on failure
-                  if [ "${RES}" = "200" ]; then
-                    # Success - use DEBUG to avoid verbose logs
-                    echo '{"severity":"DEBUG","message":"'${JOB_NAME}' job completed successfully","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}'}'
-                  else
+                  # Only log on failure - success is silent
+                  if [ "${RES}" != "200" ]; then
                     # Failure - log as ERROR with response details for debugging
                     BODY_ESCAPED=$(echo "${BODY}" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n\r\t' '   ')
                     echo '{"severity":"ERROR","message":"'${JOB_NAME}' job failed","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}',"responseBody":"'${BODY_ESCAPED}'"}'

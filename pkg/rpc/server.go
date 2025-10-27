@@ -139,11 +139,6 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	shutdownStart := time.Now()
-	s.logger.Info("Starting server graceful shutdown",
-		zap.String("server", s.name),
-		zap.Duration("timeout", timeout))
-
 	// Shutdown order is critical:
 	// 1. HTTP server first (drains REST/gRPC-Gateway requests)
 	// 2. gRPC server second (only pure gRPC connections remain)
@@ -151,15 +146,11 @@ func (s *Server) Stop(timeout time.Duration) {
 	// This ensures HTTP requests that call s.rpcServer.ServeHTTP() can complete
 	// before we stop the underlying gRPC server.
 	if s.httpServer != nil {
-		s.logger.Info("Starting HTTP server graceful shutdown")
-
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
 		if err := s.httpServer.Shutdown(ctx); err != nil {
 			s.logger.Error("HTTP server failed to shut down gracefully", zap.Error(err))
-		} else {
-			s.logger.Info("HTTP server shutdown completed gracefully")
 		}
 	}
 
@@ -168,13 +159,8 @@ func (s *Server) Stop(timeout time.Duration) {
 	// - HTTP-served connections were already drained in step 1
 	// - Pure gRPC clients have retry logic and Envoy connection draining to handle this
 	if s.rpcServer != nil {
-		s.logger.Info("Stopping gRPC server")
 		s.rpcServer.Stop()
 	}
-
-	s.logger.Info("Server shutdown completed",
-		zap.String("server", s.name),
-		zap.Duration("total_duration", time.Since(shutdownStart)))
 }
 
 func (s *Server) setupRPC() {
