@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -207,7 +208,7 @@ func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, e
 func (r *redisCounterDeleter) isTemporaryKey(key string) bool {
 	// Check if the key contains patterns for temporary keys
 	// pfmerge-key: temporary key used for HyperLogLog PFMERGE operations
-	return regexp.MustCompile(`pfmerge-key`).MatchString(key)
+	return strings.Contains(key, "pfmerge-key")
 }
 
 func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
