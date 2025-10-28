@@ -1,3 +1,5 @@
+import { FeatureVariation, PrerequisiteChange } from '@types';
+
 export enum RuleClauseType {
   COMPARE = 'compare',
   SEGMENT = 'segment',
@@ -20,4 +22,63 @@ export interface IndividualRuleItem {
   variationId: string;
   name?: string;
   users: string[];
+}
+
+export interface VariationPercent {
+  variation: string;
+  weight?: number | null;
+  variationIndex?: number;
+  variationId?: string;
+}
+
+export interface RuleOrders {
+  variations: VariationPercent[][];
+  labels: string[][];
+}
+
+export interface DiscardChangesStateData {
+  labelType: 'ADD' | 'UPDATE' | 'REMOVE' | 'REORDER';
+  label: string;
+  featureId?: string;
+  variationIndex: number;
+  valueLabel?: string;
+  changeType?:
+    | 'value'
+    | 'clause'
+    | 'strategy'
+    | 'default-strategy'
+    | 'default-audience'
+    | 'audience'
+    | 'new-rule'
+    | 'reorder';
+  ruleOrders?: RuleOrders;
+  variation?: FeatureVariation;
+  ruleIndex?: number;
+  audienceExcluded?: VariationPercent;
+  variationPercent?: VariationPercent[];
+  isAddNew?: boolean;
+}
+
+export enum DiscardChangesType {
+  PREREQUISITE = 'prerequisite',
+  INDIVIDUAL = 'individual',
+  CUSTOM = 'custom',
+  DEFAULT = 'default'
+}
+
+export type DiscardFeaturePrerequisiteChange = {
+  deleted?: PrerequisiteChange;
+  created?: PrerequisiteChange;
+};
+
+export interface DiscardChangesState {
+  type: DiscardChangesType | undefined;
+  isOpen: boolean;
+  data: DiscardChangesStateData[];
+  ruleIndex?: number;
+}
+
+export interface ClauseLabel {
+  fullLabel: string;
+  valueLabel: string;
 }
