@@ -1319,7 +1319,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			} else {
 				nonRepeateableErrors++
 			}
-			if !errors.Is(err, context.Canceled) {
+			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 				s.logger.Error(
 					"Failed to publish event",
 					log.FieldsFromIncomingContext(ctx).AddFields(

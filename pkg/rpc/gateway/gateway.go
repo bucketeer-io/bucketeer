@@ -424,10 +424,6 @@ func (g *Gateway) Stop(timeout time.Duration) {
 				zap.Duration("timeout", timeout),
 				zap.Duration("elapsed", time.Since(startTime)),
 			)
-		} else {
-			g.logger.Info("HTTP grpc-gateway server shutdown completed",
-				zap.Duration("elapsed", time.Since(startTime)),
-			)
 		}
 	}
 }

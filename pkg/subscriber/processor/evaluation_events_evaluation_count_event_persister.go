@@ -361,11 +361,10 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	p.envLastUsedCacheMutex.Lock()
 	defer p.envLastUsedCacheMutex.Unlock()
 	var clientVersion string
-	if event.User == nil {
-		p.logger.Warn("Failed to cache last used info. User is nil.",
-			zap.String("environmentId", environmentId))
-	} else {
-		clientVersion = event.User.Data[userDataAppVersion]
+	if event.User != nil {
+		if version, ok := event.User.Data[userDataAppVersion]; ok {
+			clientVersion = version
+		}
 	}
 	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
 	if cache, ok := p.envLastUsedCache[environmentId]; ok {
