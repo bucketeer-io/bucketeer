@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getEditorEnvironments, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import debounce from 'lodash/debounce';
 import isNil from 'lodash/isNil';
 import { isEmpty } from 'utils/data-type';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
@@ -12,17 +11,9 @@ import { NotificationFilters } from 'pages/notifications/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSearch,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
-import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<NotificationFilters>) => void;
@@ -52,9 +43,6 @@ const FilterAPIKeyModal = ({
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     environmentEnabledFilterOptions[0]
   ]);
-  const [searchValue, setSearchValue] = useState('');
-  const [debounceValue, setDebounceValue] = useState('');
-  const inputSearchRef = useRef<HTMLInputElement>(null);
 
   const remainingFilterOptions = useMemo(
     () =>
@@ -77,13 +65,6 @@ const FilterAPIKeyModal = ({
     [selectedFilters]
   );
 
-  const debouncedSearch = useCallback(
-    debounce(value => {
-      setSearchValue(value);
-    }, 500),
-    []
-  );
-
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(editorEnvironments);
 
@@ -96,29 +77,15 @@ const FilterAPIKeyModal = ({
     [formattedEnvironments]
   );
 
-  const handleFocusSearchInput = useCallback(() => {
-    let timerId: NodeJS.Timeout | null = null;
-    if (timerId) clearTimeout(timerId);
-    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
-  }, []);
-
   const getValueOptions = useCallback(
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
       const isEnvironmentFilter =
         filterOption.value === FilterTypes.ENVIRONMENT_IDs;
 
-      if (isEnvironmentFilter) {
-        return environmentOptions?.filter(item =>
-          searchValue
-            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
-            : item
-        );
-      }
-
-      return booleanOptions;
+      return isEnvironmentFilter ? environmentOptions : booleanOptions;
     },
-    [booleanOptions, searchValue, environmentOptions]
+    [booleanOptions, environmentOptions]
   );
 
   const handleGetLabelFilterValue = useCallback(
@@ -154,6 +121,15 @@ const FilterAPIKeyModal = ({
       const { value: filterType, filterValue } = filterOption;
       const isEnvironmentFilter = filterType === FilterTypes.ENVIRONMENT_IDs;
       let newFilterValue: string | number | string[] = value;
+      if (isEnvironmentFilter) {
+        if (Array.isArray(newFilterValue) && newFilterValue.length === 0) {
+          selectedFilters[filterIndex] = {
+            ...selectedFilters[filterIndex],
+            filterValue: value
+          };
+          return setSelectedFilters([...selectedFilters]);
+        }
+      }
       if (isEnvironmentFilter) {
         const values = filterValue as string[];
         const isExisted = values.find(item => item === value);
@@ -267,86 +243,51 @@ const FilterAPIKeyModal = ({
                 {t(filterIndex === 0 ? `if` : 'and')}
               </div>
               <Divider vertical={true} className="border-primary-500" />
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  placeholder={t(`select-filter`)}
-                  label={label}
-                  variant="secondary"
-                  className="w-full truncate"
-                />
-                <DropdownMenuContent className="w-[270px]" align="start">
-                  {remainingFilterOptions.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      value={item.value || ''}
-                      label={item.label}
-                      onSelectOption={() => {
-                        const filterValue =
-                          item.value === FilterTypes.ENVIRONMENT_IDs ? [] : '';
-                        selectedFilters[filterIndex] = {
-                          ...item,
-                          filterValue
-                        };
-                        setSelectedFilters([...selectedFilters]);
-                      }}
-                    />
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">is</p>
-              <DropdownMenu
-                onOpenChange={open => {
-                  if (open) return handleFocusSearchInput();
-                  setDebounceValue('');
-                  setSearchValue('');
+              <Dropdown
+                options={remainingFilterOptions as DropdownOption[]}
+                labelCustom={label}
+                value={filterType}
+                onChange={value => {
+                  const selected = environmentEnabledFilterOptions.find(
+                    item => item.value === value
+                  );
+                  const filterValue =
+                    selected?.value === FilterTypes.ENVIRONMENT_IDs ? [] : '';
+                  selectedFilters[filterIndex] = {
+                    ...selected!,
+                    filterValue
+                  };
+                  setSelectedFilters([...selectedFilters]);
                 }}
-              >
-                <DropdownMenuTrigger
-                  disabled={!filterType}
-                  placeholder={t(`select-value`)}
-                  label={handleGetLabelFilterValue(filterOption)}
-                  variant="secondary"
-                  className="w-full truncate"
-                />
-                <DropdownMenuContent
-                  className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isEnvironmentFilter,
-                    'hidden-scroll': valueOptions?.length > 15
-                  })}
-                  align="start"
-                >
-                  {isEnvironmentFilter && (
-                    <DropdownMenuSearch
-                      ref={inputSearchRef}
-                      value={debounceValue}
-                      onChange={value => {
-                        setDebounceValue(value);
-                        debouncedSearch(value);
-                        handleFocusSearchInput();
-                      }}
-                    />
-                  )}
-                  {valueOptions?.length > 0 ? (
-                    <DropdownList
-                      isMultiselect={isEnvironmentFilter}
-                      selectedOptions={
-                        isEnvironmentFilter &&
-                        Array.isArray(filterOption?.filterValue)
-                          ? filterOption.filterValue
-                          : undefined
-                      }
-                      options={valueOptions as DropdownOption[]}
-                      onSelectOption={value =>
-                        handleChangeFilterValue(value, filterIndex)
-                      }
-                    />
-                  ) : (
-                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
-                      {t('no-options-found')}
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                placeholder={t(`select-filter`)}
+                className="w-full truncate"
+                contentClassName="w-[270px]"
+              />
+
+              <p className="typo-para-medium text-gray-600">is</p>
+              <Dropdown
+                isSearchable={isEnvironmentFilter}
+                disabled={!filterType}
+                placeholder={t(`select-value`)}
+                labelCustom={handleGetLabelFilterValue(filterOption)}
+                className="w-full truncate"
+                wrapTriggerStyle="truncate"
+                options={valueOptions as DropdownOption[]}
+                multiselect={isEnvironmentFilter}
+                value={
+                  isEnvironmentFilter
+                    ? (filterOption.filterValue as string[])
+                    : (filterOption.filterValue as string)
+                }
+                onChange={val => {
+                  handleChangeFilterValue(val as string | number, filterIndex);
+                }}
+                contentClassName={cn('w-[235px]', {
+                  'pt-0 w-[300px]': isEnvironmentFilter,
+                  'hidden-scroll': valueOptions?.length > 15
+                })}
+              />
+
               <Button
                 variant={'grey'}
                 className="px-0 w-fit"

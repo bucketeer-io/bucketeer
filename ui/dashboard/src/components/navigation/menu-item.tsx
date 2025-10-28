@@ -1,13 +1,7 @@
 import type { FunctionComponent } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from 'utils/style';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 
 export type MenuItem = {
@@ -46,41 +40,30 @@ const MenuItemComponent = ({
 
   const actionEl =
     options && options?.length > 0 ? (
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          loading={loading}
-          trigger={
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center w-full gap-x-2 !text-primary-50">
-                <div className="flex-center size-fit mt-0.5">{iconEl}</div>
-                {label}
-              </div>
-              {!loading && actionIcon}
+      <Dropdown
+        loading={loading}
+        trigger={
+          <div className={textClsx}>
+            <div className="flex items-center gap-x-2 w-full">
+              {iconEl}
+              <div className="w-fit truncate">{label}</div>
             </div>
-          }
-          showArrow={false}
-          className="w-full !border-none !shadow-none bg-transparent hover:bg-primary-400 hover:opacity-100 opacity-80 sidebar-menu"
-        />
-        <DropdownMenuContent side="right" align="start">
-          {options?.map((item, index) => (
-            <DropdownMenuItem
-              key={index}
-              label={item.label}
-              value={item.value}
-              icon={item?.icon}
-              iconElement={
-                item?.icon ? (
-                  <div className="flex-center size-fit mt-0.5">
-                    <Icon size="sm" icon={item?.icon} />
-                  </div>
-                ) : null
-              }
-              className="[&>div>button]:!cursor-pointer"
-              onSelectOption={value => onSelectOption?.(value as string)}
-            />
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {!loading && actionIcon}
+          </div>
+        }
+        showArrow={false}
+        options={options.map(item => ({
+          ...item,
+          iconElement: item?.icon ? (
+            <div className="flex-center size-fit mt-0.5">
+              <Icon size="sm" icon={item?.icon} />
+            </div>
+          ) : null
+        }))}
+        onChange={value => onSelectOption?.(value as string)}
+        className="w-full !p-0 !border-none !shadow-none [&>div>div>div>div]:text-primary-50 bg-transparent hover:bg-primary-400 hover:opacity-100  sidebar-menu"
+        menuContentSide="right"
+      />
     ) : href ? (
       <NavLink onClick={onClick} className={textClsx} to={href}>
         {iconEl}

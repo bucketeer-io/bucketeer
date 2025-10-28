@@ -3,12 +3,7 @@ import { format, getYear, setMonth, setYear } from 'date-fns';
 import { cn } from 'utils/style';
 import { IconChevronRight } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
 
 interface Props {
@@ -66,55 +61,34 @@ const CustomizeNavigator = memo(
             />
           </Button>
           <div className="flex items-center gap-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="!shadow-none !border-none p-0"
-                label={months[currFocusedDate.getMonth()]}
-              />
-              <DropdownMenuContent
-                sideOffset={-8}
-                align="start"
-                className="min-w-[120px]"
-              >
-                {months.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    label={item}
-                    value={item}
-                    onSelectOption={value => {
-                      const newDate = setMonth(
-                        currFocusedDate,
-                        months.indexOf(value as string)
-                      );
-                      changeShownDate(newDate);
-                    }}
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="!shadow-none !border-none p-0"
-                label={getYear(currFocusedDate)}
-              />
-              <DropdownMenuContent
-                sideOffset={-8}
-                align="start"
-                className="min-w-[120px]"
-              >
-                {years.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    label={item.toString()}
-                    value={item}
-                    onSelectOption={value => {
-                      const newDate = setYear(currFocusedDate, +value);
-                      changeShownDate(newDate);
-                    }}
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Dropdown
+              options={months.map((item, index) => ({
+                label: item,
+                value: index
+              }))}
+              value={months[currFocusedDate.getMonth()]}
+              onChange={value => {
+                const newDate = setMonth(currFocusedDate, +value);
+                changeShownDate(newDate);
+              }}
+              className="!shadow-none !border-none p-0"
+              contentClassName="min-w-[120px]"
+              sideOffsetContent={-8}
+            />
+            <Dropdown
+              options={years.map(item => ({
+                label: item.toString(),
+                value: item
+              }))}
+              value={getYear(currFocusedDate)}
+              onChange={value => {
+                const newDate = setYear(currFocusedDate, +value);
+                changeShownDate(newDate);
+              }}
+              className="!shadow-none !border-none p-0"
+              contentClassName="min-w-[120px]"
+              sideOffsetContent={-8}
+            />
           </div>
           <Button
             type="button"

@@ -12,12 +12,7 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
@@ -154,35 +149,19 @@ const OrganizationSettings = ({
                 <Form.Item>
                   <Form.Label required>{t('form:owner-email')}</Form.Label>
                   <Form.Control className="w-full">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('form:owner-email')}
-                        label={
-                          accounts?.accounts.find(
-                            item => item.email === field.value
-                          )?.email
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[400px]"
-                        align="start"
-                        {...field}
-                      >
-                        {accounts?.accounts?.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.email}
-                            label={item.email}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      options={
+                        accounts?.accounts.map(item => ({
+                          label: item.email,
+                          value: item.email
+                        })) || []
+                      }
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={t('form:owner-email')}
+                      className="w-full"
+                      contentClassName="w-[400px]"
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import debounce from 'lodash/debounce';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
@@ -11,17 +10,9 @@ import { ExperimentFilters } from 'pages/experiments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSearch,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
-import DropdownList from 'elements/dropdown-list';
 
 export type FilterProps = {
   onSubmit: (v: Partial<ExperimentFilters>) => void;
@@ -43,13 +34,9 @@ const FilterExperimentModal = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { experimentStatusOptions, experimentFilterOptions } = useOptions();
 
-  const inputSearchRef = useRef<HTMLInputElement>(null);
-
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     experimentFilterOptions[0]
   ]);
-  const [searchValue, setSearchValue] = useState('');
-  const [debounceValue, setDebounceValue] = useState('');
 
   const { data: collection, isLoading } = useQueryAccounts({
     params: {
@@ -85,13 +72,6 @@ const FilterExperimentModal = ({
     [selectedFilters]
   );
 
-  const debouncedSearch = useCallback(
-    debounce(value => {
-      setSearchValue(value);
-    }, 500),
-    []
-  );
-
   const getValueOptions = useCallback(
     (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
@@ -102,22 +82,12 @@ const FilterExperimentModal = ({
           value: item.email
         }));
 
-        return options?.filter(item =>
-          searchValue
-            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
-            : item
-        );
+        return options;
       }
       return experimentStatusOptions;
     },
-    [accounts, searchValue, experimentStatusOptions]
+    [accounts, experimentStatusOptions]
   );
-
-  const handleFocusSearchInput = useCallback(() => {
-    let timerId: NodeJS.Timeout | null = null;
-    if (timerId) clearTimeout(timerId);
-    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
-  }, []);
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
@@ -173,6 +143,13 @@ const FilterExperimentModal = ({
       const { value: filterType, filterValue } = filterOption;
       const isStatusOption = filterType === FilterTypes.STATUSES;
       if (isStatusOption) {
+        if (Array.isArray(value) && isEmpty(value)) {
+          selectedFilters[filterIndex] = {
+            ...selectedFilters[filterIndex],
+            filterValue: []
+          };
+          return setSelectedFilters([...selectedFilters]);
+        }
         const values = filterValue as string[];
         const isExisted = values.find(item => item === value);
         const newValue: string[] = isExisted
@@ -192,6 +169,23 @@ const FilterExperimentModal = ({
     },
     [selectedFilters]
   );
+
+  const handleChangeOption = (value: DropdownValue, filterIndex: number) => {
+    {
+      const selectedOption = experimentFilterOptions.find(
+        item => item.value === value
+      );
+      if (selectedOption) {
+        const filterValue =
+          selectedOption.value === FilterTypes.STATUSES ? [] : '';
+        selectedFilters[filterIndex] = {
+          ...selectedOption,
+          filterValue
+        };
+        setSelectedFilters([...selectedFilters]);
+      }
+    }
+  };
 
   const onConfirmHandler = () => {
     const defaultFilters = {
@@ -249,85 +243,44 @@ const FilterExperimentModal = ({
                 {t(filterIndex === 0 ? `if` : 'and')}
               </div>
               <Divider vertical={true} className="border-primary-500" />
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  placeholder={t(`select-filter`)}
-                  label={label}
-                  variant="secondary"
-                  className="w-full"
-                />
-                <DropdownMenuContent className="w-[235px]" align="start">
-                  {remainingFilterOptions.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      value={item.value || ''}
-                      label={item.label}
-                      onSelectOption={() => {
-                        const filterValue =
-                          item.value === FilterTypes.STATUSES ? [] : '';
-                        selectedFilters[filterIndex] = { ...item, filterValue };
-                        setSelectedFilters([...selectedFilters]);
-                      }}
-                    />
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dropdown
+                placeholder={t(`select-filter`)}
+                labelCustom={label}
+                className="w-full"
+                contentClassName="w-[235px]"
+                options={remainingFilterOptions as DropdownOption[]}
+                value={filterType}
+                onChange={value =>
+                  handleChangeOption(value as DropdownValue, filterIndex)
+                }
+              />
+
               <p className="typo-para-medium text-gray-600">is</p>
-              <DropdownMenu
-                onOpenChange={open => {
-                  if (open) return handleFocusSearchInput();
-                  setDebounceValue('');
-                  setSearchValue('');
-                }}
-              >
-                <DropdownMenuTrigger
-                  disabled={isLoading || !filterType}
-                  placeholder={t(`select-value`)}
-                  label={handleGetLabelFilterValue(filterOption)}
-                  variant="secondary"
-                  className={cn('w-full max-w-[235px] truncate', {
-                    capitalize: isStatusFilter
-                  })}
-                />
-                <DropdownMenuContent
-                  className={cn('w-[235px]', {
-                    'pt-0 w-[300px]': isMaintainerFilter,
-                    'hidden-scroll': valueOptions?.length > 15
-                  })}
-                  align="start"
-                >
-                  {isMaintainerFilter && (
-                    <DropdownMenuSearch
-                      ref={inputSearchRef}
-                      value={debounceValue}
-                      onChange={value => {
-                        setDebounceValue(value);
-                        debouncedSearch(value);
-                        handleFocusSearchInput();
-                      }}
-                    />
-                  )}
-                  {valueOptions?.length > 0 ? (
-                    <DropdownList
-                      isMultiselect={isStatusFilter}
-                      selectedOptions={
-                        isStatusFilter &&
-                        Array.isArray(filterOption?.filterValue)
-                          ? filterOption.filterValue
-                          : undefined
-                      }
-                      options={valueOptions as DropdownOption[]}
-                      onSelectOption={value =>
-                        handleChangeFilterValue(value, filterIndex)
-                      }
-                    />
-                  ) : (
-                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
-                      {t('no-options-found')}
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dropdown
+                disabled={isLoading || !filterType}
+                placeholder={t(`select-value`)}
+                labelCustom={handleGetLabelFilterValue(filterOption)}
+                className={cn('w-full max-w-[235px] truncate', {
+                  capitalize: isStatusFilter
+                })}
+                contentClassName={cn('w-[235px]', {
+                  'pt-0 w-[300px]': isMaintainerFilter,
+                  'hidden-scroll': valueOptions?.length > 15
+                })}
+                value={
+                  isStatusFilter && Array.isArray(filterOption?.filterValue)
+                    ? filterOption.filterValue
+                    : (filterOption.filterValue as string)
+                }
+                options={valueOptions as DropdownOption[]}
+                isSearchable={isMaintainerFilter}
+                onChange={value =>
+                  handleChangeFilterValue(value as string, filterIndex)
+                }
+                multiselect={isStatusFilter}
+                isListItem={isMaintainerFilter || isStatusFilter}
+              />
+
               <Button
                 variant={'grey'}
                 className="px-0 w-fit"

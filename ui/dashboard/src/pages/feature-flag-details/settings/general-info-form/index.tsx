@@ -200,6 +200,7 @@ const GeneralInfoForm = ({
                     placeholder={t('placeholder-maintainer')}
                     label={maintainerLabel}
                     options={accountOptions}
+                    itemSelected={field.value}
                     selectedOptions={[field.value]}
                     onSelectOption={field.onChange}
                   />
