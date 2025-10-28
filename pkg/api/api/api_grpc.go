@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -152,27 +153,29 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type grpcGatewayService struct {
-	featureClient          featureclient.Client
-	accountClient          accountclient.Client
-	pushClient             pushclient.Client
-	codeRefClient          coderefclient.Client
-	auditLogClient         auditlogclient.Client
-	autoOpsClient          autoopsclient.Client
-	tagClient              tagclient.Client
-	teamClient             teamclient.Client
-	notificationClient     notificationclient.Client
-	experimentClient       experimentclient.Client
-	eventCounterClient     eventcounterclient.Client
-	environmentClient      environmentclient.Client
-	goalPublisher          publisher.Publisher
-	evaluationPublisher    publisher.Publisher
-	userPublisher          publisher.Publisher
-	featuresCache          cachev3.FeaturesCache
-	segmentUsersCache      cachev3.SegmentUsersCache
-	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
-	flightgroup            singleflight.Group
-	opts                   *options
-	logger                 *zap.Logger
+	featureClient               featureclient.Client
+	accountClient               accountclient.Client
+	pushClient                  pushclient.Client
+	codeRefClient               coderefclient.Client
+	auditLogClient              auditlogclient.Client
+	autoOpsClient               autoopsclient.Client
+	tagClient                   tagclient.Client
+	teamClient                  teamclient.Client
+	notificationClient          notificationclient.Client
+	experimentClient            experimentclient.Client
+	eventCounterClient          eventcounterclient.Client
+	environmentClient           environmentclient.Client
+	goalPublisher               publisher.Publisher
+	evaluationPublisher         publisher.Publisher
+	userPublisher               publisher.Publisher
+	featuresCache               cachev3.FeaturesCache
+	segmentUsersCache           cachev3.SegmentUsersCache
+	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
+	envAPIKeyLastUsedInfoCacher envAPIKeyLastUsedInfoCache
+	envAPIKeyLastUsedInfoMutex  sync.Mutex
+	flightgroup                 singleflight.Group
+	opts                        *options
+	logger                      *zap.Logger
 }
 
 func NewGrpcGatewayService(
@@ -201,28 +204,34 @@ func NewGrpcGatewayService(
 	if options.metrics != nil {
 		registerMetrics(options.metrics)
 	}
-	return &grpcGatewayService{
-		featureClient:          featureClient,
-		accountClient:          accountClient,
-		pushClient:             pushClient,
-		codeRefClient:          codeRefClient,
-		auditLogClient:         auditLogClient,
-		autoOpsClient:          autoOpsClient,
-		tagClient:              tagClient,
-		teamClient:             teamClient,
-		notificationClient:     notificationClient,
-		experimentClient:       experimentClient,
-		eventCounterClient:     eventCounterClient,
-		environmentClient:      environmentClient,
-		goalPublisher:          gp,
-		evaluationPublisher:    ep,
-		userPublisher:          up,
-		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
-		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
-		opts:                   &options,
-		logger:                 options.logger.Named("api_grpc"),
+	s := &grpcGatewayService{
+		featureClient:               featureClient,
+		accountClient:               accountClient,
+		pushClient:                  pushClient,
+		codeRefClient:               codeRefClient,
+		auditLogClient:              auditLogClient,
+		autoOpsClient:               autoOpsClient,
+		tagClient:                   tagClient,
+		teamClient:                  teamClient,
+		notificationClient:          notificationClient,
+		experimentClient:            experimentClient,
+		eventCounterClient:          eventCounterClient,
+		environmentClient:           environmentClient,
+		goalPublisher:               gp,
+		evaluationPublisher:         ep,
+		userPublisher:               up,
+		featuresCache:               cachev3.NewFeaturesCache(redisV3Cache),
+		segmentUsersCache:           cachev3.NewSegmentUsersCache(redisV3Cache),
+		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
+		envAPIKeyLastUsedInfoCacher: make(envAPIKeyLastUsedInfoCache),
+		envAPIKeyLastUsedInfoMutex:  sync.Mutex{},
+		opts:                        &options,
+		logger:                      options.logger.Named("api_grpc"),
 	}
+
+	go s.writeAPIKeyLastUsedAtCacheToDatabase(context.Background())
+
+	return s
 }
 
 func (s *grpcGatewayService) Register(server *grpc.Server) {
@@ -1504,6 +1513,9 @@ func (s *grpcGatewayService) checkRequest(
 		)
 		return nil, err
 	}
+
+	s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
+
 	return envAPIKey, nil
 }
 

@@ -454,6 +454,11 @@
                 "id": 10,
                 "name": "environment_name",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "last_used_at",
+                "type": "int64"
               }
             ]
           },
@@ -2078,6 +2083,11 @@
                 "id": 7,
                 "name": "maintainer",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 8,
+                "name": "last_used_at",
+                "type": "google.protobuf.Int64Value"
               }
             ]
           },

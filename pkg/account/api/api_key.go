@@ -715,6 +715,7 @@ func (s *AccountService) UpdateAPIKey(
 			req.Role,
 			req.Maintainer,
 			req.Disabled,
+			req.LastUsedAt,
 		)
 		if err != nil {
 			return err

@@ -88,6 +88,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Maintainer,
 		k.Description,
 		k.UpdatedAt,
+		k.LastUsedAt,
 		k.Id,
 		environmentID,
 	)

@@ -8768,6 +8768,9 @@ definitions:
         type: string
       environmentName:
         type: string
+      lastUsedAt:
+        type: string
+        format: int64
   accountAPIKeyRole:
     type: string
     enum:
@@ -9352,6 +9355,9 @@ definitions:
         type: boolean
       maintainer:
         type: string
+      lastUsedAt:
+        type: string
+        format: int64
   accountUpdateAPIKeyResponse:
     type: object
   accountUpdateAccountV2Request:

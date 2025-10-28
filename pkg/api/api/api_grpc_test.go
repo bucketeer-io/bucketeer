@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -4002,26 +4003,28 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &grpcGatewayService{
-		featureClient:          featureclientmock.NewMockClient(mockController),
-		accountClient:          accountclientmock.NewMockClient(mockController),
-		pushClient:             pushclientmock.NewMockClient(mockController),
-		codeRefClient:          coderefclientmock.NewMockClient(mockController),
-		auditLogClient:         auditlogclientmock.NewMockClient(mockController),
-		autoOpsClient:          autoopsclientmock.NewMockClient(mockController),
-		goalPublisher:          publishermock.NewMockPublisher(mockController),
-		tagClient:              tagclientmock.NewMockClient(mockController),
-		teamClient:             teamclientmock.NewMockClient(mockController),
-		notificationClient:     notificationclientmock.NewMockClient(mockController),
-		experimentClient:       experimentclientmock.NewMockClient(mockController),
-		eventCounterClient:     eventcounterclientmock.NewMockClient(mockController),
-		environmentClient:      environmentclientmock.NewMockClient(mockController),
-		userPublisher:          publishermock.NewMockPublisher(mockController),
-		evaluationPublisher:    publishermock.NewMockPublisher(mockController),
-		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
-		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
-		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
-		opts:                   &defaultOptions,
-		logger:                 logger,
+		featureClient:               featureclientmock.NewMockClient(mockController),
+		accountClient:               accountclientmock.NewMockClient(mockController),
+		pushClient:                  pushclientmock.NewMockClient(mockController),
+		codeRefClient:               coderefclientmock.NewMockClient(mockController),
+		auditLogClient:              auditlogclientmock.NewMockClient(mockController),
+		autoOpsClient:               autoopsclientmock.NewMockClient(mockController),
+		goalPublisher:               publishermock.NewMockPublisher(mockController),
+		tagClient:                   tagclientmock.NewMockClient(mockController),
+		teamClient:                  teamclientmock.NewMockClient(mockController),
+		notificationClient:          notificationclientmock.NewMockClient(mockController),
+		experimentClient:            experimentclientmock.NewMockClient(mockController),
+		eventCounterClient:          eventcounterclientmock.NewMockClient(mockController),
+		environmentClient:           environmentclientmock.NewMockClient(mockController),
+		userPublisher:               publishermock.NewMockPublisher(mockController),
+		evaluationPublisher:         publishermock.NewMockPublisher(mockController),
+		featuresCache:               cachev3mock.NewMockFeaturesCache(mockController),
+		segmentUsersCache:           cachev3mock.NewMockSegmentUsersCache(mockController),
+		environmentAPIKeyCache:      cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		envAPIKeyLastUsedInfoCacher: make(envAPIKeyLastUsedInfoCache),
+		envAPIKeyLastUsedInfoMutex:  sync.Mutex{},
+		opts:                        &defaultOptions,
+		logger:                      logger,
 	}
 }
 
