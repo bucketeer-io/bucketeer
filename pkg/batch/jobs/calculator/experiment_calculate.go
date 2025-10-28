@@ -107,7 +107,6 @@ func (e *experimentCalculate) runCalculation() {
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), e.opts.Timeout)
 	defer cancel() // Ensure context is canceled when goroutine completes
 	var err error
-	e.logger.Info("Started experiment calculation job")
 	startTime := time.Now().In(e.location)
 	defer func() {
 		jobs.RecordJob(jobs.JobExperimentCalculator, err, time.Since(startTime))

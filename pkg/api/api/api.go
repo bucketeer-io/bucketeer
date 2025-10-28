@@ -819,7 +819,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			} else {
 				nonRepeateableErrors++
 			}
-			if !errors.Is(err, context.Canceled) {
+			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 				s.logger.Error(
 					"Failed to publish event",
 					log.FieldsFromIncomingContext(req.Context()).AddFields(
