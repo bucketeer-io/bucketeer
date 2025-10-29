@@ -835,9 +835,9 @@ func (s *AccountService) ListUserAPIKeys(
 		return nil, dt.Err()
 	}
 	for i := range apiKeys {
-		// do not return the API key value
-		apiKeys[i].ApiKey = ""
-		apiKeys[i].Id = ""
+		// for security, obfuscate the returned key
+		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
+		apiKeys[i].ApiKey = apiKeys[i].ApiKey[shadowLen:]
 	}
 
 	return &proto.ListUserAPIKeysResponse{
