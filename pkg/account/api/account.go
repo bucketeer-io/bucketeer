@@ -32,6 +32,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
@@ -603,6 +604,13 @@ func (s *AccountService) DeleteAccountV2(
 		}
 		if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
 			return err
+		}
+		// Delete associated credentials if they exist
+		if err = s.credentialsStorage.DeleteCredentials(contextWithTx, account.Email); err != nil {
+			// Ignore error if credentials don't exist (e.g., SSO-only accounts)
+			if !errors.Is(err, authstorage.ErrCredentialsUnexpectedAffectedRows) {
+				return err
+			}
 		}
 		return s.accountStorage.DeleteAccountV2(contextWithTx, account)
 	})

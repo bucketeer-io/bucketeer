@@ -31,6 +31,8 @@ import (
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	alstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
+	authstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -1008,10 +1010,50 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().DeleteCredentials(
+					gomock.Any(), "bucketeer@example.com",
+				).Return(nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+			},
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "successWithoutCredentials",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						OrganizationId:   "org0",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil).Times(2)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				// Simulate account without credentials (e.g., SSO-only account)
+				s.credentialsStorage.(*authstoragemock.MockCredentialsStorage).EXPECT().DeleteCredentials(
+					gomock.Any(), "bucketeer@example.com",
+				).Return(authstorage.ErrCredentialsUnexpectedAffectedRows)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
