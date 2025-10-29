@@ -119,6 +119,7 @@ Understand how features are being used and make informed decisions.
 
 Built by developers, for developers—with the tools you need for modern development practices.
 
+- **AI-Powered Workflows:** Model Context Protocol (MCP) servers for [managing flags](https://github.com/bucketeer-io/bucketeer-mcp) and [querying documentation](https://github.com/bucketeer-io/bucketeer-docs-local-mcp-server) via AI assistants (Claude, ChatGPT, etc.)
 - **Code References:** Track where flags are used in your source code to safely remove obsolete flags and prevent technical debt
 - **Interactive Debugger:** Test flag evaluations for specific users without deploying—supports batch testing multiple users and flags simultaneously
 - **Trunk-Based Development:** Merge frequently without fear using feature flags to hide incomplete work
