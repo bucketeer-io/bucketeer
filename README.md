@@ -30,7 +30,7 @@ Try Bucketeer online with our [online demo](https://app.bucketeer.io/demo).
 
 [Bucketeer](https://bucketeer.io) is an open-source feature management and experimentation platform created by CyberAgent that combines enterprise-grade capabilities with the flexibility of self-hosting. Unlike expensive SaaS solutions, Bucketeer gives you complete control over your feature flag infrastructure while delivering advanced automation, sophisticated A/B testing, and a polished user experience.
 
-**Scale from startup to enterprise:** Start with Docker and scale to 100M+ users per month with Kubernetes. Battle-tested in production at scale.
+**Scale from startup to enterprise:** Start with Docker for small-to-medium deployments, then scale to 100M+ users with billions of evaluations per month using Kubernetes. Battle-tested in production at scale.
 
 **Advanced features, zero licensing costs:** Get progressive rollouts, Bayesian experimentation, automated operations, and comprehensive audit logging—all features typically locked behind expensive enterprise tiers.
 
@@ -39,6 +39,8 @@ Try Bucketeer online with our [online demo](https://app.bucketeer.io/demo).
 **Superior A/B testing:** Bayesian statistical analysis delivers faster, more accurate results with smaller sample sizes compared to traditional frequentist approaches.
 
 **Modern, intuitive UI/UX:** A thoughtfully designed interface that makes complex feature management accessible to both technical and non-technical team members.
+
+**Need something we don't have?** We actively work with teams to build custom features and integrations. [Let's talk](https://github.com/bucketeer-io/bucketeer/discussions).
 
 ## Core Capabilities
 
@@ -168,10 +170,11 @@ Get started in minutes with a fully functional Bucketeer instance. The lite vers
 
 ### Production (Kubernetes + Helm)
 Enterprise-grade deployment for production workloads:
-- **Proven at scale:** Handles 100M+ user evaluations per month
+- **Proven at scale:** Supports 100M+ users with billions of flag evaluations per month
 - **High availability:** Multi-instance deployment with automatic failover
 - **Microservices architecture:** Independent scaling of API, batch, and subscriber services
-- **Cloud-native:** Runs on any Kubernetes cluster (GKE, EKS, AKS, on-premise)
+- **GCP-optimized:** Standard deployment uses GCP Pub/Sub and BigQuery for event processing
+- **Multi-cloud ready:** Lite version works on any Kubernetes cluster (MySQL + Redis only) - GKE, EKS, AKS, on-premise
 - **Infrastructure as Code:** Helm charts for reproducible deployments
 
 ### Architecture Highlights
