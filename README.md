@@ -219,11 +219,29 @@ Experience Bucketeer without any setup: [Online Demo](https://app.bucketeer.io/d
 ```bash
 git clone https://github.com/bucketeer-io/bucketeer.git
 cd bucketeer
-docker-compose up -d
+make docker-compose-up
 ```
 
+This will start all services including MySQL, Redis, and the Bucketeer platform.
+
+**Important:** Add the following to your `/etc/hosts` file to access the dashboard:
+```
+127.0.0.1 web-gateway.bucketeer.io
+127.0.0.1 api-gateway.bucketeer.io
+```
+
+Then access the admin dashboard at `https://web-gateway.bucketeer.io`.
+
+For detailed deployment instructions, configuration options, and production setup, see [Docker Compose Deployment](DEPLOYMENT.md#docker-compose-deployment).
+
 ### Kubernetes Deployment
-See our [deployment documentation](https://docs.bucketeer.io) for Helm chart installation and production configuration.
+For production deployments with high availability and scalability:
+```bash
+helm install bucketeer ./manifests/bucketeer -n bucketeer \
+  --values ./manifests/bucketeer/values.prod.yaml
+```
+
+See the [Kubernetes deployment guide](DEPLOYMENT.md#kubernetes-deployment) for complete setup instructions.
 
 ## License
 
