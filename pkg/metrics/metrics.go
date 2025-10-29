@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
@@ -61,12 +62,13 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type metrics struct {
-	mux         *http.ServeMux
-	server      *http.Server
-	defaultPath string
-	registries  map[string]*registry
-	opts        *options
-	logger      *zap.Logger
+	mux          *http.ServeMux
+	server       *http.Server
+	defaultPath  string
+	registries   map[string]*registry
+	opts         *options
+	logger       *zap.Logger
+	healthClient *http.Client
 }
 
 type registry struct {
@@ -92,11 +94,14 @@ func NewMetrics(port int, path string, opts ...Option) Metrics {
 		registries:  make(map[string]*registry),
 		opts:        dopts,
 		logger:      dopts.logger.Named("metrics"),
+		healthClient: &http.Client{
+			Timeout: 2 * time.Second,
+		},
 	}
 	r := m.Registerer(path)
 	r.MustRegister(
-		prometheus.NewGoCollector(),
-		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 	return m
 }
@@ -132,13 +137,22 @@ func (m *metrics) Run() error {
 func (m *metrics) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	m.server.Shutdown(ctx) // nolint:errcheck
+
+	if err := m.server.Shutdown(ctx); err != nil {
+		m.logger.Error("Failed to shutdown metrics server", zap.Error(err))
+	}
 }
 
 func (m *metrics) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
 	go func() {
-		resp, err := http.Get(m.opts.healthCheckURL)
+		req, err := http.NewRequestWithContext(ctx, "GET", m.opts.healthCheckURL, nil)
+		if err != nil {
+			m.logger.Error("Failed to create health check request", zap.Error(err))
+			resultCh <- health.Unhealthy
+			return
+		}
+		resp, err := m.healthClient.Do(req)
 		if resp != nil {
 			defer resp.Body.Close()
 		}

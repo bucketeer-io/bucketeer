@@ -129,7 +129,7 @@ func (w *progressiveRolloutWatcher) executeProgressiveRollout(
 	now := time.Now().Unix()
 	for _, s := range schedules {
 		if s.TriggeredAt == 0 && s.ExecuteAt <= now {
-			w.logger.Info("scheduled time is passed",
+			w.logger.Debug("scheduled time is passed",
 				zap.String("environmentId", environmentId),
 				zap.String("featureId", progressiveRollout.FeatureId),
 				zap.String("progressiveRolloutId", progressiveRollout.Id),

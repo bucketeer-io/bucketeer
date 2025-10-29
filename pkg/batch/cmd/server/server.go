@@ -65,9 +65,17 @@ import (
 )
 
 const (
-	command               = "server"
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	command           = "server"
+	clientDialTimeout = 30 * time.Second
+
+	// Shutdown timing for graceful termination:
+	// During normal operations (rolling updates, scale down), the pod gets the full
+	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
+	// a best-effort 15s limit. We optimize for the common case (normal operations).
+	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
+	propagationDelay      = 15 * time.Second
+	serverShutDownTimeout = 30 * time.Second
+	grpcStopTimeout       = 5 * time.Second
 )
 
 type server struct {
@@ -315,7 +323,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer pushClient.Close()
 
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -385,7 +392,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 
 	nonPersistentRedisClient, err := redisv3.NewClient(
 		*s.nonPersistentRedisAddr,
@@ -398,7 +404,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 
 	// This slice contains all Redis instance caches
 	nonPersistentRedisCaches := make(
@@ -445,7 +450,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer batchClient.Close()
 
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
@@ -575,13 +579,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		logger,
 	)
 
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
+
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("persistent-redis", persistentRedisClient.Check),
 		health.WithCheck("non-persistent-redis", nonPersistentRedisClient.Check),
 	)
-	go healthChecker.Run(ctx)
+	go healthChecker.Run(healthCheckCtx)
 
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
 		"batch-server",
@@ -590,7 +598,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
-		rpc.WithHandler("/health", healthChecker),
+		rpc.WithHandler("/health", healthChecker), // Liveness probe
+		rpc.WithHandler("/ready", healthChecker),  // Readiness probe
 	)
 	go server.Run()
 
@@ -614,24 +623,55 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create batch gateway: %v", err)
 	}
 
-	if err := batchGateway.Start(ctx, batchHandler); err != nil {
+	batchCtx, batchCancel := context.WithCancel(context.Background())
+	defer batchCancel()
+	if err := batchGateway.Start(batchCtx, batchHandler); err != nil {
 		return fmt.Errorf("failed to start batch gateway: %v", err)
 	}
 
 	defer func() {
-		server.Stop(serverShutDownTimeout)
+		shutdownStartTime := time.Now()
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		healthChecker.Stop()
+
+		// Gracefully stop gRPC Gateway (calls the gRPC server internally)
 		batchGateway.Stop(serverShutDownTimeout)
-		accountClient.Close()
-		notificationClient.Close()
-		experimentClient.Close()
-		environmentClient.Close()
-		eventCounterClient.Close()
-		featureClient.Close()
-		autoOpsClient.Close()
-		mysqlClient.Close()
+
+		// Stop gRPC server (only pure gRPC connections remain)
+		server.Stop(grpcStopTimeout)
+
+		// Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go accountClient.Close()
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go environmentClient.Close()
+		go eventCounterClient.Close()
+		go pushClient.Close()
+		go featureClient.Close()
+		go autoOpsClient.Close()
+		go batchClient.Close()
+		go mysqlClient.Close()
+		go persistentRedisClient.Close()
+		go nonPersistentRedisClient.Close()
 		for _, client := range childRedisClients {
-			client.Close()
+			go client.Close()
 		}
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+			zap.Duration("propagation_delay", propagationDelay),
+			zap.Duration("server_shutdown_timeout", serverShutDownTimeout),
+			zap.Duration("grpc_stop_timeout", grpcStopTimeout),
+		)
 	}()
 
 	<-ctx.Done()

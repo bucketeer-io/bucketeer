@@ -114,13 +114,16 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 	var lastErr error
 	for _, subscription := range subscriptions {
 		// When a flag changes it must be checked before sending notifications
-		send := s.checkForFeatureDomainEvent(
-			subscription,
-			notificationEvent.SourceType,
-			notificationEvent.Notification.DomainEventNotification.EntityData,
-		)
-		// Check if the subcription tag is configured in the feature flag
-		// If not, we skip the notification
+		send := true
+		if notificationEvent.Notification.DomainEventNotification != nil {
+			// If this is a feature domain event, we need to check if the subscription tag is configured in the flag
+			// If not, we skip the notification
+			send = s.checkForFeatureDomainEvent(
+				subscription,
+				notificationEvent.SourceType,
+				notificationEvent.Notification.DomainEventNotification.EntityData,
+			)
+		}
 		if !send {
 			continue
 		}

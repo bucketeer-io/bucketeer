@@ -342,11 +342,11 @@ func (g *Gateway) Start(ctx context.Context,
 	if g.opts.certPath != "" {
 		creds, err := credentials.NewClientTLSFromFile(g.opts.certPath, "")
 		if err != nil {
-			return fmt.Errorf("failed to create TLS credentials: %v", err)
+			return fmt.Errorf("failed to create grpc-gateway TLS credentials: %v", err)
 		}
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 	} else {
-		g.logger.Warn("starting gateway without TLS credentials")
+		g.logger.Warn("starting grpc-gateway without TLS credentials")
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
@@ -364,17 +364,23 @@ func (g *Gateway) Start(ctx context.Context,
 	)
 
 	// Register all the provided handler registrars
+	// The context will be used to manage the lifecycle of gRPC client connections.
+	// When the context is cancelled (after all shutdown logic completes), the gRPC
+	// connections will be closed automatically by the generated gateway code.
 	for _, registerFunc := range registerFuncs {
 		if err := registerFunc(ctx, mux, dialOpts); err != nil {
-			return fmt.Errorf("failed to register gateway handler: %v", err)
+			return fmt.Errorf("failed to register grpc-gateway handler: %v", err)
 		}
 	}
 
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
-		Addr:     g.restAddr,
-		Handler:  mux,
-		ErrorLog: stdlog.New(noOpWriter{}, "", 0),
+		Addr:         g.restAddr,
+		Handler:      mux,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		ErrorLog:     stdlog.New(noOpWriter{}, "", 0),
 	}
 
 	// Start the server in a goroutine
@@ -394,10 +400,10 @@ func (g *Gateway) Start(ctx context.Context,
 	// Check if there was an immediate error
 	select {
 	case err := <-errChan:
-		return fmt.Errorf("failed to start gateway: %v", err)
+		return fmt.Errorf("failed to start grpc-gateway: %v", err)
 	default:
 		// No immediate error, server is starting
-		g.logger.Debug("gateway started",
+		g.logger.Debug("grpc-gateway started",
 			zap.String("rest_addr", g.restAddr),
 			zap.Bool("tls_enabled", g.opts.keyPath != "" && g.opts.certPath != ""),
 			zap.Int("handlers_registered", len(registerFuncs)))
@@ -410,8 +416,14 @@ func (g *Gateway) Stop(timeout time.Duration) {
 	if g.httpServer != nil {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
+
+		startTime := time.Now()
 		if err := g.httpServer.Shutdown(shutdownCtx); err != nil {
-			g.logger.Error("failed to shutdown HTTP server gracefully", zap.Error(err))
+			g.logger.Warn("HTTP grpc-gateway server shutdown timeout",
+				zap.Error(err),
+				zap.Duration("timeout", timeout),
+				zap.Duration("elapsed", time.Since(startTime)),
+			)
 		}
 	}
 }

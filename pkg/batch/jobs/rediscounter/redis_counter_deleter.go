@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -130,7 +131,7 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int,
 		return 0, err
 	}
 	if len(keys) == 0 {
-		r.logger.Info("No keys was found",
+		r.logger.Debug("No keys was found",
 			zap.String("environmentId", environmentId),
 			zap.String("kind", kind),
 		)
@@ -140,7 +141,7 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int,
 	if err != nil {
 		return 0, err
 	}
-	r.logger.Info("Filtered keys older than 31 days",
+	r.logger.Debug("Filtered keys older than 31 days",
 		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 		zap.Int("filteredKeysSize", len(filteredKeys)),
@@ -148,7 +149,6 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int,
 	// To avoid blocking Redis for too much time while deleting all the keys
 	// we split the keys in chunks
 	chunks := r.chunkSlice(filteredKeys, redisChunkMaxSize)
-	r.logger.Info("Chunked the filtered keys", zap.Int("chunkSize", len(chunks)))
 	deletedKeys := 0
 	for _, chunk := range chunks {
 		if err := r.deleteKeys(chunk); err != nil {
@@ -162,7 +162,7 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int,
 			return deletedKeys, err
 		}
 		deletedKeys += len(chunk)
-		r.logger.Info("Chunk deleted successfully", zap.Strings("keys", chunk))
+		r.logger.Debug("Chunk deleted successfully", zap.Strings("keys", chunk))
 	}
 	return deletedKeys, nil
 }
@@ -173,7 +173,7 @@ func (r *redisCounterDeleter) newKeyPrefix(environmentId, kind string) string {
 }
 
 func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, error) {
-	r.logger.Info("Starting scan keys from Redis",
+	r.logger.Debug("Starting scan keys from Redis",
 		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 	)
@@ -195,7 +195,7 @@ func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, e
 	if err != nil {
 		return nil, err
 	}
-	r.logger.Info("Finished scanning keys from Redis",
+	r.logger.Debug("Finished scanning keys from Redis",
 		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 		zap.Duration("elapsedTime", time.Since(startTime)),
@@ -204,12 +204,26 @@ func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, e
 	return keys, nil
 }
 
+func (r *redisCounterDeleter) isTemporaryKey(key string) bool {
+	// Check if the key contains patterns for temporary keys
+	// pfmerge-key: temporary key used for HyperLogLog PFMERGE operations
+	return strings.Contains(key, "pfmerge-key")
+}
+
 func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 	environmentId, kind string,
 	keys []string,
 ) ([]string, error) {
 	filteredKeys := make([]string, 0, len(keys))
+	skippedKeys := make([]string, 0)
 	for _, key := range keys {
+		// Skip temporary keys like pfmerge-key
+		// These keys have TTL (10 minutes) and will be automatically deleted
+		if r.isTemporaryKey(key) {
+			skippedKeys = append(skippedKeys, key)
+			continue
+		}
+
 		// E.g. environment_id:uc:1689835532:feature_id:variation_id
 		var regex string
 		if environmentId == "" {
@@ -243,6 +257,21 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 		}
 		filteredKeys = append(filteredKeys, key)
 	}
+
+	if len(skippedKeys) > 0 {
+		// Log only a sample of skipped keys to avoid log flooding
+		sampleSize := len(skippedKeys)
+		if sampleSize > 5 {
+			sampleSize = 5
+		}
+		r.logger.Warn("Skipped temporary keys",
+			zap.String("environmentId", environmentId),
+			zap.String("kind", kind),
+			zap.Int("skippedCount", len(skippedKeys)),
+			zap.Strings("examples", skippedKeys[:sampleSize]),
+		)
+	}
+
 	return filteredKeys, nil
 }
 

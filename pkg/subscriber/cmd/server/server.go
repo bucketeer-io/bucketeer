@@ -44,10 +44,9 @@ import (
 )
 
 const (
-	command               = "server"
-	healthCheckTimeout    = 1 * time.Second
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	command            = "server"
+	healthCheckTimeout = 1 * time.Second
+	clientDialTimeout  = 30 * time.Second
 )
 
 type server struct {
@@ -59,6 +58,7 @@ type server struct {
 	keyPath          *string
 	serviceTokenPath *string
 	webURL           *string
+	demoSiteEnabled  *bool
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -99,6 +99,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		demoSiteEnabled:  cmd.Flag("demo-site-enabled", "Enable demo site.").Default("false").Bool(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -281,7 +282,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -294,7 +294,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
@@ -316,7 +315,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer batchClient.Close()
 
 	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
@@ -342,12 +340,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	// healthCheckService
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(ctx)
+	defer healthCheckCancel()
+
 	restHealthChecker := health.NewRestChecker(
 		"", "",
 		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go restHealthChecker.Run(ctx)
+	go restHealthChecker.Run(healthCheckCtx)
 	// healthcheckService
 	healthcheckServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -359,14 +361,33 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go healthcheckServer.Run()
 
 	defer func() {
-		healthcheckServer.Stop(serverShutDownTimeout)
+		shutdownStartTime := time.Now()
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		restHealthChecker.Stop()
+
+		// Stop PubSub subscription
+		// This stops receiving new messages and allows in-flight messages to be processed.
 		multiPubSub.Stop()
-		notificationClient.Close()
-		experimentClient.Close()
-		environmentClient.Close()
-		featureClient.Close()
-		autoOpsClient.Close()
-		mysqlClient.Close()
+
+		// Close clients
+		// These are fast cleanup operations that can run asynchronously.
+		go notificationClient.Close()
+		go experimentClient.Close()
+		go environmentClient.Close()
+		go featureClient.Close()
+		go autoOpsClient.Close()
+		go batchClient.Close()
+		go mysqlClient.Close()
+		go nonPersistentRedisClient.Close()
+		go persistentRedisClient.Close()
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+		)
 	}()
 
 	<-ctx.Done()
@@ -534,15 +555,17 @@ func (s *server) registerPubSubProcessorMap(
 			userEventPersister,
 		)
 
-		demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
-			processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
-			*s.webURL,
-			logger,
-		)
-		processors.RegisterProcessor(
-			processor.DemoOrganizationCreationNotifierName,
-			demoOrganizationCreationNotifier,
-		)
+		if *s.demoSiteEnabled {
+			demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
+				processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
+				*s.webURL,
+				logger,
+			)
+			processors.RegisterProcessor(
+				processor.DemoOrganizationCreationNotifierName,
+				demoOrganizationCreationNotifier,
+			)
+		}
 
 		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(

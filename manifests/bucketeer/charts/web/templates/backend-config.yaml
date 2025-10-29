@@ -8,6 +8,10 @@ spec:
   healthCheck:
     requestPath: /health
     type: HTTP2
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 1
   timeoutSec: 300
   connectionDraining:
     drainingTimeoutSec: 60

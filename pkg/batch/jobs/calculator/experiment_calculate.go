@@ -107,7 +107,6 @@ func (e *experimentCalculate) runCalculation() {
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), e.opts.Timeout)
 	defer cancel() // Ensure context is canceled when goroutine completes
 	var err error
-	e.logger.Info("Started experiment calculation job")
 	startTime := time.Now().In(e.location)
 	defer func() {
 		jobs.RecordJob(jobs.JobExperimentCalculator, err, time.Since(startTime))
@@ -135,7 +134,7 @@ func (e *experimentCalculate) runCalculation() {
 			return
 		}
 		if experiments == nil {
-			e.logger.Info("There are no experiments for calculation in the specified environment",
+			e.logger.Debug("There are no experiments for calculation in the specified environment",
 				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 				)...,

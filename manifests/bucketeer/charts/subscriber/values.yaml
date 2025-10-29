@@ -8,6 +8,7 @@ fullnameOverride: "subscriber"
 env:
   project:
   profile: true
+  demoSiteEnabled: false
   gcpEnabled: true
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
@@ -51,6 +52,11 @@ nodeSelector: {}
 pdb:
   enabled:
   maxUnavailable: 50%
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 10%
+    maxSurge: 1
 
 hpa:
   enabled:
@@ -87,15 +93,22 @@ gcpMultiCluster:
   configCluster: false
   enabled: false
 
+terminationGracePeriodSeconds: 60
 health:
+  startupProbe:
+    periodSeconds: 3
+    failureThreshold: 20
+    timeoutSeconds: 5
   livenessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 3
-    failureThreshold: 5
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    failureThreshold: 8
+    timeoutSeconds: 5
   readinessProbe:
-    initialDelaySeconds: 10
+    initialDelaySeconds: 15
     periodSeconds: 3
-    failureThreshold: 2
+    failureThreshold: 1
+    timeoutSeconds: 5
 
 resources: {}
 
@@ -250,7 +263,7 @@ processors:
     domainEventTopic:
     flushSize: 100
     flushInterval: 10
-    # PubSub configuration  
+    # PubSub configuration
     pubSubType: google
     redisServerName: ""
     redisAddr: ""

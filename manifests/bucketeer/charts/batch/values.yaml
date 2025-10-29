@@ -59,6 +59,11 @@ nodeSelector: {}
 pdb:
   enabled:
   maxUnavailable: 50%
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 10%
+    maxSurge: 1
 
 hpa:
   enabled:
@@ -119,14 +124,20 @@ gcpMultiCluster:
   enabled: false
 
 health:
+  startupProbe:
+    periodSeconds: 3
+    failureThreshold: 30
+    timeoutSeconds: 5
   livenessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 3
-    failureThreshold: 5
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    failureThreshold: 8
+    timeoutSeconds: 5
   readinessProbe:
-    initialDelaySeconds: 10
+    initialDelaySeconds: 15
     periodSeconds: 3
-    failureThreshold: 2
+    failureThreshold: 1
+    timeoutSeconds: 5
 
 resources: {}
 
@@ -192,3 +203,4 @@ cronjob:
     - name: tag-deleter
       jobId: TagDeleter
       schedule: "0 0 * * *"
+terminationGracePeriodSeconds: 60

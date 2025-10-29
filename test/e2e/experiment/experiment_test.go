@@ -499,7 +499,7 @@ func TestDeleteGoal(t *testing.T) {
 		Id:            goalID,
 		EnvironmentId: *environmentID,
 	})
-	assert.Equal(t, err.Error(), "rpc error: code = NotFound desc = experiment: not found")
+	assert.Equal(t, "rpc error: code = NotFound desc = experiment:not found, experiment", err.Error())
 }
 
 func TestStatusUpdateFromWaitingToRunning(t *testing.T) {

@@ -16,6 +16,7 @@ package health
 
 import (
 	"context"
+	"net/http"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -32,6 +33,20 @@ func NewGrpcChecker(opts ...option) *grpcChecker {
 		checker: newChecker(opts...),
 	}
 	return checker
+}
+
+// ServeHTTP implements http.Handler for backward compatibility when grpcChecker is used as HTTP handler
+// This allows the grpcChecker to respond to /health HTTP requests
+// Routes: /health -> liveness, /ready -> readiness
+func (hc *grpcChecker) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	// Route to appropriate handler based on path
+	switch req.URL.Path {
+	case readyPath:
+		hc.ServeReadyHTTP(resp, req)
+	default:
+		// Default to liveness for unknown paths
+		hc.ServeLiveHTTP(resp, req)
+	}
 }
 
 func (hc *grpcChecker) Register(server *grpc.Server) {

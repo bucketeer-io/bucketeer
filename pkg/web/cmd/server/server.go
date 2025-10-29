@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -87,8 +88,21 @@ const (
 	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
-	serverShutDownTimeout         = 10 * time.Second
+
+	// Shutdown timing for graceful termination:
+	// During normal operations (rolling updates, scale down), the pod gets the full
+	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
+	// a best-effort 15s limit. We optimize for the common case (normal operations).
+	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
+	propagationDelay      = 15 * time.Second
+	serverShutDownTimeout = 30 * time.Second
+	grpcStopTimeout       = 5 * time.Second
 )
+
+// GracefulStopper defines the interface for components that support graceful shutdown.
+type GracefulStopper interface {
+	Stop(timeout time.Duration)
+}
 
 type server struct {
 	*kingpin.CmdClause
@@ -390,14 +404,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	registerer := metrics.DefaultRegisterer()
 
 	// dataWarehouse config
-	dataWarehouseConfig, err := s.readDataWarehouseConfig(ctx, logger)
+	dataWarehouseConfig, err := s.readDataWarehouseConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read dataWarehouse config", zap.Error(err))
 		return err
 	}
 
 	// oauth config
-	oAuthConfig, err := s.readOAuthConfig(ctx, logger)
+	oAuthConfig, err := s.readOAuthConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read OAuth config", zap.Error(err))
 		return err
@@ -413,13 +427,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	// healthCheckService
+
 	restHealthChecker := health.NewRestChecker(
 		"", "",
 		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
-	go restHealthChecker.Run(ctx)
+
+	// Use a dedicated context so we can stop the health checker goroutine cleanly during shutdown
+	healthCheckCtx, healthCheckCancel := context.WithCancel(context.Background())
+	defer healthCheckCancel()
+
+	go restHealthChecker.Run(healthCheckCtx)
 	// healthcheckService
 	healthcheckServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -482,13 +501,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+
+	pubsubCtx, pubsubCancel := context.WithCancel(context.Background())
+	defer pubsubCancel()
 	// domainTopicPublisher
-	domainTopicPublisher, err := s.createPublisher(ctx, *s.domainTopic, registerer, logger)
+	domainTopicPublisher, err := s.createPublisher(pubsubCtx, *s.domainTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
 	// segmentUsersPublisher
-	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
+	segmentUsersPublisher, err := s.createPublisher(pubsubCtx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
@@ -562,7 +584,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 	// autoOpsClient
 	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -574,7 +595,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer autoOpsClient.Close()
 	// authService
 	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
 	if err != nil {
@@ -679,6 +699,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		// Longer timeouts for web server due to complex BigQuery operations and admin console analytics
+		rpc.WithTimeouts(120*time.Second, 120*time.Second, 180*time.Second),
 	)
 	go eventCounterServer.Run()
 
@@ -702,7 +724,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// featureService
 	featureService, err := s.createFeatureService(
-		ctx,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
@@ -837,28 +858,71 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
 	}
 
-	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
-	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
-	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
-		go healthcheckServer.Stop(serverShutDownTimeout)
-		time.Sleep(serverShutDownTimeout)
-		// Stop gRPC servers
-		go authServer.Stop(serverShutDownTimeout)
-		go accountServer.Stop(serverShutDownTimeout)
-		go auditLogServer.Stop(serverShutDownTimeout)
-		go autoOpsServer.Stop(serverShutDownTimeout)
-		go environmentServer.Stop(serverShutDownTimeout)
-		go experimentServer.Stop(serverShutDownTimeout)
-		go eventCounterServer.Stop(serverShutDownTimeout)
-		go featureServer.Stop(serverShutDownTimeout)
-		go notificationServer.Stop(serverShutDownTimeout)
-		go pushServer.Stop(serverShutDownTimeout)
-		go tagServer.Stop(serverShutDownTimeout)
-		go codeReferenceServer.Stop(serverShutDownTimeout)
-		go teamServer.Stop(serverShutDownTimeout)
-		go webGrpcGateway.Stop(serverShutDownTimeout)
+		shutdownStartTime := time.Now()
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
+
+		// Mark as unhealthy so readiness probes fail
+		// This ensures Kubernetes readiness probe fails on next check,
+		// preventing new traffic from being routed to this pod.
+		healthcheckServer.Stop(5 * time.Second)
+		restHealthChecker.Stop()
+
+		// Stop REST servers in parallel (these call gRPC servers internally)
+		// Stop these first to drain REST traffic before stopping gRPC
+		var restWg sync.WaitGroup
+
+		restWg.Add(1)
+		go func() {
+			defer restWg.Done()
+			dashboardServer.Stop(serverShutDownTimeout)
+		}()
+
+		restWg.Add(1)
+		go func() {
+			defer restWg.Done()
+			webGrpcGateway.Stop(serverShutDownTimeout)
+		}()
+
+		// Wait for REST traffic to drain
+		restWg.Wait()
+
+		// Gracefully stop all gRPC servers in parallel
+		// Now safe to stop since REST traffic has drained
+		var wg sync.WaitGroup
+
+		servers := []GracefulStopper{
+			authServer,
+			accountServer,
+			auditLogServer,
+			autoOpsServer,
+			environmentServer,
+			experimentServer,
+			eventCounterServer,
+			featureServer,
+			notificationServer,
+			pushServer,
+			tagServer,
+			codeReferenceServer,
+			teamServer,
+		}
+
+		for _, server := range servers {
+			wg.Add(1)
+			go func(s GracefulStopper) {
+				defer wg.Done()
+				s.Stop(grpcStopTimeout)
+			}(server)
+		}
+
+		// Wait for all gRPC servers to complete shutdown
+		wg.Wait()
+
 		// Close clients
+		// These are fast cleanup operations that can run asynchronously.
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -873,6 +937,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go environmentClient.Close()
 		go experimentClient.Close()
 		go featureClient.Close()
+		go autoOpsClient.Close()
+
+		// Log total shutdown duration
+		logger.Info("Graceful shutdown sequence completed",
+			zap.Duration("total_elapsed", time.Since(shutdownStartTime)),
+			zap.Duration("propagation_delay", propagationDelay),
+			zap.Duration("server_shutdown_timeout", serverShutDownTimeout),
+			zap.Duration("grpc_stop_timeout", grpcStopTimeout),
+		)
 	}()
 	<-ctx.Done()
 	return nil
@@ -918,9 +991,6 @@ func (s *server) createPublisher(
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (publisher.Publisher, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
 	// Create PubSub client using the factory
 	pubSubType := factory.PubSubType(*s.pubSubType)
 	factoryOpts := []factory.Option{
@@ -960,7 +1030,6 @@ func (s *server) createPublisher(
 }
 
 func (s *server) readOAuthConfig(
-	ctx context.Context,
 	logger *zap.Logger,
 ) (*auth.OAuthConfig, error) {
 	bytes, err := os.ReadFile(*s.oauthConfigPath)
@@ -1054,7 +1123,6 @@ func (s *server) createEnvironmentService(
 }
 
 func (s *server) createFeatureService(
-	ctx context.Context,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -1143,7 +1211,6 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 }
 
 func (s *server) readDataWarehouseConfig(
-	ctx context.Context,
 	logger *zap.Logger,
 ) (*DataWarehouseConfig, error) {
 	// If config path is provided, read from file

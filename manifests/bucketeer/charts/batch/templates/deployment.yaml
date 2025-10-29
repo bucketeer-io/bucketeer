@@ -22,6 +22,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -183,10 +184,19 @@ spec:
               containerPort: {{ .Values.env.port }}
             - name: metrics
               containerPort: {{ .Values.env.metricsPort }}
+          startupProbe:
+            periodSeconds: {{ .Values.health.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.startupProbe.timeoutSeconds }}
+            httpGet:
+              path: /ready
+              port: service
+              scheme: HTTPS
           livenessProbe:
             initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: /health
               port: service
@@ -195,8 +205,9 @@ spec:
             initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
-              path: /health
+              path: /ready
               port: service
               scheme: HTTPS
           resources:
@@ -208,9 +219,15 @@ spec:
             preStop:
               exec:
                 command:
-                  - "/bin/sh"
-                  - "-c"
-                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - /bin/sh
+                  - -c
+                  - |
+                    admin_port={{ .Values.envoy.adminPort }}
+                    # Wait for load balancer propagation (must match app container propagation delay)
+                    sleep 15
+                    wget -q -T 1 -O- --method=POST --body-data='' \
+                      "http://localhost:${admin_port}/drain_listeners?graceful" || true
+                    exit 0
           command: ["envoy"]
           args:
             - "-c"
@@ -232,10 +249,19 @@ spec:
               containerPort: {{ .Values.envoy.port }}
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
+          startupProbe:
+            periodSeconds: {{ .Values.health.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.startupProbe.timeoutSeconds }}
+            httpGet:
+              path: /ready
+              port: admin
+              scheme: HTTP
           livenessProbe:
             initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: /ready
               port: admin
@@ -244,6 +270,7 @@ spec:
             initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /ready
               port: admin
@@ -273,5 +300,5 @@ spec:
           resources:
 {{ toYaml .Values.httpstan.resources | indent 12 }}
   strategy:
-    type: RollingUpdate
+{{ toYaml .Values.strategy | indent 4 }}
 {{- end }}

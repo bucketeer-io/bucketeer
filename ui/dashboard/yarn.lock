@@ -5216,10 +5216,10 @@ vite-tsconfig-paths@^5.0.1:
     globrex "^0.1.2"
     tsconfck "^3.0.3"
 
-vite@^7.0.7:
-  version "7.0.7"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-7.0.7.tgz#d883a0297d24139237676f4227ac2b1e72f9677b"
-  integrity sha512-hc6LujN/EkJHmxeiDJMs0qBontZ1cdBvvoCbWhVjzUFTU329VRyOC46gHNSA8NcOC5yzCeXpwI40tieI3DEZqg==
+vite@^7.0.8:
+  version "7.0.8"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-7.0.8.tgz#02eef500e871d84048b2789f74e034c4bb4263d0"
+  integrity sha512-cJBdq0/u+8rgstg9t7UkBilf8ipLmeXJO30NxD5HAHOivnj10ocV8YtR/XBvd2wQpN3TmcaxNKaHX3tN7o5F5A==
   dependencies:
     esbuild "^0.25.0"
     fdir "^6.4.6"
