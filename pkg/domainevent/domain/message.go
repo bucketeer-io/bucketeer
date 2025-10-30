@@ -1380,7 +1380,7 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Organization),
 			),
 		}
-	case proto.Event_ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED:
+	case proto.Event_ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
