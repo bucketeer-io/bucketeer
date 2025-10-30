@@ -561,6 +561,12 @@ func (s *EnvironmentService) CreateTrialProject(
 	}
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
+	// Default authentication settings: Google only
+	defaultAuthSettings := &environmentproto.AuthenticationSettings{
+		EnabledTypes: []environmentproto.AuthenticationType{
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+		},
+	}
 	organization, err := domain.NewOrganization(
 		name,
 		urlCode,
@@ -568,7 +574,7 @@ func (s *EnvironmentService) CreateTrialProject(
 		"",
 		true,
 		false,
-		true, // Default password auth enabled
+		defaultAuthSettings,
 	)
 	if err != nil {
 		s.logger.Error(
