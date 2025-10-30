@@ -459,6 +459,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
 	service := api.NewGrpcGatewayService(
+		ctx,
 		featureClient,
 		accountClient,
 		pushClient,

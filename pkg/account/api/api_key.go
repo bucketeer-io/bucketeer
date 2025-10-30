@@ -715,7 +715,6 @@ func (s *AccountService) UpdateAPIKey(
 			req.Role,
 			req.Maintainer,
 			req.Disabled,
-			req.LastUsedAt,
 		)
 		if err != nil {
 			return err
@@ -773,4 +772,71 @@ func (s *AccountService) UpdateAPIKey(
 	}
 
 	return &proto.UpdateAPIKeyResponse{}, nil
+}
+
+func (s *AccountService) UpdateAPIKeyLastUsedAt(
+	ctx context.Context,
+	req *proto.UpdateAPIKeyLastUsedAtRequest,
+) (*proto.UpdateAPIKeyLastUsedAtResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	// No need to check roles since this is only allowed to be called internally by other services.
+
+	err := validateUpdateAPIKeyLastUsedAtRequest(req, localizer)
+	if err != nil {
+		s.logger.Error("Invalid UpdateAPIKeyLastUsedAt request",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKeyId", req.ApiKeyId),
+				zap.Int64("lastUsedAt", req.LastUsedAt),
+			)...)
+		return nil, err
+	}
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, req.ApiKeyId, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		apiKey.UsedAt(req.LastUsedAt)
+		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update api key last used at",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.ApiKeyId),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	return &proto.UpdateAPIKeyLastUsedAtResponse{}, nil
+}
+
+func validateUpdateAPIKeyLastUsedAtRequest(
+	req *proto.UpdateAPIKeyLastUsedAtRequest,
+	localizer locale.Localizer,
+) error {
+	if req.ApiKeyId == "" {
+		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }

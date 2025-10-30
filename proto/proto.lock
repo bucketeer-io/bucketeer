@@ -2083,16 +2083,34 @@
                 "id": 7,
                 "name": "maintainer",
                 "type": "google.protobuf.StringValue"
-              },
-              {
-                "id": 8,
-                "name": "last_used_at",
-                "type": "google.protobuf.Int64Value"
               }
             ]
           },
           {
             "name": "UpdateAPIKeyResponse"
+          },
+          {
+            "name": "UpdateAPIKeyLastUsedAtRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_key_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "last_used_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAPIKeyLastUsedAtResponse"
           }
         ],
         "services": [
@@ -5439,6 +5457,11 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "UpdateAPIKeyLastUsedAt",
+                "in_type": "UpdateAPIKeyLastUsedAtRequest",
+                "out_type": "UpdateAPIKeyLastUsedAtResponse"
               }
             ]
           }

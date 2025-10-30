@@ -337,10 +337,17 @@ message UpdateAPIKeyRequest {
   APIKey.Role role = 5;
   google.protobuf.BoolValue disabled = 6;
   google.protobuf.StringValue maintainer = 7;
-  google.protobuf.Int64Value last_used_at = 8;
 }
 
 message UpdateAPIKeyResponse {}
+
+message UpdateAPIKeyLastUsedAtRequest {
+  string api_key_id = 1;
+  string environment_id = 2;
+  int64 last_used_at = 3;
+}
+
+message UpdateAPIKeyLastUsedAtResponse {}
 
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
@@ -1217,4 +1224,6 @@ service AccountService {
       }
     };
   }
+  rpc UpdateAPIKeyLastUsedAt(UpdateAPIKeyLastUsedAtRequest)
+      returns (UpdateAPIKeyLastUsedAtResponse) {}
 }

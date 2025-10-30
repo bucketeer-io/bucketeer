@@ -9338,6 +9338,8 @@ definitions:
     required:
       - changeType
       - team
+  accountUpdateAPIKeyLastUsedAtResponse:
+    type: object
   accountUpdateAPIKeyRequest:
     type: object
     properties:
@@ -9355,9 +9357,6 @@ definitions:
         type: boolean
       maintainer:
         type: string
-      lastUsedAt:
-        type: string
-        format: int64
   accountUpdateAPIKeyResponse:
     type: object
   accountUpdateAccountV2Request:

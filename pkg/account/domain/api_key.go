@@ -92,7 +92,6 @@ func (a *APIKey) Update(
 	role proto.APIKey_Role,
 	maintainer *wrapperspb.StringValue,
 	disabled *wrapperspb.BoolValue,
-	lastUsedAt *wrapperspb.Int64Value,
 ) (*APIKey, error) {
 	updated := &APIKey{}
 	if err := copier.Copy(updated, a); err != nil {
@@ -113,11 +112,12 @@ func (a *APIKey) Update(
 	if disabled != nil {
 		updated.Disabled = disabled.Value
 	}
-	if lastUsedAt != nil {
-		if a.LastUsedAt < lastUsedAt.Value {
-			updated.LastUsedAt = lastUsedAt.Value
-		}
-	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
+}
+
+func (a *APIKey) UsedAt(lastUsedAt int64) {
+	if a.LastUsedAt < lastUsedAt {
+		a.LastUsedAt = lastUsedAt
+	}
 }

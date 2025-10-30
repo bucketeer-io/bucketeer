@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
-	"github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestCacheAPIKeyLastUsedAt(t *testing.T) {
@@ -29,178 +28,76 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		envAPIKey     *account.EnvironmentAPIKey
+		apikey        *account.APIKey
 		lastUsedAt    int64
-		existingCache envAPIKeyLastUsedInfoCache
-		expectedCache envAPIKeyLastUsedInfoCache
+		existingCache sync.Map
+		expectedCache sync.Map
 	}{
 		{
-			name: "Add API key last used at to cache for new environment ID",
-			envAPIKey: &account.EnvironmentAPIKey{
-				Environment: &environment.EnvironmentV2{
-					Id:   "env-1",
-					Name: "Environment 1",
-				},
-				ApiKey: &account.APIKey{
-					Id:   "api-key-1",
-					Name: "API Key 1",
-				},
-			},
-			lastUsedAt:    1625155200,
-			existingCache: envAPIKeyLastUsedInfoCache{},
-			expectedCache: envAPIKeyLastUsedInfoCache{
-				"env-1": {
-					"api-key-1": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-1",
-								Name: "Environment 1",
-							},
-							ApiKey: &account.APIKey{
-								Id:   "api-key-1",
-								Name: "API Key 1",
-							},
-						},
-						lastUsedAt: 1625155200,
-					},
-				},
-			},
+			name:       "new entry",
+			apikey:     &account.APIKey{Id: "key1"},
+			lastUsedAt: 1000,
+			existingCache: func() sync.Map {
+				var m sync.Map
+				return m
+			}(),
+			expectedCache: func() sync.Map {
+				var m sync.Map
+				m.Store("key1", int64(1000))
+				return m
+			}(),
 		},
 		{
-			name: "Update existing API key last used at in cache",
-			envAPIKey: &account.EnvironmentAPIKey{
-				Environment: &environment.EnvironmentV2{
-					Id:   "env-1",
-					Name: "Environment 1",
-				},
-				ApiKey: &account.APIKey{
-					Id:   "api-key-1",
-					Name: "API Key 1",
-				},
-			},
-			lastUsedAt: 1625241600,
-			existingCache: envAPIKeyLastUsedInfoCache{
-				"env-1": {
-					"api-key-1": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-1",
-								Name: "Environment 1",
-							},
-							ApiKey: &account.APIKey{
-								Id:   "api-key-1",
-								Name: "API Key 1",
-							},
-						},
-						lastUsedAt: 1620055200,
-					},
-				},
-				"env-2": {
-					"api-key-2": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-2",
-								Name: "Environment 2",
-							},
-							ApiKey: &account.APIKey{
-								Id:         "api-key-2",
-								LastUsedAt: 1620055200,
-							},
-						},
-						lastUsedAt: 1621055200,
-					},
-				},
-			},
-			expectedCache: envAPIKeyLastUsedInfoCache{
-				"env-1": {
-					"api-key-1": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-1",
-								Name: "Environment 1",
-							},
-							ApiKey: &account.APIKey{
-								Id:   "api-key-1",
-								Name: "API Key 1",
-							},
-						},
-						lastUsedAt: 1625241600,
-					},
-				},
-				"env-2": {
-					"api-key-2": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-2",
-								Name: "Environment 2",
-							},
-							ApiKey: &account.APIKey{
-								Id:         "api-key-2",
-								LastUsedAt: 1620055200,
-							},
-						},
-						lastUsedAt: 1621055200,
-					},
-				},
-			},
+			name:       "update existing entry with higher lastUsedAt",
+			apikey:     &account.APIKey{Id: "key1"},
+			lastUsedAt: 2000,
+			existingCache: func() sync.Map {
+				var m sync.Map
+				m.Store("key1", int64(1500))
+				return m
+			}(),
+			expectedCache: func() sync.Map {
+				var m sync.Map
+				m.Store("key1", int64(2000))
+				return m
+			}(),
 		},
 		{
-			name: "Do not update API key last used at if existing is newer",
-			envAPIKey: &account.EnvironmentAPIKey{
-				Environment: &environment.EnvironmentV2{
-					Id:   "env-1",
-					Name: "Environment 1",
-				},
-				ApiKey: &account.APIKey{
-					Id:   "api-key-1",
-					Name: "API Key 1",
-				},
-			},
-			lastUsedAt: 1620055200,
-			existingCache: envAPIKeyLastUsedInfoCache{
-				"env-1": {
-					"api-key-1": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-1",
-								Name: "Environment 1",
-							},
-							ApiKey: &account.APIKey{
-								Id:   "api-key-1",
-								Name: "API Key 1",
-							},
-						},
-						lastUsedAt: 1625241600,
-					},
-				},
-			},
-			expectedCache: envAPIKeyLastUsedInfoCache{
-				"env-1": {
-					"api-key-1": lastUsedInfo{
-						envAPIKey: &account.EnvironmentAPIKey{
-							Environment: &environment.EnvironmentV2{
-								Id:   "env-1",
-								Name: "Environment 1",
-							},
-							ApiKey: &account.APIKey{
-								Id:   "api-key-1",
-								Name: "API Key 1",
-							},
-						},
-						lastUsedAt: 1625241600,
-					},
-				},
-			},
+			name:       "do not update existing entry with lower lastUsedAt",
+			apikey:     &account.APIKey{Id: "key1"},
+			lastUsedAt: 1000,
+			existingCache: func() sync.Map {
+				var m sync.Map
+				m.Store("key1", int64(1500))
+				return m
+			}(),
+			expectedCache: func() sync.Map {
+				var m sync.Map
+				m.Store("key1", int64(1500))
+				return m
+			}(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			service := &grpcGatewayService{
-				envAPIKeyLastUsedInfoCacher: tt.existingCache,
-				envAPIKeyLastUsedInfoMutex:  sync.Mutex{},
+				apiKeyLastUsedInfoCacher: tt.existingCache,
 			}
-			service.cacheAPIKeyLastUsedAt(tt.envAPIKey, tt.lastUsedAt)
-			assert.Equal(t, tt.expectedCache, service.envAPIKeyLastUsedInfoCacher)
+			service.cacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
+
+			listExpected := make(map[string]int64)
+			tt.expectedCache.Range(func(key, value interface{}) bool {
+				listExpected[key.(string)] = value.(int64)
+				return true
+			})
+
+			listActual := make(map[string]int64)
+			service.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
+				listActual[key.(string)] = value.(int64)
+				return true
+			})
+
+			assert.Equal(t, listExpected, listActual)
 		})
 	}
 }

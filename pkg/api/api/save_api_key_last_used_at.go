@@ -19,48 +19,23 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
-type lastUsedInfo struct {
-	envAPIKey  *account.EnvironmentAPIKey
-	lastUsedAt int64
-}
-
-type apikeyLastUsedInfoCache map[string]lastUsedInfo
-
-type envAPIKeyLastUsedInfoCache map[string]apikeyLastUsedInfoCache
-
 func (s *grpcGatewayService) cacheAPIKeyLastUsedAt(
-	envAPIKey *account.EnvironmentAPIKey,
+	apiKey *account.APIKey,
 	lastUsedAt int64,
 ) {
-	s.envAPIKeyLastUsedInfoMutex.Lock()
-	defer s.envAPIKeyLastUsedInfoMutex.Unlock()
-
-	if cache, ok := s.envAPIKeyLastUsedInfoCacher[envAPIKey.Environment.Id]; ok {
-		if info, ok := cache[envAPIKey.ApiKey.Id]; ok {
-			if info.lastUsedAt < lastUsedAt {
-				info.lastUsedAt = lastUsedAt
-			}
-			s.envAPIKeyLastUsedInfoCacher[envAPIKey.Environment.Id][envAPIKey.ApiKey.Id] = info
-			return
+	if cache, ok := s.apiKeyLastUsedInfoCacher.Load(apiKey.Id); ok {
+		lastUsedAtCache := cache.(int64)
+		if lastUsedAtCache < lastUsedAt {
+			lastUsedAtCache = lastUsedAt
 		}
-		cache[envAPIKey.ApiKey.Id] = lastUsedInfo{
-			envAPIKey:  envAPIKey,
-			lastUsedAt: lastUsedAt,
-		}
-		s.envAPIKeyLastUsedInfoCacher[envAPIKey.Environment.Id] = cache
+		s.apiKeyLastUsedInfoCacher.Store(apiKey.Id, lastUsedAtCache)
 		return
 	}
-	cache := apikeyLastUsedInfoCache{}
-	cache[envAPIKey.ApiKey.Id] = lastUsedInfo{
-		envAPIKey:  envAPIKey,
-		lastUsedAt: lastUsedAt,
-	}
-	s.envAPIKeyLastUsedInfoCacher[envAPIKey.Environment.Id] = cache
+	s.apiKeyLastUsedInfoCacher.Store(apiKey.Id, lastUsedAt)
 }
 
 func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
@@ -77,41 +52,39 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 }
 
 func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
-	s.envAPIKeyLastUsedInfoMutex.Lock()
-	defer s.envAPIKeyLastUsedInfoMutex.Unlock()
-
-	for _, cache := range s.envAPIKeyLastUsedInfoCacher {
-		for _, info := range cache {
-			envAPIKey, err := s.getEnvironmentAPIKey(ctx, info.envAPIKey.ApiKey.Id)
-			if err != nil {
-				s.logger.Error("failed to get environment API key", zap.Error(err),
-					zap.String("apiKeyId", info.envAPIKey.ApiKey.Id),
-				)
-				continue
-			}
-
-			if envAPIKey == nil {
-				s.logger.Error("environment API key not found",
-					zap.String("apiKeyId", info.envAPIKey.ApiKey.Id),
-				)
-				continue
-			}
-
-			if envAPIKey.ApiKey.LastUsedAt >= info.lastUsedAt {
-				continue
-			}
-
-			_, err = s.accountClient.UpdateAPIKey(ctx, &account.UpdateAPIKeyRequest{
-				EnvironmentId: envAPIKey.Environment.Id,
-				Id:            envAPIKey.ApiKey.Id,
-				LastUsedAt:    wrapperspb.Int64(info.lastUsedAt),
-			})
-			if err != nil {
-				s.logger.Error("failed to update API key last used at", zap.Error(err),
-					zap.String("apiKeyId", info.envAPIKey.ApiKey.Id),
-				)
-				continue
-			}
+	s.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
+		apikey := key.(string)
+		lastUsedAt := value.(int64)
+		envAPIKey, err := s.getEnvironmentAPIKey(ctx, apikey)
+		if err != nil {
+			s.logger.Error("failed to get environment API key", zap.Error(err),
+				zap.String("apiKeyId", apikey),
+			)
+			return true
 		}
-	}
+
+		if envAPIKey == nil {
+			s.logger.Error("environment API key not found",
+				zap.String("apiKeyId", apikey),
+			)
+			return true
+		}
+
+		if envAPIKey.ApiKey.LastUsedAt >= lastUsedAt {
+			return true
+		}
+
+		_, err = s.accountClient.UpdateAPIKeyLastUsedAt(ctx, &account.UpdateAPIKeyLastUsedAtRequest{
+			EnvironmentId: envAPIKey.Environment.Id,
+			ApiKeyId:      envAPIKey.ApiKey.Id,
+			LastUsedAt:    lastUsedAt,
+		})
+		if err != nil {
+			s.logger.Error("failed to update API key last used at", zap.Error(err),
+				zap.String("apiKeyId", apikey),
+			)
+			return true
+		}
+		return true
+	})
 }
