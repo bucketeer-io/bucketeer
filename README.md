@@ -44,7 +44,7 @@ Try Bucketeer online with our [online demo](https://app.bucketeer.io/demo).
 
 ## Core Capabilities
 
-### 🚀 Advanced Feature Flag Management
+### Advanced Feature Flag Management
 
 Control feature releases with precision through a comprehensive suite of tools designed for modern software teams.
 
@@ -66,7 +66,7 @@ Control feature releases with precision through a comprehensive suite of tools d
 These complementary features enable sophisticated multi-flag targeting strategies impossible with other platforms.
 </details>
 
-### 🧪 Bayesian A/B Testing & Experimentation
+### Bayesian A/B Testing & Experimentation
 
 Make data-driven decisions faster with statistically superior experimentation.
 
@@ -76,7 +76,7 @@ Make data-driven decisions faster with statistically superior experimentation.
 - **Real-time Results:** Monitor experiment performance with live statistical significance calculations
 - **Experiment Lifecycle Management:** Seamlessly transition from experiment to full rollout
 
-### ⚙️ Intelligent Automation
+### Intelligent Automation
 
 Reduce manual work and respond to issues instantly with built-in automation.
 
@@ -86,7 +86,7 @@ Reduce manual work and respond to issues instantly with built-in automation.
 - **Event-Driven Actions:** Automatically disable flags when error thresholds are exceeded
 - **Multi-Schedule Support:** Chain multiple scheduled operations for complex release workflows
 
-### 🔐 Enterprise Security & Compliance
+### Enterprise Security & Compliance
 
 Maintain control and meet compliance requirements with comprehensive governance features.
 
@@ -96,7 +96,7 @@ Maintain control and meet compliance requirements with comprehensive governance 
 - **Environment Isolation:** Full data separation between environments and projects
 - **Admin & Environment Accounts:** Flexible account structure for organizations of any size
 
-### 🔔 Integrations & Notifications
+### Integrations & Notifications
 
 Stay informed and integrate with your existing tools seamlessly.
 
@@ -106,7 +106,7 @@ Stay informed and integrate with your existing tools seamlessly.
 - **RESTful API:** Comprehensive HTTP API for programmatic flag management (Read/Write/Admin access levels)
 - **Push Notifications:** Firebase Cloud Messaging support for instant SDK updates
 
-### 📊 Observability & Analytics
+### Observability & Analytics
 
 Understand how features are being used and make informed decisions.
 
@@ -117,7 +117,7 @@ Understand how features are being used and make informed decisions.
 - **Goal Event Analytics:** Measure conversion rates and goal completions
 - **Audit Trail:** Complete visibility into all system changes for debugging and compliance
 
-### 🎯 Developer Experience
+### Developer Experience
 
 Built by developers, for developers—with the tools you need for modern development practices.
 
