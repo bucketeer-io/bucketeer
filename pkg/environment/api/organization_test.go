@@ -27,6 +27,15 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
+// Helper function to create default authentication settings for tests
+func newTestAuthSettings() *proto.AuthenticationSettings {
+	return &proto.AuthenticationSettings{
+		EnabledTypes: []proto.AuthenticationType{
+			proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+		},
+	}
+}
+
 func TestGetOrganizationMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -175,7 +184,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"description",
 		false,
 		false,
-		true,
+		newTestAuthSettings(),
 	)
 	require.NoError(t, err)
 	trialOrgExpected, err := domain.NewOrganization(
@@ -185,7 +194,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"description2",
 		true,
 		false,
-		true,
+		newTestAuthSettings(),
 	)
 	require.NoError(t, err)
 
@@ -863,7 +872,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 		"description",
 		false,
 		false,
-		true,
+		newTestAuthSettings(),
 	)
 	require.NoError(t, err)
 
