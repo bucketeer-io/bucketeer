@@ -207,9 +207,6 @@ spec:
                     admin_port={{ .Values.envoy.adminPort }}
                     wget -q -T 1 -O- --method=POST --body-data='' \
                       "http://localhost:${admin_port}/drain_listeners?graceful" || true
-
-                    # Wait for load balancer propagation (must match app container propagation delay)
-                    sleep 15
                     exit 0
           command: ["envoy"]
           args:
