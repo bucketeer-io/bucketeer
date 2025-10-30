@@ -11419,7 +11419,7 @@ definitions:
       - ORGANIZATION_OWNER_EMAIL_CHANGED
       - ORGANIZATION_UPDATED
       - DEMO_ORGANIZATION_CREATED
-      - ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED
+      - ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED
       - FLAG_TRIGGER_CREATED
       - FLAG_TRIGGER_RESET
       - FLAG_TRIGGER_DESCRIPTION_CHANGED
@@ -11647,8 +11647,8 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
-      passwordAuthenticationEnabled:
-        type: boolean
+      authenticationSettings:
+        $ref: '#/definitions/environmentAuthenticationSettings'
     required:
       - name
       - urlCode
@@ -12076,8 +12076,8 @@ definitions:
         type: string
       ownerEmail:
         type: string
-      passwordAuthenticationEnabled:
-        type: boolean
+      authenticationSettings:
+        $ref: '#/definitions/environmentAuthenticationSettings'
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:
