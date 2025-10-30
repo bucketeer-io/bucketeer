@@ -46,7 +46,8 @@ var (
 
 func NewOrganization(
 	name, urlCode, ownerEmail, description string,
-	trial, systemAdmin, passwordAuthenticationEnabled bool,
+	trial, systemAdmin bool,
+	authenticationSettings *proto.AuthenticationSettings,
 ) (*Organization, error) {
 	now := time.Now().Unix()
 	uid, err := uuid.NewUUID()
@@ -54,27 +55,26 @@ func NewOrganization(
 		return nil, err
 	}
 
-	// Set default authentication settings: Google is always enabled, Password based on parameter
-	authTypes := []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE}
-	if passwordAuthenticationEnabled {
-		authTypes = append(authTypes, proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
+	// Set default authentication settings if not provided: Google is always enabled
+	if authenticationSettings == nil {
+		authenticationSettings = &proto.AuthenticationSettings{
+			EnabledTypes: []proto.AuthenticationType{proto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE},
+		}
 	}
 
 	return &Organization{&proto.Organization{
-		Id:          uid.String(),
-		Name:        name,
-		UrlCode:     urlCode,
-		OwnerEmail:  ownerEmail,
-		Description: description,
-		Disabled:    false,
-		Archived:    false,
-		Trial:       trial,
-		SystemAdmin: systemAdmin,
-		AuthenticationSettings: &proto.AuthenticationSettings{
-			EnabledTypes: authTypes,
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
+		Id:                     uid.String(),
+		Name:                   name,
+		UrlCode:                urlCode,
+		OwnerEmail:             ownerEmail,
+		Description:            description,
+		Disabled:               false,
+		Archived:               false,
+		Trial:                  trial,
+		SystemAdmin:            systemAdmin,
+		AuthenticationSettings: authenticationSettings,
+		CreatedAt:              now,
+		UpdatedAt:              now,
 	}}, nil
 }
 
