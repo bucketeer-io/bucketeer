@@ -313,7 +313,7 @@ const OrganizationCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button type="button" variant="secondary" onClick={onClose}>
                       {t(`cancel`)}
                     </Button>
                   }

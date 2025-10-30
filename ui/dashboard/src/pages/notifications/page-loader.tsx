@@ -92,10 +92,13 @@ const PageLoader = () => {
     [commonPath]
   );
 
-  const handleOnCloseModal = useCallback(() => {
+  const handleOnCloseModal = useCallback((isRefresh?: boolean) => {
+    const isResetNotification = isRefresh ?? true;
     onCloseConfirmModal();
     setIsDeleteNotification(false);
-    setSelectedNotification(undefined);
+    if (isResetNotification) {
+      setSelectedNotification(undefined);
+    }
     onCloseActionModal();
   }, []);
 
@@ -132,6 +135,11 @@ const PageLoader = () => {
     }
   }, [selectedNotification]);
 
+  const onHandleAddNew = useCallback(() => {
+    setSelectedNotification(undefined);
+    onOpenAddModal();
+  }, []);
+
   useEffect(() => {
     if (notificationCollection) {
       setSelectedNotification(notificationCollection.subscription);
@@ -149,7 +157,7 @@ const PageLoader = () => {
     <>
       <PageContent
         disabled={!editable}
-        onAdd={onOpenAddModal}
+        onAdd={onHandleAddNew}
         onHandleActions={onHandleActions}
       />
 
@@ -160,6 +168,8 @@ const PageLoader = () => {
           isOpen={!!isAdd || !!isEdit}
           isLoadingNotification={isLoadingNotification}
           notification={selectedNotification}
+          notificationEnvironmentId={notificationEnvironmentId as string}
+          resetNotification={() => setSelectedNotification(undefined)}
           onClose={handleOnCloseModal}
         />
       )}
