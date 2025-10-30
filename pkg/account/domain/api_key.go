@@ -22,10 +22,16 @@ import (
 	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/jinzhu/copier"
 
+	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 const keyBytes = 32
+
+var (
+	ErrLastUsedAtNotUpdated = pkgErr.NewErrorFailedPrecondition(pkgErr.AccountPackageName, "last used at not updated")
+	ErrInvalidLastUsedAt    = pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "invalid last used at", "last_used_at")
+)
 
 type APIKey struct {
 	*proto.APIKey
@@ -116,8 +122,13 @@ func (a *APIKey) Update(
 	return updated, nil
 }
 
-func (a *APIKey) UsedAt(lastUsedAt int64) {
-	if a.LastUsedAt < lastUsedAt {
-		a.LastUsedAt = lastUsedAt
+func (a *APIKey) SetUsedAt(lastUsedAt int64) error {
+	if lastUsedAt <= 0 {
+		return ErrInvalidLastUsedAt
 	}
+	if a.LastUsedAt >= lastUsedAt {
+		return ErrLastUsedAtNotUpdated
+	}
+	a.LastUsedAt = lastUsedAt
+	return nil
 }

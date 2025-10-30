@@ -800,7 +800,10 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 		apiKey := &domain.APIKey{
 			APIKey: envAPIKey.ApiKey,
 		}
-		apiKey.UsedAt(req.LastUsedAt)
+		err = apiKey.SetUsedAt(req.LastUsedAt)
+		if err != nil {
+			return err
+		}
 		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, envAPIKey.Environment.Id)
 	})
 	if err != nil {
@@ -834,6 +837,17 @@ func validateUpdateAPIKeyLastUsedAtRequest(
 		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	if req.LastUsedAt <= 0 {
+		dt, err := statusInvalidLastUsedAt.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_used_at"),
 		})
 		if err != nil {
 			return statusInternal.Err()
