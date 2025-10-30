@@ -793,12 +793,15 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 	}
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, req.ApiKeyId, req.EnvironmentId)
+		envAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(contextWithTx, req.ApiKeyId)
 		if err != nil {
 			return err
 		}
+		apiKey := &domain.APIKey{
+			APIKey: envAPIKey.ApiKey,
+		}
 		apiKey.UsedAt(req.LastUsedAt)
-		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, req.EnvironmentId)
+		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, envAPIKey.Environment.Id)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
@@ -815,7 +818,6 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 			"Failed to update api key last used at",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.ApiKeyId),
 			)...,
 		)

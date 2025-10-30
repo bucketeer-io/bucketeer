@@ -52,9 +52,11 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 }
 
 func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
+	keys := make([]string, 0)
 	s.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
 		apikey := key.(string)
 		lastUsedAt := value.(int64)
+		keys = append(keys, apikey)
 		envAPIKey, err := s.getEnvironmentAPIKey(ctx, apikey)
 		if err != nil {
 			s.logger.Error("failed to get environment API key", zap.Error(err),
@@ -75,9 +77,8 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
 		}
 
 		_, err = s.accountClient.UpdateAPIKeyLastUsedAt(ctx, &account.UpdateAPIKeyLastUsedAtRequest{
-			EnvironmentId: envAPIKey.Environment.Id,
-			ApiKeyId:      envAPIKey.ApiKey.Id,
-			LastUsedAt:    lastUsedAt,
+			ApiKeyId:   envAPIKey.ApiKey.Id,
+			LastUsedAt: lastUsedAt,
 		})
 		if err != nil {
 			s.logger.Error("failed to update API key last used at", zap.Error(err),
@@ -87,4 +88,6 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
 		}
 		return true
 	})
+
+	s.apiKeyLastUsedInfoCacher.Clear()
 }

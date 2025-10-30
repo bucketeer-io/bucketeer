@@ -2099,11 +2099,6 @@
               },
               {
                 "id": 2,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
                 "name": "last_used_at",
                 "type": "int64"
               }
