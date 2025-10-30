@@ -72,8 +72,8 @@ func (h *organizationCommandHandler) Handle(ctx context.Context, cmd Command) er
 		return h.convertTrial(ctx, c)
 	case *proto.ChangeOwnerEmailOrganizationCommand:
 		return h.changeOwnerEmail(ctx, c)
-	case *proto.ChangePasswordAuthenticationOrganizationCommand:
-		return h.changePasswordAuthentication(ctx, c)
+	case *proto.UpdateAuthenticationSettingsOrganizationCommand:
+		return h.updateAuthenticationSettings(ctx, c)
 	default:
 		return errUnknownCommand
 	}
@@ -91,22 +91,15 @@ func (h *organizationCommandHandler) changeOwnerEmail(
 		})
 }
 
-func (h *organizationCommandHandler) changePasswordAuthentication(
+func (h *organizationCommandHandler) updateAuthenticationSettings(
 	ctx context.Context,
-	cmd *proto.ChangePasswordAuthenticationOrganizationCommand,
+	cmd *proto.UpdateAuthenticationSettingsOrganizationCommand,
 ) error {
-	if cmd.PasswordAuthenticationEnabled {
-		h.organization.EnableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
-	} else {
-		err := h.organization.DisableAuthenticationType(proto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
-		if err != nil {
-			return err
-		}
-	}
-	return h.send(ctx, eventproto.Event_ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED,
-		&eventproto.OrganizationPasswordAuthenticationChangedEvent{
-			Id:                            h.organization.Id,
-			PasswordAuthenticationEnabled: cmd.PasswordAuthenticationEnabled,
+	h.organization.UpdateAuthenticationSettings(cmd.AuthenticationSettings)
+	return h.send(ctx, eventproto.Event_ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED,
+		&eventproto.OrganizationAuthenticationSettingsUpdatedEvent{
+			Id:                     h.organization.Id,
+			AuthenticationSettings: cmd.AuthenticationSettings,
 		})
 }
 
