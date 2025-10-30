@@ -12980,12 +12980,12 @@
             ]
           },
           {
-            "name": "ChangePasswordAuthenticationOrganizationCommand",
+            "name": "UpdateAuthenticationSettingsOrganizationCommand",
             "fields": [
               {
                 "id": 1,
-                "name": "password_authentication_enabled",
-                "type": "bool"
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -13013,6 +13013,11 @@
           },
           {
             "name": "ConvertTrialOrganizationCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
@@ -14298,8 +14303,8 @@
               },
               {
                 "id": 8,
-                "name": "password_authentication_enabled",
-                "type": "bool"
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -14398,8 +14403,8 @@
               },
               {
                 "id": 8,
-                "name": "password_authentication_enabled",
-                "type": "google.protobuf.BoolValue"
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -20869,7 +20874,7 @@
                 "integer": 1510
               },
               {
-                "name": "ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED",
+                "name": "ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED",
                 "integer": 1511
               },
               {
@@ -24004,7 +24009,7 @@
             ]
           },
           {
-            "name": "OrganizationPasswordAuthenticationChangedEvent",
+            "name": "OrganizationAuthenticationSettingsUpdatedEvent",
             "fields": [
               {
                 "id": 1,
@@ -24013,8 +24018,8 @@
               },
               {
                 "id": 2,
-                "name": "password_authentication_enabled",
-                "type": "bool"
+                "name": "authentication_settings",
+                "type": "bucketeer.environment.AuthenticationSettings"
               }
             ]
           },
@@ -24740,6 +24745,9 @@
           },
           {
             "path": "proto/account/api_key.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           },
           {
             "path": "proto/autoops/auto_ops_rule.proto"
