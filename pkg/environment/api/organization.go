@@ -192,6 +192,13 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		return nil, err
 	}
 
+	// Demo organizations need both Google and Password authentication enabled
+	authSettings := &environmentproto.AuthenticationSettings{
+		EnabledTypes: []environmentproto.AuthenticationType{
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+		},
+	}
 	organization, err := s.createOrganizationMySQL(
 		ctx,
 		req.Name,
@@ -200,7 +207,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
-		true, // Enable password auth for demo organizations
+		authSettings,
 	)
 	if err != nil {
 		return nil, err
@@ -314,7 +321,7 @@ func (s *EnvironmentService) CreateOrganization(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
-		req.PasswordAuthenticationEnabled,
+		req.AuthenticationSettings,
 	)
 	if err != nil {
 		return nil, err
@@ -379,7 +386,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
-	passwordAuthenticationEnabled bool,
+	authenticationSettings *environmentproto.AuthenticationSettings,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
 		name,
@@ -388,7 +395,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		description,
 		isTrial,
 		isSystemAdmin,
-		passwordAuthenticationEnabled,
+		authenticationSettings,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -611,25 +618,12 @@ func (s *EnvironmentService) UpdateOrganization(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
-		// Convert boolean password auth to authentication settings
-		var authSettings *environmentproto.AuthenticationSettings
-		if req.PasswordAuthenticationEnabled != nil {
-			// Start with Google authentication always enabled
-			authTypes := []environmentproto.AuthenticationType{environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE}
-			// Add password auth if enabled
-			if req.PasswordAuthenticationEnabled.Value {
-				authTypes = append(authTypes, environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD)
-			}
-			authSettings = &environmentproto.AuthenticationSettings{
-				EnabledTypes: authTypes,
-			}
-		}
 
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
-			authSettings,
+			req.AuthenticationSettings,
 		)
 		if err != nil {
 			return err
