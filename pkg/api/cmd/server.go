@@ -567,15 +567,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer func() {
 		shutdownStartTime := time.Now()
 
-		// Wait for K8s endpoint propagation
-		// This prevents "context deadline exceeded" errors during high traffic.
-		time.Sleep(propagationDelay)
-
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
 		restHealthChecker.Stop()
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
 
 		// Shutdown order matters due to dependencies:
 		// 1. apiGateway/httpServer make gRPC calls to the backend server

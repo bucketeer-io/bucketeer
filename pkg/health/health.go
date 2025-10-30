@@ -46,7 +46,8 @@ func (s Status) String() string {
 type check func(context.Context) Status
 
 type checker struct {
-	status uint32
+	status  uint32
+	stopped uint32 // 0 = running, 1 = stopped
 
 	interval time.Duration
 	timeout  time.Duration
@@ -104,6 +105,13 @@ func (hc *checker) Run(ctx context.Context) {
 }
 
 func (hc *checker) check(ctx context.Context) {
+	// Don't run checks if already stopped
+	// This prevents the race condition where Stop() sets status to Unhealthy
+	// but then check() overrides it back to Healthy
+	if hc.isStopped() {
+		return
+	}
+
 	resultChan := make(chan Status, len(hc.checks))
 	ctx, cancel := context.WithTimeout(ctx, hc.timeout)
 	defer cancel()
@@ -118,7 +126,12 @@ func (hc *checker) check(ctx context.Context) {
 			return
 		}
 	}
-	hc.setStatus(Healthy)
+
+	// Only set to Healthy if not stopped
+	// This prevents the race condition during shutdown
+	if !hc.isStopped() {
+		hc.setStatus(Healthy)
+	}
 }
 
 func (hc *checker) ServeReadyHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -148,6 +161,13 @@ func (hc *checker) setStatus(s Status) {
 	atomic.StoreUint32(&hc.status, uint32(s))
 }
 
+func (hc *checker) isStopped() bool {
+	return atomic.LoadUint32(&hc.stopped) == 1
+}
+
 func (hc *checker) Stop() {
+	// Set stopped flag first to prevent any concurrent check() from setting status back to Healthy
+	atomic.StoreUint32(&hc.stopped, 1)
+	// Then set status to Unhealthy
 	hc.setStatus(Unhealthy)
 }
