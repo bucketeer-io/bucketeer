@@ -8,6 +8,7 @@ import { useAuth } from 'auth';
 import { ID_NEW } from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -36,7 +37,8 @@ interface PushCreateUpdateModalProps {
   pushId?: string;
   isLoadingPush: boolean;
   push?: Push;
-  onClose: () => void;
+  resetPush: () => void;
+  onClose: (isRefresh?: boolean) => void;
 }
 
 export interface PushCreateUpdateForm {
@@ -64,6 +66,7 @@ const PushCreateUpdateModal = ({
   isOpen,
   pushId,
   isLoadingPush,
+  resetPush,
   push,
   onClose
 }: PushCreateUpdateModalProps) => {
@@ -191,11 +194,16 @@ const PushCreateUpdateModal = ({
     [isEditPush, push, files]
   );
 
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting,
+    callBackCancel: resetPush
+  });
+
   return (
     <SlideModal
       title={t(isEditPush ? 'edit-push' : 'new-push')}
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => onClose(false)}
     >
       {isLoadingPush ? (
         <FormLoading />
@@ -361,7 +369,11 @@ const PushCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => onClose(false)}
+                    >
                       {t(`cancel`)}
                     </Button>
                   }

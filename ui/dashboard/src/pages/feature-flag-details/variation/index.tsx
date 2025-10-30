@@ -11,6 +11,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
 import { Feature, FeatureVariation, VariationChange } from '@types';
@@ -63,7 +64,10 @@ const Variation = ({ feature, editable }: VariationProps) => {
     mode: 'onChange'
   });
 
-  const { getValues } = form;
+  const {
+    getValues,
+    formState: { isDirty, isSubmitting }
+  } = form;
 
   const handleCheckVariations = useCallback(
     (variations: FeatureVariation[]) => {
@@ -144,7 +148,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
       variations: feature.variations
     });
   }, [feature]);
-
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <div className="p-6 pt-0 w-full min-w-[900px]">
       <FormProvider {...form}>

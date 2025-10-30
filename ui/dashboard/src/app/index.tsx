@@ -39,6 +39,7 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
+import { ConfirmProvider } from 'hooks/use-unsaved-leave-page';
 import { i18n } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import {
@@ -62,7 +63,6 @@ import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
 import AccessDemoPage from 'pages/demo';
 import CreateDemoPage from 'pages/demo/demo-create';
-import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
@@ -79,7 +79,8 @@ import {
   OrganizationsRoot,
   ProjectsRoot,
   GoalsRoot,
-  FeatureFlagsRoot
+  FeatureFlagsRoot,
+  MemberRoot
 } from './routers';
 
 export const AppLoading = () => (
@@ -100,30 +101,35 @@ function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route
-                path={PAGE_PATH_AUTH_CALLBACK}
-                element={<AuthCallbackPage />}
-              />
-              <Route
-                path={PAGE_PATH_AUTH_DEMO_CALLBACK}
-                element={<AuthDemoCallbackPage />}
-              />
-              <Route
-                path={PAGE_PATH_AUTH_SIGNIN}
-                element={<SignInEmailPage />}
-              />
-              <Route path={PAGE_PATH_DEMO_SITE} element={<AccessDemoPage />} />
-              <Route
-                path={`${PAGE_PATH_DEMO_SITE}/new`}
-                element={<CreateDemoPage />}
-              />
-              <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+        <ConfirmProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route
+                  path={PAGE_PATH_AUTH_CALLBACK}
+                  element={<AuthCallbackPage />}
+                />
+                <Route
+                  path={PAGE_PATH_AUTH_DEMO_CALLBACK}
+                  element={<AuthDemoCallbackPage />}
+                />
+                <Route
+                  path={PAGE_PATH_AUTH_SIGNIN}
+                  element={<SignInEmailPage />}
+                />
+                <Route
+                  path={PAGE_PATH_DEMO_SITE}
+                  element={<AccessDemoPage />}
+                />
+                <Route
+                  path={`${PAGE_PATH_DEMO_SITE}/new`}
+                  element={<CreateDemoPage />}
+                />
+                <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </ConfirmProvider>
         {/* {process.env.NODE_ENV === 'development' && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}
@@ -269,7 +275,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}/*`} element={<APIKeysPage />} />
-        <Route path={`${PAGE_PATH_MEMBERS}`} element={<MembersPage />} />
+        <Route path={`${PAGE_PATH_MEMBERS}/*`} element={<MemberRoot />} />
         <Route
           path={`${PAGE_PATH_NOTIFICATIONS}/*`}
           element={<NotificationsPage />}

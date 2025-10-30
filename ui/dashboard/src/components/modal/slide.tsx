@@ -53,7 +53,12 @@ const SlideModal = ({
                 </Dialog.Title>
                 <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
-                  <Button size="icon-sm" variant="grey" onClick={onClose}>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="grey"
+                    onClick={onClose}
+                  >
                     <Icon icon={IconCloseRound} />
                   </Button>
                 </Dialog.Close>

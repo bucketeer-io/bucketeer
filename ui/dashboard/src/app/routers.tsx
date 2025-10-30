@@ -7,6 +7,7 @@ import FeatureFlagDetailsPage from 'pages/feature-flag-details';
 import FeatureFlagsPage from 'pages/feature-flags';
 import GoalDetailsPage from 'pages/goal-details';
 import GoalsPage from 'pages/goals';
+import MembersPage from 'pages/members';
 import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
@@ -16,6 +17,8 @@ export const OrganizationsRoot = () => {
   return (
     <Routes>
       <Route index element={<OrganizationsPage />} />
+      <Route path="new" element={<OrganizationsPage />} />
+      <Route path=":organizationId" element={<OrganizationsPage />} />
       <Route path=":organizationId/*" element={<OrganizationDetailPage />} />
     </Routes>
   );
@@ -25,6 +28,8 @@ export const ProjectsRoot = () => {
   return (
     <Routes>
       <Route index element={<ProjectsPage />} />
+      <Route path="new" element={<ProjectsPage />} />
+      <Route path=":projectId" element={<ProjectsPage />} />
       <Route path=":projectId/*" element={<ProjectDetailsPage />} />
     </Routes>
   );
@@ -58,6 +63,16 @@ export const FeatureFlagsRoot = () => {
       <Route path={ID_NEW} element={<CreateFlagPage />} />
       <Route path={`${ID_CLONE}/:flagId`} element={<FeatureFlagsPage />} />
       <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const MemberRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<MembersPage />} />
+      <Route path={ID_NEW} element={<MembersPage />} />
+      <Route path=":memberId" element={<MembersPage />} />
     </Routes>
   );
 };
