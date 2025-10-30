@@ -29,6 +29,7 @@ import "proto/feature/segment.proto";
 import "proto/feature/target.proto";
 import "proto/account/account.proto";
 import "proto/account/api_key.proto";
+import "proto/environment/organization.proto";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
 import "proto/autoops/service.proto";
@@ -247,7 +248,7 @@ message Event {
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
     ORGANIZATION_UPDATED = 1509;
     DEMO_ORGANIZATION_CREATED = 1510;
-    ORGANIZATION_PASSWORD_AUTHENTICATION_CHANGED = 1511;
+    ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED = 1511;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -1190,9 +1191,9 @@ message OrganizationOwnerEmailChangedEvent {
   string owner_email = 2;
 }
 
-message OrganizationPasswordAuthenticationChangedEvent {
+message OrganizationAuthenticationSettingsUpdatedEvent {
   string id = 1;
-  bool password_authentication_enabled = 2;
+  bucketeer.environment.AuthenticationSettings authentication_settings = 2;
 }
 
 message OrganizationNameChangedEvent {
