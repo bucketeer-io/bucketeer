@@ -778,10 +778,8 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 	ctx context.Context,
 	req *proto.UpdateAPIKeyLastUsedAtRequest,
 ) (*proto.UpdateAPIKeyLastUsedAtResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	// No need to check roles since this is only allowed to be called internally by other services.
-
-	err := validateUpdateAPIKeyLastUsedAtRequest(req, localizer)
+	err := validateUpdateAPIKeyLastUsedAtRequest(req)
 	if err != nil {
 		s.logger.Error("Invalid UpdateAPIKeyLastUsedAt request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -808,14 +806,7 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update api key last used at",
@@ -831,28 +822,13 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 
 func validateUpdateAPIKeyLastUsedAtRequest(
 	req *proto.UpdateAPIKeyLastUsedAtRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.ApiKeyId == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingAPIKeyID.Err()
 	}
 
 	if req.LastUsedAt <= 0 {
-		dt, err := statusInvalidLastUsedAt.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_used_at"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidLastUsedAt.Err()
 	}
 	return nil
 }
