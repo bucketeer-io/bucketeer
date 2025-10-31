@@ -119,6 +119,9 @@ export const EvaluationChart = forwardRef(
         })()
       : [];
 
+    // Use Set for O(1) lookup performance in tick callback
+    const logTickLabelsSet = new Set(logTickLabels);
+
     // Format large numbers: 1000 → "1K", 1000000 → "1M", 1000000000 → "1B"
     const formatNumber = (value: number): string => {
       if (value >= 1_000_000_000) {
@@ -182,7 +185,9 @@ export const EvaluationChart = forwardRef(
           },
           display: true,
           stacked: false,
-          min: useLogScale ? 0.5 : 0,
+          min: useLogScale
+            ? Math.pow(10, Math.floor(Math.log10(minNonZeroValue)))
+            : 0,
           ticks: {
             font: {
               family: 'Sofia Pro',
@@ -190,10 +195,10 @@ export const EvaluationChart = forwardRef(
               weight: 400
             },
             color: '#94A3B8',
-            callback: function (value) {
+            callback: value => {
               if (useLogScale) {
-                // For log scale: only show specific ticks
-                if (logTickLabels.includes(Number(value))) {
+                // For log scale: only show specific ticks (O(1) Set lookup)
+                if (logTickLabelsSet.has(Number(value))) {
                   return formatNumber(Number(value));
                 }
                 return null;
