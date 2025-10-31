@@ -83,7 +83,7 @@ const PageLoader = () => {
   const onHandleAddNew = useCallback(() => {
     setSelectedPush(undefined);
     onOpenAddModal();
-  }, [commonPath]);
+  }, []);
 
   const handleOnCloseModal = useCallback((isRefresh?: boolean) => {
     const checkReset = isRefresh ?? true;
