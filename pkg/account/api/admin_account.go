@@ -114,17 +114,41 @@ func (s *AccountService) GetMe(
 	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 
-		// update system admin user last seen
-		err := s.updateLastSeen(ctx, sysAdminAccount.Email, sysAdminAccount.OrganizationId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update system admin user last seen",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("email", sysAdminAccount.Email),
-					zap.String("organizationId", req.OrganizationId),
-				)...,
-			)
+		if err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId); err != nil {
+			if errors.Is(err, v2as.ErrAccountNotFound) {
+				s.logger.Warn(
+					"System admin user not found in organization when updating last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", req.OrganizationId),
+					)...,
+				)
+			} else {
+				s.logger.Error(
+					"Failed to update system admin user last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", req.OrganizationId),
+					)...,
+				)
+			}
+		}
+		if req.OrganizationId != sysAdminAccount.OrganizationId {
+			// req.OrganizationId is the org currently being viewed in the console, while
+			// sysAdminAccount.OrganizationId is the system admin's dedicated organization.
+			// When these differ, the system admin is looking at a regular organization,
+			// so we also update the last-seen timestamp for the system admin organization.
+			if err := s.updateLastSeen(ctx, sysAdminAccount.Email, sysAdminAccount.OrganizationId); err != nil {
+				s.logger.Error(
+					"Failed to update system admin user last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", sysAdminAccount.OrganizationId),
+					)...,
+				)
+			}
 		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
