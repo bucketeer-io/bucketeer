@@ -186,7 +186,13 @@ export const EvaluationChart = forwardRef(
           display: true,
           stacked: false,
           min: useLogScale
-            ? Math.pow(10, Math.floor(Math.log10(minNonZeroValue)))
+            ? Math.max(
+                1,
+                Math.pow(
+                  10,
+                  Math.floor(Math.log10(Math.max(1, minNonZeroValue)))
+                )
+              )
             : 0,
           ticks: {
             font: {
@@ -196,15 +202,16 @@ export const EvaluationChart = forwardRef(
             },
             color: '#94A3B8',
             callback: value => {
+              const numValue = Number(value);
               if (useLogScale) {
                 // For log scale: only show specific ticks (O(1) Set lookup)
-                if (logTickLabelsSet.has(Number(value))) {
-                  return formatNumber(Number(value));
+                if (logTickLabelsSet.has(numValue)) {
+                  return formatNumber(numValue);
                 }
                 return null;
               }
               // For linear scale: format all numbers
-              return formatNumber(Number(value));
+              return formatNumber(numValue);
             }
           },
           grid: {
