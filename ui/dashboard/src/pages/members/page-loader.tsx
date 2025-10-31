@@ -5,9 +5,7 @@ import { accountDeleter } from '@api/account/account-deleter';
 import { invalidateAccounts } from '@queries/accounts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_MEMBERS } from 'constants/routing';
 import { useToast } from 'hooks';
-import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Account } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
@@ -27,14 +25,17 @@ const PageLoader = () => {
 
   const [selectedMember, setSelectedMember] = useState<Account>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
-  const commonPath = `/${currentEnvironment.urlCode}${PAGE_PATH_MEMBERS}`;
-  const { isAdd, isEdit, onCloseActionModal, onOpenAddModal, onOpenEditModal } =
-    useActionWithURL({ closeModalPath: commonPath });
+
+  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
+    useToggleOpen(false);
 
   const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
     useToggleOpen(false);
 
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
+    useToggleOpen(false);
+
+  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
     useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
@@ -93,7 +94,7 @@ const PageLoader = () => {
       setSelectedMember(member);
       switch (type) {
         case 'EDIT':
-          return onOpenEditModal(`${commonPath}/${member?.teams}`);
+          return onOpenEditModal();
         case 'DELETE':
           return onOpenDeleteModal();
         case 'DETAILS':
@@ -112,13 +113,13 @@ const PageLoader = () => {
   return (
     <>
       <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      {!!isAdd && (
-        <AddMemberModal isOpen={!!isAdd} onClose={onCloseActionModal} />
+      {isOpenAddModal && (
+        <AddMemberModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
       )}
-      {!!isEdit && (
+      {isOpenEditModal && (
         <EditMemberModal
-          isOpen={!!isEdit}
-          onClose={onCloseActionModal}
+          isOpen={isOpenEditModal}
+          onClose={onCloseEditModal}
           member={selectedMember!}
         />
       )}

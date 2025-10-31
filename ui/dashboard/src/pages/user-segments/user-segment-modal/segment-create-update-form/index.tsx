@@ -162,6 +162,7 @@ const SegmentCreateUpdateModal = ({
         }
         if (file) setSegmentUploading(newSegment!);
         onUpdateSuccess();
+        resetSegment();
       } catch (error) {
         errorNotify(error);
       }

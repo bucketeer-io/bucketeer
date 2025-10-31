@@ -91,8 +91,8 @@ const APIKeyCreateUpdateModal = ({
     formState: { isValid, isSubmitting, isDirty }
   } = form;
 
-  const handleClose = () => {
-    if (!form.formState.isDirty) {
+  const handleClose = (forceReset?: boolean) => {
+    if (forceReset || !form.formState.isDirty) {
       resetApiKey();
     }
     onClose();
@@ -126,7 +126,7 @@ const APIKeyCreateUpdateModal = ({
           })
         });
         invalidateAPIKeys(queryClient);
-        handleClose();
+        handleClose(true);
       }
     },
     [apiKey, isEditApiKey]
@@ -264,7 +264,7 @@ const APIKeyCreateUpdateModal = ({
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={handleClose}
+                      onClick={() => handleClose()}
                     >
                       {t(`cancel`)}
                     </Button>

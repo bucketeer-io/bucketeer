@@ -20,7 +20,7 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   }, [location.pathname]);
 
   const isAdd = useMemo(() => lastPath === ID_NEW, [lastPath]);
-  const isClone = useMemo(() => lastPath?.includes('clone'), [lastPath]);
+  const isClone = useMemo(() => path?.includes('clone'), [path]);
   const isEdit = useMemo(
     () => id && path && !isAdd && !isClone,
     [path, isAdd, isClone, idKey]

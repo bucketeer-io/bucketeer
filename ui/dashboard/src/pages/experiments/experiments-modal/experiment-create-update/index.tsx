@@ -166,10 +166,12 @@ const ExperimentCreateUpdateModal = ({
 
   const goalOptions = useMemo(() => {
     return (
-      goalCollection?.goals?.map(item => ({
-        label: item.name,
-        value: item.id
-      })) || []
+      goalCollection?.goals
+        ?.filter(item => !item.archived && item.connectionType !== 'OPERATION')
+        .map(item => ({
+          label: item.name,
+          value: item.id
+        })) || []
     );
   }, [goalCollection]);
 
@@ -265,13 +267,15 @@ const ExperimentCreateUpdateModal = ({
           description
         } = values;
         let resp: ExperimentCreateUpdateResponse | null = null;
+        const formatStartAt = Math.floor(Number(startAt)).toString();
+        const formatStopAt = Math.floor(Number(stopAt)).toString();
         if (isEdit) {
           resp = await experimentUpdater({
             id,
             name,
             description,
-            startAt,
-            stopAt,
+            startAt: formatStartAt,
+            stopAt: formatStopAt,
             environmentId: currentEnvironment.id
           });
         } else {
@@ -280,8 +284,8 @@ const ExperimentCreateUpdateModal = ({
             featureId,
             goalIds,
             name,
-            startAt,
-            stopAt,
+            startAt: formatStartAt,
+            stopAt: formatStopAt,
             description,
             environmentId: currentEnvironment.id
           });
