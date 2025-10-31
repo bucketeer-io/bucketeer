@@ -5,6 +5,7 @@ import {
   CategoryScale,
   LineElement,
   LinearScale,
+  LogarithmicScale,
   TimeScale,
   TimeSeriesScale,
   PointElement,
@@ -17,6 +18,7 @@ import {
   Legend,
   TimeUnit
 } from 'chart.js';
+import 'chartjs-adapter-luxon';
 import { COLORS } from 'constants/styles';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
@@ -43,6 +45,7 @@ ChartJS.register(
   LineElement,
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   TimeScale,
   PointElement,
   TimeSeriesScale,
@@ -80,6 +83,47 @@ export const EvaluationChart = forwardRef(
         };
       })
     };
+
+    // Determine if we should use logarithmic scale
+    // Only use log scale when there's a large variance (max/min > 100)
+    const allValues = data
+      .flat()
+      .filter((v): v is number => v !== null && v > 0);
+    const maxValue = Math.max(...allValues, 1);
+    const minNonZeroValue = Math.min(...allValues.filter(v => v > 0), 1);
+    const useLogScale = maxValue / minNonZeroValue > 100;
+
+    // Generate dynamic tick labels based on data range
+    // e.g., for max=5M: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k, 1M, 2M, 5M]
+    const generateLogTicks = (max: number) => {
+      const ticks: number[] = [];
+      let magnitude = 1;
+      while (magnitude <= max * 2) {
+        [1, 2, 5].forEach(base => {
+          const tick = base * magnitude;
+          if (tick <= max * 2) {
+            ticks.push(tick);
+          }
+        });
+        magnitude *= 10;
+      }
+      return ticks;
+    };
+
+    // Format large numbers: 1000 → "1K", 1000000 → "1M", 1000000000 → "1B"
+    const formatNumber = (value: number): string => {
+      if (value >= 1_000_000_000) {
+        return `${(value / 1_000_000_000).toFixed(value % 1_000_000_000 === 0 ? 0 : 1)}B`;
+      }
+      if (value >= 1_000_000) {
+        return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
+      }
+      if (value >= 1_000) {
+        return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
+      }
+      return value.toLocaleString();
+    };
+
     const options: ChartOptions<'line'> = {
       responsive: true,
       maintainAspectRatio: false,
@@ -123,18 +167,30 @@ export const EvaluationChart = forwardRef(
           }
         },
         y: {
+          type: useLogScale ? 'logarithmic' : 'linear',
           title: {
             display: false
           },
           display: true,
           stacked: false,
+          min: useLogScale ? 0.5 : 0,
           ticks: {
             font: {
               family: 'Sofia Pro',
               size: 14,
               weight: 400
             },
-            color: '#94A3B8'
+            color: '#94A3B8',
+            callback: useLogScale
+              ? function (value) {
+                  // Format tick labels dynamically based on data range
+                  const labels = generateLogTicks(maxValue);
+                  if (labels.includes(Number(value))) {
+                    return formatNumber(Number(value));
+                  }
+                  return null;
+                }
+              : undefined
           },
           grid: {
             display: true,
