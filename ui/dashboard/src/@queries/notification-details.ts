@@ -50,6 +50,15 @@ export const prefetchNotification = (
   });
 };
 
+export const invalidateNotificationDetails = (
+  queryClient: QueryClient,
+  params: NotificationFetcherPayload
+) => {
+  queryClient.invalidateQueries({
+    queryKey: [NOTIFICATION_DETAILS_QUERY_KEY, params]
+  });
+};
+
 export const invalidateNotification = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({
     queryKey: [NOTIFICATION_DETAILS_QUERY_KEY]
