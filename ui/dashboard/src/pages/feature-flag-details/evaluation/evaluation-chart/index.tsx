@@ -89,26 +89,35 @@ export const EvaluationChart = forwardRef(
     const allValues = data
       .flat()
       .filter((v): v is number => v !== null && v > 0);
-    const maxValue = Math.max(...allValues, 1);
-    const minNonZeroValue = Math.min(...allValues.filter(v => v > 0), 1);
-    const useLogScale = maxValue / minNonZeroValue > 100;
 
-    // Generate dynamic tick labels based on data range
+    let maxValue = 1;
+    let minNonZeroValue = 1;
+    let useLogScale = false;
+
+    if (allValues.length > 0) {
+      maxValue = Math.max(...allValues);
+      minNonZeroValue = Math.min(...allValues);
+      useLogScale = maxValue / minNonZeroValue > 100;
+    }
+
+    // Generate dynamic tick labels based on data range (calculated once for performance)
     // e.g., for max=5M: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k, 1M, 2M, 5M]
-    const generateLogTicks = (max: number) => {
-      const ticks: number[] = [];
-      let magnitude = 1;
-      while (magnitude <= max * 2) {
-        [1, 2, 5].forEach(base => {
-          const tick = base * magnitude;
-          if (tick <= max * 2) {
-            ticks.push(tick);
+    const logTickLabels = useLogScale
+      ? (() => {
+          const ticks: number[] = [];
+          let magnitude = 1;
+          while (magnitude <= maxValue * 2) {
+            [1, 2, 5].forEach(base => {
+              const tick = base * magnitude;
+              if (tick <= maxValue * 2) {
+                ticks.push(tick);
+              }
+            });
+            magnitude *= 10;
           }
-        });
-        magnitude *= 10;
-      }
-      return ticks;
-    };
+          return ticks;
+        })()
+      : [];
 
     // Format large numbers: 1000 → "1K", 1000000 → "1M", 1000000000 → "1B"
     const formatNumber = (value: number): string => {
@@ -181,16 +190,17 @@ export const EvaluationChart = forwardRef(
               weight: 400
             },
             color: '#94A3B8',
-            callback: useLogScale
-              ? function (value) {
-                  // Format tick labels dynamically based on data range
-                  const labels = generateLogTicks(maxValue);
-                  if (labels.includes(Number(value))) {
-                    return formatNumber(Number(value));
-                  }
-                  return null;
+            callback: function (value) {
+              if (useLogScale) {
+                // For log scale: only show specific ticks
+                if (logTickLabels.includes(Number(value))) {
+                  return formatNumber(Number(value));
                 }
-              : undefined
+                return null;
+              }
+              // For linear scale: format all numbers
+              return formatNumber(Number(value));
+            }
           },
           grid: {
             display: true,
