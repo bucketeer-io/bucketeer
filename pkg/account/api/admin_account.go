@@ -23,6 +23,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	proto "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -474,10 +475,16 @@ func (s *AccountService) updateLastSeen(ctx context.Context, email, organization
 		return err
 	}
 
+	cloned, ok := proto.Clone(account.AccountV2).(*accountproto.AccountV2)
+	if !ok {
+		return statusInternal.Err()
+	}
+
 	now := time.Now().Unix()
 	// Update only the LastSeen field
-	account.LastSeen = now
-	account.UpdatedAt = now
+	accountForUpdate := &domain.AccountV2{AccountV2: cloned}
+	accountForUpdate.LastSeen = now
+	accountForUpdate.UpdatedAt = now
 
-	return s.accountStorage.UpdateAccountV2(ctx, account)
+	return s.accountStorage.UpdateAccountV2(ctx, accountForUpdate)
 }
