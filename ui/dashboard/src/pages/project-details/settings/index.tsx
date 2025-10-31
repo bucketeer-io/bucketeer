@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconLaunchOutlined } from 'react-icons-material-design';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
+import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
@@ -38,10 +39,12 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
+  const [searchParams] = useSearchParams();
   const params = useParams();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const projectDetailsId = params.projectId!;
+  const organizationId = searchParams.get('organizationId');
 
   const disabled = useMemo(
     () => !envEditable || !isOrganizationAdmin,
@@ -65,10 +68,12 @@ const ProjectSettings = ({ project }: { project: Project }) => {
         name: values.name
       });
       if (resp) {
+        invalidateProjects(queryClient);
         invalidateProjectDetails(queryClient, {
           id: projectDetailsId,
-          organizationId: project.organizationId
+          organizationId: organizationId!
         });
+
         invalidateAccounts(queryClient);
         notify({
           message: t('message:collection-action-success', {
@@ -82,7 +87,10 @@ const ProjectSettings = ({ project }: { project: Project }) => {
     }
   };
 
-  const isShowPopup = form.formState.isDirty && !form.formState.isSubmitting;
+  const isShowPopup =
+    form.formState.isDirty &&
+    !form.formState.isSubmitting &&
+    !form.formState.isSubmitSuccessful;
 
   useUnsavedLeavePage({ isShow: isShowPopup });
 
