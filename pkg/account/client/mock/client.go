@@ -454,6 +454,26 @@ func (mr *MockClientMockRecorder) UpdateAPIKey(ctx, in any, opts ...any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKey", reflect.TypeOf((*MockClient)(nil).UpdateAPIKey), varargs...)
 }
 
+// UpdateAPIKeyLastUsedAt mocks base method.
+func (m *MockClient) UpdateAPIKeyLastUsedAt(ctx context.Context, in *account.UpdateAPIKeyLastUsedAtRequest, opts ...grpc.CallOption) (*account.UpdateAPIKeyLastUsedAtResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateAPIKeyLastUsedAt", varargs...)
+	ret0, _ := ret[0].(*account.UpdateAPIKeyLastUsedAtResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAPIKeyLastUsedAt indicates an expected call of UpdateAPIKeyLastUsedAt.
+func (mr *MockClientMockRecorder) UpdateAPIKeyLastUsedAt(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKeyLastUsedAt", reflect.TypeOf((*MockClient)(nil).UpdateAPIKeyLastUsedAt), varargs...)
+}
+
 // UpdateAccountV2 mocks base method.
 func (m *MockClient) UpdateAccountV2(ctx context.Context, in *account.UpdateAccountV2Request, opts ...grpc.CallOption) (*account.UpdateAccountV2Response, error) {
 	m.ctrl.T.Helper()

@@ -126,6 +126,7 @@ func TestUpdateAPIKey(t *testing.T) {
 	createdAt := int64(2)
 	updatedAt := int64(3)
 	maintainer := "demo@bucketeer.io"
+	lastUsedAt := int64(16000000000)
 
 	patterns := []struct {
 		desc          string
@@ -170,11 +171,11 @@ func TestUpdateAPIKey(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					name, int32(role), disabled, maintainer, description, updatedAt, id, environmentId,
+					name, int32(role), disabled, maintainer, description, updatedAt, lastUsedAt, id, environmentId,
 				).Return(result, nil)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, Maintainer: maintainer, Description: description, CreatedAt: createdAt, UpdatedAt: updatedAt},
+				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, Maintainer: maintainer, Description: description, LastUsedAt: lastUsedAt, CreatedAt: createdAt, UpdatedAt: updatedAt},
 			},
 			environmentId: environmentId,
 			expectedErr:   nil,
