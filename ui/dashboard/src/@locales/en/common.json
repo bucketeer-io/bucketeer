@@ -295,5 +295,10 @@
   "edit-rule": "Edit rule",
   "add-rule":"Add rule",
   "continue-editing":"Continue editing",
-  "leave-page":"Leave page"
+  "leave-page":"Leave page",
+  "custom-individual-rule":"Custom Individual Targeting",
+  "custom-prerequises-rule":"Custom Prerequisites",
+  "custom-segment-rule":"Custom Segment Rule {{rule}}",
+  "custom-default-rule":"Custom Default Rule",
+  "change-count": "{{count}} Changes Detected"
 }
