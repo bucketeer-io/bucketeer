@@ -17,6 +17,7 @@ import {
   Legend,
   TimeUnit
 } from 'chart.js';
+import 'chartjs-adapter-luxon';
 import { COLORS } from 'constants/styles';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
@@ -80,6 +81,21 @@ export const EvaluationChart = forwardRef(
         };
       })
     };
+
+    // Format large numbers: 1000 → "1K", 1000000 → "1M", 1000000000 → "1B"
+    const formatNumber = (value: number): string => {
+      if (value >= 1_000_000_000) {
+        return `${(value / 1_000_000_000).toFixed(value % 1_000_000_000 === 0 ? 0 : 1)}B`;
+      }
+      if (value >= 1_000_000) {
+        return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
+      }
+      if (value >= 1_000) {
+        return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
+      }
+      return value.toLocaleString();
+    };
+
     const options: ChartOptions<'line'> = {
       responsive: true,
       maintainAspectRatio: false,
@@ -127,14 +143,17 @@ export const EvaluationChart = forwardRef(
             display: false
           },
           display: true,
-          stacked: false,
+          beginAtZero: true,
           ticks: {
             font: {
               family: 'Sofia Pro',
               size: 14,
               weight: 400
             },
-            color: '#94A3B8'
+            color: '#94A3B8',
+            callback: value => {
+              return formatNumber(Number(value));
+            }
           },
           grid: {
             display: true,
