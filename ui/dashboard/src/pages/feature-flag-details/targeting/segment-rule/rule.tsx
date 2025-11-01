@@ -152,9 +152,10 @@ const RuleForm = ({
         setValue(getFieldName('values', index), [], { shouldDirty: true });
         setValue(getFieldName('attribute', index), '', { shouldDirty: true });
       }
+
       onChange(value);
     },
-    [clauses]
+    [clauses, segmentIndex]
   );
 
   useEffect(() => {

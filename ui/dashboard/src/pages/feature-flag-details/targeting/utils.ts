@@ -266,8 +266,9 @@ export const createVariationLabel = (variation: FeatureVariation): string => {
   return label;
 };
 
-const handleGetStrategy = (
-  strategy?: StrategySchema | FeatureRuleStrategy
+export const handleGetStrategy = (
+  strategy?: StrategySchema | FeatureRuleStrategy,
+  factor?: number
 ): Partial<FeatureRuleStrategy> => {
   const { type, fixedStrategy, rolloutStrategy } = strategy || {};
   if (type === StrategyType.FIXED) {
@@ -284,7 +285,7 @@ const handleGetStrategy = (
         variations: convertVariationWeights(
           (rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])
             ?.variations || [],
-          1000
+          factor ?? 1000
         ),
         audience: rolloutStrategy?.audience
           ? createAudienceConfig(rolloutStrategy.audience)
@@ -783,20 +784,6 @@ export const getClauseLabelsFromRule = (
     return `${t('common:if')} ${fullLabel}`;
   });
 
-export const hasChangePosition = (
-  ruleId: string,
-  originFeatures: Feature,
-  currentFeature: Feature
-) => {
-  const originIndex = originFeatures.rules.findIndex(
-    item => item.id === ruleId
-  );
-  const currentIndex = currentFeature.rules.findIndex(
-    item => item.id === ruleId
-  );
-  return originIndex !== currentIndex;
-};
-
 export const getFeatureRuleLabels = (
   originFeature: Feature,
   currentFeature: Feature,
@@ -847,54 +834,6 @@ export const handleSwapRuleFeature = (
 
   return { ...feature, rules: newRules };
 };
-
-export function reorderWithReset(
-  originRules: FeatureRule[],
-  currentRules: FeatureRule[],
-  resetRuleId: string,
-  resetRule: FeatureRule
-): { reordered: FeatureRule[]; resetIndex: number } {
-  const withoutReset = currentRules.filter(r => r.id !== resetRuleId);
-
-  const resetIndex = originRules.findIndex(r => r.id === resetRuleId);
-  if (resetIndex < 0) return { reordered: withoutReset, resetIndex };
-
-  const reordered = [...withoutReset];
-  reordered.splice(Math.min(resetIndex, reordered.length), 0, resetRule);
-  return { reordered, resetIndex };
-}
-
-export function normalizeSegmentRules(
-  featureRefRules: FeatureRule[],
-  segmentRules?: TargetingSchema['segmentRules'] | undefined
-) {
-  if (!segmentRules) return [];
-  return segmentRules.map((segRule, i) => {
-    const originalRule = featureRefRules[i];
-    if (!originalRule) return segRule;
-    return {
-      ...segRule,
-      id: originalRule.id,
-      clauses: segRule.clauses.map((clause, j) => {
-        const originalClause = originalRule.clauses[j];
-        return originalClause ? { ...clause, id: originalClause.id } : clause;
-      })
-    };
-  });
-}
-
-export function hasSameRelativeOrder(
-  originRules: FeatureRule[],
-  currentRules: FeatureRule[]
-): boolean {
-  for (let i = 0; i < originRules.length; i++) {
-    if (originRules[i].id !== currentRules[i].id) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 const getAudienceChangeData = (
   strategy: FeatureRuleStrategy,
@@ -1191,6 +1130,7 @@ export const handleCheckSegmentRulesDiscardChanges = (
     currentRule.strategy,
     variationFeatures
   );
+
   if (!preRule) {
     setActionRuleSegment('new-rule');
     return [
@@ -1239,23 +1179,4 @@ export const handleCheckSegmentRulesDiscardChanges = (
   }
 
   return [...clauseChanges, ...strategyChanges];
-};
-
-export const checkFiledDirty = (obj: { [key: string]: boolean }): boolean => {
-  if (!obj) return false;
-  if (typeof obj === 'boolean' && obj === true) return true;
-  for (const value of Object.values(obj)) {
-    if (typeof value === 'boolean' && value === true) return true;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === 'object') {
-          checkFiledDirty(item as { [key: string]: boolean });
-        }
-      }
-    }
-    if (typeof value === 'object' && value !== null) {
-      if (checkFiledDirty(value)) return true;
-    }
-  }
-  return false;
 };

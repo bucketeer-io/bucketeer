@@ -362,7 +362,6 @@
   "custom-rule-clause-value-discard-desc": "条件から値 <b>{{value}}</b> を{{action}} ",
   "custom-rule-strategy-discard-desc": "ルールのバリエーションを{{action}} ",
   "custom-rule-strategy-add-new-discard-desc": "ルール {{clauseLabel}} を追加して配信",
-  "custom-rule-reorder-discard-desc": "ルールを並べ替える",
   "custom-rule-audience-discard-desc": "オーディエンスのトラフィック配分を{{action}} ",
   "custom-rule-audience-not-include-desc": "この配分に含まれていない <b>{{percent}}%</b> には <b>{{variation}}</b> が提供されます",
   "custom-rule-audience-include-desc": "この配分に含まれている <b>{{percent}}%</b> には提供されます",

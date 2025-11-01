@@ -296,6 +296,9 @@
   "add-rule":"Add rule",
   "continue-editing":"Continue editing",
   "leave-page":"Leave page",
-  "include":"include",
-  "not-include":"not include"
+  "custom-individual-rule":"Custom Individual Targeting",
+  "custom-prerequises-rule":"Custom Prerequisites",
+  "custom-segment-rule":"Custom Segment Rule {{rule}}",
+  "custom-default-rule":"Custom Default Rule",
+  "change-count": "{{count}} Changes Detected"
 }

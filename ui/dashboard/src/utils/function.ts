@@ -125,6 +125,11 @@ export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
   }
 };
 
+type BooleanValue = boolean | BooleanRecord | BooleanRecord[];
+interface BooleanRecord {
+  [key: string]: boolean | BooleanValue;
+}
+
 export const checkFieldDirty = (obj: { [key: string]: boolean }): boolean => {
   if (!obj) return false;
   if (typeof obj === 'boolean' && obj === true) return true;
@@ -143,7 +148,3 @@ export const checkFieldDirty = (obj: { [key: string]: boolean }): boolean => {
   }
   return false;
 };
-type BooleanValue = boolean | BooleanRecord | BooleanRecord[];
-interface BooleanRecord {
-  [key: string]: boolean | BooleanValue;
-}
