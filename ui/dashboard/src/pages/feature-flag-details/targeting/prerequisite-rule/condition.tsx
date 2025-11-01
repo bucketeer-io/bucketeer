@@ -84,7 +84,8 @@ const ConditionForm = forwardRef(
 
       if ((!currentVariationId || !isCurrentValid) && firstVariationId) {
         methods.setValue(`${commonName}.variationId`, firstVariationId, {
-          shouldDirty: true
+          shouldDirty: true,
+          shouldValidate: true
         });
       }
     }, [currentFeatureId, currentFeature, methods.setValue, commonName]);

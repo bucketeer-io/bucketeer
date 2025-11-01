@@ -44,6 +44,7 @@ export interface RuleOrders {
 export interface DiscardChangesStateData {
   labelType: 'ADD' | 'UPDATE' | 'REMOVE' | 'REORDER';
   label: string;
+  groupLabel?: string[];
   featureId?: string;
   variationIndex: number;
   valueLabel?: string;
@@ -54,12 +55,12 @@ export interface DiscardChangesStateData {
     | 'default-strategy'
     | 'default-audience'
     | 'audience'
-    | 'new-rule'
-    | 'reorder';
+    | 'new-rule';
   ruleOrders?: RuleOrders;
   variation?: FeatureVariation;
   ruleIndex?: number;
   audienceExcluded?: VariationPercent;
+  audienceIncluded?: VariationPercent[];
   variationPercent?: VariationPercent[];
   isAddNew?: boolean;
 }

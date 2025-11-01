@@ -177,7 +177,7 @@ const Strategy = ({
         isEquallyVariations(variations) ? 'equally' : 'percentage'
       );
     }
-  }, [variations, rolloutStrategy, isCustomExperiment]);
+  }, [variations, rolloutStrategy]);
   return (
     <div className="px-2">
       {label && (

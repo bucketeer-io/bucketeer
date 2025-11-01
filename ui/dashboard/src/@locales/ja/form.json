@@ -384,7 +384,6 @@
     "current-variation-title": "現在のバリエーション配分",
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
   },
-  "discard-unsaved-changes": "保存されていない変更を破棄",
   "discard-form:discard-rule.discard-unsaved-changes": "未保存の変更を破棄しますか？",
   "prerequisite-discard-desc": "前提フラグ <b>{{flagName}}</b>（バリエーション付き）を{{action}}",
   "individual-discard-desc": "ユーザーに対して <variantElement /> に <b>{{flagName}}</b> を{{action}}",
@@ -397,5 +396,19 @@
   "custom-rule-audience-not-include-desc": "この配分に含まれていない <b>{{percent}}%</b> には <b>{{variation}}</b> が提供されます",
   "custom-rule-audience-include-desc": "この配分に含まれている <b>{{percent}}%</b> には提供されます",
   "custom-rule-default-strategy-discard-desc": "デフォルトルールに設定します",
-  "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します"
+  "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します",
+  "discard-unsaved-changes": "未保存の変更を破棄しますか？",
+  "add_prerequisite-discard-desc": "前提条件を追加: {{flagName}}、<variantElement/>",
+  "remove_prerequisite-discard-desc": "前提条件を削除: {{flagName}}、<variantElement/>",
+  "update_prerequisite-discard-desc": "前提条件を更新: {{flagName}}、<variantElement/>",
+  "add_individual-discard-desc": "<labeElemet/> を <variantElement/> に追加",
+  "remove_individual-discard-desc": "<labeElemet/> を <variantElement/> から削除",
+  "add-custom-rule-discard-desc": "ルールを追加: ",
+  "update-custom-rule-discard-desc": "条件を更新: ",
+  "remove-custom-rule-discard-desc": "条件を削除: ",
+  "add-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を追加します",
+  "remove-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を削除します",
+  "add-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を追加:",
+  "update-custom-rule-audience-discard-desc":"対象ユーザーのトラフィック配分:",
+  "add-new-rule": "ルールを追加: <b>{{clauseLabel}} の場合</b>、<variantElement/> を返す"
 }
