@@ -51,6 +51,7 @@ import IconStartExperiment from './customized-icons/start-experiment.svg?react';
 import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
 import IconStoppedByUser from './customized-icons/stopped-by-user.svg?react';
 import IconFlagString from './customized-icons/string.svg?react';
+import IconSwitchUpdate from './customized-icons/switch-icon.svg?react';
 import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconTargetSegments from './customized-icons/target-segments.svg?react';
 import IconThreeLines from './customized-icons/three-lines.svg?react';
@@ -63,7 +64,6 @@ import IconUnion from './customized-icons/union.svg?react';
 import IconUpload from './customized-icons/upload.svg?react';
 import IconUserOutlined from './customized-icons/user-outlined.svg?react';
 import IconUserSettings from './customized-icons/user-settings.svg?react';
-import IconWarningOutline from './customized-icons/warning-outline.svg?react';
 import IconWatch from './customized-icons/watch.svg?react';
 import IconWebhook from './customized-icons/webhook.svg?react';
 import IconFlagYaml from './customized-icons/yaml.svg?react';
@@ -155,7 +155,7 @@ export {
   IconFlagSwitch,
   IconFlagNumber,
   IconFlagString,
-  IconWarningOutline,
+  IconSwitchUpdate,
   IconFlagJSON,
   IconWatch,
   IconPlus,
