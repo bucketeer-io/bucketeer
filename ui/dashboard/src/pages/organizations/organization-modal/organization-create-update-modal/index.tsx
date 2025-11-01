@@ -11,6 +11,7 @@ import { useQueryAccounts } from '@queries/accounts';
 import { useQueryOrganizationDetails } from '@queries/organization-details';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
@@ -74,6 +75,7 @@ const OrganizationCreateUpdateModal = ({
   organization
 }: OrganizationCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
+  const { refreshOrganizations } = useAuth();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const params = useParams();
@@ -146,6 +148,7 @@ const OrganizationCreateUpdateModal = ({
             })
           });
           invalidateOrganizations(queryClient);
+          refreshOrganizations();
           onClose();
         }
       } catch (error) {
