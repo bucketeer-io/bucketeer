@@ -9,13 +9,9 @@ require (
 	cloud.google.com/go/pubsub v1.50.1
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/VividCortex/mysqlerr v1.0.0
-	github.com/aws/aws-sdk-go-v2 v1.39
+	github.com/aws/aws-sdk-go-v2 v1.39.5
 	github.com/aws/aws-sdk-go-v2/config v1.31.16
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.10
-	github.com/aws/aws-sdk-go-v2/service/kms v1.45.1
-	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
-	github.com/aws/aws-sdk-go-v2/config v1.31.8
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.12
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
 	github.com/aws/aws-sdk-go-v2/service/kms v1.45.3
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.34.1
 	github.com/blang/semver v3.5.1+incompatible
@@ -38,8 +34,8 @@ require (
 	github.com/mna/redisc v1.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/redis/go-redis/v9 v9.16.0
+	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/slack-go/slack v0.17.3
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.11.1
@@ -47,7 +43,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.42.0
+	golang.org/x/crypto v0.43.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.17.0
@@ -139,7 +135,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
