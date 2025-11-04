@@ -42,6 +42,8 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 	for {
 		select {
 		case <-ctx.Done():
+			s.writeAPIKeyLastUsedAt(ctx)
+			s.logger.Debug("writeAPIKeyLastUsedAtCacheToDatabase stopped")
 			return
 		case <-ticker.C:
 			s.logger.Debug("writing API key last used at cache to database")
@@ -51,23 +53,29 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 }
 
 func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
+	updatedAPIKeys := make([]string, 0)
 	s.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
-		apiKey := key.(string)
+		apiKeyID := key.(string)
 		lastUsedAt := value.(int64)
 
 		_, err := s.accountClient.UpdateAPIKeyLastUsedAt(ctx, &account.UpdateAPIKeyLastUsedAtRequest{
-			ApiKeyId:   apiKey,
+			ApiKeyId:   apiKeyID,
 			LastUsedAt: lastUsedAt,
 		})
 		if err != nil {
 			s.logger.Error("failed to update API key last used at", zap.Error(err),
-				zap.String("apiKeyId", apiKey),
+				zap.String("apiKeyId", apiKeyID),
 				zap.Int64("lastUsedAt", lastUsedAt),
 			)
+			// return true to continue the iteration
 			return true
 		}
+		updatedAPIKeys = append(updatedAPIKeys, apiKeyID)
 		return true
 	})
 
-	s.apiKeyLastUsedInfoCacher.Clear()
+	// Clear the cache for the updated API keys
+	for _, apiKeyID := range updatedAPIKeys {
+		s.apiKeyLastUsedInfoCacher.Delete(apiKeyID)
+	}
 }

@@ -805,9 +805,6 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, envAPIKey.Environment.Id)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
-			return nil, statusNotFound.Err()
-		}
 		s.logger.Error(
 			"Failed to update api key last used at",
 			log.FieldsFromIncomingContext(ctx).AddFields(
