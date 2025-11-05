@@ -24,7 +24,8 @@ import (
 // Default email templates
 var (
 	defaultPasswordChangedSubject = "Your Bucketeer Password Was Changed"
-	defaultPasswordChangedBody    = `
+	//nolint:lll
+	defaultPasswordChangedBody = `
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -70,7 +71,8 @@ var (
 </html>`
 
 	defaultPasswordSetupSubject = "Complete Your Bucketeer Password Setup"
-	defaultPasswordSetupBody    = `
+	//nolint:lll
+	defaultPasswordSetupBody = `
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -130,7 +132,8 @@ var (
 </html>`
 
 	defaultPasswordResetSubject = "Reset Your Bucketeer Password"
-	defaultPasswordResetBody    = `
+	//nolint:lll
+	defaultPasswordResetBody = `
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -214,7 +217,10 @@ func (r *TemplateRenderer) getTemplateForLanguage(language string) auth.EmailTem
 }
 
 // RenderPasswordChangedEmail renders the password changed notification template
-func (r *TemplateRenderer) RenderPasswordChangedEmail(language string) (subject, body string) {
+func (r *TemplateRenderer) RenderPasswordChangedEmail(
+	language string,
+	userEmail string,
+) (subject, body string) {
 	template := r.getTemplateForLanguage(language).PasswordChanged
 	if template.Subject == "" {
 		template.Subject = defaultPasswordChangedSubject
@@ -224,7 +230,9 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail(language string) (subject,
 	}
 
 	variables := map[string]string{
-		"{{baseURL}}": r.config.BaseURL,
+		"{{baseURL}}":            r.config.BaseURL,
+		"{{webConsoleEndpoint}}": r.config.BaseURL,
+		"{{userEmail}}":          userEmail,
 	}
 
 	return template.Subject, r.substituteVariables(template.Body, variables)
@@ -232,7 +240,10 @@ func (r *TemplateRenderer) RenderPasswordChangedEmail(language string) (subject,
 
 // RenderPasswordSetupEmail renders the password setup email template
 func (r *TemplateRenderer) RenderPasswordSetupEmail(
-	language string, setupURL string, ttl time.Duration,
+	language string,
+	setupURL string,
+	ttl time.Duration,
+	userEmail string,
 ) (subject, body string) {
 	template := r.getTemplateForLanguage(language).PasswordSetup
 	if template.Subject == "" {
@@ -243,9 +254,11 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(
 	}
 
 	variables := map[string]string{
-		"{{setupURL}}":       setupURL,
-		"{{baseURL}}":        r.config.BaseURL,
-		"{{expirationTime}}": ttl.String(),
+		"{{setupURL}}":           setupURL,
+		"{{baseURL}}":            r.config.BaseURL,
+		"{{webConsoleEndpoint}}": r.config.BaseURL,
+		"{{expirationTime}}":     ttl.String(),
+		"{{userEmail}}":          userEmail,
 	}
 
 	return template.Subject, r.substituteVariables(template.Body, variables)
@@ -253,7 +266,10 @@ func (r *TemplateRenderer) RenderPasswordSetupEmail(
 
 // RenderPasswordResetEmail renders the password reset email template
 func (r *TemplateRenderer) RenderPasswordResetEmail(
-	language string, resetURL string, ttl time.Duration,
+	language string,
+	resetURL string,
+	ttl time.Duration,
+	userEmail string,
 ) (subject, body string) {
 	template := r.getTemplateForLanguage(language).PasswordReset
 	if template.Subject == "" {
@@ -264,9 +280,11 @@ func (r *TemplateRenderer) RenderPasswordResetEmail(
 	}
 
 	variables := map[string]string{
-		"{{resetURL}}":       resetURL,
-		"{{baseURL}}":        r.config.BaseURL,
-		"{{expirationTime}}": ttl.String(),
+		"{{resetURL}}":           resetURL,
+		"{{baseURL}}":            r.config.BaseURL,
+		"{{webConsoleEndpoint}}": r.config.BaseURL,
+		"{{expirationTime}}":     ttl.String(),
+		"{{userEmail}}":          userEmail,
 	}
 
 	return template.Subject, r.substituteVariables(template.Body, variables)
