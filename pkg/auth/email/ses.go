@@ -63,7 +63,7 @@ func NewSESEmailService(emailConfig auth.EmailServiceConfig, logger *zap.Logger)
 }
 
 func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
-	subject, body := s.renderer.RenderPasswordChangedEmail(language)
+	subject, body := s.renderer.RenderPasswordChangedEmail(language, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -83,7 +83,7 @@ func (s *SESEmailService) SendPasswordChangedNotification(ctx context.Context, t
 func (s *SESEmailService) SendPasswordSetupEmail(
 	ctx context.Context, to, setupURL string, ttl time.Duration, language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl)
+	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *SESEmailService) SendPasswordSetupEmail(
 func (s *SESEmailService) SendPasswordResetEmail(
 	ctx context.Context, to, resetURL string, ttl time.Duration, language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl)
+	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
