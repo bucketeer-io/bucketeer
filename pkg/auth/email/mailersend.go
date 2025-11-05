@@ -50,7 +50,7 @@ func (s *MailerSendEmailService) SendPasswordChangedNotification(
 	to string,
 	language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordChangedEmail(language)
+	subject, body := s.renderer.RenderPasswordChangedEmail(language, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *MailerSendEmailService) SendPasswordSetupEmail(
 	ttl time.Duration,
 	language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl)
+	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *MailerSendEmailService) SendPasswordResetEmail(
 	ttl time.Duration,
 	language string,
 ) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl)
+	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl, to)
 
 	err := s.sendEmail(ctx, to, subject, body)
 	if err != nil {
