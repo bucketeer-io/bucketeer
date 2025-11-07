@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
@@ -59,6 +59,22 @@ const CollectionLoader = memo(
 
     const experiments = collection?.experiments || [];
     const totalCount = Number(collection?.totalCount) || 0;
+    useEffect(() => {
+      if (!collection?.experiments?.length) return;
+
+      const hasWaiting = collection.experiments.some(
+        exp => exp.status === 'WAITING'
+      );
+
+      if (hasWaiting) {
+        const intervalId = setInterval(() => {
+          refetch();
+        }, 60 * 1000);
+        return () => {
+          clearInterval(intervalId);
+        };
+      }
+    }, [collection, refetch]);
 
     const emptyState = (
       <CollectionEmpty
