@@ -62,6 +62,7 @@ import IconUserOutlined from './customized-icons/user-outlined.svg?react';
 import IconUserSettings from './customized-icons/user-settings.svg?react';
 import IconWatch from './customized-icons/watch.svg?react';
 import IconWebhook from './customized-icons/webhook.svg?react';
+import IconFlagYaml from './customized-icons/yaml.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
 import IconFolder from './sidebar-icons/folder.svg?react';
@@ -115,6 +116,7 @@ export {
   IconLogout,
   IconBuilding,
   // Customized icons
+  IconFlagYaml,
   IconBackspace,
   IconSearch,
   IconChevronRight,

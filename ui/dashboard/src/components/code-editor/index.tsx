@@ -5,6 +5,7 @@ import './style.css';
 
 interface ReactCodeEditorProps extends EditorProps {
   readOnly?: boolean;
+  defaultLanguage?: string;
 }
 
 export default function ReactCodeEditor(props: ReactCodeEditorProps) {
@@ -40,97 +41,100 @@ export default function ReactCodeEditor(props: ReactCodeEditorProps) {
   }, [monaco]);
 
   return (
-    <Editor
-      height={170}
-      width={'100%'}
-      defaultLanguage="json"
-      theme="customLight"
-      wrapperProps={{
-        className:
-          'flex border-none outline-none rounded-lg overflow-hidden editor-wrapper'
-      }}
-      options={{
-        minimap: { enabled: false },
-        fontSize: 14,
-        fontFamily: 'Sofia Pro, san-serif',
-        padding: {
-          top: 12,
-          bottom: 12
-        },
-        lineNumbersMinChars: 3,
-        bracketPairColorization: { enabled: true },
-        scrollBeyondLastLine: true,
-        smoothScrolling: true,
-        wordWrap: 'on',
-        automaticLayout: true,
-        renderLineHighlight: 'all',
-        cursorBlinking: 'smooth',
-        cursorSmoothCaretAnimation: 'on',
-        tabSize: 4,
-        renderWhitespace: 'boundary',
-        folding: true,
-        foldingHighlight: true,
-        showFoldingControls: 'always',
-        scrollbar: {
-          vertical: 'visible',
-          horizontal: 'visible',
-          verticalScrollbarSize: 10,
-          horizontalScrollbarSize: 10
-        },
-        quickSuggestions: true,
-        suggestOnTriggerCharacters: true,
-        acceptSuggestionOnEnter: 'on',
-        tabCompletion: 'on',
-        formatOnType: true,
-        formatOnPaste: true,
-        hideCursorInOverviewRuler: true,
-        overviewRulerLanes: 0,
-        overviewRulerBorder: false,
-        columnSelection: true,
-        readOnly: props?.readOnly
-      }}
-      onMount={editor => {
-        editor.onDidChangeCursorSelection(() => {
-          const selection = editor.getSelection();
-          const editorDomNode = editor.getDomNode();
-          if (!editorDomNode) return;
+    <div className="w-full min-h-[170px] h-[170px] max-h-[600px] resize-y overflow-hidden">
+      <Editor
+        height={'100%'}
+        width={'100%'}
+        defaultLanguage={`${props.defaultLanguage || 'json'}`}
+        theme="customLight"
+        wrapperProps={{
+          className:
+            'flex border-none outline-none rounded-lg overflow-hidden editor-wrapper'
+        }}
+        options={{
+          minimap: { enabled: false },
+          fontSize: 14,
+          fontFamily: 'Sofia Pro, san-serif',
+          padding: {
+            top: 12,
+            bottom: 60
+          },
+          lineNumbersMinChars: 3,
+          bracketPairColorization: { enabled: true },
+          scrollBeyondLastLine: false,
+          smoothScrolling: true,
+          wordWrap: 'on',
+          automaticLayout: true,
+          renderLineHighlight: 'all',
+          cursorBlinking: 'smooth',
+          cursorSmoothCaretAnimation: 'on',
+          tabSize: 4,
+          renderWhitespace: 'boundary',
+          folding: true,
+          foldingHighlight: true,
+          showFoldingControls: 'always',
+          scrollbar: {
+            vertical: 'visible',
+            horizontal: 'visible',
+            borderRadius: '5px',
+            verticalScrollbarSize: 3,
+            horizontalScrollbarSize: 10
+          },
+          quickSuggestions: true,
+          suggestOnTriggerCharacters: true,
+          acceptSuggestionOnEnter: 'on',
+          tabCompletion: 'on',
+          formatOnType: true,
+          formatOnPaste: true,
+          hideCursorInOverviewRuler: true,
+          overviewRulerLanes: 0,
+          overviewRulerBorder: false,
+          columnSelection: true,
+          readOnly: props?.readOnly
+        }}
+        onMount={editor => {
+          editor.onDidChangeCursorSelection(() => {
+            const selection = editor.getSelection();
+            const editorDomNode = editor.getDomNode();
+            if (!editorDomNode) return;
 
-          const highlightedLines =
-            editorDomNode.querySelectorAll('.highlighted-line');
-          highlightedLines?.forEach((line: Element) =>
-            line.classList.remove('highlighted-line')
-          );
-          if (selection && !selection.isEmpty()) {
-            const selectionLineNumbers = [];
-            for (
-              let i = selection.startLineNumber;
-              i <= selection.endLineNumber;
-              i++
-            ) {
-              selectionLineNumbers.push(i);
+            const highlightedLines =
+              editorDomNode.querySelectorAll('.highlighted-line');
+            highlightedLines?.forEach((line: Element) =>
+              line.classList.remove('highlighted-line')
+            );
+            if (selection && !selection.isEmpty()) {
+              const selectionLineNumbers = [];
+              for (
+                let i = selection.startLineNumber;
+                i <= selection.endLineNumber;
+                i++
+              ) {
+                selectionLineNumbers.push(i);
+              }
+              if (editorDomNode) {
+                selectionLineNumbers.forEach(lineNumber => {
+                  const lineElement = editorDomNode.querySelector(
+                    `.view-line:nth-child(${lineNumber})`
+                  );
+                  if (lineElement) {
+                    lineElement.classList.add('highlighted-line');
+                  }
+                });
+              }
             }
-            if (editorDomNode) {
-              selectionLineNumbers.forEach(lineNumber => {
-                const lineElement = editorDomNode.querySelector(
-                  `.view-line:nth-child(${lineNumber})`
-                );
-                if (lineElement) {
-                  lineElement.classList.add('highlighted-line');
-                }
-              });
-            }
-          }
-        });
-      }}
-      loading={
-        <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
-          <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
-            Loading...
-          </p>
-          <Spinner />
-        </div>
-      }
-      {...props}
-    />
+          });
+        }}
+        loading={
+          <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
+            <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
+              Loading...
+            </p>
+            <Spinner />
+          </div>
+        }
+        {...props}
+      />
+    </div>
   );
 }

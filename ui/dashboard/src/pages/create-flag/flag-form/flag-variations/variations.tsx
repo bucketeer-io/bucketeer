@@ -34,6 +34,7 @@ const Variations = () => {
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
+  const isYAML = useMemo(() => variationType === 'YAML', [variationType]);
 
   const onAddVariation = () => {
     append({
@@ -65,7 +66,7 @@ const Variations = () => {
             <div className="flex flex-col w-full gap-y-4">
               <div
                 className={cn('flex w-full gap-4', {
-                  'flex-col': isJSON
+                  'flex-col': isJSON || isYAML
                 })}
               >
                 <Form.Field
@@ -90,9 +91,10 @@ const Variations = () => {
                         {t('feature-flags.value')}
                       </Form.Label>
                       <Form.Control>
-                        {isJSON ? (
+                        {isJSON || isYAML ? (
                           <div className="flex flex-col gap-y-2">
                             <ReactCodeEditor
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
                               value={field.value}
                               onChange={field.onChange}
                             />

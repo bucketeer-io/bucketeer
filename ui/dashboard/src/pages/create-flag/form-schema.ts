@@ -7,6 +7,7 @@ import {
   VARIATION_VALUE_MAX_LENGTH
 } from 'constants/feature-flag';
 import { FormSchemaProps } from 'hooks/use-form-schema';
+import * as yaml from 'js-yaml';
 import * as yup from 'yup';
 import { FeatureVariation, FeatureVariationType } from '@types';
 import { isNumber } from 'utils/chart';
@@ -62,6 +63,23 @@ export const createVariationsSchema = ({
                   message: translation('message:validation.must-be-json'),
                   path: context.path
                 });
+              }
+              return true;
+            })
+            .test('isYaml', (value, context) => {
+              const type = context.from && context.from[1].value.variationType;
+              if (type === 'YAML') {
+                try {
+                  yaml.load(value);
+                  return true;
+                } catch (error) {
+                  if (error) {
+                    return context.createError({
+                      message: translation('message:validation.must-be-yaml'),
+                      path: context.path
+                    });
+                  }
+                }
               }
               return true;
             })

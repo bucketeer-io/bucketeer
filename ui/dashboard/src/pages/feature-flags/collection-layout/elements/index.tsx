@@ -168,7 +168,7 @@ export const VariationTypeTooltip = ({
             i18nKey={'table:feature-flags.specific-variation-type'}
             values={{
               type:
-                variationType === 'JSON'
+                variationType === 'JSON' || variationType === 'YAML'
                   ? variationType
                   : t(`form:${variationType?.toLowerCase()}`)
             }}
