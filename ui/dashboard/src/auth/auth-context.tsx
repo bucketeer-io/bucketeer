@@ -43,6 +43,7 @@ interface AuthContextType {
 
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
+  refreshOrganizations: () => Promise<void>;
 
   syncSignIn: (authToken: AuthToken) => Promise<void>;
   onMeFetcher: (params: MeFetcherParams) => Promise<void>;
@@ -156,6 +157,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     navigate(PAGE_PATH_ROOT);
   };
 
+  const refreshOrganizations = async () => {
+    try {
+      const response = await accountOrganizationFetcher();
+      const organizationsList = response.organizations || [];
+      setMyOrganizations(organizationsList);
+    } catch (error) {
+      errorNotify(error);
+    }
+  };
+
   useEffect(() => {
     if (authToken) {
       onSyncAuthentication();
@@ -188,6 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         consoleAccount,
         myOrganizations,
+        refreshOrganizations,
 
         syncSignIn,
         onMeFetcher,
