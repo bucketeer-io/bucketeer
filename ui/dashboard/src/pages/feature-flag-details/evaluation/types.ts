@@ -16,7 +16,7 @@ export interface TimeRangeOption {
 }
 
 export interface RawPoint {
-  x:Date;
-  y:number;
-  raw:number
+  x: Date;
+  y: number;
+  raw: number;
 }
