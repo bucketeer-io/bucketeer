@@ -9,3 +9,5 @@ export const VARIATION_VALUE_MAX_LENGTH = 10000;
 export const VARIATION_NUMBER_VALUE_MAX_LENGTH = 309;
 export const VARIATION_NAME_MAX_LENGTH = 100;
 export const VARIATION_DESCRIPTION_MAX_LENGTH = 100;
+
+export const DEFAULT_VALUE_YAML = `key:\n    key_1: value_1\n    key_2: value_2\n`;

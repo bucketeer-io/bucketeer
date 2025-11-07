@@ -15,7 +15,12 @@ export enum FeatureRuleClauseOperator {
   FEATURE_FLAG = 'FEATURE_FLAG'
 }
 
-export type FeatureVariationType = 'STRING' | 'BOOLEAN' | 'NUMBER' | 'JSON';
+export type FeatureVariationType =
+  | 'STRING'
+  | 'BOOLEAN'
+  | 'NUMBER'
+  | 'JSON'
+  | 'YAML';
 
 export type FeatureChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
 

@@ -40,3 +40,7 @@
 .editor-wrapper .overflow-guard {
   @apply !flex !gap-x-4;
 }
+
+.editor-wrapper .monaco-scrollable-element > .scrollbar > .slider {
+  @apply rounded-md;
+}
