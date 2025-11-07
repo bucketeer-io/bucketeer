@@ -14,3 +14,9 @@ export interface TimeRangeOption {
   label: string;
   value: EvaluationTimeRange;
 }
+
+export interface RawPoint {
+  x:Date;
+  y:number;
+  raw:number
+}
