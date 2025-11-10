@@ -812,7 +812,7 @@ func (s *AccountService) UpdateAPIKeyLastUsedAt(
 				zap.String("id", req.ApiKeyId),
 			)...,
 		)
-		return nil, api.NewGRPCStatus(err).Err()
+		return nil, statusInternal.Err()
 	}
 	return &proto.UpdateAPIKeyLastUsedAtResponse{}, nil
 }
