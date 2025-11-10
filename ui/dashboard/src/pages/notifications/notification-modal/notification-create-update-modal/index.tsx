@@ -11,6 +11,7 @@ import {
   notificationUpdater
 } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateNotificationDetails } from '@queries/notification-details';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
@@ -18,6 +19,7 @@ import { languageList } from 'constants/notification';
 import { ID_NEW } from 'constants/routing';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -55,7 +57,9 @@ interface NotificationCreateUpdateModalProps {
   isOpen: boolean;
   isLoadingNotification: boolean;
   notification?: Notification;
-  onClose: () => void;
+  notificationEnvironmentId?: string;
+  resetNotification: () => void;
+  onClose: (isRefresh?: boolean) => void;
 }
 
 export interface NotificationCreateUpdateForm {
@@ -90,6 +94,8 @@ const NotificationCreateUpdateModal = ({
   isOpen,
   isLoadingNotification,
   notification,
+  notificationEnvironmentId,
+  resetNotification,
   onClose
 }: NotificationCreateUpdateModalProps) => {
   const { notify, errorNotify } = useToast();
@@ -207,6 +213,10 @@ const NotificationCreateUpdateModal = ({
             })
           });
           invalidateNotifications(queryClient);
+          invalidateNotificationDetails(queryClient, {
+            id: notificationId as string,
+            environmentId: notificationEnvironmentId as string
+          });
           onClose();
         }
       } catch (error) {
@@ -216,11 +226,15 @@ const NotificationCreateUpdateModal = ({
     [notification, isEditNotification]
   );
 
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting,
+    callBackCancel: resetNotification
+  });
   return (
     <SlideModal
       title={t(isEditNotification ? 'update-notification' : 'new-notification')}
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => onClose(false)}
     >
       {isLoadingNotification ? (
         <FormLoading />
@@ -519,7 +533,11 @@ const NotificationCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => onClose(false)}
+                    >
                       {t(`cancel`)}
                     </Button>
                   }

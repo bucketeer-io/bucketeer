@@ -166,8 +166,8 @@ const PageLoader = () => {
           isOpen={!!isAdd || !!isEdit}
           isLoadingSegment={isLoadingSegment}
           userSegment={selectedSegment!}
+          resetSegment={() => setSelectedSegment(undefined)}
           onClose={() => {
-            setSelectedSegment(undefined);
             onCloseActionModal();
           }}
           setSegmentUploading={setSegmentUploading}

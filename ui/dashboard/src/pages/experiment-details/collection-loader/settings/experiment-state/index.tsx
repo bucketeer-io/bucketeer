@@ -144,7 +144,7 @@ const ExperimentState = ({
             }
             values={{
               date: formatLongDateTime({
-                value: experiment.stopAt,
+                value: isWaiting ? experiment.startAt : experiment.stopAt,
                 overrideOptions: {
                   month: '2-digit',
                   day: '2-digit',

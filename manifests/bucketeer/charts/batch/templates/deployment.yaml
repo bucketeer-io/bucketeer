@@ -223,10 +223,11 @@ spec:
                   - -c
                   - |
                     admin_port={{ .Values.envoy.adminPort }}
-                    # Wait for load balancer propagation (must match app container propagation delay)
-                    sleep 15
                     wget -q -T 1 -O- --method=POST --body-data='' \
                       "http://localhost:${admin_port}/drain_listeners?graceful" || true
+
+                    # Wait for load balancer propagation (must match app container propagation delay)
+                    sleep 15
                     exit 0
           command: ["envoy"]
           args:
@@ -284,15 +285,19 @@ spec:
             - name: httpstan
               containerPort: {{ .Values.httpstan.port }}
           livenessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
-            periodSeconds: {{ .Values.health.periodSeconds }}
-            failureThreshold: {{ .Values.health.failureThreshold }}
+            initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.livenessProbe.timeoutSeconds }}
             httpGet:
               path: {{ .Values.httpstan.healthPath }}
               port: {{ .Values.httpstan.port }}
               scheme: HTTP
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.health.readinessProbe.timeoutSeconds }}
             httpGet:
               path: {{ .Values.httpstan.healthPath }}
               port: {{ .Values.httpstan.port }}

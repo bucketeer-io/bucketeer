@@ -289,5 +289,11 @@
   "member-role-description": "特定の環境にのみアクセスでき、組織設定、プロジェクト、環境、APIキー、メンバーの作成や更新はできません。",
   "admin-role-description": "すべての環境にアクセスでき、すべての操作を実行できます。",
   "teams": "チーム",
-  "docs": "ドキュメント"
+  "docs": "ドキュメント",
+  "new":"新規",
+  "discard": "変更を破棄",
+  "edit-rule": "ルールを編集",
+  "add-rule": "ルールを追加",
+  "continue-editing": "編集を続ける",
+  "leave-page": "ページを離れる"
 }

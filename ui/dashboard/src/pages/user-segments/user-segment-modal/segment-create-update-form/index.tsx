@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
@@ -34,6 +35,7 @@ interface SegmentCreateUpdateModalProps {
   userSegment?: UserSegment;
   isDisabled: boolean;
   onClose: () => void;
+  resetSegment: () => void;
   setSegmentUploading: (userSegment: UserSegment | null) => void;
 }
 
@@ -43,6 +45,7 @@ const SegmentCreateUpdateModal = ({
   isLoadingSegment,
   userSegment,
   isDisabled,
+  resetSegment,
   onClose,
   setSegmentUploading
 }: SegmentCreateUpdateModalProps) => {
@@ -79,6 +82,13 @@ const SegmentCreateUpdateModal = ({
     getFieldState
   } = form;
 
+  const handleClose = () => {
+    if (!form.formState.isDirty) {
+      resetSegment();
+    }
+    onClose();
+  };
+
   const updateSuccess = (isUpload = false) => {
     if (!isUpload) {
       notify({
@@ -87,7 +97,7 @@ const SegmentCreateUpdateModal = ({
           action: t(userSegment ? 'updated' : 'created')
         })
       });
-      onClose();
+      handleClose();
     }
     if (isUpload) setSegmentUploading(null);
     invalidateUserSegments(queryClient);
@@ -152,18 +162,22 @@ const SegmentCreateUpdateModal = ({
         }
         if (file) setSegmentUploading(newSegment!);
         onUpdateSuccess();
+        resetSegment();
       } catch (error) {
         errorNotify(error);
       }
     },
     [files, currentEnvironment, userSegment]
   );
-
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting,
+    callBackCancel: resetSegment
+  });
   return (
     <SlideModal
       title={t(isUpdate ? 'update-user-segment' : 'new-user-segment')}
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
     >
       {isLoadingSegment ? (
         <FormLoading />
@@ -337,7 +351,11 @@ const SegmentCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleClose}
+                    >
                       {t(`common:cancel`)}
                     </Button>
                   }

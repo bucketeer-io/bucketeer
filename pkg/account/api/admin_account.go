@@ -23,6 +23,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	proto "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -113,18 +114,45 @@ func (s *AccountService) GetMe(
 	}
 	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+		lastSeen := sysAdminAccount.LastSeen
 
-		// update system admin user last seen
-		err := s.updateLastSeen(ctx, sysAdminAccount.Email, sysAdminAccount.OrganizationId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update system admin user last seen",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("email", sysAdminAccount.Email),
-					zap.String("organizationId", req.OrganizationId),
-				)...,
-			)
+		if updated, err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId); err != nil {
+			if errors.Is(err, v2as.ErrAccountNotFound) {
+				s.logger.Warn(
+					"System admin user not found in organization when updating last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", req.OrganizationId),
+					)...,
+				)
+			} else {
+				s.logger.Error(
+					"Failed to update system admin user last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", req.OrganizationId),
+					)...,
+				)
+			}
+		} else {
+			lastSeen = updated
+		}
+		if req.OrganizationId != sysAdminAccount.OrganizationId {
+			// req.OrganizationId is the org currently being viewed in the console, while
+			// sysAdminAccount.OrganizationId is the system admin's dedicated organization.
+			// When these differ, the system admin is looking at a regular organization,
+			// so we also update the last-seen timestamp for the system admin organization.
+			if _, err := s.updateLastSeen(ctx, sysAdminAccount.Email, sysAdminAccount.OrganizationId); err != nil {
+				s.logger.Error(
+					"Failed to update system admin user last seen",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("email", sysAdminAccount.Email),
+						zap.String("organizationId", sysAdminAccount.OrganizationId),
+					)...,
+				)
+			}
 		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
@@ -141,7 +169,7 @@ func (s *AccountService) GetMe(
 			FirstName:        sysAdminAccount.FirstName,
 			LastName:         sysAdminAccount.LastName,
 			Language:         sysAdminAccount.Language,
-			LastSeen:         sysAdminAccount.LastSeen,
+			LastSeen:         lastSeen,
 		}}, nil
 	}
 	// non admin account response
@@ -158,7 +186,9 @@ func (s *AccountService) GetMe(
 	}
 
 	// update user last seen
-	err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)
+	lastSeen := account.LastSeen
+	var updated int64
+	updated, err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to update user last seen",
@@ -168,6 +198,8 @@ func (s *AccountService) GetMe(
 				zap.String("organizationId", req.OrganizationId),
 			)...,
 		)
+	} else {
+		lastSeen = updated
 	}
 
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
@@ -184,7 +216,7 @@ func (s *AccountService) GetMe(
 		FirstName:        account.FirstName,
 		LastName:         account.LastName,
 		Language:         account.Language,
-		LastSeen:         account.LastSeen,
+		LastSeen:         lastSeen,
 	}}, nil
 }
 
@@ -443,17 +475,26 @@ func (s *AccountService) getSystemAdminAccountV2(
 	return account, nil
 }
 
-func (s *AccountService) updateLastSeen(ctx context.Context, email, organizationID string) error {
+func (s *AccountService) updateLastSeen(ctx context.Context, email, organizationID string) (int64, error) {
 	// First get the existing account
 	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
-		return err
+		return 0, err
+	}
+
+	cloned, ok := proto.Clone(account.AccountV2).(*accountproto.AccountV2)
+	if !ok {
+		return 0, statusInternal.Err()
 	}
 
 	now := time.Now().Unix()
 	// Update only the LastSeen field
-	account.LastSeen = now
-	account.UpdatedAt = now
+	accountForUpdate := &domain.AccountV2{AccountV2: cloned}
+	accountForUpdate.LastSeen = now
+	accountForUpdate.UpdatedAt = now
 
-	return s.accountStorage.UpdateAccountV2(ctx, account)
+	if err := s.accountStorage.UpdateAccountV2(ctx, accountForUpdate); err != nil {
+		return 0, err
+	}
+	return now, nil
 }

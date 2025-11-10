@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import {
@@ -15,6 +16,7 @@ import {
   RolloutSchedule,
   RolloutTemplateScheduleClause
 } from '@types';
+import { checkFieldDirty } from 'utils/function';
 import { cn } from 'utils/style';
 import {
   rolloutSchema,
@@ -111,10 +113,17 @@ const ProgressiveRolloutModal = ({
   });
 
   const {
-    formState: { isValid, isSubmitting },
+    formState: { isValid, isSubmitting, dirtyFields },
     watch,
     setValue
   } = form;
+
+  const isShowPopupUnsaved = useMemo(() => {
+    delete dirtyFields.progressiveRollout?.template?.schedulesList;
+    return checkFieldDirty(
+      dirtyFields.progressiveRollout as unknown as { [key: string]: boolean }
+    );
+  }, [dirtyFields.progressiveRollout]);
 
   const progressiveRolloutType = watch('progressiveRolloutType');
 
@@ -232,6 +241,8 @@ const ProgressiveRolloutModal = ({
     [actionType, selectedData, editable]
   );
 
+  useUnsavedLeavePage({ isShow: isShowPopupUnsaved && !isSubmitting });
+
   return (
     <SlideModal
       title={t(`common:new-operation`)}
@@ -320,7 +331,7 @@ const ProgressiveRolloutModal = ({
           <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
             <ButtonBar
               primaryButton={
-                <Button variant="secondary" onClick={onClose}>
+                <Button type="button" variant="secondary" onClick={onClose}>
                   {t(`common:cancel`)}
                 </Button>
               }
