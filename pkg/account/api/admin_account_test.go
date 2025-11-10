@@ -327,6 +327,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				envClient := s.environmentClient.(*ecmock.MockClient)
 				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				credentialsStorage := s.credentialsStorage.(*authstoragemock.MockCredentialsStorage)
 				email := "bucketeer@example.com"
 				sysAdminOrgID := "sys-org"
 				projects := getProjects(t)
@@ -428,6 +429,12 @@ func TestGetMeMySQL(t *testing.T) {
 					accountStorage.EXPECT().GetAccountV2(
 						gomock.Any(), email, org.Id,
 					).Return(orgAccount, nil),
+					credentialsStorage.EXPECT().GetCredentials(
+						gomock.Any(), email,
+					).Return(nil, authstorage.ErrCredentialsNotFound),
+					credentialsStorage.EXPECT().CreateCredentials(
+						gomock.Any(), email, "",
+					).Return(nil),
 				)
 			},
 			input: &accountproto.GetMeRequest{
@@ -470,10 +477,11 @@ func TestGetMeMySQL(t *testing.T) {
 							Id: "filter-id",
 						},
 					},
-					FirstName: "System",
-					LastName:  "Admin",
-					Language:  "en",
-					LastSeen:  123,
+					FirstName:             "System",
+					LastName:              "Admin",
+					Language:              "en",
+					LastSeen:              123,
+					PasswordSetupRequired: true,
 				},
 			},
 			expectedErr: nil,
@@ -484,6 +492,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup: func(s *AccountService) {
 				envClient := s.environmentClient.(*ecmock.MockClient)
 				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				credentialsStorage := s.credentialsStorage.(*authstoragemock.MockCredentialsStorage)
 				email := "bucketeer@example.com"
 				sysAdminOrgID := "sys-org"
 				projects := getProjects(t)
@@ -565,6 +574,12 @@ func TestGetMeMySQL(t *testing.T) {
 					accountStorage.EXPECT().GetAccountV2(
 						gomock.Any(), email, org.Id,
 					).Return(nil, v2as.ErrAccountNotFound),
+					credentialsStorage.EXPECT().GetCredentials(
+						gomock.Any(), email,
+					).Return(nil, authstorage.ErrCredentialsNotFound),
+					credentialsStorage.EXPECT().CreateCredentials(
+						gomock.Any(), email, "",
+					).Return(nil),
 				)
 			},
 			input: &accountproto.GetMeRequest{
@@ -607,10 +622,11 @@ func TestGetMeMySQL(t *testing.T) {
 							Id: "filter-id",
 						},
 					},
-					FirstName: "System",
-					LastName:  "Admin",
-					Language:  "en",
-					LastSeen:  456,
+					FirstName:             "System",
+					LastName:              "Admin",
+					Language:              "en",
+					LastSeen:              456,
+					PasswordSetupRequired: true,
 				},
 			},
 			expectedErr: nil,
