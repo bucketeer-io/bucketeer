@@ -401,11 +401,13 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
+	// Set stopAt to be slightly in the past so the calculator doesn't cap endAt to time.Now()
+	// This ensures the calculator queries the full experiment time range
+	stopAt := time.Now().Add(-10 * time.Minute)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
+	// Wait for event-persister-dwh to subscribe to the pubsub
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
@@ -456,7 +458,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
 		}
 		time.Sleep(10 * time.Second)
 
@@ -466,6 +468,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 			if st.Code() != codes.NotFound {
 				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
 			} else {
+				t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
 				continue
 			}
 		}
@@ -571,7 +574,9 @@ func TestExperimentResult(t *testing.T) {
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Add(-time.Hour)
-	stopAt := startAt.Add(time.Hour * 2)
+	// Set stopAt to be slightly in the past so the calculator doesn't cap endAt to time.Now()
+	// This ensures the calculator queries the full experiment time range
+	stopAt := time.Now().Add(-10 * time.Minute)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -626,7 +631,7 @@ func TestExperimentResult(t *testing.T) {
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
 		}
 		time.Sleep(10 * time.Second)
 
@@ -636,6 +641,7 @@ func TestExperimentResult(t *testing.T) {
 			if st.Code() != codes.NotFound {
 				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
 			} else {
+				t.Logf("Retry %d/%d: ExperimentResult not found yet (NotFound error)", i+1, retryTimes)
 				continue
 			}
 		}
