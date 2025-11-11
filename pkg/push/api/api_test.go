@@ -493,7 +493,6 @@ func TestDeletePushMySQL(t *testing.T) {
 			req: &pushproto.DeletePushRequest{
 				EnvironmentId: "ns0",
 				Id:            "key-1",
-				Command:       &pushproto.DeletePushCommand{},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -520,7 +519,6 @@ func TestDeletePushMySQL(t *testing.T) {
 			req: &pushproto.DeletePushRequest{
 				EnvironmentId: "ns0",
 				Id:            "key-0",
-				Command:       &pushproto.DeletePushCommand{},
 			},
 			expectedErr: nil,
 		},

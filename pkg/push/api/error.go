@@ -33,9 +33,6 @@ var (
 	statusFCMServiceAccountInvalid = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "fcm service account is invalid", "fcm_service_account"),
 	)
-	statusTagsRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.PushPackageName, "tags must be specified", "tags"),
-	)
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "cursor is invalid", "cursor"),
 	)
