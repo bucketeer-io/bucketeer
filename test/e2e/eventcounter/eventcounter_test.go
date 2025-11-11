@@ -401,9 +401,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Add(-time.Hour)
-	// Set stopAt to be slightly in the past so the calculator doesn't cap endAt to time.Now()
-	// This ensures the calculator queries the full experiment time range
-	stopAt := time.Now().Add(-10 * time.Minute)
+	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -574,9 +572,7 @@ func TestExperimentResult(t *testing.T) {
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Add(-time.Hour)
-	// Set stopAt to be slightly in the past so the calculator doesn't cap endAt to time.Now()
-	// This ensures the calculator queries the full experiment time range
-	stopAt := time.Now().Add(-10 * time.Minute)
+	stopAt := time.Now().Add(2 * time.Hour)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
