@@ -49648,17 +49648,6 @@
             "name": "CreatePushRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "command",
-                "type": "CreatePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "tags",
                 "type": "string",
@@ -49681,7 +49670,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -49790,24 +49780,20 @@
                 ]
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "DeletePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -49824,39 +49810,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "add_push_tags_command",
-                "type": "AddPushTagsCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "delete_push_tags_command",
-                "type": "DeletePushTagsCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "rename_push_command",
-                "type": "RenamePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
                   }
                 ]
               },
@@ -49901,7 +49854,10 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3,
+              4,
+              5
             ]
           },
           {

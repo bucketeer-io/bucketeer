@@ -39,7 +39,7 @@ message TagChange {
 
 message CreatePushRequest {
   reserved 1;
-  CreatePushCommand command = 2 [deprecated = true];
+  reserved 2;
   repeated string tags = 3;
   string name = 4;
   bytes fcm_service_account = 5;
@@ -84,8 +84,8 @@ message ListPushesResponse {
 message DeletePushRequest {
   reserved 1;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  DeletePushCommand command = 3 [deprecated = true];
-  string environment_id = 4;
+  reserved 3;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DeletePushResponse {}
@@ -93,9 +93,9 @@ message DeletePushResponse {}
 message UpdatePushRequest {
   reserved 1;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  AddPushTagsCommand add_push_tags_command = 3 [deprecated = true];
-  DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
-  RenamePushCommand rename_push_command = 5 [deprecated = true];
+  reserved 3;
+  reserved 4;
+  reserved 5;
   repeated string tags = 6 [deprecated = true];
   google.protobuf.StringValue name = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
