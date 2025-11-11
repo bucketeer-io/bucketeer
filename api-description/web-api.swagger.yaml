@@ -9997,6 +9997,12 @@ definitions:
           $ref: '#/definitions/autoopsProgressiveRolloutSchedule'
       variationId:
         type: string
+        title: 'Deprecated: use control_variation_id and'
+      controlVariationId:
+        type: string
+        title: target_variation_id instead
+      targetVariationId:
+        type: string
   autoopsProgressiveRolloutSchedule:
     type: object
     properties:
@@ -10036,6 +10042,12 @@ definitions:
         type: string
         format: int64
       variationId:
+        type: string
+        title: 'Deprecated: use control_variation_id and'
+      controlVariationId:
+        type: string
+        title: target_variation_id instead
+      targetVariationId:
         type: string
   autoopsProgressiveRolloutType:
     type: string
