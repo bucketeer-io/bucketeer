@@ -19,34 +19,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestGetRolloutStrategyVariations(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc              string
-		feature           *featureproto.Feature
-		targetVariationID string
-		targetWeight      int32
-		expected          []*featureproto.RolloutStrategy_Variation
-		expectedErr       error
+		desc                string
+		controlVariationID  string
+		targetVariationID   string
+		targetWeight        int32
+		expected            []*featureproto.RolloutStrategy_Variation
 	}{
 		{
-			desc: "success: weight is max",
-			feature: &featureproto.Feature{
-				Variations: []*featureproto.Variation{
-					{
-						Id: "vid-1",
-					},
-					{
-						Id: "vid-2",
-					},
-				},
-			},
-			targetVariationID: "vid-1",
-			targetWeight:      totalVariationWeight,
+			desc:               "success: weight is max",
+			controlVariationID: "vid-2",
+			targetVariationID:  "vid-1",
+			targetWeight:       totalVariationWeight,
 			expected: []*featureproto.RolloutStrategy_Variation{
 				{
 					Variation: "vid-1",
@@ -59,19 +48,10 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 			},
 		},
 		{
-			desc: "success: weight is not max",
-			feature: &featureproto.Feature{
-				Variations: []*featureproto.Variation{
-					{
-						Id: "vid-1",
-					},
-					{
-						Id: "vid-2",
-					},
-				},
-			},
-			targetVariationID: "vid-2",
-			targetWeight:      20,
+			desc:               "success: weight is not max",
+			controlVariationID: "vid-1",
+			targetVariationID:  "vid-2",
+			targetWeight:       20,
 			expected: []*featureproto.RolloutStrategy_Variation{
 				{
 					Variation: "vid-2",
@@ -86,12 +66,11 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getRolloutStrategyVariations(
-				&ftdomain.Feature{Feature: p.feature},
-				p.targetWeight,
+			actual := getRolloutStrategyVariations(
+				p.controlVariationID,
 				p.targetVariationID,
+				p.targetWeight,
 			)
-			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
 	}

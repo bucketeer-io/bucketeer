@@ -35,7 +35,17 @@ func ExecuteProgressiveRolloutOperation(
 	feature *ftdomain.Feature,
 	scheduleID string,
 ) (*featureproto.Strategy, error) {
-	var variationID string
+	// Extract control and target variation IDs
+	controlVariationID, err := progressiveRollout.GetControlVariationID()
+	if err != nil {
+		return nil, err
+	}
+	targetVariationID, err := progressiveRollout.GetTargetVariationID()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get weight for this schedule
 	var weight int32
 	switch progressiveRollout.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
@@ -43,8 +53,6 @@ func ExecuteProgressiveRolloutOperation(
 		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
-		variationID = c.VariationId
-		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
 			return nil, err
@@ -54,8 +62,6 @@ func ExecuteProgressiveRolloutOperation(
 		if err := progressiveRollout.Clause.UnmarshalTo(c); err != nil {
 			return nil, err
 		}
-		variationID = c.VariationId
-		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
 			return nil, err
@@ -63,10 +69,11 @@ func ExecuteProgressiveRolloutOperation(
 	default:
 		return nil, domain.ErrProgressiveRolloutInvalidType
 	}
+
 	return newRolloutStrategy(
+		controlVariationID,
+		targetVariationID,
 		weight,
-		feature,
-		variationID,
 	)
 }
 
@@ -83,14 +90,11 @@ func getTargetWeight(
 }
 
 func newRolloutStrategy(
-	weight int32,
-	feature *ftdomain.Feature,
+	controlVariationID string,
 	targetVariationID string,
+	weight int32,
 ) (*featureproto.Strategy, error) {
-	variations, err := getRolloutStrategyVariations(feature, weight, targetVariationID)
-	if err != nil {
-		return nil, err
-	}
+	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight)
 	strategy := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -101,34 +105,19 @@ func newRolloutStrategy(
 }
 
 func getRolloutStrategyVariations(
-	feature *ftdomain.Feature,
-	weight int32,
+	controlVariationID string,
 	targetVariationID string,
-) ([]*featureproto.RolloutStrategy_Variation, error) {
-	nonTargetVariationID, err := findNonTargetVariationID(feature, targetVariationID)
-	if err != nil {
-		return nil, err
-	}
+	weight int32,
+) []*featureproto.RolloutStrategy_Variation {
+	// Only include the two selected variations in the rollout
 	return []*featureproto.RolloutStrategy_Variation{
 		{
 			Variation: targetVariationID,
 			Weight:    weight,
 		},
 		{
-			Variation: nonTargetVariationID,
+			Variation: controlVariationID,
 			Weight:    totalVariationWeight - weight,
 		},
-	}, nil
-}
-
-func findNonTargetVariationID(
-	feature *ftdomain.Feature,
-	variationID string,
-) (string, error) {
-	for _, v := range feature.Variations {
-		if v.Id != variationID {
-			return v.Id, nil
-		}
 	}
-	return "", errVariationNotFound
 }
