@@ -171,7 +171,10 @@ func (e *experimentCalculate) runCalculation() {
 			e.logger.Info("Experiment calculated successfully in the specified environment",
 				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
-					zap.Any("experiment", ex),
+					zap.String("experimentId", ex.Id),
+					zap.String("experimentName", ex.Name),
+					zap.Bool("archived", ex.Archived),
+					zap.Int32("status", int32(ex.Status)),
 				)...,
 			)
 		}
@@ -272,7 +275,6 @@ func (e *experimentCalculate) listExperiments(
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
 		},
-		Archived: wrapperspb.Bool(false),
 	}
 	resp, err := e.experimentClient.ListExperiments(ctx, req)
 	if err != nil {

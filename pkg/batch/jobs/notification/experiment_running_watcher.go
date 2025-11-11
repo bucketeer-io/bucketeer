@@ -152,7 +152,6 @@ func (w *experimentRunningWatcher) listExperiments(
 			Statuses: []experimentproto.Experiment_Status{
 				experimentproto.Experiment_RUNNING,
 			},
-			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
