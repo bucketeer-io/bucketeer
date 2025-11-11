@@ -105,13 +105,13 @@ oauth:
     redirectUrls:
   passwordAuth:
     enabled:
-    passwordMinLength:
-    passwordRequireUppercase:
-    passwordRequireLowercase:
-    passwordRequireNumbers:
-    passwordRequireSymbols:
-    passwordResetTokenTTL:
-    passwordSetupTokenTTL:
+    passwordMinLength: 8
+    passwordRequireUppercase: true
+    passwordRequireLowercase: true
+    passwordRequireNumbers: true
+    passwordRequireSymbols: true
+    passwordResetTokenTTL: 1800s
+    passwordSetupTokenTTL: 24h
     emailServiceEnabled:
     emailServiceConfig:
       provider:
