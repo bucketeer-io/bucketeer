@@ -160,16 +160,7 @@ func (w *eventCountWatcher) getExecuteClauseId(
 	}
 	var lastErr error
 	for id, c := range opsEventRateClauses {
-		logFunc := func(msg string) {
-			w.logger.Debug(msg,
-				zap.String("environmentId", environmentId),
-				zap.String("featureId", a.FeatureId),
-				zap.String("autoOpsRuleId", a.Id),
-				zap.Any("opsEventRateClause", c),
-			)
-		}
 		evaluationCount, err := w.getTargetOpsEvaluationCount(ctx,
-			logFunc,
 			environmentId,
 			a.Id,
 			id,
@@ -186,7 +177,6 @@ func (w *eventCountWatcher) getExecuteClauseId(
 		}
 		opsEventCount, err := w.getTargetOpsGoalEventCount(
 			ctx,
-			logFunc,
 			environmentId,
 			a.Id,
 			id,
@@ -265,7 +255,6 @@ func (w *eventCountWatcher) assessRule(
 
 func (w *eventCountWatcher) getTargetOpsEvaluationCount(
 	ctx context.Context,
-	logFunc func(string),
 	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
@@ -280,9 +269,6 @@ func (w *eventCountWatcher) getTargetOpsEvaluationCount(
 	)
 	if err != nil {
 		return 0, err
-	}
-	if count == 0 {
-		logFunc("Ops evaluation user count is zero")
 	}
 	return count, nil
 }
@@ -316,7 +302,6 @@ func (w *eventCountWatcher) getEvaluationCount(
 
 func (w *eventCountWatcher) getTargetOpsGoalEventCount(
 	ctx context.Context,
-	logFunc func(string),
 	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
@@ -331,9 +316,6 @@ func (w *eventCountWatcher) getTargetOpsGoalEventCount(
 	)
 	if err != nil {
 		return 0, err
-	}
-	if count == 0 {
-		logFunc("Ops goal user count is zero")
 	}
 	return count, nil
 }
