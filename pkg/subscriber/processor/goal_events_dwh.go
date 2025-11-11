@@ -191,20 +191,6 @@ func (w *goalEvtWriter) Write(
 			continue
 		}
 
-		// Log experiment cache state for debugging
-		w.logger.Info("Goal event processing - experiment cache state",
-			zap.String("environmentId", environmentId),
-			zap.Int("experimentCount", len(experiments)),
-			zap.Int("goalEventCount", len(events)),
-		)
-
-		if len(experiments) == 0 {
-			w.logger.Warn("No experiments found in cache - goal events will be skipped",
-				zap.String("environmentId", environmentId),
-				zap.Int("goalEventCount", len(events)),
-			)
-			continue
-		}
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
