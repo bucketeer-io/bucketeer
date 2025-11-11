@@ -90,9 +90,9 @@ spec:
                   rm -f ${RESPONSE}
                   END_TIME=$(date +%s)
                   DURATION=$((END_TIME - START_TIME))
-                  # Only log on failure - success is silent
-                  if [ "${RES}" != "200" ]; then
-                    # Failure - log as ERROR with response details for debugging
+                  # Only log ERROR for real failures (not 200 or 429)
+                  if [ "${RES}" != "200" ] && [ "${RES}" != "429" ]; then
+                    # Real failure - log as ERROR with response details for debugging
                     BODY_ESCAPED=$(echo "${BODY}" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n\r\t' '   ')
                     echo '{"severity":"ERROR","message":"'${JOB_NAME}' job failed","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}',"responseBody":"'${BODY_ESCAPED}'"}'
                   fi
