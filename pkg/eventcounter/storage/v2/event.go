@@ -181,6 +181,15 @@ func (es *eventStorage) QueryEvaluationCount(
 		}
 		rows = append(rows, &row)
 	}
+	es.logger.Info("Query evaluation count result",
+		zap.String("environmentId", environmentId),
+		zap.String("featureID", featureID),
+		zap.Int32("featureVersion", featureVersion),
+		zap.Time("startAt", startAt),
+		zap.Time("endAt", endAt),
+		zap.Int("resultCount", len(rows)),
+		zap.Any("rows", rows),
+	)
 	return rows, nil
 }
 
@@ -255,6 +264,16 @@ func (es *eventStorage) QueryGoalCount(
 		}
 		rows = append(rows, &row)
 	}
+	es.logger.Info("Query goal count result",
+		zap.String("environmentId", environmentId),
+		zap.String("goalID", goalID),
+		zap.String("featureID", featureID),
+		zap.Int32("featureVersion", featureVersion),
+		zap.Time("startAt", startAt),
+		zap.Time("endAt", endAt),
+		zap.Int("resultCount", len(rows)),
+		zap.Any("rows", rows),
+	)
 	return rows, nil
 }
 
