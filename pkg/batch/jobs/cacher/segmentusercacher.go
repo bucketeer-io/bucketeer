@@ -98,13 +98,7 @@ func (c *segmentUserCacher) Run(ctx context.Context) (lastErr error) {
 				UpdatedAt: seg.UpdatedAt,
 			}
 			// Update the cache by segment ID
-			updatedInstances := c.putCache(su, env.Id)
-			c.logger.Debug("Caching segments",
-				zap.String("environmentId", env.Id),
-				zap.String("segmentId", seg.Id),
-				zap.Int("userSize", len(users)),
-				zap.Int("updatedInstances", updatedInstances),
-			)
+			c.putCache(su, env.Id)
 		}
 	}
 	return nil

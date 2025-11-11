@@ -85,12 +85,7 @@ func (c *experimentCacher) Run(ctx context.Context) (lastErr error) {
 			c.logger.Error("Failed to list experiments", zap.String("environmentId", env.Id))
 			return err
 		}
-		updatedInstances := c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
-		c.logger.Debug("Caching experiments",
-			zap.String("environmentId", env.Id),
-			zap.Int("experimentSize", len(experiments)),
-			zap.Int("updatedInstances", updatedInstances),
-		)
+		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
 	}
 	return nil
 }

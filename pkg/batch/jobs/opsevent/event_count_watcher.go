@@ -161,7 +161,7 @@ func (w *eventCountWatcher) getExecuteClauseId(
 	var lastErr error
 	for id, c := range opsEventRateClauses {
 		logFunc := func(msg string) {
-			w.logger.Debug(msg,
+			w.logger.Info(msg,
 				zap.String("environmentId", environmentId),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),

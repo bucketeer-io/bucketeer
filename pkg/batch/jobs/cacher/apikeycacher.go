@@ -70,11 +70,7 @@ func (c *apiKeyCacher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, envAPIKey := range envAPIKeys {
-		updatedInstances := c.putCache(envAPIKey.EnvironmentAPIKey)
-		c.logger.Debug("Caching environment api key",
-			zap.Any("environmentApiKey", envAPIKey.EnvironmentAPIKey),
-			zap.Int("updatedInstances", updatedInstances),
-		)
+		c.putCache(envAPIKey.EnvironmentAPIKey)
 	}
 	return nil
 }

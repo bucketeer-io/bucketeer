@@ -18,6 +18,7 @@ package calculator
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -48,6 +49,7 @@ type experimentCalculate struct {
 	location          *time.Location
 	opts              *jobs.Options
 	logger            *zap.Logger
+	running           atomic.Bool
 }
 
 func NewExperimentCalculate(
@@ -91,10 +93,19 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
+	// Prevent goroutine stacking by checking if a calculation is already running
+	if !e.running.CompareAndSwap(false, true) {
+		e.logger.Warn("Experiment calculation already in progress, skipping this cycle",
+			zap.String("reason", "previous calculation not completed"),
+		)
+		return nil
+	}
+
 	// Because the calculation can take several minutes depending on the data volume
 	// and the number of the running experiments, it runs the calculation in the background
 	// returning the response immediately, not waiting for the calculation to complete.
 	go func() {
+		defer e.running.Store(false)
 		e.runCalculation()
 	}()
 

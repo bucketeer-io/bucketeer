@@ -434,10 +434,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		childRedisClients = append(childRedisClients, client)
 		nonPersistentRedisCaches = append(nonPersistentRedisCaches, cachev3.NewRedisCache(client))
 	}
-	// TODO: To be removed after checked it works
-	logger.Debug("Redis main address", zap.String("address", *s.nonPersistentRedisAddr))
-	logger.Debug("Redis child addresses", zap.Strings("addresses", *s.nonPersistentChildRedisAddresses))
-	logger.Debug("Redis non persistent cache size", zap.Int("size", len(nonPersistentRedisCaches)))
 
 	// batchClient
 	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,

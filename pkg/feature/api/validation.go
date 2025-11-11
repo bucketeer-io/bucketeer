@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	maxPageSizePerRequest   = 100
+	maxPageSizePerRequest   = 1000
 	maxUserIDsLength        = 100000
 	maxSegmentUsersDataSize = 2000000 // 2MB
 	totalVariationWeight    = int32(100000)

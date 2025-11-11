@@ -78,12 +78,7 @@ func (c *featureFlagCacher) Run(ctx context.Context) (lastErr error) {
 			Id:       evaluation.GenerateFeaturesID(filtered),
 			Features: filtered,
 		}
-		updatedInstances := c.putCache(fts, envFt.EnvironmentId)
-		c.logger.Debug("Caching features",
-			zap.String("environmentId", envFt.EnvironmentId),
-			zap.Int("featureCount", len(envFt.Features)),
-			zap.Int("updatedInstances", updatedInstances),
-		)
+		c.putCache(fts, envFt.EnvironmentId)
 	}
 	return nil
 }

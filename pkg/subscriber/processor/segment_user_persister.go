@@ -123,7 +123,7 @@ func NewSegmentUserPersister(
 		opts = append(opts, factory.WithProjectID(segmentPersisterConfig.Project))
 	case factory.RedisStream:
 		// Create Redis client internally
-		redisClient, err := createRedisClientForSegmentPersister(ctx, segmentPersisterConfig, logger, registerer)
+		redisClient, err := createRedisClientForSegmentPersister(segmentPersisterConfig, logger, registerer)
 		if err != nil {
 			logger.Error("SegmentUserPersister: failed to create Redis client", zap.Error(err))
 			return nil, err
@@ -158,7 +158,6 @@ func NewSegmentUserPersister(
 
 // createRedisClientForSegmentPersister creates a Redis client from the configuration
 func createRedisClientForSegmentPersister(
-	ctx context.Context,
 	conf segmentUserPersisterConfig,
 	logger *zap.Logger,
 	registerer metrics.Registerer,
