@@ -201,9 +201,10 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		)
 		return nil
 	}
-	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
-		// To prevent calculating the same experiment multiple times in a short time,
-		// we set the TTL for the lock key and only unlock it when an error occurs so that it can retry.
+
+	// Always unlock after calculation finishes (success or error)
+	// The lock only prevents concurrent calculation, not recalculation over time
+	defer func() {
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock when calculating experiment",
@@ -218,6 +219,9 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 				zap.Any("experiment", experiment),
 			)
 		}
+	}()
+
+	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
 		return calcErr
 	}
 	return nil
