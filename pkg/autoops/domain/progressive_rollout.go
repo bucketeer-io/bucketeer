@@ -171,6 +171,62 @@ func (p *ProgressiveRollout) ExtractSchedules() ([]*autoopsproto.ProgressiveRoll
 	return nil, ErrProgressiveRolloutInvalidType
 }
 
+func (p *ProgressiveRollout) GetControlVariationID() (string, error) {
+	switch p.Type {
+	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
+		c, err := unmarshalProgressiveRolloutManualClause(p.Clause)
+		if err != nil {
+			return "", err
+		}
+		// Try new field first, fallback to empty for backward compatibility
+		if c.ControlVariationId != "" {
+			return c.ControlVariationId, nil
+		}
+		return "", nil
+	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
+		c, err := unmarshalProgressiveRolloutTemplateClause(p.Clause)
+		if err != nil {
+			return "", err
+		}
+		if c.ControlVariationId != "" {
+			return c.ControlVariationId, nil
+		}
+		return "", nil
+	}
+	return "", ErrProgressiveRolloutInvalidType
+}
+
+func (p *ProgressiveRollout) GetTargetVariationID() (string, error) {
+	switch p.Type {
+	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
+		c, err := unmarshalProgressiveRolloutManualClause(p.Clause)
+		if err != nil {
+			return "", err
+		}
+		// Try new field first, fallback to old field for backward compatibility
+		if c.TargetVariationId != "" {
+			return c.TargetVariationId, nil
+		}
+		if c.VariationId != "" {
+			return c.VariationId, nil
+		}
+		return "", nil
+	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
+		c, err := unmarshalProgressiveRolloutTemplateClause(p.Clause)
+		if err != nil {
+			return "", err
+		}
+		if c.TargetVariationId != "" {
+			return c.TargetVariationId, nil
+		}
+		if c.VariationId != "" {
+			return c.VariationId, nil
+		}
+		return "", nil
+	}
+	return "", ErrProgressiveRolloutInvalidType
+}
+
 func unmarshalProgressiveRolloutManualClause(
 	clause *anypb.Any,
 ) (*autoopsproto.ProgressiveRolloutManualScheduleClause, error) {
