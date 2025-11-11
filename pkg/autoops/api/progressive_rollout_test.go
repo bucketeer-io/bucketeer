@@ -160,7 +160,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
+			expectedErr: createError(statusProgressiveRolloutInsufficientVariations, localizer.MustLocalizeWithTemplate(locale.AutoOpsInsufficientVariations)),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -953,7 +953,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
+			expectedErr: createError(statusProgressiveRolloutInsufficientVariations, localizer.MustLocalizeWithTemplate(locale.AutoOpsInsufficientVariations)),
 		},
 		{
 			desc: "err: ErrClauseRequired",
