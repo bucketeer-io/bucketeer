@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
@@ -95,10 +97,11 @@ func NewExperimentCalculate(
 func (e *experimentCalculate) Run(ctx context.Context) error {
 	// Prevent goroutine stacking by checking if a calculation is already running
 	if !e.running.CompareAndSwap(false, true) {
-		e.logger.Warn("Experiment calculation already in progress, skipping this cycle",
-			zap.String("reason", "previous calculation not completed"),
+		e.logger.Warn("Experiment calculation already in progress, returning ResourceExhausted",
+			zap.String("reason", "previous_calculation_not_completed"),
 		)
-		return nil
+		// Return ResourceExhausted (429) so cronjob can retry to a different pod
+		return status.Error(codes.ResourceExhausted, "experiment calculation already in progress on this pod")
 	}
 
 	// Because the calculation can take several minutes depending on the data volume

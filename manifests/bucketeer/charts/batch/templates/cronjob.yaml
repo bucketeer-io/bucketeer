@@ -60,8 +60,33 @@ spec:
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
                   RESPONSE=$(mktemp)
-                  RES=$(curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "'${JOB_ID}'"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o ${RESPONSE} -w '%{http_code}' ${ENDPOINT})
+                  MAX_RETRIES=3
+                  RETRY_COUNT=0
+
+                  # Function to execute batch job
+                  execute_job() {
+                    curl -X POST -m 3600 \
+                      --cacert /usr/local/certs/service/tls.crt \
+                      -d '{"job": "'${JOB_ID}'"}' \
+                      -H "authorization: bearer ${TOKEN}" \
+                      -H "Content-Type: application/json" \
+                      -s -o ${RESPONSE} -w '%{http_code}' \
+                      ${ENDPOINT}
+                  }
+                  
+                  # Initial request
+                  RES=$(execute_job)
                   BODY=$(cat ${RESPONSE})
+
+                  # Retry up to MAX_RETRIES times if pod is busy (429)
+                  while [ "${RES}" = "429" ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                    RETRY_COUNT=$((RETRY_COUNT + 1))
+                    echo "Pod busy (429), retry $RETRY_COUNT/$MAX_RETRIES..."
+                    sleep 2
+                    RES=$(execute_job)
+                    BODY=$(cat ${RESPONSE})
+                  done
+
                   rm -f ${RESPONSE}
                   END_TIME=$(date +%s)
                   DURATION=$((END_TIME - START_TIME))
@@ -71,7 +96,8 @@ spec:
                     BODY_ESCAPED=$(echo "${BODY}" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n\r\t' '   ')
                     echo '{"severity":"ERROR","message":"'${JOB_NAME}' job failed","job":"'${JOB_NAME}'","jobId":"'${JOB_ID}'","statusCode":'${RES}',"durationSeconds":'${DURATION}',"responseBody":"'${BODY_ESCAPED}'"}'
                   fi
-                  if [ "${RES}" = "200" ] || [ "${RES}" = "503" ] || [ "${RES}" = "000" ]; then
+                  # Treat 429 (all pods busy) as success - job will retry next minute
+                  if [ "${RES}" = "200" ] || [ "${RES}" = "429" ] || [ "${RES}" = "503" ] || [ "${RES}" = "000" ]; then
                     exit 0
                   else
                     exit 1
