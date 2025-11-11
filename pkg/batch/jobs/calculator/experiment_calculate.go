@@ -275,6 +275,7 @@ func (e *experimentCalculate) listExperiments(
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
 		},
+		Archived: wrapperspb.Bool(false),
 	}
 	resp, err := e.experimentClient.ListExperiments(ctx, req)
 	if err != nil {

@@ -135,12 +135,21 @@ func (s *batchService) ExecuteBatchJob(
 		return nil, errUnknownJob
 	}
 	if err != nil {
-		s.logger.Error("Failed to run the job",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.String("job_name", req.Job.String()),
-				zap.Error(err),
-			)...,
-		)
+		// Don't log ResourceExhausted as ERROR - it's expected when pod is busy
+		if st, ok := status.FromError(err); ok && st.Code() == codes.ResourceExhausted {
+			s.logger.Debug("Job skipped, pod busy",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("job_name", req.Job.String()),
+				)...,
+			)
+		} else {
+			s.logger.Error("Failed to run the job",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("job_name", req.Job.String()),
+					zap.Error(err),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	return &batch.BatchJobResponse{}, nil
