@@ -25,11 +25,11 @@ import (
 func TestGetRolloutStrategyVariations(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc                string
-		controlVariationID  string
-		targetVariationID   string
-		targetWeight        int32
-		expected            []*featureproto.RolloutStrategy_Variation
+		desc               string
+		controlVariationID string
+		targetVariationID  string
+		targetWeight       int32
+		expected           []*featureproto.RolloutStrategy_Variation
 	}{
 		{
 			desc:               "success: weight is max",
