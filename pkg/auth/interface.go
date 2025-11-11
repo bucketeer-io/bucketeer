@@ -147,16 +147,6 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	resetTTL, err := time.ParseDuration(aux.PasswordResetTokenTTL)
-	if err != nil {
-		return fmt.Errorf("failed to parse passwordResetTokenTTL: %w", err)
-	}
-
-	setupTTL, err := time.ParseDuration(aux.PasswordSetupTokenTTL)
-	if err != nil {
-		return fmt.Errorf("failed to parse passwordSetupTokenTTL: %w", err)
-	}
-
 	// Set values to the actual struct
 	c.Enabled = aux.Enabled
 	c.PasswordMinLength = aux.PasswordMinLength
@@ -164,10 +154,24 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 	c.PasswordRequireLowercase = aux.PasswordRequireLowercase
 	c.PasswordRequireNumbers = aux.PasswordRequireNumbers
 	c.PasswordRequireSymbols = aux.PasswordRequireSymbols
-	c.PasswordResetTokenTTL = resetTTL
-	c.PasswordSetupTokenTTL = setupTTL
 	c.EmailServiceEnabled = aux.EmailServiceEnabled
 	c.EmailServiceConfig = aux.EmailServiceConfig
+
+	// Only parse TTL values if password auth is enabled
+	if aux.Enabled {
+		resetTTL, err := time.ParseDuration(aux.PasswordResetTokenTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse passwordResetTokenTTL: %w", err)
+		}
+
+		setupTTL, err := time.ParseDuration(aux.PasswordSetupTokenTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse passwordSetupTokenTTL: %w", err)
+		}
+
+		c.PasswordResetTokenTTL = resetTTL
+		c.PasswordSetupTokenTTL = setupTTL
+	}
 
 	return nil
 }
