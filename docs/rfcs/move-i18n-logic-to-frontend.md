@@ -4,46 +4,88 @@ Now, we have part of the i18n implementation on both sides, front and backend.
 
 Because the i18n implementation in all APIs made the backend code too hard to read, we decided to do this only on the front end.
 
-Note that this RFC only describes content related to the backend.
+~~Note that this RFC only describes content related to the backend.~~
 
 [Issue](https://github.com/bucketeer-io/bucketeer/issues/1253)
 
+## Scope
 
-## Response design
-Currently, I am using GRPC's ErrorDetail to return a localized message based on LocalizedMessage.
+There are two parts that have i18n logic in backend:
 
-[GRPC's LocalizedMessage](https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L290)
+1. error message
+2. domain event
 
-Ex: Validation error when GetAccount
+**We focus on only [1. error message] part.**
+
+We will skip [2. domain event] for now for the following reasons:
+  1. Lower Priority: Let's develop Analysis Dashboard first to make Bucketeer more useful.
+  2. Less Impact: The localization in the Domain Events affects only on Audit Logs and Slack notifications. There's no way to migrate i18 logic to frontend in the Slack notifications.
+
+
+## New Error Design
+
+Currently, we use GRPC's `ErrorDetail` to return a localized message based on [GRPC's `LocalizedMessage`](https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L290).
+
+Example: Validation error when GetAccount
 
 https://github.com/bucketeer-io/bucketeer/blob/main/pkg/account/api/validation.go#L624
 
-Design to return by utilizing ErrorInfo defined in GRPC's ErrorDetail.
-
-[GRPC's ErrorInfo]https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L51
+We're going to design to return by utilizing `ErrorInfo` defined in GRPC's [GRPC's ErrorInfo](https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L51).
 
 If multiple errors are returned, multiple ErrorInfos are returned.
 
-Response Ex：
+
+### Response Format
+
+Response Example:
 ```json
 {
-  "reason": "INVALID"
-  "domain": "account.bucketeer.io",
-  "metadata": {
-      "messageKey": "account.invalid.format",
-      "field": "email",
-      "value": "email.com",
-  }
+  "code": 3,
+  "message": "rpc error: code = InvalidArgument desc = account:invalid email",
+  "details": [
+    {
+      "reason": "INVALID",
+      "domain": "account.bucketeer.io",
+      "metadata": {
+        "messageKey": "InvalidArgumentError",
+        "email": "email.com",
+        "field_1": "APIKey"
+      }
+    }
+  ]
 }
 ```
-| Key | Explanation | Example |
-|:---|:---|:---|
-|reason|The reason of the error.|"reason": "INVALID"|
-|domain|The error domain is typically the registered service name of the tool or product that generates the error. |"domain": "account.bucketeer.io"  // account package|
-|metadata| Additional structured details about this error. |- |
-|messageKey| Key to identify message content.<br> Format: ［error package name］.［error type］.(error characteristics)<br>※ Grant error characteristics only when necessary. |ex1) "messageKey": "account.invalid" // Invalid error in account package<br> ex2) "messageKey": "account.invalid.empty" // Invalid error with empty value in account package |
-|field| Send field information in a message. Granted only when needed. |"field": "email" |
-|value| Send value information in a message. Granted only when needed. |"value": "email.com" |
+| Key                     | Explanation                                                                                                | Example                                              |
+| :---------------------- | :--------------------------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| reason                  | The reason of the error.                                                                                   | "reason": "INVALID"                                  |
+| domain                  | The error domain is typically the registered service name of the tool or product that generates the error. | "domain": "account.bucketeer.io"  // account package |
+| metadata                | Additional structured details about this error.                                                            | -                                                    |
+| metadata.messageKey     | Key to identify message content.<br>                                                                       | e.g. NotFoundError, InvalidArgumentError             |
+| metadata.<key-value(s)> | Additional information to be embedded in the message. Optional.                                            | "email": "email.com", "field_1": "APIKey"            |
+
+### Message Formats
+
+We will move the error message formats in `pkg/locale/localizedata/` to frontend, like under `ui/dashboard/src/@locales`.
+They contain both error messages and nouns.
+
+e.g.
+
+```json
+// en/backend-errors.json
+{
+    "NotFoundError": "The requested {{ .field_1 }} cannot be found",
+    "InvalidArgumentError": "The argument {{ .field_1 }} is invalid",
+    "ExceededMaxError": "The maximum value {{ .field_2 }} for {{ .field_1 }} has been exceeded",
+    ...
+}
+
+// en/nouns.json (The file is not decided yet)
+{
+    "APIKey": "API key",
+    "OffVariation": "Off variation",
+    ...
+}
+```
 
 
 ## Correction points
@@ -60,7 +102,7 @@ func NewError(status *gstatus.Status, anoterDetailData ...map[string]string) err
 	var metadatas []map[string]string
 	if status == statusEmailIsEmpty {
 		reason = "INVALID"
-		messageKey = "account.invalid.empty"
+		messageKey = "RequiredFieldError"
 		metadatas = []map[string]string{
 			{
 				"messageKey": messageKey,
@@ -69,7 +111,7 @@ func NewError(status *gstatus.Status, anoterDetailData ...map[string]string) err
 		}
 	} else if status == statusInvalidEmail {
 		reason = "INVALID"
-		messageKey = "account.invalid.format"
+		messageKey = "InvalidArgumentError"
 		metadatas = []map[string]string{
 			{
 				"messageKey": messageKey,
@@ -137,8 +179,8 @@ func validateGetAccountV2Request(req *accountproto.GetAccountV2Request, localize
 				Reason: "INVALID",
 				Domain: "account.bucketeer.io",
 				Metadata: map[string]string{
-					"messageKey": "account.invalid.empty",
-					"feild":      "email",
+					"messageKey": "InvalidArgumentError",
+					"field": "email"
 				},
 			})
 		if err != nil {
@@ -149,11 +191,46 @@ func validateGetAccountV2Request(req *accountproto.GetAccountV2Request, localize
 ...
 ```
 
-## Release Steps
-1. Releases a process that returns an ErrorInfo for each package for The backend.
-2. Supports multilingual ization based on the ErrorInfo process in step 1 with Frontend.
 
-※ Currently, the front localization information acquisition process seems to be implemented using the code below, so it may be a good idea to focus on modifying that area.
-https://github.com/bucketeer-io/bucketeer/blob/main/ui/web-v2/src/grpc/messages.ts
 
-3. Remove the LocalizedMessage code in backend for the error handled in step 2.
+## Frontend Updates
+
+### 1. The temporary way to show the error message until releasing the all backend updates
+
+Show the message in the `message` field when the error is returned from the backend.
+Alghough it can show only English and the message is unclear, this is needed because the error format has been already updated in v2.1.1, and the right way might require more time to develop.
+
+e.g. Error Response
+```json
+{
+  "code": 2,
+  "message": "rpc error: code = NotFound desc = account:account not found, account", // Use this
+  "details": [ // Ignore for now
+    {
+      "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+      "reason": "UNKNOWN",
+      "domain": "unknown.bucketeer.io",
+      "metadata": {
+        "messageKey": "unknown"
+      }
+    }
+  ]
+}
+```
+
+### 2. The complete way
+
+Use the `messageKey`, other metadata, and message template files to show the complete message.
+As the current implementation, react-i18next is useful to embed nouns.
+We don't need to be aware of field names of the metadata except `messageKey` while developing the frontend.
+
+
+## Development Steps
+
+| Phase | Backend                                               | Frontend                                                                                                                                                       |
+| ----- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1   | Define the new error struct                           | -                                                                                                                                                              |
+| 0.2   | Replace some of the existing errors to the new format | -                                                                                                                                                              |
+| 1     | Start refining the error struct and replacing to it   | Update and release to show the `message` field temporarily. See [here](#1-the-temporary-way-to-show-the-error-message-until-releasing-the-all-backend-updates) |
+| 2     | Complete replacing to the new struct                  | -                                                                                                                                                              |
+| 3     | -                                                     | Update to show the complete message using the `messageKey`. See [here](#2-the-complete-way)                                                                    |
