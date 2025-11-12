@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { getEditorEnvironments, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { Environment } from '@types';
 import { onFormatEnvironments } from 'utils/function';
 import DropdownMenuWithSearch, {
   DropdownMenuWithSearchProps
@@ -9,6 +10,7 @@ import DropdownMenuWithSearch, {
 interface Props extends Omit<DropdownMenuWithSearchProps, 'options'> {
   value: string | string[];
   selectedValues?: string[];
+  currentEnvironment?: Environment;
 }
 
 const EnvironmentEditorList = ({
@@ -17,6 +19,7 @@ const EnvironmentEditorList = ({
   itemSize = 60,
   maxOptions = 10,
   selectedValues,
+  currentEnvironment,
   ...props
 }: Props) => {
   const { t } = useTranslation(['form', 'common']);
@@ -27,14 +30,16 @@ const EnvironmentEditorList = ({
   const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const environmentOptions = useMemo(() => {
-    const options = formattedEnvironments.map(item => ({
-      label: `${item.name}`,
-      value: item.id,
-      description: `${t('common:source-type.project')}: ${projects.find(project => project.id === item.projectId)?.name}`,
-      projectId: item.projectId
-    }));
+    const options = formattedEnvironments
+      .filter(env => env.id !== currentEnvironment?.id)
+      .map(item => ({
+        label: `${item.name}`,
+        value: item.id,
+        description: `${t('common:source-type.project')}: ${projects.find(project => project.id === item.projectId)?.name}`,
+        projectId: item.projectId
+      }));
     return options;
-  }, [formattedEnvironments]);
+  }, [formattedEnvironments, currentEnvironment]);
 
   const remainingEnvironmentsOptions = useMemo(() => {
     const remainingEnvironments = environmentOptions.filter(item =>

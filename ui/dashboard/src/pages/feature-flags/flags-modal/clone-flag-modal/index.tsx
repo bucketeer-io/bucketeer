@@ -231,6 +231,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       <EnvironmentEditorList
                         value={field.value}
                         disabled={!editable}
+                        currentEnvironment={currentEnvironment}
                         onSelectOption={field.onChange}
                       />
                     </Form.Control>
