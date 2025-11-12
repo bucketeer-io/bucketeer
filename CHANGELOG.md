@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.2.0](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.2.0) (2025-11-12)
+
+
+### Features
+
+* show popup unsaved changes leaves page ([#2141](https://github.com/bucketeer-io/bucketeer/issues/2141)) ([c3d7cd7](https://github.com/bucketeer-io/bucketeer/commit/c3d7cd733fefbe5a41420fb3464cb58c11e0229b))
+* **ui/dashboard:** cache experiment reload ([#2190](https://github.com/bucketeer-io/bucketeer/issues/2190)) ([3587c72](https://github.com/bucketeer-io/bucketeer/commit/3587c72c054bfea702dc82c09dd5cd542545833f))
+
+
+### Bug Fixes
+
+* app and envoy container not shutting down gracefully ([#2155](https://github.com/bucketeer-io/bucketeer/issues/2155)) ([c78bb7e](https://github.com/bucketeer-io/bucketeer/commit/c78bb7ea605e21b4910875262a2d4c845a22f7c7))
+* batch-server redis-counter-deleter fails because of the temporary keys ([#2165](https://github.com/bucketeer-io/bucketeer/issues/2165)) ([8b138de](https://github.com/bucketeer-io/bucketeer/commit/8b138dee32853d771438076d113e8bc7e36c8a5f))
+* failed to create puller log for none-demo deployment ([#2158](https://github.com/bucketeer-io/bucketeer/issues/2158)) ([6927c51](https://github.com/bucketeer-io/bucketeer/commit/6927c515b363a6e0cfd8be0bfa5ef8188050a4fe))
+* http stan readiness not using default settings ([#2194](https://github.com/bucketeer-io/bucketeer/issues/2194)) ([635dc67](https://github.com/bucketeer-io/bucketeer/commit/635dc67ed415f9f42556224d6e282ecdd5f94768))
+* improve timeout handling and health check resilience during traffic spikes ([#2131](https://github.com/bucketeer-io/bucketeer/issues/2131)) ([b2a5065](https://github.com/bucketeer-io/bucketeer/commit/b2a50655be320a803444df4cdfe136e9520b6aa3))
+* nil pointer exception in feature stale watcher ([#2167](https://github.com/bucketeer-io/bucketeer/issues/2167)) ([c327839](https://github.com/bucketeer-io/bucketeer/commit/c327839235655a5295f4cce6ff5b3e77df1333df))
+* prevent experiment calculator goroutine stacking ([#2196](https://github.com/bucketeer-io/bucketeer/issues/2196)) ([58318fc](https://github.com/bucketeer-io/bucketeer/commit/58318fc7eef1b2ee38c0384fd4783ff8e199fc8b))
+* race condition when stopping health check during shutdown ([#2177](https://github.com/bucketeer-io/bucketeer/issues/2177)) ([d289118](https://github.com/bucketeer-io/bucketeer/commit/d289118b0a88d6d865f674a5508bf37a579c0f1b))
+* remove demoOrganizationCreationNotifier from ConfigMap when demoSiteEnabled is false ([#2174](https://github.com/bucketeer-io/bucketeer/issues/2174)) ([7ca7f44](https://github.com/bucketeer-io/bucketeer/commit/7ca7f44c26c1ae27718a43912fdc38e057d17ae8))
+* **ui/dashboard:** experiment filter opens drawer add new ([#2140](https://github.com/bucketeer-io/bucketeer/issues/2140)) ([d764014](https://github.com/bucketeer-io/bucketeer/commit/d7640146f295cea53b338ec2767b2138ba6bc501))
+* **ui/dashboard:** show clone feature and unsave changes issues ([#2182](https://github.com/bucketeer-io/bucketeer/issues/2182)) ([a48eebf](https://github.com/bucketeer-io/bucketeer/commit/a48eebfb42080bb56ae49e6de7e4864cff4952eb))
+* **ui/dashboard:** switch org menu not being updated after org creation ([#2191](https://github.com/bucketeer-io/bucketeer/issues/2191)) ([7a6ec1e](https://github.com/bucketeer-io/bucketeer/commit/7a6ec1e34ae76c7ce4e24b3e8fae05c66eff1487))
+* update last seen when using system admin ([#2185](https://github.com/bucketeer-io/bucketeer/issues/2185)) ([68627f1](https://github.com/bucketeer-io/bucketeer/commit/68627f1c8decd3b161d03b83ddc9a8bc2d744d33))
+* use global imagePullSecrets for migration job ([#2203](https://github.com/bucketeer-io/bucketeer/issues/2203)) ([424fd91](https://github.com/bucketeer-io/bucketeer/commit/424fd91553bcfbea41b892b231726c1f4f159f4a))
+
+
+### Miscellaneous
+
+* **evaluation:** update typescript evaluation version to 0.0.5 ([#2161](https://github.com/bucketeer-io/bucketeer/issues/2161)) ([34837f9](https://github.com/bucketeer-io/bucketeer/commit/34837f9c5f65b925de7579b43e9702163569f2b8))
+* reduce info log verbosity in all services ([#2170](https://github.com/bucketeer-io/bucketeer/issues/2170)) ([7500951](https://github.com/bucketeer-io/bucketeer/commit/750095149507d7a5a02dd6ab455d3f0c2754e752))
+* reduce info log verbosity with structured logging ([#2168](https://github.com/bucketeer-io/bucketeer/issues/2168)) ([41d5a0f](https://github.com/bucketeer-io/bucketeer/commit/41d5a0f9f5cc5314464da2ab2ced6ca64727f8a3))
+* remove make command of old console ([#2139](https://github.com/bucketeer-io/bucketeer/issues/2139)) ([70baf53](https://github.com/bucketeer-io/bucketeer/commit/70baf53cf0272e589d4a983b10376716c4ce956a))
+* suppress context.DeadlineExceeded errors in the api event publishing ([#2171](https://github.com/bucketeer-io/bucketeer/issues/2171)) ([ca41162](https://github.com/bucketeer-io/bucketeer/commit/ca41162f340f032894fdf0909ce3f780b0e3790c))
+* **ui/dashboard:** format Y values in the chart js ([#2186](https://github.com/bucketeer-io/bucketeer/issues/2186)) ([861cfc5](https://github.com/bucketeer-io/bucketeer/commit/861cfc59437c2097e0b3e8032c0f25062b607cc0))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 7.0.7 to 7.0.8 in /ui/dashboard ([#2159](https://github.com/bucketeer-io/bucketeer/issues/2159)) ([e71e995](https://github.com/bucketeer-io/bucketeer/commit/e71e99586e448b5b81088c17c5be449f24a008e3))
+* **deps:** bump the dependencies group across 1 directory with 5 updates ([#2143](https://github.com/bucketeer-io/bucketeer/issues/2143)) ([d9c0560](https://github.com/bucketeer-io/bucketeer/commit/d9c05601fdc6b36514d2af7ac78100ec9b702da5))
+* **deps:** bump the dependencies group with 16 updates ([#2188](https://github.com/bucketeer-io/bucketeer/issues/2188)) ([c7842bf](https://github.com/bucketeer-io/bucketeer/commit/c7842bf6f66d01a055cad51ac79c5d36adf5da63))
+* **deps:** bump the dependencies group with 6 updates ([#2144](https://github.com/bucketeer-io/bucketeer/issues/2144)) ([c9c9ad6](https://github.com/bucketeer-io/bucketeer/commit/c9c9ad6db01433999c4a26b540086c6263a2eba5))
+
 ## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
 
 
