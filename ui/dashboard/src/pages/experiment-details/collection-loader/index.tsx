@@ -22,13 +22,14 @@ const CollectionLoader = ({
   const {
     data: experimentResultCollection,
     isLoading,
+    isRefetching,
     isError
   } = useQueryExperimentResultDetails({
     params: {
       experimentId: params?.experimentId || '',
       environmentId: currentEnvironment.id
     },
-    retry: experiment.status !== 'WAITING'
+    retry: experiment.status !== 'WAITING' ? 3 : false
   });
 
   const experimentResult = experimentResultCollection?.experimentResult;
@@ -43,6 +44,7 @@ const CollectionLoader = ({
   const feature = featureResultCollection?.feature;
 
   const isErrorState = isError || !experimentResult || featureError;
+  const shouldShowLoading = isLoading || (isRefetching && !isError);
 
   return (
     <div className="flex flex-col size-full gap-y-6">
@@ -52,7 +54,7 @@ const CollectionLoader = ({
       />
       {currentTab === 'results' && (
         <Results
-          isLoading={isLoading}
+          isLoading={shouldShowLoading}
           isErrorState={isErrorState}
           experiment={experiment}
           experimentResult={experimentResult}
