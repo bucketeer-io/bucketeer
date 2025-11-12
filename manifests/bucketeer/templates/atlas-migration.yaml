@@ -14,7 +14,7 @@ spec:
   {{- end }}
   template:
     spec:
-      {{- with .Values.migration.imagePullSecrets }}
+      {{- with .Values.migration.imagePullSecrets | default .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: Never

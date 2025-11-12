@@ -1,22 +1,19 @@
 global:
   image:
     tag: v2.1.1 # x-release-please-version
-    imagePullSecrets:
-  
+    imagePullSecrets: # Used by all services including migration
   # Global data warehouse configuration
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql
-    type: bigquery  # Options: bigquery, mysql
+    type: bigquery # Options: bigquery, mysql
     batchSize: 1000
     timezone: "UTC"
-    
     # BigQuery configuration (used when type: bigquery)
     bigquery:
       project: ""
       dataset: ""
       location: ""
-    
     # MySQL configuration (used when type: mysql)
     mysql:
       useMainConnection: true
@@ -25,7 +22,6 @@ global:
       user: ""
       password: ""
       database: ""
-  
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""
@@ -50,8 +46,7 @@ migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: v2.1.1 # x-release-please-version
-
-  imagePullSecrets: []
+  # imagePullSecrets: []  # Optional: Override global.image.imagePullSecrets for migration only
 
   backoffLimit: 0
   ttlSecondsAfterFinished:
