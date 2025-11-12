@@ -10,7 +10,7 @@ import DropdownMenuWithSearch, {
 interface Props extends Omit<DropdownMenuWithSearchProps, 'options'> {
   value: string | string[];
   selectedValues?: string[];
-  exceptEnvironment?: Environment;
+  currentEnvironment?: Environment;
 }
 
 const EnvironmentEditorList = ({
@@ -19,7 +19,7 @@ const EnvironmentEditorList = ({
   itemSize = 60,
   maxOptions = 10,
   selectedValues,
-  exceptEnvironment,
+  currentEnvironment,
   ...props
 }: Props) => {
   const { t } = useTranslation(['form', 'common']);
@@ -31,7 +31,7 @@ const EnvironmentEditorList = ({
 
   const environmentOptions = useMemo(() => {
     const options = formattedEnvironments
-      .filter(evn => evn.id !== exceptEnvironment?.id)
+      .filter(env => env.id !== currentEnvironment?.id)
       .map(item => ({
         label: `${item.name}`,
         value: item.id,
@@ -39,7 +39,7 @@ const EnvironmentEditorList = ({
         projectId: item.projectId
       }));
     return options;
-  }, [formattedEnvironments]);
+  }, [formattedEnvironments, currentEnvironment]);
 
   const remainingEnvironmentsOptions = useMemo(() => {
     const remainingEnvironments = environmentOptions.filter(item =>
