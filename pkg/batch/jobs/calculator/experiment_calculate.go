@@ -18,9 +18,12 @@ package calculator
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
@@ -48,6 +51,7 @@ type experimentCalculate struct {
 	location          *time.Location
 	opts              *jobs.Options
 	logger            *zap.Logger
+	running           atomic.Bool
 }
 
 func NewExperimentCalculate(
@@ -91,10 +95,20 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
+	// Prevent goroutine stacking by checking if a calculation is already running
+	if !e.running.CompareAndSwap(false, true) {
+		e.logger.Warn("Experiment calculation already in progress, returning ResourceExhausted",
+			zap.String("reason", "previous_calculation_not_completed"),
+		)
+		// Return ResourceExhausted (429) so cronjob can retry to a different pod
+		return status.Error(codes.ResourceExhausted, "experiment calculation already in progress on this pod")
+	}
+
 	// Because the calculation can take several minutes depending on the data volume
 	// and the number of the running experiments, it runs the calculation in the background
 	// returning the response immediately, not waiting for the calculation to complete.
 	go func() {
+		defer e.running.Store(false)
 		e.runCalculation()
 	}()
 
@@ -157,7 +171,10 @@ func (e *experimentCalculate) runCalculation() {
 			e.logger.Info("Experiment calculated successfully in the specified environment",
 				log.FieldsFromIncomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
-					zap.Any("experiment", ex),
+					zap.String("experimentId", ex.Id),
+					zap.String("experimentName", ex.Name),
+					zap.Bool("archived", ex.Archived),
+					zap.Int32("status", int32(ex.Status)),
 				)...,
 			)
 		}
@@ -184,9 +201,10 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		)
 		return nil
 	}
-	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
-		// To prevent calculating the same experiment multiple times in a short time,
-		// we set the TTL for the lock key and only unlock it when an error occurs so that it can retry.
+
+	// Always unlock after calculation finishes (success or error)
+	// The lock only prevents concurrent calculation, not recalculation over time
+	defer func() {
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock when calculating experiment",
@@ -201,6 +219,9 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 				zap.Any("experiment", experiment),
 			)
 		}
+	}()
+
+	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
 		return calcErr
 	}
 	return nil
@@ -258,6 +279,7 @@ func (e *experimentCalculate) listExperiments(
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
 		},
+		Archived: wrapperspb.Bool(false),
 	}
 	resp, err := e.experimentClient.ListExperiments(ctx, req)
 	if err != nil {

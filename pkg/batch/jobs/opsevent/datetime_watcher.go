@@ -80,7 +80,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			if aor.IsFinished() || aor.IsStopped() || aor.OpsType != autoopsproto.OpsType_SCHEDULE {
 				continue
 			}
-			executeClauseID, err := w.getExecuteClauseId(ctx, env.Id, aor)
+			executeClauseID, err := w.getExecuteClauseId(env.Id, aor)
 			if err != nil {
 				lastErr = err
 			}
@@ -121,7 +121,6 @@ func (w *datetimeWatcher) listAutoOpsRules(
 }
 
 func (w *datetimeWatcher) getExecuteClauseId(
-	ctx context.Context,
 	environmentId string,
 	a *autoopsdomain.AutoOpsRule,
 ) (string, error) {
@@ -161,14 +160,6 @@ func (w *datetimeWatcher) getExecuteClauseId(
 		)
 		return nextClauseID, nil
 	}
-	w.logger.Debug("Scheduled operation does not satisfy the time condition",
-		zap.String("environmentId", environmentId),
-		zap.String("featureId", a.FeatureId),
-		zap.String("autoOpsRuleId", a.Id),
-		zap.String("clauseId", nextClauseID),
-		zap.Int64("clauseTime", dateClause.Time),
-		zap.Any("dateClauses", dateClause),
-	)
 	// Nothing to execute
 	return "", nil
 }
