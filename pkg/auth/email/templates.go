@@ -44,7 +44,7 @@ var (
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="width:100%;max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <tr>
                             <td style="padding:32px;background:#ffffff;">
-                                <img src="{{webConsoleEndpoint}}/img/logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
+                                <img src="{{webConsoleEndpoint}}/img/bucketeer-logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">Hello, {{userEmail}}.</p>
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">We wanted to let you know that your Bucketeer password has changed.</p>
                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 24px 0;">
@@ -91,7 +91,7 @@ var (
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="width:100%;max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <tr>
                             <td style="padding:32px;background:#ffffff;">
-                                <img src="{{webConsoleEndpoint}}/img/logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
+                                <img src="{{webConsoleEndpoint}}/img/bucketeer-logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">Hello, {{userEmail}}.</p>
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">Your Bucketeer account is ready! To complete your account setup, please create a password by clicking the button below:</p>
                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px 0;">
@@ -152,7 +152,7 @@ var (
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="width:100%;max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <tr>
                             <td style="padding:32px;background:#ffffff;">
-                                <img src="{{webConsoleEndpoint}}/img/logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
+                                <img src="{{webConsoleEndpoint}}/img/bucketeer-logo-primary.png" alt="Bucketeer" width="205" height="48" style="display:block;margin-bottom:24px;" />
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">Hello, {{userEmail}}.</p>
                                 <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;">We received a request to reset your Bucketeer password. Click the button below to create a new password:</p>
                                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px 0;">
