@@ -146,18 +146,7 @@ var (
 		pkgErr.NewErrorInternal(pkgErr.AutoopsPackageName, "internal error occurs for a progressive rollout"))
 	statusProgressiveRolloutAlreadyStopped = api.NewGRPCStatus(
 		pkgErr.NewErrorUnavailable(pkgErr.AutoopsPackageName, "progressive rollout is already stopped"))
-	statusProgressiveRolloutClauseVariationIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName,
-			"clause variation id must be specified for a progressive rollout",
-			"clause_variation_id",
-		))
-	statusProgressiveRolloutClauseInvalidVariationID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName,
-			"the clause variation id set in the progressive rollout is invalid for a progressive rollout",
-			"clause_variation_id",
-		))
+
 	statusProgressiveRolloutClauseSchedulesRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,
@@ -181,10 +170,39 @@ var (
 			pkgErr.AutoopsPackageName,
 			"cannot create a progressive rollout when there is a scheduled or running experiment",
 		))
-	statusProgressiveRolloutInvalidVariationSize = api.NewGRPCStatus(
+	statusProgressiveRolloutInsufficientVariations = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.AutoopsPackageName,
-			"the number of variations must be equal to 2 when creating a progressive rollout",
+			"the feature must have at least 2 variations when creating a progressive rollout",
+		))
+	statusProgressiveRolloutControlVariationRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"control variation id must be specified for a progressive rollout",
+			"control_variation_id",
+		))
+	statusProgressiveRolloutTargetVariationRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"target variation id must be specified for a progressive rollout",
+			"target_variation_id",
+		))
+	statusProgressiveRolloutVariationsMustBeDifferent = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.AutoopsPackageName,
+			"control and target variations must be different for a progressive rollout",
+		))
+	statusProgressiveRolloutControlVariationNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"the control variation id set in the progressive rollout does not exist in the feature",
+			"control_variation_id",
+		))
+	statusProgressiveRolloutTargetVariationNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.AutoopsPackageName,
+			"the target variation id set in the progressive rollout does not exist in the feature",
+			"target_variation_id",
 		))
 	statusProgressiveRolloutInvalidScheduleSpans = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
