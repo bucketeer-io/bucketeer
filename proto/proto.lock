@@ -49396,81 +49396,6 @@
       }
     },
     {
-      "protopath": "push:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreatePushCommand",
-            "fields": [
-              {
-                "id": 2,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "fcm_service_account",
-                "type": "bytes"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "AddPushTagsCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeletePushTagsCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeletePushCommand"
-          },
-          {
-            "name": "RenamePushCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "bucketeer.push"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "push:/:push.proto",
       "def": {
         "messages": [
@@ -50618,9 +50543,6 @@
           },
           {
             "path": "proto/push/push.proto"
-          },
-          {
-            "path": "proto/push/command.proto"
           }
         ],
         "package": {

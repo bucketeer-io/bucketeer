@@ -23,7 +23,6 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/push/push.proto";
-import "proto/push/command.proto";
 
 enum ChangeType {
   UNSPECIFIED = 0;
@@ -39,7 +38,7 @@ message TagChange {
 
 message CreatePushRequest {
   reserved 1;
-  reserved 2;
+  reserved 2;  // CreatePushCommand command
   repeated string tags = 3;
   string name = 4;
   bytes fcm_service_account = 5;
@@ -84,7 +83,7 @@ message ListPushesResponse {
 message DeletePushRequest {
   reserved 1;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  reserved 3;
+  reserved 3;  // DeletePushCommand command
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -93,9 +92,9 @@ message DeletePushResponse {}
 message UpdatePushRequest {
   reserved 1;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  reserved 3;
-  reserved 4;
-  reserved 5;
+  reserved 3;  // AddPushTagsCommand add_push_tags_command
+  reserved 4;  // DeletePushTagsCommand delete_push_tags_command
+  reserved 5;  // RenamePushCommand rename_push_command
   repeated string tags = 6 [deprecated = true];
   google.protobuf.StringValue name = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
