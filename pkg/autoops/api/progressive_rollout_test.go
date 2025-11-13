@@ -458,9 +458,9 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
 						ControlVariationId: "vid-1",
 						TargetVariationId:  "vid-2",
-						Schedules:   executedAtRequiredSchedules,
-						Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-						Increments:  2,
+						Schedules:          executedAtRequiredSchedules,
+						Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+						Increments:         2,
 					},
 				},
 			},
