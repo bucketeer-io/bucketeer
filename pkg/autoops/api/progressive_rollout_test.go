@@ -117,7 +117,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
-			desc: "err: InvalidVariationSize",
+			desc: "err: InsufficientVariations",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -125,12 +125,6 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					Variations: []*featureproto.Variation{
 						{
 							Id: "vid-1",
-						},
-						{
-							Id: "vid-2",
-						},
-						{
-							Id: "vid-3",
 						},
 					},
 					Enabled: true,
@@ -246,13 +240,14 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-					VariationId: "invalid",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "invalid",
 				},
 			},
 			expectedErr: statusProgressiveRolloutClauseInvalidVariationID.Err(),
 		},
 		{
-			desc: "err: template ErrVariationIdRequired",
+			desc: "err: template ErrControlVariationIdRequired",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -302,7 +297,8 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-					VariationId: "vid-1",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
 				},
 			},
 			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
@@ -331,7 +327,8 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
 				},
 			},
 			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
@@ -360,7 +357,8 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
 					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
 						{
 							ScheduleId: "sid-1",
@@ -396,7 +394,8 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
 					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
 						{
 							ScheduleId: "sid-1",
@@ -433,10 +432,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   executedAtRequiredSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          executedAtRequiredSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
@@ -465,8 +465,9 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   executedAtRequiredSchedules,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          executedAtRequiredSchedules,
 				},
 			},
 			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
@@ -495,10 +496,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   invalidWeightSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          invalidWeightSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
@@ -527,7 +529,8 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-					VariationId: "vid-1",
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
 					Schedules:   invalidWeightSchedules,
 				},
 			},
@@ -557,10 +560,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   invalidSpanSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          invalidSpanSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
@@ -589,8 +593,9 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   invalidSpanSchedules,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          invalidSpanSchedules,
 				},
 			},
 			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
@@ -622,10 +627,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   validSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusInternal.Err(),
@@ -657,10 +663,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   validSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusProgressiveRolloutAlreadyExists.Err(),
@@ -689,10 +696,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   validSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusInternal.Err(),
@@ -727,10 +735,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   validSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: statusProgressiveRolloutWaitingOrRunningExperimentExists.Err(),
@@ -763,10 +772,11 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				EnvironmentId: "env-id",
 				FeatureId:     "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
-					VariationId: "vid-1",
-					Schedules:   validSchedules,
-					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
-					Increments:  2,
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
 				},
 			},
 			expectedErr: nil,
