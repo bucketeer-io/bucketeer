@@ -18,16 +18,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
-	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-)
-
-var errVariationNotFound = err.NewErrorNotFound(
-	err.AutoopsPackageName,
-	"a variation for a progressive rollout is not found",
-	"variation_id",
 )
 
 const totalVariationWeight = int32(100000)
