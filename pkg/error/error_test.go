@@ -303,17 +303,19 @@ func TestErrorAs(t *testing.T) {
 	fieldErr := NewErrorNotFound("test", "not found", "resource")
 	fieldErr.Wrap(originalErr)
 
-	var targetErr *BktFieldError
+	var targetErr *BktError
 	if errors.As(fieldErr, &targetErr) {
 		assert.Equal(t, "test", targetErr.PackageName())
 		assert.Equal(t, "not found", targetErr.message)
-		assert.Equal(t, "resource", targetErr.Field())
+		assert.Equal(t, "resource", targetErr.field)
+		assert.Equal(t, "test:not found, resource: test:permission denied", targetErr.Error())
 	} else {
-		t.Error("Expected fieldErr to be of type *BktFieldError")
+		t.Error("Expected fieldErr to be of type *BktError")
 	}
 
+	// Check that wrapped error can be extracted
 	var wrappedErr *BktError
-	if errors.As(fieldErr, &wrappedErr) {
+	if errors.As(fieldErr.Unwrap(), &wrappedErr) {
 		assert.Equal(t, "test", wrappedErr.PackageName())
 		assert.Equal(t, "permission denied", wrappedErr.message)
 		assert.Equal(t, "test:permission denied", wrappedErr.Error())
