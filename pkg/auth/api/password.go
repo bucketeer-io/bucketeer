@@ -146,9 +146,9 @@ func (s *authService) InitiatePasswordSetup(
 		return nil, err
 	}
 
-	// Check if password authentication and email service are enabled
-	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
-		s.logger.Error("Password setup not available")
+	// Check if email service is enabled
+	if !s.config.PasswordAuth.EmailServiceEnabled {
+		s.logger.Error("Password setup requires email service to be enabled")
 		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.PermissionDenied),
