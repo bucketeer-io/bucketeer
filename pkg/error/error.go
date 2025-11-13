@@ -35,32 +35,27 @@ const (
 	ExperimentPackageName   = "experiment"
 	AuthPackageName         = "auth"
 
-	invalidTypeUnknown        = "unknown"
-	invalidTypeEmpty          = "empty"
-	invalidTypeNil            = "nil"
-	invalidTypeNotMatchFormat = "not_match_format"
-	invalidTypeDuplicated     = "duplicated"
-
-	invalidPrefix = "invalid"
+	invalidPrefix = "Invalid"
 )
 
+// ErrorType is also used as the message key.
 type ErrorType string
 
 const (
-	ErrorTypeNotFound                 ErrorType = "not_found"
-	ErrorTypeAlreadyExists            ErrorType = "already_exists"
-	ErrorTypeUnauthenticated          ErrorType = "unauthenticated"
-	ErrorTypePermissionDenied         ErrorType = "permission_denied"
-	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
-	ErrorTypeInternal                 ErrorType = "internal"
-	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
-	ErrorTypeUnavailable              ErrorType = "unavailable"
-	ErrorTypeAborted                  ErrorType = "aborted"
-	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
-	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
-	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
-	ErrorTypeInvalidArgNotMatchFormat ErrorType = invalidPrefix + "_" + invalidTypeNotMatchFormat
-	ErrorTypeInvalidArgDuplicated     ErrorType = invalidPrefix + "_" + invalidTypeDuplicated
+	ErrorTypeNotFound                 ErrorType = "NotFoundError"
+	ErrorTypeAlreadyExists            ErrorType = "AlreadyExistsError"
+	ErrorTypeUnauthenticated          ErrorType = "UnauthenticatedError"
+	ErrorTypePermissionDenied         ErrorType = "PermissionDenied"
+	ErrorTypeUnexpectedAffectedRows   ErrorType = "UnexpectedAffectedRows"
+	ErrorTypeInternal                 ErrorType = "InternalServerError"
+	ErrorTypeFailedPrecondition       ErrorType = "FailedPreconditionError"
+	ErrorTypeUnavailable              ErrorType = "UnavailableError"
+	ErrorTypeAborted                  ErrorType = "AbortedError"
+	ErrorTypeInvalidArgUnknown        ErrorType = "InvalidArgumentUnknownError"
+	ErrorTypeInvalidArgEmpty          ErrorType = "InvalidArgumentEmptyError"
+	ErrorTypeInvalidArgNil            ErrorType = "InvalidArgumentNilError"
+	ErrorTypeInvalidArgNotMatchFormat ErrorType = "InvalidArgumentNotMatchFormatError"
+	ErrorTypeInvalidArgDuplicated     ErrorType = "InvalidArgumentDuplicatedError"
 )
 
 type BktError struct {
@@ -70,14 +65,13 @@ type BktError struct {
 	wrappedError error
 	field        string // optional
 
-	messageKey     string
 	embedKeyValues map[string]string
 }
 
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
 
-func (e *BktError) MessageKey() string                { return e.messageKey }
+func (e *BktError) MessageKey() string                { return string(e.errorType) }
 func (e *BktError) EmbedKeyValues() map[string]string { return e.embedKeyValues }
 
 func (e *BktError) Error() string {
