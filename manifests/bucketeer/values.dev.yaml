@@ -566,7 +566,7 @@ subscriber:
       flushInterval: 5
       flushTimeout: 30
       maxRetryGoalEventPeriod: 86400 # 1 day
-      retryGoalEventInterval: 30 # 30 seconds
+      retryGoalEventInterval: 5 # 5 seconds (reduced for faster retries in dev/test with Redis Stream)
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
         type: ""  

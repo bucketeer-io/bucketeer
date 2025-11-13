@@ -73,6 +73,12 @@ func NewEvalEventWriter(
 		option = options[0]
 	}
 
+	l.Info("NewEvalEventWriter: data warehouse configuration",
+		zap.String("dataWarehouseType", option.DataWarehouseType),
+		zap.Bool("hasMySQLClient", option.MySQLClient != nil),
+		zap.Int("optionsCount", len(options)),
+	)
+
 	switch option.DataWarehouseType {
 	case "mysql":
 		if option.MySQLClient == nil {

@@ -164,6 +164,10 @@ func NewEventsDWHPersister(
 
 		switch persisterConfig.DataWarehouse.Type {
 		case "mysql":
+			logger.Info("Creating MySQL evaluation event writer option",
+				zap.Bool("hasMySQLClient", dwhMySQLClient != nil),
+				zap.Int("batchSize", persisterConfig.DataWarehouse.BatchSize),
+			)
 			evalOptions = append(evalOptions, EvalEventWriterOption{
 				DataWarehouseType: "mysql",
 				MySQLClient:       dwhMySQLClient,
@@ -182,6 +186,13 @@ func NewEventsDWHPersister(
 		project := persisterConfig.DataWarehouse.BigQuery.Project
 		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
 		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
+
+		logger.Info("Calling NewEvalEventWriter",
+			zap.String("dataWarehouseType", persisterConfig.DataWarehouse.Type),
+			zap.Int("evalOptionsCount", len(evalOptions)),
+			zap.String("project", project),
+			zap.String("dataset", dataset),
+		)
 
 		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
@@ -208,6 +219,10 @@ func NewEventsDWHPersister(
 
 		switch persisterConfig.DataWarehouse.Type {
 		case "mysql":
+			logger.Info("Creating MySQL goal event writer option",
+				zap.Bool("hasMySQLClient", dwhMySQLClient != nil),
+				zap.Int("batchSize", persisterConfig.DataWarehouse.BatchSize),
+			)
 			goalOptions = append(goalOptions, GoalEventWriterOption{
 				DataWarehouseType: "mysql",
 				MySQLClient:       dwhMySQLClient,
@@ -224,6 +239,13 @@ func NewEventsDWHPersister(
 		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
 		location_str := persisterConfig.DataWarehouse.BigQuery.Location
 		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
+
+		logger.Info("Calling NewGoalEventWriter",
+			zap.String("dataWarehouseType", persisterConfig.DataWarehouse.Type),
+			zap.Int("goalOptionsCount", len(goalOptions)),
+			zap.String("project", project),
+			zap.String("dataset", dataset),
+		)
 
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
