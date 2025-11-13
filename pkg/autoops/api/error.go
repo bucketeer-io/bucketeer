@@ -140,18 +140,7 @@ var (
 		))
 	statusProgressiveRolloutAlreadyStopped = api.NewGRPCStatus(
 		pkgErr.NewErrorUnavailable(pkgErr.AutoopsPackageName, "progressive rollout is already stopped"))
-	statusProgressiveRolloutClauseVariationIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName,
-			"clause variation id must be specified for a progressive rollout",
-			"VariationId",
-		))
-	statusProgressiveRolloutClauseInvalidVariationID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(
-			pkgErr.AutoopsPackageName,
-			"the clause variation id set in the progressive rollout is invalid for a progressive rollout",
-			"VariationId",
-		))
+
 	statusProgressiveRolloutClauseSchedulesRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,
