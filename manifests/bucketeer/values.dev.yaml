@@ -7,33 +7,36 @@ global:
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql
-    type: mysql  # Options: bigquery, mysql
+    type: mysql # Options: bigquery, mysql
     batchSize: 1000
     timezone: "UTC"
-    
+
     # BigQuery configuration (used when type: bigquery)
     bigquery:
-      project: ""
-      dataset: ""
+      project: "bucketeer-test"
+      dataset: "bucketeer"
       location: "US"
-    
+
     # MySQL configuration (used when type: mysql)
     mysql:
       useMainConnection: true
-      host: ""
+      host: "localenv-mysql-headless.default.svc.cluster.local"
       port: 3306
-      user: ""
-      password: ""
-      database: ""
-  
+      user: "bucketeer"
+      password: "bucketeer"
+      database: "bucketeer"
+
   pubsub:
-    type: redis-stream
+    type: redis-stream # Options: redis-stream, google
+    # Redis configuration (used when type is redis-stream)
     redis:
       serverName: non-persistent-redis
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolSize: 25
       minIdle: 25
+      partitionCount: 16 # Must match between publisher (API) and subscriber
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    # Google Cloud project ID when type is google
     project: bucketeer-test
 
 migration:

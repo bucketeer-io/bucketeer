@@ -45,8 +45,8 @@ New Makefile target `pre-cache-docker-images` downloads all necessary images to 
 - `registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.3` - Webhook cert generator
 - `gcr.io/k8s-minikube/storage-provisioner:v5` - Storage provisioner
 - `mysql:8.0` - Database
-- `ghcr.io/bucketeer-io/bigquery-emulator:latest` - BigQuery emulator
-- `gcr.io/google.com/cloudsdktool/cloud-sdk:449.0.0` - Cloud SDK
+- `ghcr.io/bucketeer-io/bigquery-emulator:0.6.6` - BigQuery emulator (forked version with ARM64 support)
+- `gcr.io/google.com/cloudsdktool/google-cloud-cli:545.0.0` - Cloud SDK (full version, includes Java for PubSub emulator)
 
 ## 🛠️ Available Commands
 

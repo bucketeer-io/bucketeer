@@ -44,8 +44,8 @@ pre-cache-docker-images:
 	docker pull gcr.io/k8s-minikube/storage-provisioner:v5 || echo "Failed to pull storage provisioner"
 	@echo "Pulling application images..."
 	docker pull mysql:8.0 || echo "Failed to pull mysql"
-	docker pull ghcr.io/bucketeer-io/bigquery-emulator:latest || echo "Failed to pull bigquery emulator"
-	docker pull gcr.io/google.com/cloudsdktool/cloud-sdk:449.0.0 || echo "Failed to pull cloud-sdk"
+	docker pull ghcr.io/bucketeer-io/bigquery-emulator:0.6.6 || echo "Failed to pull bigquery emulator"
+	docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:545.0.0 || echo "Failed to pull cloud-sdk"
 	@echo "Docker image pre-caching completed. These images will persist across minikube deletions."
 
 # Smart minikube setup that uses cached images when available
@@ -65,15 +65,19 @@ setup-minikube:
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
 	helm install localenv ../../manifests/localenv
 
-start-minikube: 
+start-minikube:
 	minikube start --cache-images
 	# ensure ingress addon is enabled
 	minikube addons enable ingress
 	# used to enable ssl-passthrough for nginx ingress container
 	kubectl config use-context minikube
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
-	# install localenv if not already installed
-	helm list | grep -q localenv || helm install localenv ../../manifests/localenv
+	# update helm dependencies
+	cd ../../manifests/localenv && helm dependency update
+	# delete old Bitnami StatefulSets if they exist (migration from Bitnami charts)
+	kubectl delete statefulset localenv-mysql localenv-redis-master -n default --ignore-not-found=true
+	# install or upgrade localenv
+	helm list | grep -q localenv && helm upgrade localenv ../../manifests/localenv || helm install localenv ../../manifests/localenv
 
 # Clean Docker cache and volumes (use when troubleshooting or freeing space)
 clean-cache:

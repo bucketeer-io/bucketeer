@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "localenv.fullname" . }}-mysql
+  labels:
+    {{- include "localenv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+spec:
+  type: {{ .Values.mysql.service.type | default "NodePort" }}
+  {{- if eq (.Values.mysql.service.type | default "NodePort") "NodePort" }}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+      {{- if .Values.mysql.service.nodePort }}
+      nodePort: {{ .Values.mysql.service.nodePort }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  {{- end }}
+  selector:
+    {{- include "localenv.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "localenv.fullname" . }}-mysql
+  labels:
+    {{- include "localenv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+spec:
+  serviceName: {{ include "localenv.fullname" . }}-mysql-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "localenv.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mysql
+  template:
+    metadata:
+      labels:
+        {{- include "localenv.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mysql
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+      - name: mysql
+        image: {{ .Values.mysql.image.repository }}:{{ .Values.mysql.image.tag }}
+        imagePullPolicy: {{ .Values.mysql.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "localenv.fullname" . }}-mysql-secrets
+              key: mysql-root-password
+        - name: MYSQL_DATABASE
+          value: {{ .Values.mysql.auth.database | quote }}
+        - name: MYSQL_USER
+          value: {{ .Values.mysql.auth.username | quote }}
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "localenv.fullname" . }}-mysql-secrets
+              key: mysql-password
+        args:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_general_ci
+        - --datadir=/var/lib/mysql
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          {{- toYaml .Values.mysql.resources | nindent 10 }}
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin ping -h localhost -u$MYSQL_USER -p$MYSQL_PASSWORD
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 20
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin ping -h localhost -u$MYSQL_USER -p$MYSQL_PASSWORD
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+      volumes:
+      - name: mysql-initdb
+        configMap:
+          name: {{ include "localenv.fullname" . }}-mysql-initdb
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.mysql.storageClass }}
+      storageClassName: {{ .Values.mysql.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.mysql.storageSize | default "20Gi" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "localenv.fullname" . }}-mysql-headless
+  labels:
+    {{- include "localenv.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+spec:
+  clusterIP: None
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    {{- include "localenv.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+

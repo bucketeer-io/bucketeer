@@ -7,35 +7,51 @@ vault:
       devRootToken: "root"
 
 redis:
-  architecture: "standalone"
-  auth: 
-    enabled: false
+  # Using official Redis image (aligned with docker-compose)
+  image:
+    repository: redis
+    tag: "7.2-alpine"
+    pullPolicy: IfNotPresent
+  storageSize: "8Gi"
+  storageClass: ""  # Use default storage class
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 nginx:
   controller:
     service:
       loadBalancerIP: "192.168.49.2"
       externalIPs:
-      - 127.0.0.1
-      - 192.168.49.2
+        - 127.0.0.1
+        - 192.168.49.2
 
 mysql:
+  # Using official MySQL image (aligned with docker-compose)
   image:
+    repository: mysql
     tag: "8.0"
-  initdbScriptsConfigMap: mysql-initdb
-  #diagnosticMode:
-  #  enabled: true
-  volumePermissions:
-    enabled: true
+    pullPolicy: IfNotPresent
+  storageSize: "20Gi"
+  storageClass: ""  # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32000
   auth:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
-  primary:
-   service:
-     type: NodePort
-     nodePorts:
-       mysql: 32000
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
 
 bq:
   project: bucketeer-test
@@ -43,8 +59,29 @@ bq:
     type: NodePort
     httpNodePort: 31000
   image:
+    # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)
     repository: ghcr.io/bucketeer-io/bigquery-emulator
-    
-pubsub: 
-  image: 
-    tag: "449.0.0"
+    tag: "0.6.6"
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "2"
+    limits:
+      memory: "8Gi"
+      cpu: "4"
+
+pubsub:
+  image:
+    repository: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    # Use non-slim version - pubsub emulator requires Java which is not in slim variant
+    tag: "545.0.0"
+  service:
+    type: NodePort
+    nodePort: 30089
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"

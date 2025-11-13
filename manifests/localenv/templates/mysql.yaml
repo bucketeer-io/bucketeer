@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mysql-secrets
+  name: {{ include "localenv.fullname" . }}-mysql-secrets
 type: Opaque
 data:
   mysql-root-password: YnVja2V0ZWVy
@@ -11,7 +11,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-initdb
+  name: {{ include "localenv.fullname" . }}-mysql-initdb
 data:
   mysql_dump.sql: |
     --
