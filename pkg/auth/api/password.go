@@ -170,23 +170,21 @@ func (s *authService) InitiatePasswordSetup(
 		}, nil
 	}
 
-	// Always send welcome email for new users
-	if s.emailService != nil {
-		err = s.emailService.SendWelcomeEmail(ctx, email, localizer.GetLocale())
-		if err != nil {
-			s.logger.Error("Failed to send welcome email",
-				zap.Error(err),
-				zap.String("email", email),
-			)
-			// Don't return error to user for security reasons
-		} else {
-			s.logger.Info("Welcome email sent", zap.String("email", email))
-		}
-	}
-
-	// If password authentication is not enabled, return early
+	// If password authentication is not enabled, send welcome email only
 	if !s.config.Password.Enabled {
-		s.logger.Info("Password authentication disabled, skipping password setup", zap.String("email", email))
+		s.logger.Info("Password authentication disabled, sending welcome email only", zap.String("email", email))
+		if s.emailService != nil {
+			err = s.emailService.SendWelcomeEmail(ctx, email, localizer.GetLocale())
+			if err != nil {
+				s.logger.Error("Failed to send welcome email",
+					zap.Error(err),
+					zap.String("email", email),
+				)
+				// Don't return error to user for security reasons
+			} else {
+				s.logger.Info("Welcome email sent", zap.String("email", email))
+			}
+		}
 		return &authproto.InitiatePasswordSetupResponse{
 			Message: localizer.MustLocalize(locale.WelcomeEmailSent),
 		}, nil
