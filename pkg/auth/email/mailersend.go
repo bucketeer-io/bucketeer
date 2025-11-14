@@ -27,15 +27,15 @@ import (
 
 // MailerSendEmailService implements EmailService using MailerSend
 type MailerSendEmailService struct {
-	config   auth.EmailServiceConfig
+	config   auth.EmailConfig
 	logger   *zap.Logger
 	renderer *TemplateRenderer
 	client   *mailersend.Mailersend
 }
 
 // NewMailerSendEmailService creates a new MailerSend email service
-func NewMailerSendEmailService(config auth.EmailServiceConfig, logger *zap.Logger) EmailService {
-	client := mailersend.NewMailersend(config.MailerSend.MailerSendAPIKey)
+func NewMailerSendEmailService(config auth.EmailConfig, logger *zap.Logger) EmailService {
+	client := mailersend.NewMailersend(config.MailerSend.APIKey)
 
 	return &MailerSendEmailService{
 		config:   config,
@@ -113,14 +113,32 @@ func (s *MailerSendEmailService) SendPasswordResetEmail(
 	return nil
 }
 
+func (s *MailerSendEmailService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderWelcomeEmail(language, to)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *MailerSendEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
 	// Create the message using MailerSend's message builder
 	message := s.client.Email.NewMessage()
 
 	// Set sender
 	from := mailersend.From{
-		Name:  s.config.FromName,
-		Email: s.config.FromEmail,
+		Name:  s.config.Sender.Name,
+		Email: s.config.Sender.Email,
 	}
 	message.SetFrom(from)
 
