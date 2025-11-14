@@ -154,38 +154,22 @@ web:
         - https://localhost:9000/v3/auth/callback
   
     # Password authentication configuration for development
-    passwordAuth:
+    password:
       enabled: true
-      passwordMinLength: 8
-      passwordRequireUppercase: true
-      passwordRequireLowercase: true
-      passwordRequireNumbers: true
-      passwordRequireSymbols: false
-      passwordSetupTokenTTL: "24h"
-      passwordResetTokenTTL: "1h"
-      emailServiceEnabled: true
-      emailServiceConfig:
-        provider: "smtp"
-        smtp:
-          smtpHost: "smtp.gmail.com"
-          smtpPort: 587
-          smtpUsername: "bucketeer@example.com"
-          smtpPassword: "${SMTP_PASSWORD}"
-        sendgrid:
-          sendgridAPIKey: ""
-        ses:
-          sesRegion: ""
-          sesAccessKey: ""
-          sesSecretKey: ""
-        mailersend:
-          mailersendAPIKey: ""
-        fromEmail: "bucketeer@example.com"
-        fromName: "Bucketeer Development"
-        baseURL: "https://localhost"
-        passwordResetPath: "/auth/reset-password"
-        passwordSetupPath: "/auth/setup-password"
-        passwordResetParam: "token"
-        passwordSetupParam: "token"
+      policy:
+        minLength: 8
+        requireUppercase: true
+        requireLowercase: true
+        requireNumbers: true
+        requireSymbols: false
+      tokens:
+        resetTTL: "1h"
+        setupTTL: "24h"
+      urls:
+        resetPath: "/auth/reset-password"
+        setupPath: "/auth/setup-password"
+        tokenParam: "token"
+
     demoSignIn:
       enabled: true
       email: "demo@bucketeer.io"

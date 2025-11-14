@@ -31,7 +31,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/email"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -40,6 +39,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	envdomain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -103,6 +103,7 @@ type authService struct {
 	audience            string
 	signer              token.Signer
 	config              *auth.OAuthConfig
+	emailConfig         *email.Config
 	mysqlClient         mysql.Client
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
@@ -111,7 +112,7 @@ type authService struct {
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	credentialsStorage  storage.CredentialsStorage
-	emailService        email.EmailService
+	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
 }
@@ -124,6 +125,7 @@ func NewAuthService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	config *auth.OAuthConfig,
+	emailConfig *email.Config,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -132,17 +134,17 @@ func NewAuthService(
 	}
 	logger := options.logger.Named("api")
 
-	// Initialize email service if password auth and email are enabled
-	var emailService email.EmailService
-	if config.PasswordAuth.Enabled && config.PasswordAuth.EmailServiceEnabled {
+	// Initialize email service if email are enabled
+	var emailService email.Service
+	if emailConfig.Enabled {
 		var err error
-		emailService, err = email.NewEmailService(config.PasswordAuth.EmailServiceConfig, logger)
+		emailService, err = email.NewService(*emailConfig, logger)
 		if err != nil {
 			logger.Warn("Failed to initialize email service", zap.Error(err))
-			emailService = email.NewNoOpEmailService(logger)
+			emailService = email.NewNoOpService(logger)
 		}
 	} else {
-		emailService = email.NewNoOpEmailService(logger)
+		emailService = email.NewNoOpService(logger)
 	}
 
 	service := &authService{
@@ -150,6 +152,7 @@ func NewAuthService(
 		audience:            audience,
 		signer:              signer,
 		config:              config,
+		emailConfig:         emailConfig,
 		mysqlClient:         mysqlClient,
 		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
 		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
@@ -271,7 +274,7 @@ func (s *authService) ExchangeToken(
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations)
+	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -283,7 +286,7 @@ func (s *authService) ExchangeToken(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin)
+	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
