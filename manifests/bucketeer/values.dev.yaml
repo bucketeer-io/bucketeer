@@ -146,38 +146,70 @@ web:
         - https://localhost:9000/v3/auth/callback
   
     # Password authentication configuration for development
-    passwordAuth:
+    password:
       enabled: true
-      passwordMinLength: 8
-      passwordRequireUppercase: true
-      passwordRequireLowercase: true
-      passwordRequireNumbers: true
-      passwordRequireSymbols: false
-      passwordSetupTokenTTL: "24h"
-      passwordResetTokenTTL: "1h"
-      emailServiceEnabled: true
-      emailServiceConfig:
-        provider: "smtp"
-        smtp:
-          smtpHost: "smtp.gmail.com"
-          smtpPort: 587
-          smtpUsername: "bucketeer@example.com"
-          smtpPassword: "${SMTP_PASSWORD}"
-        sendgrid:
-          sendgridAPIKey: ""
-        ses:
-          sesRegion: ""
-          sesAccessKey: ""
-          sesSecretKey: ""
-        mailersend:
-          mailersendAPIKey: ""
-        fromEmail: "bucketeer@example.com"
-        fromName: "Bucketeer Development"
-        baseURL: "https://localhost"
-        passwordResetPath: "/auth/reset-password"
-        passwordSetupPath: "/auth/setup-password"
-        passwordResetParam: "token"
-        passwordSetupParam: "token"
+      policy:
+        minLength: 8
+        requireUppercase: true
+        requireLowercase: true
+        requireNumbers: true
+        requireSymbols: false
+      tokens:
+        resetTTL: "1h"
+        setupTTL: "24h"
+      urls:
+        resetPath: "/auth/reset-password"
+        setupPath: "/auth/setup-password"
+        tokenParam: "token"
+
+  # Email service configuration for development
+  email:
+    enabled: true
+    provider: "smtp"
+    smtp:
+      host: "smtp.gmail.com"
+      port: 587
+      username: "bucketeer@example.com"
+      password: "${SMTP_PASSWORD}"
+    sendgrid:
+      apiKey: ""
+    ses:
+      region: ""
+      accessKey: ""
+      secretKey: ""
+    mailersend:
+      apiKey: ""
+    sender:
+      email: "bucketeer@example.com"
+      name: "Bucketeer Development"
+    baseURL: "https://localhost"
+    templates:
+      en:
+        passwordChanged:
+          subject: ""
+          body: ""
+        passwordSetup:
+          subject: ""
+          body: ""
+        passwordReset:
+          subject: ""
+          body: ""
+        welcome:
+          subject: ""
+          body: ""
+      ja:
+        passwordChanged:
+          subject: ""
+          body: ""
+        passwordSetup:
+          subject: ""
+          body: ""
+        passwordReset:
+          subject: ""
+          body: ""
+        welcome:
+          subject: ""
+          body: ""
     demoSignIn:
       enabled: true
       email: "demo@bucketeer.io"

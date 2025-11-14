@@ -42,7 +42,7 @@ func (s *authService) UpdatePassword(
 	}
 
 	// Check if password authentication is enabled
-	if !s.config.PasswordAuth.Enabled {
+	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
 		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -93,7 +93,7 @@ func (s *authService) UpdatePassword(
 	}
 
 	// Validate new password complexity
-	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.PasswordAuth)
+	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("New password complexity validation failed", zap.Error(err))
 		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
@@ -121,7 +121,7 @@ func (s *authService) UpdatePassword(
 	}
 
 	// Send notification email if email service is enabled
-	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
+	if s.config.Email.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
@@ -147,7 +147,7 @@ func (s *authService) InitiatePasswordSetup(
 	}
 
 	// Check if email service is enabled
-	if !s.config.PasswordAuth.EmailServiceEnabled {
+	if !s.config.Email.Enabled {
 		s.logger.Error("Password setup requires email service to be enabled")
 		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -167,6 +167,28 @@ func (s *authService) InitiatePasswordSetup(
 		s.logger.Warn("Password setup attempted for non-existent account", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
 			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
+		}, nil
+	}
+
+	// Always send welcome email for new users
+	if s.emailService != nil {
+		err = s.emailService.SendWelcomeEmail(ctx, email, localizer.GetLocale())
+		if err != nil {
+			s.logger.Error("Failed to send welcome email",
+				zap.Error(err),
+				zap.String("email", email),
+			)
+			// Don't return error to user for security reasons
+		} else {
+			s.logger.Info("Welcome email sent", zap.String("email", email))
+		}
+	}
+
+	// If password authentication is not enabled, return early
+	if !s.config.Password.Enabled {
+		s.logger.Info("Password authentication disabled, skipping password setup", zap.String("email", email))
+		return &authproto.InitiatePasswordSetupResponse{
+			Message: localizer.MustLocalize(locale.WelcomeEmailSent),
 		}, nil
 	}
 
@@ -198,8 +220,8 @@ func (s *authService) InitiatePasswordSetup(
 		return nil, auth.StatusInternal.Err()
 	}
 
-	// Store setup token with longer expiration (use PasswordSetupTokenTTL)
-	expiresAt := time.Now().Add(s.config.PasswordAuth.PasswordSetupTokenTTL).Unix()
+	// Store setup token with longer expiration (use setupTTL)
+	expiresAt := time.Now().Add(s.config.Password.Tokens.SetupTTL).Unix()
 	err = s.credentialsStorage.SetPasswordResetToken(ctx, email, setupToken, expiresAt)
 	if err != nil {
 		s.logger.Error("Failed to store setup token", zap.Error(err))
@@ -208,20 +230,20 @@ func (s *authService) InitiatePasswordSetup(
 
 	// Send setup email
 	if s.emailService != nil {
-		setupPath := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupPath
+		setupPath := s.config.Password.URLs.SetupPath
 		if setupPath == "" {
 			s.logger.Error("Password setup path not configured")
 			return nil, auth.StatusInternal.Err()
 		}
-		setupParam := s.config.PasswordAuth.EmailServiceConfig.PasswordSetupParam
+		setupParam := s.config.Password.URLs.TokenParam
 		if setupParam == "" {
 			s.logger.Error("Password setup parameter not configured")
 			return nil, auth.StatusInternal.Err()
 		}
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
-			s.config.PasswordAuth.EmailServiceConfig.BaseURL, setupPath, setupParam, setupToken)
+			s.config.Email.BaseURL, setupPath, setupParam, setupToken)
 		err = s.emailService.SendPasswordSetupEmail(
-			ctx, email, setupURL, s.config.PasswordAuth.PasswordSetupTokenTTL, localizer.GetLocale(),
+			ctx, email, setupURL, s.config.Password.Tokens.SetupTTL, localizer.GetLocale(),
 		)
 		if err != nil {
 			s.logger.Error("Failed to send password setup email",
@@ -249,7 +271,7 @@ func (s *authService) SetupPassword(
 	}
 
 	// Check if password authentication is enabled
-	if !s.config.PasswordAuth.Enabled {
+	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
 		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -293,7 +315,7 @@ func (s *authService) SetupPassword(
 	}
 
 	// Validate new password complexity
-	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.PasswordAuth)
+	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("Password complexity validation failed", zap.Error(err))
 		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
@@ -346,7 +368,7 @@ func (s *authService) SetupPassword(
 	}
 
 	// Send welcome email if email service is enabled
-	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
+	if s.config.Email.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password setup completion notification",
@@ -422,7 +444,7 @@ func (s *authService) InitiatePasswordReset(
 	}
 
 	// Check if password authentication and email service are enabled
-	if !s.config.PasswordAuth.Enabled || !s.config.PasswordAuth.EmailServiceEnabled {
+	if !s.config.Password.Enabled || !s.config.Email.Enabled {
 		s.logger.Error("Password reset not available")
 		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -466,8 +488,8 @@ func (s *authService) InitiatePasswordReset(
 		return nil, auth.StatusInternal.Err()
 	}
 
-	// Store reset token with expiration (use PasswordResetTokenTTL)
-	expiresAt := time.Now().Add(s.config.PasswordAuth.PasswordResetTokenTTL).Unix()
+	// Store reset token with expiration (use resetTTL)
+	expiresAt := time.Now().Add(s.config.Password.Tokens.ResetTTL).Unix()
 	err = s.credentialsStorage.SetPasswordResetToken(ctx, email, resetToken, expiresAt)
 	if err != nil {
 		s.logger.Error("Failed to store reset token", zap.Error(err))
@@ -476,20 +498,20 @@ func (s *authService) InitiatePasswordReset(
 
 	// Send reset email
 	if s.emailService != nil {
-		resetPath := s.config.PasswordAuth.EmailServiceConfig.PasswordResetPath
+		resetPath := s.config.Password.URLs.ResetPath
 		if resetPath == "" {
 			s.logger.Error("Password reset path not configured")
 			return nil, auth.StatusInternal.Err()
 		}
-		resetParam := s.config.PasswordAuth.EmailServiceConfig.PasswordResetParam
+		resetParam := s.config.Password.URLs.TokenParam
 		if resetParam == "" {
 			s.logger.Error("Password reset parameter not configured")
 			return nil, auth.StatusInternal.Err()
 		}
 		resetURL := fmt.Sprintf("%s%s?%s=%s",
-			s.config.PasswordAuth.EmailServiceConfig.BaseURL, resetPath, resetParam, resetToken)
+			s.config.Email.BaseURL, resetPath, resetParam, resetToken)
 		err = s.emailService.SendPasswordResetEmail(
-			ctx, email, resetURL, s.config.PasswordAuth.PasswordResetTokenTTL, localizer.GetLocale(),
+			ctx, email, resetURL, s.config.Password.Tokens.ResetTTL, localizer.GetLocale(),
 		)
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
@@ -517,7 +539,7 @@ func (s *authService) ResetPassword(
 	}
 
 	// Check if password authentication is enabled
-	if !s.config.PasswordAuth.Enabled {
+	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
 		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -561,7 +583,7 @@ func (s *authService) ResetPassword(
 	}
 
 	// Validate new password complexity
-	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.PasswordAuth)
+	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("Password complexity validation failed", zap.Error(err))
 		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
@@ -627,7 +649,7 @@ func (s *authService) ResetPassword(
 	}
 
 	// Send password changed notification email if email service is enabled
-	if s.config.PasswordAuth.EmailServiceEnabled && s.emailService != nil {
+	if s.config.Email.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",

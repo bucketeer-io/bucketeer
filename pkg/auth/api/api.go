@@ -132,11 +132,11 @@ func NewAuthService(
 	}
 	logger := options.logger.Named("api")
 
-	// Initialize email service if password auth and email are enabled
+	// Initialize email service if email are enabled
 	var emailService email.EmailService
-	if config.PasswordAuth.Enabled && config.PasswordAuth.EmailServiceEnabled {
+	if config.Email.Enabled {
 		var err error
-		emailService, err = email.NewEmailService(config.PasswordAuth.EmailServiceConfig, logger)
+		emailService, err = email.NewEmailService(config.Email, logger)
 		if err != nil {
 			logger.Warn("Failed to initialize email service", zap.Error(err))
 			emailService = email.NewNoOpEmailService(logger)
