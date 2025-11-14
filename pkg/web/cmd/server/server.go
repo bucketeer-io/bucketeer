@@ -56,6 +56,7 @@ import (
 	coderefstorage "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	coderefmysql "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mysql"
 	coderefpostgres "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/postgres"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	environmentapi "github.com/bucketeer-io/bucketeer/v2/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -201,6 +202,7 @@ type server struct {
 	refreshTokenTTL                 *time.Duration
 	emailFilter                     *string
 	oauthConfigPath                 *string
+	emailConfigPath                 *string
 	oauthPublicKeyPath              *string
 	oauthPrivateKeyPath             *string
 	webhookBaseURL                  *string
@@ -452,6 +454,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("168h").Duration(),
 		emailFilter:     cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
 		oauthConfigPath: cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
+		emailConfigPath: cmd.Flag("email-config-path", "Path to email config.").Required().String(),
 		oauthPrivateKeyPath: cmd.Flag(
 			"oauth-private-key",
 			"Path to private key for signing oauth token.",
@@ -529,6 +532,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	oAuthConfig, err := s.readOAuthConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read OAuth config", zap.Error(err))
+		return err
+	}
+
+	// email config
+	emailConfig, err := s.readEmailConfig(logger)
+	if err != nil {
+		logger.Error("Failed to read email config", zap.Error(err))
 		return err
 	}
 
@@ -783,6 +793,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentStorage,
 		verifier,
 		oAuthConfig,
+		emailConfig,
+		authstorage.NewCredentialsStorage(mysqlClient),
 		logger,
 	)
 	if err != nil {
@@ -1380,6 +1392,26 @@ func (s *server) readOAuthConfig(
 	return &config, nil
 }
 
+func (s *server) readEmailConfig(
+	logger *zap.Logger,
+) (*email.Config, error) {
+	bytes, err := os.ReadFile(*s.emailConfigPath)
+	if err != nil {
+		logger.Error("auth: failed to read email config file",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	config := email.Config{}
+	if err = json.Unmarshal(bytes, &config); err != nil {
+		logger.Error("auth: failed to unmarshal email config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return &config, nil
+}
+
 func (s *server) createAuthService(
 	dbClient database.Client,
 	accountClient accountclient.Client,
@@ -1389,6 +1421,8 @@ func (s *server) createAuthService(
 	environmentStorage v2es.EnvironmentStorage,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
+	emailConfig *email.Config,
+	credentialsStorage authstorage.CredentialsStorage,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	signer, err := token.NewSigner(*s.oauthPrivateKeyPath)
@@ -1420,6 +1454,8 @@ func (s *server) createAuthService(
 		projectStorage,
 		environmentStorage,
 		config,
+		emailConfig,
+		credentialsStorage,
 		serviceOptions...,
 	), nil
 }
