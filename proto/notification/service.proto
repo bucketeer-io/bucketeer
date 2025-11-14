@@ -164,7 +164,7 @@ message ListEnabledSubscriptionsResponse {
 
 message CreateSubscriptionRequest {
   reserved 1;
-  CreateSubscriptionCommand command = 2 [deprecated = true];
+  reserved 2;  // CreateSubscriptionCommand command
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string name = 4 [(google.api.field_behavior) = REQUIRED];
   repeated Subscription.SourceType source_types = 5
@@ -180,51 +180,18 @@ message CreateSubscriptionResponse {
 message DeleteSubscriptionRequest {
   reserved 1;
   string id = 2;
-  DeleteSubscriptionCommand command = 3 [deprecated = true];
+  reserved 3;  // DeleteSubscriptionCommand
   string environment_id = 4;
 }
 
 message DeleteSubscriptionResponse {}
 
-message EnableSubscriptionRequest {
-  reserved 1;
-  string id = 2;
-  EnableSubscriptionCommand command = 3;
-  string environment_id = 4;
-}
-
-message EnableSubscriptionResponse {}
-
-message DisableSubscriptionRequest {
-  reserved 1;
-  string id = 2;
-  DisableSubscriptionCommand command = 3;
-  string environment_id = 4;
-}
-
-message DisableSubscriptionResponse {}
-
 message UpdateSubscriptionRequest {
   reserved 1;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  AddSourceTypesCommand add_source_types_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated. use source_types instead."
-    }
-  ];
-  DeleteSourceTypesCommand delete_source_types_command = 4 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated. use source_types instead."
-    }
-  ];
-  RenameSubscriptionCommand rename_subscription_command = 5 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated. use name instead."
-    }
-  ];
+  reserved 3;  // AddSourceTypesCommand add_source_types_command
+  reserved 4;  // DeleteSourceTypesCommand delete_source_types_command
+  reserved 5;  // RenameSubscriptionCommand rename_subscription_command
   string environment_id = 6 [(google.api.field_behavior) = REQUIRED];
   repeated Subscription.SourceType source_types = 7;
   google.protobuf.StringValue name = 8;
@@ -234,13 +201,8 @@ message UpdateSubscriptionRequest {
         description: "if true, the subscription is disabled, otherwise enabled."
       }];
   repeated string feature_flag_tags = 10;
-  UpdateSubscriptionFeatureFlagTagsCommand
-      update_subscription_feature_tags_command = 11 [
-        deprecated = true,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "Deprecated. Use feature_flag_tags instead."
-        }
-      ];
+  reserved 11;  // UpdateSubscriptionFeatureFlagTagsCommand
+                // update_subscription_feature_tags_command
 }
 
 message UpdateSubscriptionResponse {
@@ -414,10 +376,6 @@ service NotificationService {
       }
     };
   }
-  rpc EnableSubscription(EnableSubscriptionRequest)
-      returns (EnableSubscriptionResponse) {}
-  rpc DisableSubscription(DisableSubscriptionRequest)
-      returns (DisableSubscriptionResponse) {}
   rpc UpdateSubscription(UpdateSubscriptionRequest)
       returns (UpdateSubscriptionResponse) {
     option (google.api.http) = {

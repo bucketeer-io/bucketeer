@@ -47068,85 +47068,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "CreateSubscriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "recipient",
-                "type": "Recipient"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "feature_flag_tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "AddSourceTypesCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeleteSourceTypesCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "source_types",
-                "type": "Subscription.SourceType",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "UpdateSubscriptionFeatureFlagTagsCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_flag_tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "EnableSubscriptionCommand"
-          },
-          {
-            "name": "DisableSubscriptionCommand"
-          },
-          {
-            "name": "DeleteSubscriptionCommand"
-          },
-          {
-            "name": "RenameSubscriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
           }
         ],
         "imports": [
@@ -48002,17 +47923,6 @@
             "name": "CreateSubscriptionRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "command",
-                "type": "CreateSubscriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -48065,7 +47975,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -48087,80 +47998,18 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "DeleteSubscriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
             "name": "DeleteSubscriptionResponse"
-          },
-          {
-            "name": "EnableSubscriptionRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "EnableSubscriptionCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "EnableSubscriptionResponse"
-          },
-          {
-            "name": "DisableSubscriptionRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "DisableSubscriptionCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "DisableSubscriptionResponse"
           },
           {
             "name": "UpdateSubscriptionRequest",
@@ -48173,66 +48022,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "add_source_types_command",
-                "type": "AddSourceTypesCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated. use source_types instead."
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "delete_source_types_command",
-                "type": "DeleteSourceTypesCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated. use source_types instead."
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "rename_subscription_command",
-                "type": "RenameSubscriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated. use name instead."
-                      }
-                    ]
                   }
                 ]
               },
@@ -48283,30 +48072,14 @@
                 "name": "feature_flag_tags",
                 "type": "string",
                 "is_repeated": true
-              },
-              {
-                "id": 11,
-                "name": "update_subscription_feature_tags_command",
-                "type": "UpdateSubscriptionFeatureFlagTagsCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "Deprecated. Use feature_flag_tags instead."
-                      }
-                    ]
-                  }
-                ]
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3,
+              4,
+              5,
+              11
             ]
           },
           {
@@ -48925,16 +48698,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "name": "EnableSubscription",
-                "in_type": "EnableSubscriptionRequest",
-                "out_type": "EnableSubscriptionResponse"
-              },
-              {
-                "name": "DisableSubscription",
-                "in_type": "DisableSubscriptionRequest",
-                "out_type": "DisableSubscriptionResponse"
               },
               {
                 "name": "UpdateSubscription",

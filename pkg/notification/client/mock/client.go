@@ -154,26 +154,6 @@ func (mr *MockClientMockRecorder) DisableAdminSubscription(ctx, in any, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableAdminSubscription", reflect.TypeOf((*MockClient)(nil).DisableAdminSubscription), varargs...)
 }
 
-// DisableSubscription mocks base method.
-func (m *MockClient) DisableSubscription(ctx context.Context, in *notification.DisableSubscriptionRequest, opts ...grpc.CallOption) (*notification.DisableSubscriptionResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DisableSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.DisableSubscriptionResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DisableSubscription indicates an expected call of DisableSubscription.
-func (mr *MockClientMockRecorder) DisableSubscription(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableSubscription", reflect.TypeOf((*MockClient)(nil).DisableSubscription), varargs...)
-}
-
 // EnableAdminSubscription mocks base method.
 func (m *MockClient) EnableAdminSubscription(ctx context.Context, in *notification.EnableAdminSubscriptionRequest, opts ...grpc.CallOption) (*notification.EnableAdminSubscriptionResponse, error) {
 	m.ctrl.T.Helper()
@@ -192,26 +172,6 @@ func (mr *MockClientMockRecorder) EnableAdminSubscription(ctx, in any, opts ...a
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAdminSubscription", reflect.TypeOf((*MockClient)(nil).EnableAdminSubscription), varargs...)
-}
-
-// EnableSubscription mocks base method.
-func (m *MockClient) EnableSubscription(ctx context.Context, in *notification.EnableSubscriptionRequest, opts ...grpc.CallOption) (*notification.EnableSubscriptionResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "EnableSubscription", varargs...)
-	ret0, _ := ret[0].(*notification.EnableSubscriptionResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EnableSubscription indicates an expected call of EnableSubscription.
-func (mr *MockClientMockRecorder) EnableSubscription(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableSubscription", reflect.TypeOf((*MockClient)(nil).EnableSubscription), varargs...)
 }
 
 // GetAdminSubscription mocks base method.
