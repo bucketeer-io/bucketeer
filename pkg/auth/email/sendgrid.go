@@ -28,13 +28,13 @@ import (
 
 // SendGridEmailService implements EmailService using SendGrid
 type SendGridEmailService struct {
-	config   auth.EmailServiceConfig
+	config   auth.EmailConfig
 	logger   *zap.Logger
 	renderer *TemplateRenderer
 }
 
 // NewSendGridEmailService creates a new SendGrid email service
-func NewSendGridEmailService(config auth.EmailServiceConfig, logger *zap.Logger) EmailService {
+func NewSendGridEmailService(config auth.EmailConfig, logger *zap.Logger) EmailService {
 	return &SendGridEmailService{
 		config:   config,
 		logger:   logger,
@@ -106,12 +106,30 @@ func (s *SendGridEmailService) SendPasswordResetEmail(
 	return nil
 }
 
+func (s *SendGridEmailService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderWelcomeEmail(language, to)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SendGridEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
-	from := mail.NewEmail(s.config.FromName, s.config.FromEmail)
+	from := mail.NewEmail(s.config.Sender.Name, s.config.Sender.Email)
 	toEmail := mail.NewEmail("", to)
 	message := mail.NewSingleEmail(from, subject, toEmail, "", body)
 
-	client := sendgrid.NewSendClient(s.config.SendGrid.SendGridAPIKey)
+	client := sendgrid.NewSendClient(s.config.SendGrid.APIKey)
 	response, err := client.SendWithContext(ctx, message)
 	if err != nil {
 		return fmt.Errorf("failed to send email via SendGrid: %w", err)
