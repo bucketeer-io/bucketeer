@@ -9937,6 +9937,16 @@ definitions:
       - ENABLE
       - DISABLE
     default: UNKNOWN
+  autoopsAddDatetimeClauseCommand:
+    type: object
+    properties:
+      datetimeClause:
+        $ref: '#/definitions/autoopsDatetimeClause'
+  autoopsAddOpsEventRateClauseCommand:
+    type: object
+    properties:
+      opsEventRateClause:
+        $ref: '#/definitions/autoopsOpsEventRateClause'
   autoopsAutoOpsRule:
     type: object
     properties:
@@ -9971,9 +9981,48 @@ definitions:
       - FINISHED
       - STOPPED
     default: WAITING
+  autoopsChangeDatetimeClauseCommand:
+    type: object
+    properties:
+      id:
+        type: string
+      datetimeClause:
+        $ref: '#/definitions/autoopsDatetimeClause'
+  autoopsChangeOpsEventRateClauseCommand:
+    type: object
+    properties:
+      id:
+        type: string
+      opsEventRateClause:
+        $ref: '#/definitions/autoopsOpsEventRateClause'
+  autoopsChangeProgressiveRolloutScheduleTriggeredAtCommand:
+    type: object
+    properties:
+      scheduleId:
+        type: string
+  autoopsCreateAutoOpsRuleCommand:
+    type: object
+    properties:
+      featureId:
+        type: string
+      opsType:
+        $ref: '#/definitions/autoopsOpsType'
+      opsEventRateClauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsOpsEventRateClause'
+      datetimeClauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsDatetimeClause'
   autoopsCreateAutoOpsRuleRequest:
     type: object
     properties:
+      command:
+        $ref: '#/definitions/autoopsCreateAutoOpsRuleCommand'
+        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -9999,9 +10048,21 @@ definitions:
     properties:
       autoOpsRule:
         $ref: '#/definitions/autoopsAutoOpsRule'
+  autoopsCreateProgressiveRolloutCommand:
+    type: object
+    properties:
+      featureId:
+        type: string
+      progressiveRolloutManualScheduleClause:
+        $ref: '#/definitions/autoopsProgressiveRolloutManualScheduleClause'
+      progressiveRolloutTemplateScheduleClause:
+        $ref: '#/definitions/autoopsProgressiveRolloutTemplateScheduleClause'
   autoopsCreateProgressiveRolloutRequest:
     type: object
     properties:
+      command:
+        $ref: '#/definitions/autoopsCreateProgressiveRolloutCommand'
+        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -10038,7 +10099,11 @@ definitions:
         $ref: '#/definitions/bucketeerautoopsChangeType'
     required:
       - changeType
+  autoopsDeleteAutoOpsRuleCommand:
+    type: object
   autoopsDeleteAutoOpsRuleResponse:
+    type: object
+  autoopsDeleteProgressiveRolloutCommand:
     type: object
   autoopsDeleteProgressiveRolloutResponse:
     type: object
@@ -10047,6 +10112,8 @@ definitions:
     properties:
       id:
         type: string
+      executeAutoOpsRuleCommand:
+        $ref: '#/definitions/autoopsExecuteAutoOpsRuleCommand'
       environmentId:
         type: string
       clauseId:
@@ -10060,14 +10127,21 @@ definitions:
     properties:
       alreadyTriggered:
         type: boolean
+  autoopsExecuteAutoOpsRuleCommand:
+    type: object
+    properties:
+      clauseId:
+        type: string
   autoopsExecuteProgressiveRolloutRequest:
     type: object
     properties:
       id:
         type: string
+      changeProgressiveRolloutTriggeredAtCommand:
+        $ref: '#/definitions/autoopsChangeProgressiveRolloutScheduleTriggeredAtCommand'
+        description: deprecated
       environmentId:
         type: string
-        title: change_progressive_rollout_triggered_at_command
       scheduleId:
         type: string
   autoopsExecuteProgressiveRolloutResponse:
@@ -10270,11 +10344,16 @@ definitions:
       - MANUAL_SCHEDULE
       - TEMPLATE_SCHEDULE
     default: MANUAL_SCHEDULE
+  autoopsStopAutoOpsRuleCommand:
+    type: object
   autoopsStopAutoOpsRuleRequest:
     type: object
     properties:
       id:
         type: string
+      command:
+        $ref: '#/definitions/autoopsStopAutoOpsRuleCommand'
+        description: deprecated
       environmentId:
         type: string
     required:
@@ -10282,11 +10361,19 @@ definitions:
       - environmentId
   autoopsStopAutoOpsRuleResponse:
     type: object
+  autoopsStopProgressiveRolloutCommand:
+    type: object
+    properties:
+      stoppedBy:
+        $ref: '#/definitions/ProgressiveRolloutStoppedBy'
   autoopsStopProgressiveRolloutRequest:
     type: object
     properties:
       id:
         type: string
+      command:
+        $ref: '#/definitions/autoopsStopProgressiveRolloutCommand'
+        description: deprecated
       environmentId:
         type: string
       stoppedBy:
@@ -10298,9 +10385,38 @@ definitions:
     properties:
       id:
         type: string
+      addOpsEventRateClauseCommands:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsAddOpsEventRateClauseCommand'
+        description: deprecated
+      changeOpsEventRateClauseCommands:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsChangeOpsEventRateClauseCommand'
+        description: deprecated
+      deleteClauseCommands:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerautoopsDeleteClauseCommand'
+        description: deprecated
+      addDatetimeClauseCommands:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsAddDatetimeClauseCommand'
+        description: deprecated
+      changeDatetimeClauseCommands:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsChangeDatetimeClauseCommand'
+        description: deprecated
       environmentId:
         type: string
-        title: change_datetime_clause_commands
       opsEventRateClauseChanges:
         type: array
         items:
@@ -10343,6 +10459,11 @@ definitions:
       executedAt:
         type: string
         format: int64
+  bucketeerautoopsDeleteClauseCommand:
+    type: object
+    properties:
+      id:
+        type: string
   bucketeerenvironmentOrganization:
     type: object
     properties:
