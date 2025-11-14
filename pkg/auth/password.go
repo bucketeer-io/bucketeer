@@ -50,23 +50,23 @@ func ValidatePassword(password, hash string) bool {
 
 // ValidatePasswordComplexity validates password complexity based on configuration
 func ValidatePasswordComplexity(password string, config PasswordAuthConfig) error {
-	if len(password) < config.PasswordMinLength {
-		return fmt.Errorf("password must be at least %d characters long", config.PasswordMinLength)
+	if len(password) < config.Policy.MinLength {
+		return fmt.Errorf("password must be at least %d characters long", config.Policy.MinLength)
 	}
 
-	if config.PasswordRequireUppercase && !containsUppercase(password) {
+	if config.Policy.RequireUppercase && !containsUppercase(password) {
 		return fmt.Errorf("password must contain at least one uppercase letter")
 	}
 
-	if config.PasswordRequireLowercase && !containsLowercase(password) {
+	if config.Policy.RequireLowercase && !containsLowercase(password) {
 		return fmt.Errorf("password must contain at least one lowercase letter")
 	}
 
-	if config.PasswordRequireNumbers && !containsNumbers(password) {
+	if config.Policy.RequireNumbers && !containsNumbers(password) {
 		return fmt.Errorf("password must contain at least one number")
 	}
 
-	if config.PasswordRequireSymbols && !containsSymbols(password) {
+	if config.Policy.RequireSymbols && !containsSymbols(password) {
 		return fmt.Errorf("password must contain at least one symbol")
 	}
 

@@ -59,87 +59,46 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
-type EmailTemplate struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+type PasswordPolicyConfig struct {
+	MinLength        int  `json:"minLength"`
+	RequireUppercase bool `json:"requireUppercase"`
+	RequireLowercase bool `json:"requireLowercase"`
+	RequireNumbers   bool `json:"requireNumbers"`
+	RequireSymbols   bool `json:"requireSymbols"`
 }
 
-type EmailTemplatesByLanguage struct {
-	PasswordChanged EmailTemplate `json:"passwordChanged"`
-	PasswordSetup   EmailTemplate `json:"passwordSetup"`
-	PasswordReset   EmailTemplate `json:"passwordReset"`
+type PasswordTokensConfig struct {
+	ResetTTL time.Duration `json:"resetTTL"`
+	SetupTTL time.Duration `json:"setupTTL"`
 }
 
-type EmailTemplatesConfig struct {
-	En EmailTemplatesByLanguage `json:"en"`
-	Ja EmailTemplatesByLanguage `json:"ja"`
-}
-
-type SMTPConfig struct {
-	SMTPHost     string `json:"smtpHost"`
-	SMTPPort     int    `json:"smtpPort"`
-	SMTPUsername string `json:"smtpUsername"`
-	SMTPPassword string `json:"smtpPassword"`
-}
-
-type SendGridConfig struct {
-	SendGridAPIKey string `json:"sendgridAPIKey"`
-}
-
-type SESConfig struct {
-	SESRegion    string `json:"sesRegion"`
-	SESAccessKey string `json:"sesAccessKey"`
-	SESSecretKey string `json:"sesSecretKey"`
-}
-
-type MailerSendConfig struct {
-	MailerSendAPIKey string `json:"mailersendAPIKey"`
-}
-
-type EmailServiceConfig struct {
-	Provider           string               `json:"provider"` // "smtp", "sendgrid", "ses", "mailersend"
-	SMTP               SMTPConfig           `json:"smtp"`
-	SendGrid           SendGridConfig       `json:"sendgrid"`
-	SES                SESConfig            `json:"ses"`
-	MailerSend         MailerSendConfig     `json:"mailersend"`
-	FromEmail          string               `json:"fromEmail"`
-	FromName           string               `json:"fromName"`
-	BaseURL            string               `json:"baseURL"`            // For constructing reset URLs
-	PasswordSetupPath  string               `json:"passwordSetupPath"`  // Path for password setup page
-	PasswordSetupParam string               `json:"passwordSetupParam"` // URL parameter name for setup token
-	PasswordResetPath  string               `json:"passwordResetPath"`  // Path for password reset page
-	PasswordResetParam string               `json:"passwordResetParam"` // URL parameter name for reset token
-	Templates          EmailTemplatesConfig `json:"templates"`
+type PasswordURLsConfig struct {
+	ResetPath  string `json:"resetPath"`  // Path for password reset page
+	SetupPath  string `json:"setupPath"`  // Path for password setup page
+	TokenParam string `json:"tokenParam"` // URL parameter name for token
 }
 
 type PasswordAuthConfig struct {
-	Enabled                  bool               `json:"enabled"`
-	PasswordMinLength        int                `json:"passwordMinLength"`
-	PasswordRequireUppercase bool               `json:"passwordRequireUppercase"`
-	PasswordRequireLowercase bool               `json:"passwordRequireLowercase"`
-	PasswordRequireNumbers   bool               `json:"passwordRequireNumbers"`
-	PasswordRequireSymbols   bool               `json:"passwordRequireSymbols"`
-	PasswordResetTokenTTL    time.Duration      `json:"passwordResetTokenTTL"`
-	PasswordSetupTokenTTL    time.Duration      `json:"passwordSetupTokenTTL"`
-	EmailServiceEnabled      bool               `json:"emailServiceEnabled"`
-	EmailServiceConfig       EmailServiceConfig `json:"emailServiceConfig"`
+	Enabled bool                 `json:"enabled"`
+	Policy  PasswordPolicyConfig `json:"policy"`
+	Tokens  PasswordTokensConfig `json:"tokens"`
+	URLs    PasswordURLsConfig   `json:"urls"`
 }
 
 // UnmarshalJSON implements custom JSON unmarshaling for PasswordAuthConfig
-// to handle duration strings like "1h", "24h"
+// to handle duration strings like "1h", "24h" in the Tokens field
 func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
-	// Define a temporary struct with string duration fields
+	// Define a temporary struct with string duration fields in Tokens
+	type TokensAlias struct {
+		ResetTTL string `json:"resetTTL"`
+		SetupTTL string `json:"setupTTL"`
+	}
+
 	type Alias struct {
-		Enabled                  bool               `json:"enabled"`
-		PasswordMinLength        int                `json:"passwordMinLength"`
-		PasswordRequireUppercase bool               `json:"passwordRequireUppercase"`
-		PasswordRequireLowercase bool               `json:"passwordRequireLowercase"`
-		PasswordRequireNumbers   bool               `json:"passwordRequireNumbers"`
-		PasswordRequireSymbols   bool               `json:"passwordRequireSymbols"`
-		PasswordResetTokenTTL    string             `json:"passwordResetTokenTTL"`
-		PasswordSetupTokenTTL    string             `json:"passwordSetupTokenTTL"`
-		EmailServiceEnabled      bool               `json:"emailServiceEnabled"`
-		EmailServiceConfig       EmailServiceConfig `json:"emailServiceConfig"`
+		Enabled bool                 `json:"enabled"`
+		Policy  PasswordPolicyConfig `json:"policy"`
+		Tokens  TokensAlias          `json:"tokens"`
+		URLs    PasswordURLsConfig   `json:"urls"`
 	}
 
 	var aux Alias
@@ -147,30 +106,25 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Set values to the actual struct
+	// Set non-duration values
 	c.Enabled = aux.Enabled
-	c.PasswordMinLength = aux.PasswordMinLength
-	c.PasswordRequireUppercase = aux.PasswordRequireUppercase
-	c.PasswordRequireLowercase = aux.PasswordRequireLowercase
-	c.PasswordRequireNumbers = aux.PasswordRequireNumbers
-	c.PasswordRequireSymbols = aux.PasswordRequireSymbols
-	c.EmailServiceEnabled = aux.EmailServiceEnabled
-	c.EmailServiceConfig = aux.EmailServiceConfig
+	c.Policy = aux.Policy
+	c.URLs = aux.URLs
 
 	// Only parse TTL values if password auth is enabled
 	if aux.Enabled {
-		resetTTL, err := time.ParseDuration(aux.PasswordResetTokenTTL)
+		resetTTL, err := time.ParseDuration(aux.Tokens.ResetTTL)
 		if err != nil {
-			return fmt.Errorf("failed to parse passwordResetTokenTTL: %w", err)
+			return fmt.Errorf("failed to parse resetTTL: %w", err)
 		}
 
-		setupTTL, err := time.ParseDuration(aux.PasswordSetupTokenTTL)
+		setupTTL, err := time.ParseDuration(aux.Tokens.SetupTTL)
 		if err != nil {
-			return fmt.Errorf("failed to parse passwordSetupTokenTTL: %w", err)
+			return fmt.Errorf("failed to parse setupTTL: %w", err)
 		}
 
-		c.PasswordResetTokenTTL = resetTTL
-		c.PasswordSetupTokenTTL = setupTTL
+		c.Tokens.ResetTTL = resetTTL
+		c.Tokens.SetupTTL = setupTTL
 	}
 
 	return nil
@@ -180,6 +134,6 @@ type OAuthConfig struct {
 	Issuer       string             `json:"issuer"`
 	Audience     string             `json:"audience"`
 	GoogleConfig GoogleConfig       `json:"google"`
+	Password     PasswordAuthConfig `json:"password"`
 	DemoSignIn   DemoSignInConfig   `json:"demoSignIn"`
-	PasswordAuth PasswordAuthConfig `json:"passwordAuth"`
 }
