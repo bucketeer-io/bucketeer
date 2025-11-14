@@ -31,20 +31,20 @@ import (
 
 // SESEmailService implements EmailService using Amazon SES
 type SESEmailService struct {
-	config   auth.EmailServiceConfig
+	config   auth.EmailConfig
 	logger   *zap.Logger
 	renderer *TemplateRenderer
 	client   *sesv2.Client
 }
 
 // NewSESEmailService creates a new SES email service
-func NewSESEmailService(emailConfig auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
+func NewSESEmailService(emailConfig auth.EmailConfig, logger *zap.Logger) (EmailService, error) {
 	// Create AWS config with explicit credentials
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(emailConfig.SES.SESRegion),
+		config.WithRegion(emailConfig.SES.Region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			emailConfig.SES.SESAccessKey,
-			emailConfig.SES.SESSecretKey,
+			emailConfig.SES.AccessKey,
+			emailConfig.SES.SecretKey,
 			"",
 		)),
 	)
@@ -120,9 +120,27 @@ func (s *SESEmailService) SendPasswordResetEmail(
 	return nil
 }
 
+func (s *SESEmailService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderWelcomeEmail(language, to)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SESEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
 	input := &sesv2.SendEmailInput{
-		FromEmailAddress: aws.String(s.config.FromEmail),
+		FromEmailAddress: aws.String(s.config.Sender.Email),
 		Destination: &types.Destination{
 			ToAddresses: []string{to},
 		},

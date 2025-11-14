@@ -27,13 +27,13 @@ import (
 
 // SMTPEmailService implements EmailService using SMTP
 type SMTPEmailService struct {
-	config   auth.EmailServiceConfig
+	config   auth.EmailConfig
 	logger   *zap.Logger
 	renderer *TemplateRenderer
 }
 
 // NewSMTPEmailService creates a new SMTP email service
-func NewSMTPEmailService(config auth.EmailServiceConfig, logger *zap.Logger) EmailService {
+func NewSMTPEmailService(config auth.EmailConfig, logger *zap.Logger) EmailService {
 	return &SMTPEmailService{
 		config:   config,
 		logger:   logger,
@@ -99,8 +99,26 @@ func (s *SMTPEmailService) SendPasswordResetEmail(
 	return nil
 }
 
+func (s *SMTPEmailService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
+	subject, body := s.renderer.RenderWelcomeEmail(language, to)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send welcome email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+
+	s.logger.Info("Welcome email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body string) error {
-	auth := smtp.PlainAuth("", s.config.SMTP.SMTPUsername, s.config.SMTP.SMTPPassword, s.config.SMTP.SMTPHost)
+	auth := smtp.PlainAuth("", s.config.SMTP.Username, s.config.SMTP.Password, s.config.SMTP.Host)
 
 	msg := []byte(fmt.Sprintf("To: %s\r\n"+
 		"From: %s\r\n"+
@@ -108,8 +126,8 @@ func (s *SMTPEmailService) sendEmail(ctx context.Context, to, subject, body stri
 		"MIME-Version: 1.0\r\n"+
 		"Content-Type: text/html; charset=UTF-8\r\n"+
 		"\r\n"+
-		"%s\r\n", to, s.config.FromEmail, subject, body))
+		"%s\r\n", to, s.config.Sender.Email, subject, body))
 
-	addr := fmt.Sprintf("%s:%d", s.config.SMTP.SMTPHost, s.config.SMTP.SMTPPort)
-	return smtp.SendMail(addr, auth, s.config.FromEmail, []string{to}, msg)
+	addr := fmt.Sprintf("%s:%d", s.config.SMTP.Host, s.config.SMTP.Port)
+	return smtp.SendMail(addr, auth, s.config.Sender.Email, []string{to}, msg)
 }

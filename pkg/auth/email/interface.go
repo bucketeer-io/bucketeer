@@ -29,10 +29,11 @@ type EmailService interface {
 	SendPasswordChangedNotification(ctx context.Context, to string, language string) error
 	SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error
 	SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error
+	SendWelcomeEmail(ctx context.Context, to string, language string) error
 }
 
 // NewEmailService EmailServiceFactory creates an email service based on configuration
-func NewEmailService(config auth.EmailServiceConfig, logger *zap.Logger) (EmailService, error) {
+func NewEmailService(config auth.EmailConfig, logger *zap.Logger) (EmailService, error) {
 	switch config.Provider {
 	case "smtp":
 		return NewSMTPEmailService(config, logger), nil
@@ -82,6 +83,14 @@ func (s *NoOpEmailService) SendPasswordResetEmail(
 	s.logger.Info("No-op email service: password reset email not sent",
 		zap.String("to", to),
 		zap.String("resetURL", resetURL),
+		zap.String("language", language),
+	)
+	return nil
+}
+
+func (s *NoOpEmailService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
+	s.logger.Info("No-op email service: welcome email not sent",
+		zap.String("to", to),
 		zap.String("language", language),
 	)
 	return nil
