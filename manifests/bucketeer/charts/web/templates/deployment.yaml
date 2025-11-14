@@ -36,6 +36,9 @@ spec:
         - name: oauth-config
           configMap:
             name: {{ template "web.fullname" . }}-oauth-config
+        - name: email-config
+          configMap:
+            name: {{ template "web.fullname" . }}-email-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -192,6 +195,8 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_WEB_OAUTH_CONFIG_PATH
               value: /usr/local/oauth-config/oauth-config.json
+            - name: BUCKETEER_WEB_EMAIL_CONFIG_PATH
+              value: /usr/local/email-config/email-config.json
             - name: BUCKETEER_WEB_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_WEB_DATA_WAREHOUSE_TYPE
@@ -218,6 +223,9 @@ spec:
               readOnly: true
             - name: oauth-config
               mountPath: /usr/local/oauth-config
+              readOnly: true
+            - name: email-config
+              mountPath: /usr/local/email-config
               readOnly: true
             - name: env-js
               mountPath: /usr/local/static/js

@@ -121,7 +121,7 @@ func (s *authService) UpdatePassword(
 	}
 
 	// Send notification email if email service is enabled
-	if s.config.Email.Enabled && s.emailService != nil {
+	if s.emailConfig.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
@@ -147,7 +147,7 @@ func (s *authService) InitiatePasswordSetup(
 	}
 
 	// Check if email service is enabled
-	if !s.config.Email.Enabled {
+	if !s.emailConfig.Enabled {
 		s.logger.Error("Password setup requires email service to be enabled")
 		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -239,7 +239,7 @@ func (s *authService) InitiatePasswordSetup(
 			return nil, auth.StatusInternal.Err()
 		}
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
-			s.config.Email.BaseURL, setupPath, setupParam, setupToken)
+			s.emailConfig.BaseURL, setupPath, setupParam, setupToken)
 		err = s.emailService.SendPasswordSetupEmail(
 			ctx, email, setupURL, s.config.Password.Tokens.SetupTTL, localizer.GetLocale(),
 		)
@@ -366,7 +366,7 @@ func (s *authService) SetupPassword(
 	}
 
 	// Send welcome email if email service is enabled
-	if s.config.Email.Enabled && s.emailService != nil {
+	if s.emailConfig.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password setup completion notification",
@@ -442,7 +442,7 @@ func (s *authService) InitiatePasswordReset(
 	}
 
 	// Check if password authentication and email service are enabled
-	if !s.config.Password.Enabled || !s.config.Email.Enabled {
+	if !s.config.Password.Enabled || !s.emailConfig.Enabled {
 		s.logger.Error("Password reset not available")
 		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -507,7 +507,7 @@ func (s *authService) InitiatePasswordReset(
 			return nil, auth.StatusInternal.Err()
 		}
 		resetURL := fmt.Sprintf("%s%s?%s=%s",
-			s.config.Email.BaseURL, resetPath, resetParam, resetToken)
+			s.emailConfig.BaseURL, resetPath, resetParam, resetToken)
 		err = s.emailService.SendPasswordResetEmail(
 			ctx, email, resetURL, s.config.Password.Tokens.ResetTTL, localizer.GetLocale(),
 		)
@@ -647,7 +647,7 @@ func (s *authService) ResetPassword(
 	}
 
 	// Send password changed notification email if email service is enabled
-	if s.config.Email.Enabled && s.emailService != nil {
+	if s.emailConfig.Enabled && s.emailService != nil {
 		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email, localizer.GetLocale())
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
