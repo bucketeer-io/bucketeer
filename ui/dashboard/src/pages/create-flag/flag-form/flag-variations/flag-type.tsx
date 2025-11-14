@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { DEFAULT_VALUE_YAML } from 'constants/feature-flag';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
@@ -49,12 +50,13 @@ const FlagType = () => {
     ) => {
       const isBoolean = value === 'BOOLEAN';
       const isJSON = value === 'JSON';
+      const isYAML = value === 'YAML';
       const cloneVariations = cloneDeep(defaultVariations);
       const newVariations = isBoolean
         ? cloneVariations
         : cloneVariations.map(item => ({
             ...item,
-            value: isJSON ? '{}' : ''
+            value: isJSON ? '{}' : isYAML ? DEFAULT_VALUE_YAML : ''
           }));
 
       resetField('variations');

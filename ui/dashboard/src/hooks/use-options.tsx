@@ -5,7 +5,8 @@ import {
   IconFlagJSON,
   IconFlagNumber,
   IconFlagString,
-  IconFlagSwitch
+  IconFlagSwitch,
+  IconFlagYaml
 } from '@icons';
 import { RuleClauseType } from 'pages/feature-flag-details/targeting/types';
 import { StatusFilterType } from 'pages/feature-flags/types';
@@ -258,6 +259,11 @@ const useOptions = () => {
         label: 'JSON',
         value: 'JSON',
         icon: IconFlagJSON
+      },
+      {
+        label: 'YAML',
+        value: 'YAML',
+        icon: IconFlagYaml
       }
     ],
     [language]

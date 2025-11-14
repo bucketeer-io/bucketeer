@@ -76,7 +76,7 @@ const Variations = ({
     [feature]
   );
   const isJSON = useMemo(() => feature.variationType === 'JSON', [feature]);
-
+  const isYAML = useMemo(() => feature.variationType === 'YAML', [feature]);
   const formItemClassName = useMemo(
     () => 'flex flex-col flex-1 py-0 h-full self-stretch',
     []
@@ -329,7 +329,7 @@ const Variations = ({
                   )}
                 />
               </div>
-              {isJSON && (
+              {(isJSON || isYAML) && (
                 <Form.Field
                   control={control}
                   name={`variations.${variationIndex}.value`}
@@ -341,6 +341,7 @@ const Variations = ({
                         </Form.Label>
                         <Form.Control>
                           <ReactCodeEditor
+                            defaultLanguage={isJSON ? 'json' : 'yaml'}
                             readOnly={isRunningExperiment || !editable}
                             value={field.value}
                             onChange={field.onChange}

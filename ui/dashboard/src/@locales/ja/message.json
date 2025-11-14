@@ -3,6 +3,7 @@
   "validation": {
     "must-be-number": "数値を入力してください",
     "must-be-json": "JSONを入力してください",
+    "must-be-yaml": "YAMLを入力してください",
     "must-be-unique": "一意の値を入力してください",
     "max-length-number": "このフィールドの最大長は{{count}}桁です。",
     "max-length-string": "このフィールドの最大長は{{count}}文字です。",
