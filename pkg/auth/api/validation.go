@@ -15,6 +15,10 @@
 package api
 
 import (
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
