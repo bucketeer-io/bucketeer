@@ -140,6 +140,7 @@ const (
 	// password setup/reset messages
 	PasswordSetupEmailSent = "PasswordSetupEmailSent"
 	PasswordResetEmailSent = "PasswordResetEmailSent"
+	WelcomeEmailSent       = "WelcomeEmailSent"
 	PasswordsIdentical     = "PasswordsIdentical"
 )
 

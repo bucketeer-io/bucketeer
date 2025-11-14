@@ -37,14 +37,14 @@ func (s *authService) SignIn(
 	}
 
 	// Then, try password authentication if enabled
-	if s.config.PasswordAuth.Enabled {
+	if s.config.Password.Enabled {
 		return s.handlePasswordSignIn(ctx, request, localizer)
 	}
 
 	// If neither is enabled nor credentials don't match, deny access
 	s.logger.Error("Sign in failed - no valid authentication method",
 		zap.String("email", request.Email),
-		zap.Bool("passwordAuthEnabled", s.config.PasswordAuth.Enabled),
+		zap.Bool("passwordAuthEnabled", s.config.Password.Enabled),
 	)
 	dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
