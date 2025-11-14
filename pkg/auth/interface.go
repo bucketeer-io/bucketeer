@@ -190,6 +190,5 @@ type OAuthConfig struct {
 	Audience     string             `json:"audience"`
 	GoogleConfig GoogleConfig       `json:"google"`
 	Password     PasswordAuthConfig `json:"password"`
-	Email        EmailConfig        `json:"email"`
 	DemoSignIn   DemoSignInConfig   `json:"demoSignIn"`
 }
