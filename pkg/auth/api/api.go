@@ -105,6 +105,7 @@ type authService struct {
 	audience            string
 	signer              token.Signer
 	config              *auth.OAuthConfig
+	emailConfig         *auth.EmailConfig
 	mysqlClient         mysql.Client
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
@@ -126,6 +127,7 @@ func NewAuthService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	config *auth.OAuthConfig,
+	emailConfig *auth.EmailConfig,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -136,9 +138,9 @@ func NewAuthService(
 
 	// Initialize email service if email are enabled
 	var emailService email.EmailService
-	if config.Email.Enabled {
+	if emailConfig.Enabled {
 		var err error
-		emailService, err = email.NewEmailService(config.Email, logger)
+		emailService, err = email.NewEmailService(*emailConfig, logger)
 		if err != nil {
 			logger.Warn("Failed to initialize email service", zap.Error(err))
 			emailService = email.NewNoOpEmailService(logger)
@@ -152,6 +154,7 @@ func NewAuthService(
 		audience:            audience,
 		signer:              signer,
 		config:              config,
+		emailConfig:         emailConfig,
 		mysqlClient:         mysqlClient,
 		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
 		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
