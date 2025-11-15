@@ -67,7 +67,7 @@ const RuleForm = ({
     () =>
       compact(
         feature.rules
-          ?.flatMap(item => item.clauses)
+          ?.flatMap(item => item?.clauses || [])
           .map(clause => clause.attribute)
       ),
     [feature.rules]
@@ -146,15 +146,16 @@ const RuleForm = ({
           break;
       }
 
-      setValue(getFieldName('operator', index), _value);
+      setValue(getFieldName('operator', index), _value, { shouldDirty: true });
       const currentType = watch(getFieldName('type', index));
       if (currentType !== value) {
-        setValue(getFieldName('values', index), []);
-        setValue(getFieldName('attribute', index), '');
+        setValue(getFieldName('values', index), [], { shouldDirty: true });
+        setValue(getFieldName('attribute', index), '', { shouldDirty: true });
       }
+
       onChange(value);
     },
-    [clauses]
+    [clauses, segmentIndex]
   );
 
   useEffect(() => {
@@ -183,7 +184,6 @@ const RuleForm = ({
           const isHaveError = isNotEmptyObject(
             errors?.segmentRules?.[segmentIndex]?.clauses?.[clauseIndex] || {}
           );
-
           return (
             <div
               key={clause.clauseId}
