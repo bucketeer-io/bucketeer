@@ -117,14 +117,80 @@ web:
       redirectUrls:
         - https://localhost:9000/auth/callback
         - https://localhost:9000/v3/auth/callback
+  
+    # Password authentication configuration for development
+    password:
+      enabled: true
+      policy:
+        minLength: 8
+        requireUppercase: true
+        requireLowercase: true
+        requireNumbers: true
+        requireSymbols: false
+      tokens:
+        resetTTL: "1h"
+        setupTTL: "24h"
+      urls:
+        resetPath: "/auth/reset-password"
+        setupPath: "/auth/setup-password"
+        tokenParam: "token"
+
+  # Email service configuration for development
+  email:
+    enabled: true
+    provider: "smtp"
+    smtp:
+      host: "smtp.gmail.com"
+      port: 587
+      username: "bucketeer@example.com"
+      password: "${SMTP_PASSWORD}"
+    sendgrid:
+      apiKey: ""
+    ses:
+      region: ""
+      accessKey: ""
+      secretKey: ""
+    mailersend:
+      apiKey: ""
+    sender:
+      email: "bucketeer@example.com"
+      name: "Bucketeer Development"
+    baseURL: "https://localhost"
+    templates:
+      en:
+        passwordChanged:
+          subject: ""
+          body: ""
+        passwordSetup:
+          subject: ""
+          body: ""
+        passwordReset:
+          subject: ""
+          body: ""
+        welcome:
+          subject: ""
+          body: ""
+      ja:
+        passwordChanged:
+          subject: ""
+          body: ""
+        passwordSetup:
+          subject: ""
+          body: ""
+        passwordReset:
+          subject: ""
+          body: ""
+        welcome:
+          subject: ""
+          body: ""
     demoSignIn:
       enabled: true
-      email: demo@bucketeer.io
-      password: demo
-      organizationId: demo
-      organizationOwnerEmail: demo@bucketeer.io
-      projectId: demo
-      environmentId: demo
+      email: "demo@bucketeer.io"
+      password: "demo"
+      organizationId: "demo"
+      organizationOwnerEmail: "demo@bucketeer.io"
+      projectId: "demo"
+      environmentId: "demo"
       isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io

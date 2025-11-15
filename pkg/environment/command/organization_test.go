@@ -14,6 +14,15 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
+// Helper function to create default authentication settings for tests
+func newTestAuthSettings() *environmentproto.AuthenticationSettings {
+	return &environmentproto.AuthenticationSettings{
+		EnabledTypes: []environmentproto.AuthenticationType{
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+		},
+	}
+}
+
 func TestHandleCreateOrganizationCommand(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -26,6 +35,7 @@ func TestHandleCreateOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 
@@ -48,6 +58,7 @@ func TestHandleChangeNameOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 
@@ -72,6 +83,7 @@ func TestHandleChangeDescriptionOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 
@@ -96,6 +108,7 @@ func TestHandleEnableOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 	organization.Disabled = true
@@ -120,6 +133,7 @@ func TestHandleDisableOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 
@@ -143,6 +157,7 @@ func TestHandleArchiveOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 
@@ -166,6 +181,7 @@ func TestHandleUnarchiveOrganizationCommand(t *testing.T) {
 		"organization desc",
 		false,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 	organization.Archive()
@@ -190,6 +206,7 @@ func TestHandleConvertTrialOrganizationCommand(t *testing.T) {
 		"organization desc",
 		true,
 		false,
+		newTestAuthSettings(),
 	)
 	assert.NoError(t, err)
 

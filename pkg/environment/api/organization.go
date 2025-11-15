@@ -238,6 +238,13 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		return nil, err
 	}
 
+	// Demo organizations need both Google and Password authentication enabled
+	authSettings := &environmentproto.AuthenticationSettings{
+		EnabledTypes: []environmentproto.AuthenticationType{
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
+		},
+	}
 	organization, err := s.createOrganizationMySQL(
 		ctx,
 		req.Name,
@@ -246,6 +253,7 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
+		authSettings,
 		localizer,
 	)
 	if err != nil {
@@ -390,6 +398,12 @@ func (s *EnvironmentService) CreateOrganization(
 	}
 	name := strings.TrimSpace(req.Command.Name)
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
+	// Default authentication settings: Google only
+	defaultAuthSettings := &environmentproto.AuthenticationSettings{
+		EnabledTypes: []environmentproto.AuthenticationType{
+			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
+		},
+	}
 	organization, err := domain.NewOrganization(
 		name,
 		urlCode,
@@ -397,6 +411,7 @@ func (s *EnvironmentService) CreateOrganization(
 		req.Command.Description,
 		req.Command.IsTrial,
 		req.Command.IsSystemAdmin,
+		defaultAuthSettings,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -494,6 +509,7 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
+		req.AuthenticationSettings,
 		localizer,
 	)
 	if err != nil {
@@ -539,6 +555,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
+	authenticationSettings *environmentproto.AuthenticationSettings,
 	localizer locale.Localizer,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
@@ -548,6 +565,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		description,
 		isTrial,
 		isSystemAdmin,
+		authenticationSettings,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -876,10 +894,12 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
+
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
+			req.AuthenticationSettings,
 		)
 		if err != nil {
 			return err
