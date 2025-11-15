@@ -454,6 +454,11 @@
                 "id": 10,
                 "name": "environment_name",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "last_used_at",
+                "type": "int64"
               }
             ]
           },
@@ -2083,6 +2088,24 @@
           },
           {
             "name": "UpdateAPIKeyResponse"
+          },
+          {
+            "name": "UpdateAPIKeyLastUsedAtRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_key_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "last_used_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAPIKeyLastUsedAtResponse"
           }
         ],
         "services": [
@@ -5429,6 +5452,11 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "UpdateAPIKeyLastUsedAt",
+                "in_type": "UpdateAPIKeyLastUsedAtRequest",
+                "out_type": "UpdateAPIKeyLastUsedAtResponse"
               }
             ]
           }

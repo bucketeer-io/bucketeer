@@ -8768,6 +8768,9 @@ definitions:
         type: string
       environmentName:
         type: string
+      lastUsedAt:
+        type: string
+        format: int64
   accountAPIKeyRole:
     type: string
     enum:
@@ -9335,6 +9338,8 @@ definitions:
     required:
       - changeType
       - team
+  accountUpdateAPIKeyLastUsedAtResponse:
+    type: object
   accountUpdateAPIKeyRequest:
     type: object
     properties:
