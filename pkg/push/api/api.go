@@ -37,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/push/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -113,108 +112,7 @@ func (s *PushService) CreatePush(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createPushNoCommand(ctx, req, localizer, editor)
-	}
-
 	if err := s.validateCreatePushRequest(req, localizer); err != nil {
-		return nil, err
-	}
-	push, err := domain.NewPush(
-		req.Command.Name,
-		string(req.Command.FcmServiceAccount),
-		req.Command.Tags,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new push",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.Strings("tags", req.Command.Tags),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
-	if err != nil {
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if err := s.checkFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
-		return nil, err
-	}
-	err = s.containsTags(pushes, req.Command.Tags, localizer)
-	if err != nil {
-		if status.Code(err) == codes.AlreadyExists {
-			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to validate tag existence",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.Strings("tags", req.Command.Tags),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
-			return err
-		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to create push",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-
-	// For security reasons we remove the service account from the API response
-	push.FcmServiceAccount = ""
-
-	return &pushproto.CreatePushResponse{
-		Push: push.Push,
-	}, nil
-}
-
-// createPushNoCommand implement logic without command
-func (s *PushService) createPushNoCommand(
-	ctx context.Context,
-	req *pushproto.CreatePushRequest,
-	localizer locale.Localizer,
-	editor *eventproto.Editor,
-) (*pushproto.CreatePushResponse, error) {
-	if err := s.validateCreatePushNoCommand(req, localizer); err != nil {
 		return nil, err
 	}
 	push, err := domain.NewPush(
@@ -324,30 +222,6 @@ func (s *PushService) createPushNoCommand(
 }
 
 func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
-	if string(req.Command.FcmServiceAccount) == "" {
-		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func (s *PushService) validateCreatePushNoCommand(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
 	if string(req.FcmServiceAccount) == "" {
 		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -383,85 +257,12 @@ func (s *PushService) UpdatePush(
 		return nil, err
 	}
 
-	if s.isNoUpdatePushCommand(req) {
-		return s.updatePushNoCommand(ctx, req, localizer, editor)
-	}
-
-	if err := s.validateUpdatePushRequest(ctx, req, localizer); err != nil {
-		return nil, err
-	}
-
-	var updatedPushPb *pushproto.Push
-	commands := s.createUpdatePushCommands(req)
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		for _, command := range commands {
-			if err := handler.Handle(ctx, command); err != nil {
-				return err
-			}
-		}
-		updatedPushPb = push.Push
-		return s.pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, v2ps.ErrPushNotFound):
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
-			if updatedPushPb != nil {
-				// For security reasons we remove the service account from the API response
-				updatedPushPb.FcmServiceAccount = ""
-			}
-			return &pushproto.UpdatePushResponse{
-				Push: updatedPushPb,
-			}, nil
-		}
-		s.logger.Error(
-			"Failed to update push",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-
-	if updatedPushPb != nil {
-		// For security reasons we remove the service account from the API response
-		updatedPushPb.FcmServiceAccount = ""
-	}
-	return &pushproto.UpdatePushResponse{
-		Push: updatedPushPb,
-	}, nil
-}
-
-func (s *PushService) updatePushNoCommand(
-	ctx context.Context,
-	req *pushproto.UpdatePushRequest,
-	localizer locale.Localizer,
-	editor *eventproto.Editor,
-) (*pushproto.UpdatePushResponse, error) {
-	if err := s.validateUpdatePushRequestNoCommand(ctx, req, localizer); err != nil {
+	if err := s.validateUpdatePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	var updatedPushPb *pushproto.Push
 	var updatePushEvent *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -536,48 +337,6 @@ func (s *PushService) updatePushNoCommand(
 }
 
 func (s *PushService) validateUpdatePushRequest(
-	ctx context.Context,
-	req *pushproto.UpdatePushRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.DeletePushTagsCommand != nil && len(req.DeletePushTagsCommand.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if err := s.validateAddPushTagsCommand(ctx, req, localizer); err != nil {
-		return err
-	}
-	if req.RenamePushCommand != nil && req.RenamePushCommand.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func (s *PushService) validateUpdatePushRequestNoCommand(
-	ctx context.Context,
 	req *pushproto.UpdatePushRequest,
 	localizer locale.Localizer,
 ) error {
@@ -593,60 +352,6 @@ func (s *PushService) validateUpdatePushRequestNoCommand(
 	}
 
 	return nil
-}
-
-func (s *PushService) validateAddPushTagsCommand(
-	ctx context.Context,
-	req *pushproto.UpdatePushRequest,
-	localizer locale.Localizer,
-) error {
-	if req.AddPushTagsCommand == nil {
-		return nil
-	}
-	if len(req.AddPushTagsCommand.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
-	if err != nil {
-		return api.NewGRPCStatus(err).Err()
-	}
-	err = s.containsTags(pushes, req.AddPushTagsCommand.Tags, localizer)
-	if err != nil {
-		if status.Code(err) == codes.AlreadyExists {
-			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "tag"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		s.logger.Error(
-			"Failed to validate tag existence",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
-				zap.Strings("tags", req.AddPushTagsCommand.Tags),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
-func (s *PushService) isNoUpdatePushCommand(req *pushproto.UpdatePushRequest) bool {
-	return req.AddPushTagsCommand == nil &&
-		req.DeletePushTagsCommand == nil &&
-		req.RenamePushCommand == nil
 }
 
 func (s *PushService) DeletePush(
@@ -789,20 +494,6 @@ func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer local
 		return dt.Err()
 	}
 	return nil
-}
-
-func (s *PushService) createUpdatePushCommands(req *pushproto.UpdatePushRequest) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.DeletePushTagsCommand != nil {
-		commands = append(commands, req.DeletePushTagsCommand)
-	}
-	if req.AddPushTagsCommand != nil {
-		commands = append(commands, req.AddPushTagsCommand)
-	}
-	if req.RenamePushCommand != nil {
-		commands = append(commands, req.RenamePushCommand)
-	}
-	return commands
 }
 
 func (s *PushService) containsTags(

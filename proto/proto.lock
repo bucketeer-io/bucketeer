@@ -49396,81 +49396,6 @@
       }
     },
     {
-      "protopath": "push:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreatePushCommand",
-            "fields": [
-              {
-                "id": 2,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "fcm_service_account",
-                "type": "bytes"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "AddPushTagsCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeletePushTagsCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeletePushCommand"
-          },
-          {
-            "name": "RenamePushCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "bucketeer.push"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/push"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "push:/:push.proto",
       "def": {
         "messages": [
@@ -49648,17 +49573,6 @@
             "name": "CreatePushRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "command",
-                "type": "CreatePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "tags",
                 "type": "string",
@@ -49681,7 +49595,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -49790,24 +49705,20 @@
                 ]
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "DeletePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -49824,39 +49735,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "add_push_tags_command",
-                "type": "AddPushTagsCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "delete_push_tags_command",
-                "type": "DeletePushTagsCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "rename_push_command",
-                "type": "RenamePushCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
                   }
                 ]
               },
@@ -49901,7 +49779,10 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3,
+              4,
+              5
             ]
           },
           {
@@ -50662,9 +50543,6 @@
           },
           {
             "path": "proto/push/push.proto"
-          },
-          {
-            "path": "proto/push/command.proto"
           }
         ],
         "package": {
