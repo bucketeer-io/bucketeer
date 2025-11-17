@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -684,6 +686,12 @@ func (f *Feature) validateVariationValue(id, value string) error {
 			return nil
 		}
 		return errVariationTypeUnmatched
+	case feature.Feature_YAML:
+		// Validate YAML can be parsed
+		var yamlData interface{}
+		if err := yaml.Unmarshal([]byte(value), &yamlData); err != nil {
+			return errVariationTypeUnmatched
+		}
 	}
 	return nil
 }

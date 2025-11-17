@@ -30,6 +30,7 @@ message Feature {
     BOOLEAN = 1;
     NUMBER = 2;
     JSON = 3;
+    YAML = 4;
   }
   string id = 1;
   string name = 2;

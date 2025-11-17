@@ -216,4 +216,104 @@ test('EvaluateFeature', async (t) => {
       }
     }
   }
+
+  // Test YAML feature conversion
+  const yamlFeature = createFeature({
+    id: 'yaml-feature-id',
+    name: 'YAML Feature',
+    version: 1,
+    enabled: true,
+    createdAt: Date.now(),
+    variationType: Feature.VariationType.YAML,
+    variations: [
+      {
+        id: 'yaml-variation-A',
+        name: 'YAML Variation A',
+        value: `# Configuration A
+config:
+  enabled: true  # Enable feature
+  timeout: 30    # Timeout in seconds`,
+        description: '',
+      },
+      {
+        id: 'yaml-variation-B',
+        name: 'YAML Variation B',
+        value: `# Configuration B
+config:
+  # Feature toggle
+  enabled: false
+  timeout: 60  # Longer timeout`,
+        description: '',
+      },
+    ],
+    targets: [],
+    rules: [],
+    defaultStrategy: {
+      type: Strategy.Type.FIXED,
+      variation: 'yaml-variation-B',
+    },
+    prerequisitesList: [],
+  });
+  yamlFeature.getTagsList().push('tag1');
+
+  const yamlPatterns = [
+    {
+      enabled: true,
+      offVariation: '',
+      userID: 'yaml-user-1',
+      prerequisite: [],
+      expected: {
+        id: EvaluationID(yamlFeature.getId(), yamlFeature.getVersion(), 'yaml-user-1'),
+        featureId: 'yaml-feature-id',
+        featureVersion: 1,
+        userId: 'yaml-user-1',
+        variationId: 'yaml-variation-B',
+        variationName: 'YAML Variation B',
+        variationValue: '{"config":{"enabled":false,"timeout":60}}',
+        variation: {
+          id: 'yaml-variation-B',
+          name: 'YAML Variation B',
+          value: '{"config":{"enabled":false,"timeout":60}}',
+          description: '',
+        },
+        reason: { ruleId: '', type: Reason.Type.DEFAULT },
+      },
+      expectedError: null,
+    },
+  ];
+
+  // Test YAML feature
+  for (const p of yamlPatterns) {
+    const evaluator = new Evaluator();
+    const user = createUser(p.userID, {});
+    yamlFeature.setEnabled(p.enabled);
+    yamlFeature.setOffVariation(p.offVariation);
+    yamlFeature.setPrerequisitesList(p.prerequisite);
+
+    const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
+    try {
+      const evaluation = await evaluator.evaluateFeatures([yamlFeature], user, segmentUser, 'tag1');
+      if (evaluation.getEvaluationsList()) {
+        const actual = findEvaluation(evaluation.getEvaluationsList(), yamlFeature.getId());
+        t.deepEqual(p.expected, actual?.toObject(), 'YAML should be converted to JSON');
+
+        // Verify it's valid JSON
+        if (actual) {
+          const jsonData = JSON.parse(actual.getVariationValue());
+          t.is(jsonData.config.enabled, false, 'YAML parsed correctly');
+          t.is(jsonData.config.timeout, 60, 'YAML parsed correctly');
+          t.false(
+            actual.getVariationValue().includes('#'),
+            'YAML comments should be stripped',
+          );
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error || error === null) {
+        t.deepEqual(p.expectedError, error);
+      } else {
+        t.fail(`Unexpected error type: ${typeof error}: ${error}`);
+      }
+    }
+  }
 });

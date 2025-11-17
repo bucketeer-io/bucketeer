@@ -1783,6 +1783,82 @@ func TestValidateVariationValue(t *testing.T) {
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
+		{
+			desc:          "valid yaml - simple",
+			variationType: ftproto.Feature_YAML,
+			value: `name: John Doe
+age: 30
+active: true`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - nested objects",
+			variationType: ftproto.Feature_YAML,
+			value: `config:
+  database:
+    host: localhost
+    port: 5432
+  cache:
+    enabled: true
+    ttl: 3600`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - arrays",
+			variationType: ftproto.Feature_YAML,
+			value: `items:
+  - id: 1
+    name: Item 1
+  - id: 2
+    name: Item 2`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - with comments",
+			variationType: ftproto.Feature_YAML,
+			value: `# Configuration
+name: Test Config
+# Settings
+settings:
+  enabled: true  # Enable feature
+  timeout: 30    # Timeout in seconds`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - mixed types",
+			variationType: ftproto.Feature_YAML,
+			value: `string: hello
+number: 42
+float: 3.14
+boolean: true
+null_value: null
+list:
+  - one
+  - two
+  - three
+object:
+  nested: value`,
+			expected: nil,
+		},
+		{
+			desc:          "invalid yaml - malformed",
+			variationType: ftproto.Feature_YAML,
+			value:         `invalid: yaml: [unclosed`,
+			expected:      errVariationTypeUnmatched,
+		},
+		{
+			desc:          "invalid yaml - tab indentation",
+			variationType: ftproto.Feature_YAML,
+			value: "config:\n\tkey: value",
+			expected:      errVariationTypeUnmatched,
+		},
+		{
+			desc:          "invalid yaml - unbalanced brackets",
+			variationType: ftproto.Feature_YAML,
+			value: `list: [1, 2, 3
+incomplete`,
+			expected: errVariationTypeUnmatched,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

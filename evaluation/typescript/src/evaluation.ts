@@ -10,6 +10,7 @@ import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 import { createReason } from './modelFactory';
+import * as yaml from 'js-yaml';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
@@ -21,10 +22,14 @@ export function EvaluationID(featureID: string, featureVersion: number, userID: 
 class Evaluator {
   private ruleEvaluator: RuleEvaluator;
   private strategyEvaluator: StrategyEvaluator;
+  // variationCache caches YAML to JSON conversions using variation ID as the key.
+  // Since variation IDs are UUIDs, they are globally unique and safe to use as cache keys.
+  private variationCache: Map<string, string>;
 
   constructor() {
     this.ruleEvaluator = new RuleEvaluator();
     this.strategyEvaluator = new StrategyEvaluator();
+    this.variationCache = new Map<string, string>();
   }
 
   async evaluateFeatures(
@@ -119,6 +124,9 @@ class Evaluator {
         continue;
       }
 
+      // Convert YAML to JSON for client SDKs if needed
+      const convertedValue = this.convertVariationValue(feature, variation);
+
       const evaluationID = EvaluationID(feature.getId(), feature.getVersion(), user.getId());
       const evaluation = new Evaluation();
       evaluation.setId(evaluationID);
@@ -127,7 +135,7 @@ class Evaluator {
       evaluation.setUserId(user.getId());
       evaluation.setVariationId(variation.getId());
       evaluation.setVariationName(variation.getName());
-      evaluation.setVariationValue(variation.getValue());
+      evaluation.setVariationValue(convertedValue);
       // Deprecated
       // FIXME: Remove the Variation when is no longer being used.
       // For security reasons, we should remove the variation description.
@@ -136,7 +144,7 @@ class Evaluator {
       const copyVariation = new Variation();
       copyVariation.setId(variation.getId());
       copyVariation.setName(variation.getName());
-      copyVariation.setValue(variation.getValue());
+      copyVariation.setValue(convertedValue);
       evaluation.setVariation(copyVariation);
       evaluation.setReason(reason);
 
@@ -277,6 +285,35 @@ class Evaluator {
       throw EVALUATOR_ERRORS.VariationNotFound;
     }
     return variation;
+  }
+
+  /**
+   * Converts YAML to JSON if needed, with in-memory caching.
+   * This ensures client SDKs can retrieve variation values using the object variation interface.
+   * Only performs conversion when the variation type is YAML.
+   */
+  private convertVariationValue(feature: Feature, variation: Variation): string {
+    // Only convert if type is YAML
+    if (feature.getVariationType() !== Feature.VariationType.YAML) {
+      return variation.getValue();
+    }
+
+    // Check cache first (using variation ID as key since it's a UUID)
+    const cached = this.variationCache.get(variation.getId());
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Convert YAML to JSON
+    try {
+      const jsonValue = yamlToJSON(variation.getValue());
+      // Cache the result for future requests
+      this.variationCache.set(variation.getId(), jsonValue);
+      return jsonValue;
+    } catch (error) {
+      // Return original value as fallback on error
+      return variation.getValue();
+    }
   }
 }
 
@@ -496,6 +533,14 @@ function arrayToRecord(arr: Array<[string, string]>): Record<string, string> {
     },
     {} as Record<string, string>,
   );
+}
+
+/**
+ * Converts a YAML string to a JSON string.
+ */
+function yamlToJSON(yamlStr: string): string {
+  const data = yaml.load(yamlStr);
+  return JSON.stringify(data);
 }
 
 export { Evaluator, getFeatureIDsDependsOn };
