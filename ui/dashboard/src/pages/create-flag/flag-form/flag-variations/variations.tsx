@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
@@ -10,6 +10,7 @@ import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
+import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -17,7 +18,11 @@ import Input from 'components/input';
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
 
-  const { control, watch } = useFormContext<FlagFormSchema>();
+  const {
+    control,
+    watch,
+    formState: { errors }
+  } = useFormContext<FlagFormSchema>();
   const {
     fields: variations,
     append,
@@ -31,6 +36,9 @@ const Variations = () => {
   const variationType = watch('variationType');
   const onVariation = watch('defaultOnVariation');
   const offVariation = watch('defaultOffVariation');
+  const [variationSelected, setVariationSelected] = useState<number | null>(
+    null
+  );
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
@@ -97,6 +105,35 @@ const Variations = () => {
                               defaultLanguage={isYAML ? 'yaml' : 'json'}
                               value={field.value}
                               onChange={field.onChange}
+                              onExpand={() =>
+                                setVariationSelected(variationIndex)
+                              }
+                            />
+                            <ReactCodeEditorModal
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
+                              isOpen={variationSelected === variationIndex}
+                              onClose={() => {
+                                setVariationSelected(null);
+                              }}
+                              title={
+                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                  <FlagVariationPolygon
+                                    index={variationIndex}
+                                  />
+                                  <Trans
+                                    i18nKey={'form:feature-flags.variation'}
+                                    values={{
+                                      index: `${variationIndex + 1}`
+                                    }}
+                                  />
+                                </div>
+                              }
+                              value={field.value}
+                              onChange={field.onChange}
+                              error={
+                                errors.variations?.[variationIndex]?.value
+                                  ?.message as string
+                              }
                             />
                           </div>
                         ) : (

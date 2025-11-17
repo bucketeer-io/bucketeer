@@ -295,5 +295,7 @@
   "edit-rule": "Edit rule",
   "add-rule":"Add rule",
   "continue-editing":"Continue editing",
-  "leave-page":"Leave page"
+  "leave-page":"Leave page",
+  "note":"Note",
+  "full-screen-mode":"Fullscreen Mode"
 }

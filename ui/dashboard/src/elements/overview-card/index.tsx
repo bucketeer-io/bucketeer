@@ -1,4 +1,5 @@
 import { FunctionComponent, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cva } from 'class-variance-authority';
 import isNil from 'lodash/isNil';
 import { Color, IconSize } from '@types';
@@ -117,6 +118,26 @@ const CardDescription = ({
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+export const CardNote = ({
+  className,
+  content
+}: {
+  className?: string;
+  content: string;
+}) => {
+  const { t } = useTranslation(['common']);
+  return (
+    <div
+      className={cn(
+        'px-4 py-3 w-full typo-para-small text-gray-700 bg-white shadow-card-note rounded-xl overflow-hidden',
+        className
+      )}
+    >
+      <b>{t('note')}:</b> {content}
     </div>
   );
 };

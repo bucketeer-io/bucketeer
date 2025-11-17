@@ -18,6 +18,7 @@ import IconDisable from './customized-icons/disable.svg?react';
 import IconDocument from './customized-icons/document.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconEnglishFlag from './customized-icons/english-flag.svg?react';
+import IconExpandSquar from './customized-icons/expand-squar.svg?react';
 import IconExpand from './customized-icons/expand.svg?react';
 import IconFlagNoTraffic from './customized-icons/flag-no-traffic.svg?react';
 import IconGitHub from './customized-icons/github.svg?react';
@@ -116,6 +117,7 @@ export {
   IconLogout,
   IconBuilding,
   // Customized icons
+  IconExpandSquar,
   IconFlagYaml,
   IconBackspace,
   IconSearch,

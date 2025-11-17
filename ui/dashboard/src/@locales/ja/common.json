@@ -295,5 +295,7 @@
   "edit-rule": "ルールを編集",
   "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
-  "leave-page": "ページを離れる"
+  "leave-page": "ページを離れる",
+  "note":"メモ",
+  "full-screen-mode":"フルスクリーンモード"
 }

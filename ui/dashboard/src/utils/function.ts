@@ -1,6 +1,8 @@
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import dayjs from 'dayjs';
+import * as yaml from 'js-yaml';
 import { Environment } from '@types';
+import { areJsonStringsEqual } from './converts';
 
 export const copyToClipBoard = (text: string) => {
   if (navigator.clipboard) {
@@ -142,4 +144,27 @@ export const checkFieldDirty = (obj: { [key: string]: boolean }): boolean => {
     }
   }
   return false;
+};
+
+export const normalizeYamlIndentation = (yamlString: string) => {
+  let data: string;
+  try {
+    data = yaml.load(yamlString) as string;
+    return yaml.dump(data);
+  } catch {
+    return yamlString;
+  }
+};
+
+export const isUniqueValue = (text1: string, text2: string, type: string) => {
+  switch (type) {
+    case 'YAML':
+      return (
+        normalizeYamlIndentation(text1) !== normalizeYamlIndentation(text2)
+      );
+    case 'JSON':
+      return !areJsonStringsEqual(text1, text2);
+    default:
+      return text1.trim() !== text2.trim();
+  }
 };

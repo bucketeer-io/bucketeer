@@ -1,4 +1,6 @@
-.editor-wrapper div:first-child,
+.editor-wrapper div:first-child {
+  @apply  !border-none !outline-none;
+}
 .editor-wrapper div .monaco-editor {
   @apply overflow-hidden !border-none !outline-none;
 }
