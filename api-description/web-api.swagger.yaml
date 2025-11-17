@@ -6855,7 +6855,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - push
@@ -13572,30 +13572,9 @@ definitions:
             "@type": "type.googleapis.com/google.protobuf.Duration",
             "value": "1.212s"
           }
-  pushAddPushTagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
-  pushCreatePushCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
-      fcmServiceAccount:
-        type: string
-        format: byte
   pushCreatePushRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/pushCreatePushCommand'
       tags:
         type: array
         items:
@@ -13612,17 +13591,8 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
-  pushDeletePushCommand:
-    type: object
   pushDeletePushResponse:
     type: object
-  pushDeletePushTagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
   pushGetPushResponse:
     type: object
     properties:
@@ -13684,22 +13654,11 @@ definitions:
         type: string
       environmentName:
         type: string
-  pushRenamePushCommand:
-    type: object
-    properties:
-      name:
-        type: string
   pushUpdatePushRequest:
     type: object
     properties:
       id:
         type: string
-      addPushTagsCommand:
-        $ref: '#/definitions/pushAddPushTagsCommand'
-      deletePushTagsCommand:
-        $ref: '#/definitions/pushDeletePushTagsCommand'
-      renamePushCommand:
-        $ref: '#/definitions/pushRenamePushCommand'
       tags:
         type: array
         items:
