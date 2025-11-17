@@ -21,6 +21,9 @@ import (
 	_ "embed"
 	"fmt"
 	"strings"
+	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
@@ -53,11 +56,22 @@ type EvaluationEventParams struct {
 }
 
 type mysqlEvaluationEventStorage struct {
-	qe mysql.QueryExecer
+	qe     mysql.QueryExecer
+	logger *zap.Logger
 }
 
 func NewMysqlEvaluationEventStorage(qe mysql.QueryExecer) EvaluationEventStorageV2 {
-	return &mysqlEvaluationEventStorage{qe: qe}
+	return &mysqlEvaluationEventStorage{
+		qe:     qe,
+		logger: zap.NewNop(),
+	}
+}
+
+func NewMysqlEvaluationEventStorageWithLogger(qe mysql.QueryExecer, logger *zap.Logger) EvaluationEventStorageV2 {
+	return &mysqlEvaluationEventStorage{
+		qe:     qe,
+		logger: logger,
+	}
 }
 
 func (s *mysqlEvaluationEventStorage) CreateEvaluationEvents(
@@ -128,5 +142,22 @@ func (s *mysqlEvaluationEventStorage) createEvaluationEventsBatch(
 	if err != nil {
 		return fmt.Errorf("failed to execute batch insert: %w", err)
 	}
+	
+	// Log successful writes for debugging
+	if s.logger != nil {
+		for _, event := range events {
+			timestampSeconds := event.Timestamp / 1000000
+			s.logger.Info("💾 MYSQL: Successfully wrote evaluation event",
+				zap.String("eventId", event.ID),
+				zap.String("environmentId", event.EnvironmentID),
+				zap.String("userId", event.UserID),
+				zap.String("featureId", event.FeatureID),
+				zap.Int32("featureVersion", event.FeatureVersion),
+				zap.Int64("timestamp", timestampSeconds),
+				zap.String("timestampISO", time.Unix(timestampSeconds, 0).Format(time.RFC3339)),
+			)
+		}
+	}
+	
 	return err
 }

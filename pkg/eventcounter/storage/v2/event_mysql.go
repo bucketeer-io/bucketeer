@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 	"time"
 
@@ -189,6 +190,16 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	featureVersion int32,
 	experimentStartAt, experimentEndAt time.Time,
 ) (*UserEvaluation, error) {
+	es.logger.Debug("🔍 MYSQL: Querying for user evaluation",
+		zap.String("environmentId", environmentID),
+		zap.String("userId", userID),
+		zap.String("featureId", featureID),
+		zap.Int32("featureVersion", featureVersion),
+		zap.Time("experimentStartAt", experimentStartAt),
+		zap.Time("experimentEndAt", experimentEndAt),
+		zap.String("experimentStartAtISO", experimentStartAt.Format(time.RFC3339)),
+		zap.String("experimentEndAtISO", experimentEndAt.Format(time.RFC3339)),
+	)
 	rows, err := es.qe.QueryContext(
 		ctx,
 		userEvaluationMySQLQuery,
@@ -217,6 +228,86 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	defer rows.Close()
 
 	if !rows.Next() {
+		// Query to check what evaluation events exist for this user/feature (any version)
+		checkRows, checkErr := es.qe.QueryContext(
+			ctx,
+			"SELECT feature_version, UNIX_TIMESTAMP(timestamp) as ts, variation_id, user_id FROM evaluation_event WHERE environment_id = ? AND user_id = ? AND feature_id = ? AND timestamp BETWEEN ? AND ? ORDER BY timestamp DESC LIMIT 10",
+			environmentID,
+			userID,
+			featureID,
+			experimentStartAt,
+			experimentEndAt,
+		)
+		if checkErr == nil && checkRows != nil {
+			var foundVersions []int32
+			var foundTimestamps []int64
+			var foundUserIDs []string
+			for checkRows.Next() {
+				var fv int32
+				var ts int64
+				var vid sql.NullString
+				var uid string
+				if err := checkRows.Scan(&fv, &ts, &vid, &uid); err == nil {
+					foundVersions = append(foundVersions, fv)
+					foundTimestamps = append(foundTimestamps, ts)
+					foundUserIDs = append(foundUserIDs, uid)
+				}
+			}
+			checkRows.Close()
+			
+			// Also check if there are ANY evaluation events for this feature (any user) in the time window
+			anyRows, anyErr := es.qe.QueryContext(
+				ctx,
+				"SELECT user_id, feature_version, UNIX_TIMESTAMP(timestamp) as ts FROM evaluation_event WHERE environment_id = ? AND feature_id = ? AND timestamp BETWEEN ? AND ? ORDER BY timestamp DESC LIMIT 10",
+				environmentID,
+				featureID,
+				experimentStartAt,
+				experimentEndAt,
+			)
+			var anyUserIDs []string
+			var anyVersions []int32
+			var anyTimestamps []int64
+			if anyErr == nil && anyRows != nil {
+				for anyRows.Next() {
+					var uid string
+					var fv int32
+					var ts int64
+					if err := anyRows.Scan(&uid, &fv, &ts); err == nil {
+						anyUserIDs = append(anyUserIDs, uid)
+						anyVersions = append(anyVersions, fv)
+						anyTimestamps = append(anyTimestamps, ts)
+					}
+				}
+				anyRows.Close()
+			}
+			
+			es.logger.Warn("MYSQL: No evaluation found with exact featureVersion",
+				zap.String("environmentId", environmentID),
+				zap.String("requestedUserId", userID),
+				zap.String("featureId", featureID),
+				zap.Int32("requestedFeatureVersion", featureVersion),
+				zap.Int64s("foundTimestamps", foundTimestamps),
+				zap.Int32s("foundFeatureVersions", foundVersions),
+				zap.Strings("foundUserIDs", foundUserIDs),
+				zap.Time("experimentStartAt", experimentStartAt),
+				zap.Time("experimentEndAt", experimentEndAt),
+				zap.String("experimentStartAtISO", experimentStartAt.Format(time.RFC3339)),
+				zap.String("experimentEndAtISO", experimentEndAt.Format(time.RFC3339)),
+				zap.Strings("anyUserIDsForFeature", anyUserIDs),
+				zap.Int32s("anyVersionsForFeature", anyVersions),
+				zap.Int64s("anyTimestampsForFeature", anyTimestamps),
+			)
+		} else {
+			es.logger.Warn("MYSQL: No evaluation found in database - check query failed",
+				zap.String("environmentId", environmentID),
+				zap.String("userId", userID),
+				zap.String("featureId", featureID),
+				zap.Int32("featureVersion", featureVersion),
+				zap.Error(checkErr),
+				zap.Time("experimentStartAt", experimentStartAt),
+				zap.Time("experimentEndAt", experimentEndAt),
+			)
+		}
 		return nil, ErrNoResultsFound
 	}
 
@@ -237,6 +328,15 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 		)
 		return nil, err
 	}
+
+	es.logger.Debug("MYSQL: Evaluation found in database",
+		zap.String("userId", ue.UserID),
+		zap.String("featureId", ue.FeatureID),
+		zap.Int32("featureVersion", ue.FeatureVersion),
+		zap.String("variationId", ue.VariationID),
+		zap.Int64("timestamp", ue.Timestamp),
+		zap.String("timestampISO", time.Unix(ue.Timestamp, 0).Format(time.RFC3339)),
+	)
 
 	if rows.Next() {
 		return nil, ErrUnexpectedMultipleResults

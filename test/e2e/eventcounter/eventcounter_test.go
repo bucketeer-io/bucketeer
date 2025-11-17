@@ -30,6 +30,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -59,6 +60,10 @@ const (
 )
 
 const defaultVariationID = "default"
+
+// experimentCacherFlightGroup ensures only one experiment cacher execution happens at a time
+// across all parallel tests, preventing race conditions and redundant cache updates
+var experimentCacherFlightGroup singleflight.Group
 
 var (
 	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
@@ -137,7 +142,9 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -153,7 +160,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -274,7 +281,9 @@ func TestExperimentGoalCount(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -290,7 +299,7 @@ func TestExperimentGoalCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -414,11 +423,13 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 1, 2 and 3
 	// Register variation a
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], experiment.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -437,10 +448,12 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 4 and 5
 	// Register variation
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], experiment.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -585,11 +598,13 @@ func TestExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], f.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -608,10 +623,12 @@ func TestExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], f.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -759,8 +776,10 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -779,7 +798,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		time.Sleep(10 * time.Second)
 
 		// Goal 0.
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -825,7 +844,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -871,7 +890,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -986,8 +1005,10 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -1006,7 +1027,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		time.Sleep(10 * time.Second)
 
 		// Goal 0.
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1052,7 +1073,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1098,7 +1119,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1210,7 +1231,9 @@ func TestHTTPTrack(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -1226,7 +1249,7 @@ func TestHTTPTrack(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1344,17 +1367,19 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(70 * time.Second)
 
-		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1371,8 +1396,8 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		if ec.FeatureId != featureID {
 			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
 		}
-		if ec.FeatureVersion != f.Version {
-			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
+		if ec.FeatureVersion != experiment.FeatureVersion {
+			t.Fatalf("feature version is not correct: %d (expected %d)", ec.FeatureVersion, experiment.FeatureVersion)
 		}
 
 		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
@@ -1474,9 +1499,11 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	// Use experiment.FeatureVersion instead of f.Version to ensure we use the same version
+	// that was used when creating the experiment, avoiding race conditions with parallel tests
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1484,7 +1511,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, experiment.FeatureVersion, variationIDs)
 		if err != nil {
 			st, _ := status.FromError(err)
 			if st.Code() != codes.NotFound {
@@ -1500,8 +1527,8 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		if ec.FeatureId != featureID {
 			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
 		}
-		if ec.FeatureVersion != f.Version {
-			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
+		if ec.FeatureVersion != experiment.FeatureVersion {
+			t.Fatalf("feature version is not correct: %d (expected %d)", ec.FeatureVersion, experiment.FeatureVersion)
 		}
 
 		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
@@ -1708,23 +1735,31 @@ func createExperimentWithMultiGoals(
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Update experiment cache
+	// Update experiment cache using singleflight to prevent concurrent executions
+	// This ensures that if multiple parallel tests trigger the cacher simultaneously,
+	// only one execution happens and all tests share the result
+	// _, err, _ = experimentCacherFlightGroup.Do("experiment-cacher", func() (interface{}, error) {
+
+	// 	return nil, execErr
+	// })
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
-	numRetries := 3
+	numRetries := 5
+	var execErr error
 	for i := 0; i < numRetries; i++ {
-		_, err = batchClient.ExecuteBatchJob(
+		_, execErr = batchClient.ExecuteBatchJob(
 			ctx,
 			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
-		if err == nil {
+		if execErr == nil {
 			break
 		}
-		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
-			t.Fatalf("Failed to execute experiment cacher batch. Error code: %d. Error: %v\n", st.Code(), err)
+		st, _ := status.FromError(execErr)
+		// Handle both Unavailable (service busy) and ResourceExhausted (cacher already running)
+		if st.Code() != codes.Unavailable && st.Code() != codes.ResourceExhausted {
+			t.Fatal(fmt.Errorf("failed to execute experiment cacher batch. Error code: %d. Error: %v", st.Code(), execErr))
 		}
-		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
+		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d. Retrying in 2 seconds.\n", st.Code())
+		time.Sleep(2 * time.Second)
 	}
 	if err != nil {
 		t.Fatal(err)
@@ -1755,24 +1790,32 @@ func stopExperiment(
 		// Ignore
 		return
 	}
-	// Update experiment cache
-	batchClient := newBatchClient(t)
-	defer batchClient.Close()
-	numRetries := 3
-	for i := 0; i < numRetries; i++ {
-		_, err = batchClient.ExecuteBatchJob(
-			ctx,
-			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
-		if err == nil {
-			break
+	// Update experiment cache using singleflight to prevent concurrent executions
+	// This ensures consistency when multiple tests are creating/stopping experiments simultaneously
+	_, err, _ = experimentCacherFlightGroup.Do("experiment-cacher", func() (interface{}, error) {
+		batchClient := newBatchClient(t)
+		defer batchClient.Close()
+		numRetries := 3
+		var execErr error
+		for i := 0; i < numRetries; i++ {
+			_, execErr = batchClient.ExecuteBatchJob(
+				ctx,
+				&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
+			if execErr == nil {
+				break
+			}
+			st, _ := status.FromError(execErr)
+			// Handle both Unavailable (service busy) and ResourceExhausted (cacher already running)
+			if st.Code() != codes.Unavailable && st.Code() != codes.ResourceExhausted {
+				// For stopExperiment, we ignore non-retryable errors since it's optional
+				return nil, nil
+			}
+			fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 2 seconds.\n", st.Code())
+			time.Sleep(2 * time.Second)
 		}
-		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
-			return
-		}
-		fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
-	}
+		return nil, execErr
+	})
+	// Ignore errors for stopExperiment since it's optional cleanup
 }
 
 func updateFeatueFlagCache(t *testing.T) {

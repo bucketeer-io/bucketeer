@@ -384,6 +384,18 @@ create-mysql-event-tables-minikube:
 	MYSQL_DB_NAME=bucketeer \
 	make create-mysql-event-tables
 
+.PHONY: delete-mysql-data-warehouse-data
+delete-mysql-data-warehouse-data:
+	@echo "Deleting all data from MySQL data warehouse tables..."
+	kubectl config use-context minikube
+	@MYSQL_HOST=$$(minikube ip); \
+	MYSQL_PORT=3306; \
+	echo "Connecting to MySQL at $$MYSQL_HOST:$$MYSQL_PORT..."; \
+	mysql -h $$MYSQL_HOST -P $$MYSQL_PORT -u bucketeer -pbucketeer bucketeer -e "TRUNCATE TABLE evaluation_event;" && \
+	mysql -h $$MYSQL_HOST -P $$MYSQL_PORT -u bucketeer -pbucketeer bucketeer -e "TRUNCATE TABLE goal_event;" && \
+	echo "MySQL data warehouse data deleted." || \
+	echo "Failed to delete MySQL data. Make sure MySQL client is installed and MySQL is accessible."
+
 setup-bigquery-vault:
 	kubectl config use-context minikube
 	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \

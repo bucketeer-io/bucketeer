@@ -343,7 +343,17 @@ func (e *eventsDWHPersister) send(messages map[string]*puller.Message) {
 		e.logger.Error("all messages were bad")
 		return
 	}
+	e.logger.Info("Processing batch of events from stream",
+		zap.Int("messageCount", len(messages)),
+		zap.Int("environmentCount", len(envEvents)),
+		zap.String("subscriberType", e.subscriberType),
+	)
 	fails := e.writer.Write(ctx, envEvents)
+	e.logger.Info("Finished processing batch",
+		zap.Int("totalMessages", len(messages)),
+		zap.Int("failedCount", len(fails)),
+		zap.String("subscriberType", e.subscriberType),
+	)
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {

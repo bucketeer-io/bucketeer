@@ -26,6 +26,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 
+	ecstorage "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
@@ -110,14 +111,52 @@ func (w *goalEvtWriter) processRetryKey(ctx context.Context, key string) {
 	}
 
 	now := time.Now().Unix()
+
+	// Check if retry period has been exceeded - delete the key if so
+	if msg.FirstRetryAt != 0 {
+		elapsed := time.Since(time.Unix(msg.FirstRetryAt, 0))
+		if elapsed > w.maxRetryGoalEventPeriod {
+			w.logger.Info("Retry period exceeded, deleting retry key",
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("userId", msg.GoalEvent.UserId),
+				zap.Duration("elapsed", elapsed),
+				zap.Duration("maxPeriod", w.maxRetryGoalEventPeriod),
+				zap.Int("retryCount", msg.RetryCount),
+				zap.String("key", key),
+			)
+			// Delete the expired retry key
+			if err := w.redisClient.Del(key); err != nil {
+				w.logger.Error("Failed to delete expired retry key",
+					zap.Error(err),
+					zap.String("key", key),
+				)
+			}
+			return
+		}
+	}
+
 	if now < msg.RetryAt {
 		w.logger.Debug("Not time for retry",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("userId", msg.GoalEvent.UserId),
 			zap.String("retryAt", time.Unix(msg.RetryAt, 0).Format(time.RFC3339)),
+			zap.Int64("now", now),
+			zap.Int64("retryAtUnix", msg.RetryAt),
+			zap.Int64("secondsUntilRetry", msg.RetryAt-now),
 			zap.String("key", key),
 		)
 		return
 	}
 
+	w.logger.Info("Processing retry message",
+		zap.String("retryId", msg.ID),
+		zap.String("goalId", msg.GoalEvent.GoalId),
+		zap.String("userId", msg.GoalEvent.UserId),
+		zap.Int("retryCount", msg.RetryCount),
+		zap.String("key", key),
+	)
 	w.handleMessage(ctx, &msg, key)
 }
 
@@ -181,32 +220,242 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 	if len(experiments) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
-		w.deleteKey(ctx, key)
-		return
-	}
-
-	evals, _, err := w.linkGoalEventByExperiment(ctx, msg.GoalEvent, msg.EnvironmentID, msg.GoalEvent.Tag, experiments)
-	if err != nil {
-		if errors.Is(err, ErrExperimentNotFound) {
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
-			lg.Error("Experiment not found, deleting retry message")
-			w.deleteKey(ctx, key)
-		} else {
-			lg.Error("Linking failed", zap.Error(err))
+		// Cache might be stale - do DB fallback before marking as missing
+		lg.Debug("RETRY: No experiments found in cache, checking DB",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("environmentId", msg.EnvironmentID),
+		)
+		dbExperiments, dbErr := w.listExperimentsFromDB(ctx, msg.EnvironmentID)
+		if dbErr != nil {
+			lg.Error("RETRY: Failed to list experiments from DB in fallback path",
+				zap.Error(dbErr),
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("environmentId", msg.EnvironmentID),
+			)
+			// Treat as infra error: retry later
 			msg.RetryCount++
 			if err := w.storeRetryMessage(msg); err != nil {
 				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 				lg.Error("Failed to store retry message", zap.Error(err))
 			}
+			return
+		}
+		if len(dbExperiments) == 0 {
+			// Confirmed no experiments exist - mark as missing
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
+			lg.Warn("RETRY: No experiments found in DB, marking as missing and deleting retry message",
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("environmentId", msg.EnvironmentID),
+			)
+			// Mark as missing in sync.Map so future events are rejected immediately
+			w.markExperimentMissing(msg.EnvironmentID, msg.GoalEvent.GoalId)
+			w.deleteKey(ctx, key)
+			return
+		}
+		// Found experiments in DB - use them
+		lg.Info("RETRY: Found experiments in DB fallback",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("environmentId", msg.EnvironmentID),
+			zap.Int("experimentCount", len(dbExperiments)),
+		)
+		experiments = dbExperiments
+	}
+
+	lg.Info("🔄 RETRY: Looking for evaluation",
+		zap.String("retryId", msg.ID),
+		zap.String("goalId", msg.GoalEvent.GoalId),
+		zap.String("userId", msg.GoalEvent.UserId),
+		zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+		zap.String("goalTimestampISO", time.Unix(msg.GoalEvent.Timestamp, 0).Format(time.RFC3339)),
+		zap.Int("retryCount", msg.RetryCount),
+		zap.Int64("firstRetryAt", msg.FirstRetryAt),
+		zap.String("firstRetryAtISO", func() string {
+			if msg.FirstRetryAt > 0 {
+				return time.Unix(msg.FirstRetryAt, 0).Format(time.RFC3339)
+			}
+			return "N/A"
+		}()),
+	)
+	evals, _, err := w.linkGoalEventByExperiment(ctx, msg.GoalEvent, msg.ID, msg.EnvironmentID, msg.GoalEvent.Tag, experiments)
+	if err != nil {
+		if errors.Is(err, ErrExperimentNotFound) {
+			// Experiment not found in the list - could be:
+			// 1. Experiment doesn't match goal ID
+			// 2. Goal event timestamp outside experiment window
+			// 3. Experiment was deleted/stopped
+			// Do DB fallback to confirm before marking as missing
+			lg.Debug("RETRY: Experiment not found in list, checking DB",
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("environmentId", msg.EnvironmentID),
+				zap.Int("experimentCount", len(experiments)),
+			)
+			dbExperiments, dbErr := w.listExperimentsFromDB(ctx, msg.EnvironmentID)
+			if dbErr != nil {
+				lg.Error("RETRY: Failed to list experiments from DB when experiment not found",
+					zap.Error(dbErr),
+					zap.String("retryId", msg.ID),
+					zap.String("goalId", msg.GoalEvent.GoalId),
+				)
+				// Treat as infra error: retry later
+				msg.RetryCount++
+				if err := w.storeRetryMessage(msg); err != nil {
+					subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+					lg.Error("Failed to store retry message", zap.Error(err))
+				}
+				return
+			}
+			// Check if any experiment matches the goal ID (regardless of timestamp window)
+			// This helps distinguish between "experiment doesn't exist" vs "experiment exists but timestamp outside window"
+			hasMatchingGoalID := false
+			for _, exp := range dbExperiments {
+				if w.findGoalID(msg.GoalEvent.GoalId, exp.GoalIds) {
+					hasMatchingGoalID = true
+					break
+				}
+			}
+
+			// Try linking again with DB experiments
+			dbEvals, _, dbLinkErr := w.linkGoalEventByExperiment(ctx, msg.GoalEvent, msg.ID, msg.EnvironmentID, msg.GoalEvent.Tag, dbExperiments)
+			if dbLinkErr != nil {
+				if errors.Is(dbLinkErr, ErrExperimentNotFound) {
+					if !hasMatchingGoalID {
+						// No experiment exists with this goal ID - mark as missing
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
+						lg.Warn("RETRY: No experiment found with matching goal ID, marking as missing and deleting retry",
+							zap.String("retryId", msg.ID),
+							zap.String("goalId", msg.GoalEvent.GoalId),
+							zap.String("environmentId", msg.EnvironmentID),
+						)
+						w.markExperimentMissing(msg.EnvironmentID, msg.GoalEvent.GoalId)
+					} else {
+						// Experiment exists with matching goal ID but doesn't match (e.g., timestamp outside window)
+						// Don't mark as missing - just delete the retry as the event is invalid
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
+						lg.Warn("RETRY: Experiment exists but doesn't match goal event (e.g., timestamp outside window), deleting retry",
+							zap.String("retryId", msg.ID),
+							zap.String("goalId", msg.GoalEvent.GoalId),
+							zap.String("environmentId", msg.EnvironmentID),
+							zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+						)
+					}
+					w.deleteKey(ctx, key)
+				} else {
+					// Other error (e.g., evaluation not found) - continue retrying
+					lg.Error("RETRY: DB fallback linking failed with non-NotFound error",
+						zap.Error(dbLinkErr),
+						zap.String("retryId", msg.ID),
+						zap.String("goalId", msg.GoalEvent.GoalId),
+					)
+					msg.RetryCount++
+					if err := w.storeRetryMessage(msg); err != nil {
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+						lg.Error("Failed to store retry message", zap.Error(err))
+					}
+				}
+				return
+			}
+			// Found experiment via DB fallback - use the evaluations
+			lg.Info("RETRY: Found experiment via DB fallback after initial NotFound",
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.Int("evaluationCount", len(dbEvals)),
+			)
+			evals = dbEvals
+			// Clear negative cache since we found the experiment
+			w.clearExperimentMissing(msg.EnvironmentID, msg.GoalEvent.GoalId)
+			// Clear error to continue processing evaluations below
+			err = nil
+		} else if errors.Is(err, ecstorage.ErrNoResultsFound) {
+			// Evaluation not found - this is expected, continue retrying
+			lg.Warn("🔄 RETRY: Still no evaluations found, will retry again",
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("userId", msg.GoalEvent.UserId),
+				zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+				zap.String("goalTimestampISO", time.Unix(msg.GoalEvent.Timestamp, 0).Format(time.RFC3339)),
+				zap.Int("retryCount", msg.RetryCount),
+				zap.String("tag", msg.GoalEvent.Tag),
+			)
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
+			msg.RetryCount++
+			if err := w.storeRetryMessage(msg); err != nil {
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+				lg.Error("Failed to store retry message", zap.Error(err))
+			}
+		} else {
+			lg.Error("❌ RETRY: Linking failed",
+				zap.Error(err),
+				zap.String("retryId", msg.ID),
+				zap.String("goalId", msg.GoalEvent.GoalId),
+				zap.String("userId", msg.GoalEvent.UserId),
+				zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+				zap.Int("retryCount", msg.RetryCount),
+			)
+			msg.RetryCount++
+			if err := w.storeRetryMessage(msg); err != nil {
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+				lg.Error("Failed to store retry message", zap.Error(err))
+			}
+			return
+		}
+		// If we found experiments via DB fallback (evals was set above), continue processing below
+		// Otherwise, return here
+		if err != nil {
+			return
+		}
+	}
+	// Successfully found experiment (even if no evaluations yet) - clear any negative cache entry
+	// This ensures that if experiment was previously marked as missing, we clear it now
+	// Note: Cache may have already been cleared above if found via DB fallback
+	if err == nil {
+		w.clearExperimentMissing(msg.EnvironmentID, msg.GoalEvent.GoalId)
+	}
+	// If err == nil but evals is empty, this means evaluations weren't found yet
+	// Treat this the same as ErrNoResultsFound and retry
+	if len(evals) == 0 {
+		lg.Warn("🔄 RETRY: Still no evaluations found (err=nil but evals empty), will retry again",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("userId", msg.GoalEvent.UserId),
+			zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+			zap.String("goalTimestampISO", time.Unix(msg.GoalEvent.Timestamp, 0).Format(time.RFC3339)),
+			zap.Int("retryCount", msg.RetryCount),
+			zap.String("tag", msg.GoalEvent.Tag),
+		)
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
+		msg.RetryCount++
+		if err := w.storeRetryMessage(msg); err != nil {
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
 	}
-	if len(evals) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
-		w.deleteKey(ctx, key)
-		return
+	evalDetails := make([]map[string]interface{}, len(evals))
+	for i, eval := range evals {
+		evalDetails[i] = map[string]interface{}{
+			"featureId":      eval.FeatureID,
+			"featureVersion": eval.FeatureVersion,
+			"variationId":    eval.VariationID,
+			"timestamp":      eval.Timestamp,
+		}
 	}
+	lg.Info("✅ RETRY: Evaluation found!",
+		zap.String("retryId", msg.ID),
+		zap.String("goalId", msg.GoalEvent.GoalId),
+		zap.String("userId", msg.GoalEvent.UserId),
+		zap.Int64("goalTimestamp", msg.GoalEvent.Timestamp),
+		zap.String("goalTimestampISO", time.Unix(msg.GoalEvent.Timestamp, 0).Format(time.RFC3339)),
+		zap.Int("evaluationCount", len(evals)),
+		zap.Int("retryCount", msg.RetryCount),
+		zap.Any("evaluations", evalDetails),
+	)
+
+	// Note: sync.Map already cleared above when experiment was found
 
 	var events []*epproto.GoalEvent
 	for _, ev := range evals {
@@ -221,9 +470,29 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 
+	if len(events) > 0 {
+		eventIds := make([]string, len(events))
+		for i, e := range events {
+			eventIds[i] = e.Id
+		}
+		lg.Info("💾 RETRY: Writing goal events to data warehouse",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("userId", msg.GoalEvent.UserId),
+			zap.Int("retryCount", msg.RetryCount),
+			zap.Int("eventCount", len(events)),
+			zap.Strings("eventIds", eventIds),
+		)
+	}
 	fs, err := w.writer.AppendRows(ctx, events)
 	if err != nil {
-		lg.Error("AppendRows failed", zap.Error(err))
+		lg.Error("❌ RETRY: AppendRows failed",
+			zap.Error(err),
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("userId", msg.GoalEvent.UserId),
+			zap.Int("eventCount", len(events)),
+		)
 		msg.RetryCount++
 		msg.FailedEvents = events
 		if err := w.storeRetryMessage(msg); err != nil {
@@ -233,6 +502,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 	var failed []*epproto.GoalEvent
+	successfulIds := make([]string, 0)
 	for id, f := range fs {
 		if f {
 			for _, ev := range events {
@@ -240,9 +510,21 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 					failed = append(failed, ev)
 				}
 			}
+		} else {
+			successfulIds = append(successfulIds, id)
 		}
 	}
 	if len(failed) > 0 {
+		failedIds := make([]string, len(failed))
+		for i, e := range failed {
+			failedIds[i] = e.Id
+		}
+		lg.Warn("🔄 Retry: Some goal events failed to write, will retry again",
+			zap.String("retryId", msg.ID),
+			zap.Int("failedCount", len(failed)),
+			zap.Int("successfulCount", len(successfulIds)),
+			zap.Strings("failedEventIds", failedIds),
+		)
 		msg.RetryCount++
 		msg.FailedEvents = failed
 		if err := w.storeRetryMessage(msg); err != nil {
@@ -250,6 +532,14 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 	} else {
+		lg.Info("✅ Retry: Successfully wrote all goal events, deleting retry key",
+			zap.String("retryId", msg.ID),
+			zap.String("goalId", msg.GoalEvent.GoalId),
+			zap.String("userId", msg.GoalEvent.UserId),
+			zap.Int("retryCount", msg.RetryCount),
+			zap.Int("eventCount", len(events)),
+			zap.Strings("eventIds", successfulIds),
+		)
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageAppendSuccess).Inc()
 		w.deleteKey(ctx, key)
 	}
@@ -333,15 +623,42 @@ func (w *goalEvtWriter) computeBackoffAndTTL(
 		return 0, 0, fmt.Errorf("retry period exceeded %v", maxRetryPeriod)
 	}
 
-	// Compute TTL: either the full period (first retry) or remaining time
-	ttl = maxRetryPeriod
+	// Cap the retry interval to a reasonable maximum (1 minute) to prevent
+	// extremely long waits between retries, especially for Redis Stream where
+	// events can arrive out of order and need faster retries.
+	// This balances between retrying quickly enough for tests and not overwhelming
+	// the system with too frequent retries in production.
+	const maxRetryInterval = 1 * time.Minute
+	if nextInterval > maxRetryInterval {
+		nextInterval = maxRetryInterval
+	}
+
+	// Compute TTL: ensure it's at least 2x nextInterval to account for:
+	// - Clock skew
+	// - Processing delays
+	// - Retry processor not running exactly on time
+	// But don't exceed the maxRetryPeriod
+	minTTL := nextInterval * 2
 	if firstRetryAt != 0 {
 		elapsed := time.Since(time.Unix(firstRetryAt, 0))
 		remaining := maxRetryPeriod - elapsed
 		if remaining <= 0 {
 			return 0, 0, fmt.Errorf("retry period exceeded %v since first retry", maxRetryPeriod)
 		}
-		ttl = remaining
+		// Use minTTL (2x nextInterval) if we have enough remaining time,
+		// otherwise use remaining (we're close to max period)
+		if remaining >= minTTL {
+			ttl = minTTL
+		} else {
+			ttl = remaining
+		}
+	} else {
+		// First retry: use minTTL or maxRetryPeriod, whichever is smaller
+		if maxRetryPeriod < minTTL {
+			ttl = maxRetryPeriod
+		} else {
+			ttl = minTTL
+		}
 	}
 
 	return nextInterval, ttl, nil
@@ -371,10 +688,15 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 		return err
 	}
 
-	w.logger.Debug("Storing retry message",
+	w.logger.Info("Storing retry message",
 		zap.String("key", key),
+		zap.String("retryId", msg.ID),
+		zap.String("goalId", msg.GoalEvent.GoalId),
+		zap.String("userId", msg.GoalEvent.UserId),
+		zap.Int("retryCount", msg.RetryCount),
 		zap.Duration("ttl", ttl),
 		zap.Int64("retryAt", msg.RetryAt),
+		zap.String("retryAtTime", time.Unix(msg.RetryAt, 0).Format(time.RFC3339)),
 	)
 	return w.redisClient.Set(key, data, ttl)
 }
