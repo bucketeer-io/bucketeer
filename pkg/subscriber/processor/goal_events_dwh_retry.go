@@ -186,7 +186,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 
-	evals, _, err := w.linkGoalEventByExperiment(ctx, msg.GoalEvent, msg.EnvironmentID, msg.GoalEvent.Tag, experiments)
+	evals, _, err := w.linkGoalEventByExperiment(ctx, msg.GoalEvent, msg.ID, msg.EnvironmentID, msg.GoalEvent.Tag, experiments)
 	if err != nil {
 		if errors.Is(err, ErrExperimentNotFound) {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
