@@ -385,7 +385,7 @@ test('convertVariationValue: Mixed variation types in single evaluation', async 
     variations: [
       {
         id: 'yaml-var',
-        value: `enabled: true\ntimeout: 30`,
+        value: 'enabled: true\ntimeout: 30',
         name: 'YAML Config',
         description: '',
       },
