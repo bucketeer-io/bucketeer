@@ -1849,7 +1849,7 @@ object:
 		{
 			desc:          "invalid yaml - tab indentation",
 			variationType: ftproto.Feature_YAML,
-			value: "config:\n\tkey: value",
+			value:         "config:\n\tkey: value",
 			expected:      errVariationTypeUnmatched,
 		},
 		{
