@@ -321,12 +321,16 @@ test('convertVariationValue: Cache is used across multiple evaluations', async (
     email: true
     push: false`;
 
+  const createdAt = Date.now();
+  const updatedAt = createdAt + 1000;
+
   const feature = createFeature({
     id: 'cached-yaml-feature',
     name: 'Cached YAML Feature',
     version: 1,
     enabled: true,
-    createdAt: Date.now(),
+    createdAt: createdAt,
+    updatedAt: updatedAt,
     variationType: Feature.VariationType.YAML,
     variations: [
       {
@@ -370,6 +374,64 @@ test('convertVariationValue: Cache is used across multiple evaluations', async (
   t.is(jsonData.settings.language, 'en');
   t.is(jsonData.settings.notifications.email, true);
   t.is(jsonData.settings.notifications.push, false);
+});
+
+test('convertVariationValue: Cache invalidates when feature is updated', async (t) => {
+  const evaluator = new Evaluator();
+  const createdAt = Date.now();
+  const originalUpdatedAt = createdAt + 1000;
+  const newUpdatedAt = createdAt + 2000;
+
+  const feature = createFeature({
+    id: 'update-test-feature',
+    name: 'Update Test Feature',
+    version: 1,
+    enabled: true,
+    createdAt: createdAt,
+    updatedAt: originalUpdatedAt,
+    variationType: Feature.VariationType.YAML,
+    variations: [
+      {
+        id: 'test-var',
+        value: 'key: original_value',
+        name: 'Test Config',
+        description: '',
+      },
+    ],
+    targets: [],
+    rules: [],
+    defaultStrategy: {
+      type: Strategy.Type.FIXED,
+      variation: 'test-var',
+    },
+    prerequisitesList: [],
+  });
+
+  // First evaluation with original timestamp
+  const user1 = createUser('test-user-1', {});
+  const result1 = await evaluator.evaluateFeatures([feature], user1, new Map(), '');
+  const value1 = result1.getEvaluationsList()[0]?.getVariationValue();
+  t.truthy(value1);
+  if (!value1) return;
+  t.is(value1, '{"key":"original_value"}');
+
+  // Update feature timestamp and variation value (simulating feature update)
+  feature.setUpdatedAt(newUpdatedAt);
+  const updatedVariation = feature.getVariationsList()[0];
+  if (updatedVariation) {
+    updatedVariation.setValue('key: updated_value');
+  }
+
+  // Second evaluation with updated timestamp
+  const user2 = createUser('test-user-2', {});
+  const result2 = await evaluator.evaluateFeatures([feature], user2, new Map(), '');
+  const value2 = result2.getEvaluationsList()[0]?.getVariationValue();
+  t.truthy(value2);
+  if (!value2) return;
+  t.is(value2, '{"key":"updated_value"}');
+
+  // Values should be different
+  t.not(value1, value2);
 });
 
 test('convertVariationValue: Mixed variation types in single evaluation', async (t) => {

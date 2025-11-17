@@ -343,6 +343,7 @@ func contains(needle string, haystack []string) bool {
 // convertVariationValue converts YAML to JSON if needed, with in-memory caching.
 // This ensures client SDKs can retrieve variation values using the object variation interface.
 // Only performs conversion when the variation type is YAML.
+// Cache key uses feature.UpdatedAt + variation.Id to ensure cache invalidation when variations are updated.
 func (e *evaluator) convertVariationValue(
 	feature *ftproto.Feature,
 	variation *ftproto.Variation,
@@ -352,8 +353,13 @@ func (e *evaluator) convertVariationValue(
 		return variation.Value
 	}
 
-	// Check cache first (using variation ID as key since it's a UUID)
-	if cached, ok := e.variationCache.Load(variation.Id); ok {
+	// Cache key: {featureUpdatedAt}:{variationId}
+	// This ensures cache is invalidated when the feature (and its variations) are updated,
+	// including changes from auto operations that don't increment feature.Version
+	cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+
+	// Check cache first
+	if cached, ok := e.variationCache.Load(cacheKey); ok {
 		return cached.(string)
 	}
 
@@ -366,7 +372,7 @@ func (e *evaluator) convertVariationValue(
 	}
 
 	// Cache the result for future requests
-	e.variationCache.Store(variation.Id, jsonValue)
+	e.variationCache.Store(cacheKey, jsonValue)
 	return jsonValue
 }
 

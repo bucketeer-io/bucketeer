@@ -28,6 +28,7 @@ export function createFeature(
     version?: number;
     enabled?: boolean;
     createdAt?: number;
+    updatedAt?: number;
     variationType?: Feature.VariationTypeMap[keyof Feature.VariationTypeMap];
     variations?: Array<{ id: string; value: string; name: string; description: string }>;
     targets?: Array<{ variation: string; users: string[] }>;
@@ -52,6 +53,7 @@ export function createFeature(
     version: 0,
     enabled: false,
     createdAt: Date.now(),
+    updatedAt: Date.now(),
     variationType: Feature.VariationType.STRING,
     variations: [],
     targets: [],
@@ -70,6 +72,7 @@ export function createFeature(
   feature.setVersion(finalOptions.version);
   feature.setEnabled(finalOptions.enabled);
   feature.setCreatedAt(finalOptions.createdAt);
+  feature.setUpdatedAt(finalOptions.updatedAt);
   feature.setVariationType(finalOptions.variationType);
 
   // Set variations
@@ -105,7 +108,7 @@ export function createFeature(
   if (finalOptions.offVariation !== undefined) {
     feature.setOffVariation(finalOptions.offVariation);
   }
-  
+
   return feature;
 }
 

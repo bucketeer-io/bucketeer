@@ -2304,6 +2304,7 @@ func TestConvertVariationValueCaching(t *testing.T) {
 		feature := &ftproto.Feature{
 			Id:            "feature-1",
 			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
 		}
 		variation := &ftproto.Variation{
 			Id: "var-1",
@@ -2315,8 +2316,9 @@ value: 123`,
 		result1 := evaluator.convertVariationValue(feature, variation)
 		assert.Equal(t, `{"name":"Test","value":123}`, result1)
 
-		// Second call should use cache (verify by checking cache directly)
-		cached, ok := evaluator.variationCache.Load(variation.Id)
+		// Second call should use cache (verify by checking cache directly with correct key)
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached, ok := evaluator.variationCache.Load(cacheKey)
 		assert.True(t, ok)
 		assert.Equal(t, result1, cached)
 
@@ -2325,11 +2327,12 @@ value: 123`,
 		assert.Equal(t, result1, result2)
 	})
 
-	t.Run("Cache is keyed by variation ID", func(t *testing.T) {
+	t.Run("Cache is keyed by UpdatedAt and variation ID", func(t *testing.T) {
 		evaluator := NewEvaluator()
 		feature := &ftproto.Feature{
 			Id:            "feature-1",
 			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
 		}
 
 		variation1 := &ftproto.Variation{
@@ -2349,13 +2352,59 @@ value: 123`,
 		assert.Equal(t, `{"key1":"value1"}`, result1)
 		assert.Equal(t, `{"key2":"value2"}`, result2)
 
-		// Both should be cached separately
-		cached1, ok1 := evaluator.variationCache.Load(variation1.Id)
-		cached2, ok2 := evaluator.variationCache.Load(variation2.Id)
+		// Both should be cached separately with correct keys
+		cacheKey1 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation1.Id)
+		cacheKey2 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation2.Id)
+		cached1, ok1 := evaluator.variationCache.Load(cacheKey1)
+		cached2, ok2 := evaluator.variationCache.Load(cacheKey2)
 		assert.True(t, ok1)
 		assert.True(t, ok2)
 		assert.Equal(t, result1, cached1)
 		assert.Equal(t, result2, cached2)
+	})
+
+	t.Run("Cache invalidates when feature is updated", func(t *testing.T) {
+		evaluator := NewEvaluator()
+		feature := &ftproto.Feature{
+			Id:            "feature-1",
+			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
+		}
+		variation := &ftproto.Variation{
+			Id:    "var-1",
+			Value: "key: original_value",
+		}
+
+		// First call with original timestamp
+		result1 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, `{"key":"original_value"}`, result1)
+
+		// Verify cache with original key
+		cacheKey1 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached1, ok1 := evaluator.variationCache.Load(cacheKey1)
+		assert.True(t, ok1)
+		assert.Equal(t, result1, cached1)
+
+		// Update feature timestamp (simulating feature update)
+		feature.UpdatedAt = 1234567999
+		variation.Value = "key: updated_value"
+
+		// Second call with updated timestamp should create new cache entry
+		result2 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, `{"key":"updated_value"}`, result2)
+
+		// Verify new cache key exists
+		cacheKey2 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached2, ok2 := evaluator.variationCache.Load(cacheKey2)
+		assert.True(t, ok2)
+		assert.Equal(t, result2, cached2)
+
+		// Results should be different
+		assert.NotEqual(t, result1, result2)
+
+		// Old cache entry still exists (no automatic cleanup)
+		_, stillExists := evaluator.variationCache.Load(cacheKey1)
+		assert.True(t, stillExists)
 	})
 
 	t.Run("Does not cache non-YAML types", func(t *testing.T) {
@@ -2363,6 +2412,7 @@ value: 123`,
 		feature := &ftproto.Feature{
 			Id:            "feature-1",
 			VariationType: ftproto.Feature_STRING,
+			UpdatedAt:     1234567890,
 		}
 		variation := &ftproto.Variation{
 			Id:    "var-1",
@@ -2373,7 +2423,8 @@ value: 123`,
 		assert.Equal(t, "simple string", result)
 
 		// Should not be in cache
-		_, ok := evaluator.variationCache.Load(variation.Id)
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		_, ok := evaluator.variationCache.Load(cacheKey)
 		assert.False(t, ok)
 	})
 }
@@ -2513,6 +2564,8 @@ func TestEvaluateWithYAMLVariation(t *testing.T) {
 			Name:          "YAML Feature",
 			Version:       1,
 			Enabled:       true,
+			CreatedAt:     1234567890,
+			UpdatedAt:     1234567890,
 			VariationType: ftproto.Feature_YAML,
 			Variations: []*ftproto.Variation{
 				{
@@ -2556,8 +2609,9 @@ func TestEvaluateWithYAMLVariation(t *testing.T) {
 		assert.Equal(t, expectedJSON, result1.Evaluations[0].VariationValue)
 		assert.Equal(t, expectedJSON, result2.Evaluations[0].VariationValue)
 
-		// Verify cache was used (should only have one entry)
-		cached, ok := evaluator.variationCache.Load("yaml-var-shared")
+		// Verify cache was used (with correct key format: updatedAt:variationId)
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, "yaml-var-shared")
+		cached, ok := evaluator.variationCache.Load(cacheKey)
 		assert.True(t, ok)
 		assert.Equal(t, expectedJSON, cached)
 	})

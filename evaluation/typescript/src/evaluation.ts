@@ -291,6 +291,7 @@ class Evaluator {
    * Converts YAML to JSON if needed, with in-memory caching.
    * This ensures client SDKs can retrieve variation values using the object variation interface.
    * Only performs conversion when the variation type is YAML.
+   * Cache key uses feature.updatedAt + variation.id to ensure cache invalidation when variations are updated.
    */
   private convertVariationValue(feature: Feature, variation: Variation): string {
     // Only convert if type is YAML
@@ -298,8 +299,13 @@ class Evaluator {
       return variation.getValue();
     }
 
-    // Check cache first (using variation ID as key since it's a UUID)
-    const cached = this.variationCache.get(variation.getId());
+    // Cache key: {featureUpdatedAt}:{variationId}
+    // This ensures cache is invalidated when the feature (and its variations) are updated,
+    // including changes from auto operations that don't increment feature.version
+    const cacheKey = `${feature.getUpdatedAt()}:${variation.getId()}`;
+
+    // Check cache first
+    const cached = this.variationCache.get(cacheKey);
     if (cached !== undefined) {
       return cached;
     }
@@ -308,7 +314,7 @@ class Evaluator {
     try {
       const jsonValue = yamlToJSON(variation.getValue());
       // Cache the result for future requests
-      this.variationCache.set(variation.getId(), jsonValue);
+      this.variationCache.set(cacheKey, jsonValue);
       return jsonValue;
     } catch (error) {
       // Return original value as fallback on error
