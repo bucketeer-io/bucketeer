@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { refreshTokenFetcher } from '@api/auth';
-import { getTokenStorage, setTokenStorage } from 'storage/token';
+import {
+  AUTH_TOKEN_KEY,
+  getTokenStorage,
+  setTokenStorage
+} from 'storage/token';
 
 const REFRESH_BEFORE_EXPIRY_MS = 60 * 1000; // 1 minute before expiry (for tokens >= 10 min)
 const MIN_TTL_FOR_FIXED_BUFFER_MS = 10 * 60 * 1000; // 10 minutes
@@ -22,7 +26,7 @@ const MIN_TTL_FOR_PROACTIVE_REFRESH_MS = 60 * 1000; // 1 minute - minimum TTL fo
  *   - Provides security buffer if refresh fails
  *
  * @param ttlMs Token time-to-live in milliseconds
- * @returns Refresh buffer in milliseconds, or null to skip proactive refresh
+ * @returns {number | null} If a number, this is the refresh buffer in milliseconds before expiry; if null, skip proactive refresh.
  */
 const calculateRefreshBuffer = (ttlMs: number): number | null => {
   // Skip proactive refresh for very short TTLs (< 1 minute)
@@ -172,7 +176,7 @@ export const useTokenRefresh = (options?: UseTokenRefreshOptions) => {
 
     // Listen for token storage changes (from other tabs or login events)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'auth_token' && e.newValue) {
+      if (e.key === AUTH_TOKEN_KEY && e.newValue) {
         scheduleTokenRefresh();
       }
     };
