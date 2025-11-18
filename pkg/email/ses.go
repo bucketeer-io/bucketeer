@@ -17,7 +17,6 @@ package email
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -58,64 +57,6 @@ func NewSESService(emailConfig Config, logger *zap.Logger) (Service, error) {
 		renderer: NewTemplateRenderer(emailConfig),
 		client:   client,
 	}, nil
-}
-
-func (s *SESService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
-	subject, body := s.renderer.RenderPasswordChangedEmail(language, to)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send password changed notification",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send password changed notification: %w", err)
-	}
-
-	s.logger.Info("Password changed notification sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
-func (s *SESService) SendPasswordSetupEmail(
-	ctx context.Context, to, setupURL string, ttl time.Duration, language string,
-) error {
-	subject, body := s.renderer.RenderPasswordSetupEmail(language, setupURL, ttl, to)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send password setup email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send password setup email: %w", err)
-	}
-
-	s.logger.Info("Password setup email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
-func (s *SESService) SendPasswordResetEmail(
-	ctx context.Context, to, resetURL string, ttl time.Duration, language string,
-) error {
-	subject, body := s.renderer.RenderPasswordResetEmail(language, resetURL, ttl, to)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send password reset email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send password reset email: %w", err)
-	}
-
-	s.logger.Info("Password reset email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
 }
 
 func (s *SESService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
