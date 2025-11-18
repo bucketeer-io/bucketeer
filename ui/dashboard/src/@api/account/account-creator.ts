@@ -13,6 +13,7 @@ export interface AccountCreatorPayload {
   environmentRoles?: EnvironmentRoleItem[];
   tags?: string[];
   teams?: string[];
+  language?: string;
 }
 
 export interface AccountCreatorResponse {
