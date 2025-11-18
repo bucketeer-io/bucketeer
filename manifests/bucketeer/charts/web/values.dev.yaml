@@ -35,6 +35,8 @@ env:
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
+  accessTokenTTL: 1m
+  refreshTokenTTL: 168h
 tls:
   service:
     secret: bucketeer-service-cert
