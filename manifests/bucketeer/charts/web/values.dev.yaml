@@ -35,7 +35,7 @@ env:
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
-  accessTokenTTL: 1m
+  accessTokenTTL: 5m
   refreshTokenTTL: 168h
 tls:
   service:
