@@ -24,6 +24,7 @@ import (
 const (
 	AuditLogPersisterName                = "auditLogPersister"
 	DomainEventInformerName              = "domainEventInformer"
+	EmailSenderName                      = "emailSender"
 	EvaluationCountEventDWHPersisterName = "evaluationCountEventDWHPersister"
 	EvaluationCountEventOPSPersisterName = "evaluationCountEventOPSPersister"
 	EvaluationCountEventPersisterName    = "evaluationCountEventPersister"

@@ -23,12 +23,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v2"
-
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
 
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"

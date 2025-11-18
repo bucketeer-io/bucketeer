@@ -34,6 +34,9 @@ spec:
         - name: envoy-config
           configMap:
             name: {{ template "subscriber.fullname" . }}-envoy-config
+        - name: email-config
+          configMap:
+            name: {{ template "subscriber.fullname" . }}-email-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -134,6 +137,8 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_SUBSCRIBER_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
+            - name: BUCKETEER_SUBSCRIBER_EMAIL_CONFIG_PATH
+              value: /usr/local/email-config/email-config.json
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
             - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR
@@ -157,6 +162,9 @@ spec:
               readOnly: true
             - name: service-token-secret
               mountPath: /usr/local/service-token
+              readOnly: true
+            - name: email-config
+              mountPath: /usr/local/email-config
               readOnly: true
             - name: subscriber-config
               mountPath: /usr/local/conf
