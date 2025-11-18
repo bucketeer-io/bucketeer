@@ -138,7 +138,8 @@ func (e *emailSender) handleMessage(msg *puller.Message) {
 		// Don't retry on email failures - acknowledge the message
 		msg.Ack()
 		subscriberHandledCounter.WithLabelValues(subscriberEmailSender, codes.NonRepeatableError.String()).Inc()
-		subscriberHandledHistogram.WithLabelValues(subscriberEmailSender, codes.NonRepeatableError.String()).Observe(time.Since(startTime).Seconds())
+		subscriberHandledHistogram.WithLabelValues(subscriberEmailSender, codes.NonRepeatableError.String()).
+			Observe(time.Since(startTime).Seconds())
 		return
 	}
 
@@ -149,7 +150,8 @@ func (e *emailSender) handleMessage(msg *puller.Message) {
 
 	msg.Ack()
 	subscriberHandledCounter.WithLabelValues(subscriberEmailSender, codes.OK.String()).Inc()
-	subscriberHandledHistogram.WithLabelValues(subscriberEmailSender, codes.OK.String()).Observe(time.Since(startTime).Seconds())
+	subscriberHandledHistogram.WithLabelValues(subscriberEmailSender, codes.OK.String()).
+		Observe(time.Since(startTime).Seconds())
 }
 
 func (e *emailSender) unmarshalMessage(msg *puller.Message) (*domaineventproto.Event, error) {
