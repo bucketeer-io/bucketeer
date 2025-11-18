@@ -183,7 +183,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             }))
           }),
       teams: values.teams ?? [],
-      language: values.language
+      language: values.language ?? Language.ENGLISH
     })
       .then(() => {
         notify({
