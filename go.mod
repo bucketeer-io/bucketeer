@@ -9,8 +9,11 @@ require (
 	cloud.google.com/go/pubsub v1.50.1
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/VividCortex/mysqlerr v1.0.0
+	github.com/aws/aws-sdk-go-v2 v1.39.6
 	github.com/aws/aws-sdk-go-v2/config v1.31.16
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
 	github.com/aws/aws-sdk-go-v2/service/kms v1.47.0
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.54.4
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-gota/gota v0.12.0
@@ -27,10 +30,12 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
+	github.com/mailersend/mailersend-go v1.6.2
 	github.com/mna/redisc v1.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.16.0
+	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/slack-go/slack v0.17.3
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.11.1
@@ -69,18 +74,17 @@ require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/aws/aws-sdk-go v1.49.6 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.39.5 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.20 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.12 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.13 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.39.0 // indirect
-	github.com/aws/smithy-go v1.23.1 // indirect
+	github.com/aws/smithy-go v1.23.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -93,6 +97,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20250602020802-c6617b811d0e // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
@@ -120,6 +125,7 @@ require (
 	github.com/prometheus/prometheus v0.35.0 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect

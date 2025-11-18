@@ -153,6 +153,17 @@ func (s *AccountService) CreateAccountV2(
 			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
+	// Send welcome email
+	if err := s.emailService.SendWelcomeEmail(ctx, req.Command.Email, req.Command.Language); err != nil {
+		s.logger.Warn(
+			"Failed to send welcome email",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("email", req.Command.Email),
+			)...,
+		)
+		// Don't fail the account creation if email sending fails
+	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -298,6 +309,17 @@ func (s *AccountService) createAccountV2NoCommand(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	// Send welcome email
+	if err := s.emailService.SendWelcomeEmail(ctx, req.Email, req.Language); err != nil {
+		s.logger.Warn(
+			"Failed to send welcome email",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("email", req.Email),
+			)...,
+		)
+		// Don't fail the account creation if email sending fails
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }

@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -155,6 +156,7 @@ type server struct {
 	codeReferenceService            *string
 	refreshTokenTTL                 *time.Duration
 	emailFilter                     *string
+	emailConfigPath                 *string
 	oauthConfigPath                 *string
 	oauthPublicKeyPath              *string
 	oauthPrivateKeyPath             *string
@@ -364,6 +366,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"TTL for refresh token.",
 		).Default("168h").Duration(),
 		emailFilter:     cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
+		emailConfigPath: cmd.Flag("email-config-path", "Path to email config.").Required().String(),
 		oauthConfigPath: cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
 		oauthPrivateKeyPath: cmd.Flag(
 			"oauth-private-key",
@@ -414,6 +417,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	oAuthConfig, err := s.readOAuthConfig(logger)
 	if err != nil {
 		logger.Error("Failed to read OAuth config", zap.Error(err))
+		return err
+	}
+
+	// email config
+	emailConfig, err := s.readEmailConfig(logger)
+	if err != nil {
+		logger.Error("Failed to read email config", zap.Error(err))
+		return err
+	}
+
+	// email service
+	emailService, err := email.NewService(*emailConfig, logger)
+	if err != nil {
+		logger.Error("Failed to create email service", zap.Error(err))
 		return err
 	}
 
@@ -612,6 +629,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		mysqlClient,
 		domainTopicPublisher,
+		emailService,
 		accountapi.WithLogger(logger),
 	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,
@@ -1044,6 +1062,26 @@ func (s *server) readOAuthConfig(
 	config := auth.OAuthConfig{}
 	if err = json.Unmarshal(bytes, &config); err != nil {
 		logger.Error("auth: failed to unmarshal auth config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return &config, nil
+}
+
+func (s *server) readEmailConfig(
+	logger *zap.Logger,
+) (*email.Config, error) {
+	bytes, err := os.ReadFile(*s.emailConfigPath)
+	if err != nil {
+		logger.Error("Failed to read email config file",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	config := email.Config{}
+	if err = json.Unmarshal(bytes, &config); err != nil {
+		logger.Error("Failed to unmarshal email config",
 			zap.Error(err),
 		)
 		return nil, err

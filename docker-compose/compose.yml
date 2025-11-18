@@ -128,6 +128,7 @@ services:
       - BUCKETEER_WEB_OAUTH_PUBLIC_KEY=/usr/local/oauth-key/public.pem
       - BUCKETEER_WEB_OAUTH_PRIVATE_KEY=/usr/local/oauth-key/private.pem
       - BUCKETEER_WEB_OAUTH_CONFIG_PATH=/usr/local/oauth-config/oauth-config.json
+      - BUCKETEER_WEB_EMAIL_CONFIG_PATH=/usr/local/email-config/email-config.json
       - BUCKETEER_WEB_CERT=/usr/local/certs/service/tls.crt
       - BUCKETEER_WEB_KEY=/usr/local/certs/service/tls.key
       - BUCKETEER_WEB_SERVICE_TOKEN=/usr/local/service-token/token
@@ -153,6 +154,7 @@ services:
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ../tools/dev/cert/oauth-private.pem:/usr/local/oauth-key/private.pem:ro
       - ./config/oauth-config.json:/usr/local/oauth-config/oauth-config.json:ro
+      - ./config/email-config.json:/usr/local/email-config/email-config.json:ro
       - ./config/datawarehouse.yaml:/usr/local/datawarehouse-config/datawarehouse.yaml:ro
       - ./static-files:/usr/local/static:ro
     networks:

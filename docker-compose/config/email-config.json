@@ -1,0 +1,64 @@
+{
+  "enabled": true,
+  "provider": "smtp",
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "username": "bucketeer@example.com",
+    "password": "${SMTP_PASSWORD}"
+  },
+  "sendgrid": {
+    "apiKey": ""
+  },
+  "ses": {
+    "region": "",
+    "accessKey": "",
+    "secretKey": ""
+  },
+  "mailersend": {
+    "apiKey": ""
+  },
+  "sender": {
+    "email": "bucketeer@example.com",
+    "name": "Bucketeer"
+  },
+  "baseURL": "https://localhost",
+  "templates": {
+    "en": {
+      "passwordChanged": {
+        "subject": "",
+        "body": ""
+      },
+      "passwordSetup": {
+        "subject": "",
+        "body": ""
+      },
+      "passwordReset": {
+        "subject": "",
+        "body": ""
+      },
+      "welcome": {
+        "subject": "",
+        "body": ""
+      }
+    },
+    "ja": {
+      "passwordChanged": {
+        "subject": "",
+        "body": ""
+      },
+      "passwordSetup": {
+        "subject": "",
+        "body": ""
+      },
+      "passwordReset": {
+        "subject": "",
+        "body": ""
+      },
+      "welcome": {
+        "subject": "",
+        "body": ""
+      }
+    }
+  }
+}
