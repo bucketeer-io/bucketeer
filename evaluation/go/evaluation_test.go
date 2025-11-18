@@ -2485,6 +2485,23 @@ count: 42`,
 			expected:    "",
 			expectedErr: true,
 		},
+		{
+			desc: "Top-level YAML array",
+			yamlInput: `- item1
+- item2
+- item3`,
+			expected:    `["item1","item2","item3"]`,
+			expectedErr: false,
+		},
+		{
+			desc: "Top-level YAML array with objects",
+			yamlInput: `- id: 1
+  name: First
+- id: 2
+  name: Second`,
+			expected:    `[{"id":1,"name":"First"},{"id":2,"name":"Second"}]`,
+			expectedErr: false,
+		},
 	}
 
 	for _, p := range patterns {

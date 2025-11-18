@@ -312,6 +312,102 @@ test('convertVariationValue: Invalid YAML returns original value as fallback', a
   t.is(evaluation.getVariationValue(), invalidYamlValue);
 });
 
+test('convertVariationValue: Top-level YAML array converts to JSON array', async (t) => {
+  const evaluator = new Evaluator();
+  const yamlValue = `- item1
+- item2
+- item3`;
+
+  const feature = createFeature({
+    id: 'yaml-feature',
+    name: 'YAML Feature',
+    version: 1,
+    enabled: true,
+    createdAt: Date.now(),
+    variationType: Feature.VariationType.YAML,
+    variations: [
+      {
+        id: 'yaml-var-array',
+        value: yamlValue,
+        name: 'Array YAML',
+        description: '',
+      },
+    ],
+    targets: [],
+    rules: [],
+    defaultStrategy: {
+      type: Strategy.Type.FIXED,
+      variation: 'yaml-var-array',
+    },
+    prerequisitesList: [],
+  });
+
+  const user = createUser('test-user-1', {});
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+
+  t.is(result.getEvaluationsList().length, 1);
+  const evaluation = result.getEvaluationsList()[0];
+  t.truthy(evaluation);
+  if (!evaluation) return;
+
+  // Verify it's valid JSON array
+  const jsonData = JSON.parse(evaluation.getVariationValue());
+  t.true(Array.isArray(jsonData));
+  t.is(jsonData.length, 3);
+  t.is(jsonData[0], 'item1');
+  t.is(jsonData[1], 'item2');
+  t.is(jsonData[2], 'item3');
+});
+
+test('convertVariationValue: Top-level YAML array with objects converts to JSON', async (t) => {
+  const evaluator = new Evaluator();
+  const yamlValue = `- id: 1
+  name: First
+- id: 2
+  name: Second`;
+
+  const feature = createFeature({
+    id: 'yaml-feature',
+    name: 'YAML Feature',
+    version: 1,
+    enabled: true,
+    createdAt: Date.now(),
+    variationType: Feature.VariationType.YAML,
+    variations: [
+      {
+        id: 'yaml-var-array-obj',
+        value: yamlValue,
+        name: 'Array of Objects YAML',
+        description: '',
+      },
+    ],
+    targets: [],
+    rules: [],
+    defaultStrategy: {
+      type: Strategy.Type.FIXED,
+      variation: 'yaml-var-array-obj',
+    },
+    prerequisitesList: [],
+  });
+
+  const user = createUser('test-user-1', {});
+  const result = await evaluator.evaluateFeatures([feature], user, new Map(), '');
+
+  t.is(result.getEvaluationsList().length, 1);
+  const evaluation = result.getEvaluationsList()[0];
+  t.truthy(evaluation);
+  if (!evaluation) return;
+
+  // Verify it's valid JSON array of objects
+  const jsonData = JSON.parse(evaluation.getVariationValue());
+  t.true(Array.isArray(jsonData));
+  t.is(jsonData.length, 2);
+  t.is(jsonData[0].id, 1);
+  t.is(jsonData[0].name, 'First');
+  t.is(jsonData[1].id, 2);
+  t.is(jsonData[1].name, 'Second');
+});
+
 test('convertVariationValue: Cache is used across multiple evaluations', async (t) => {
   const evaluator = new Evaluator();
   const yamlValue = `settings:
