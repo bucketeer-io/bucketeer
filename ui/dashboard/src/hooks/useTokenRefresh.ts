@@ -49,6 +49,12 @@ interface UseTokenRefreshOptions {
 export const useTokenRefresh = (options?: UseTokenRefreshOptions) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
+  const optionsRef = useRef(options);
+
+  // Update options ref whenever options change to avoid stale closures
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -122,7 +128,7 @@ export const useTokenRefresh = (options?: UseTokenRefreshOptions) => {
         // Schedule next refresh (will be rescheduled by event handler, but that's ok - it cancels first)
         scheduleTokenRefresh();
 
-        options?.onRefreshSuccess?.();
+        optionsRef.current?.onRefreshSuccess?.();
       }
     } catch (error: unknown) {
       // Only log out on authentication/authorization errors (401, 403)
@@ -141,7 +147,7 @@ export const useTokenRefresh = (options?: UseTokenRefreshOptions) => {
           })
         );
 
-        options?.onRefreshError?.();
+        optionsRef.current?.onRefreshError?.();
       } else {
         // Network error or server error - retry on next scheduled refresh
         // The token will still expire naturally and trigger reactive refresh
@@ -173,21 +179,18 @@ export const useTokenRefresh = (options?: UseTokenRefreshOptions) => {
 
     // Listen for token refresh events (from axios interceptor or manual refresh)
     const handleTokenRefreshed = () => {
-      console.log(
-        '[useTokenRefresh] Token refreshed, rescheduling next refresh'
-      );
       // Always reschedule when token is refreshed (from any source)
       // scheduleTokenRefresh() calls clearTimer() first, so no duplicate timers
       scheduleTokenRefresh();
     };
 
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('tokenRefreshed', handleTokenRefreshed);
+    document.addEventListener('tokenRefreshed', handleTokenRefreshed);
 
     return () => {
       stopTokenRefresh();
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
+      document.removeEventListener('tokenRefreshed', handleTokenRefreshed);
     };
   }, []);
 
