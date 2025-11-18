@@ -92,4 +92,3 @@ func TestTemplateRenderer_LanguageFallback(t *testing.T) {
 		t.Errorf("expected fallback to English subject, got: %s", subjectFallback)
 	}
 }
-
