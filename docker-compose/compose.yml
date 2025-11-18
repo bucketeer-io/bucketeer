@@ -348,6 +348,7 @@ services:
       - BUCKETEER_SUBSCRIBER_ON_DEMAND_SUBSCRIBER_CONFIG=/usr/local/conf/onDemandSubscribers.json
       - BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG=/usr/local/conf/processors.json
       - BUCKETEER_SUBSCRIBER_ON_DEMAND_PROCESSORS_CONFIG=/usr/local/conf/onDemandProcessors.json
+      - BUCKETEER_SUBSCRIBER_EMAIL_CONFIG_PATH=/usr/local/email-config/email-config.json
       # pprof settings
       - BUCKETEER_SUBSCRIBER_ENABLE_PPROF=${BUCKETEER_SUBSCRIBER_ENABLE_PPROF:-false}
       - BUCKETEER_SUBSCRIBER_PPROF_ADDR=${BUCKETEER_SUBSCRIBER_PPROF_ADDR:-127.0.0.1:6060}
@@ -357,6 +358,7 @@ services:
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ./config/subscriber-config:/usr/local/conf:ro
+      - ./config/email-config.json:/usr/local/email-config/email-config.json:ro
     networks:
       - bucketeer
     restart: unless-stopped

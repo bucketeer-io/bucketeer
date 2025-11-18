@@ -31,6 +31,22 @@
     "maxMps": 50,
     "workerNum": 1
   },
+  "emailSender": {
+    "pubSubType": "redis-stream",
+    "redisServerName": "redis",
+    "redisAddr": "redis:6379",
+    "redisPoolSize": 10,
+    "redisMinIdle": 1,
+    "project": "bucketeer",
+    "redisPartitionCount": 16,
+    "topic": "domain",
+    "subscription": "email-sender",
+    "pullerNumGoroutines": 5,
+    "pullerMaxOutstandingMessages": 1000,
+    "pullerMaxOutstandingBytes": 1000000000,
+    "maxMps": 50,
+    "workerNum": 1
+  },
   "evaluationCountEventPersister": {
     "pubSubType": "redis-stream",
     "redisServerName": "redis",

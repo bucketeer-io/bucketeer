@@ -23,6 +23,7 @@ import (
 const (
 	subscriberAuditLog              = "AuditLog"
 	subscriberDomainEvent           = "DomainEvent"
+	subscriberEmailSender           = "EmailSender"
 	subscriberEvaluationCount       = "EvaluationCount"
 	subscriberEvaluationEventDWH    = "EvaluationEventDWH"
 	subscriberEvaluationEventOPS    = "EvaluationEventOPS"

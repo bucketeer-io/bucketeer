@@ -67,13 +67,13 @@ type SenderConfig struct {
 
 // Config represents the email service configuration
 type Config struct {
-	Enabled    bool            `json:"enabled"`
-	Provider   string          `json:"provider"` // "smtp", "sendgrid", "ses", "mailersend"
-	SMTP       SMTPConfig      `json:"smtp"`
-	SendGrid   SendGridConfig  `json:"sendgrid"`
-	SES        SESConfig       `json:"ses"`
+	Enabled    bool             `json:"enabled"`
+	Provider   string           `json:"provider"` // "smtp", "sendgrid", "ses", "mailersend"
+	SMTP       SMTPConfig       `json:"smtp"`
+	SendGrid   SendGridConfig   `json:"sendgrid"`
+	SES        SESConfig        `json:"ses"`
 	MailerSend MailerSendConfig `json:"mailersend"`
-	Sender     SenderConfig    `json:"sender"`
-	BaseURL    string          `json:"baseURL"` // Base URL for web console
-	Templates  TemplatesConfig `json:"templates"`
+	Sender     SenderConfig     `json:"sender"`
+	BaseURL    string           `json:"baseURL"` // Base URL for web console
+	Templates  TemplatesConfig  `json:"templates"`
 }

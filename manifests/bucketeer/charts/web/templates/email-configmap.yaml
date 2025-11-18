@@ -10,4 +10,4 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   email-config.json: |-
-    {{ toJson .Values.email }}
+    {{ toJson .Values.global.email }}

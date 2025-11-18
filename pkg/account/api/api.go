@@ -27,7 +27,6 @@ import (
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -69,7 +68,6 @@ type AccountService struct {
 	teamStorage          teamstorage.TeamStorage
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
 	publisher            publisher.Publisher
-	emailService         email.Service
 	opts                 *options
 	logger               *zap.Logger
 }
@@ -78,7 +76,6 @@ func NewAccountService(
 	e environmentclient.Client,
 	mysqlClient mysql.Client,
 	publisher publisher.Publisher,
-	emailService email.Service,
 	opts ...Option,
 ) *AccountService {
 	options := defaultOptions
@@ -93,7 +90,6 @@ func NewAccountService(
 		teamStorage:          teamstorage.NewTeamStorage(mysqlClient),
 		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
 		publisher:            publisher,
-		emailService:         emailService,
 		opts:                 &options,
 		logger:               options.logger.Named("api"),
 	}

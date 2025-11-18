@@ -27,6 +27,7 @@ import (
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -58,6 +59,7 @@ type server struct {
 	keyPath          *string
 	serviceTokenPath *string
 	webURL           *string
+	emailConfigPath  *string
 	demoSiteEnabled  *bool
 	// MySQL
 	mysqlUser        *string
@@ -104,6 +106,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
 		webURL:           cmd.Flag("web-url", "Web console URL.").Required().String(),
+		emailConfigPath:  cmd.Flag("email-config-path", "Path to email config.").Required().String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -567,6 +570,28 @@ func (s *server) registerPubSubProcessorMap(
 			)
 		}
 
+		// Email service
+		emailConfig, err := s.readEmailConfig(logger)
+		if err != nil {
+			return nil, err
+		}
+		emailService, err := email.NewService(*emailConfig, logger)
+		if err != nil {
+			logger.Error("Failed to create email service", zap.Error(err))
+			return nil, err
+		}
+
+		// Email sender processor
+		emailSender := processor.NewEmailSender(
+			processorsConfigMap[processor.EmailSenderName],
+			emailService,
+			logger,
+		)
+		processors.RegisterProcessor(
+			processor.EmailSenderName,
+			emailSender,
+		)
+
 		redisCache := cachev3.NewRedisCache(persistentRedisClient)
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
@@ -687,6 +712,26 @@ func (s *server) registerPubSubProcessorMap(
 	}
 
 	return processors, nil
+}
+
+func (s *server) readEmailConfig(
+	logger *zap.Logger,
+) (*email.Config, error) {
+	bytes, err := os.ReadFile(*s.emailConfigPath)
+	if err != nil {
+		logger.Error("Failed to read email config file",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	config := email.Config{}
+	if err = json.Unmarshal(bytes, &config); err != nil {
+		logger.Error("Failed to unmarshal email config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return &config, nil
 }
 
 func (s *server) insertTelepresenceMountRoot(path string) string {
