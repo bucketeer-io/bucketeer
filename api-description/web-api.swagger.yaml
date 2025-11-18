@@ -9338,8 +9338,6 @@ definitions:
     required:
       - changeType
       - team
-  accountUpdateAPIKeyLastUsedAtResponse:
-    type: object
   accountUpdateAPIKeyRequest:
     type: object
     properties:

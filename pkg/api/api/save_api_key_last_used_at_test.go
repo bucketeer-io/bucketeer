@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
+	"github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
 func TestCacheAPIKeyLastUsedAt(t *testing.T) {
@@ -28,14 +29,21 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		apikey        *account.APIKey
+		apikey        *account.EnvironmentAPIKey
 		lastUsedAt    int64
 		existingCache sync.Map
 		expectedCache sync.Map
 	}{
 		{
-			name:       "new entry",
-			apikey:     &account.APIKey{Id: "key1"},
+			name: "new entry",
+			apikey: &account.EnvironmentAPIKey{
+				ApiKey: &account.APIKey{
+					Id: "key1",
+				},
+				Environment: &environment.EnvironmentV2{
+					Id: "env1",
+				},
+			},
 			lastUsedAt: 1000,
 			existingCache: func() sync.Map {
 				var m sync.Map
@@ -43,37 +51,71 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 			}(),
 			expectedCache: func() sync.Map {
 				var m sync.Map
-				m.Store("key1", int64(1000))
+				m.Store("key1", apikeyLastUsedAt{
+					apiKeyID:      "key1",
+					lastUsedAt:    1000,
+					environmentID: "env1",
+				})
 				return m
 			}(),
 		},
 		{
-			name:       "update existing entry with higher lastUsedAt",
-			apikey:     &account.APIKey{Id: "key1"},
+			name: "update existing entry with higher lastUsedAt",
+			apikey: &account.EnvironmentAPIKey{
+				ApiKey: &account.APIKey{
+					Id: "key1",
+				},
+				Environment: &environment.EnvironmentV2{
+					Id: "env1",
+				},
+			},
 			lastUsedAt: 2000,
 			existingCache: func() sync.Map {
 				var m sync.Map
-				m.Store("key1", int64(1500))
+				m.Store("key1", apikeyLastUsedAt{
+					apiKeyID:      "key1",
+					lastUsedAt:    1500,
+					environmentID: "env1",
+				})
 				return m
 			}(),
 			expectedCache: func() sync.Map {
 				var m sync.Map
-				m.Store("key1", int64(2000))
+				m.Store("key1", apikeyLastUsedAt{
+					apiKeyID:      "key1",
+					lastUsedAt:    2000,
+					environmentID: "env1",
+				})
 				return m
 			}(),
 		},
 		{
-			name:       "do not update existing entry with lower lastUsedAt",
-			apikey:     &account.APIKey{Id: "key1"},
+			name: "do not update existing entry with lower lastUsedAt",
+			apikey: &account.EnvironmentAPIKey{
+				ApiKey: &account.APIKey{
+					Id: "key1",
+				},
+				Environment: &environment.EnvironmentV2{
+					Id: "env1",
+				},
+			},
 			lastUsedAt: 1000,
 			existingCache: func() sync.Map {
 				var m sync.Map
-				m.Store("key1", int64(1500))
+				m.Store("key1", apikeyLastUsedAt{
+					apiKeyID:      "key1",
+					lastUsedAt:    1500,
+					environmentID: "env1",
+				})
 				return m
 			}(),
 			expectedCache: func() sync.Map {
 				var m sync.Map
-				m.Store("key1", int64(1500))
+				m.Store("key1", apikeyLastUsedAt{
+					apiKeyID:      "key1",
+					lastUsedAt:    1500,
+					environmentID: "env1",
+				})
 				return m
 			}(),
 		},
@@ -85,15 +127,15 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 			}
 			service.cacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
 
-			listExpected := make(map[string]int64)
+			listExpected := make(map[string]apikeyLastUsedAt)
 			tt.expectedCache.Range(func(key, value interface{}) bool {
-				listExpected[key.(string)] = value.(int64)
+				listExpected[key.(string)] = value.(apikeyLastUsedAt)
 				return true
 			})
 
-			listActual := make(map[string]int64)
+			listActual := make(map[string]apikeyLastUsedAt)
 			service.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
-				listActual[key.(string)] = value.(int64)
+				listActual[key.(string)] = value.(apikeyLastUsedAt)
 				return true
 			})
 

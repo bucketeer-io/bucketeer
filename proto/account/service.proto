@@ -341,13 +341,6 @@ message UpdateAPIKeyRequest {
 
 message UpdateAPIKeyResponse {}
 
-message UpdateAPIKeyLastUsedAtRequest {
-  string api_key_id = 1;
-  int64 last_used_at = 2;
-}
-
-message UpdateAPIKeyLastUsedAtResponse {}
-
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
@@ -1223,6 +1216,4 @@ service AccountService {
       }
     };
   }
-  rpc UpdateAPIKeyLastUsedAt(UpdateAPIKeyLastUsedAtRequest)
-      returns (UpdateAPIKeyLastUsedAtResponse) {}
 }

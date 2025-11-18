@@ -20,21 +20,37 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
+type apikeyLastUsedAt struct {
+	apiKeyID      string
+	environmentID string
+	lastUsedAt    int64
+}
+
 func (s *grpcGatewayService) cacheAPIKeyLastUsedAt(
-	apiKey *account.APIKey,
+	envAPIKey *account.EnvironmentAPIKey,
 	lastUsedAt int64,
 ) {
-	if cache, ok := s.apiKeyLastUsedInfoCacher.Load(apiKey.Id); ok {
-		lastUsedAtCache := cache.(int64)
-		if lastUsedAtCache < lastUsedAt {
-			s.apiKeyLastUsedInfoCacher.Store(apiKey.Id, lastUsedAt)
+	if cache, ok := s.apiKeyLastUsedInfoCacher.Load(envAPIKey.ApiKey.Id); ok {
+		lastUsedAtCache := cache.(apikeyLastUsedAt)
+		if lastUsedAtCache.lastUsedAt < lastUsedAt {
+			s.apiKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
+				apiKeyID:      envAPIKey.ApiKey.Id,
+				lastUsedAt:    lastUsedAt,
+				environmentID: envAPIKey.Environment.Id,
+			})
 		}
 		return
 	}
-	s.apiKeyLastUsedInfoCacher.Store(apiKey.Id, lastUsedAt)
+	s.apiKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
+		apiKeyID:      envAPIKey.ApiKey.Id,
+		lastUsedAt:    lastUsedAt,
+		environmentID: envAPIKey.Environment.Id,
+	})
 }
 
 func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
@@ -56,18 +72,27 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
 	updatedAPIKeys := make([]string, 0)
 	s.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
 		apiKeyID := key.(string)
-		lastUsedAt := value.(int64)
+		lastUsedAtInfo := value.(apikeyLastUsedAt)
 
-		_, err := s.accountClient.UpdateAPIKeyLastUsedAt(ctx, &account.UpdateAPIKeyLastUsedAtRequest{
-			ApiKeyId:   apiKeyID,
-			LastUsedAt: lastUsedAt,
+		err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+			apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, apiKeyID, lastUsedAtInfo.environmentID)
+			if err != nil {
+				return err
+			}
+			err = apiKey.SetUsedAt(lastUsedAtInfo.lastUsedAt)
+			if err != nil {
+				return err
+			}
+			return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, lastUsedAtInfo.environmentID)
 		})
 		if err != nil {
-			s.logger.Error("failed to update API key last used at", zap.Error(err),
-				zap.String("apiKeyId", apiKeyID),
-				zap.Int64("lastUsedAt", lastUsedAt),
+			s.logger.Error(
+				"failed to update API key last used at",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", apiKeyID),
+				)...,
 			)
-			// return true to continue the iteration
 			return true
 		}
 		updatedAPIKeys = append(updatedAPIKeys, apiKeyID)

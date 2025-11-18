@@ -21,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/golang/protobuf/ptypes"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
@@ -165,6 +167,8 @@ type grpcGatewayService struct {
 	experimentClient         experimentclient.Client
 	eventCounterClient       eventcounterclient.Client
 	environmentClient        environmentclient.Client
+	mysqlClient              mysql.Client
+	accountStorage           accountstotage.AccountStorage
 	goalPublisher            publisher.Publisher
 	evaluationPublisher      publisher.Publisher
 	userPublisher            publisher.Publisher
@@ -191,6 +195,7 @@ func NewGrpcGatewayService(
 	experimentClient experimentclient.Client,
 	eventCounterClient eventcounterclient.Client,
 	environmentClient environmentclient.Client,
+	mysqlClient mysql.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -217,6 +222,8 @@ func NewGrpcGatewayService(
 		experimentClient:         experimentClient,
 		eventCounterClient:       eventCounterClient,
 		environmentClient:        environmentClient,
+		mysqlClient:              mysqlClient,
+		accountStorage:           accountstotage.NewAccountStorage(mysqlClient),
 		goalPublisher:            gp,
 		evaluationPublisher:      ep,
 		userPublisher:            up,
@@ -1513,7 +1520,7 @@ func (s *grpcGatewayService) checkRequest(
 		return nil, err
 	}
 
-	go s.cacheAPIKeyLastUsedAt(envAPIKey.ApiKey, time.Now().Unix())
+	go s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
 
 	return envAPIKey, nil
 }

@@ -169,6 +169,11 @@ services:
     command: ["server"]
     environment:
       - BUCKETEER_API_PROJECT=bucketeer-test
+      - BUCKETEER_API_MYSQL_USER=bucketeer
+      - BUCKETEER_API_MYSQL_PASS=bucketeer
+      - BUCKETEER_API_MYSQL_HOST=mysql
+      - BUCKETEER_API_MYSQL_PORT=3306
+      - BUCKETEER_API_MYSQL_DB_NAME=bucketeer
       - BUCKETEER_API_GOAL_TOPIC=goal
       - BUCKETEER_API_EVALUATION_TOPIC=evaluation
       - BUCKETEER_API_USER_TOPIC=user

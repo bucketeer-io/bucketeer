@@ -135,6 +135,13 @@ api:
     gcpEnabled: false
     profile: false
     enablePprof: false
+    database:
+      mysql:
+        user: bucketeer
+        pass: bucketeer
+        host: localenv-mysql-headless.default.svc.cluster.local
+        port: 3306
+        dbName: bucketeer
     pprofAddr: 127.0.0.1:6060
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     project: ${global.pubsub.project}
