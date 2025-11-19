@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -779,10 +778,9 @@ func (s *EnvironmentService) createDefaultEnvironments(
 		"Production",
 	}
 	for _, name := range envNames {
-		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
 		env, err := domain.NewEnvironmentV2(
 			name,
-			envURLCode,
+			strings.ToLower(name),
 			"",
 			project.Id,
 			organizationID,
