@@ -8,6 +8,13 @@ env:
   profile: false
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-test
+  database:
+    mysql:
+      user: bucketeer
+      pass: bucketeer
+      host: localenv-mysql-headless.default.svc.cluster.local
+      port: 3306
+      dbName: bucketeer
   goalTopic: goal
   evaluationTopic: evaluation
   userTopic: user

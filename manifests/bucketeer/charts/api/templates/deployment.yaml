@@ -54,6 +54,16 @@ spec:
               value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_API_PROJECT
               value: "{{ .Values.global.pubsub.project }}"
+            - name: BUCKETEER_API_MYSQL_USER
+              value: "{{ .Values.env.database.mysql.user }}"
+            - name: BUCKETEER_API_MYSQL_PASS
+              value: "{{ .Values.env.database.mysql.pass }}"
+            - name: BUCKETEER_API_MYSQL_HOST
+              value: "{{ .Values.env.database.mysql.host }}"
+            - name: BUCKETEER_API_MYSQL_PORT
+              value: "{{ .Values.env.database.mysql.port }}"
+            - name: BUCKETEER_API_MYSQL_DB_NAME
+              value: "{{ .Values.env.database.mysql.dbName }}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC

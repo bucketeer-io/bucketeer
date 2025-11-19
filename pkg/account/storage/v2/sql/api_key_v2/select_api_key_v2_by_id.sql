@@ -7,7 +7,8 @@ SELECT
     updated_at,
     description,
     api_key,
-    maintainer
+    maintainer,
+    last_used_at
 FROM
     api_key
 WHERE

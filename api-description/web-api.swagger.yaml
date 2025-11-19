@@ -8769,6 +8769,9 @@ definitions:
         type: string
       environmentName:
         type: string
+      lastUsedAt:
+        type: string
+        format: int64
   accountAPIKeyRole:
     type: string
     enum:

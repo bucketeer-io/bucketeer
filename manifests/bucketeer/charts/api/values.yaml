@@ -7,6 +7,13 @@ env:
   project:
   gcpEnabled: true
   profile: true
+  database:
+    mysql:
+      user:
+      pass:
+      host:
+      port:
+      dbName:
   enablePprof: false
   pprofAddr: 127.0.0.1:6060
   pubsubEmulatorHost:

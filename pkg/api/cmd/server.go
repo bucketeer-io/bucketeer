@@ -47,6 +47,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -70,6 +71,11 @@ type server struct {
 	port                   *int
 	grpcGatewayPort        *int
 	project                *string
+	mysqlUser              *string
+	mysqlPass              *string
+	mysqlHost              *string
+	mysqlPort              *int
+	mysqlDBName            *string
 	goalTopic              *string
 	goalTopicProject       *string
 	evaluationTopic        *string
@@ -114,6 +120,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		port:            cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		grpcGatewayPort: cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
 		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
+		mysqlUser:       cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:       cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:       cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:       cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:     cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		goalTopic:       cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
@@ -458,7 +469,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+
 	service := api.NewGrpcGatewayService(
+		ctx,
 		featureClient,
 		accountClient,
 		pushClient,
@@ -471,6 +488,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		eventCounterClient,
 		environmentClient,
+		mysqlClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
@@ -637,4 +655,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
+}
+
+func (s *server) createMySQLClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return mysql.NewClient(
+		ctx,
+		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDBName,
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	)
 }

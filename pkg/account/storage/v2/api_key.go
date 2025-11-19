@@ -88,6 +88,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Maintainer,
 		k.Description,
 		k.UpdatedAt,
+		k.LastUsedAt,
 		k.Id,
 		environmentID,
 	)
@@ -122,6 +123,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Description,
 		&apiKey.ApiKey,
 		&apiKey.Maintainer,
+		&apiKey.LastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -155,6 +157,7 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
 		&apiKeyDB.Maintainer,
+		&apiKeyDB.LastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -191,6 +194,7 @@ func (s *accountStorage) ListAllEnvironmentAPIKeys(
 			&apiKeyDB.Description,
 			&apiKeyDB.ApiKey,
 			&apiKeyDB.Maintainer,
+			&apiKeyDB.LastUsedAt,
 
 			// Environment columns
 			&envDB.Id,
@@ -246,6 +250,7 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
 		&apiKeyDB.Maintainer,
+		&apiKeyDB.LastUsedAt,
 
 		// Environment columns
 		&envDB.Id,
@@ -306,6 +311,7 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.EnvironmentName,
 			&apiKey.ApiKey,
 			&apiKey.Maintainer,
+			&apiKey.LastUsedAt,
 		)
 		if err != nil {
 			return nil, 0, 0, err
