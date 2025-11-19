@@ -32,7 +32,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/email"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -41,6 +40,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	envdomain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
@@ -105,7 +105,7 @@ type authService struct {
 	audience            string
 	signer              token.Signer
 	config              *auth.OAuthConfig
-	emailConfig         *auth.EmailConfig
+	emailConfig         *email.Config
 	mysqlClient         mysql.Client
 	organizationStorage envstotage.OrganizationStorage
 	projectStorage      envstotage.ProjectStorage
@@ -114,7 +114,7 @@ type authService struct {
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	credentialsStorage  storage.CredentialsStorage
-	emailService        email.EmailService
+	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
 }
@@ -127,7 +127,7 @@ func NewAuthService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	config *auth.OAuthConfig,
-	emailConfig *auth.EmailConfig,
+	emailConfig *email.Config,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -137,16 +137,16 @@ func NewAuthService(
 	logger := options.logger.Named("api")
 
 	// Initialize email service if email are enabled
-	var emailService email.EmailService
+	var emailService email.Service
 	if emailConfig.Enabled {
 		var err error
-		emailService, err = email.NewEmailService(*emailConfig, logger)
+		emailService, err = email.NewService(*emailConfig, logger)
 		if err != nil {
 			logger.Warn("Failed to initialize email service", zap.Error(err))
-			emailService = email.NewNoOpEmailService(logger)
+			emailService = email.NewNoOpService(logger)
 		}
 	} else {
-		emailService = email.NewNoOpEmailService(logger)
+		emailService = email.NewNoOpService(logger)
 	}
 
 	service := &authService{

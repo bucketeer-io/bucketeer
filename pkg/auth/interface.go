@@ -59,61 +59,6 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
-type EmailTemplate struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-}
-
-type EmailTemplatesByLanguage struct {
-	PasswordChanged EmailTemplate `json:"passwordChanged"`
-	PasswordSetup   EmailTemplate `json:"passwordSetup"`
-	PasswordReset   EmailTemplate `json:"passwordReset"`
-	Welcome         EmailTemplate `json:"welcome"`
-}
-
-type EmailTemplatesConfig struct {
-	En EmailTemplatesByLanguage `json:"en"`
-	Ja EmailTemplatesByLanguage `json:"ja"`
-}
-
-type SMTPConfig struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type SendGridConfig struct {
-	APIKey string `json:"apiKey"`
-}
-
-type SESConfig struct {
-	Region    string `json:"region"`
-	AccessKey string `json:"accessKey"`
-	SecretKey string `json:"secretKey"`
-}
-
-type MailerSendConfig struct {
-	APIKey string `json:"apiKey"`
-}
-
-type EmailSenderConfig struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-}
-
-type EmailConfig struct {
-	Enabled    bool                 `json:"enabled"`
-	Provider   string               `json:"provider"` // "smtp", "sendgrid", "ses", "mailersend"
-	SMTP       SMTPConfig           `json:"smtp"`
-	SendGrid   SendGridConfig       `json:"sendgrid"`
-	SES        SESConfig            `json:"ses"`
-	MailerSend MailerSendConfig     `json:"mailersend"`
-	Sender     EmailSenderConfig    `json:"sender"`
-	BaseURL    string               `json:"baseURL"` // For constructing reset URLs
-	Templates  EmailTemplatesConfig `json:"templates"`
-}
-
 type PasswordPolicyConfig struct {
 	MinLength        int  `json:"minLength"`
 	RequireUppercase bool `json:"requireUppercase"`
