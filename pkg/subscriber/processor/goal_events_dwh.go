@@ -262,7 +262,7 @@ func (w *goalEvtWriter) convToGoalEvents(
 	id, environmentID string,
 	experiments []*exproto.Experiment,
 ) ([]*epproto.GoalEvent, bool, error) {
-	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentID, e.Tag, experiments)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, id, environmentID, e.Tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -319,10 +319,10 @@ func (w *goalEvtWriter) convToGoalEvent(
 func (w *goalEvtWriter) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentID, tag string,
+	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*ecstorage.UserEvaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentID, tag, experiments)
+	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, id, environmentID, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -333,7 +333,7 @@ func (w *goalEvtWriter) linkGoalEvent(
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentID, tag string,
+	id, environmentID, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*ecstorage.UserEvaluation, bool, error) {
 	// Find the experiment by goal ID
@@ -386,7 +386,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 					GoalEvent:     event,
 					EnvironmentID: environmentID,
 					RetryCount:    0,
-					ID:            fmt.Sprintf("%s-%s-%d", event.GoalId, userID, event.Timestamp),
+					ID:            id,
 				}); err != nil {
 					subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 					w.logger.Error("Failed to store retry message",
