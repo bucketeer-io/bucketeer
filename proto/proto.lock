@@ -1900,6 +1900,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "maintainer_email",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -2083,44 +2088,6 @@
           },
           {
             "name": "UpdateAPIKeyResponse"
-          },
-          {
-            "name": "ListUserAPIKeysRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization_id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "ListUserAPIKeysResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "api_keys",
-                "type": "APIKey",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "services": [
@@ -5457,178 +5424,6 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "ListUserAPIKeys",
-                "in_type": "ListUserAPIKeysRequest",
-                "out_type": "ListUserAPIKeysResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/account/list_user_api_keys"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "List User API Keys"
-                      },
-                      {
-                        "name": "description",
-                        "value": "List all API keys maintained by a user in an organization."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "API Key"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.account.list_user_api_keys"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "404"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "The specified resource was not found."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
                                   }
                                 ]
                               }

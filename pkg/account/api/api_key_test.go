@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -834,105 +833,6 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			actual, err := service.ListAPIKeys(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
-			assert.Equal(t, p.expected, actual, p.desc)
-		})
-	}
-}
-
-func TestAccountService_ListUserAPIKeys(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
-	patterns := []struct {
-		desc           string
-		context        context.Context
-		setup          func(*AccountService)
-		input          *accountproto.ListUserAPIKeysRequest
-		expected       *accountproto.ListUserAPIKeysResponse
-		getExpectedErr func(localizer locale.Localizer) error
-	}{
-		{
-			desc:    "errInternal",
-			context: createContextWithDefaultToken(t, true),
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), errors.New("error"))
-			},
-			input: &accountproto.ListUserAPIKeysRequest{
-				Email:          "demo@bucketeer.io",
-				OrganizationId: "org0",
-			},
-			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			context: createContextWithDefaultToken(t, false),
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil).AnyTimes()
-			},
-			input: &accountproto.ListUserAPIKeysRequest{
-				Email:          "demo@bucketeer.io",
-				OrganizationId: "org0",
-			},
-			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
-			},
-		},
-		{
-			desc:    "success",
-			context: createContextWithDefaultToken(t, true),
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(),
-				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
-			},
-			input: &accountproto.ListUserAPIKeysRequest{
-				Email:          "demo@bucketeer.io",
-				OrganizationId: "org0",
-			},
-			expected: &accountproto.ListUserAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return nil
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(p.context)
-			defer cancel()
-			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-				"accept-language": []string{"ja"},
-			})
-			localizer := locale.NewLocalizer(ctx)
-
-			service := createAccountService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			actual, err := service.ListUserAPIKeys(ctx, p.input)
 			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
 			assert.Equal(t, p.expected, actual, p.desc)
 		})

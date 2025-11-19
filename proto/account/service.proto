@@ -284,6 +284,7 @@ message ListAPIKeysRequest {
   string environment_id = 8 [deprecated = true];
   repeated string environment_ids = 9;
   string organization_id = 10 [(google.api.field_behavior) = REQUIRED];
+  string maintainer_email = 11;
 }
 
 message ListAPIKeysResponse {
@@ -340,15 +341,6 @@ message UpdateAPIKeyRequest {
 }
 
 message UpdateAPIKeyResponse {}
-
-message ListUserAPIKeysRequest {
-  string organization_id = 1 [(google.api.field_behavior) = REQUIRED];
-  string email = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-message ListUserAPIKeysResponse {
-  repeated APIKey api_keys = 1;
-}
 
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
@@ -1220,51 +1212,6 @@ service AccountService {
           examples: {
             key: "application/json"
             value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc ListUserAPIKeys(ListUserAPIKeysRequest)
-      returns (ListUserAPIKeysResponse) {
-    option (google.api.http) = {
-      get: "/v1/account/list_user_api_keys"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List User API Keys",
-      description: "List all API keys maintained by a user in an organization.",
-      tags: "API Key",
-      operation_id: "web.v1.account.list_user_api_keys",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "404"
-        value: {
-          description: "The specified resource was not found."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 5, "message": "not found", "details": [] }'
           }
         }
       }
