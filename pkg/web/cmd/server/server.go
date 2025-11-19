@@ -35,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -1067,7 +1068,7 @@ func (s *server) readOAuthConfig(
 
 func (s *server) readEmailConfig(
 	logger *zap.Logger,
-) (*auth.EmailConfig, error) {
+) (*email.Config, error) {
 	bytes, err := os.ReadFile(*s.emailConfigPath)
 	if err != nil {
 		logger.Error("auth: failed to read email config file",
@@ -1075,7 +1076,7 @@ func (s *server) readEmailConfig(
 		)
 		return nil, err
 	}
-	config := auth.EmailConfig{}
+	config := email.Config{}
 	if err = json.Unmarshal(bytes, &config); err != nil {
 		logger.Error("auth: failed to unmarshal email config",
 			zap.Error(err),
@@ -1090,7 +1091,7 @@ func (s *server) createAuthService(
 	accountClient accountclient.Client,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
-	emailConfig *auth.EmailConfig,
+	emailConfig *email.Config,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	signer, err := token.NewSigner(*s.oauthPrivateKeyPath)
