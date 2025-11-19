@@ -59,12 +59,19 @@ func TestUpsertAndListTag(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newTagClient(t)
+	featureClient := newFeatureClient(t)
+
 	testTags := []string{
 		newTagName(t),
 		newTagName(t),
 		newTagName(t),
 	}
-	createTags(t, client, testTags, tagproto.Tag_FEATURE_FLAG)
+
+	// Create a feature flag with the tags to prevent the tag deleter batch job
+	// from deleting them (the batch job deletes unused tags every minute in dev environment)
+	fid := newFeatureID(t)
+	createFfReq := newCreateFeatureReq(fid, testTags)
+	createFeatureNoCmd(t, featureClient, createFfReq)
 
 	// Retry logic to handle eventual consistency in e2e environments:
 	//
@@ -80,30 +87,22 @@ func TestUpsertAndListTag(t *testing.T) {
 	// we retry multiple times with small delays to allow the system to reach
 	// eventual consistency. This makes the test more robust and reduces
 	// false negative failures in real e2e environments.
-	var tags []*tagproto.Tag
-	maxRetries := 10
-	for i := 0; i < maxRetries; i++ {
-		actual := listTags(ctx, t, client)
-		tags = findTags(actual, testTags)
-
-		if len(tags) == len(testTags) {
-			// All tags found - system has reached consistency, proceed with test
-			break
-		}
-
-		if i == maxRetries-1 {
-			// Final attempt failed, provide detailed error info for debugging
-			actualNames := make([]string, len(actual))
-			for i, tag := range actual {
+	tags := waitForTags(ctx, t, client, testTags,
+		func(foundTags []*tagproto.Tag) bool {
+			// Success: all tags found
+			return len(foundTags) == len(testTags)
+		},
+		func(foundTags []*tagproto.Tag) string {
+			// Generate error message with all available context
+			allTags := listTags(ctx, t, client)
+			actualNames := make([]string, len(allTags))
+			for i, tag := range allTags {
 				actualNames[i] = tag.Name
 			}
-			t.Fatalf("Failed to find all created tags after %d retries. Expected: %v, Found: %v, All tags: %v",
-				maxRetries, testTags, getTagNames(tags), actualNames)
-		}
-
-		// Wait before retrying to allow system to reach consistency
-		time.Sleep(500 * time.Millisecond)
-	}
+			return fmt.Sprintf("Expected to find all %d created tags: %v. Found: %d tags: %v. All tags in system: %v",
+				len(testTags), testTags, len(foundTags), getTagNames(foundTags), actualNames)
+		},
+	)
 
 	// Wait a few seconds before upserting the same tag.
 	// Otherwise, the test could fail because it could finish in less than 1 second,
@@ -112,12 +111,28 @@ func TestUpsertAndListTag(t *testing.T) {
 	// Upsert tag index 1
 	targetTag := tags[1]
 	createTag(t, client, targetTag.Name, tagproto.Tag_FEATURE_FLAG)
-	actual := listTags(ctx, t, client)
-	tagUpsert := findTags(actual, []string{targetTag.Name})
-	if tagUpsert == nil {
-		t.Fatalf("Upserted tag wasn't found in the response. Expected: %v\n Response: %v",
-			targetTag, actual)
+
+	// Retry logic to handle eventual consistency after upsert
+	// Similar to the retry logic after initial create, we need to handle the case
+	// where the upserted tag might not be immediately visible or might be in an
+	// inconsistent state due to distributed system delays
+	tagUpsert := waitForTags(ctx, t, client, []string{targetTag.Name},
+		func(foundTags []*tagproto.Tag) bool {
+			// Success: found exactly 1 tag with the same ID (updated, not recreated)
+			return len(foundTags) == 1 && foundTags[0].Id == targetTag.Id
+		},
+		func(foundTags []*tagproto.Tag) string {
+			return fmt.Sprintf("Expected to find exactly 1 tag with ID: %s and name: %s. Found: %d tags: %v",
+				targetTag.Id, targetTag.Name, len(foundTags), foundTags)
+		},
+	)
+
+	// Check if the ID matches (tag was updated, not recreated)
+	if targetTag.Id != tagUpsert[0].Id {
+		t.Fatalf("Tag ID changed after upsert! Original ID: %s, New ID: %s. This suggests the tag was recreated instead of updated. Original: %v, After upsert: %v",
+			targetTag.Id, tagUpsert[0].Id, targetTag, tagUpsert[0])
 	}
+
 	// Check if the create time is equal
 	if targetTag.CreatedAt != tagUpsert[0].CreatedAt {
 		t.Fatalf("Different create time. Expected: %v\n, Actual: %v",
@@ -364,4 +379,36 @@ func getTagNames(tags []*tagproto.Tag) []string {
 		names[i] = tag.Name
 	}
 	return names
+}
+
+// waitForTags retries listing and finding tags until the validation function returns true
+// or maxRetries is exceeded. This handles eventual consistency in distributed systems.
+func waitForTags(
+	ctx context.Context,
+	t *testing.T,
+	client tagclient.Client,
+	tagNames []string,
+	validateFn func([]*tagproto.Tag) bool,
+	errorMsgFn func([]*tagproto.Tag) string,
+) []*tagproto.Tag {
+	t.Helper()
+	maxRetries := 10
+	var foundTags []*tagproto.Tag
+
+	for i := 0; i < maxRetries; i++ {
+		allTags := listTags(ctx, t, client)
+		foundTags = findTags(allTags, tagNames)
+
+		if validateFn(foundTags) {
+			return foundTags
+		}
+
+		if i == maxRetries-1 {
+			t.Fatalf("Failed after %d retries. %s", maxRetries, errorMsgFn(foundTags))
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	return foundTags
 }
