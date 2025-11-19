@@ -664,36 +664,140 @@ func (f *Feature) validateVariationValue(id, value string) error {
 	if value == "" {
 		return errVariationValueRequired
 	}
-	// Check for duplicate values
-	for _, existingVar := range f.Variations {
-		if existingVar.Id != id && existingVar.Value == value {
-			return errVariationValueUnique
-		}
-	}
+
 	switch f.VariationType {
 	case feature.Feature_BOOLEAN:
 		if value != "true" && value != "false" {
 			return errVariationTypeUnmatched
 		}
+		// Check for duplicate values (exact string match for boolean)
+		for _, existingVar := range f.Variations {
+			if existingVar.Id != id && existingVar.Value == value {
+				return errVariationValueUnique
+			}
+		}
+
 	case feature.Feature_NUMBER:
 		if _, err := strconv.ParseFloat(value, 64); err != nil {
 			return errVariationTypeUnmatched
 		}
-	case feature.Feature_JSON:
-		var js map[string]interface{}
-		var jsArray []interface{}
-		if json.Unmarshal([]byte(value), &js) == nil || json.Unmarshal([]byte(value), &jsArray) == nil {
-			return nil
+		// Check for duplicate values (exact string match for number)
+		for _, existingVar := range f.Variations {
+			if existingVar.Id != id && existingVar.Value == value {
+				return errVariationValueUnique
+			}
 		}
-		return errVariationTypeUnmatched
-	case feature.Feature_YAML:
-		// Validate YAML can be parsed
-		var yamlData interface{}
-		if err := yaml.Unmarshal([]byte(value), &yamlData); err != nil {
+
+	case feature.Feature_JSON:
+		// Normalize and validate JSON
+		normalizedValue, err := normalizeJSON(value)
+		if err != nil {
 			return errVariationTypeUnmatched
 		}
+
+		// Check for duplicates by comparing normalized JSON
+		for _, existingVar := range f.Variations {
+			if existingVar.Id != id {
+				normalizedExisting, err := normalizeJSON(existingVar.Value)
+				if err != nil {
+					// Existing value is invalid - skip comparison
+					// This shouldn't happen in practice
+					continue
+				}
+				if normalizedValue == normalizedExisting {
+					return errVariationValueUnique
+				}
+			}
+		}
+
+	case feature.Feature_YAML:
+		// Validate YAML can be parsed and normalize it
+		normalizedValue, err := normalizeYAML(value)
+		if err != nil {
+			return errVariationTypeUnmatched
+		}
+
+		// Check for duplicates by comparing normalized YAML (as JSON)
+		for _, existingVar := range f.Variations {
+			if existingVar.Id != id {
+				normalizedExisting, err := normalizeYAML(existingVar.Value)
+				if err != nil {
+					// Existing value is invalid - skip comparison
+					continue
+				}
+				if normalizedValue == normalizedExisting {
+					return errVariationValueUnique
+				}
+			}
+		}
+
+	default:
+		// STRING type and any other types - exact string match
+		for _, existingVar := range f.Variations {
+			if existingVar.Id != id && existingVar.Value == value {
+				return errVariationValueUnique
+			}
+		}
 	}
+
 	return nil
+}
+
+// normalizeJSON parses JSON and returns a canonical representation.
+// This ensures that two JSON strings with different formatting but same data
+// are considered equal (e.g., different whitespace, key order).
+func normalizeJSON(jsonStr string) (string, error) {
+	var data interface{}
+	// Try to unmarshal as object or array
+	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+		return "", err
+	}
+	// Re-marshal to get canonical representation
+	// json.Marshal produces consistent output (sorted keys, no extra whitespace)
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
+}
+
+// normalizeYAML parses YAML and returns its canonical JSON representation.
+// This ensures that two YAML strings with different formatting (comments, whitespace,
+// flow vs block style) but same data are considered equal.
+func normalizeYAML(yamlStr string) (string, error) {
+	var data interface{}
+	if err := yaml.Unmarshal([]byte(yamlStr), &data); err != nil {
+		return "", err
+	}
+
+	// Convert map[interface{}]interface{} to map[string]interface{} for JSON compatibility
+	data = convertYAMLMapKeys(data)
+
+	// Convert to JSON for canonical representation
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
+}
+
+// convertYAMLMapKeys recursively converts map[interface{}]interface{} to map[string]interface{}.
+// This is necessary because yaml.v2 unmarshals to map[interface{}]interface{},
+// but json.Marshal requires map[string]interface{}.
+func convertYAMLMapKeys(input interface{}) interface{} {
+	switch x := input.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range x {
+			m[fmt.Sprintf("%v", k)] = convertYAMLMapKeys(v)
+		}
+		return m
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convertYAMLMapKeys(v)
+		}
+	}
+	return input
 }
 
 func (f *Feature) addTarget(variationID string) {
