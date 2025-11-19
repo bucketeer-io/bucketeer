@@ -16,9 +16,11 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -665,6 +667,159 @@ func TestGrpcGetEvaluation(t *testing.T) {
 	targetFeatureID := response.Evaluation.FeatureId
 	if targetFeatureID != featureID2 {
 		t.Fatalf("Wrong feature id. Expected: %s, actual: %s", featureID2, targetFeatureID)
+	}
+}
+
+func TestGrpcGetEvaluationWithYAMLVariation(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t, *apiKeyPath)
+	defer c.Close()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+
+	// Create a feature with YAML variation type
+	// Note: Feature_YAML (value 4) is not yet in the proto enum definition,
+	// so we use the numeric value directly until the proto is updated
+	cmd := &featureproto.CreateFeatureCommand{
+		Id:            featureID,
+		Name:          featureID,
+		Description:   "e2e-test-yaml-feature",
+		VariationType: featureproto.Feature_VariationType(4), // YAML type
+		Variations: []*featureproto.Variation{
+			{
+				Value: `# Configuration A
+app:
+  name: MyApp
+  version: 1.0.0
+  # Feature flags
+  features:
+    - login # Login information
+    - signup
+  settings:
+    timeout: 30
+    retries: 3`,
+				Name:        "YAML Variation A",
+				Description: "YAML config A",
+			},
+			{
+				Value: `# Configuration B
+app:
+  name: MyApp
+  version: 2.0.0 # version
+  settings:
+    timeout: 60
+    retries: 5`,
+				Name:        "YAML Variation B",
+				Description: "YAML config B",
+			},
+		},
+		Tags:                     []string{tag},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+	}
+
+	createFeature(t, client, cmd)
+	enableFeature(t, featureID, client)
+	updateFeatueFlagCache(t)
+
+	// Get evaluation using GetEvaluation API
+	response := grpcGetEvaluation(t, tag, featureID, userID)
+
+	// Verify evaluation exists
+	if response.Evaluation == nil {
+		t.Fatal("Evaluation field is nil")
+	}
+
+	// Verify feature ID matches
+	if response.Evaluation.FeatureId != featureID {
+		t.Fatalf("Wrong feature id. Expected: %s, actual: %s", featureID, response.Evaluation.FeatureId)
+	}
+
+	// Verify the variation value is converted to JSON
+	variationValue := response.Evaluation.VariationValue
+	if variationValue == "" {
+		t.Fatal("VariationValue is empty")
+	}
+
+	// Verify it's valid JSON (not YAML)
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal([]byte(variationValue), &jsonData); err != nil {
+		t.Fatalf("VariationValue is not valid JSON: %v. Value: %s", err, variationValue)
+	}
+
+	// Verify JSON structure matches expected YAML conversion
+	if _, ok := jsonData["app"]; !ok {
+		t.Fatal("JSON should contain 'app' key from YAML")
+	}
+
+	app, ok := jsonData["app"].(map[string]interface{})
+	if !ok {
+		t.Fatal("'app' should be an object")
+	}
+
+	if app["name"] != "MyApp" {
+		t.Fatalf("app.name should be 'MyApp', got: %v", app["name"])
+	}
+
+	if app["version"] != "1.0.0" {
+		t.Fatalf("app.version should be '1.0.0', got: %v", app["version"])
+	}
+
+	// Verify nested objects and arrays are converted correctly
+	if _, ok := app["features"]; !ok {
+		t.Fatal("app should contain 'features' array")
+	}
+
+	features, ok := app["features"].([]interface{})
+	if !ok {
+		t.Fatal("'features' should be an array")
+	}
+
+	if len(features) != 2 {
+		t.Fatalf("features array should have 2 items, got: %d", len(features))
+	}
+
+	if features[0] != "login" || features[1] != "signup" {
+		t.Fatalf("features array values incorrect. Expected: [login, signup], got: %v", features)
+	}
+
+	// Verify settings object
+	if _, ok := app["settings"]; !ok {
+		t.Fatal("app should contain 'settings' object")
+	}
+
+	settings, ok := app["settings"].(map[string]interface{})
+	if !ok {
+		t.Fatal("'settings' should be an object")
+	}
+
+	// Verify numbers are properly converted
+	if timeout, ok := settings["timeout"].(float64); !ok || timeout != 30 {
+		t.Fatalf("settings.timeout should be 30, got: %v", settings["timeout"])
+	}
+
+	if retries, ok := settings["retries"].(float64); !ok || retries != 3 {
+		t.Fatalf("settings.retries should be 3, got: %v", settings["retries"])
+	}
+
+	// Verify YAML comments are stripped
+	if strings.Contains(variationValue, "#") {
+		t.Fatalf("JSON should not contain YAML comments. Value: %s", variationValue)
+	}
+
+	// Verify Variation.Value is also converted
+	if response.Evaluation.Variation == nil {
+		t.Fatal("Evaluation.Variation is nil")
+	}
+
+	if response.Evaluation.Variation.Value != variationValue {
+		t.Fatalf("Variation.Value should match VariationValue. Expected: %s, Got: %s",
+			variationValue, response.Evaluation.Variation.Value)
 	}
 }
 

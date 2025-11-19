@@ -1742,9 +1742,9 @@ func TestValidateVariationValue(t *testing.T) {
 			expected:      errVariationTypeUnmatched,
 		},
 		{
-			desc:          "invalid json",
+			desc:          "invalid json - unclosed bracket",
 			variationType: ftproto.Feature_JSON,
-			value:         "true",
+			value:         `{"key": "value"`,
 			expected:      errVariationTypeUnmatched,
 		},
 		{
@@ -1783,6 +1783,82 @@ func TestValidateVariationValue(t *testing.T) {
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
+		{
+			desc:          "valid yaml - simple",
+			variationType: ftproto.Feature_YAML,
+			value: `name: John Doe
+age: 30
+active: true`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - nested objects",
+			variationType: ftproto.Feature_YAML,
+			value: `config:
+  database:
+    host: localhost
+    port: 5432
+  cache:
+    enabled: true
+    ttl: 3600`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - arrays",
+			variationType: ftproto.Feature_YAML,
+			value: `items:
+  - id: 1
+    name: Item 1
+  - id: 2
+    name: Item 2`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - with comments",
+			variationType: ftproto.Feature_YAML,
+			value: `# Configuration
+name: Test Config
+# Settings
+settings:
+  enabled: true  # Enable feature
+  timeout: 30    # Timeout in seconds`,
+			expected: nil,
+		},
+		{
+			desc:          "valid yaml - mixed types",
+			variationType: ftproto.Feature_YAML,
+			value: `string: hello
+number: 42
+float: 3.14
+boolean: true
+null_value: null
+list:
+  - one
+  - two
+  - three
+object:
+  nested: value`,
+			expected: nil,
+		},
+		{
+			desc:          "invalid yaml - malformed",
+			variationType: ftproto.Feature_YAML,
+			value:         `invalid: yaml: [unclosed`,
+			expected:      errVariationTypeUnmatched,
+		},
+		{
+			desc:          "invalid yaml - tab indentation",
+			variationType: ftproto.Feature_YAML,
+			value:         "config:\n\tkey: value",
+			expected:      errVariationTypeUnmatched,
+		},
+		{
+			desc:          "invalid yaml - unbalanced brackets",
+			variationType: ftproto.Feature_YAML,
+			value: `list: [1, 2, 3
+incomplete`,
+			expected: errVariationTypeUnmatched,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -1795,6 +1871,257 @@ func TestValidateVariationValue(t *testing.T) {
 				},
 			}}
 			assert.Equal(t, p.expected, f.validateVariationValue("", p.value))
+		})
+	}
+}
+
+func TestValidateVariationValueUniqueness(t *testing.T) {
+	t.Parallel()
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	newID, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	patterns := []struct {
+		desc               string
+		variationType      ftproto.Feature_VariationType
+		existingVariations []*ftproto.Variation
+		newVariationID     string
+		newValue           string
+		expectedError      error
+		reason             string
+	}{
+		// JSON uniqueness tests
+		{
+			desc:          "JSON: Different whitespace should be considered duplicate",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `{"key":"value"}`},
+			},
+			newVariationID: newID.String(),
+			newValue:       `{"key": "value"}`,
+			expectedError:  errVariationValueUnique,
+			reason:         "Different whitespace should normalize to same JSON",
+		},
+		{
+			desc:          "JSON: Different key order should be considered duplicate",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `{"a":1,"b":2}`},
+			},
+			newVariationID: newID.String(),
+			newValue:       `{"b":2,"a":1}`,
+			expectedError:  errVariationValueUnique,
+			reason:         "JSON key order doesn't matter",
+		},
+		{
+			desc:          "JSON: Newlines and formatting should be considered duplicate",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `{"nested":{"key":"value"}}`},
+			},
+			newVariationID: newID.String(),
+			newValue: `{
+  "nested": {
+    "key": "value"
+  }
+}`,
+			expectedError: errVariationValueUnique,
+			reason:        "Formatting differences should normalize away",
+		},
+		{
+			desc:          "JSON: Arrays with same elements should be duplicate",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `[1,2,3]`},
+			},
+			newVariationID: newID.String(),
+			newValue:       `[1, 2, 3]`,
+			expectedError:  errVariationValueUnique,
+			reason:         "Array whitespace differences should normalize",
+		},
+		{
+			desc:          "JSON: Actually different values should not be duplicate",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `{"key":"value1"}`},
+			},
+			newVariationID: newID.String(),
+			newValue:       `{"key":"value2"}`,
+			expectedError:  nil,
+			reason:         "Different data should be allowed",
+		},
+
+		// YAML uniqueness tests
+		{
+			desc:          "YAML: With comments should be considered duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "app:\n  name: MyApp"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "# Comment\napp:\n  name: MyApp",
+			expectedError:  errVariationValueUnique,
+			reason:         "YAML comments should be stripped during normalization",
+		},
+		{
+			desc:          "YAML: Inline comments should be considered duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "key: value"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "key: value # inline comment",
+			expectedError:  errVariationValueUnique,
+			reason:         "Inline comments should be stripped",
+		},
+		{
+			desc:          "YAML: Flow vs block style should be duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "items: [1, 2, 3]"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "items:\n  - 1\n  - 2\n  - 3",
+			expectedError:  errVariationValueUnique,
+			reason:         "Flow and block styles represent the same data",
+		},
+		{
+			desc:          "YAML: Extra whitespace should be considered duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "app:\n  name: MyApp\n  version: 1.0"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "app:\n  name:   MyApp\n  version: 1.0\n\n",
+			expectedError:  errVariationValueUnique,
+			reason:         "Extra whitespace and empty lines should normalize away",
+		},
+		{
+			desc:          "YAML: Complex case with comments, whitespace, and formatting",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "config:\n  enabled: true\n  timeout: 30"},
+			},
+			newVariationID: newID.String(),
+			newValue: `# Configuration
+config:
+  enabled: true  # Enable feature
+  timeout: 30
+
+`,
+			expectedError: errVariationValueUnique,
+			reason:        "All formatting differences should normalize away",
+		},
+		{
+			desc:          "YAML: Actually different values should not be duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "key: value1"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "key: value2",
+			expectedError:  nil,
+			reason:         "Different data should be allowed",
+		},
+		{
+			desc:          "YAML: Different nested structure should not be duplicate",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "app:\n  name: MyApp\n  version: 1.0"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "app:\n  name: MyApp\n  version: 2.0",
+			expectedError:  nil,
+			reason:         "Different version should be allowed",
+		},
+
+		// STRING type tests (should remain exact match)
+		{
+			desc:          "STRING: Exact duplicate should fail",
+			variationType: ftproto.Feature_STRING,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "hello world"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "hello world",
+			expectedError:  errVariationValueUnique,
+			reason:         "Exact string match should be duplicate",
+		},
+		{
+			desc:          "STRING: Different whitespace should NOT be duplicate",
+			variationType: ftproto.Feature_STRING,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "hello world"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "hello  world",
+			expectedError:  nil,
+			reason:         "String type keeps exact matching (no normalization)",
+		},
+
+		// BOOLEAN and NUMBER tests (exact match)
+		{
+			desc:          "BOOLEAN: Same value should be duplicate",
+			variationType: ftproto.Feature_BOOLEAN,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "true"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "true",
+			expectedError:  errVariationValueUnique,
+			reason:         "Same boolean value should be duplicate",
+		},
+		{
+			desc:          "NUMBER: Same value should be duplicate",
+			variationType: ftproto.Feature_NUMBER,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "123.45"},
+			},
+			newVariationID: newID.String(),
+			newValue:       "123.45",
+			expectedError:  errVariationValueUnique,
+			reason:         "Same number value should be duplicate",
+		},
+
+		// Update existing variation (should allow same value)
+		{
+			desc:          "JSON: Update same variation with same value should succeed",
+			variationType: ftproto.Feature_JSON,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: `{"key":"value"}`},
+			},
+			newVariationID: v1.String(), // Same ID as existing
+			newValue:       `{"key": "value"}`,
+			expectedError:  nil,
+			reason:         "Updating same variation should be allowed",
+		},
+		{
+			desc:          "YAML: Update same variation with formatted version should succeed",
+			variationType: ftproto.Feature_YAML,
+			existingVariations: []*ftproto.Variation{
+				{Id: v1.String(), Value: "key: value"},
+			},
+			newVariationID: v1.String(), // Same ID as existing
+			newValue:       "# Comment\nkey: value",
+			expectedError:  nil,
+			reason:         "Updating same variation should be allowed even with formatting changes",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			f := &Feature{Feature: &ftproto.Feature{
+				VariationType: p.variationType,
+				Variations:    p.existingVariations,
+			}}
+			err := f.validateVariationValue(p.newVariationID, p.newValue)
+			if p.expectedError != nil {
+				assert.Equal(t, p.expectedError, err, "Reason: %s", p.reason)
+			} else {
+				assert.NoError(t, err, "Reason: %s", p.reason)
+			}
 		})
 	}
 }

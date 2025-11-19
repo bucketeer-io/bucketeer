@@ -8582,6 +8582,7 @@ definitions:
       - BOOLEAN
       - NUMBER
       - JSON
+      - YAML
     default: STRING
   FlagTriggerAction:
     type: string

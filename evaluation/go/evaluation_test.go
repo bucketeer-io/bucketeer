@@ -15,6 +15,7 @@
 package evaluation
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -198,6 +199,90 @@ func TestEvaluateFeature(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+	}
+
+	// Add YAML feature test case
+	yamlFeature := makeFeature("yaml-feature-id")
+	yamlFeature.Tags = append(yamlFeature.Tags, "tag1")
+	yamlFeature.VariationType = ftproto.Feature_YAML
+	yamlFeature.Variations = []*ftproto.Variation{
+		{
+			Id:   "yaml-variation-A",
+			Name: "YAML Variation A",
+			Value: `# Configuration A
+config:
+  enabled: true  # Enable feature
+  timeout: 30    # Timeout in seconds`,
+		},
+		{
+			Id:   "yaml-variation-B",
+			Name: "YAML Variation B",
+			Value: `# Configuration B
+config:
+  # Feature toggle
+  enabled: false
+  timeout: 60  # Longer timeout`,
+		},
+	}
+	yamlFeature.DefaultStrategy = &ftproto.Strategy{
+		Type: ftproto.Strategy_FIXED,
+		FixedStrategy: &ftproto.FixedStrategy{
+			Variation: "yaml-variation-B",
+		},
+	}
+
+	yamlPatterns := []struct {
+		enabled       bool
+		offVariation  string
+		userID        string
+		prerequisite  []*ftproto.Prerequisite
+		expected      *ftproto.Evaluation
+		expectedError error
+	}{
+		{
+			enabled:      true,
+			offVariation: "",
+			userID:       "yaml-user-1",
+			prerequisite: []*ftproto.Prerequisite{},
+			expected: &ftproto.Evaluation{
+				Id:             EvaluationID(yamlFeature.Id, yamlFeature.Version, "yaml-user-1"),
+				FeatureId:      "yaml-feature-id",
+				FeatureVersion: 1,
+				UserId:         "yaml-user-1",
+				VariationId:    "yaml-variation-B",
+				VariationName:  "YAML Variation B",
+				VariationValue: `{"config":{"enabled":false,"timeout":60}}`,
+				Variation: &ftproto.Variation{
+					Id:    "yaml-variation-B",
+					Name:  "YAML Variation B",
+					Value: `{"config":{"enabled":false,"timeout":60}}`,
+				},
+				Reason: &ftproto.Reason{Type: ftproto.Reason_DEFAULT},
+			},
+			expectedError: nil,
+		},
+	}
+
+	// Test YAML feature
+	for _, p := range yamlPatterns {
+		evaluator := NewEvaluator()
+		user := &userproto.User{Id: p.userID}
+		yamlFeature.Enabled = p.enabled
+		yamlFeature.OffVariation = p.offVariation
+		yamlFeature.Prerequisites = p.prerequisite
+		segmentUser := map[string][]*ftproto.SegmentUser{}
+		evaluation, err := evaluator.EvaluateFeatures([]*ftproto.Feature{yamlFeature}, user, segmentUser, "tag1")
+		assert.Equal(t, p.expectedError, err)
+		if evaluation != nil {
+			actual, err := findEvaluation(evaluation.Evaluations, yamlFeature.Id)
+			assert.NoError(t, err)
+			assert.Equal(t, p.expected.VariationValue, actual.VariationValue, "YAML should be converted to JSON")
+			assert.Equal(t, p.expected.Variation.Value, actual.Variation.Value, "Variation.Value should also be converted")
+			// Verify it's valid JSON
+			var jsonData interface{}
+			jsonErr := json.Unmarshal([]byte(actual.VariationValue), &jsonData)
+			assert.NoError(t, jsonErr, "YAML should be converted to valid JSON")
+		}
 	}
 
 	for _, p := range patterns {
@@ -2107,6 +2192,746 @@ func TestEvaluateFeaturesByEvaluatedAt_TagMismatchScenario(t *testing.T) {
 			assert.NoError(t, err, "Evaluation should succeed despite tag mismatches")
 			assert.NotNil(t, result, "Result should not be nil")
 			assert.NotNil(t, result.Evaluations, "Evaluations should not be nil")
+		})
+	}
+}
+
+func TestConvertVariationValue(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc           string
+		variationType  ftproto.Feature_VariationType
+		variationValue string
+		expectedValue  string
+	}{
+		{
+			desc:           "Non-YAML type returns original value",
+			variationType:  ftproto.Feature_STRING,
+			variationValue: "simple string",
+			expectedValue:  "simple string",
+		},
+		{
+			desc:           "JSON type returns original value",
+			variationType:  ftproto.Feature_JSON,
+			variationValue: `{"key": "value"}`,
+			expectedValue:  `{"key": "value"}`,
+		},
+		{
+			desc:          "YAML type converts to JSON",
+			variationType: ftproto.Feature_YAML,
+			variationValue: `name: John Doe
+age: 30
+active: true`,
+			expectedValue: `{"active":true,"age":30,"name":"John Doe"}`,
+		},
+		{
+			desc:          "YAML with nested objects converts to JSON",
+			variationType: ftproto.Feature_YAML,
+			variationValue: `user:
+  name: Jane
+  email: jane@example.com
+settings:
+  theme: dark
+  notifications: true`,
+			expectedValue: `{"settings":{"notifications":true,"theme":"dark"},"user":{"email":"jane@example.com","name":"Jane"}}`,
+		},
+		{
+			desc:          "YAML with arrays converts to JSON",
+			variationType: ftproto.Feature_YAML,
+			variationValue: `items:
+  - id: 1
+    name: Item 1
+  - id: 2
+    name: Item 2`,
+			expectedValue: `{"items":[{"id":1,"name":"Item 1"},{"id":2,"name":"Item 2"}]}`,
+		},
+		{
+			desc:          "YAML with comments converts to JSON",
+			variationType: ftproto.Feature_YAML,
+			variationValue: `# This is a configuration
+name: John Doe
+# Age in years
+age: 30
+active: true # User is active`,
+			expectedValue: `{"active":true,"age":30,"name":"John Doe"}`,
+		},
+		{
+			desc:          "YAML with comments and nested objects converts to JSON",
+			variationType: ftproto.Feature_YAML,
+			variationValue: `# Database configuration
+database:
+  # Connection settings
+  host: localhost
+  port: 5432
+  # Security
+  ssl: true
+# Application settings
+app:
+  debug: false # Disable in production`,
+			expectedValue: `{"app":{"debug":false},"database":{"host":"localhost","port":5432,"ssl":true}}`,
+		},
+		{
+			desc:           "Invalid YAML returns original value as fallback",
+			variationType:  ftproto.Feature_YAML,
+			variationValue: "invalid: yaml: [unclosed",
+			expectedValue:  "invalid: yaml: [unclosed",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			feature := &ftproto.Feature{
+				Id:            "feature-1",
+				VariationType: p.variationType,
+			}
+			variation := &ftproto.Variation{
+				Id:    "var-1",
+				Value: p.variationValue,
+			}
+
+			result := evaluator.convertVariationValue(feature, variation)
+			assert.Equal(t, p.expectedValue, result)
+		})
+	}
+}
+
+func TestConvertVariationValueCaching(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Caches YAML to JSON conversion", func(t *testing.T) {
+		evaluator := NewEvaluator()
+		feature := &ftproto.Feature{
+			Id:            "feature-1",
+			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
+		}
+		variation := &ftproto.Variation{
+			Id: "var-1",
+			Value: `name: Test
+value: 123`,
+		}
+
+		// First call should convert and cache
+		result1 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, `{"name":"Test","value":123}`, result1)
+
+		// Second call should use cache (verify by checking cache directly with correct key)
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached, ok := evaluator.variationCache.Load(cacheKey)
+		assert.True(t, ok)
+		assert.Equal(t, result1, cached)
+
+		// Third call should return cached value
+		result2 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("Cache is keyed by UpdatedAt and variation ID", func(t *testing.T) {
+		evaluator := NewEvaluator()
+		feature := &ftproto.Feature{
+			Id:            "feature-1",
+			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
+		}
+
+		variation1 := &ftproto.Variation{
+			Id:    "var-1",
+			Value: "key1: value1",
+		}
+		variation2 := &ftproto.Variation{
+			Id:    "var-2",
+			Value: "key2: value2",
+		}
+
+		result1 := evaluator.convertVariationValue(feature, variation1)
+		result2 := evaluator.convertVariationValue(feature, variation2)
+
+		// Different variations should have different results
+		assert.NotEqual(t, result1, result2)
+		assert.Equal(t, `{"key1":"value1"}`, result1)
+		assert.Equal(t, `{"key2":"value2"}`, result2)
+
+		// Both should be cached separately with correct keys
+		cacheKey1 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation1.Id)
+		cacheKey2 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation2.Id)
+		cached1, ok1 := evaluator.variationCache.Load(cacheKey1)
+		cached2, ok2 := evaluator.variationCache.Load(cacheKey2)
+		assert.True(t, ok1)
+		assert.True(t, ok2)
+		assert.Equal(t, result1, cached1)
+		assert.Equal(t, result2, cached2)
+	})
+
+	t.Run("Cache invalidates when feature is updated", func(t *testing.T) {
+		evaluator := NewEvaluator()
+		feature := &ftproto.Feature{
+			Id:            "feature-1",
+			VariationType: ftproto.Feature_YAML,
+			UpdatedAt:     1234567890,
+		}
+		variation := &ftproto.Variation{
+			Id:    "var-1",
+			Value: "key: original_value",
+		}
+
+		// First call with original timestamp
+		result1 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, `{"key":"original_value"}`, result1)
+
+		// Verify cache with original key
+		cacheKey1 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached1, ok1 := evaluator.variationCache.Load(cacheKey1)
+		assert.True(t, ok1)
+		assert.Equal(t, result1, cached1)
+
+		// Update feature timestamp (simulating feature update)
+		feature.UpdatedAt = 1234567999
+		variation.Value = "key: updated_value"
+
+		// Second call with updated timestamp should create new cache entry
+		result2 := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, `{"key":"updated_value"}`, result2)
+
+		// Verify new cache key exists
+		cacheKey2 := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		cached2, ok2 := evaluator.variationCache.Load(cacheKey2)
+		assert.True(t, ok2)
+		assert.Equal(t, result2, cached2)
+
+		// Results should be different
+		assert.NotEqual(t, result1, result2)
+
+		// Old cache entry still exists (no automatic cleanup)
+		_, stillExists := evaluator.variationCache.Load(cacheKey1)
+		assert.True(t, stillExists)
+	})
+
+	t.Run("Does not cache non-YAML types", func(t *testing.T) {
+		evaluator := NewEvaluator()
+		feature := &ftproto.Feature{
+			Id:            "feature-1",
+			VariationType: ftproto.Feature_STRING,
+			UpdatedAt:     1234567890,
+		}
+		variation := &ftproto.Variation{
+			Id:    "var-1",
+			Value: "simple string",
+		}
+
+		result := evaluator.convertVariationValue(feature, variation)
+		assert.Equal(t, "simple string", result)
+
+		// Should not be in cache
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+		_, ok := evaluator.variationCache.Load(cacheKey)
+		assert.False(t, ok)
+	})
+}
+
+func TestYAMLToJSON(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		yamlInput   string
+		expected    string
+		expectedErr bool
+	}{
+		{
+			desc:        "Simple YAML",
+			yamlInput:   "key: value",
+			expected:    `{"key":"value"}`,
+			expectedErr: false,
+		},
+		{
+			desc: "Nested YAML",
+			yamlInput: `parent:
+  child: value
+  number: 42`,
+			expected:    `{"parent":{"child":"value","number":42}}`,
+			expectedErr: false,
+		},
+		{
+			desc: "YAML with array",
+			yamlInput: `list:
+  - item1
+  - item2
+  - item3`,
+			expected:    `{"list":["item1","item2","item3"]}`,
+			expectedErr: false,
+		},
+		{
+			desc: "YAML with mixed types",
+			yamlInput: `string: text
+number: 123
+float: 45.67
+boolean: true
+nullValue: null`,
+			expected:    `{"boolean":true,"float":45.67,"nullValue":null,"number":123,"string":"text"}`,
+			expectedErr: false,
+		},
+		{
+			desc: "YAML with comments",
+			yamlInput: `# Configuration file
+key: value
+# Number setting
+count: 42`,
+			expected:    `{"count":42,"key":"value"}`,
+			expectedErr: false,
+		},
+		{
+			desc:        "Invalid YAML",
+			yamlInput:   "invalid: yaml: [unclosed",
+			expected:    "",
+			expectedErr: true,
+		},
+		{
+			desc: "Top-level YAML array",
+			yamlInput: `- item1
+- item2
+- item3`,
+			expected:    `["item1","item2","item3"]`,
+			expectedErr: false,
+		},
+		{
+			desc: "Top-level YAML array with objects",
+			yamlInput: `- id: 1
+  name: First
+- id: 2
+  name: Second`,
+			expected:    `[{"id":1,"name":"First"},{"id":2,"name":"Second"}]`,
+			expectedErr: false,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result, err := yamlToJSON(p.yamlInput)
+
+			if p.expectedErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "failed to convert YAML to JSON")
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, p.expected, result)
+			}
+		})
+	}
+}
+
+func TestEvaluateWithYAMLVariation(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Evaluates YAML variation and converts to JSON", func(t *testing.T) {
+		evaluator := NewEvaluator()
+
+		// Create a feature with YAML variation type
+		feature := &ftproto.Feature{
+			Id:            "yaml-feature",
+			Name:          "YAML Feature",
+			Version:       1,
+			Enabled:       true,
+			VariationType: ftproto.Feature_YAML,
+			Variations: []*ftproto.Variation{
+				{
+					Id:   "yaml-var-1",
+					Name: "YAML Variation",
+					Value: `config:
+  enabled: true
+  maxRetries: 3
+  timeout: 30`,
+				},
+			},
+			DefaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
+					Variation: "yaml-var-1",
+				},
+			},
+		}
+
+		user := &userproto.User{Id: "user-1"}
+		result, err := evaluator.EvaluateFeatures(
+			[]*ftproto.Feature{feature},
+			user,
+			map[string][]*ftproto.SegmentUser{},
+			"",
+		)
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result.Evaluations, 1)
+
+		evaluation := result.Evaluations[0]
+		// Verify the value is converted to JSON
+		expectedJSON := `{"config":{"enabled":true,"maxRetries":3,"timeout":30}}`
+		assert.Equal(t, expectedJSON, evaluation.VariationValue)
+		assert.Equal(t, expectedJSON, evaluation.Variation.Value)
+	})
+
+	t.Run("Multiple evaluations with same YAML variation use cache", func(t *testing.T) {
+		evaluator := NewEvaluator()
+
+		yamlValue := `settings:
+  theme: dark
+  language: en`
+
+		feature := &ftproto.Feature{
+			Id:            "yaml-feature",
+			Name:          "YAML Feature",
+			Version:       1,
+			Enabled:       true,
+			CreatedAt:     1234567890,
+			UpdatedAt:     1234567890,
+			VariationType: ftproto.Feature_YAML,
+			Variations: []*ftproto.Variation{
+				{
+					Id:    "yaml-var-shared",
+					Name:  "Shared YAML Variation",
+					Value: yamlValue,
+				},
+			},
+			DefaultStrategy: &ftproto.Strategy{
+				Type: ftproto.Strategy_FIXED,
+				FixedStrategy: &ftproto.FixedStrategy{
+					Variation: "yaml-var-shared",
+				},
+			},
+		}
+
+		// Evaluate for first user
+		user1 := &userproto.User{Id: "user-1"}
+		result1, err1 := evaluator.EvaluateFeatures(
+			[]*ftproto.Feature{feature},
+			user1,
+			map[string][]*ftproto.SegmentUser{},
+			"",
+		)
+		require.NoError(t, err1)
+		require.Len(t, result1.Evaluations, 1)
+
+		// Evaluate for second user
+		user2 := &userproto.User{Id: "user-2"}
+		result2, err2 := evaluator.EvaluateFeatures(
+			[]*ftproto.Feature{feature},
+			user2,
+			map[string][]*ftproto.SegmentUser{},
+			"",
+		)
+		require.NoError(t, err2)
+		require.Len(t, result2.Evaluations, 1)
+
+		// Both should have the same converted JSON value
+		expectedJSON := `{"settings":{"language":"en","theme":"dark"}}`
+		assert.Equal(t, expectedJSON, result1.Evaluations[0].VariationValue)
+		assert.Equal(t, expectedJSON, result2.Evaluations[0].VariationValue)
+
+		// Verify cache was used (with correct key format: updatedAt:variationId)
+		cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, "yaml-var-shared")
+		cached, ok := evaluator.variationCache.Load(cacheKey)
+		assert.True(t, ok)
+		assert.Equal(t, expectedJSON, cached)
+	})
+}
+
+func TestEvaluate_YAMLConversion(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc                string
+		setupFunc           func() ([]*ftproto.Feature, *userproto.User)
+		expectedEvalCount   int
+		expectedVariationID string
+		validateValue       func(t *testing.T, value string)
+	}{
+		{
+			desc: "Evaluate function converts YAML to JSON for single feature",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				feature := &ftproto.Feature{
+					Id:            "yaml-feature-1",
+					Name:          "YAML Feature 1",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_YAML,
+					Variations: []*ftproto.Variation{
+						{
+							Id:   "yaml-var-a",
+							Name: "Config A",
+							Value: `# Application config
+app:
+  name: MyApp
+  version: 1.0.0
+  # Feature flags
+  features:
+    - login
+    - signup`,
+						},
+						{
+							Id:   "yaml-var-b",
+							Name: "Config B",
+							Value: `app:
+  name: MyApp
+  version: 2.0.0`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "yaml-var-a",
+						},
+					},
+				}
+				user := &userproto.User{Id: "test-user-1"}
+				return []*ftproto.Feature{feature}, user
+			},
+			expectedEvalCount:   1,
+			expectedVariationID: "yaml-var-a",
+			validateValue: func(t *testing.T, value string) {
+				// Verify it's valid JSON
+				var jsonData map[string]interface{}
+				err := json.Unmarshal([]byte(value), &jsonData)
+				assert.NoError(t, err, "Should be valid JSON")
+
+				// Verify structure
+				assert.Contains(t, jsonData, "app")
+				app := jsonData["app"].(map[string]interface{})
+				assert.Equal(t, "MyApp", app["name"])
+				assert.Equal(t, "1.0.0", app["version"])
+				assert.Contains(t, app, "features")
+			},
+		},
+		{
+			desc: "Evaluate function with multiple YAML features",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				feature1 := &ftproto.Feature{
+					Id:            "yaml-feature-1",
+					Name:          "YAML Feature 1",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_YAML,
+					Variations: []*ftproto.Variation{
+						{
+							Id:   "yaml-var-1",
+							Name: "Config 1",
+							Value: `database:
+  host: localhost
+  port: 5432`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "yaml-var-1",
+						},
+					},
+				}
+				feature2 := &ftproto.Feature{
+					Id:            "yaml-feature-2",
+					Name:          "YAML Feature 2",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_YAML,
+					Variations: []*ftproto.Variation{
+						{
+							Id:   "yaml-var-2",
+							Name: "Config 2",
+							Value: `cache:
+  enabled: true
+  ttl: 3600`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "yaml-var-2",
+						},
+					},
+				}
+				user := &userproto.User{Id: "test-user-2"}
+				return []*ftproto.Feature{feature1, feature2}, user
+			},
+			expectedEvalCount: 2,
+			validateValue: func(t *testing.T, value string) {
+				var jsonData map[string]interface{}
+				err := json.Unmarshal([]byte(value), &jsonData)
+				assert.NoError(t, err, "Should be valid JSON")
+			},
+		},
+		{
+			desc: "Evaluate function with mixed variation types (YAML and non-YAML)",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				yamlFeature := &ftproto.Feature{
+					Id:            "yaml-feature",
+					Name:          "YAML Feature",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_YAML,
+					Variations: []*ftproto.Variation{
+						{
+							Id:   "yaml-var",
+							Name: "YAML Config",
+							Value: `enabled: true
+timeout: 30`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "yaml-var",
+						},
+					},
+				}
+				stringFeature := &ftproto.Feature{
+					Id:            "string-feature",
+					Name:          "String Feature",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_STRING,
+					Variations: []*ftproto.Variation{
+						{
+							Id:    "string-var",
+							Name:  "String Value",
+							Value: "simple-string",
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "string-var",
+						},
+					},
+				}
+				jsonFeature := &ftproto.Feature{
+					Id:            "json-feature",
+					Name:          "JSON Feature",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_JSON,
+					Variations: []*ftproto.Variation{
+						{
+							Id:    "json-var",
+							Name:  "JSON Value",
+							Value: `{"key":"value"}`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "json-var",
+						},
+					},
+				}
+				user := &userproto.User{Id: "test-user-3"}
+				return []*ftproto.Feature{yamlFeature, stringFeature, jsonFeature}, user
+			},
+			expectedEvalCount: 3,
+			validateValue: func(t *testing.T, value string) {
+				// All values should be returned as-is or converted appropriately
+				assert.NotEmpty(t, value)
+			},
+		},
+		{
+			desc: "Evaluate function caches YAML conversion across multiple calls",
+			setupFunc: func() ([]*ftproto.Feature, *userproto.User) {
+				feature := &ftproto.Feature{
+					Id:            "cached-yaml-feature",
+					Name:          "Cached YAML Feature",
+					Version:       1,
+					Enabled:       true,
+					VariationType: ftproto.Feature_YAML,
+					Variations: []*ftproto.Variation{
+						{
+							Id:   "cached-yaml-var",
+							Name: "Cached Config",
+							Value: `settings:
+  theme: dark
+  language: en
+  notifications:
+    email: true
+    push: false`,
+						},
+					},
+					DefaultStrategy: &ftproto.Strategy{
+						Type: ftproto.Strategy_FIXED,
+						FixedStrategy: &ftproto.FixedStrategy{
+							Variation: "cached-yaml-var",
+						},
+					},
+				}
+				user := &userproto.User{Id: "test-user-4"}
+				return []*ftproto.Feature{feature}, user
+			},
+			expectedEvalCount:   1,
+			expectedVariationID: "cached-yaml-var",
+			validateValue: func(t *testing.T, value string) {
+				expectedJSON := `{"settings":{"language":"en","notifications":{"email":true,"push":false},"theme":"dark"}}`
+				assert.Equal(t, expectedJSON, value)
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			features, user := p.setupFunc()
+
+			// First evaluation
+			result1, err := evaluator.EvaluateFeatures(
+				features,
+				user,
+				map[string][]*ftproto.SegmentUser{},
+				"",
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, result1)
+			require.Len(t, result1.Evaluations, p.expectedEvalCount)
+
+			// Validate each evaluation
+			for _, eval := range result1.Evaluations {
+				// Check that variation value is set
+				assert.NotEmpty(t, eval.VariationValue)
+
+				// Check that Variation.Value is also set correctly
+				assert.Equal(t, eval.VariationValue, eval.Variation.Value)
+
+				// Run custom validation if provided
+				if p.validateValue != nil {
+					p.validateValue(t, eval.VariationValue)
+				}
+
+				// If it's a YAML feature, ensure it's valid JSON
+				for _, f := range features {
+					if f.Id == eval.FeatureId && f.VariationType == ftproto.Feature_YAML {
+						var jsonData interface{}
+						err := json.Unmarshal([]byte(eval.VariationValue), &jsonData)
+						assert.NoError(t, err, "YAML should be converted to valid JSON")
+					}
+				}
+			}
+
+			// Second evaluation with same features (should use cache)
+			result2, err := evaluator.EvaluateFeatures(
+				features,
+				user,
+				map[string][]*ftproto.SegmentUser{},
+				"",
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, result2)
+
+			// Results should be identical (compare by feature ID)
+			for _, eval2 := range result2.Evaluations {
+				// Find matching evaluation in result1
+				for _, eval1 := range result1.Evaluations {
+					if eval1.FeatureId == eval2.FeatureId {
+						assert.Equal(t, eval1.VariationValue, eval2.VariationValue,
+							"Values should match for feature %s", eval1.FeatureId)
+						break
+					}
+				}
+			}
 		})
 	}
 }

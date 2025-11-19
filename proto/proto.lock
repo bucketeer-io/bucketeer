@@ -31951,6 +31951,10 @@
               {
                 "name": "JSON",
                 "integer": 3
+              },
+              {
+                "name": "YAML",
+                "integer": 4
               }
             ]
           }
