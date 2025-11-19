@@ -48,5 +48,4 @@ var (
 	statusSearchFilterIDIsEmpty                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "search filter ID is empty", "search_filter_ID"))
 	statusSearchFilterIDNotFound                 = api.NewGRPCStatus(pkgErr.NewErrorNotFound(pkgErr.AccountPackageName, "search filter not found", "search_filter"))
 	statusInvalidListAPIKeyRequest               = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "invalid list api key request", "list_api_key_request"))
-	statusInvalidLastUsedAt                      = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "last used at is invalid", "last_used_at"))
 )
