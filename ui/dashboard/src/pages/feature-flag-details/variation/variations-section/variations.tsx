@@ -274,7 +274,7 @@ const Variations = ({
             <VariationLabel index={variationIndex} />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
-                {!isJSON && (
+                {!isJSON && !isYAML && (
                   <Form.Field
                     control={control}
                     name={`variations.${variationIndex}.value`}
