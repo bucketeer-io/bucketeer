@@ -372,3 +372,162 @@ func TestGRPCReadyAffectedByStop(t *testing.T) {
 		})
 	}
 }
+
+func TestStopPreventsCheckFromSettingHealthy(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc             string
+		setupFunc        func() *restChecker
+		expectedStatus   int
+		expectedStopped  bool
+		expectedInternal Status
+	}{
+		{
+			desc: "check() after Stop() does not override status to Healthy",
+			setupFunc: func() *restChecker {
+				healthyCheck := func(ctx context.Context) Status {
+					return Healthy
+				}
+				c := NewRestChecker(version, service, WithCheck("healthy", healthyCheck))
+				c.check(context.Background())
+				return c
+			},
+			expectedStatus:   http.StatusServiceUnavailable,
+			expectedStopped:  true,
+			expectedInternal: Unhealthy,
+		},
+		{
+			desc: "multiple check() calls after Stop() remain Unhealthy",
+			setupFunc: func() *restChecker {
+				healthyCheck := func(ctx context.Context) Status {
+					return Healthy
+				}
+				c := NewRestChecker(version, service, WithCheck("healthy", healthyCheck))
+				c.check(context.Background())
+				return c
+			},
+			expectedStatus:   http.StatusServiceUnavailable,
+			expectedStopped:  true,
+			expectedInternal: Unhealthy,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			checker := p.setupFunc()
+
+			// Verify initial state is healthy
+			if checker.getStatus() != Healthy {
+				t.Errorf("Initial state should be Healthy, got %v", checker.getStatus())
+			}
+
+			// Call Stop()
+			checker.Stop()
+
+			// Verify stopped flag is set
+			if !checker.isStopped() {
+				t.Error("Expected isStopped() to be true after Stop()")
+			}
+
+			// Verify status is Unhealthy
+			if checker.getStatus() != Unhealthy {
+				t.Errorf("Expected status to be Unhealthy after Stop(), got %v", checker.getStatus())
+			}
+
+			// Call check() to simulate the race condition
+			// This should NOT override the status back to Healthy
+			checker.check(context.Background())
+
+			// Verify status remains Unhealthy
+			if checker.getStatus() != p.expectedInternal {
+				t.Errorf("Expected status to remain %v after check(), got %v",
+					p.expectedInternal, checker.getStatus())
+			}
+
+			// Verify HTTP response is 503
+			req := httptest.NewRequest("GET", fmt.Sprintf("%s%s%s", version, service, readyPath), nil)
+			resp := httptest.NewRecorder()
+			checker.ServeReadyHTTP(resp, req)
+			if resp.Code != p.expectedStatus {
+				t.Errorf("Expected HTTP status %d, got %d", p.expectedStatus, resp.Code)
+			}
+
+			// Call check() multiple times to ensure it stays Unhealthy
+			for i := 0; i < 5; i++ {
+				checker.check(context.Background())
+				if checker.getStatus() != p.expectedInternal {
+					t.Errorf("After %d check() calls, expected status %v, got %v",
+						i+1, p.expectedInternal, checker.getStatus())
+				}
+			}
+		})
+	}
+}
+
+func TestStopWithRunningGoroutine(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc          string
+		setupFunc     func() (*restChecker, context.CancelFunc)
+		expectedErr   error
+		expectedFinal int
+	}{
+		{
+			desc: "Stop() prevents Run() goroutine from setting status to Healthy",
+			setupFunc: func() (*restChecker, context.CancelFunc) {
+				healthyCheck := func(ctx context.Context) Status {
+					return Healthy
+				}
+				c := NewRestChecker(version, service,
+					WithCheck("healthy", healthyCheck),
+					WithInterval(10*time.Millisecond))
+				ctx, cancel := context.WithCancel(context.Background())
+				go c.Run(ctx)
+				// Wait for first check to complete
+				time.Sleep(50 * time.Millisecond)
+				return c, cancel
+			},
+			expectedErr:   nil,
+			expectedFinal: http.StatusServiceUnavailable,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			checker, cancel := p.setupFunc()
+			defer cancel()
+
+			// Verify initial state is healthy
+			if checker.getStatus() != Healthy {
+				t.Errorf("Initial state should be Healthy, got %v", checker.getStatus())
+			}
+
+			// Call Stop() while Run() goroutine is still running
+			checker.Stop()
+
+			// Verify status is immediately Unhealthy
+			if checker.getStatus() != Unhealthy {
+				t.Errorf("Expected status to be Unhealthy immediately after Stop(), got %v",
+					checker.getStatus())
+			}
+
+			// Wait for multiple check intervals to pass
+			// The Run() goroutine should NOT override status back to Healthy
+			time.Sleep(100 * time.Millisecond)
+
+			// Verify status remains Unhealthy
+			if checker.getStatus() != Unhealthy {
+				t.Errorf("Expected status to remain Unhealthy after waiting, got %v",
+					checker.getStatus())
+			}
+
+			// Verify HTTP response is 503
+			req := httptest.NewRequest("GET", fmt.Sprintf("%s%s%s", version, service, readyPath), nil)
+			resp := httptest.NewRecorder()
+			checker.ServeReadyHTTP(resp, req)
+			if resp.Code != p.expectedFinal {
+				t.Errorf("Expected HTTP status %d, got %d", p.expectedFinal, resp.Code)
+			}
+		})
+	}
+}

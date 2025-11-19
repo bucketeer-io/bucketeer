@@ -21,15 +21,12 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -51,84 +48,7 @@ func (s *NotificationService) CreateSubscription(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.createSubscriptionNoCommand(ctx, req, localizer, editor)
-	}
-
 	if err := s.validateCreateSubscriptionRequest(req, localizer); err != nil {
-		return nil, err
-	}
-	subscription, err := domain.NewSubscription(
-		req.Command.Name,
-		req.Command.SourceTypes,
-		req.Command.Recipient,
-		req.Command.FeatureFlagTags,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new subscription",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.Any("sourceType", req.Command.SourceTypes),
-				zap.Any("recipient", req.Command.Recipient),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	handler := command.NewEmptySubscriptionCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId); err != nil {
-			return err
-		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to create subscription",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &notificationproto.CreateSubscriptionResponse{}, nil
-}
-
-func (s *NotificationService) createSubscriptionNoCommand(
-	ctx context.Context,
-	req *notificationproto.CreateSubscriptionRequest,
-	localizer locale.Localizer,
-	editor *eventproto.Editor,
-) (*notificationproto.CreateSubscriptionResponse, error) {
-	if err := s.validateCreateSubscriptionNoCommandRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	subscription, err := domain.NewSubscription(
@@ -227,41 +147,11 @@ func (s *NotificationService) UpdateSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if s.isNoUpdateSubscriptionCommand(req) {
-		return s.updateSubscriptionNoCommand(ctx, req, localizer, editor)
-	}
-
 	if err := s.validateUpdateSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	commands := s.createUpdateSubscriptionCommands(req)
-	if err := s.updateSubscription(ctx, commands, req.Id, req.EnvironmentId, editor, localizer); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to update subscription",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("id", req.Id),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &notificationproto.UpdateSubscriptionResponse{}, nil
-}
 
-func (s *NotificationService) updateSubscriptionNoCommand(
-	ctx context.Context,
-	req *notificationproto.UpdateSubscriptionRequest,
-	localizer locale.Localizer,
-	editor *eventproto.Editor,
-) (*notificationproto.UpdateSubscriptionResponse, error) {
-	if err := s.validateUpdateSubscriptionNoCommandRequest(req, localizer); err != nil {
-		return nil, err
-	}
-
-	updatedSubscription, err := s.updateSubscriptionMySQLNoCommand(
+	updatedSubscription, err := s.updateSubscriptionMySQL(
 		ctx,
 		req.Id,
 		req.EnvironmentId,
@@ -281,142 +171,7 @@ func (s *NotificationService) updateSubscriptionNoCommand(
 	}, nil
 }
 
-func (s *NotificationService) EnableSubscription(
-	ctx context.Context,
-	req *notificationproto.EnableSubscriptionRequest,
-) (*notificationproto.EnableSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-		localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateEnableSubscriptionRequest(req, localizer); err != nil {
-		return nil, err
-	}
-	if err := s.updateSubscription(
-		ctx,
-		[]command.Command{req.Command},
-		req.Id,
-		req.EnvironmentId,
-		editor,
-		localizer,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to enable subscription",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &notificationproto.EnableSubscriptionResponse{}, nil
-}
-
-func (s *NotificationService) DisableSubscription(
-	ctx context.Context,
-	req *notificationproto.DisableSubscriptionRequest,
-) (*notificationproto.DisableSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-		localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateDisableSubscriptionRequest(req, localizer); err != nil {
-		return nil, err
-	}
-	if err := s.updateSubscription(
-		ctx,
-		[]command.Command{req.Command},
-		req.Id,
-		req.EnvironmentId,
-		editor,
-		localizer,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to disable subscription",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &notificationproto.DisableSubscriptionResponse{}, nil
-}
-
-func (s *NotificationService) updateSubscription(
-	ctx context.Context,
-	commands []command.Command,
-	id, environmentId string,
-	editor *eventproto.Editor,
-	localizer locale.Localizer,
-) error {
-	handler := command.NewEmptySubscriptionCommandHandler()
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, id, environmentId)
-		if err != nil {
-			return err
-		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, environmentId)
-		if err != nil {
-			return err
-		}
-		for _, command := range commands {
-			if err := handler.Handle(ctx, command); err != nil {
-				return err
-			}
-		}
-		if err = s.subscriptionStorage.UpdateSubscription(contextWithTx, subscription, environmentId); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		s.logger.Error(
-			"Failed to update subscription",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", id),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", environmentId),
-				zap.String("id", id),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
-func (s *NotificationService) updateSubscriptionMySQLNoCommand(
+func (s *NotificationService) updateSubscriptionMySQL(
 	ctx context.Context,
 	ID, environmentID string,
 	name *wrapperspb.StringValue,
@@ -496,13 +251,6 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	return updatedSubscription, nil
 }
 
-func (s *NotificationService) isNoUpdateSubscriptionCommand(req *notificationproto.UpdateSubscriptionRequest) bool {
-	return req.AddSourceTypesCommand == nil &&
-		req.DeleteSourceTypesCommand == nil &&
-		req.RenameSubscriptionCommand == nil &&
-		req.UpdateSubscriptionFeatureTagsCommand == nil
-}
-
 func (s *NotificationService) DeleteSubscription(
 	ctx context.Context,
 	req *notificationproto.DeleteSubscriptionRequest,
@@ -575,25 +323,6 @@ func (s *NotificationService) DeleteSubscription(
 		return nil, err
 	}
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
-}
-
-func (s *NotificationService) createUpdateSubscriptionCommands(
-	req *notificationproto.UpdateSubscriptionRequest,
-) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.AddSourceTypesCommand != nil {
-		commands = append(commands, req.AddSourceTypesCommand)
-	}
-	if req.DeleteSourceTypesCommand != nil {
-		commands = append(commands, req.DeleteSourceTypesCommand)
-	}
-	if req.RenameSubscriptionCommand != nil {
-		commands = append(commands, req.RenameSubscriptionCommand)
-	}
-	if req.UpdateSubscriptionFeatureTagsCommand != nil {
-		commands = append(commands, req.UpdateSubscriptionFeatureTagsCommand)
-	}
-	return commands
 }
 
 func (s *NotificationService) GetSubscription(

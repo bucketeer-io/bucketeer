@@ -8,6 +8,7 @@ import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, APIKeyRole, Environment } from '@types';
@@ -30,6 +31,7 @@ interface APIKeyCreateUpdateModalProps {
   apiKeyEnvironmentId: string;
   environments: Environment[];
   apiKey?: APIKey;
+  resetApiKey: () => void;
   onClose: () => void;
 }
 
@@ -54,6 +56,7 @@ const APIKeyCreateUpdateModal = ({
   apiKeyEnvironmentId,
   apiKey,
   environments,
+  resetApiKey,
   onClose
 }: APIKeyCreateUpdateModalProps) => {
   const queryClient = useQueryClient();
@@ -79,7 +82,7 @@ const APIKeyCreateUpdateModal = ({
     values: {
       name: apiKey?.name || '',
       environmentId: apiKey ? apiKeyEnvironmentId || emptyEnvironmentId : '',
-      description: apiKey?.description,
+      description: apiKey?.description || '',
       role: apiKey?.role || 'SDK_CLIENT'
     }
   });
@@ -87,6 +90,13 @@ const APIKeyCreateUpdateModal = ({
   const {
     formState: { isValid, isSubmitting, isDirty }
   } = form;
+
+  const handleClose = (forceReset?: boolean) => {
+    if (forceReset || !form.formState.isDirty) {
+      resetApiKey();
+    }
+    onClose();
+  };
 
   const onSubmit: SubmitHandler<APIKeyCreateUpdateForm> = useCallback(
     async values => {
@@ -116,17 +126,22 @@ const APIKeyCreateUpdateModal = ({
           })
         });
         invalidateAPIKeys(queryClient);
-        onClose();
+        handleClose(true);
       }
     },
     [apiKey, isEditApiKey]
   );
 
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting,
+    callBackCancel: resetApiKey
+  });
+
   return (
     <SlideModal
       title={t(isEditApiKey ? 'update-api-key' : 'new-api-key')}
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
     >
       {isLoadingApiKey ? (
         <FormLoading />
@@ -246,7 +261,11 @@ const APIKeyCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleClose()}
+                    >
                       {t(`cancel`)}
                     </Button>
                   }

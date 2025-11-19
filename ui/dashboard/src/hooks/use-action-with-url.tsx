@@ -14,12 +14,16 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = location;
+  const lastPath = useMemo(() => {
+    const paths = location.pathname.split('/').filter(Boolean);
+    return paths[paths.length - 1];
+  }, [location.pathname]);
 
-  const isAdd = useMemo(() => path === ID_NEW, [path]);
+  const isAdd = useMemo(() => lastPath === ID_NEW, [lastPath]);
   const isClone = useMemo(() => path?.includes('clone'), [path]);
   const isEdit = useMemo(
-    () => path && !isAdd && !isClone,
-    [path, isAdd, isClone]
+    () => id && path && !isAdd && !isClone,
+    [path, isAdd, isClone, idKey]
   );
 
   const onOpenAddModal = useCallback(

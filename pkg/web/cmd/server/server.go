@@ -23,12 +23,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v2"
-
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
 
 	accountapi "github.com/bucketeer-io/bucketeer/v2/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -861,15 +860,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer func() {
 		shutdownStartTime := time.Now()
 
-		// Wait for K8s endpoint propagation
-		// This prevents "context deadline exceeded" errors during high traffic.
-		time.Sleep(propagationDelay)
-
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
-		healthcheckServer.Stop(5 * time.Second)
+		// IMPORTANT: Stop the health checker FIRST before stopping the HTTP server
+		// to prevent race condition where health checks return 200 during shutdown
 		restHealthChecker.Stop()
+		healthcheckServer.Stop(5 * time.Second)
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
 
 		// Stop REST servers in parallel (these call gRPC servers internally)
 		// Stop these first to drain REST traffic before stopping gRPC

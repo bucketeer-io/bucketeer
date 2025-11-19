@@ -1,4 +1,5 @@
 import axiosClient from '@api/axios-client';
+import { Language } from 'i18n';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
 
 export interface EnvironmentRoleItem {
@@ -13,6 +14,7 @@ export interface AccountCreatorPayload {
   environmentRoles?: EnvironmentRoleItem[];
   tags?: string[];
   teams?: string[];
+  language?: Language;
 }
 
 export interface AccountCreatorResponse {

@@ -24,6 +24,7 @@ import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import useFormSchema from 'hooks/use-form-schema';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { IconInfo, IconPlus } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
@@ -165,10 +166,12 @@ const ExperimentCreateUpdateModal = ({
 
   const goalOptions = useMemo(() => {
     return (
-      goalCollection?.goals?.map(item => ({
-        label: item.name,
-        value: item.id
-      })) || []
+      goalCollection?.goals
+        ?.filter(item => !item.archived && item.connectionType !== 'OPERATION')
+        .map(item => ({
+          label: item.name,
+          value: item.id
+        })) || []
     );
   }, [goalCollection]);
 
@@ -220,6 +223,10 @@ const ExperimentCreateUpdateModal = ({
     watch,
     formState: { isDirty, isSubmitting }
   } = form;
+
+  useUnsavedLeavePage({
+    isShow: isDirty && !isSubmitting
+  });
   const featureId = watch('featureId');
 
   const variationOptions = useMemo(
@@ -260,13 +267,15 @@ const ExperimentCreateUpdateModal = ({
           description
         } = values;
         let resp: ExperimentCreateUpdateResponse | null = null;
+        const formatStartAt = Math.floor(Number(startAt)).toString();
+        const formatStopAt = Math.floor(Number(stopAt)).toString();
         if (isEdit) {
           resp = await experimentUpdater({
             id,
             name,
             description,
-            startAt,
-            stopAt,
+            startAt: formatStartAt,
+            stopAt: formatStopAt,
             environmentId: currentEnvironment.id
           });
         } else {
@@ -275,8 +284,8 @@ const ExperimentCreateUpdateModal = ({
             featureId,
             goalIds,
             name,
-            startAt,
-            stopAt,
+            startAt: formatStartAt,
+            stopAt: formatStopAt,
             description,
             environmentId: currentEnvironment.id
           });
@@ -703,7 +712,7 @@ const ExperimentCreateUpdateModal = ({
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
                   primaryButton={
-                    <Button variant="secondary" onClick={onClose}>
+                    <Button type="button" variant="secondary" onClick={onClose}>
                       {t(`common:cancel`)}
                     </Button>
                   }

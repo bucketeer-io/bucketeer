@@ -6916,7 +6916,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - push
@@ -13225,13 +13225,6 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/SubscriptionSourceType'
-  notificationAddSourceTypesCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
   notificationCreateAdminSubscriptionCommand:
     type: object
     properties:
@@ -13245,26 +13238,9 @@ definitions:
         type: string
   notificationCreateAdminSubscriptionResponse:
     type: object
-  notificationCreateSubscriptionCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-      recipient:
-        $ref: '#/definitions/notificationRecipient'
-      name:
-        type: string
-      featureFlagTags:
-        type: array
-        items:
-          type: string
   notificationCreateSubscriptionRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/notificationCreateSubscriptionCommand'
       environmentId:
         type: string
       name:
@@ -13300,32 +13276,15 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/SubscriptionSourceType'
-  notificationDeleteSourceTypesCommand:
-    type: object
-    properties:
-      sourceTypes:
-        type: array
-        items:
-          $ref: '#/definitions/SubscriptionSourceType'
-  notificationDeleteSubscriptionCommand:
-    type: object
   notificationDeleteSubscriptionResponse:
     type: object
   notificationDisableAdminSubscriptionCommand:
     type: object
   notificationDisableAdminSubscriptionResponse:
     type: object
-  notificationDisableSubscriptionCommand:
-    type: object
-  notificationDisableSubscriptionResponse:
-    type: object
   notificationEnableAdminSubscriptionCommand:
     type: object
   notificationEnableAdminSubscriptionResponse:
-    type: object
-  notificationEnableSubscriptionCommand:
-    type: object
-  notificationEnableSubscriptionResponse:
     type: object
   notificationGetAdminSubscriptionResponse:
     type: object
@@ -13432,11 +13391,6 @@ definitions:
     properties:
       name:
         type: string
-  notificationRenameSubscriptionCommand:
-    type: object
-    properties:
-      name:
-        type: string
   notificationSlackChannelRecipient:
     type: object
     properties:
@@ -13473,27 +13427,11 @@ definitions:
           type: string
   notificationUpdateAdminSubscriptionResponse:
     type: object
-  notificationUpdateSubscriptionFeatureFlagTagsCommand:
-    type: object
-    properties:
-      featureFlagTags:
-        type: array
-        items:
-          type: string
   notificationUpdateSubscriptionRequest:
     type: object
     properties:
       id:
         type: string
-      addSourceTypesCommand:
-        $ref: '#/definitions/notificationAddSourceTypesCommand'
-        description: deprecated. use source_types instead.
-      deleteSourceTypesCommand:
-        $ref: '#/definitions/notificationDeleteSourceTypesCommand'
-        description: deprecated. use source_types instead.
-      renameSubscriptionCommand:
-        $ref: '#/definitions/notificationRenameSubscriptionCommand'
-        description: deprecated. use name instead.
       environmentId:
         type: string
       sourceTypes:
@@ -13510,9 +13448,6 @@ definitions:
         type: array
         items:
           type: string
-      updateSubscriptionFeatureTagsCommand:
-        $ref: '#/definitions/notificationUpdateSubscriptionFeatureFlagTagsCommand'
-        description: Deprecated. Use feature_flag_tags instead.
     required:
       - id
       - environmentId
@@ -13641,30 +13576,9 @@ definitions:
             "@type": "type.googleapis.com/google.protobuf.Duration",
             "value": "1.212s"
           }
-  pushAddPushTagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
-  pushCreatePushCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
-      fcmServiceAccount:
-        type: string
-        format: byte
   pushCreatePushRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/pushCreatePushCommand'
       tags:
         type: array
         items:
@@ -13681,17 +13595,8 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
-  pushDeletePushCommand:
-    type: object
   pushDeletePushResponse:
     type: object
-  pushDeletePushTagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
   pushGetPushResponse:
     type: object
     properties:
@@ -13753,22 +13658,11 @@ definitions:
         type: string
       environmentName:
         type: string
-  pushRenamePushCommand:
-    type: object
-    properties:
-      name:
-        type: string
   pushUpdatePushRequest:
     type: object
     properties:
       id:
         type: string
-      addPushTagsCommand:
-        $ref: '#/definitions/pushAddPushTagsCommand'
-      deletePushTagsCommand:
-        $ref: '#/definitions/pushDeletePushTagsCommand'
-      renamePushCommand:
-        $ref: '#/definitions/pushRenamePushCommand'
       tags:
         type: array
         items:

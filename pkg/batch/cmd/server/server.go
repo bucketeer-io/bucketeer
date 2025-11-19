@@ -434,10 +434,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		childRedisClients = append(childRedisClients, client)
 		nonPersistentRedisCaches = append(nonPersistentRedisCaches, cachev3.NewRedisCache(client))
 	}
-	// TODO: To be removed after checked it works
-	logger.Debug("Redis main address", zap.String("address", *s.nonPersistentRedisAddr))
-	logger.Debug("Redis child addresses", zap.Strings("addresses", *s.nonPersistentChildRedisAddresses))
-	logger.Debug("Redis non persistent cache size", zap.Int("size", len(nonPersistentRedisCaches)))
 
 	// batchClient
 	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,
@@ -632,14 +628,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer func() {
 		shutdownStartTime := time.Now()
 
-		// Wait for K8s endpoint propagation
-		// This prevents "context deadline exceeded" errors during high traffic.
-		time.Sleep(propagationDelay)
-
 		// Mark as unhealthy so readiness probes fail
 		// This ensures Kubernetes readiness probe fails on next check,
 		// preventing new traffic from being routed to this pod.
 		healthChecker.Stop()
+
+		// Wait for K8s endpoint propagation
+		// This prevents "context deadline exceeded" errors during high traffic.
+		time.Sleep(propagationDelay)
 
 		// Gracefully stop gRPC Gateway (calls the gRPC server internally)
 		batchGateway.Stop(serverShutDownTimeout)

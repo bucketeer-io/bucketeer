@@ -171,7 +171,7 @@ func defaultOptions() *options {
 		dialTimeout:  5 * time.Second,
 		poolSize:     10,
 		minIdleConns: 5,
-		poolTimeout:  5 * time.Second,
+		poolTimeout:  30 * time.Second,
 		logger:       zap.NewNop(),
 	}
 }

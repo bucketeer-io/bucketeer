@@ -57,5 +57,7 @@
   "demo-not-available": "現在、デモ機能はご利用いただけません。",
   "demo-available": "Googleで認証してデモをスタート！",
   "demo-privacy-description": "デモの利用状況を分析し、必要に応じてBucketeerに関するご意見を伺うため、お名前とメールアドレスを収集しています。.<br />ご提供いただいた情報を第三者に共有することはありません。ご質問や情報の削除をご希望の場合は、<comp>Slack</comp>からご連絡ください。",
-  "required-agreement-terms": "利用規約およびプライバシーポリシーへの同意が必要です。"
+  "required-agreement-terms": "利用規約およびプライバシーポリシーへの同意が必要です。",
+  "leave-page-unsaved-changes": "未保存の変更があります",
+  "leave-page-unsaved-changes-content": "このページを離れると、変更内容が失われます。"
 }

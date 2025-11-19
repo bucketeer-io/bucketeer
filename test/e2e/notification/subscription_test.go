@@ -53,7 +53,7 @@ var (
 	testID           = flag.String("test-id", "", "test ID")
 )
 
-func TestCreateListSubscriptionNoCommand(t *testing.T) {
+func TestCreateListSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -75,7 +75,7 @@ func TestCreateListSubscriptionNoCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscriptionNoCommand(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
+	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
 	var subscription *proto.Subscription
 	subscriptions := listSubscriptionsByOrganizationID(
 		t,
@@ -122,7 +122,7 @@ func TestCreateListSubscriptionNoCommand(t *testing.T) {
 	}
 }
 
-func TestCreateUpdateSubscriptionNoCommand(t *testing.T) {
+func TestCreateUpdateSubscription(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -144,7 +144,7 @@ func TestCreateUpdateSubscriptionNoCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	createSubscriptionNoCommand(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
+	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
 
 	updatedName := fmt.Sprintf("%s-updated-name-%s", prefixTestName, newUUID(t))
 	updatedSourceTypes := []proto.Subscription_SourceType{
@@ -257,7 +257,6 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -332,7 +331,6 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -346,171 +344,6 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 		if st.Code() != codes.NotFound {
 			t.Fatal(err)
 		}
-	}
-}
-
-func TestUpdateSubscription(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	notificationClient := newNotificationClient(t)
-	defer notificationClient.Close()
-
-	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
-	sourceTypes := []proto.Subscription_SourceType{
-		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-		proto.Subscription_DOMAIN_EVENT_FEATURE,
-	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
-	recipient := &proto.Recipient{
-		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
-	}
-	featureFlagTags := []string{"android", "ios"}
-	id, err := domain.ID(recipient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
-	updatedFeatureFlagTags := []string{"android", "ios", "web"}
-	_, err = notificationClient.UpdateSubscription(ctx, &proto.UpdateSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-		AddSourceTypesCommand: &proto.AddSourceTypesCommand{
-			SourceTypes: []proto.Subscription_SourceType{
-				proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
-			},
-		},
-		DeleteSourceTypesCommand: &proto.DeleteSourceTypesCommand{
-			SourceTypes: []proto.Subscription_SourceType{
-				proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-			},
-		},
-		UpdateSubscriptionFeatureTagsCommand: &proto.UpdateSubscriptionFeatureFlagTagsCommand{
-			FeatureFlagTags: updatedFeatureFlagTags,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp, err := notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	subscription := resp.Subscription
-	if subscription == nil {
-		t.Fatalf("Subscription not found")
-	}
-	if subscription.Name != name {
-		t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
-	}
-	if len(subscription.SourceTypes) != 2 {
-		t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 2, len(subscription.SourceTypes))
-	}
-	var foundFeature, foundAdminAccount bool
-	for _, sourceType := range subscription.SourceTypes {
-		if sourceType == proto.Subscription_DOMAIN_EVENT_FEATURE {
-			foundFeature = true
-		}
-		if sourceType == proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT {
-			foundAdminAccount = true
-		}
-	}
-	if !foundFeature || !foundAdminAccount {
-		expected := []proto.Subscription_SourceType{
-			proto.Subscription_DOMAIN_EVENT_FEATURE,
-			proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
-		}
-		t.Fatalf("Incorrect notification type. Expected: %v actual: %sv", expected, subscription.SourceTypes)
-	}
-	if !reflect.DeepEqual(subscription.FeatureFlagTags, updatedFeatureFlagTags) {
-		t.Fatalf("Incorrect tags. Expected: %v actual: %s", updatedFeatureFlagTags, subscription.FeatureFlagTags)
-	}
-	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
-		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
-	}
-	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
-		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
-	}
-	if subscription.Disabled != false {
-		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
-	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-		Command:       &proto.DeleteSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-	})
-	if err != nil {
-		st, _ := status.FromError(err)
-		if st.Code() != codes.NotFound {
-			t.Fatal(err)
-		}
-	}
-}
-
-func TestListEnabledSubscriptions(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	notificationClient := newNotificationClient(t)
-	defer notificationClient.Close()
-
-	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
-	sourceTypes := []proto.Subscription_SourceType{
-		proto.Subscription_MAU_COUNT,
-		proto.Subscription_DOMAIN_EVENT_FEATURE,
-	}
-	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
-	recipient := &proto.Recipient{
-		Type:                  proto.Recipient_SlackChannel,
-		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
-	}
-	featureFlagTags := []string{"android", "ios"}
-	id, err := domain.ID(recipient)
-	if err != nil {
-		t.Fatal(err)
-	}
-	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient, featureFlagTags)
-	_, err = notificationClient.DisableSubscription(ctx, &proto.DisableSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-		Command:       &proto.DisableSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	subscriptions := listEnabledSubscriptions(
-		t,
-		notificationClient,
-		[]proto.Subscription_SourceType{proto.Subscription_MAU_COUNT},
-	)
-	var contains bool
-	for _, s := range subscriptions {
-		if s.Id == id {
-			contains = true
-			break
-		}
-	}
-	if contains {
-		t.Fatal("List enabled subscriptions include disabled subscription")
-	}
-	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Id:            id,
-		Command:       &proto.DeleteSubscriptionCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 
@@ -540,40 +373,6 @@ func newUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id.String()
-}
-
-func createSubscription(
-	ctx context.Context,
-	t *testing.T,
-	client notificationclient.Client,
-	name string,
-	sourceTypes []proto.Subscription_SourceType,
-	recipient *proto.Recipient,
-	featureFlagTags []string) {
-
-	t.Helper()
-	cmd := newCreateSubscriptionCommand(name, sourceTypes, recipient, featureFlagTags)
-	createReq := &proto.CreateSubscriptionRequest{
-		EnvironmentId: *environmentID,
-		Command:       cmd,
-	}
-	if _, err := client.CreateSubscription(ctx, createReq); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func newCreateSubscriptionCommand(
-	name string,
-	sourceTypes []proto.Subscription_SourceType,
-	recipient *proto.Recipient,
-	featureFlagTags []string) *proto.CreateSubscriptionCommand {
-
-	return &proto.CreateSubscriptionCommand{
-		Name:            name,
-		SourceTypes:     sourceTypes,
-		Recipient:       recipient,
-		FeatureFlagTags: featureFlagTags,
-	}
 }
 
 func listSubscriptions(
@@ -612,7 +411,7 @@ func listEnabledSubscriptions(
 	return resp.Subscriptions
 }
 
-func createSubscriptionNoCommand(
+func createSubscription(
 	ctx context.Context,
 	t *testing.T,
 	client notificationclient.Client,

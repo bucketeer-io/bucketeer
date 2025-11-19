@@ -11,7 +11,11 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   subscribers.json: |-
-    {{- range $name, $config := .Values.subscribers }}
+    {{- $subscribers := .Values.subscribers }}
+    {{- if not .Values.env.demoSiteEnabled }}
+    {{- $subscribers = omit $subscribers "demoOrganizationCreationNotifier" }}
+    {{- end }}
+    {{- range $name, $config := $subscribers }}
     {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
     {{- $_ := set $config "redisServerName" $.Values.global.pubsub.redis.serverName }}
     {{- $_ := set $config "redisAddr" $.Values.global.pubsub.redis.addr }}
@@ -20,7 +24,7 @@ data:
     {{- $_ := set $config "project" $.Values.global.pubsub.project }}
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
-    {{ toJson .Values.subscribers }}
+    {{ toJson $subscribers }}
 
   onDemandSubscribers.json: |-
     {{- range $name, $config := .Values.onDemandSubscribers }}
@@ -35,7 +39,11 @@ data:
     {{ toJson .Values.onDemandSubscribers }}
 
   processors.json: |-
-    {{- range $name, $config := .Values.processors }}
+    {{- $processors := .Values.processors }}
+    {{- if not .Values.env.demoSiteEnabled }}
+    {{- $processors = omit $processors "demoOrganizationCreationNotifier" }}
+    {{- end }}
+    {{- range $name, $config := $processors }}
     {{- if eq $name "segmentUserPersister" }}
     {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
     {{- $_ := set $config "redisServerName" $.Values.global.pubsub.redis.serverName }}
@@ -46,7 +54,7 @@ data:
     {{- $_ := set $config "redisPartitionCount" $.Values.global.pubsub.redis.partitionCount }}
     {{- end }}
     {{- end }}
-    {{ toJson .Values.processors }}
+    {{ toJson $processors }}
 
   onDemandProcessors.json: |-
     {{- range $name, $config := .Values.onDemandProcessors }}

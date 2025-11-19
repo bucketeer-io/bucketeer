@@ -60,7 +60,9 @@ const formSchema = ({ requiredMessage }: FormSchemaProps) =>
 
 const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const { consoleAccount } = useAuth();
-  const { editorEnvironments } = getEditorEnvironments(consoleAccount!);
+  const { editorEnvironments, projects } = getEditorEnvironments(
+    consoleAccount!
+  );
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(editorEnvironments);
   const queryClient = useQueryClient();
@@ -94,6 +96,16 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       destinationEnvironmentId: ''
     }
   });
+
+  const getCurrentLabelEnv = useCallback(
+    (environmentId: string) => {
+      const currentEnv = formattedEnvironments.find(
+        item => item.id === environmentId
+      );
+      return `${currentEnv?.name} (${t('common:source-type.project')}: ${projects.find(project => project.id === currentEnv?.projectId)?.name})`;
+    },
+    [formattedEnvironments, projects]
+  );
 
   const onSubmit: SubmitHandler<CloneFlagForm> = useCallback(
     async values => {
@@ -186,11 +198,9 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
-                          label={
-                            formattedEnvironments.find(
-                              item => item.id === field.value
-                            )?.name
-                          }
+                          label={getCurrentLabelEnv(
+                            currentEnvironment?.id || ''
+                          )}
                           disabled
                           variant="secondary"
                           className="w-full"
@@ -231,6 +241,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       <EnvironmentEditorList
                         value={field.value}
                         disabled={!editable}
+                        currentEnvironment={currentEnvironment}
                         onSelectOption={field.onChange}
                       />
                     </Form.Control>

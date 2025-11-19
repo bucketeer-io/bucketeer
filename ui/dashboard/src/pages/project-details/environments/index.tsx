@@ -1,9 +1,16 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
+import {
+  PAGE_PATH_ENVIRONMENTS,
+  PAGE_PATH_NEW,
+  PAGE_PATH_PROJECTS
+} from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -20,16 +27,23 @@ const ProjectEnvironments = ({
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const params = useParams();
   const { consoleAccount, onMeFetcher } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const [
-    isOpenCreateUpdateModal,
-    onOpenCreateUpdateModal,
-    onCloseCreateUpdateModal
-  ] = useToggleOpen(false);
+  const commonPath = useMemo(
+    () =>
+      `/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${params.projectId}${PAGE_PATH_ENVIRONMENTS}`,
+    [currentEnvironment]
+  );
+  const { isAdd, isEdit, onOpenEditModal, onCloseActionModal, onOpenAddModal } =
+    useActionWithURL({
+      closeModalPath: `${commonPath}?organizationId=${organizationId}`,
+      addPath: `${commonPath}${PAGE_PATH_NEW}?organizationId=${organizationId}`,
+      idKey: 'environmentId'
+    });
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -59,17 +73,21 @@ const ProjectEnvironments = ({
   const onHandleActions = useCallback(
     (environment: Environment, type: EnvironmentActionsType) => {
       setSelectedEnvironment(environment);
+      if (type === 'EDIT') {
+        onOpenEditModal(
+          `${commonPath}/${environment.id}?organizationId=${organizationId}`
+        );
+      }
       if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
         setIsArchiving(type === 'ARCHIVE');
         return onOpenConfirmModal();
       }
-      return onOpenCreateUpdateModal();
     },
     []
   );
 
   const handleOnCloseModal = useCallback(() => {
-    onCloseCreateUpdateModal();
+    onCloseActionModal();
     onCloseConfirmModal();
     setSelectedEnvironment(undefined);
   }, []);
@@ -78,15 +96,15 @@ const ProjectEnvironments = ({
     <>
       <PageContent
         organizationId={organizationId}
-        onAdd={onOpenCreateUpdateModal}
+        onAdd={onOpenAddModal}
         onActionHandler={onHandleActions}
       />
-      {isOpenCreateUpdateModal && (
+      {(!!isAdd || !!isEdit) && (
         <EnvironmentCreateUpdateModal
           organizationId={organizationId}
-          isOpen={isOpenCreateUpdateModal}
+          isOpen={!!isAdd || !!isEdit}
           environment={selectedEnvironment}
-          onClose={handleOnCloseModal}
+          onClose={onCloseActionModal}
         />
       )}
       {openConfirmModal && (

@@ -4,6 +4,7 @@
     "flushInterval": 10,
     "flushTimeout": 10
   },
+  "emailSender": {},
   "evaluationCountEventPersister": {
     "flushSize": 100,
     "flushInterval": 10,

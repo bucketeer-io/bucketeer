@@ -80,9 +80,17 @@ const PageLoader = () => {
     [commonPath]
   );
 
-  const handleOnCloseModal = useCallback(() => {
-    onCloseActionModal();
+  const onHandleAddNew = useCallback(() => {
     setSelectedPush(undefined);
+    onOpenAddModal();
+  }, []);
+
+  const handleOnCloseModal = useCallback((isRefresh?: boolean) => {
+    const checkReset = isRefresh ?? true;
+    onCloseActionModal();
+    if (checkReset) {
+      setSelectedPush(undefined);
+    }
     setIsDeletePush(false);
     setIsDisabling(false);
     onCloseConfirmModal();
@@ -138,7 +146,7 @@ const PageLoader = () => {
     <>
       <PageContent
         disabled={!editable}
-        onAdd={onOpenAddModal}
+        onAdd={onHandleAddNew}
         onHandleActions={onHandleActions}
       />
       {(!!isAdd || !!isEdit) && (
@@ -148,6 +156,7 @@ const PageLoader = () => {
           pushId={pushId}
           isLoadingPush={isLoadingPush}
           push={selectedPush}
+          resetPush={() => setSelectedPush(undefined)}
           onClose={handleOnCloseModal}
         />
       )}

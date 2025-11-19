@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
@@ -68,7 +68,6 @@ const SwitchOrganization = ({
   const { errorNotify } = useToast();
   const organizationId = getOrgIdStorage();
   const [searchValue, setSearchValue] = useState('');
-  const [organizations, setOrganizations] = useState(myOrganizations);
   const [currentOrganization, setCurrentOrganization] = useState(
     organizationId ?? ''
   );
@@ -76,17 +75,17 @@ const SwitchOrganization = ({
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const onSearchOrganization = useCallback(
-    (value: string) => {
-      if (!value) return setOrganizations(myOrganizations);
-      const newOrgs = myOrganizations.filter(item =>
-        item.name?.toLowerCase()?.includes(value.toString())
-      );
-      setSearchValue(value);
-      setOrganizations(newOrgs);
-    },
-    [myOrganizations]
-  );
+  const organizations = useMemo(() => {
+    if (!searchValue) return myOrganizations;
+    const lowerSearch = searchValue.toLowerCase();
+    return myOrganizations.filter(org =>
+      org.name?.toLowerCase().includes(lowerSearch)
+    );
+  }, [myOrganizations, searchValue]);
+
+  const onSearchOrganization = useCallback((value: string) => {
+    setSearchValue(value);
+  }, []);
 
   const onChangeOrganization = useCallback(
     async (organizationId: string) => {

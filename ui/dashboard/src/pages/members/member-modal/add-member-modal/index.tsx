@@ -17,6 +17,7 @@ import { getCurrentEnvironment, getEditorEnvironments, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
+import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -66,6 +67,7 @@ export interface AddMemberForm {
   memberRole: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
   teams: string[];
+  language: Language;
 }
 
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
@@ -103,7 +105,8 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
             })
         })
       ),
-    teams: yup.array().of(yup.string())
+    teams: yup.array().of(yup.string()),
+    language: yup.mixed<Language>().required(requiredMessage)
   });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
@@ -129,13 +132,15 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       email: '',
       memberRole: undefined,
       environmentRoles: [defaultEnvironmentRole],
-      teams: []
+      teams: [],
+      language: Language.ENGLISH
     }
   });
 
   const {
     watch,
-    formState: { isValid, isSubmitting }
+    getValues,
+    formState: { isValid, isDirty, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
   const roleWatch = watch('memberRole');
@@ -177,7 +182,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
               environmentId: checkEnvironmentEmptyId(item.environmentId)
             }))
           }),
-      teams: values.teams ?? []
+      teams: values.teams ?? [],
+      language: values.language ?? Language.ENGLISH
     })
       .then(() => {
         notify({
@@ -193,6 +199,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       .catch(error => errorNotify(error));
   };
 
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal title={t('invite-member')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
@@ -295,6 +302,64 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                   <Form.Message />
                 </Form.Item>
               )}
+            />
+
+            <Form.Field
+              control={form.control}
+              name="language"
+              render={({ field }) => {
+                const currentItem = languageList.find(
+                  item => item.value === getValues('language')
+                );
+
+                return (
+                  <Form.Item className="py-2">
+                    <Form.Label required>{t('language')}</Form.Label>
+                    <Form.Control className="w-full">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          placeholder={t('form:select-language')}
+                          trigger={
+                            <div className="flex items-center gap-x-2">
+                              {currentItem?.icon && (
+                                <div className="flex-center size-fit mt-0.5">
+                                  <Icon icon={currentItem?.icon} size={'sm'} />
+                                </div>
+                              )}
+                              {currentItem?.label}
+                            </div>
+                          }
+                          variant="secondary"
+                          className="w-full"
+                        />
+                        <DropdownMenuContent
+                          className="w-[500px]"
+                          align="start"
+                          {...field}
+                        >
+                          {languageList.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              iconElement={
+                                <div className="flex-center size-fit mt-0.5">
+                                  <Icon icon={item.icon} size={'sm'} />
+                                </div>
+                              }
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
             />
 
             {!isAdminRole && !!roleWatch && (

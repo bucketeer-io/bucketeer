@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -192,4 +193,19 @@ func newAdminSubscriptionCommandHandler(t *testing.T, subscription *domain.Subsc
 		t.Fatal(err)
 	}
 	return h
+}
+
+func newSubscription(t *testing.T, disabled bool) *domain.Subscription {
+	sourceTypes := []proto.Subscription_SourceType{
+		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+		proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+	}
+	recipient := &proto.Recipient{
+		Type:                  proto.Recipient_SlackChannel,
+		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+	}
+	s, err := domain.NewSubscription("sname", sourceTypes, recipient, nil)
+	s.Disabled = disabled
+	require.NoError(t, err)
+	return s
 }

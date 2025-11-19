@@ -523,6 +523,10 @@ func TestFeatureFlagCacher(t *testing.T) {
 		mysqlMockClient.EXPECT().QueryContext(
 			gomock.Any(), gomock.Any(), gomock.Any(),
 		).Return(mysqlMockRows, nil)
+		redisMockClient.EXPECT().
+			Put(gomock.Any(), gomock.Any(), gomock.Any()).
+			AnyTimes().
+			Return(nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
 		Job: batchproto.BatchJob_FeatureFlagCacher,

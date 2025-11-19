@@ -36,6 +36,27 @@ global:
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     project: bucketeer-test
 
+  email:
+    enabled: false
+    provider: smtp
+    smtp:
+      host: smtp.gmail.com
+      port: 587
+      username: bucketeer@example.com
+      password: ""
+    sendgrid:
+      apiKey: ""
+    ses:
+      region: ""
+      accessKey: ""
+      secretKey: ""
+    mailersend:
+      apiKey: ""
+    sender:
+      email: bucketeer@example.com
+      name: Bucketeer
+    baseURL: https://localhost
+
 migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
@@ -129,7 +150,6 @@ web:
   webhook:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
-
 api:
   env:
     gcpEnabled: false
@@ -440,6 +460,19 @@ subscriber:
       pullerMaxOutstandingBytes: 1000000000
       maxMps: 50
       workerNum: 1
+    emailSender:
+      pubSubType: ${global.pubsub.type}
+      redisAddr: ${global.pubsub.redis.addr}
+      redisPoolSize: ${global.pubsub.redis.poolSize}
+      redisMinIdle: ${global.pubsub.redis.minIdle}
+      project: ${global.pubsub.project}
+      topic: domain
+      subscription: email-sender
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
 
   onDemandSubscribers:
     evaluationCountEventDWHPersister:
@@ -532,6 +565,7 @@ subscriber:
       notifier:
         slack:
           webhookURL: ""
+    emailSender: {}
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:

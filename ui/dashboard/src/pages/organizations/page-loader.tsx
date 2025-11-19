@@ -3,6 +3,8 @@ import { Trans } from 'react-i18next';
 import { organizationArchive, organizationUnarchive } from '@api/organization';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
@@ -14,17 +16,17 @@ import { OrganizationActionsType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
-
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization>();
 
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const [
-    isOpenCreateUpdateModal,
-    onOpenCreateUpdateModal,
-    onCloseCreateUpdateModal
-  ] = useToggleOpen(false);
+  const commonPath = `${PAGE_PATH_ORGANIZATIONS}`;
+
+  const { isAdd, isEdit, onCloseActionModal, onOpenAddModal, onOpenEditModal } =
+    useActionWithURL({
+      closeModalPath: commonPath
+    });
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -53,31 +55,30 @@ const PageLoader = () => {
   const onHandleActions = useCallback(
     (organization: Organization, type: OrganizationActionsType) => {
       setSelectedOrganization(organization);
-
-      if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
+      if (type === 'EDIT') {
+        return onOpenEditModal(`${PAGE_PATH_ORGANIZATIONS}/${organization.id}`);
+      } else if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
         setIsArchiving(type === 'ARCHIVE');
         return onOpenConfirmModal();
+      } else {
+        onOpenAddModal();
       }
-      return onOpenCreateUpdateModal();
     },
     []
   );
 
   const handleOnCloseModal = useCallback(() => {
-    onCloseCreateUpdateModal();
+    onCloseActionModal();
     onCloseConfirmModal();
     setSelectedOrganization(undefined);
   }, []);
 
   return (
     <>
-      <PageContent
-        onAdd={onOpenCreateUpdateModal}
-        onHandleActions={onHandleActions}
-      />
-      {isOpenCreateUpdateModal && (
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      {(!!isAdd || !!isEdit) && (
         <OrganizationCreateUpdateModal
-          isOpen={isOpenCreateUpdateModal}
+          isOpen={!!isAdd || !!isEdit}
           onClose={handleOnCloseModal}
           organization={selectedOrganization!}
         />

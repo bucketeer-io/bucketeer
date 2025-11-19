@@ -43,32 +43,3 @@ message DeleteAdminSubscriptionCommand {}
 message RenameAdminSubscriptionCommand {
   string name = 1;
 }
-
-message CreateSubscriptionCommand {
-  repeated Subscription.SourceType source_types = 1;
-  Recipient recipient = 2;
-  string name = 3;
-  repeated string feature_flag_tags = 4;
-}
-
-message AddSourceTypesCommand {
-  repeated Subscription.SourceType source_types = 1;
-}
-
-message DeleteSourceTypesCommand {
-  repeated Subscription.SourceType source_types = 1;
-}
-
-message UpdateSubscriptionFeatureFlagTagsCommand {
-  repeated string feature_flag_tags = 1;
-}
-
-message EnableSubscriptionCommand {}
-
-message DisableSubscriptionCommand {}
-
-message DeleteSubscriptionCommand {}
-
-message RenameSubscriptionCommand {
-  string name = 1;
-}

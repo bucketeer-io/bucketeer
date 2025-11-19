@@ -85,7 +85,6 @@ const PageLoader = () => {
   const handleOnCloseModal = useCallback(() => {
     onCloseActionModal();
     onCloseConfirmModal();
-    setSelectedAPIKey(undefined);
   }, []);
 
   const onHandleActions = useCallback(
@@ -167,6 +166,7 @@ const PageLoader = () => {
           isLoadingApiKey={isLoadingApiKey}
           apiKey={selectedAPIKey}
           environments={editorEnvironments}
+          resetApiKey={() => setSelectedAPIKey(undefined)}
           onClose={handleOnCloseModal}
         />
       )}

@@ -317,6 +317,291 @@ func TestGetMeMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: system admin updates last seen for organization",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				envClient := s.environmentClient.(*ecmock.MockClient)
+				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				email := "bucketeer@example.com"
+				sysAdminOrgID := "sys-org"
+				projects := getProjects(t)
+				environments := getEnvironments(t)
+				sysAdminAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						Name:             "System Admin",
+						AvatarImageUrl:   "avatar.png",
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						SearchFilters: []*accountproto.SearchFilter{
+							{Id: "filter-id"},
+						},
+						FirstName: "System",
+						LastName:  "Admin",
+						Language:  "en",
+						LastSeen:  123,
+					},
+				}
+				orgAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   org.Id,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+						LastSeen:         0,
+						UpdatedAt:        0,
+					},
+				}
+				sysAdminAccountForUpdate := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         123,
+						UpdatedAt:        123,
+					},
+				}
+
+				gomock.InOrder(
+					envClient.EXPECT().ListProjects(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListProjectsResponse{
+							Projects: projects,
+							Cursor:   "",
+						},
+						nil,
+					),
+					envClient.EXPECT().ListEnvironmentsV2(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListEnvironmentsV2Response{
+							Environments: environments,
+							Cursor:       "",
+						},
+						nil,
+					),
+					envClient.EXPECT().GetOrganization(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.GetOrganizationResponse{
+							Organization: &org,
+						},
+						nil,
+					),
+					accountStorage.EXPECT().GetSystemAdminAccountV2(
+						gomock.Any(), email,
+					).Return(sysAdminAccount, nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(orgAccount, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).DoAndReturn(
+						func(_ context.Context, acc *domain.AccountV2) error {
+							assert.Equal(t, org.Id, acc.OrganizationId)
+							assert.Greater(t, acc.LastSeen, orgAccount.LastSeen)
+							assert.Greater(t, acc.UpdatedAt, orgAccount.UpdatedAt)
+							return nil
+						},
+					),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, sysAdminOrgID,
+					).Return(sysAdminAccountForUpdate, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).DoAndReturn(
+						func(_ context.Context, acc *domain.AccountV2) error {
+							assert.Equal(t, sysAdminOrgID, acc.OrganizationId)
+							assert.Greater(t, acc.LastSeen, sysAdminAccountForUpdate.LastSeen)
+							assert.Greater(t, acc.UpdatedAt, sysAdminAccountForUpdate.UpdatedAt)
+							return nil
+						},
+					),
+				)
+			},
+			input: &accountproto.GetMeRequest{
+				OrganizationId: "org0",
+			},
+			expected: &accountproto.GetMeResponse{
+				Account: &accountproto.ConsoleAccount{
+					Email:            "bucketeer@example.com",
+					Name:             "System Admin",
+					AvatarUrl:        "avatar.png",
+					IsSystemAdmin:    true,
+					Organization:     &org,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id:        "ns0",
+								Name:      "ns0",
+								ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{
+								Id: "pj0",
+							},
+							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id:        "ns1",
+								Name:      "ns1",
+								ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{
+								Id: "pj0",
+							},
+							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id: "filter-id",
+						},
+					},
+					FirstName: "System",
+					LastName:  "Admin",
+					Language:  "en",
+					LastSeen:  123,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: system admin missing organization account",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				envClient := s.environmentClient.(*ecmock.MockClient)
+				accountStorage := s.accountStorage.(*accstoragemock.MockAccountStorage)
+				email := "bucketeer@example.com"
+				sysAdminOrgID := "sys-org"
+				projects := getProjects(t)
+				environments := getEnvironments(t)
+				sysAdminAccount := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						Name:             "System Admin",
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						SearchFilters: []*accountproto.SearchFilter{
+							{Id: "filter-id"},
+						},
+						FirstName: "System",
+						LastName:  "Admin",
+						Language:  "en",
+						LastSeen:  456,
+					},
+				}
+				sysAdminAccountForUpdate := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   sysAdminOrgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						LastSeen:         456,
+						UpdatedAt:        456,
+					},
+				}
+
+				gomock.InOrder(
+					envClient.EXPECT().ListProjects(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListProjectsResponse{
+							Projects: projects,
+							Cursor:   "",
+						},
+						nil,
+					),
+					envClient.EXPECT().ListEnvironmentsV2(
+						gomock.Any(),
+						gomock.Any(),
+					).Return(
+						&environmentproto.ListEnvironmentsV2Response{
+							Environments: environments,
+							Cursor:       "",
+						},
+						nil,
+					),
+					envClient.EXPECT().GetOrganization(
+						gomock.Any(), gomock.Any(),
+					).Return(
+						&environmentproto.GetOrganizationResponse{
+							Organization: &org,
+						},
+						nil,
+					),
+					accountStorage.EXPECT().GetSystemAdminAccountV2(
+						gomock.Any(), email,
+					).Return(sysAdminAccount, nil),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, org.Id,
+					).Return(nil, v2as.ErrAccountNotFound),
+					accountStorage.EXPECT().GetAccountV2(
+						gomock.Any(), email, sysAdminOrgID,
+					).Return(sysAdminAccountForUpdate, nil),
+					accountStorage.EXPECT().UpdateAccountV2(
+						gomock.Any(), gomock.AssignableToTypeOf(&domain.AccountV2{}),
+					).DoAndReturn(
+						func(_ context.Context, acc *domain.AccountV2) error {
+							assert.Equal(t, sysAdminOrgID, acc.OrganizationId)
+							assert.Greater(t, acc.LastSeen, sysAdminAccountForUpdate.LastSeen)
+							assert.Greater(t, acc.UpdatedAt, sysAdminAccountForUpdate.UpdatedAt)
+							return nil
+						},
+					),
+				)
+			},
+			input: &accountproto.GetMeRequest{
+				OrganizationId: "org0",
+			},
+			expected: &accountproto.GetMeResponse{
+				Account: &accountproto.ConsoleAccount{
+					Email:            "bucketeer@example.com",
+					Name:             "System Admin",
+					IsSystemAdmin:    true,
+					Organization:     &org,
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.ConsoleAccount_EnvironmentRole{
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id:        "ns0",
+								Name:      "ns0",
+								ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{
+								Id: "pj0",
+							},
+							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id:        "ns1",
+								Name:      "ns1",
+								ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{
+								Id: "pj0",
+							},
+							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id: "filter-id",
+						},
+					},
+					FirstName: "System",
+					LastName:  "Admin",
+					Language:  "en",
+					LastSeen:  456,
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, p := range patterns {

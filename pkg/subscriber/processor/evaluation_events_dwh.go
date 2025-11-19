@@ -23,6 +23,7 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
@@ -295,6 +296,7 @@ func (w *evalEvtWriter) listExperiments(
 					exproto.Experiment_RUNNING,
 					exproto.Experiment_STOPPED,
 				},
+				Archived: wrapperspb.Bool(false),
 			})
 			if err != nil {
 				return nil, err
