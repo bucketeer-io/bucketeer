@@ -147,9 +147,8 @@ export const checkFieldDirty = (obj: { [key: string]: boolean }): boolean => {
 };
 
 export const normalizeYamlIndentation = (yamlString: string) => {
-  let data: string;
   try {
-    data = yaml.load(yamlString) as string;
+    const data = yaml.load(yamlString);
     return yaml.dump(data);
   } catch {
     return yamlString;

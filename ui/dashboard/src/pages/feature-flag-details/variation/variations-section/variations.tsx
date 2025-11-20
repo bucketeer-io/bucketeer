@@ -65,6 +65,7 @@ const Variations = ({
   const {
     control,
     watch,
+    trigger,
     formState: { errors }
   } = useFormContext<VariationForm>();
   const [variationSelected, setVariationSelected] = useState<number | null>(
@@ -266,6 +267,13 @@ const Variations = ({
     ]
   );
 
+  const reValidVariation = () => {
+    if (!errors || !errors?.variations || !errors.variations.length) return;
+    errors.variations.map?.((_, index) => {
+      trigger(`variations.${index}.value`);
+    });
+  };
+
   return (
     <div className="flex flex-col w-full gap-y-6">
       {fields.map((variation, variationIndex) => (
@@ -287,6 +295,10 @@ const Variations = ({
                           <Form.Control>
                             <Input
                               {...field}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               disabled={
                                 isBoolean || isRunningExperiment || !editable
                               }
@@ -351,7 +363,10 @@ const Variations = ({
                             <ReactCodeEditor
                               defaultLanguage={isYAML ? 'yaml' : 'json'}
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               onExpand={() =>
                                 setVariationSelected(variationIndex)
                               }
@@ -377,7 +392,10 @@ const Variations = ({
                                 </div>
                               }
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               readOnly={isRunningExperiment || !editable}
                               error={
                                 errors.variations?.[variationIndex]?.value

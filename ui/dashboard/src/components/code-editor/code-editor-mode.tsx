@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EditorProps } from '@monaco-editor/react';
+import { IconAlert } from '@icons';
 import Button from 'components/button';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import ReactCodeEditor from '.';
 
@@ -59,8 +61,8 @@ export default function ReactCodeEditorModal({
           {...props}
         />
         {error && (
-          <div className="sticky left-0 bottom-0 ml-[42px] flex items-center bg-white w-full h-6 typo-para-small text-accent-red-500">
-            {error}
+          <div className="sticky left-0 bottom-0 pl-3 flex items-center gap-[10px] bg-white w-full h-9 typo-para-small text-accent-red-500">
+            <Icon icon={IconAlert} size="xs" /> {error}
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import IconAlert from './customized-icons/alert-circle.svg?react';
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconArrowLeft from './customized-icons/arrow-left.svg?react';
@@ -117,6 +118,7 @@ export {
   IconLogout,
   IconBuilding,
   // Customized icons
+  IconAlert,
   IconExpandSquar,
   IconFlagYaml,
   IconBackspace,

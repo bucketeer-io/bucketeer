@@ -21,6 +21,7 @@ const Variations = () => {
   const {
     control,
     watch,
+    trigger,
     formState: { errors }
   } = useFormContext<FlagFormSchema>();
   const {
@@ -55,6 +56,13 @@ const Variations = () => {
 
   const onDeleteVariation = (itemIndex: number) => {
     remove(itemIndex);
+  };
+
+  const reValidVariation = () => {
+    if (!errors || !errors?.variations || !errors.variations.length) return;
+    errors.variations.map?.((_, index) => {
+      trigger(`variations.${index}.value`);
+    });
   };
 
   return (
@@ -104,7 +112,10 @@ const Variations = () => {
                             <ReactCodeEditor
                               defaultLanguage={isYAML ? 'yaml' : 'json'}
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               onExpand={() =>
                                 setVariationSelected(variationIndex)
                               }
@@ -129,7 +140,10 @@ const Variations = () => {
                                 </div>
                               }
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               error={
                                 errors.variations?.[variationIndex]?.value
                                   ?.message as string
@@ -139,6 +153,10 @@ const Variations = () => {
                         ) : (
                           <Input
                             {...field}
+                            onChange={value => {
+                              field.onChange(value);
+                              reValidVariation();
+                            }}
                             placeholder={t(
                               'feature-flags.placeholder-variation'
                             )}
