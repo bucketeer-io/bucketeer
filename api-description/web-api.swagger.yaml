@@ -8992,18 +8992,9 @@ definitions:
         $ref: '#/definitions/environmentProject'
       role:
         $ref: '#/definitions/RoleEnvironment'
-  accountCreateAPIKeyCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      role:
-        $ref: '#/definitions/accountAPIKeyRole'
   accountCreateAPIKeyRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/accountCreateAPIKeyCommand'
       environmentId:
         type: string
       name:

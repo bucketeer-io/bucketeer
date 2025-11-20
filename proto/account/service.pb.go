@@ -1826,13 +1826,11 @@ type CreateAPIKeyRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Deprecated: Do not use.
-	Command       *CreateAPIKeyCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
-	EnvironmentId string               `protobuf:"bytes,3,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
-	Name          string               `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
-	Role          APIKey_Role          `protobuf:"varint,5,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role"`
-	Maintainer    string               `protobuf:"bytes,6,opt,name=maintainer,proto3" json:"maintainer"`
-	Description   string               `protobuf:"bytes,7,opt,name=description,proto3" json:"description"`
+	EnvironmentId string      `protobuf:"bytes,3,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Name          string      `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
+	Role          APIKey_Role `protobuf:"varint,5,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role"`
+	Maintainer    string      `protobuf:"bytes,6,opt,name=maintainer,proto3" json:"maintainer"`
+	Description   string      `protobuf:"bytes,7,opt,name=description,proto3" json:"description"`
 }
 
 func (x *CreateAPIKeyRequest) Reset() {
@@ -1865,14 +1863,6 @@ func (x *CreateAPIKeyRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateAPIKeyRequest.ProtoReflect.Descriptor instead.
 func (*CreateAPIKeyRequest) Descriptor() ([]byte, []int) {
 	return file_proto_account_service_proto_rawDescGZIP(), []int{22}
-}
-
-// Deprecated: Do not use.
-func (x *CreateAPIKeyRequest) GetCommand() *CreateAPIKeyCommand {
-	if x != nil {
-		return x.Command
-	}
-	return nil
 }
 
 func (x *CreateAPIKeyRequest) GetEnvironmentId() string {
@@ -3574,23 +3564,19 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x63, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x12,
 	0x1f, 0x0a, 0x0b, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x43, 0x6f, 0x75, 0x6e, 0x74,
-	0x22, 0x92, 0x02, 0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65,
-	0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x44, 0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d,
-	0x61, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x62, 0x75, 0x63, 0x6b,
-	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
-	0x64, 0x42, 0x02, 0x18, 0x01, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x25,
-	0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
-	0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x32, 0x0a, 0x04, 0x72, 0x6f, 0x6c,
-	0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x50, 0x49, 0x4b,
-	0x65, 0x79, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x1e, 0x0a,
-	0x0a, 0x6d, 0x61, 0x69, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x18, 0x06, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0a, 0x6d, 0x61, 0x69, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x12, 0x20, 0x0a,
-	0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x07, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4a,
+	0x22, 0xd2, 0x01, 0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65,
+	0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69,
+	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0d, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x32, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x1e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x2e, 0x52, 0x6f, 0x6c,
+	0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x6d, 0x61, 0x69, 0x6e, 0x74,
+	0x61, 0x69, 0x6e, 0x65, 0x72, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x6d, 0x61, 0x69,
+	0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72,
+	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65,
+	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x4a, 0x04, 0x08, 0x01, 0x10, 0x02, 0x4a,
 	0x04, 0x08, 0x02, 0x10, 0x03, 0x22, 0x4a, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41,
 	0x50, 0x49, 0x4b, 0x65, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x32, 0x0a,
 	0x07, 0x61, 0x70, 0x69, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19,
@@ -4862,18 +4848,17 @@ var file_proto_account_service_proto_goTypes = []interface{}{
 	(*common.StringListValue)(nil),                       // 72: bucketeer.common.StringListValue
 	(*ChangeAccountV2TagsCommand)(nil),                   // 73: bucketeer.account.ChangeAccountV2TagsCommand
 	(*wrapperspb.Int32Value)(nil),                        // 74: google.protobuf.Int32Value
-	(*CreateAPIKeyCommand)(nil),                          // 75: bucketeer.account.CreateAPIKeyCommand
-	(APIKey_Role)(0),                                     // 76: bucketeer.account.APIKey.Role
-	(*APIKey)(nil),                                       // 77: bucketeer.account.APIKey
-	(*ChangeAPIKeyNameCommand)(nil),                      // 78: bucketeer.account.ChangeAPIKeyNameCommand
-	(*EnableAPIKeyCommand)(nil),                          // 79: bucketeer.account.EnableAPIKeyCommand
-	(*DisableAPIKeyCommand)(nil),                         // 80: bucketeer.account.DisableAPIKeyCommand
-	(*EnvironmentAPIKey)(nil),                            // 81: bucketeer.account.EnvironmentAPIKey
-	(*CreateSearchFilterCommand)(nil),                    // 82: bucketeer.account.CreateSearchFilterCommand
-	(*ChangeSearchFilterNameCommand)(nil),                // 83: bucketeer.account.ChangeSearchFilterNameCommand
-	(*ChangeSearchFilterQueryCommand)(nil),               // 84: bucketeer.account.ChangeSearchFilterQueryCommand
-	(*ChangeDefaultSearchFilterCommand)(nil),             // 85: bucketeer.account.ChangeDefaultSearchFilterCommand
-	(*DeleteSearchFilterCommand)(nil),                    // 86: bucketeer.account.DeleteSearchFilterCommand
+	(APIKey_Role)(0),                                     // 75: bucketeer.account.APIKey.Role
+	(*APIKey)(nil),                                       // 76: bucketeer.account.APIKey
+	(*ChangeAPIKeyNameCommand)(nil),                      // 77: bucketeer.account.ChangeAPIKeyNameCommand
+	(*EnableAPIKeyCommand)(nil),                          // 78: bucketeer.account.EnableAPIKeyCommand
+	(*DisableAPIKeyCommand)(nil),                         // 79: bucketeer.account.DisableAPIKeyCommand
+	(*EnvironmentAPIKey)(nil),                            // 80: bucketeer.account.EnvironmentAPIKey
+	(*CreateSearchFilterCommand)(nil),                    // 81: bucketeer.account.CreateSearchFilterCommand
+	(*ChangeSearchFilterNameCommand)(nil),                // 82: bucketeer.account.ChangeSearchFilterNameCommand
+	(*ChangeSearchFilterQueryCommand)(nil),               // 83: bucketeer.account.ChangeSearchFilterQueryCommand
+	(*ChangeDefaultSearchFilterCommand)(nil),             // 84: bucketeer.account.ChangeDefaultSearchFilterCommand
+	(*DeleteSearchFilterCommand)(nil),                    // 85: bucketeer.account.DeleteSearchFilterCommand
 }
 var file_proto_account_service_proto_depIdxs = []int32{
 	51, // 0: bucketeer.account.GetMeResponse.account:type_name -> bucketeer.account.ConsoleAccount
@@ -4920,78 +4905,77 @@ var file_proto_account_service_proto_depIdxs = []int32{
 	69, // 41: bucketeer.account.ListAccountsV2Request.environment_id:type_name -> google.protobuf.StringValue
 	74, // 42: bucketeer.account.ListAccountsV2Request.environment_role:type_name -> google.protobuf.Int32Value
 	56, // 43: bucketeer.account.ListAccountsV2Response.accounts:type_name -> bucketeer.account.AccountV2
-	75, // 44: bucketeer.account.CreateAPIKeyRequest.command:type_name -> bucketeer.account.CreateAPIKeyCommand
-	76, // 45: bucketeer.account.CreateAPIKeyRequest.role:type_name -> bucketeer.account.APIKey.Role
-	77, // 46: bucketeer.account.CreateAPIKeyResponse.api_key:type_name -> bucketeer.account.APIKey
-	78, // 47: bucketeer.account.ChangeAPIKeyNameRequest.command:type_name -> bucketeer.account.ChangeAPIKeyNameCommand
-	79, // 48: bucketeer.account.EnableAPIKeyRequest.command:type_name -> bucketeer.account.EnableAPIKeyCommand
-	80, // 49: bucketeer.account.DisableAPIKeyRequest.command:type_name -> bucketeer.account.DisableAPIKeyCommand
-	77, // 50: bucketeer.account.GetAPIKeyResponse.api_key:type_name -> bucketeer.account.APIKey
-	3,  // 51: bucketeer.account.ListAPIKeysRequest.order_by:type_name -> bucketeer.account.ListAPIKeysRequest.OrderBy
-	4,  // 52: bucketeer.account.ListAPIKeysRequest.order_direction:type_name -> bucketeer.account.ListAPIKeysRequest.OrderDirection
-	71, // 53: bucketeer.account.ListAPIKeysRequest.disabled:type_name -> google.protobuf.BoolValue
-	77, // 54: bucketeer.account.ListAPIKeysResponse.api_keys:type_name -> bucketeer.account.APIKey
-	81, // 55: bucketeer.account.GetEnvironmentAPIKeyResponse.environment_api_key:type_name -> bucketeer.account.EnvironmentAPIKey
-	82, // 56: bucketeer.account.CreateSearchFilterRequest.command:type_name -> bucketeer.account.CreateSearchFilterCommand
-	83, // 57: bucketeer.account.UpdateSearchFilterRequest.change_name_command:type_name -> bucketeer.account.ChangeSearchFilterNameCommand
-	84, // 58: bucketeer.account.UpdateSearchFilterRequest.change_query_command:type_name -> bucketeer.account.ChangeSearchFilterQueryCommand
-	85, // 59: bucketeer.account.UpdateSearchFilterRequest.change_default_filter_command:type_name -> bucketeer.account.ChangeDefaultSearchFilterCommand
-	86, // 60: bucketeer.account.DeleteSearchFilterRequest.command:type_name -> bucketeer.account.DeleteSearchFilterCommand
-	69, // 61: bucketeer.account.UpdateAPIKeyRequest.name:type_name -> google.protobuf.StringValue
-	69, // 62: bucketeer.account.UpdateAPIKeyRequest.description:type_name -> google.protobuf.StringValue
-	76, // 63: bucketeer.account.UpdateAPIKeyRequest.role:type_name -> bucketeer.account.APIKey.Role
-	71, // 64: bucketeer.account.UpdateAPIKeyRequest.disabled:type_name -> google.protobuf.BoolValue
-	69, // 65: bucketeer.account.UpdateAPIKeyRequest.maintainer:type_name -> google.protobuf.StringValue
-	54, // 66: bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue.role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	5,  // 67: bucketeer.account.AccountService.GetMe:input_type -> bucketeer.account.GetMeRequest
-	7,  // 68: bucketeer.account.AccountService.GetMyOrganizations:input_type -> bucketeer.account.GetMyOrganizationsRequest
-	8,  // 69: bucketeer.account.AccountService.GetMyOrganizationsByEmail:input_type -> bucketeer.account.GetMyOrganizationsByEmailRequest
-	10, // 70: bucketeer.account.AccountService.CreateAccountV2:input_type -> bucketeer.account.CreateAccountV2Request
-	12, // 71: bucketeer.account.AccountService.EnableAccountV2:input_type -> bucketeer.account.EnableAccountV2Request
-	14, // 72: bucketeer.account.AccountService.DisableAccountV2:input_type -> bucketeer.account.DisableAccountV2Request
-	19, // 73: bucketeer.account.AccountService.UpdateAccountV2:input_type -> bucketeer.account.UpdateAccountV2Request
-	16, // 74: bucketeer.account.AccountService.DeleteAccountV2:input_type -> bucketeer.account.DeleteAccountV2Request
-	21, // 75: bucketeer.account.AccountService.GetAccountV2:input_type -> bucketeer.account.GetAccountV2Request
-	23, // 76: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:input_type -> bucketeer.account.GetAccountV2ByEnvironmentIDRequest
-	25, // 77: bucketeer.account.AccountService.ListAccountsV2:input_type -> bucketeer.account.ListAccountsV2Request
-	27, // 78: bucketeer.account.AccountService.CreateAPIKey:input_type -> bucketeer.account.CreateAPIKeyRequest
-	29, // 79: bucketeer.account.AccountService.ChangeAPIKeyName:input_type -> bucketeer.account.ChangeAPIKeyNameRequest
-	31, // 80: bucketeer.account.AccountService.EnableAPIKey:input_type -> bucketeer.account.EnableAPIKeyRequest
-	33, // 81: bucketeer.account.AccountService.DisableAPIKey:input_type -> bucketeer.account.DisableAPIKeyRequest
-	35, // 82: bucketeer.account.AccountService.GetAPIKey:input_type -> bucketeer.account.GetAPIKeyRequest
-	37, // 83: bucketeer.account.AccountService.ListAPIKeys:input_type -> bucketeer.account.ListAPIKeysRequest
-	39, // 84: bucketeer.account.AccountService.GetEnvironmentAPIKey:input_type -> bucketeer.account.GetEnvironmentAPIKeyRequest
-	41, // 85: bucketeer.account.AccountService.CreateSearchFilter:input_type -> bucketeer.account.CreateSearchFilterRequest
-	43, // 86: bucketeer.account.AccountService.UpdateSearchFilter:input_type -> bucketeer.account.UpdateSearchFilterRequest
-	45, // 87: bucketeer.account.AccountService.DeleteSearchFilter:input_type -> bucketeer.account.DeleteSearchFilterRequest
-	47, // 88: bucketeer.account.AccountService.UpdateAPIKey:input_type -> bucketeer.account.UpdateAPIKeyRequest
-	6,  // 89: bucketeer.account.AccountService.GetMe:output_type -> bucketeer.account.GetMeResponse
-	9,  // 90: bucketeer.account.AccountService.GetMyOrganizations:output_type -> bucketeer.account.GetMyOrganizationsResponse
-	9,  // 91: bucketeer.account.AccountService.GetMyOrganizationsByEmail:output_type -> bucketeer.account.GetMyOrganizationsResponse
-	11, // 92: bucketeer.account.AccountService.CreateAccountV2:output_type -> bucketeer.account.CreateAccountV2Response
-	13, // 93: bucketeer.account.AccountService.EnableAccountV2:output_type -> bucketeer.account.EnableAccountV2Response
-	15, // 94: bucketeer.account.AccountService.DisableAccountV2:output_type -> bucketeer.account.DisableAccountV2Response
-	20, // 95: bucketeer.account.AccountService.UpdateAccountV2:output_type -> bucketeer.account.UpdateAccountV2Response
-	17, // 96: bucketeer.account.AccountService.DeleteAccountV2:output_type -> bucketeer.account.DeleteAccountV2Response
-	22, // 97: bucketeer.account.AccountService.GetAccountV2:output_type -> bucketeer.account.GetAccountV2Response
-	24, // 98: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:output_type -> bucketeer.account.GetAccountV2ByEnvironmentIDResponse
-	26, // 99: bucketeer.account.AccountService.ListAccountsV2:output_type -> bucketeer.account.ListAccountsV2Response
-	28, // 100: bucketeer.account.AccountService.CreateAPIKey:output_type -> bucketeer.account.CreateAPIKeyResponse
-	30, // 101: bucketeer.account.AccountService.ChangeAPIKeyName:output_type -> bucketeer.account.ChangeAPIKeyNameResponse
-	32, // 102: bucketeer.account.AccountService.EnableAPIKey:output_type -> bucketeer.account.EnableAPIKeyResponse
-	34, // 103: bucketeer.account.AccountService.DisableAPIKey:output_type -> bucketeer.account.DisableAPIKeyResponse
-	36, // 104: bucketeer.account.AccountService.GetAPIKey:output_type -> bucketeer.account.GetAPIKeyResponse
-	38, // 105: bucketeer.account.AccountService.ListAPIKeys:output_type -> bucketeer.account.ListAPIKeysResponse
-	40, // 106: bucketeer.account.AccountService.GetEnvironmentAPIKey:output_type -> bucketeer.account.GetEnvironmentAPIKeyResponse
-	42, // 107: bucketeer.account.AccountService.CreateSearchFilter:output_type -> bucketeer.account.CreateSearchFilterResponse
-	44, // 108: bucketeer.account.AccountService.UpdateSearchFilter:output_type -> bucketeer.account.UpdateSearchFilterResponse
-	46, // 109: bucketeer.account.AccountService.DeleteSearchFilter:output_type -> bucketeer.account.DeleteSearchFilterResponse
-	48, // 110: bucketeer.account.AccountService.UpdateAPIKey:output_type -> bucketeer.account.UpdateAPIKeyResponse
-	89, // [89:111] is the sub-list for method output_type
-	67, // [67:89] is the sub-list for method input_type
-	67, // [67:67] is the sub-list for extension type_name
-	67, // [67:67] is the sub-list for extension extendee
-	0,  // [0:67] is the sub-list for field type_name
+	75, // 44: bucketeer.account.CreateAPIKeyRequest.role:type_name -> bucketeer.account.APIKey.Role
+	76, // 45: bucketeer.account.CreateAPIKeyResponse.api_key:type_name -> bucketeer.account.APIKey
+	77, // 46: bucketeer.account.ChangeAPIKeyNameRequest.command:type_name -> bucketeer.account.ChangeAPIKeyNameCommand
+	78, // 47: bucketeer.account.EnableAPIKeyRequest.command:type_name -> bucketeer.account.EnableAPIKeyCommand
+	79, // 48: bucketeer.account.DisableAPIKeyRequest.command:type_name -> bucketeer.account.DisableAPIKeyCommand
+	76, // 49: bucketeer.account.GetAPIKeyResponse.api_key:type_name -> bucketeer.account.APIKey
+	3,  // 50: bucketeer.account.ListAPIKeysRequest.order_by:type_name -> bucketeer.account.ListAPIKeysRequest.OrderBy
+	4,  // 51: bucketeer.account.ListAPIKeysRequest.order_direction:type_name -> bucketeer.account.ListAPIKeysRequest.OrderDirection
+	71, // 52: bucketeer.account.ListAPIKeysRequest.disabled:type_name -> google.protobuf.BoolValue
+	76, // 53: bucketeer.account.ListAPIKeysResponse.api_keys:type_name -> bucketeer.account.APIKey
+	80, // 54: bucketeer.account.GetEnvironmentAPIKeyResponse.environment_api_key:type_name -> bucketeer.account.EnvironmentAPIKey
+	81, // 55: bucketeer.account.CreateSearchFilterRequest.command:type_name -> bucketeer.account.CreateSearchFilterCommand
+	82, // 56: bucketeer.account.UpdateSearchFilterRequest.change_name_command:type_name -> bucketeer.account.ChangeSearchFilterNameCommand
+	83, // 57: bucketeer.account.UpdateSearchFilterRequest.change_query_command:type_name -> bucketeer.account.ChangeSearchFilterQueryCommand
+	84, // 58: bucketeer.account.UpdateSearchFilterRequest.change_default_filter_command:type_name -> bucketeer.account.ChangeDefaultSearchFilterCommand
+	85, // 59: bucketeer.account.DeleteSearchFilterRequest.command:type_name -> bucketeer.account.DeleteSearchFilterCommand
+	69, // 60: bucketeer.account.UpdateAPIKeyRequest.name:type_name -> google.protobuf.StringValue
+	69, // 61: bucketeer.account.UpdateAPIKeyRequest.description:type_name -> google.protobuf.StringValue
+	75, // 62: bucketeer.account.UpdateAPIKeyRequest.role:type_name -> bucketeer.account.APIKey.Role
+	71, // 63: bucketeer.account.UpdateAPIKeyRequest.disabled:type_name -> google.protobuf.BoolValue
+	69, // 64: bucketeer.account.UpdateAPIKeyRequest.maintainer:type_name -> google.protobuf.StringValue
+	54, // 65: bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue.role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	5,  // 66: bucketeer.account.AccountService.GetMe:input_type -> bucketeer.account.GetMeRequest
+	7,  // 67: bucketeer.account.AccountService.GetMyOrganizations:input_type -> bucketeer.account.GetMyOrganizationsRequest
+	8,  // 68: bucketeer.account.AccountService.GetMyOrganizationsByEmail:input_type -> bucketeer.account.GetMyOrganizationsByEmailRequest
+	10, // 69: bucketeer.account.AccountService.CreateAccountV2:input_type -> bucketeer.account.CreateAccountV2Request
+	12, // 70: bucketeer.account.AccountService.EnableAccountV2:input_type -> bucketeer.account.EnableAccountV2Request
+	14, // 71: bucketeer.account.AccountService.DisableAccountV2:input_type -> bucketeer.account.DisableAccountV2Request
+	19, // 72: bucketeer.account.AccountService.UpdateAccountV2:input_type -> bucketeer.account.UpdateAccountV2Request
+	16, // 73: bucketeer.account.AccountService.DeleteAccountV2:input_type -> bucketeer.account.DeleteAccountV2Request
+	21, // 74: bucketeer.account.AccountService.GetAccountV2:input_type -> bucketeer.account.GetAccountV2Request
+	23, // 75: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:input_type -> bucketeer.account.GetAccountV2ByEnvironmentIDRequest
+	25, // 76: bucketeer.account.AccountService.ListAccountsV2:input_type -> bucketeer.account.ListAccountsV2Request
+	27, // 77: bucketeer.account.AccountService.CreateAPIKey:input_type -> bucketeer.account.CreateAPIKeyRequest
+	29, // 78: bucketeer.account.AccountService.ChangeAPIKeyName:input_type -> bucketeer.account.ChangeAPIKeyNameRequest
+	31, // 79: bucketeer.account.AccountService.EnableAPIKey:input_type -> bucketeer.account.EnableAPIKeyRequest
+	33, // 80: bucketeer.account.AccountService.DisableAPIKey:input_type -> bucketeer.account.DisableAPIKeyRequest
+	35, // 81: bucketeer.account.AccountService.GetAPIKey:input_type -> bucketeer.account.GetAPIKeyRequest
+	37, // 82: bucketeer.account.AccountService.ListAPIKeys:input_type -> bucketeer.account.ListAPIKeysRequest
+	39, // 83: bucketeer.account.AccountService.GetEnvironmentAPIKey:input_type -> bucketeer.account.GetEnvironmentAPIKeyRequest
+	41, // 84: bucketeer.account.AccountService.CreateSearchFilter:input_type -> bucketeer.account.CreateSearchFilterRequest
+	43, // 85: bucketeer.account.AccountService.UpdateSearchFilter:input_type -> bucketeer.account.UpdateSearchFilterRequest
+	45, // 86: bucketeer.account.AccountService.DeleteSearchFilter:input_type -> bucketeer.account.DeleteSearchFilterRequest
+	47, // 87: bucketeer.account.AccountService.UpdateAPIKey:input_type -> bucketeer.account.UpdateAPIKeyRequest
+	6,  // 88: bucketeer.account.AccountService.GetMe:output_type -> bucketeer.account.GetMeResponse
+	9,  // 89: bucketeer.account.AccountService.GetMyOrganizations:output_type -> bucketeer.account.GetMyOrganizationsResponse
+	9,  // 90: bucketeer.account.AccountService.GetMyOrganizationsByEmail:output_type -> bucketeer.account.GetMyOrganizationsResponse
+	11, // 91: bucketeer.account.AccountService.CreateAccountV2:output_type -> bucketeer.account.CreateAccountV2Response
+	13, // 92: bucketeer.account.AccountService.EnableAccountV2:output_type -> bucketeer.account.EnableAccountV2Response
+	15, // 93: bucketeer.account.AccountService.DisableAccountV2:output_type -> bucketeer.account.DisableAccountV2Response
+	20, // 94: bucketeer.account.AccountService.UpdateAccountV2:output_type -> bucketeer.account.UpdateAccountV2Response
+	17, // 95: bucketeer.account.AccountService.DeleteAccountV2:output_type -> bucketeer.account.DeleteAccountV2Response
+	22, // 96: bucketeer.account.AccountService.GetAccountV2:output_type -> bucketeer.account.GetAccountV2Response
+	24, // 97: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:output_type -> bucketeer.account.GetAccountV2ByEnvironmentIDResponse
+	26, // 98: bucketeer.account.AccountService.ListAccountsV2:output_type -> bucketeer.account.ListAccountsV2Response
+	28, // 99: bucketeer.account.AccountService.CreateAPIKey:output_type -> bucketeer.account.CreateAPIKeyResponse
+	30, // 100: bucketeer.account.AccountService.ChangeAPIKeyName:output_type -> bucketeer.account.ChangeAPIKeyNameResponse
+	32, // 101: bucketeer.account.AccountService.EnableAPIKey:output_type -> bucketeer.account.EnableAPIKeyResponse
+	34, // 102: bucketeer.account.AccountService.DisableAPIKey:output_type -> bucketeer.account.DisableAPIKeyResponse
+	36, // 103: bucketeer.account.AccountService.GetAPIKey:output_type -> bucketeer.account.GetAPIKeyResponse
+	38, // 104: bucketeer.account.AccountService.ListAPIKeys:output_type -> bucketeer.account.ListAPIKeysResponse
+	40, // 105: bucketeer.account.AccountService.GetEnvironmentAPIKey:output_type -> bucketeer.account.GetEnvironmentAPIKeyResponse
+	42, // 106: bucketeer.account.AccountService.CreateSearchFilter:output_type -> bucketeer.account.CreateSearchFilterResponse
+	44, // 107: bucketeer.account.AccountService.UpdateSearchFilter:output_type -> bucketeer.account.UpdateSearchFilterResponse
+	46, // 108: bucketeer.account.AccountService.DeleteSearchFilter:output_type -> bucketeer.account.DeleteSearchFilterResponse
+	48, // 109: bucketeer.account.AccountService.UpdateAPIKey:output_type -> bucketeer.account.UpdateAPIKeyResponse
+	88, // [88:110] is the sub-list for method output_type
+	66, // [66:88] is the sub-list for method input_type
+	66, // [66:66] is the sub-list for extension type_name
+	66, // [66:66] is the sub-list for extension extendee
+	0,  // [0:66] is the sub-list for field type_name
 }
 
 func init() { file_proto_account_service_proto_init() }

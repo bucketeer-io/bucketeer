@@ -210,7 +210,7 @@ message ListAccountsV2Response {
 }
 
 message CreateAPIKeyRequest {
-  CreateAPIKeyCommand command = 1 [deprecated = true];
+  reserved 1;  // CreateAPIKeyCommand command
   reserved 2;
   string environment_id = 3;
   string name = 4;

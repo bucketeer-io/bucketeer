@@ -53,75 +53,7 @@ func (s *AccountService) CreateAPIKey(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.createAPIKeyNoCommand(ctx, req, localizer, editor)
-	}
-
 	if err := validateCreateAPIKeyRequest(req, localizer); err != nil {
-		return nil, err
-	}
-	if req.Maintainer == "" {
-		req.Maintainer = editor.Email
-	}
-
-	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role, req.Maintainer, req.Description)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewAPIKeyCommandHandler(
-			editor,
-			key,
-			s.publisher,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.CreateAPIKey(contextWithTx, key, req.EnvironmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to create api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.CreateAPIKeyResponse{
-		ApiKey: key.APIKey,
-	}, nil
-}
-
-func (s *AccountService) createAPIKeyNoCommand(
-	ctx context.Context,
-	req *proto.CreateAPIKeyRequest,
-	localizer locale.Localizer,
-	editor *eventproto.Editor,
-) (*proto.CreateAPIKeyResponse, error) {
-	if err := validateCreateAPIKeyRequestNoCommand(req, localizer); err != nil {
 		return nil, err
 	}
 	if req.Maintainer == "" {

@@ -37,20 +37,6 @@ func verifyEmailFormat(email string) bool {
 }
 
 func validateCreateAPIKeyRequest(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
-	if req.Command.Name == "" {
-		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateCreateAPIKeyRequestNoCommand(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Name == "" {
 		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

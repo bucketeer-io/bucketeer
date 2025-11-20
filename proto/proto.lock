@@ -1689,17 +1689,6 @@
             "name": "CreateAPIKeyRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateAPIKeyCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
@@ -1726,6 +1715,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
