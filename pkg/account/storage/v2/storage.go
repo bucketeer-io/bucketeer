@@ -38,6 +38,7 @@ type AccountStorage interface {
 	GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
 	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error
 	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error
+	UpdateAPIKeyLastUsedAt(ctx context.Context, id, environmentID string, lastUsedAt int64) (bool, error)
 	GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error)
 	GetAPIKeyByAPIKey(ctx context.Context, apiKey string, environmentID string) (*domain.APIKey, error)
 	GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error)

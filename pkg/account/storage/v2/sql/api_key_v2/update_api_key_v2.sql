@@ -4,8 +4,7 @@ UPDATE api_key SET
     disabled = ?,
     maintainer = ?,
     description = ?,
-    updated_at = ?,
-    last_used_at = ?
+    updated_at = ?
 WHERE
     id = ? AND
     environment_id = ?

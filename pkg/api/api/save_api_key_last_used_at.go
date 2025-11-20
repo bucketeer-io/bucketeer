@@ -21,7 +21,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -74,23 +73,20 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
 		apiKeyID := key.(string)
 		lastUsedAtInfo := value.(apikeyLastUsedAt)
 
-		err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-			apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, apiKeyID, lastUsedAtInfo.environmentID)
-			if err != nil {
-				return err
-			}
-			err = apiKey.SetUsedAt(lastUsedAtInfo.lastUsedAt)
-			if err != nil {
-				return err
-			}
-			return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, lastUsedAtInfo.environmentID)
-		})
+		_, err := s.accountStorage.UpdateAPIKeyLastUsedAt(
+			ctx,
+			apiKeyID,
+			lastUsedAtInfo.environmentID,
+			lastUsedAtInfo.lastUsedAt,
+		)
 		if err != nil {
 			s.logger.Error(
-				"failed to update API key last used at",
+				"Failed to update API Key Last Used At",
 				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.String("apiKeyID", apiKeyID),
+					zap.String("environmentID", lastUsedAtInfo.environmentID),
+					zap.Int64("lastUsedAt", lastUsedAtInfo.lastUsedAt),
 					zap.Error(err),
-					zap.String("id", apiKeyID),
 				)...,
 			)
 			return true

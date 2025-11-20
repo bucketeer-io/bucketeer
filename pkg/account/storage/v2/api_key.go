@@ -40,6 +40,8 @@ var (
 	insertAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/update_api_key_v2.sql
 	updateAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/update_api_key_v2_last_used_at.sql
+	updateAPIKeyLastUsedAtV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2.sql
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
@@ -88,7 +90,6 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Maintainer,
 		k.Description,
 		k.UpdatedAt,
-		k.LastUsedAt,
 		k.Id,
 		environmentID,
 	)
@@ -103,6 +104,29 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		return ErrAPIKeyUnexpectedAffectedRows
 	}
 	return nil
+}
+
+func (s *accountStorage) UpdateAPIKeyLastUsedAt(
+	ctx context.Context,
+	id, environmentID string,
+	lastUsedAt int64,
+) (bool, error) {
+	result, err := s.qe.ExecContext(
+		ctx,
+		updateAPIKeyLastUsedAtV2SQLQuery,
+		lastUsedAt,
+		id,
+		environmentID,
+		lastUsedAt,
+	)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
 }
 
 func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
