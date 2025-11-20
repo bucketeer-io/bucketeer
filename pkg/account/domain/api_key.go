@@ -123,14 +123,3 @@ func (a *APIKey) Update(
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
 }
-
-func (a *APIKey) SetUsedAt(lastUsedAt int64) error {
-	if lastUsedAt <= 0 {
-		return ErrInvalidLastUsedAt
-	}
-	if a.LastUsedAt >= lastUsedAt {
-		return ErrLastUsedAtNotUpdated
-	}
-	a.LastUsedAt = lastUsedAt
-	return nil
-}

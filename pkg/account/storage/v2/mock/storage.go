@@ -268,6 +268,21 @@ func (mr *MockAccountStorageMockRecorder) UpdateAPIKey(ctx, k, environmentID any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).UpdateAPIKey), ctx, k, environmentID)
 }
 
+// UpdateAPIKeyLastUsedAt mocks base method.
+func (m *MockAccountStorage) UpdateAPIKeyLastUsedAt(ctx context.Context, id, environmentID string, lastUsedAt int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAPIKeyLastUsedAt", ctx, id, environmentID, lastUsedAt)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAPIKeyLastUsedAt indicates an expected call of UpdateAPIKeyLastUsedAt.
+func (mr *MockAccountStorageMockRecorder) UpdateAPIKeyLastUsedAt(ctx, id, environmentID, lastUsedAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKeyLastUsedAt", reflect.TypeOf((*MockAccountStorage)(nil).UpdateAPIKeyLastUsedAt), ctx, id, environmentID, lastUsedAt)
+}
+
 // UpdateAccountV2 mocks base method.
 func (m *MockAccountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
 	m.ctrl.T.Helper()
