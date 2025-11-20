@@ -102,7 +102,8 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       const currentEnv = formattedEnvironments.find(
         item => item.id === environmentId
       );
-      return `${currentEnv?.name} (${t('common:source-type.project')}: ${projects.find(project => project.id === currentEnv?.projectId)?.name})`;
+      
+      return currentEnv ?  `${currentEnv?.name} (${t('common:source-type.project')}: ${projects.find(project => project.id === currentEnv?.projectId)?.name})` : t('empty');
     },
     [formattedEnvironments, projects]
   );
@@ -199,7 +200,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={getCurrentLabelEnv(
-                            currentEnvironment?.id || ''
+                            ''
                           )}
                           disabled
                           variant="secondary"
