@@ -131,6 +131,7 @@ func (s *APIKeyLastUsedWriter) CacheAPIKeyLastUsedAt(
 
 func (s *APIKeyLastUsedWriter) WriteAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():

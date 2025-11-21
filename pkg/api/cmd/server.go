@@ -62,9 +62,10 @@ const (
 	// terminationGracePeriodSeconds (60s). During Spot VM preemption, kubelet enforces
 	// a best-effort 15s limit. We optimize for the common case (normal operations).
 	// See: https://cloud.google.com/kubernetes-engine/docs/concepts/spot-vms
-	propagationDelay      = 15 * time.Second
-	serverShutDownTimeout = 30 * time.Second
-	grpcStopTimeout       = 5 * time.Second
+	propagationDelay               = 15 * time.Second
+	serverShutDownTimeout          = 30 * time.Second
+	grpcStopTimeout                = 5 * time.Second
+	apikeyLastUsedLastWriteTimeout = 30 * time.Second
 )
 
 type server struct {
@@ -622,11 +623,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Wait for HTTP/REST traffic to fully drain
 		wg.Wait()
 
-		// last write api key last used at
+		// Last write of API key last used at
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			lastWriteCtx, lastWriteCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			lastWriteCtx, lastWriteCancel := context.WithTimeout(context.Background(), apikeyLastUsedLastWriteTimeout)
 			defer lastWriteCancel()
 			apikeyLastUsedWriter.WriteAPIKeyLastUsedAt(lastWriteCtx)
 		}()
