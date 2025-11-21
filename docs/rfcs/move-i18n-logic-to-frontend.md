@@ -104,7 +104,7 @@ func NewError(status *gstatus.Status, anoterDetailData ...map[string]string) err
 		metadatas = []map[string]string{
 			{
 				"messageKey": messageKey,
-				"feild":      "email",
+				"field":      "email",
 			},
 		}
 	} else if status == statusInvalidEmail {
@@ -113,7 +113,7 @@ func NewError(status *gstatus.Status, anoterDetailData ...map[string]string) err
 		metadatas = []map[string]string{
 			{
 				"messageKey": messageKey,
-				"feild":      "email",
+				"field":      "email",
 			},
 		}
 	} else if {
