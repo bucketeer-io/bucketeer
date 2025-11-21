@@ -173,8 +173,7 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const apiKey = row.original;
-        const isNever = Number(apiKey.lastUsedAt) === 0;
-
+        const isNever = !apiKey.lastUsedAt || apiKey.lastUsedAt === '0';
         return (
           <DateTooltip
             trigger={
