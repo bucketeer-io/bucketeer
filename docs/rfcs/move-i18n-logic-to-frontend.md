@@ -4,8 +4,6 @@ Now, we have part of the i18n implementation on both sides, front and backend.
 
 Because the i18n implementation in all APIs made the backend code too hard to read, we decided to do this only on the front end.
 
-~~Note that this RFC only describes content related to the backend.~~
-
 [Issue](https://github.com/bucketeer-io/bucketeer/issues/1253)
 
 ## Scope
@@ -31,8 +29,6 @@ Example: Validation error when GetAccount
 https://github.com/bucketeer-io/bucketeer/blob/main/pkg/account/api/validation.go#L624
 
 We're going to design to return by utilizing `ErrorInfo` defined in GRPC's [GRPC's ErrorInfo](https://github.com/googleapis/googleapis/blob/master/google/rpc/error_details.proto#L51).
-
-If multiple errors are returned, multiple ErrorInfos are returned.
 
 
 ### Response Format
@@ -62,6 +58,8 @@ Response Example:
 | metadata                | Additional structured details about this error.                                                            | -                                                    |
 | metadata.messageKey     | Key to identify message content.<br>                                                                       | e.g. NotFoundError, InvalidArgumentError             |
 | metadata.<key-value(s)> | Additional information to be embedded in the message. Optional.                                            | "email": "email.com", "field_1": "APIKey"            |
+
+For now, `details` has only one element.
 
 ### Message Formats
 
