@@ -7,6 +7,7 @@ export type OrderBy =
   | 'ID'
   | 'CREATED_AT'
   | 'UPDATED_AT'
+  | 'LAST_USED_AT'
   | 'NAME'
   | 'URL_CODE'
   | 'FEATURE_COUNT'
