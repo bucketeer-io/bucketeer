@@ -91,7 +91,9 @@ const Strategy = ({
       if (timerId) clearTimeout(timerId);
       setIsCustomExperiment(true);
       timerId = setTimeout(() => inputRef.current?.focus(), 100);
-      setValue(`${rootName}.${strategyName}.audience.percentage`, '');
+      setValue(`${rootName}.${strategyName}.audience.percentage`, '', {
+        shouldDirty: true
+      });
     } else {
       setIsCustomExperiment(false);
       setValue(
@@ -145,16 +147,16 @@ const Strategy = ({
       0
     );
 
-    if (isActiveCustomExperiment && experimentPercentage > 0) {
-      setIsCustomExperiment(true);
+    if (experimentPercentage > 0) {
+      setIsCustomExperiment(isActiveCustomExperiment);
     }
+
     if (variationsTotal > 0) {
       setSplitOptionType(
         isEquallyVariations(variations) ? 'equally' : 'percentage'
       );
     }
-  }, []);
-
+  }, [variations, rolloutStrategy]);
   return (
     <div className="px-2">
       {label && (
@@ -246,20 +248,22 @@ const Strategy = ({
                   <Form.Control>
                     <div>
                       <div className="flex items-center w-full gap-x-2">
-                        {audienceTrafficOptions.map((item, index) => (
-                          <AudienceSelect
-                            key={index}
-                            label={item.label}
-                            value={item.value}
-                            isActive={
-                              item.value === 'custom'
-                                ? isCustomExperiment
-                                : !isCustomExperiment &&
-                                  field.value === item.value
-                            }
-                            onSelect={handleSelectExperiment}
-                          />
-                        ))}
+                        {audienceTrafficOptions.map((item, index) => {
+                          return (
+                            <AudienceSelect
+                              key={index}
+                              label={item.label}
+                              value={item.value}
+                              isActive={
+                                item.value === 'custom'
+                                  ? isCustomExperiment
+                                  : !isCustomExperiment &&
+                                    experimentPercentage === item.value
+                              }
+                              onSelect={handleSelectExperiment}
+                            />
+                          );
+                        })}
                         {isCustomExperiment && (
                           <div className="flex-1 relative">
                             <InputGroup
@@ -271,7 +275,11 @@ const Strategy = ({
                               <Input
                                 {...field}
                                 ref={inputRef}
-                                value={field.value ?? ''}
+                                value={
+                                  experimentPercentage > 0
+                                    ? experimentPercentage
+                                    : ''
+                                }
                                 onWheel={e => e.currentTarget.blur()}
                                 onChange={value => field.onChange(value)}
                                 type="number"
@@ -408,9 +416,9 @@ const Strategy = ({
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">
-                <RadioGroupItem value={value} id={value} />
+                <RadioGroupItem value={value} id={`${value}-${rootName}`} />
                 <label
-                  htmlFor={value}
+                  htmlFor={`${value}-${rootName}`}
                   className="typo-para-medium leading-4 text-gray-600 cursor-pointer"
                 >
                   {label}
@@ -432,7 +440,7 @@ const Strategy = ({
                     <>
                       {percentageValueCount > 0 && (
                         <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
-                          {field.value.map(
+                          {rolloutStrategy?.variations?.map(
                             (item: RuleStrategyVariation, index: number) => (
                               <PercentageBar
                                 key={index}

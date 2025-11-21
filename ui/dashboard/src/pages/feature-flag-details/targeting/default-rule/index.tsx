@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
+import { IconUndoOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import {
   PAGE_PATH_FEATURE_AUTOOPS,
@@ -17,22 +18,27 @@ import VariationLabel from 'elements/variation-label';
 import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
+import { DiscardChangesType, RuleCategory } from '../types';
 
 const DefaultRule = ({
   editable,
   urlCode,
   feature,
-  waitingRunningRollouts
+  waitingRunningRollouts,
+  handleDiscardChanges,
+  handleCheckEdit
 }: {
   editable: boolean;
   urlCode: string;
   feature: Feature;
   waitingRunningRollouts: Rollout[];
+  handleDiscardChanges: (type: DiscardChangesType) => void;
+  handleCheckEdit?: (type: RuleCategory) => boolean;
 }) => {
   const { t } = useTranslation(['form']);
 
   const { control, watch } = useFormContext<TargetingSchema>();
-
+  const editableDefaultRule = handleCheckEdit?.(RuleCategory.DEFAULT);
   const commonName = 'defaultRule';
   const defaultRule = watch(commonName);
   const rolloutStrategy = watch('defaultRule.rolloutStrategy');
@@ -97,26 +103,42 @@ const DefaultRule = ({
           </div>
         </div>
       )}
-      <div className="flex flex-col w-full gap-y-3">
-        <div className="flex items-center gap-x-2">
-          <p className="typo-para-medium text-gray-700">
-            {t('targeting.default-rule')}
+      <div className="flex justify-between">
+        <div className="flex flex-col w-full gap-y-3">
+          <div className="flex items-center gap-x-2">
+            <p className="typo-para-medium text-gray-700">
+              {t('targeting.default-rule')}
+            </p>
+            <Tooltip
+              align="start"
+              alignOffset={-68}
+              content={t('form:targeting.tooltip.default-rule')}
+              trigger={
+                <div className="flex-center size-fit">
+                  <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+                </div>
+              }
+              className="max-w-[400px]"
+            />
+          </div>
+          <p className="typo-para-small text-gray-500">
+            {t('targeting.default-rule-desc')}
           </p>
-          <Tooltip
-            align="start"
-            alignOffset={-68}
-            content={t('form:targeting.tooltip.default-rule')}
-            trigger={
-              <div className="flex-center size-fit">
-                <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
-              </div>
-            }
-            className="max-w-[400px]"
-          />
         </div>
-        <p className="typo-para-small text-gray-500">
-          {t('targeting.default-rule-desc')}
-        </p>
+        {editableDefaultRule && (
+          <div
+            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+            onClick={() => {
+              handleDiscardChanges(DiscardChangesType.DEFAULT);
+            }}
+          >
+            <Icon
+              icon={IconUndoOutlined}
+              size={'sm'}
+              className="flex-center text-gray-500 group-hover:text-gray-700"
+            />
+          </div>
+        )}
       </div>
       <Form.Field
         control={control}
