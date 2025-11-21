@@ -269,6 +269,7 @@ message ListAPIKeysRequest {
     ROLE = 4;
     ENVIRONMENT = 5;
     STATE = 6;
+    LAST_USED_AT = 7;
   }
   enum OrderDirection {
     ASC = 0;
