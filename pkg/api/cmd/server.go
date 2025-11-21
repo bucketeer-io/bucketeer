@@ -474,6 +474,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	apikeyLastUsedWriter := api.NewAPIKeyLastUsedWriter(
+		mysqlClient,
+	)
+
 	service := api.NewGrpcGatewayService(
 		ctx,
 		featureClient,
@@ -488,11 +492,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		eventCounterClient,
 		environmentClient,
-		mysqlClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
 		redisV3Cache,
+		apikeyLastUsedWriter,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -617,11 +621,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		// Wait for HTTP/REST traffic to fully drain
 		wg.Wait()
 
+		// last write api key last used at
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			lastWriteCtx, lastWriteCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer lastWriteCancel()
+			apikeyLastUsedWriter.WriteAPIKeyLastUsedAt(lastWriteCtx)
+		}()
+		wg.Wait()
+
 		// Now it's safe to stop the gRPC server (no more HTTP→gRPC calls)
 		server.Stop(grpcStopTimeout)
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
+
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
 		if userPublisher != nil {

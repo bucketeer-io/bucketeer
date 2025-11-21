@@ -16,11 +16,14 @@ package api
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
 
+	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -30,14 +33,38 @@ type apikeyLastUsedAt struct {
 	lastUsedAt    int64
 }
 
-func (s *grpcGatewayService) cacheAPIKeyLastUsedAt(
+type APIKeyLastUsedWriter struct {
+	APIKeyLastUsedInfoCacher sync.Map
+	mysqlClient              mysql.Client
+	accountStorage           accountstotage.AccountStorage
+	opts                     *options
+	logger                   *zap.Logger
+}
+
+func NewAPIKeyLastUsedWriter(
+	mysqlClient mysql.Client,
+	opts ...Option,
+) *APIKeyLastUsedWriter {
+	options := defaultOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+	return &APIKeyLastUsedWriter{
+		mysqlClient:    mysqlClient,
+		accountStorage: accountstotage.NewAccountStorage(mysqlClient),
+		opts:           &options,
+		logger:         options.logger.Named("api_grpc"),
+	}
+}
+
+func (s *APIKeyLastUsedWriter) cacheAPIKeyLastUsedAt(
 	envAPIKey *account.EnvironmentAPIKey,
 	lastUsedAt int64,
 ) {
-	if cache, ok := s.apiKeyLastUsedInfoCacher.Load(envAPIKey.ApiKey.Id); ok {
+	if cache, ok := s.APIKeyLastUsedInfoCacher.Load(envAPIKey.ApiKey.Id); ok {
 		lastUsedAtCache := cache.(apikeyLastUsedAt)
 		if lastUsedAtCache.lastUsedAt < lastUsedAt {
-			s.apiKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
+			s.APIKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
 				apiKeyID:      envAPIKey.ApiKey.Id,
 				lastUsedAt:    lastUsedAt,
 				environmentID: envAPIKey.Environment.Id,
@@ -45,31 +72,29 @@ func (s *grpcGatewayService) cacheAPIKeyLastUsedAt(
 		}
 		return
 	}
-	s.apiKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
+	s.APIKeyLastUsedInfoCacher.Store(envAPIKey.ApiKey.Id, apikeyLastUsedAt{
 		apiKeyID:      envAPIKey.ApiKey.Id,
 		lastUsedAt:    lastUsedAt,
 		environmentID: envAPIKey.Environment.Id,
 	})
 }
 
-func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute)
+func (s *APIKeyLastUsedWriter) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Minute)
 	for {
 		select {
 		case <-ctx.Done():
-			s.writeAPIKeyLastUsedAt(ctx)
-			s.logger.Debug("writeAPIKeyLastUsedAtCacheToDatabase stopped")
 			return
 		case <-ticker.C:
 			s.logger.Debug("writing API key last used at cache to database")
-			s.writeAPIKeyLastUsedAt(ctx)
+			s.WriteAPIKeyLastUsedAt(ctx)
 		}
 	}
 }
 
-func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
+func (s *APIKeyLastUsedWriter) WriteAPIKeyLastUsedAt(ctx context.Context) {
 	updatedAPIKeys := make([]string, 0)
-	s.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
+	s.APIKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
 		apiKeyID := key.(string)
 		lastUsedAtInfo := value.(apikeyLastUsedAt)
 
@@ -97,6 +122,6 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAt(ctx context.Context) {
 
 	// Clear the cache for the updated API keys
 	for _, apiKeyID := range updatedAPIKeys {
-		s.apiKeyLastUsedInfoCacher.Delete(apiKeyID)
+		s.APIKeyLastUsedInfoCacher.Delete(apiKeyID)
 	}
 }

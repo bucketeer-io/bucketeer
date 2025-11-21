@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -155,30 +154,30 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type grpcGatewayService struct {
-	featureClient            featureclient.Client
-	accountClient            accountclient.Client
-	pushClient               pushclient.Client
-	codeRefClient            coderefclient.Client
-	auditLogClient           auditlogclient.Client
-	autoOpsClient            autoopsclient.Client
-	tagClient                tagclient.Client
-	teamClient               teamclient.Client
-	notificationClient       notificationclient.Client
-	experimentClient         experimentclient.Client
-	eventCounterClient       eventcounterclient.Client
-	environmentClient        environmentclient.Client
-	mysqlClient              mysql.Client
-	accountStorage           accountstotage.AccountStorage
-	goalPublisher            publisher.Publisher
-	evaluationPublisher      publisher.Publisher
-	userPublisher            publisher.Publisher
-	featuresCache            cachev3.FeaturesCache
-	segmentUsersCache        cachev3.SegmentUsersCache
-	environmentAPIKeyCache   cachev3.EnvironmentAPIKeyCache
-	apiKeyLastUsedInfoCacher sync.Map
-	flightgroup              singleflight.Group
-	opts                     *options
-	logger                   *zap.Logger
+	featureClient          featureclient.Client
+	accountClient          accountclient.Client
+	pushClient             pushclient.Client
+	codeRefClient          coderefclient.Client
+	auditLogClient         auditlogclient.Client
+	autoOpsClient          autoopsclient.Client
+	tagClient              tagclient.Client
+	teamClient             teamclient.Client
+	notificationClient     notificationclient.Client
+	experimentClient       experimentclient.Client
+	eventCounterClient     eventcounterclient.Client
+	environmentClient      environmentclient.Client
+	mysqlClient            mysql.Client
+	accountStorage         accountstotage.AccountStorage
+	goalPublisher          publisher.Publisher
+	evaluationPublisher    publisher.Publisher
+	userPublisher          publisher.Publisher
+	featuresCache          cachev3.FeaturesCache
+	segmentUsersCache      cachev3.SegmentUsersCache
+	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
+	apiKeyLastUsedWriter   *APIKeyLastUsedWriter
+	flightgroup            singleflight.Group
+	opts                   *options
+	logger                 *zap.Logger
 }
 
 func NewGrpcGatewayService(
@@ -195,11 +194,11 @@ func NewGrpcGatewayService(
 	experimentClient experimentclient.Client,
 	eventCounterClient eventcounterclient.Client,
 	environmentClient environmentclient.Client,
-	mysqlClient mysql.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	redisV3Cache cache.MultiGetCache,
+	APIKeyLastUsedWriter *APIKeyLastUsedWriter,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -210,32 +209,30 @@ func NewGrpcGatewayService(
 		registerMetrics(options.metrics)
 	}
 	s := &grpcGatewayService{
-		featureClient:            featureClient,
-		accountClient:            accountClient,
-		pushClient:               pushClient,
-		codeRefClient:            codeRefClient,
-		auditLogClient:           auditLogClient,
-		autoOpsClient:            autoOpsClient,
-		tagClient:                tagClient,
-		teamClient:               teamClient,
-		notificationClient:       notificationClient,
-		experimentClient:         experimentClient,
-		eventCounterClient:       eventCounterClient,
-		environmentClient:        environmentClient,
-		mysqlClient:              mysqlClient,
-		accountStorage:           accountstotage.NewAccountStorage(mysqlClient),
-		goalPublisher:            gp,
-		evaluationPublisher:      ep,
-		userPublisher:            up,
-		featuresCache:            cachev3.NewFeaturesCache(redisV3Cache),
-		segmentUsersCache:        cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache:   cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
-		apiKeyLastUsedInfoCacher: sync.Map{},
-		opts:                     &options,
-		logger:                   options.logger.Named("api_grpc"),
+		featureClient:          featureClient,
+		accountClient:          accountClient,
+		pushClient:             pushClient,
+		codeRefClient:          codeRefClient,
+		auditLogClient:         auditLogClient,
+		autoOpsClient:          autoOpsClient,
+		tagClient:              tagClient,
+		teamClient:             teamClient,
+		notificationClient:     notificationClient,
+		experimentClient:       experimentClient,
+		eventCounterClient:     eventCounterClient,
+		environmentClient:      environmentClient,
+		apiKeyLastUsedWriter:   APIKeyLastUsedWriter,
+		goalPublisher:          gp,
+		evaluationPublisher:    ep,
+		userPublisher:          up,
+		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
+		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
+		opts:                   &options,
+		logger:                 options.logger.Named("api_grpc"),
 	}
 
-	go s.writeAPIKeyLastUsedAtCacheToDatabase(ctx)
+	go s.apiKeyLastUsedWriter.writeAPIKeyLastUsedAtCacheToDatabase(ctx)
 
 	return s
 }
@@ -1520,7 +1517,7 @@ func (s *grpcGatewayService) checkRequest(
 		return nil, err
 	}
 
-	go s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
+	go s.apiKeyLastUsedWriter.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
 
 	return envAPIKey, nil
 }
@@ -1543,13 +1540,13 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err == nil {
 				return envAPIKey, nil
 			}
-			s.logger.Warn(
-				"API key not found in the cache",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
-				)...,
-			)
+			//s.logger.Warn(
+			//	"API key not found in the cache",
+			//	log.FieldsFromIncomingContext(ctx).AddFields(
+			//		zap.Error(err),
+			//		zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
+			//	)...,
+			//)
 			// No cache
 			envAPIKey, err = getEnvironmentAPIKey(
 				ctx,
