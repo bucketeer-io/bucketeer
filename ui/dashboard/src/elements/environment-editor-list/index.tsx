@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { getEditorEnvironments, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
-import { Environment } from '@types';
 import { onFormatEnvironments } from 'utils/function';
 import DropdownMenuWithSearch, {
   DropdownMenuWithSearchProps
@@ -10,7 +9,7 @@ import DropdownMenuWithSearch, {
 interface Props extends Omit<DropdownMenuWithSearchProps, 'options'> {
   value: string | string[];
   selectedValues?: string[];
-  currentEnvironment?: Environment;
+  currentEnvironmentId?: string;
 }
 
 const EnvironmentEditorList = ({
@@ -19,7 +18,7 @@ const EnvironmentEditorList = ({
   itemSize = 60,
   maxOptions = 10,
   selectedValues,
-  currentEnvironment,
+  currentEnvironmentId,
   ...props
 }: Props) => {
   const { t } = useTranslation(['form', 'common']);
@@ -31,7 +30,7 @@ const EnvironmentEditorList = ({
 
   const environmentOptions = useMemo(() => {
     const options = formattedEnvironments
-      .filter(env => env.id !== currentEnvironment?.id)
+      .filter(env => env.id !== currentEnvironmentId)
       .map(item => ({
         label: `${item.name}`,
         value: item.id,
@@ -39,7 +38,7 @@ const EnvironmentEditorList = ({
         projectId: item.projectId
       }));
     return options;
-  }, [formattedEnvironments, currentEnvironment]);
+  }, [formattedEnvironments, currentEnvironmentId, projects, t]);
 
   const remainingEnvironmentsOptions = useMemo(() => {
     const remainingEnvironments = environmentOptions.filter(item =>

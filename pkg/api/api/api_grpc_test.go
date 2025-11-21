@@ -32,6 +32,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	alw "github.com/bucketeer-io/bucketeer/v2/pkg/api/api/apikey_last_used_at_writer"
 	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -46,6 +47,7 @@ import (
 	notificationclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	tagclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client/mock"
 	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -101,7 +103,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(context.Background(), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(context.Background(), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -4020,6 +4022,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
 		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		apiKeyLastUsedWriter:   alw.NewAPIKeyLastUsedWriter(mysqlmock.NewMockClient(mockController)),
 		opts:                   &defaultOptions,
 		logger:                 logger,
 	}

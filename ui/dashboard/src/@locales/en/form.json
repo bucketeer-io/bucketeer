@@ -354,5 +354,6 @@
   "name-email-search-placeholder": "Search by name or email...",
   "name-desc-search-placeholder": "Search by name or description...",
   "email-search-placeholder": "Search by email...",
-  "name-search-placeholder": "Search by name..."
+  "name-search-placeholder": "Search by name...",
+  "yaml-note":"YAML values are compiled into a JSON structure before user evaluation and are returned to the client SDK through the object variation interface, just like JSON flags."
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package apikey_last_used_at_writer
 
 import (
 	"sync"
@@ -125,7 +125,7 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 			service := &APIKeyLastUsedWriter{
 				APIKeyLastUsedInfoCacher: tt.existingCache,
 			}
-			service.cacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
+			service.CacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
 
 			listExpected := make(map[string]apikeyLastUsedAt)
 			tt.expectedCache.Range(func(key, value interface{}) bool {

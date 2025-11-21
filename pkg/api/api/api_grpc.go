@@ -31,7 +31,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	accountstotage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
+	alw "github.com/bucketeer-io/bucketeer/v2/pkg/api/api/apikey_last_used_at_writer"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -48,7 +48,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
 	teamclient "github.com/bucketeer-io/bucketeer/v2/pkg/team/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -166,15 +165,13 @@ type grpcGatewayService struct {
 	experimentClient       experimentclient.Client
 	eventCounterClient     eventcounterclient.Client
 	environmentClient      environmentclient.Client
-	mysqlClient            mysql.Client
-	accountStorage         accountstotage.AccountStorage
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
-	apiKeyLastUsedWriter   *APIKeyLastUsedWriter
+	apiKeyLastUsedWriter   *alw.APIKeyLastUsedWriter
 	flightgroup            singleflight.Group
 	opts                   *options
 	logger                 *zap.Logger
@@ -198,7 +195,7 @@ func NewGrpcGatewayService(
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	redisV3Cache cache.MultiGetCache,
-	APIKeyLastUsedWriter *APIKeyLastUsedWriter,
+	APIKeyLastUsedWriter *alw.APIKeyLastUsedWriter,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -232,7 +229,7 @@ func NewGrpcGatewayService(
 		logger:                 options.logger.Named("api_grpc"),
 	}
 
-	go s.apiKeyLastUsedWriter.writeAPIKeyLastUsedAtCacheToDatabase(ctx)
+	go s.apiKeyLastUsedWriter.WriteAPIKeyLastUsedAtCacheToDatabase(ctx)
 
 	return s
 }
@@ -1517,7 +1514,7 @@ func (s *grpcGatewayService) checkRequest(
 		return nil, err
 	}
 
-	go s.apiKeyLastUsedWriter.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
+	go s.apiKeyLastUsedWriter.CacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
 
 	return envAPIKey, nil
 }
@@ -1540,13 +1537,13 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err == nil {
 				return envAPIKey, nil
 			}
-			//s.logger.Warn(
-			//	"API key not found in the cache",
-			//	log.FieldsFromIncomingContext(ctx).AddFields(
-			//		zap.Error(err),
-			//		zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
-			//	)...,
-			//)
+			s.logger.Warn(
+				"API key not found in the cache",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
+				)...,
+			)
 			// No cache
 			envAPIKey, err = getEnvironmentAPIKey(
 				ctx,

@@ -5,7 +5,8 @@ import {
   IconFlagJSON,
   IconFlagNumber,
   IconFlagString,
-  IconFlagSwitch
+  IconFlagSwitch,
+  IconFlagYaml
 } from '@icons';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
 
@@ -13,6 +14,7 @@ export const getDataTypeIcon = (type: FeatureVariationType) => {
   if (type === 'BOOLEAN') return IconFlagSwitch;
   if (type === 'STRING') return IconFlagString;
   if (type === 'NUMBER') return IconFlagNumber;
+  if (type === 'YAML') return IconFlagYaml;
   return IconFlagJSON;
 };
 

@@ -17,6 +17,7 @@ import isEqual from 'lodash/isEqual';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import InfoMessage from 'components/info-message';
+import { CardNote } from 'elements/overview-card';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
@@ -31,7 +32,7 @@ export interface VariationProps {
 }
 
 const Variation = ({ feature, editable }: VariationProps) => {
-  const { t } = useTranslation(['common', 'message']);
+  const { t } = useTranslation(['common', 'message', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
@@ -154,11 +155,16 @@ const Variation = ({ feature, editable }: VariationProps) => {
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(() => onSubmit())}>
           <div className="flex flex-col w-full gap-y-6">
-            <SubmitBar
-              editable={editable}
-              feature={feature}
-              onShowConfirmDialog={onOpenConfirmDialog}
-            />
+            <div className="flex flex-col gap-2">
+              <SubmitBar
+                editable={editable}
+                feature={feature}
+                onShowConfirmDialog={onOpenConfirmDialog}
+              />
+              {feature.variationType === 'YAML' && (
+                <CardNote content={t('form:yaml-note')} className="w-fit" />
+              )}
+            </div>
             {isRunningExperiment && (
               <InfoMessage
                 title={t('message:validation.experiment-running-warning')}

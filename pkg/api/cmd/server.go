@@ -27,6 +27,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	alw "github.com/bucketeer-io/bucketeer/v2/pkg/api/api/apikey_last_used_at_writer"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -474,7 +475,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	apikeyLastUsedWriter := api.NewAPIKeyLastUsedWriter(
+	apikeyLastUsedWriter := alw.NewAPIKeyLastUsedWriter(
 		mysqlClient,
 	)
 
@@ -636,7 +637,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
-
 		go goalPublisher.Stop()
 		go evaluationPublisher.Stop()
 		if userPublisher != nil {

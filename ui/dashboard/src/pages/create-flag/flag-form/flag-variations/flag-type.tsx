@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { DEFAULT_VALUE_YAML } from 'constants/feature-flag';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
@@ -15,6 +16,7 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import { CardNote } from 'elements/overview-card';
 
 const defaultVariations: FeatureVariation[] = [
   {
@@ -49,12 +51,13 @@ const FlagType = () => {
     ) => {
       const isBoolean = value === 'BOOLEAN';
       const isJSON = value === 'JSON';
+      const isYAML = value === 'YAML';
       const cloneVariations = cloneDeep(defaultVariations);
       const newVariations = isBoolean
         ? cloneVariations
-        : cloneVariations.map(item => ({
+        : cloneVariations.map((item, index) => ({
             ...item,
-            value: isJSON ? '{}' : ''
+            value: isJSON ? '{}' : isYAML ? DEFAULT_VALUE_YAML(index) : ''
           }));
 
       resetField('variations');
@@ -71,71 +74,77 @@ const FlagType = () => {
   );
 
   return (
-    <Form.Field
-      control={control}
-      name={`variationType`}
-      render={({ field }) => (
-        <Form.Item className="py-0">
-          <Form.Label required className="relative w-fit !mb-2">
-            {t('feature-flags.flag-type')}
-            <Tooltip
-              align="start"
-              alignOffset={-76}
-              trigger={
-                <div className="flex-center absolute top-0 -right-6">
-                  <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                </div>
-              }
-              content={t('flag-type-tooltip')}
-              className="!z-[100] max-w-[400px]"
-            />
-          </Form.Label>
-          <Form.Control>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                placeholder={t(`feature-flags.flag-type`)}
+    <div className=" w-full h-fit flex flex-col gap-3">
+      <Form.Field
+        control={control}
+        name={`variationType`}
+        render={({ field }) => (
+          <Form.Item className="py-0">
+            <Form.Label required className="relative w-fit !mb-2">
+              {t('feature-flags.flag-type')}
+              <Tooltip
+                align="start"
+                alignOffset={-76}
                 trigger={
-                  <div className="flex items-center gap-x-2">
-                    {currentFlagOption?.icon && (
-                      <Icon
-                        icon={currentFlagOption?.icon}
-                        size={'md'}
-                        className="flex-center"
-                      />
-                    )}
-                    <p>{currentFlagOption?.label}</p>
+                  <div className="flex-center absolute top-0 -right-6">
+                    <Icon icon={IconInfo} size={'sm'} color="gray-500" />
                   </div>
                 }
-                variant="secondary"
-                className="w-full"
+                content={t('flag-type-tooltip')}
+                className="!z-[100] max-w-[400px]"
               />
-              <DropdownMenuContent
-                className="w-[502px]"
-                align="start"
-                {...field}
-              >
-                {flagTypeOptions.map((item, index) => (
-                  <DropdownMenuItem
-                    {...field}
-                    key={index}
-                    icon={item.icon}
-                    value={item.value}
-                    label={item.label}
-                    onSelectOption={value =>
-                      handleOnChangeVariationType(
-                        value as FeatureVariationType,
-                        field.onChange
-                      )
-                    }
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </Form.Control>
-          <Form.Message />
-        </Form.Item>
+            </Form.Label>
+            <Form.Control>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  placeholder={t(`feature-flags.flag-type`)}
+                  trigger={
+                    <div className="flex items-center gap-x-2">
+                      {currentFlagOption?.icon && (
+                        <Icon
+                          icon={currentFlagOption?.icon}
+                          size={'md'}
+                          className="flex-center"
+                        />
+                      )}
+                      <p>{currentFlagOption?.label}</p>
+                    </div>
+                  }
+                  variant="secondary"
+                  className="w-full"
+                />
+                <DropdownMenuContent
+                  className="w-[502px]"
+                  align="start"
+                  {...field}
+                >
+                  {flagTypeOptions.map((item, index) => (
+                    <DropdownMenuItem
+                      {...field}
+                      key={index}
+                      icon={item.icon}
+                      value={item.value}
+                      label={item.label}
+                      onSelectOption={value =>
+                        handleOnChangeVariationType(
+                          value as FeatureVariationType,
+                          field.onChange
+                        )
+                      }
+                    />
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Form.Control>
+            <Form.Message />
+          </Form.Item>
+        )}
+      />
+
+      {currentFlagOption?.value === 'YAML' && (
+        <CardNote content={t('form:yaml-note')} />
       )}
-    />
+    </div>
   );
 };
 
