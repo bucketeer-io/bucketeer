@@ -168,6 +168,25 @@ export const useColumns = ({
       }
     },
     {
+      accessorKey: 'lastUsedAt',
+      header: `${t('table:last-used-at')}`,
+      size: 150,
+      cell: ({ row }) => {
+        const apiKey = row.original;
+        const isNever = !apiKey.lastUsedAt || apiKey.lastUsedAt === '0';
+        return (
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {isNever ? t('never') : formatDateTime(apiKey.lastUsedAt)}
+              </div>
+            }
+            date={isNever ? null : apiKey.lastUsedAt}
+          />
+        );
+      }
+    },
+    {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
       size: 150,
