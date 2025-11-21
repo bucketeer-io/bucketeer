@@ -136,7 +136,7 @@ func NewAuthService(
 
 	// Initialize email service if email are enabled
 	var emailService email.Service
-	if emailConfig.Enabled {
+	if emailConfig != nil && emailConfig.Enabled {
 		var err error
 		emailService, err = email.NewService(*emailConfig, logger)
 		if err != nil {
