@@ -1255,10 +1255,10 @@ func (s *AutoOpsService) validateTargetFeature(
 	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
-	if len(f.Variations) != 2 {
-		dt, err := statusProgressiveRolloutInvalidVariationSize.WithDetails(&errdetails.LocalizedMessage{
+	if len(f.Variations) < 2 {
+		dt, err := statusProgressiveRolloutInsufficientVariations.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsInvalidVariationSize),
+			Message: localizer.MustLocalize(locale.AutoOpsInsufficientVariations),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
@@ -1305,8 +1305,18 @@ func (s *AutoOpsService) validateProgressiveRolloutManualScheduleClause(
 	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
-	if err := s.validateProgressiveRolloutClauseVariationID(
-		clause.VariationId,
+	// Use new fields if available, otherwise fall back to old field for backward compatibility
+	controlVariationID := clause.ControlVariationId
+	targetVariationID := clause.TargetVariationId
+	if controlVariationID == "" && targetVariationID == "" && clause.VariationId != "" {
+		// Backward compatibility: old format only has variation_id (target)
+		// This will fail validation since control is required, prompting proper migration
+		targetVariationID = clause.VariationId
+	}
+
+	if err := s.validateProgressiveRolloutClauseVariations(
+		controlVariationID,
+		targetVariationID,
 		f,
 		localizer,
 	); err != nil {
@@ -1326,8 +1336,18 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
-	if err := s.validateProgressiveRolloutClauseVariationID(
-		clause.VariationId,
+	// Use new fields if available, otherwise fall back to old field for backward compatibility
+	controlVariationID := clause.ControlVariationId
+	targetVariationID := clause.TargetVariationId
+	if controlVariationID == "" && targetVariationID == "" && clause.VariationId != "" {
+		// Backward compatibility: old format only has variation_id (target)
+		// This will fail validation since control is required, prompting proper migration
+		targetVariationID = clause.VariationId
+	}
+
+	if err := s.validateProgressiveRolloutClauseVariations(
+		controlVariationID,
+		targetVariationID,
 		f,
 		localizer,
 	); err != nil {
@@ -1354,31 +1374,72 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	return nil
 }
 
-func (s *AutoOpsService) validateProgressiveRolloutClauseVariationID(
-	variationID string,
+func (s *AutoOpsService) validateProgressiveRolloutClauseVariations(
+	controlVariationID string,
+	targetVariationID string,
 	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
-	if variationID == "" {
-		dt, err := statusProgressiveRolloutClauseVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
+	// Check control variation
+	if controlVariationID == "" {
+		dt, err := statusProgressiveRolloutControlVariationRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "control_variation_id"),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
 		}
 		return dt.Err()
 	}
-	if exist := s.existVariationID(f, variationID); !exist {
-		dt, err := statusProgressiveRolloutClauseInvalidVariationID.WithDetails(&errdetails.LocalizedMessage{
+
+	// Check target variation
+	if targetVariationID == "" {
+		dt, err := statusProgressiveRolloutTargetVariationRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "target_variation_id"),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
 		}
 		return dt.Err()
 	}
+
+	// Check that they are different
+	if controlVariationID == targetVariationID {
+		dt, err := statusProgressiveRolloutVariationsMustBeDifferent.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AutoOpsProgressiveRolloutVariationsMustBeDifferent),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	// Check control variation exists in feature
+	if exist := s.existVariationID(f, controlVariationID); !exist {
+		dt, err := statusProgressiveRolloutControlVariationNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "control_variation_id"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	// Check target variation exists in feature
+	if exist := s.existVariationID(f, targetVariationID); !exist {
+		dt, err := statusProgressiveRolloutTargetVariationNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "target_variation_id"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+
 	return nil
 }
 
