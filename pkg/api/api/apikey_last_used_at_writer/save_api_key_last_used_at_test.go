@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api
+package apikey_last_used_at_writer
 
 import (
 	"sync"
@@ -122,10 +122,10 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := &grpcGatewayService{
-				apiKeyLastUsedInfoCacher: tt.existingCache,
+			service := &APIKeyLastUsedWriter{
+				APIKeyLastUsedInfoCacher: tt.existingCache,
 			}
-			service.cacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
+			service.CacheAPIKeyLastUsedAt(tt.apikey, tt.lastUsedAt)
 
 			listExpected := make(map[string]apikeyLastUsedAt)
 			tt.expectedCache.Range(func(key, value interface{}) bool {
@@ -134,7 +134,7 @@ func TestCacheAPIKeyLastUsedAt(t *testing.T) {
 			})
 
 			listActual := make(map[string]apikeyLastUsedAt)
-			service.apiKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
+			service.APIKeyLastUsedInfoCacher.Range(func(key, value interface{}) bool {
 				listActual[key.(string)] = value.(apikeyLastUsedAt)
 				return true
 			})

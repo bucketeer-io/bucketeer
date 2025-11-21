@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -33,6 +32,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	alw "github.com/bucketeer-io/bucketeer/v2/pkg/api/api/apikey_last_used_at_writer"
 	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
@@ -47,6 +47,7 @@ import (
 	notificationclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	tagclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client/mock"
 	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -4003,27 +4004,27 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &grpcGatewayService{
-		featureClient:            featureclientmock.NewMockClient(mockController),
-		accountClient:            accountclientmock.NewMockClient(mockController),
-		pushClient:               pushclientmock.NewMockClient(mockController),
-		codeRefClient:            coderefclientmock.NewMockClient(mockController),
-		auditLogClient:           auditlogclientmock.NewMockClient(mockController),
-		autoOpsClient:            autoopsclientmock.NewMockClient(mockController),
-		goalPublisher:            publishermock.NewMockPublisher(mockController),
-		tagClient:                tagclientmock.NewMockClient(mockController),
-		teamClient:               teamclientmock.NewMockClient(mockController),
-		notificationClient:       notificationclientmock.NewMockClient(mockController),
-		experimentClient:         experimentclientmock.NewMockClient(mockController),
-		eventCounterClient:       eventcounterclientmock.NewMockClient(mockController),
-		environmentClient:        environmentclientmock.NewMockClient(mockController),
-		userPublisher:            publishermock.NewMockPublisher(mockController),
-		evaluationPublisher:      publishermock.NewMockPublisher(mockController),
-		featuresCache:            cachev3mock.NewMockFeaturesCache(mockController),
-		segmentUsersCache:        cachev3mock.NewMockSegmentUsersCache(mockController),
-		environmentAPIKeyCache:   cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
-		apiKeyLastUsedInfoCacher: sync.Map{},
-		opts:                     &defaultOptions,
-		logger:                   logger,
+		featureClient:          featureclientmock.NewMockClient(mockController),
+		accountClient:          accountclientmock.NewMockClient(mockController),
+		pushClient:             pushclientmock.NewMockClient(mockController),
+		codeRefClient:          coderefclientmock.NewMockClient(mockController),
+		auditLogClient:         auditlogclientmock.NewMockClient(mockController),
+		autoOpsClient:          autoopsclientmock.NewMockClient(mockController),
+		goalPublisher:          publishermock.NewMockPublisher(mockController),
+		tagClient:              tagclientmock.NewMockClient(mockController),
+		teamClient:             teamclientmock.NewMockClient(mockController),
+		notificationClient:     notificationclientmock.NewMockClient(mockController),
+		experimentClient:       experimentclientmock.NewMockClient(mockController),
+		eventCounterClient:     eventcounterclientmock.NewMockClient(mockController),
+		environmentClient:      environmentclientmock.NewMockClient(mockController),
+		userPublisher:          publishermock.NewMockPublisher(mockController),
+		evaluationPublisher:    publishermock.NewMockPublisher(mockController),
+		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
+		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
+		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		apiKeyLastUsedWriter:   alw.NewAPIKeyLastUsedWriter(mysqlmock.NewMockClient(mockController)),
+		opts:                   &defaultOptions,
+		logger:                 logger,
 	}
 }
 
