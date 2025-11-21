@@ -152,6 +152,7 @@ type server struct {
 	featureService                  *string
 	autoOpsService                  *string
 	codeReferenceService            *string
+	accessTokenTTL                  *time.Duration
 	refreshTokenTTL                 *time.Duration
 	emailFilter                     *string
 	oauthConfigPath                 *string
@@ -358,6 +359,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
+		accessTokenTTL: cmd.Flag(
+			"access-token-ttl",
+			"TTL for access token.",
+		).Default("10m").Duration(),
 		refreshTokenTTL: cmd.Flag(
 			"refresh-token-ttl",
 			"TTL for refresh token.",
@@ -1063,6 +1068,7 @@ func (s *server) createAuthService(
 	}
 	serviceOptions := []authapi.Option{
 		authapi.WithLogger(logger),
+		authapi.WithAccessTokenTTL(*s.accessTokenTTL),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
 		authapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
 	}

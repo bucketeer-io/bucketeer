@@ -211,6 +211,10 @@ spec:
               value: "{{ .Values.webhook.kmsResourceName }}"
             - name: BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
+            - name: BUCKETEER_WEB_ACCESS_TOKEN_TTL
+              value: "{{ .Values.env.accessTokenTTL }}"
+            - name: BUCKETEER_WEB_REFRESH_TOKEN_TTL
+              value: "{{ .Values.env.refreshTokenTTL }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

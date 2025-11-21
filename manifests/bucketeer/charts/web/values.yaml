@@ -67,6 +67,8 @@ env:
   logLevel: info
   googleTagManagerId:
   apiEndpoint:
+  accessTokenTTL: 10m
+  refreshTokenTTL: 168h
 affinity: {}
 nodeSelector: {}
 pdb:

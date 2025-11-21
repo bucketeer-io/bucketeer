@@ -10,6 +10,7 @@ import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
+import { useTokenRefresh } from 'hooks/useTokenRefresh';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import { Undefinable } from 'option-t/undefinable';
@@ -81,6 +82,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
   const [demoGoogleAuthError, setDemoGoogleAuthError] = useState('');
+
+  // Proactive token refresh
+  const { stopTokenRefresh } = useTokenRefresh({
+    onRefreshError: () => {
+      // Token refresh failed (e.g., account disabled)
+      logout();
+    }
+  });
 
   const clearOrgAndEnvStorage = () => {
     clearOrgIdStorage();
@@ -154,6 +163,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setMyOrganizations([]);
     setIsLogin(false);
     clearTokenStorage();
+    stopTokenRefresh();
     navigate(PAGE_PATH_ROOT);
   };
 

@@ -2,21 +2,21 @@ global:
   image:
     tag: localenv
     imagePullSecrets:
-  
+
   # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql
-    type: mysql  # Options: bigquery, mysql
+    type: mysql # Options: bigquery, mysql
     batchSize: 1000
     timezone: "UTC"
-    
+
     # BigQuery configuration (used when type: bigquery)
     bigquery:
       project: ""
       dataset: ""
       location: "US"
-    
+
     # MySQL configuration (used when type: mysql)
     mysql:
       useMainConnection: true
@@ -25,7 +25,7 @@ global:
       user: ""
       password: ""
       database: ""
-  
+
   pubsub:
     type: redis-stream
     redis:
@@ -112,6 +112,8 @@ web:
     timezone: UTC
     logLevel: info
     googleTagManagerId:
+    accessTokenTTL: 5m
+    refreshTokenTTL: 168h
   tls:
     service:
       secret: bucketeer-service-cert
@@ -557,7 +559,7 @@ subscriber:
       domainEventTopic: domain
       flushSize: 10
       flushInterval: 5
-      # PubSub configuration  
+      # PubSub configuration
       pubSubType: ${global.pubsub.type}
       redisServerName: ${global.pubsub.redis.serverName}
       redisAddr: ${global.pubsub.redis.addr}
@@ -581,20 +583,20 @@ subscriber:
       flushTimeout: 30
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
-        type: ""  
-        batchSize: 0  
-        timezone: ""  
+        type: ""
+        batchSize: 0
+        timezone: ""
         mysql:
-          useMainConnection: false  
-          host: ""  
-          port: 0  
-          user: ""  
-          password: ""  
-          database: ""  
+          useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
         bigquery:
-          project: ""  
-          dataset: ""  
-          location: ""  
+          project: ""
+          dataset: ""
+          location: ""
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -607,20 +609,20 @@ subscriber:
       retryGoalEventInterval: 30 # 30 seconds
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
-        type: ""  
-        batchSize: 0  
-        timezone: ""  
+        type: ""
+        batchSize: 0
+        timezone: ""
         mysql:
-          useMainConnection: false  
-          host: ""  
-          port: 0  
-          user: ""  
-          password: ""  
-          database: ""  
+          useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
         bigquery:
-          project: ""  
-          dataset: ""  
-          location: ""  
+          project: ""
+          dataset: ""
+          location: ""
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
