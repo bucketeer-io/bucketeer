@@ -1006,6 +1006,7 @@ paths:
             - ROLE
             - ENVIRONMENT
             - STATE
+            - LAST_USED_AT
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -9261,6 +9262,7 @@ definitions:
       - ROLE
       - ENVIRONMENT
       - STATE
+      - LAST_USED_AT
     default: DEFAULT
   accountListAPIKeysRequestOrderDirection:
     type: string

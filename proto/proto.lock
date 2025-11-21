@@ -1032,6 +1032,10 @@
               {
                 "name": "STATE",
                 "integer": 6
+              },
+              {
+                "name": "LAST_USED_AT",
+                "integer": 7
               }
             ]
           },
