@@ -36,7 +36,7 @@ const Variations = ({
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
-
+  const isYAML = useMemo(() => variationType === 'YAML', [variationType]);
   const onVariation = watch('defaultOnVariation');
   const offVariation = watch('defaultOffVariation');
 
@@ -74,7 +74,7 @@ const Variations = ({
                   </Form.Label>
                 </div>
                 <Form.Control>
-                  {isJSON ? (
+                  {isJSON || isYAML ? (
                     <TextArea
                       {...field}
                       placeholder={t(

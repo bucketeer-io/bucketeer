@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
@@ -18,6 +18,7 @@ import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
+import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -61,8 +62,15 @@ const Variations = ({
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
-  const { control, watch } = useFormContext<VariationForm>();
-
+  const {
+    control,
+    watch,
+    trigger,
+    formState: { errors }
+  } = useFormContext<VariationForm>();
+  const [variationSelected, setVariationSelected] = useState<number | null>(
+    null
+  );
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'variations',
@@ -76,7 +84,7 @@ const Variations = ({
     [feature]
   );
   const isJSON = useMemo(() => feature.variationType === 'JSON', [feature]);
-
+  const isYAML = useMemo(() => feature.variationType === 'YAML', [feature]);
   const formItemClassName = useMemo(
     () => 'flex flex-col flex-1 py-0 h-full self-stretch',
     []
@@ -259,6 +267,13 @@ const Variations = ({
     ]
   );
 
+  const reValidVariation = () => {
+    if (!errors || !errors?.variations || !errors.variations.length) return;
+    errors.variations.map?.((_, index) => {
+      trigger(`variations.${index}.value`);
+    });
+  };
+
   return (
     <div className="flex flex-col w-full gap-y-6">
       {fields.map((variation, variationIndex) => (
@@ -267,7 +282,7 @@ const Variations = ({
             <VariationLabel index={variationIndex} />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
-                {!isJSON && (
+                {!isJSON && !isYAML && (
                   <Form.Field
                     control={control}
                     name={`variations.${variationIndex}.value`}
@@ -280,6 +295,10 @@ const Variations = ({
                           <Form.Control>
                             <Input
                               {...field}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
                               disabled={
                                 isBoolean || isRunningExperiment || !editable
                               }
@@ -329,7 +348,7 @@ const Variations = ({
                   )}
                 />
               </div>
-              {isJSON && (
+              {(isJSON || isYAML) && (
                 <Form.Field
                   control={control}
                   name={`variations.${variationIndex}.value`}
@@ -340,11 +359,50 @@ const Variations = ({
                           {t('form:feature-flags.value')}
                         </Form.Label>
                         <Form.Control>
-                          <ReactCodeEditor
-                            readOnly={isRunningExperiment || !editable}
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
+                          <div className="flex flex-col gap-y-2">
+                            <ReactCodeEditor
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
+                              value={field.value}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
+                              onExpand={() =>
+                                setVariationSelected(variationIndex)
+                              }
+                              readOnly={isRunningExperiment || !editable}
+                            />
+                            <ReactCodeEditorModal
+                              isOpen={variationSelected === variationIndex}
+                              onClose={() => {
+                                setVariationSelected(null);
+                              }}
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
+                              title={
+                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                  <FlagVariationPolygon
+                                    index={variationIndex}
+                                  />
+                                  <Trans
+                                    i18nKey={'form:feature-flags.variation'}
+                                    values={{
+                                      index: `${variationIndex + 1}`
+                                    }}
+                                  />
+                                </div>
+                              }
+                              value={field.value}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
+                              readOnly={isRunningExperiment || !editable}
+                              error={
+                                errors.variations?.[variationIndex]?.value
+                                  ?.message as string
+                              }
+                            />
+                          </div>
                         </Form.Control>
                         <Form.Message />
                       </Form.Item>
