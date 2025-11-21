@@ -1905,6 +1905,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "maintainer_email",
+                "type": "string"
               }
             ],
             "reserved_ids": [
