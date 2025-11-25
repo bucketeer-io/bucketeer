@@ -16,9 +16,6 @@ package api
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -55,25 +52,18 @@ func (s *grpcGatewayService) cacheAPIKeyLastUsedAt(
 	})
 }
 
-func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase() {
+func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Context) {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
 	for {
 		select {
 		case <-ctx.Done():
-			shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancelShutdown()
-
-			s.writeAPIKeyLastUsedAt(shutdownCtx)
 			s.logger.Debug("writeAPIKeyLastUsedAtCacheToDatabase stopped")
-
 			return
 		case <-ticker.C:
 			s.logger.Debug("writing API key last used at cache to database")
-			s.writeAPIKeyLastUsedAt(ctx)
+			s.writeAPIKeyLastUsedAt(context.Background())
 		}
 	}
 }

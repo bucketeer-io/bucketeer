@@ -475,6 +475,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	service := api.NewGrpcGatewayService(
+		ctx,
 		featureClient,
 		accountClient,
 		pushClient,
