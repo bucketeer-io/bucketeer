@@ -59,7 +59,7 @@ Response Example:
 | metadata.messageKey     | Key to identify message content.<br>                                                                       | e.g. NotFoundError, InvalidArgumentError             |
 | metadata.<key-value(s)> | Additional information to be embedded in the message. Optional.                                            | "email": "email.com", "field_1": "APIKey"            |
 
-For now, `details` has only one element.
+Although `details` has only one element for now, we will support multiple elements in the future for better UX.
 
 ### Message Formats
 
