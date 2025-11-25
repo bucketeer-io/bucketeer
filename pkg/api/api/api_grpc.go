@@ -182,7 +182,6 @@ type grpcGatewayService struct {
 }
 
 func NewGrpcGatewayService(
-	ctx context.Context,
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	pushClient pushclient.Client,
@@ -235,7 +234,7 @@ func NewGrpcGatewayService(
 		logger:                   options.logger.Named("api_grpc"),
 	}
 
-	go s.writeAPIKeyLastUsedAtCacheToDatabase(ctx)
+	go s.writeAPIKeyLastUsedAtCacheToDatabase()
 
 	return s
 }
