@@ -218,7 +218,7 @@ e.g. Error Response
 
 ### 2. The complete way
 
-Use the `messageKey`, other metadata, and message template files to show the complete message.
+Use the `messageKey`, other metadata, and message template files to show the complete message for each `details` element.
 As the current implementation, react-i18next is useful to embed nouns.
 We don't need to be aware of field names of the metadata except `messageKey` while developing the frontend.
 
