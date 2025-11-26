@@ -763,9 +763,17 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil).Times(2)
 
+				// Verify that the account is created with OWNER role
 				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.CreateAccountV2Response{}, nil)
+					gomock.Any(),
+					gomock.Any(),
+				).Do(func(_ context.Context, req *accountproto.CreateAccountV2Request, _ ...interface{}) {
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, req.Command.OrganizationRole,
+						"Organization creator must have OWNER role, not ADMIN")
+					assert.Equal(t, "test@example.com", req.Command.Email)
+					assert.NotNil(t, req.Command.EnvironmentRoles)
+					assert.Len(t, req.Command.EnvironmentRoles, 2, "Should create environment roles for Development and Production")
+				}).Return(&accountproto.CreateAccountV2Response{}, nil)
 			},
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
