@@ -556,6 +556,8 @@ func (s *EnvironmentService) createOrganizationMySQL(
 				zap.String("name", name),
 				zap.String("urlCode", urlCode),
 				zap.String("ownerEmail", ownerEmail),
+				zap.Bool("isTrial", isTrial),
+				zap.Bool("isSystemAdmin", isSystemAdmin),
 			)...)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -588,6 +590,8 @@ func (s *EnvironmentService) createOrganizationMySQL(
 					zap.String("name", name),
 					zap.String("urlCode", urlCode),
 					zap.String("ownerEmail", ownerEmail),
+					zap.Bool("isTrial", isTrial),
+					zap.Bool("isSystemAdmin", isSystemAdmin),
 				)...,
 			)
 			return err
@@ -606,6 +610,8 @@ func (s *EnvironmentService) createOrganizationMySQL(
 					zap.String("name", name),
 					zap.String("urlCode", urlCode),
 					zap.String("ownerEmail", ownerEmail),
+					zap.Bool("isTrial", isTrial),
+					zap.Bool("isSystemAdmin", isSystemAdmin),
 				)...,
 			)
 			return err
@@ -620,6 +626,8 @@ func (s *EnvironmentService) createOrganizationMySQL(
 				zap.String("name", name),
 				zap.String("urlCode", urlCode),
 				zap.String("ownerEmail", ownerEmail),
+				zap.Bool("isTrial", isTrial),
+				zap.Bool("isSystemAdmin", isSystemAdmin),
 			)...,
 		)
 		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
