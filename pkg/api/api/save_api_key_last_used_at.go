@@ -56,6 +56,7 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
+	writeCtx := context.Background()
 	for {
 		select {
 		case <-ctx.Done():
@@ -63,7 +64,7 @@ func (s *grpcGatewayService) writeAPIKeyLastUsedAtCacheToDatabase(ctx context.Co
 			return
 		case <-ticker.C:
 			s.logger.Debug("writing API key last used at cache to database")
-			s.writeAPIKeyLastUsedAt(context.Background())
+			s.writeAPIKeyLastUsedAt(writeCtx)
 		}
 	}
 }
