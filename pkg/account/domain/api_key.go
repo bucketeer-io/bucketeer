@@ -60,6 +60,7 @@ func NewAPIKey(
 		return nil, err
 	}
 	now := time.Now().Unix()
+
 	return &APIKey{&proto.APIKey{
 		Id:          id.String(),
 		Name:        name,
