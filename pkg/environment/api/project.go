@@ -734,11 +734,10 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	createAccountReq := &accountproto.CreateAccountV2Request{
 		OrganizationId: project.OrganizationId,
 		Command: &accountproto.CreateAccountV2Command{
-			Email:          editor.Email,
-			Name:           strings.Split(editor.Email, "@")[0],
-			AvatarImageUrl: "",
-			// TODO Once we support new console design, we should set OWNER role.
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			Email:            editor.Email,
+			Name:             strings.Split(editor.Email, "@")[0],
+			AvatarImageUrl:   "",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
 			EnvironmentRoles: envRoles,
 		},
 	}
