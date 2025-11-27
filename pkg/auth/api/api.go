@@ -1090,7 +1090,8 @@ func (s *authService) handleOAuthExchangeWithOrganization(
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
-// handleOAuthExchangeLegacy handles OAuth token exchange with first organization (legacy flow for backward compatibility)
+// handleOAuthExchangeLegacy handles OAuth token exchange with first organization
+// (legacy flow for backward compatibility)
 func (s *authService) handleOAuthExchangeLegacy(
 	ctx context.Context,
 	userInfo *auth.UserInfo,

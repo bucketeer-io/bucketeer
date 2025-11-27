@@ -75,7 +75,10 @@ func (s *authService) RequestMagicLink(
 		)
 	}
 
-	orgsResp, err := s.accountClient.GetMyOrganizationsByEmail(ctx, &acproto.GetMyOrganizationsByEmailRequest{Email: email})
+	orgsResp, err := s.accountClient.GetMyOrganizationsByEmail(
+		ctx,
+		&acproto.GetMyOrganizationsByEmailRequest{Email: email},
+	)
 	if err == nil && orgsResp != nil && len(orgsResp.Organizations) > 0 {
 		if s.emailConfig != nil && s.emailConfig.BaseURL != "" {
 			magicLinkURL := fmt.Sprintf("%s/auth/verify?token=%s", s.emailConfig.BaseURL, token)
