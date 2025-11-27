@@ -28,6 +28,7 @@ type Service interface {
 	SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error
 	SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error
 	SendWelcomeEmail(ctx context.Context, to string, language string) error
+	SendMagicLinkEmail(ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string) error
 }
 
 // NewService creates an email service based on configuration
@@ -93,6 +94,16 @@ func (s *NoOpService) SendPasswordResetEmail(
 func (s *NoOpService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
 	s.logger.Info("No-op email service: welcome email not sent",
 		zap.String("to", to),
+		zap.String("language", language),
+	)
+	return nil
+}
+
+func (s *NoOpService) SendMagicLinkEmail(ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string) error {
+	s.logger.Info("No-op email service: magic link email not sent",
+		zap.String("to", to),
+		zap.String("magicLinkURL", magicLinkURL),
+		zap.Duration("expiresIn", expiresIn),
 		zap.String("language", language),
 	)
 	return nil
