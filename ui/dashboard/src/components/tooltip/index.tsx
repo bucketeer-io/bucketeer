@@ -69,7 +69,13 @@ const Tooltip = forwardRef(
             asChild={asChild}
             className={triggerCls}
           >
-            <span className="cursor-default select-text">{trigger}</span>
+            {asChild ? (
+              trigger
+            ) : (
+              <span className="cursor-default select-text w-auto">
+                {trigger}
+              </span>
+            )}
           </TooltipTrigger>
           {content && (
             <TooltipContent
