@@ -101,22 +101,23 @@ func WithDemoSiteEnabled(isDemoSiteEnabled bool) Option {
 }
 
 type authService struct {
-	issuer              string
-	audience            string
-	signer              token.Signer
-	config              *auth.OAuthConfig
-	emailConfig         *email.Config
-	mysqlClient         mysql.Client
-	organizationStorage envstotage.OrganizationStorage
-	projectStorage      envstotage.ProjectStorage
-	environmentStorage  envstotage.EnvironmentStorage
-	accountClient       accountclient.Client
-	verifier            token.Verifier
-	googleAuthenticator auth.Authenticator
-	credentialsStorage  storage.CredentialsStorage
-	emailService        email.Service
-	opts                *options
-	logger              *zap.Logger
+	issuer                   string
+	audience                 string
+	signer                   token.Signer
+	config                   *auth.OAuthConfig
+	emailConfig              *email.Config
+	mysqlClient              mysql.Client
+	organizationStorage      envstotage.OrganizationStorage
+	projectStorage           envstotage.ProjectStorage
+	environmentStorage       envstotage.EnvironmentStorage
+	accountClient            accountclient.Client
+	verifier                 token.Verifier
+	googleAuthenticator      auth.Authenticator
+	credentialsStorage       storage.CredentialsStorage
+	emailVerificationStorage storage.EmailVerificationStorage
+	emailService             email.Service
+	opts                     *options
+	logger                   *zap.Logger
 }
 
 func NewAuthService(
@@ -150,24 +151,23 @@ func NewAuthService(
 	}
 
 	service := &authService{
-		issuer:              issuer,
-		audience:            audience,
-		signer:              signer,
-		config:              config,
-		emailConfig:         emailConfig,
-		mysqlClient:         mysqlClient,
-		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
-		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
-		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
-		accountClient:       accountClient,
-		verifier:            verifier,
-		googleAuthenticator: google.NewAuthenticator(
-			&config.GoogleConfig, logger,
-		),
-		credentialsStorage: storage.NewCredentialsStorage(mysqlClient),
-		emailService:       emailService,
-		opts:               &options,
-		logger:             logger,
+		issuer:                   issuer,
+		audience:                 audience,
+		signer:                   signer,
+		config:                   config,
+		emailConfig:              emailConfig,
+		mysqlClient:              mysqlClient,
+		organizationStorage:      envstotage.NewOrganizationStorage(mysqlClient),
+		environmentStorage:       envstotage.NewEnvironmentStorage(mysqlClient),
+		projectStorage:           envstotage.NewProjectStorage(mysqlClient),
+		accountClient:            accountClient,
+		verifier:                 verifier,
+		googleAuthenticator:      google.NewAuthenticator(&config.GoogleConfig, logger),
+		credentialsStorage:       storage.NewCredentialsStorage(mysqlClient),
+		emailVerificationStorage: storage.NewEmailVerificationStorage(mysqlClient),
+		emailService:             emailService,
+		opts:                     &options,
+		logger:                   logger,
 	}
 	service.PrepareDemoUser()
 	return service
@@ -277,31 +277,13 @@ func (s *authService) ExchangeToken(
 
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
-	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
-	if err != nil {
-		s.logger.Error("Failed to check account",
-			zap.Error(err),
-			zap.String("email", userInfo.Email),
-			zap.Any("organizations", organizations),
-		)
-		return nil, err
-	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
-	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
-
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
-	if err != nil {
-		s.logger.Error("Failed to generate token",
-			zap.Error(err),
-			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
-			zap.String("redirect_url", req.RedirectUrl),
-		)
-		return nil, err
+	// NEW FLOW: If organization_id is provided, use organization-specific authentication
+	if req.OrganizationId != "" {
+		return s.handleOAuthExchangeWithOrganization(ctx, req, userInfo, organizations, localizer)
 	}
 
-	return &authproto.ExchangeTokenResponse{Token: token}, nil
+	// OLD FLOW: Backward compatibility - use first organization
+	return s.handleOAuthExchangeLegacy(ctx, userInfo, organizations, localizer)
 }
 
 func (s *authService) RefreshToken(
@@ -531,6 +513,42 @@ func (s *authService) getOrganizationsByEmail(
 		return nil, dt.Err()
 	}
 	return orgResp.Organizations, nil
+}
+
+// convertEnvOrgsToAuthOrgs converts environment.Organization to auth.Organization
+func convertEnvOrgsToAuthOrgs(envOrgs []*envproto.Organization) []*authproto.Organization {
+	authOrgs := make([]*authproto.Organization, len(envOrgs))
+	for i, envOrg := range envOrgs {
+		var authSettings *authproto.AuthenticationSettings
+		if envOrg.AuthenticationSettings != nil {
+			enabledTypes := make([]authproto.AuthenticationType, len(envOrg.AuthenticationSettings.EnabledTypes))
+			for j, t := range envOrg.AuthenticationSettings.EnabledTypes {
+				enabledTypes[j] = authproto.AuthenticationType(t)
+			}
+			authSettings = &authproto.AuthenticationSettings{
+				EnabledTypes: enabledTypes,
+			}
+		}
+
+		authOrgs[i] = &authproto.Organization{
+			Id:                     envOrg.Id,
+			Name:                   envOrg.Name,
+			UrlCode:                envOrg.UrlCode,
+			Description:            envOrg.Description,
+			Disabled:               envOrg.Disabled,
+			Archived:               envOrg.Archived,
+			Trial:                  envOrg.Trial,
+			CreatedAt:              envOrg.CreatedAt,
+			UpdatedAt:              envOrg.UpdatedAt,
+			SystemAdmin:            envOrg.SystemAdmin,
+			ProjectCount:           envOrg.ProjectCount,
+			EnvironmentCount:       envOrg.EnvironmentCount,
+			UserCount:              envOrg.UserCount,
+			OwnerEmail:             envOrg.OwnerEmail,
+			AuthenticationSettings: authSettings,
+		}
+	}
+	return authOrgs
 }
 
 func (s *authService) updateUserInfoForOrganizations(
@@ -954,4 +972,156 @@ func (s *authService) PrepareDemoUser() {
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
+}
+
+// handleOAuthExchangeWithOrganization handles OAuth token exchange with organization selection (new flow)
+func (s *authService) handleOAuthExchangeWithOrganization(
+	ctx context.Context,
+	req *authproto.ExchangeTokenRequest,
+	userInfo *auth.UserInfo,
+	organizations []*envproto.Organization,
+	localizer locale.Localizer,
+) (*authproto.ExchangeTokenResponse, error) {
+	organizationID := req.OrganizationId
+	email := userInfo.Email
+
+	// Step 1: Verify the requested organization is in the user's organization list
+	var selectedOrg *envproto.Organization
+	for _, org := range organizations {
+		if org.Id == organizationID {
+			selectedOrg = org
+			break
+		}
+	}
+	if selectedOrg == nil {
+		s.logger.Error("Organization not found for user",
+			zap.String("email", email),
+			zap.String("organization_id", organizationID),
+		)
+		dt, err := auth.StatusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Step 2: Verify the auth method (based on req.Type) is enabled for this organization
+	var requiredAuthType envproto.AuthenticationType
+	switch req.Type {
+	case authproto.AuthType_AUTH_TYPE_GOOGLE:
+		requiredAuthType = envproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE
+	case authproto.AuthType_AUTH_TYPE_GITHUB:
+		s.logger.Error("GitHub authentication not yet supported")
+		return nil, auth.StatusUnknownAuthType.Err()
+	default:
+		s.logger.Error("Unknown auth type", zap.String("authType", req.Type.String()))
+		return nil, auth.StatusUnknownAuthType.Err()
+	}
+
+	if !isAuthMethodEnabled(selectedOrg, requiredAuthType) {
+		s.logger.Error("OAuth authentication method not enabled for organization",
+			zap.String("email", email),
+			zap.String("organization_id", organizationID),
+			zap.String("auth_type", req.Type.String()),
+		)
+		dt, err := auth.StatusAuthMethodNotEnabled.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	// Step 3: Get account for the specific organization
+	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: organizationID,
+	})
+	if err != nil {
+		s.logger.Error("Failed to get account for organization",
+			zap.Error(err),
+			zap.String("email", email),
+			zap.String("organization_id", organizationID),
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+
+	// Check if account is disabled
+	if account.Account.Disabled {
+		s.logger.Error("Account is disabled",
+			zap.String("email", email),
+			zap.String("organization_id", organizationID),
+		)
+		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
+
+	// Step 4: Generate token for the specified organization
+	token, err := s.generateToken(ctx, email, accountDomain, isSystemAdmin, localizer)
+	if err != nil {
+		s.logger.Error("Failed to generate token",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("organization_id", organizationID),
+		)
+		return nil, err
+	}
+
+	s.logger.Info("Successful OAuth token exchange with organization selection",
+		zap.String("email", email),
+		zap.String("organization_id", organizationID),
+		zap.String("auth_type", req.Type.String()),
+	)
+
+	return &authproto.ExchangeTokenResponse{Token: token}, nil
+}
+
+// handleOAuthExchangeLegacy handles OAuth token exchange with first organization (legacy flow for backward compatibility)
+func (s *authService) handleOAuthExchangeLegacy(
+	ctx context.Context,
+	userInfo *auth.UserInfo,
+	organizations []*envproto.Organization,
+	localizer locale.Localizer,
+) (*authproto.ExchangeTokenResponse, error) {
+	// Check if the user has at least one account enabled in any Organization
+	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
+	if err != nil {
+		s.logger.Error("Failed to check account",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
+			zap.Any("organizations", organizations),
+		)
+		return nil, err
+	}
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
+
+	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
+	if err != nil {
+		s.logger.Error("Failed to generate token",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
+		)
+		return nil, err
+	}
+
+	s.logger.Info("Successful OAuth token exchange (legacy flow)",
+		zap.String("email", userInfo.Email),
+	)
+
+	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
