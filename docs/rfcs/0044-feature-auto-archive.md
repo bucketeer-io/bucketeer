@@ -54,6 +54,24 @@ CREATE INDEX idx_environment_auto_archive_enabled
   ON environment_v2 (auto_archive_enabled);
 ```
 
+#### Design Decision: Configuration Storage Approach
+
+We evaluated multiple approaches for storing auto-archive configuration.
+
+**Option A: Direct columns in environment_v2 (Chosen)**
+- Consistent with existing pattern (`require_comment` field)
+- Simple implementation with single-table queries
+- High performance (no JOIN overhead)
+
+**Option B: Separate configuration table**
+- Better separation of concerns
+- Prevents environment_v2 table bloat
+- Trade-offs: JOIN overhead in queries (critical for batch jobs), implementation complexity (2-table transactions, NULL handling, UPSERT logic), 1:1 relationship redundancy, inconsistency with existing patterns
+
+**Decision Rationale**: We chose Option A because three fields represent a reasonable scope for this feature, and maintaining consistency with the existing `require_comment` pattern ensures simplicity and performance. This approach minimizes implementation cost and operational complexity while delivering the required functionality.
+
+**Future Consideration**: If environment-level configuration fields exceed 5-7 feature-specific settings, we should revisit this architecture and consider a more scalable configuration management approach, such as a unified configuration table or feature-specific config tables.
+
 ### Protobuf Changes
 
 #### Environment Proto Extension
