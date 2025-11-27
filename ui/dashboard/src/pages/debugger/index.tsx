@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import Icon from 'components/icon';
-import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
 import PageLoader from './page-loader';
 
@@ -13,9 +12,11 @@ const DebuggerPage = () => {
 
   return (
     <PageLayout.Root title={t('navigation.debugger')}>
-      <PageHeader
-        title={t('navigation.debugger')}
-        description={
+      <PageLayout.Header>
+        <h1 className="text-gray-900 typo-head-bold-huge">
+          {t('navigation.debugger')}
+        </h1>
+        <p className="text-gray-600 mt-3 typo-para-small">
           <Trans
             i18nKey={'common:debugger-subtitle'}
             components={{
@@ -29,8 +30,8 @@ const DebuggerPage = () => {
               icon: <Icon icon={IconLaunchOutlined} size="sm" />
             }}
           />
-        }
-      />
+        </p>
+      </PageLayout.Header>
       <PageLoader />
     </PageLayout.Root>
   );
