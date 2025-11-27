@@ -99,7 +99,9 @@ func (s *NoOpService) SendWelcomeEmail(ctx context.Context, to string, language 
 	return nil
 }
 
-func (s *NoOpService) SendMagicLinkEmail(ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string) error {
+func (s *NoOpService) SendMagicLinkEmail(
+	ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string,
+) error {
 	s.logger.Info("No-op email service: magic link email not sent",
 		zap.String("to", to),
 		zap.String("magicLinkURL", magicLinkURL),
