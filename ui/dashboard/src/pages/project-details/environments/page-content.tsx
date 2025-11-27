@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -62,7 +63,7 @@ const PageContent = ({
   return (
     <>
       <Filter
-        isShowDocumentation={false}
+        link={DOCUMENTATION_LINKS.ENVIRONMENTS}
         placeholder={t('form:name-desc-search-placeholder')}
         name="project-envs-list-search"
         action={

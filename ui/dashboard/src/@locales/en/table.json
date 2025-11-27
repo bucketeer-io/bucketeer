@@ -260,7 +260,7 @@
     "enable": "Enable code references",
     "enable-desc": "Quickly see instances of feature flags being leveraged in your codebase, with direct links from Bucketeer to the platform of your choice.",
     "empty": "No registered code references",
-    "empty-desc": "There are no code references in your codebase yet. When a reference is added, it will appear here."
+    "empty-desc": "There are no code references in your codebase yet. When a reference is added, it will appear here. <comp>See the documentation<icon /></comp>"
   },
   "trigger": {
     "title": "Trigger",

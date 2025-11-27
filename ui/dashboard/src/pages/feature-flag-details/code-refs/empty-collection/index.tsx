@@ -1,5 +1,9 @@
-import { IconAddOutlined } from 'react-icons-material-design';
+import { IconAddOutlined, IconLaunchOutlined } from 'react-icons-material-design';
+import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
+import Icon from 'components/icon';
 import EmptyState, { EmptyStateProps } from 'elements/empty-state';
 
 const EmptyCollection = ({
@@ -21,7 +25,23 @@ const EmptyCollection = ({
           {t(`code-refs.${isEmpty ? 'empty' : 'enable'}`)}
         </EmptyState.Title>
         <EmptyState.Description>
-          {t(`code-refs.${isEmpty ? 'empty' : 'enable'}-desc`)}
+          {isEmpty ? (
+            <Trans
+              i18nKey={'table:code-refs.empty-desc'}
+              components={{
+                comp: (
+                  <Link
+                    to={DOCUMENTATION_LINKS.FLAG_CODE_REFERENCE}
+                    target="_blank"
+                    className="inline-flex items-center gap-x-1 text-primary-500 underline"
+                  />
+                ),
+                icon: <Icon icon={IconLaunchOutlined} size="sm" />
+              }}
+            />
+          ) : (
+            t(`code-refs.enable-desc`)
+          )}
         </EmptyState.Description>
       </EmptyState.Body>
       {!isEmpty && onAdd && (

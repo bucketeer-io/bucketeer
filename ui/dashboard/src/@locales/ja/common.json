@@ -235,7 +235,7 @@
   "current-version": "現在のバージョン",
   "updates": "更新",
   "experimentation": "エクスペリメント",
-  "debugger-subtitle": "デバッガーは、特定のエンドユーザーに異なる条件下でどのバリエーションが割り当てられるかをリアルタイムで確認できます。",
+  "debugger-subtitle": "デバッガーは、特定のエンドユーザーに異なる条件下でどのバリエーションが割り当てられるかをリアルタイムで確認できます。<comp>ドキュメント <icon></icon></comp>を参照してください。",
   "add-attribute": "属性を追加",
   "evaluate": "評価",
   "debugger-results": "デバッガー結果",
@@ -290,12 +290,12 @@
   "admin-role-description": "すべての環境にアクセスでき、すべての操作を実行できます。",
   "teams": "チーム",
   "docs": "ドキュメント",
-  "new":"新規",
+  "new": "新規",
   "discard": "変更を破棄",
   "edit-rule": "ルールを編集",
   "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
   "leave-page": "ページを離れる",
-  "note":"メモ",
-  "full-screen-mode":"フルスクリーンモード"
+  "note": "メモ",
+  "full-screen-mode": "フルスクリーンモード"
 }

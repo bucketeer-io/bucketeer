@@ -235,7 +235,7 @@
   "current-version": "Current Version",
   "updates": "Updates",
   "experimentation": "Experimentation",
-  "debugger-subtitle": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.",
+  "debugger-subtitle": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time. See the <comp>documentation <icon></icon></comp>",
   "add-attribute": "Add Attribute",
   "evaluate": "Evaluate",
   "debugger-results": "Debugger Results",
@@ -293,9 +293,9 @@
   "new": "New",
   "discard": "Discard changes",
   "edit-rule": "Edit rule",
-  "add-rule":"Add rule",
-  "continue-editing":"Continue editing",
-  "leave-page":"Leave page",
-  "note":"Note",
-  "full-screen-mode":"Fullscreen Mode"
+  "add-rule": "Add rule",
+  "continue-editing": "Continue editing",
+  "leave-page": "Leave page",
+  "note": "Note",
+  "full-screen-mode": "Fullscreen Mode"
 }

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { IconLaunchOutlined } from 'react-icons-material-design';
+import { Link } from 'react-router-dom';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
@@ -8,6 +10,7 @@ import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -22,6 +25,7 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -101,9 +105,17 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   return (
     <PageLayout.Content className="p-6">
       <div className="p-5 shadow-card rounded-lg bg-white">
-        <p className="text-gray-800 typo-head-bold-small">
-          {t('form:general-info')}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-800 typo-head-bold-small">
+            {t('form:general-info')}
+          </p>
+          <Link target="_blank" to={DOCUMENTATION_LINKS.ORGANIZATIONS}>
+            <Button variant="text" className="flex-1 lg:flex-none">
+              <Icon icon={IconLaunchOutlined} size="sm" />
+              {t('documentation')}
+            </Button>
+          </Link>
+        </div>
         <FormProvider {...form}>
           <Form onSubmit={form.handleSubmit(onSubmit)}>
             <Form.Field

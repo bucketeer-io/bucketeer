@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { IconLaunchOutlined } from 'react-icons-material-design';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
@@ -9,6 +10,7 @@ import { invalidateHistories } from '@queries/histories';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -184,9 +186,20 @@ const GeneralInfoForm = ({
     <FormProvider {...form}>
       <Form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
-          <p className="typo-head-bold-small text-gray-800">
-            {t('general-info')}
-          </p>
+          <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+            <p className="typo-head-bold-small text-gray-800">
+              {t('general-info')}
+            </p>
+            <Button
+              type="button"
+              variant="text"
+              className="flex-1 lg:flex-none"
+              onClick={() => window.open(DOCUMENTATION_LINKS.FLAG_SETTINGS, '_blank')}
+            >
+              <Icon icon={IconLaunchOutlined} size="sm" />
+              {t('common:documentation')}
+            </Button>
+          </div>
 
           <Form.Field
             name="maintainer"

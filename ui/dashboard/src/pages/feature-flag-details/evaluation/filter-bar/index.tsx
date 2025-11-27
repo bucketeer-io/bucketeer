@@ -1,6 +1,9 @@
+import { IconLaunchOutlined } from 'react-icons-material-design';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
 import { EvaluationTimeRange } from '@types';
 import { IconInfo, IconThreeLines } from '@icons';
+import Button from 'components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,31 +43,40 @@ const FilterBar = ({
           className="max-w-[310px]"
         />
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          showArrow={false}
-          disabled={isLoading}
-          trigger={
-            <div className="flex items-center gap-x-2">
-              <Icon icon={IconThreeLines} size="sm" />
-              <p className="text-gray-600">{timeRangeLabel}</p>
-            </div>
-          }
-          className="px-4 py-[13.5px]"
-        />
-        <DropdownMenuContent align="end">
-          {timeRangeOptions.map(item => (
-            <DropdownMenuItem
-              key={item.value}
-              label={item.label}
-              value={item.value}
-              onSelectOption={value =>
-                onChangeTimeRange(value as EvaluationTimeRange)
-              }
-            />
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-x-3">
+        <Button
+          variant="text"
+          onClick={() => window.open(DOCUMENTATION_LINKS.FLAG_EVALUATIONS, '_blank')}
+        >
+          <Icon icon={IconLaunchOutlined} size="sm" />
+          {t('documentation')}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            showArrow={false}
+            disabled={isLoading}
+            trigger={
+              <div className="flex items-center gap-x-2">
+                <Icon icon={IconThreeLines} size="sm" />
+                <p className="text-gray-600">{timeRangeLabel}</p>
+              </div>
+            }
+            className="px-4 py-[13.5px]"
+          />
+          <DropdownMenuContent align="end">
+            {timeRangeOptions.map(item => (
+              <DropdownMenuItem
+                key={item.value}
+                label={item.label}
+                value={item.value}
+                onSelectOption={value =>
+                  onChangeTimeRange(value as EvaluationTimeRange)
+                }
+              />
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 };
