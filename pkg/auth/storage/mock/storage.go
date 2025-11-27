@@ -140,3 +140,83 @@ func (mr *MockCredentialsStorageMockRecorder) UpdatePassword(ctx, email, passwor
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockCredentialsStorage)(nil).UpdatePassword), ctx, email, passwordHash)
 }
+
+// MockEmailVerificationStorage is a mock of EmailVerificationStorage interface.
+type MockEmailVerificationStorage struct {
+	ctrl     *gomock.Controller
+	recorder *MockEmailVerificationStorageMockRecorder
+}
+
+// MockEmailVerificationStorageMockRecorder is the mock recorder for MockEmailVerificationStorage.
+type MockEmailVerificationStorageMockRecorder struct {
+	mock *MockEmailVerificationStorage
+}
+
+// NewMockEmailVerificationStorage creates a new mock instance.
+func NewMockEmailVerificationStorage(ctrl *gomock.Controller) *MockEmailVerificationStorage {
+	mock := &MockEmailVerificationStorage{ctrl: ctrl}
+	mock.recorder = &MockEmailVerificationStorageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockEmailVerificationStorage) EXPECT() *MockEmailVerificationStorageMockRecorder {
+	return m.recorder
+}
+
+// CreateVerificationToken mocks base method.
+func (m *MockEmailVerificationStorage) CreateVerificationToken(ctx context.Context, email, token string, expiresAt int64, ipAddress, userAgent string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateVerificationToken", ctx, email, token, expiresAt, ipAddress, userAgent)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateVerificationToken indicates an expected call of CreateVerificationToken.
+func (mr *MockEmailVerificationStorageMockRecorder) CreateVerificationToken(ctx, email, token, expiresAt, ipAddress, userAgent any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVerificationToken", reflect.TypeOf((*MockEmailVerificationStorage)(nil).CreateVerificationToken), ctx, email, token, expiresAt, ipAddress, userAgent)
+}
+
+// DeleteExpiredTokens mocks base method.
+func (m *MockEmailVerificationStorage) DeleteExpiredTokens(ctx context.Context, before int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteExpiredTokens", ctx, before)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteExpiredTokens indicates an expected call of DeleteExpiredTokens.
+func (mr *MockEmailVerificationStorageMockRecorder) DeleteExpiredTokens(ctx, before any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredTokens", reflect.TypeOf((*MockEmailVerificationStorage)(nil).DeleteExpiredTokens), ctx, before)
+}
+
+// GetVerificationToken mocks base method.
+func (m *MockEmailVerificationStorage) GetVerificationToken(ctx context.Context, token string) (*domain.EmailVerificationToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVerificationToken", ctx, token)
+	ret0, _ := ret[0].(*domain.EmailVerificationToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVerificationToken indicates an expected call of GetVerificationToken.
+func (mr *MockEmailVerificationStorageMockRecorder) GetVerificationToken(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVerificationToken", reflect.TypeOf((*MockEmailVerificationStorage)(nil).GetVerificationToken), ctx, token)
+}
+
+// MarkVerified mocks base method.
+func (m *MockEmailVerificationStorage) MarkVerified(ctx context.Context, token string, verifiedAt int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkVerified", ctx, token, verifiedAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkVerified indicates an expected call of MarkVerified.
+func (mr *MockEmailVerificationStorageMockRecorder) MarkVerified(ctx, token, verifiedAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVerified", reflect.TypeOf((*MockEmailVerificationStorage)(nil).MarkVerified), ctx, token, verifiedAt)
+}
