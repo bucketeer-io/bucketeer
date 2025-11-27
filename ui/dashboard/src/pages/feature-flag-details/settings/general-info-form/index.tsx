@@ -194,7 +194,9 @@ const GeneralInfoForm = ({
               type="button"
               variant="text"
               className="flex-1 lg:flex-none"
-              onClick={() => window.open(DOCUMENTATION_LINKS.FLAG_SETTINGS, '_blank')}
+              onClick={() =>
+                window.open(DOCUMENTATION_LINKS.FLAG_SETTINGS, '_blank')
+              }
             >
               <Icon icon={IconLaunchOutlined} size="sm" />
               {t('common:documentation')}

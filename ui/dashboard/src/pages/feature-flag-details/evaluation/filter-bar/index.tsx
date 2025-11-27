@@ -46,7 +46,9 @@ const FilterBar = ({
       <div className="flex items-center gap-x-3">
         <Button
           variant="text"
-          onClick={() => window.open(DOCUMENTATION_LINKS.FLAG_EVALUATIONS, '_blank')}
+          onClick={() =>
+            window.open(DOCUMENTATION_LINKS.FLAG_EVALUATIONS, '_blank')
+          }
         >
           <Icon icon={IconLaunchOutlined} size="sm" />
           {t('documentation')}

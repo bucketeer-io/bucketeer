@@ -67,7 +67,9 @@ const SubmitBar = ({
         <Button
           type="button"
           variant="text"
-          onClick={() => window.open(DOCUMENTATION_LINKS.FLAG_VARIATIONS, '_blank')}
+          onClick={() =>
+            window.open(DOCUMENTATION_LINKS.FLAG_VARIATIONS, '_blank')
+          }
         >
           <Icon icon={IconLaunchOutlined} size="sm" />
           {t('documentation')}

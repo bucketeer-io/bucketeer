@@ -1,5 +1,8 @@
-import { IconAddOutlined, IconLaunchOutlined } from 'react-icons-material-design';
 import { Trans } from 'react-i18next';
+import {
+  IconAddOutlined,
+  IconLaunchOutlined
+} from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useTranslation } from 'i18n';
