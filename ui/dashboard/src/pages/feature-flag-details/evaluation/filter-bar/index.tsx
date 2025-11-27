@@ -51,21 +51,21 @@ const FilterBar = ({
           {t('documentation')}
         </Button>
         <Dropdown
-        trigger={
-          <div className="flex items-center gap-x-2">
-            <Icon icon={IconThreeLines} size="sm" />
-            <p className="text-gray-600">{timeRangeLabel}</p>
-          </div>
-        }
-        value={currentFilter}
-        options={timeRangeOptions as DropdownOption[]}
-        disabled={isLoading}
-        showArrow={false}
-        onChange={value => onChangeTimeRange(value as EvaluationTimeRange)}
-        alignContent="end"
-        className="px-4 py-[13.5px]"
-        wrapTriggerStyle="!w-fit"
-      />
+          trigger={
+            <div className="flex items-center gap-x-2">
+              <Icon icon={IconThreeLines} size="sm" />
+              <p className="text-gray-600">{timeRangeLabel}</p>
+            </div>
+          }
+          value={currentFilter}
+          options={timeRangeOptions as DropdownOption[]}
+          disabled={isLoading}
+          showArrow={false}
+          onChange={value => onChangeTimeRange(value as EvaluationTimeRange)}
+          alignContent="end"
+          className="px-4 py-[13.5px]"
+          wrapTriggerStyle="!w-fit"
+        />
       </div>
     </div>
   );

@@ -195,7 +195,8 @@ const OrganizationCreateUpdateModal = ({
                             const urlCode = form.getValues('urlCode');
                             form.setValue(
                               'urlCode',
-                              isUrlCodeDirty ? urlCode : onGenerateSlug(value)
+                              isUrlCodeDirty ? urlCode : onGenerateSlug(value),
+                              { shouldDirty: isUrlCodeDirty ? true : false }
                             );
                           }
                         }}
