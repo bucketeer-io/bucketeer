@@ -5558,6 +5558,22 @@
                 "integer": 3
               }
             ]
+          },
+          {
+            "name": "AuthenticationType",
+            "enum_fields": [
+              {
+                "name": "AUTHENTICATION_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_GOOGLE",
+                "integer": 1
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_PASSWORD",
+                "integer": 2
+              }
+            ]
           }
         ],
         "messages": [
@@ -5608,6 +5624,11 @@
                 "id": 3,
                 "name": "type",
                 "type": "AuthType"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },
@@ -5652,6 +5673,11 @@
               {
                 "id": 2,
                 "name": "password",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
                 "type": "string"
               }
             ]
@@ -5845,6 +5871,143 @@
                 "id": 2,
                 "name": "email",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "RequestMagicLinkRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "RequestMagicLinkResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "message",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "VerifyMagicLinkRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AuthenticationSettings",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled_types",
+                "type": "AuthenticationType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "Organization",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "trial",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "system_admin",
+                "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "project_count",
+                "type": "int32"
+              },
+              {
+                "id": 12,
+                "name": "environment_count",
+                "type": "int32"
+              },
+              {
+                "id": 13,
+                "name": "user_count",
+                "type": "int32"
+              },
+              {
+                "id": 14,
+                "name": "owner_email",
+                "type": "string"
+              },
+              {
+                "id": 15,
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
+              }
+            ]
+          },
+          {
+            "name": "VerifyMagicLinkResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organizations",
+                "type": "Organization",
+                "is_repeated": true
               }
             ]
           }
@@ -7181,6 +7344,223 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "RequestMagicLink",
+                "in_type": "RequestMagicLinkRequest",
+                "out_type": "RequestMagicLinkResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/magic_link/request"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Request Magic Link"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Initiate magic link authentication by sending a verification email to users. Returns a generic success message regardless of whether the email exists to prevent user enumeration attacks."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.request_magic_link"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "VerifyMagicLink",
+                "in_type": "VerifyMagicLinkRequest",
+                "out_type": "VerifyMagicLinkResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/magic_link/verify"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Verify Magic Link"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Verify a magic link token and return the verified email address along with the user's organizations and their authentication settings."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.verify_magic_link"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Token not found or expired."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"token not found or expired\",\"details\":[]}"
                                   }
                                 ]
                               }

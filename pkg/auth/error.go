@@ -79,4 +79,18 @@ var (
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid email configuration", "emailConfig"))
 	StatusMissingEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "email"))
+
+	// Magic Link Authentication errors
+	StatusMissingToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "token must not be empty", "token"))
+	StatusInvalidMagicLinkToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid magic link token", "token"))
+	StatusExpiredMagicLinkToken = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.AuthPackageName, "magic link token expired"))
+	StatusMagicLinkTokenAlreadyUsed = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.AuthPackageName, "magic link token already used"))
+	StatusOrganizationNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "organization not found", "organization_id"))
+	StatusAuthMethodNotEnabled = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "authentication method not enabled for this organization"))
 )

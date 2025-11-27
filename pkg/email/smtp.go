@@ -115,6 +115,26 @@ func (s *SMTPService) SendWelcomeEmail(ctx context.Context, to string, language 
 	return nil
 }
 
+func (s *SMTPService) SendMagicLinkEmail(
+	ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string,
+) error {
+	subject, body := s.renderer.RenderMagicLinkEmail(language, magicLinkURL, expiresIn, to)
+
+	err := s.sendEmail(ctx, to, subject, body)
+	if err != nil {
+		s.logger.Error("Failed to send magic link email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return fmt.Errorf("failed to send magic link email: %w", err)
+	}
+
+	s.logger.Info("Magic link email sent successfully",
+		zap.String("to", to),
+	)
+	return nil
+}
+
 func (s *SMTPService) sendEmail(ctx context.Context, to, subject, body string) error {
 	auth := smtp.PlainAuth("", s.config.SMTP.Username, s.config.SMTP.Password, s.config.SMTP.Host)
 
