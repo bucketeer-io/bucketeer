@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconLaunchOutlined } from 'react-icons-material-design';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
@@ -9,6 +9,7 @@ import { invalidateProjectDetails } from '@queries/project-details';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
@@ -101,14 +102,16 @@ const ProjectSettings = ({ project }: { project: Project }) => {
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
             <p className="typo-head-bold-big">{t(`settings`)}</p>
             <div className="flex items-center gap-4 mt-3 lg:mt-0">
-              <Button
-                variant="text"
-                type="button"
-                className="flex-1 lg:flex-none"
-              >
-                <Icon icon={IconLaunchOutlined} size="sm" />
-                {t('documentation')}
-              </Button>
+              <Link target="_blank" to={DOCUMENTATION_LINKS.PROJECTS}>
+                <Button
+                  variant="text"
+                  type="button"
+                  className="flex-1 lg:flex-none"
+                >
+                  <Icon icon={IconLaunchOutlined} size="sm" />
+                  {t('documentation')}
+                </Button>
+              </Link>
               <DisabledButtonTooltip
                 type={!isOrganizationAdmin ? 'admin' : 'editor'}
                 hidden={!disabled}

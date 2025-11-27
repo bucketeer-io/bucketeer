@@ -75,7 +75,7 @@ const EmptyStateTitle = ({ children }: { children: string }) => {
   return <div className="text-gray-900 typo-head-bold-medium">{children}</div>;
 };
 
-const EmptyStateDescription = ({ children }: { children: string }) => {
+const EmptyStateDescription = ({ children }: { children: ReactNode }) => {
   return <div className="text-gray-600 typo-para-small">{children}</div>;
 };
 

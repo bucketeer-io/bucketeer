@@ -82,7 +82,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
-        link={DOCUMENTATION_LINKS.PUSHES}
+        link={DOCUMENTATION_LINKS.FCM}
         placeholder={t('form:name-search-placeholder')}
         name="pushes-list-search"
         onOpenFilter={onOpenFilterModal}
