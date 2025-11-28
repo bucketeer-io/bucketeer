@@ -35,7 +35,8 @@ import (
 )
 
 const (
-	apiKeyShadowPercentage = 0.75 // hide a part of the api key
+	// TODO: after implement the obfuscation on the console, set to 0.75 to mask most of the key
+	apiKeyShadowPercentage = 0 // hide a part of the api key
 )
 
 func (s *AccountService) CreateAPIKey(

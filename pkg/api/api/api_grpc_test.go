@@ -146,7 +146,7 @@ func TestGrpcExtractAPIKeyID(t *testing.T) {
 	for i, tc := range testcases {
 		des := fmt.Sprintf("index %d", i)
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		key, err := gs.extractAPIKeyID(tc.ctx)
+		key, err := gs.extractAPIKey(tc.ctx)
 		assert.Equal(t, tc.key, key, des)
 		assert.Equal(t, tc.failed, err != nil, des)
 	}
@@ -234,7 +234,7 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
-		id, err := gs.extractAPIKeyID(p.ctx)
+		id, err := gs.extractAPIKey(p.ctx)
 		assert.NoError(t, err)
 		actual, err := gs.getEnvironmentAPIKey(p.ctx, id)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)

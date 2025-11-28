@@ -23,6 +23,7 @@ import (
 	"github.com/jinzhu/copier"
 
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
@@ -49,14 +50,19 @@ func NewAPIKey(
 	maintainer string,
 	description string,
 ) (*APIKey, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+
 	key, err := generateKey()
 	if err != nil {
 		return nil, err
 	}
 	now := time.Now().Unix()
-	// TODO: generate UUID as id for APIKey after migrate all old ids to keys
+
 	return &APIKey{&proto.APIKey{
-		Id:          key,
+		Id:          id.String(),
 		Name:        name,
 		Role:        role,
 		CreatedAt:   now,
