@@ -7728,6 +7728,16 @@
                 "id": 2,
                 "name": "variation_id",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "control_variation_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "target_variation_id",
+                "type": "string"
               }
             ]
           },
@@ -7753,6 +7763,16 @@
               {
                 "id": 4,
                 "name": "variation_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "control_variation_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "target_variation_id",
                 "type": "string"
               }
             ]
