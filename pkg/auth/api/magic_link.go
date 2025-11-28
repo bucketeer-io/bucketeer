@@ -31,7 +31,6 @@ import (
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
-
 // RequestMagicLink initiates the magic link authentication flow
 func (s *authService) RequestMagicLink(
 	ctx context.Context,
