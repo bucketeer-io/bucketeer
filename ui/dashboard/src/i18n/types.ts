@@ -3,4 +3,10 @@ export enum Language {
   ENGLISH = 'en'
 }
 
-export type Namespace = 'common' | 'auth' | 'form' | 'table' | 'message' | 'backend';
+export type Namespace =
+  | 'common'
+  | 'auth'
+  | 'form'
+  | 'table'
+  | 'message'
+  | 'backend';
