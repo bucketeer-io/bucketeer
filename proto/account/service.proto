@@ -285,6 +285,7 @@ message ListAPIKeysRequest {
   string environment_id = 8 [deprecated = true];
   repeated string environment_ids = 9;
   string organization_id = 10 [(google.api.field_behavior) = REQUIRED];
+  string maintainer_email = 11;
 }
 
 message ListAPIKeysResponse {

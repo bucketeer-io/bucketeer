@@ -508,6 +508,13 @@ func (s *AccountService) ListAPIKeys(
 			Keyword: req.SearchKeyword,
 		}
 	}
+	if req.MaintainerEmail != "" {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "api_key.maintainer",
+			Operator: mysql.OperatorEqual,
+			Value:    req.MaintainerEmail,
+		})
+	}
 	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(

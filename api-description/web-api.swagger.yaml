@@ -1039,6 +1039,10 @@ paths:
           in: query
           required: true
           type: string
+        - name: maintainerEmail
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/my_organizations:
