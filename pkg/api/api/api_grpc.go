@@ -1502,11 +1502,11 @@ func (s *grpcGatewayService) checkRequest(
 	if isContextCanceled(ctx) {
 		return nil, ErrContextCanceled
 	}
-	id, err := s.extractAPIKeyID(ctx)
+	apiKey, err := s.extractAPIKey(ctx)
 	if err != nil {
 		return nil, err
 	}
-	envAPIKey, err := s.getEnvironmentAPIKey(ctx, id)
+	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -1571,7 +1571,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 	return envAPIKey, nil
 }
 
-func (s *grpcGatewayService) extractAPIKeyID(ctx context.Context) (string, error) {
+func (s *grpcGatewayService) extractAPIKey(ctx context.Context) (string, error) {
 	md, ok := gmetadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", ErrMissingAPIKey
