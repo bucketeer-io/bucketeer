@@ -77,6 +77,7 @@ const EnvironmentEditorList = ({
       label={environmentLabel}
       placeholder={placeholder || t('select-environment')}
       isMultiselect={Array.isArray(value)}
+      itemSelected={value as string}
       selectedOptions={Array.isArray(value) ? value : undefined}
       itemSize={itemSize}
       maxOptions={maxOptions}

@@ -12,12 +12,7 @@ import { getTokenStorage, setTokenStorage } from 'storage/token';
 import * as yup from 'yup';
 import { DecodedToken } from '@types';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import AuthWrapper from './elements/auth-wrapper';
 
@@ -86,30 +81,19 @@ const SelectOrganization = () => {
               <Form.Item>
                 <Form.Label required>{t(`organization`)}</Form.Label>
                 <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      label={
-                        myOrganizations.find(
-                          org => org.id === form.getValues('organization')
-                        )?.name || t(`organization-placeholder`)
-                      }
-                      isExpand
-                    />
-                    <DropdownMenuContent className="w-[442px]">
-                      {myOrganizations.map((org, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          label={org.name}
-                          value={org.id}
-                          onSelectOption={value => {
-                            form.clearErrors();
-                            form.setValue('organization', value as string);
-                          }}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Dropdown
+                    options={myOrganizations.map(org => ({
+                      label: org.name,
+                      value: org.id
+                    }))}
+                    value={field.value}
+                    onChange={value => {
+                      form.clearErrors();
+                      field.onChange(value);
+                    }}
+                    placeholder={t(`organization-placeholder`)}
+                    contentClassName="w-[442px]"
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>

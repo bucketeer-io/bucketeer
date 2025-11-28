@@ -35,12 +35,7 @@ import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -143,7 +138,6 @@ const NotificationCreateUpdateModal = ({
 
   const {
     watch,
-    getValues,
     formState: { isValid, isSubmitting, isDirty }
   } = form;
 
@@ -310,36 +304,18 @@ const NotificationCreateUpdateModal = ({
                   <Form.Item className="py-2">
                     <Form.Label required>{t('language')}</Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:select-language`)}
-                          label={
-                            languageList.find(
-                              item => item.value === getValues('language')
-                            )?.label
-                          }
-                          disabled={disabled || isEditNotification}
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className="w-[502px]"
-                          align="start"
-                          {...field}
-                        >
-                          {languageList.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.value}
-                              label={item.label}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Dropdown
+                        options={languageList.map(item => ({
+                          label: item.label,
+                          value: item.value
+                        }))}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={t(`form:select-language`)}
+                        disabled={disabled || isEditNotification}
+                        className="w-full"
+                        contentClassName="w-[502px]"
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

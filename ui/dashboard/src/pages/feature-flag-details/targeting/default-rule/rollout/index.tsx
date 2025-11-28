@@ -2,12 +2,7 @@ import { Trans } from 'react-i18next';
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import { Popover } from 'components/popover';
@@ -60,17 +55,11 @@ const DefaultRuleRollout = () => {
           <div className="flex items-center gap-x-2">
             <InputGroup
               addon={
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    label="4"
-                    className="size-full !border-l border-r-0 border-y-0 !border-gray-400 rounded-l-none !shadow-none"
-                  />
-                  <DropdownMenuContent>
-                    {options.map((item, index) => (
-                      <DropdownMenuItem key={index} {...item} />
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Dropdown
+                  labelCustom="4"
+                  className="size-full !border-l border-r-0 border-y-0 !border-gray-400 rounded-l-none !shadow-none"
+                  options={options}
+                />
               }
               addonSlot="right"
               className="w-[159px] overflow-hidden"

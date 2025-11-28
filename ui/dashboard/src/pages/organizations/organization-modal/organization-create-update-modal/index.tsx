@@ -25,17 +25,11 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
-import DropdownList from 'elements/dropdown-list';
 import FormLoading from 'elements/form-loading';
 
 interface OrganizationCreateUpdateModalProps {
@@ -256,31 +250,17 @@ const OrganizationCreateUpdateModal = ({
                     <Form.Label required>{t('form:owner-email')}</Form.Label>
                     <Form.Control className="w-full">
                       {organization ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            placeholder={t('form:owner-email')}
-                            label={
-                              accountOptions?.find(
-                                item => item.value === field.value
-                              )?.label
-                            }
-                            variant="secondary"
-                            className="w-full"
-                          />
-                          <DropdownMenuContent
-                            className={cn('w-[500px]', {
-                              'hidden-scroll':
-                                accountOptions && accountOptions?.length > 15
-                            })}
-                            align="start"
-                            {...field}
-                          >
-                            <DropdownList
-                              options={accountOptions as DropdownOption[]}
-                              onSelectOption={field.onChange}
-                            />
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Dropdown
+                          options={accountOptions || []}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={t('form:owner-email')}
+                          className="w-full"
+                          contentClassName={cn('w-[500px]', {
+                            'hidden-scroll':
+                              accountOptions && accountOptions?.length > 15
+                          })}
+                        />
                       ) : (
                         <Input
                           placeholder={`${t('form:placeholder-email')}`}
@@ -294,6 +274,7 @@ const OrganizationCreateUpdateModal = ({
                   </Form.Item>
                 )}
               />
+
               {!organization && (
                 <Form.Field
                   control={form.control}

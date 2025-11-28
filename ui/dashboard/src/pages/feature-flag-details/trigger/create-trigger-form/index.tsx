@@ -14,12 +14,7 @@ import { TriggerActionType, TriggerItemType, TriggerType } from '@types';
 import { IconWebhook } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import TextArea from 'components/textarea';
@@ -53,9 +48,13 @@ const CreateTriggerForm = forwardRef(
     const triggerTypeOptions = useMemo(
       () => [
         {
-          label: `${t('trigger.dropdown-desc')}`,
-          value: TriggerType.WEBHOOK,
-          icon: IconWebhook
+          label: (
+            <div className="flex items-center w-full gap-x-2">
+              <Icon icon={IconWebhook} />
+              <p className="text-gray-600 typo-para-medium">{`${t('trigger.dropdown-desc')}`}</p>
+            </div>
+          ),
+          value: TriggerType.WEBHOOK
         }
       ],
       []
@@ -105,24 +104,9 @@ const CreateTriggerForm = forwardRef(
 
     const {
       control,
-      formState: { isDirty, isValid, isSubmitting },
-      watch
+      formState: { isDirty, isValid, isSubmitting }
     } = form;
-
-    const triggerTypeWatch = watch('type');
-    const triggerActionWatch = watch('action');
     const isEdit = useMemo(() => !!selectedTrigger, [selectedTrigger]);
-
-    const currentTypeOption = useMemo(
-      () => triggerTypeOptions.find(item => item.value === triggerTypeWatch),
-      [triggerTypeWatch]
-    );
-
-    const currentActionOption = useMemo(
-      () =>
-        triggerActionOptions.find(item => item.value === triggerActionWatch),
-      [triggerActionWatch]
-    );
 
     const onSubmit = useCallback(
       async (values: CreateTriggerSchema) => {
@@ -179,33 +163,12 @@ const CreateTriggerForm = forwardRef(
                     {t('trigger.trigger-type')}
                   </Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        trigger={
-                          <div className="flex items-center w-full gap-x-2">
-                            {currentTypeOption?.icon && (
-                              <Icon icon={currentTypeOption?.icon} />
-                            )}
-                            <p className="text-gray-600 typo-para-medium">
-                              {currentTypeOption?.label}
-                            </p>
-                          </div>
-                        }
-                        isExpand
-                        disabled={isEdit || disabled}
-                      />
-                      <DropdownMenuContent align="start">
-                        {triggerTypeOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            key={index}
-                            label={item.label}
-                            value={item.value}
-                            icon={item.icon}
-                            onSelectOption={field.onChange}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      disabled={isEdit || disabled}
+                      options={triggerTypeOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
@@ -221,24 +184,13 @@ const CreateTriggerForm = forwardRef(
                     {t('trigger.action')}
                   </Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('trigger.select-action')}
-                        label={currentActionOption?.label}
-                        isExpand
-                        disabled={isEdit || disabled}
-                      />
-                      <DropdownMenuContent align="start">
-                        {triggerActionOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            key={index}
-                            label={item.label}
-                            value={item.value}
-                            onSelectOption={field.onChange}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Dropdown
+                      options={triggerActionOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isEdit || disabled}
+                      placeholder={t('trigger.select-action')}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

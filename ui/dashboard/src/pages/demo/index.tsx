@@ -1,22 +1,18 @@
+import { useMemo } from 'react';
 import { authenticationUrl } from '@api/auth';
 import { useQueryDemoSiteStatus } from '@queries/demo-site-status';
 import { useAuth } from 'auth';
 import { urls } from 'configs';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
-import { useTranslation, getLanguage, Language, setLanguage } from 'i18n';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import { clearDemoTokenStorage } from 'storage/demo-token';
 import { cn } from 'utils/style';
-import { IconGoogle, IconEnglishFlag } from '@icons';
+import { IconEnglishFlag, IconGoogle } from '@icons';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import AuthWrapper from 'pages/signin/elements/auth-wrapper';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
 import FormLoading from 'elements/form-loading';
 
@@ -28,6 +24,27 @@ const AccessDemoPage = () => {
   const { data: demoSiteStatusData, isLoading } = useQueryDemoSiteStatus();
 
   const isDemoSiteEnabled = demoSiteStatusData?.isDemoSiteEnabled;
+  const optionLanguages = useMemo(
+    () =>
+      languageList?.map(item => ({
+        label: (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center w-full gap-x-2">
+              <div className="flex-center size-fit mt-0.5">
+                <Icon
+                  color="primary-50"
+                  size="sm"
+                  icon={item?.icon || IconEnglishFlag}
+                />
+              </div>
+              {item.label || 'English'}
+            </div>
+          </div>
+        ),
+        value: item.value
+      })),
+    [languageList]
+  );
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
     const state = `${Date.now()}`;
@@ -55,48 +72,15 @@ const AccessDemoPage = () => {
             <h1 className="text-gray-900 typo-head-bold-huge">
               {t('auth:demo')}
             </h1>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                trigger={
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center w-full gap-x-2">
-                      <div className="flex-center size-fit mt-0.5">
-                        <Icon
-                          color="primary-50"
-                          size="sm"
-                          icon={
-                            languageList.find(item => item.value === language)
-                              ?.icon || IconEnglishFlag
-                          }
-                        />
-                      </div>
-                      {languageList.find(item => item.value === language)
-                        ?.label || 'English'}
-                    </div>
-                  </div>
-                }
-                className="bg-transparent !shadow-none !border-none"
-              />
-              <DropdownMenuContent side="bottom" align="start">
-                {languageList?.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    label={item.label}
-                    value={item.value}
-                    icon={item?.icon}
-                    iconElement={
-                      item?.icon ? (
-                        <div className="flex-center size-fit mt-0.5">
-                          <Icon size="sm" icon={item?.icon} />
-                        </div>
-                      ) : null
-                    }
-                    className="[&>div>button]:!cursor-pointer"
-                    onSelectOption={value => setLanguage(value as Language)}
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <Dropdown
+              value={language}
+              options={optionLanguages}
+              onChange={value => setLanguage(value as Language)}
+              className="bg-transparent !shadow-none !border-none"
+              wrapTriggerStyle="!w-fit"
+              contentClassName="[&>div>button]:!cursor-pointer"
+            />
           </div>
           {demoGoogleAuthError && (
             <div className="typo-para-medium text-accent-red-500 first-letter:uppercase mt-6">
