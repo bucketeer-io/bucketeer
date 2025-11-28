@@ -158,6 +158,15 @@ web:
         setupPath: "/auth/setup-password"
         tokenParam: "token"
 
+    # Magic link authentication configuration for development
+    magicLink:
+      enabled: true
+      tokens:
+        verifyTTL: "15m"
+      urls:
+        verifyPath: "/auth/verify"
+        tokenParam: "token"
+
     demoSignIn:
       enabled: true
       email: "demo@bucketeer.io"
