@@ -140,7 +140,7 @@ type MagicLinkURLsConfig struct {
 }
 
 type MagicLinkAuthConfig struct {
-	Enabled bool                `json:"enabled"`
+	Enabled bool                  `json:"enabled"`
 	Tokens  MagicLinkTokensConfig `json:"tokens"`
 	URLs    MagicLinkURLsConfig   `json:"urls"`
 }
