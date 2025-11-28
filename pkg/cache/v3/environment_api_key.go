@@ -43,8 +43,8 @@ func NewEnvironmentAPIKeyCache(c cache.Cache) EnvironmentAPIKeyCache {
 	return &environmentAPIKeyCache{cache: c}
 }
 
-func (c *environmentAPIKeyCache) Get(id string) (*accountproto.EnvironmentAPIKey, error) {
-	key := c.key(id)
+func (c *environmentAPIKeyCache) Get(apiKey string) (*accountproto.EnvironmentAPIKey, error) {
+	key := c.key(apiKey)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.Environment
 	if err != nil {
 		return err
 	}
-	key := c.key(environmentAPIKey.ApiKey.Id)
+	key := c.key(environmentAPIKey.ApiKey.ApiKey)
 	return c.cache.Put(key, buffer, environmentAPIKeyTTL)
 }
 
