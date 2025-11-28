@@ -102,6 +102,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
       const currentEnv = formattedEnvironments.find(
         item => item.id === environmentId
       );
+
       return `${currentEnv?.name} (${t('common:source-type.project')}: ${projects.find(project => project.id === currentEnv?.projectId)?.name})`;
     },
     [formattedEnvironments, projects]
@@ -199,7 +200,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={getCurrentLabelEnv(
-                            currentEnvironment?.id || ''
+                            currentEnvironment?.id || emptyEnvironmentId
                           )}
                           disabled
                           variant="secondary"
@@ -241,7 +242,9 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       <EnvironmentEditorList
                         value={field.value}
                         disabled={!editable}
-                        currentEnvironment={currentEnvironment}
+                        currentEnvironmentId={
+                          currentEnvironment?.id || emptyEnvironmentId
+                        }
                         onSelectOption={field.onChange}
                       />
                     </Form.Control>

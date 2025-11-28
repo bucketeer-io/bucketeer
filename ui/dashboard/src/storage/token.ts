@@ -1,11 +1,11 @@
 import { type Nullable } from 'option-t/nullable';
 import { AuthToken } from '@types';
 
-const KEY = 'auth_token';
+export const AUTH_TOKEN_KEY = 'auth_token';
 
 export const getTokenStorage = (): Nullable<AuthToken> => {
   try {
-    const tokenStr = window.localStorage.getItem(KEY);
+    const tokenStr = window.localStorage.getItem(AUTH_TOKEN_KEY);
     if (tokenStr) {
       const token = JSON.parse(tokenStr);
       return token;
@@ -18,7 +18,7 @@ export const getTokenStorage = (): Nullable<AuthToken> => {
 
 export const setTokenStorage = (token: AuthToken): void => {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(token));
+    window.localStorage.setItem(AUTH_TOKEN_KEY, JSON.stringify(token));
   } catch (error) {
     console.error(error);
   }
@@ -26,7 +26,7 @@ export const setTokenStorage = (token: AuthToken): void => {
 
 export const clearTokenStorage = (): void => {
   try {
-    window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
   } catch (error) {
     console.error(error);
   }

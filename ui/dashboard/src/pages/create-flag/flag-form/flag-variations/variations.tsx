@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
@@ -10,6 +10,7 @@ import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
+import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -17,7 +18,12 @@ import Input from 'components/input';
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
 
-  const { control, watch } = useFormContext<FlagFormSchema>();
+  const {
+    control,
+    watch,
+    trigger,
+    formState: { errors }
+  } = useFormContext<FlagFormSchema>();
   const {
     fields: variations,
     append,
@@ -31,9 +37,13 @@ const Variations = () => {
   const variationType = watch('variationType');
   const onVariation = watch('defaultOnVariation');
   const offVariation = watch('defaultOffVariation');
+  const [variationSelected, setVariationSelected] = useState<number | null>(
+    null
+  );
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
+  const isYAML = useMemo(() => variationType === 'YAML', [variationType]);
 
   const onAddVariation = () => {
     append({
@@ -46,6 +56,13 @@ const Variations = () => {
 
   const onDeleteVariation = (itemIndex: number) => {
     remove(itemIndex);
+  };
+
+  const reValidVariation = () => {
+    if (!errors || !errors?.variations || !errors.variations.length) return;
+    errors.variations.map?.((_, index) => {
+      trigger(`variations.${index}.value`);
+    });
   };
 
   return (
@@ -65,7 +82,7 @@ const Variations = () => {
             <div className="flex flex-col w-full gap-y-4">
               <div
                 className={cn('flex w-full gap-4', {
-                  'flex-col': isJSON
+                  'flex-col': isJSON || isYAML
                 })}
               >
                 <Form.Field
@@ -90,16 +107,56 @@ const Variations = () => {
                         {t('feature-flags.value')}
                       </Form.Label>
                       <Form.Control>
-                        {isJSON ? (
+                        {isJSON || isYAML ? (
                           <div className="flex flex-col gap-y-2">
                             <ReactCodeEditor
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
                               value={field.value}
-                              onChange={field.onChange}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
+                              onExpand={() =>
+                                setVariationSelected(variationIndex)
+                              }
+                            />
+                            <ReactCodeEditorModal
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
+                              isOpen={variationSelected === variationIndex}
+                              onClose={() => {
+                                setVariationSelected(null);
+                              }}
+                              title={
+                                <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                  <FlagVariationPolygon
+                                    index={variationIndex}
+                                  />
+                                  <Trans
+                                    i18nKey={'form:feature-flags.variation'}
+                                    values={{
+                                      index: `${variationIndex + 1}`
+                                    }}
+                                  />
+                                </div>
+                              }
+                              value={field.value}
+                              onChange={value => {
+                                field.onChange(value);
+                                reValidVariation();
+                              }}
+                              error={
+                                errors.variations?.[variationIndex]?.value
+                                  ?.message as string
+                              }
                             />
                           </div>
                         ) : (
                           <Input
                             {...field}
+                            onChange={value => {
+                              field.onChange(value);
+                              reValidVariation();
+                            }}
                             placeholder={t(
                               'feature-flags.placeholder-variation'
                             )}

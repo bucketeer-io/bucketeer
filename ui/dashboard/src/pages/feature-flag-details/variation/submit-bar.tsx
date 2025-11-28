@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { IconLaunchOutlined } from 'react-icons-material-design';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
@@ -61,18 +63,30 @@ const SubmitBar = ({
           {currentOption?.label}
         </p>
       </div>
-      <DisabledButtonTooltip
-        hidden={editable}
-        trigger={
-          <Button
-            type="button"
-            disabled={!isDirty || !isValid || !editable}
-            onClick={onShowConfirmDialog}
-          >
-            {t('save-with-comment')}
-          </Button>
-        }
-      />
+      <div className="flex items-center gap-x-3">
+        <Button
+          type="button"
+          variant="text"
+          onClick={() =>
+            window.open(DOCUMENTATION_LINKS.FLAG_VARIATIONS, '_blank')
+          }
+        >
+          <Icon icon={IconLaunchOutlined} size="sm" />
+          {t('documentation')}
+        </Button>
+        <DisabledButtonTooltip
+          hidden={editable}
+          trigger={
+            <Button
+              type="button"
+              disabled={!isDirty || !isValid || !editable}
+              onClick={onShowConfirmDialog}
+            >
+              {t('save-with-comment')}
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 };

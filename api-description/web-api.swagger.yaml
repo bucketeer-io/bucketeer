@@ -1006,6 +1006,7 @@ paths:
             - ROLE
             - ENVIRONMENT
             - STATE
+            - LAST_USED_AT
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -8586,6 +8587,7 @@ definitions:
       - BOOLEAN
       - NUMBER
       - JSON
+      - YAML
     default: STRING
   FlagTriggerAction:
     type: string
@@ -8772,6 +8774,9 @@ definitions:
         type: string
       environmentName:
         type: string
+      lastUsedAt:
+        type: string
+        format: int64
   accountAPIKeyRole:
     type: string
     enum:
@@ -9261,6 +9266,7 @@ definitions:
       - ROLE
       - ENVIRONMENT
       - STATE
+      - LAST_USED_AT
     default: DEFAULT
   accountListAPIKeysRequestOrderDirection:
     type: string

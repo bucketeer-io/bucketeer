@@ -3,6 +3,7 @@
   "validation": {
     "must-be-number": "This must be a number",
     "must-be-json": "This must be a JSON",
+    "must-be-yaml": "This must be a YAML",
     "must-be-unique": "This must be unique",
     "max-length-number": "The maximum length for this field is {{count}} numbers.",
     "max-length-string": "The maximum length for this field is {{count}} characters.",

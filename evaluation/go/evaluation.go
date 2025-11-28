@@ -15,11 +15,14 @@
 package evaluation
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"golang.org/x/exp/maps"
+	"gopkg.in/yaml.v2"
 
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -37,6 +40,7 @@ var (
 	ErrPrerequisiteVariationNotFound = errors.New("evaluator: prerequisite variation not found")
 	ErrVariationNotFound             = errors.New("evaluator: variation not found")
 	ErrUnsupportedStrategy           = errors.New("evaluator: unsupported strategy")
+	ErrYAMLToJSONConversion          = errors.New("evaluator: failed to convert YAML to JSON")
 )
 
 func EvaluationID(featureID string, featureVersion int32, userID string) string {
@@ -46,10 +50,15 @@ func EvaluationID(featureID string, featureVersion int32, userID string) string 
 type evaluator struct {
 	ruleEvaluator
 	strategyEvaluator
+	// variationCache caches YAML to JSON conversions using variation ID as the key.
+	// Since variation IDs are UUIDs, they are globally unique and safe to use as cache keys.
+	variationCache *sync.Map
 }
 
 func NewEvaluator() *evaluator {
-	return &evaluator{}
+	return &evaluator{
+		variationCache: &sync.Map{},
+	}
 }
 
 // This function will be removed once all the SDK clients are updated.
@@ -143,6 +152,10 @@ func (e *evaluator) evaluate(
 		if targetTag != "" && !tagExist(feature.Tags, targetTag) {
 			continue
 		}
+		// Convert YAML to JSON for client SDKs if needed
+		// SDKs can retrieve variation values using the object variation interface.
+		convertedValue := e.convertVariationValue(feature, variation)
+
 		evaluationID := EvaluationID(feature.Id, feature.Version, user.Id)
 		evaluation := &ftproto.Evaluation{
 			Id:             evaluationID,
@@ -151,7 +164,7 @@ func (e *evaluator) evaluate(
 			UserId:         user.Id,
 			VariationId:    variation.Id,
 			VariationName:  variation.Name,
-			VariationValue: variation.Value,
+			VariationValue: convertedValue,
 			// Deprecated
 			// FIXME: Remove the Variation when is no longer being used.
 			// For security reasons, we should remove the variation description.
@@ -160,7 +173,7 @@ func (e *evaluator) evaluate(
 			Variation: &ftproto.Variation{
 				Id:    variation.Id,
 				Name:  variation.Name,
-				Value: variation.Value,
+				Value: convertedValue,
 			},
 			Reason: reason,
 		}
@@ -325,4 +338,76 @@ func contains(needle string, haystack []string) bool {
 		}
 	}
 	return false
+}
+
+// convertVariationValue converts YAML to JSON if needed, with in-memory caching.
+// This ensures client SDKs can retrieve variation values using the object variation interface.
+// Only performs conversion when the variation type is YAML.
+// Cache key uses feature.UpdatedAt + variation.Id to ensure cache invalidation when variations are updated.
+func (e *evaluator) convertVariationValue(
+	feature *ftproto.Feature,
+	variation *ftproto.Variation,
+) string {
+	// Only convert if type is YAML
+	if feature.VariationType != ftproto.Feature_YAML {
+		return variation.Value
+	}
+
+	// Cache key: {featureUpdatedAt}:{variationId}
+	// This ensures cache is invalidated when the feature (and its variations) are updated,
+	// including changes from auto operations that don't increment feature.Version
+	cacheKey := fmt.Sprintf("%d:%s", feature.UpdatedAt, variation.Id)
+
+	// Check cache first
+	if cached, ok := e.variationCache.Load(cacheKey); ok {
+		return cached.(string)
+	}
+
+	// Convert YAML to JSON
+	jsonValue, err := yamlToJSON(variation.Value)
+	if err != nil {
+		// Log would be helpful here, but to avoid dependency injection,
+		// we return the original value as a fallback
+		return variation.Value
+	}
+
+	// Cache the result for future requests
+	e.variationCache.Store(cacheKey, jsonValue)
+	return jsonValue
+}
+
+// yamlToJSON converts a YAML string to a JSON string.
+func yamlToJSON(yamlStr string) (string, error) {
+	var data interface{}
+	if err := yaml.Unmarshal([]byte(yamlStr), &data); err != nil {
+		return "", fmt.Errorf("%w: %v", ErrYAMLToJSONConversion, err)
+	}
+
+	// Convert map[interface{}]interface{} to map[string]interface{} for JSON compatibility
+	data = convertMapKeys(data)
+
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrYAMLToJSONConversion, err)
+	}
+	return string(jsonBytes), nil
+}
+
+// convertMapKeys recursively converts map[interface{}]interface{} to map[string]interface{}
+// This is necessary because yaml.v2 unmarshals to map[interface{}]interface{},
+// but json.Marshal requires map[string]interface{}.
+func convertMapKeys(input interface{}) interface{} {
+	switch x := input.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{})
+		for k, v := range x {
+			m[fmt.Sprintf("%v", k)] = convertMapKeys(v)
+		}
+		return m
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convertMapKeys(v)
+		}
+	}
+	return input
 }

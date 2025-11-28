@@ -454,6 +454,11 @@
                 "id": 10,
                 "name": "environment_name",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "last_used_at",
+                "type": "int64"
               }
             ]
           },
@@ -1027,6 +1032,10 @@
               {
                 "name": "STATE",
                 "integer": 6
+              },
+              {
+                "name": "LAST_USED_AT",
+                "integer": 7
               }
             ]
           },
@@ -31956,6 +31965,10 @@
               {
                 "name": "JSON",
                 "integer": 3
+              },
+              {
+                "name": "YAML",
+                "integer": 4
               }
             ]
           }

@@ -8,6 +8,7 @@ SELECT
     ak.description AS api_key_description,
     ak.api_key AS api_key_key,
     ak.maintainer AS api_key_maintainer,
+    ak.last_used_at AS api_key_last_used_at,
 
     env.id AS environment_id,
     env.name AS environment_name,

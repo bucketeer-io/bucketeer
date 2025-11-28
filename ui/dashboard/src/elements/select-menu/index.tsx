@@ -50,24 +50,23 @@ const SelectMenu = ({
                     key={index}
                     className="flex items-center max-w-full gap-x-2 px-1.5 rounded bg-primary-100"
                   >
-                    <div>
-                      <NameWithTooltip
-                        id={id}
-                        maxLines={1}
-                        content={
-                          <NameWithTooltip.Content content={content} id={id} />
-                        }
-                        trigger={
-                          <NameWithTooltip.Trigger
-                            name={content}
-                            id={id}
-                            className="typo-para-small py-1 [&>div]:!text-primary-500"
-                            maxLines={1}
-                            haveAction={false}
-                          />
-                        }
-                      />
-                    </div>
+                    <NameWithTooltip
+                      asChild
+                      id={id}
+                      maxLines={1}
+                      content={
+                        <NameWithTooltip.Content content={content} id={id} />
+                      }
+                      trigger={
+                        <NameWithTooltip.Trigger
+                          name={content}
+                          id={id}
+                          className="typo-para-small py-1 [&>div]:!text-primary-500"
+                          maxLines={1}
+                          haveAction={false}
+                        />
+                      }
+                    />
                     <div
                       aria-label="tag-delete-btn"
                       className="flex-center w-3 min-w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900"

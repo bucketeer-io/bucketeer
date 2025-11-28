@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -552,7 +551,14 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a domain organization",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...)
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("name", name),
+				zap.String("urlCode", urlCode),
+				zap.String("ownerEmail", ownerEmail),
+				zap.Bool("isTrial", isTrial),
+				zap.Bool("isSystemAdmin", isSystemAdmin),
+			)...)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
@@ -581,6 +587,11 @@ func (s *EnvironmentService) createOrganizationMySQL(
 				"Failed to create the default project",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
+					zap.String("name", name),
+					zap.String("urlCode", urlCode),
+					zap.String("ownerEmail", ownerEmail),
+					zap.Bool("isTrial", isTrial),
+					zap.Bool("isSystemAdmin", isSystemAdmin),
 				)...,
 			)
 			return err
@@ -596,6 +607,11 @@ func (s *EnvironmentService) createOrganizationMySQL(
 				"Failed to create the default environments",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
+					zap.String("name", name),
+					zap.String("urlCode", urlCode),
+					zap.String("ownerEmail", ownerEmail),
+					zap.Bool("isTrial", isTrial),
+					zap.Bool("isSystemAdmin", isSystemAdmin),
 				)...,
 			)
 			return err
@@ -603,6 +619,17 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		return nil
 	})
 	if err != nil {
+		s.logger.Error(
+			"Failed to create an organization",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("name", name),
+				zap.String("urlCode", urlCode),
+				zap.String("ownerEmail", ownerEmail),
+				zap.Bool("isTrial", isTrial),
+				zap.Bool("isSystemAdmin", isSystemAdmin),
+			)...,
+		)
 		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
 			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -613,12 +640,6 @@ func (s *EnvironmentService) createOrganizationMySQL(
 			}
 			return nil, dt.Err()
 		}
-		s.logger.Error(
-			"Failed to create an organization",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// Create the admin account using the environment roles created in the last step
@@ -779,10 +800,9 @@ func (s *EnvironmentService) createDefaultEnvironments(
 		"Production",
 	}
 	for _, name := range envNames {
-		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
 		env, err := domain.NewEnvironmentV2(
 			name,
-			envURLCode,
+			strings.ToLower(name),
 			"",
 			project.Id,
 			organizationID,

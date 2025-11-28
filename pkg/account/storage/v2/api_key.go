@@ -40,6 +40,8 @@ var (
 	insertAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/update_api_key_v2.sql
 	updateAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/update_api_key_v2_last_used_at.sql
+	updateAPIKeyLastUsedAtV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2.sql
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
@@ -104,6 +106,29 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
+func (s *accountStorage) UpdateAPIKeyLastUsedAt(
+	ctx context.Context,
+	id, environmentID string,
+	lastUsedAt int64,
+) (bool, error) {
+	result, err := s.qe.ExecContext(
+		ctx,
+		updateAPIKeyLastUsedAtV2SQLQuery,
+		lastUsedAt,
+		id,
+		environmentID,
+		lastUsedAt,
+	)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
+
 func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
@@ -122,6 +147,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Description,
 		&apiKey.ApiKey,
 		&apiKey.Maintainer,
+		&apiKey.LastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -155,6 +181,7 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
 		&apiKeyDB.Maintainer,
+		&apiKeyDB.LastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -191,6 +218,7 @@ func (s *accountStorage) ListAllEnvironmentAPIKeys(
 			&apiKeyDB.Description,
 			&apiKeyDB.ApiKey,
 			&apiKeyDB.Maintainer,
+			&apiKeyDB.LastUsedAt,
 
 			// Environment columns
 			&envDB.Id,
@@ -246,6 +274,7 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 		&apiKeyDB.Description,
 		&apiKeyDB.ApiKey,
 		&apiKeyDB.Maintainer,
+		&apiKeyDB.LastUsedAt,
 
 		// Environment columns
 		&envDB.Id,
@@ -306,6 +335,7 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.EnvironmentName,
 			&apiKey.ApiKey,
 			&apiKey.Maintainer,
+			&apiKey.LastUsedAt,
 		)
 		if err != nil {
 			return nil, 0, 0, err

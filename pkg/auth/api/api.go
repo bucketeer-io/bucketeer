@@ -50,12 +50,8 @@ import (
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
-const (
-	day       = 24 * time.Hour
-	sevenDays = 7 * 24 * time.Hour
-)
-
 type options struct {
+	accessTokenTTL    time.Duration
 	refreshTokenTTL   time.Duration
 	emailFilter       *regexp.Regexp
 	logger            *zap.Logger
@@ -63,12 +59,19 @@ type options struct {
 }
 
 var defaultOptions = options{
+	accessTokenTTL:    10 * time.Minute,
 	refreshTokenTTL:   7 * 24 * time.Hour,
 	logger:            zap.NewNop(),
 	isDemoSiteEnabled: false,
 }
 
 type Option func(*options)
+
+func WithAccessTokenTTL(ttl time.Duration) Option {
+	return func(opts *options) {
+		opts.accessTokenTTL = ttl
+	}
+}
 
 func WithRefreshTokenTTL(ttl time.Duration) Option {
 	return func(opts *options) {
@@ -661,11 +664,10 @@ func (s *authService) generateToken(
 
 	// Create access token
 	timeNow := time.Now()
-	accessTokenTTL := timeNow.Add(day)
 	accessToken := &token.AccessToken{
 		Issuer:         s.issuer,
 		Audience:       s.audience,
-		Expiry:         accessTokenTTL,
+		Expiry:         timeNow.Add(s.opts.accessTokenTTL),
 		IssuedAt:       timeNow,
 		Email:          userEmail,
 		OrganizationID: organizationID,
@@ -683,14 +685,10 @@ func (s *authService) generateToken(
 	}
 
 	// Create refresh token
-	refreshTokenTTL := 30 * day
-	if s.opts.refreshTokenTTL > 0 {
-		refreshTokenTTL = s.opts.refreshTokenTTL
-	}
 	refreshToken := &token.RefreshToken{
 		Email:          userEmail,
 		OrganizationID: organizationID,
-		Expiry:         timeNow.Add(refreshTokenTTL),
+		Expiry:         timeNow.Add(s.opts.refreshTokenTTL),
 		IssuedAt:       timeNow,
 	}
 
@@ -707,7 +705,7 @@ func (s *authService) generateToken(
 		AccessToken:  signedAccessToken,
 		RefreshToken: signedRefreshToken,
 		TokenType:    "Bearer",
-		Expiry:       accessTokenTTL.Unix(),
+		Expiry:       timeNow.Add(s.opts.accessTokenTTL).Unix(),
 	}, nil
 }
 

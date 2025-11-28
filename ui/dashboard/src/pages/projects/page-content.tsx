@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -74,7 +75,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
-        isShowDocumentation={false}
+        link={DOCUMENTATION_LINKS.PROJECTS}
         onOpenFilter={onOpenFilterModal}
         placeholder={t('form:name-email-search-placeholder')}
         name="projects-list-search"

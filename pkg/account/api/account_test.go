@@ -199,9 +199,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -241,9 +238,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -278,9 +272,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -480,33 +471,22 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						Language:         "en",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
 				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},

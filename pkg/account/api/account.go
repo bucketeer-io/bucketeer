@@ -21,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -85,26 +84,6 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.EnvironmentRoles,
 	)
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		// TODO: temporary implementation: double write account v2 ---
-		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
-		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
-			return err
-		}
-		if exist != nil {
-			handler, err := command.NewAccountV2CommandHandler(editor, exist, s.publisher, req.OrganizationId)
-			if err != nil {
-				return err
-			}
-			cmd := &accountproto.ChangeAccountV2EnvironmentRolesCommand{
-				Roles:     account.EnvironmentRoles,
-				WriteType: accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH,
-			}
-			if err := handler.Handle(ctx, cmd); err != nil {
-				return err
-			}
-			return s.accountStorage.UpdateAccountV2(contextWithTx, exist)
-		}
-		// TODO: temporary implementation end ---
 		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
 		if err != nil {
 			return err
@@ -188,22 +167,6 @@ func (s *AccountService) createAccountV2NoCommand(
 	)
 	var createAccountEvent *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		// TODO: temporary implementation: double write account v2 ---
-		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
-		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
-			return err
-		}
-		if exist != nil {
-			updateAccountEvent, err := s.changeExistedAccountV2EnvironmentRoles(contextWithTx, req, exist, editor)
-			if err != nil {
-				return err
-			}
-			// Store the event to publish after the transaction commits to ensure consistency
-			createAccountEvent = updateAccountEvent
-			return nil
-		}
-		// TODO: temporary implementation end ---
-
 		createAccountEvent, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
@@ -300,58 +263,6 @@ func (s *AccountService) createAccountV2NoCommand(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
-}
-
-func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
-	ctx context.Context,
-	req *accountproto.CreateAccountV2Request,
-	account *domain.AccountV2,
-	editor *eventproto.Editor,
-) (*eventproto.Event, error) {
-	var updateAccountEvent *eventproto.Event
-	updated := &domain.AccountV2{}
-	if err := copier.Copy(updated, account); err != nil {
-		return nil, err
-	}
-	err := updated.PatchEnvironmentRole(req.EnvironmentRoles)
-	if err != nil {
-		return nil, err
-	}
-
-	updateAccountEvent, err = domainevent.NewAdminEvent(
-		editor,
-		eventproto.Event_PUSH,
-		updated.Email,
-		eventproto.Event_ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED,
-		&eventproto.AccountV2EnvironmentRolesChangedEvent{
-			Email:            updated.Email,
-			EnvironmentRoles: updated.EnvironmentRoles,
-		},
-		updated,
-		account,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create update account event",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("email", req.Email),
-			)...,
-		)
-		return nil, err
-	}
-	err = s.accountStorage.UpdateAccountV2(ctx, updated)
-	if err != nil {
-		return nil, err
-	}
-	err = s.adminAuditLogStorage.CreateAdminAuditLog(
-		ctx,
-		domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return updateAccountEvent, nil
 }
 
 func (s *AccountService) upsertTags(

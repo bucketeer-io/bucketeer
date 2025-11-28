@@ -1,3 +1,4 @@
+import IconAlert from './customized-icons/alert-circle.svg?react';
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconArrowLeft from './customized-icons/arrow-left.svg?react';
@@ -18,6 +19,7 @@ import IconDisable from './customized-icons/disable.svg?react';
 import IconDocument from './customized-icons/document.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconEnglishFlag from './customized-icons/english-flag.svg?react';
+import IconExpandSquar from './customized-icons/expand-squar.svg?react';
 import IconExpand from './customized-icons/expand.svg?react';
 import IconFlagNoTraffic from './customized-icons/flag-no-traffic.svg?react';
 import IconGitHub from './customized-icons/github.svg?react';
@@ -62,6 +64,7 @@ import IconUserOutlined from './customized-icons/user-outlined.svg?react';
 import IconUserSettings from './customized-icons/user-settings.svg?react';
 import IconWatch from './customized-icons/watch.svg?react';
 import IconWebhook from './customized-icons/webhook.svg?react';
+import IconFlagYaml from './customized-icons/yaml.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
 import IconFolder from './sidebar-icons/folder.svg?react';
@@ -115,6 +118,9 @@ export {
   IconLogout,
   IconBuilding,
   // Customized icons
+  IconAlert,
+  IconExpandSquar,
+  IconFlagYaml,
   IconBackspace,
   IconSearch,
   IconChevronRight,

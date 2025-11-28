@@ -959,7 +959,7 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: member with unassigned roles gets organization excluded",
+			desc: "success: member with unassigned roles gets organization included",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
 					gomock.Any(), "member@example.com",
@@ -985,8 +985,15 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 					},
 				}, nil)
 			},
-			email:       "member@example.com",
-			expected:    []*environmentproto.Organization{},
+			email: "member@example.com",
+			expected: []*environmentproto.Organization{
+				{
+					Id:       "org1",
+					Name:     "Organization 1",
+					Disabled: false,
+					Archived: false,
+				},
+			},
 			expectedErr: nil,
 		},
 		{

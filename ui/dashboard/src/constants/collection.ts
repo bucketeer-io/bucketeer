@@ -14,6 +14,7 @@ export const sortingListFields: SortingListFields = {
   urlCode: 'URL_CODE',
   createdAt: 'CREATED_AT',
   updatedAt: 'UPDATED_AT',
+  lastUsedAt: 'LAST_USED_AT',
   userCount: 'USER_COUNT',
   environmentCount: 'ENVIRONMENT_COUNT',
   projectCount: 'PROJECT_COUNT',

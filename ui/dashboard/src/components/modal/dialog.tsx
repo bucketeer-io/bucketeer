@@ -9,7 +9,8 @@ import Icon from 'components/icon';
 export type ModalSize = 'sm' | 'md';
 export type ModalProps = {
   size?: ModalSize;
-  title: string;
+  title: string | ReactNode;
+  closeContent?: ReactNode;
   isOpen: boolean;
   onClose: () => void;
   closeOnPressEscape?: boolean;
@@ -17,9 +18,11 @@ export type ModalProps = {
   isShowHeader?: boolean;
   children?: ReactNode;
   className?: string;
+  overlayCls?: string;
 };
 
 const DialogModal = ({
+  closeContent,
   title,
   isOpen,
   onClose,
@@ -27,7 +30,8 @@ const DialogModal = ({
   closeOnClickOutside = true,
   isShowHeader = true,
   children,
-  className
+  className,
+  overlayCls
 }: ModalProps) => {
   const onOpenChange = useCallback((v: boolean) => {
     if (v === false) onClose();
@@ -39,7 +43,8 @@ const DialogModal = ({
         <Dialog.Overlay
           className={cn(
             'fixed inset-0 grid h-full w-full animate-fade z-50',
-            'place-items-center overflow-y-auto bg-overlay'
+            'place-items-center overflow-y-auto bg-overlay',
+            overlayCls
           )}
         >
           <Dialog.Content
@@ -69,9 +74,11 @@ const DialogModal = ({
                 )}
                 <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
-                  <Button size="icon-sm" variant="grey" onClick={onClose}>
-                    <Icon icon={IconCloseRound} />
-                  </Button>
+                  {closeContent ?? (
+                    <Button size="icon-sm" variant="grey" onClick={onClose}>
+                      <Icon icon={IconCloseRound} />
+                    </Button>
+                  )}
                 </Dialog.Close>
               </div>
             </div>

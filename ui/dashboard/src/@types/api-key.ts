@@ -16,6 +16,7 @@ export interface APIKey {
   maintainer: string;
   createdAt: string;
   updatedAt: string;
+  lastUsedAt: string;
 }
 
 export interface APIKeyCollection {

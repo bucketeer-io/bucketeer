@@ -1,25 +1,24 @@
 import { forwardRef, Ref, useImperativeHandle, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
   CategoryScale,
-  LineElement,
+  ChartData,
+  ChartDataset,
+  Chart as ChartJS,
+  ChartOptions,
+  Filler,
+  Legend,
   LinearScale,
+  LineElement,
+  Point,
+  PointElement,
   TimeScale,
   TimeSeriesScale,
-  PointElement,
-  Tooltip,
-  Filler,
-  ChartData,
-  ChartOptions,
-  Point,
-  ChartDataset,
-  Legend,
-  TimeUnit
+  TimeUnit,
+  Tooltip
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
 import { COLORS } from 'constants/styles';
-import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
 import {
@@ -27,6 +26,8 @@ import {
   DatasetReduceType
 } from 'pages/experiment-details/collection-loader/results/goal-results/timeseries-area-line-chart';
 import { Option } from 'components/creatable-select';
+import { RawPoint } from '../types';
+import { formatLabel, getLogBase, symlog, symlogInverse } from '../utils';
 
 interface TimeseriesStackedLineChartProps {
   variationValues: Option[];
@@ -65,14 +66,26 @@ export const EvaluationChart = forwardRef(
   ) => {
     const chartRef = useRef<ChartJS<'line'> | null>(null);
 
-    const chartData: ChartData<'line', (number | Point | null)[], Date> = {
+    const maxValue = Math.max(...data.flat());
+    const useSymlog = maxValue > 100;
+    const logBase = getLogBase(maxValue);
+
+    const chartData: ChartData<
+      'line',
+      (number | Point | RawPoint | null)[],
+      Date
+    > = {
       labels: timeseries.map(t => new Date(Number(t) * 1000)),
       datasets: variationValues.map((e, i) => {
         const color = getVariationColor(i % COLORS.length);
         return {
           label:
             e.label.length > 40 ? `${e.label.substring(0, 40)}...` : e.label,
-          data: data[i],
+          data: data[i].map((v, idx) => ({
+            x: new Date(Number(timeseries[idx]) * 1000),
+            y: useSymlog ? symlog(v, 1, logBase) : v,
+            raw: v
+          })),
           backgroundColor: color,
           borderColor: color,
           fill: false,
@@ -80,20 +93,6 @@ export const EvaluationChart = forwardRef(
           value: e.value
         };
       })
-    };
-
-    // Format large numbers: 1000 → "1K", 1000000 → "1M", 1000000000 → "1B"
-    const formatNumber = (value: number): string => {
-      if (value >= 1_000_000_000) {
-        return `${(value / 1_000_000_000).toFixed(value % 1_000_000_000 === 0 ? 0 : 1)}B`;
-      }
-      if (value >= 1_000_000) {
-        return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`;
-      }
-      if (value >= 1_000) {
-        return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
-      }
-      return value.toLocaleString();
     };
 
     const options: ChartOptions<'line'> = {
@@ -117,7 +116,12 @@ export const EvaluationChart = forwardRef(
               }
               return tooltipItems[0].label;
             },
-            label: formatTooltipLabel
+            label: context => {
+              const displayValue = useSymlog
+                ? symlogInverse(context.parsed.y, 1, logBase)
+                : context.parsed.y;
+              return `${context.dataset.label ?? ''} : ${displayValue.toLocaleString()}`;
+            }
           }
         }
       },
@@ -130,6 +134,7 @@ export const EvaluationChart = forwardRef(
           },
           ticks: {
             align: 'center' as const,
+            source: 'data',
             font: {
               family: 'Sofia Pro',
               size: 14,
@@ -139,20 +144,40 @@ export const EvaluationChart = forwardRef(
           }
         },
         y: {
+          max: useSymlog ? symlog(maxValue * 1.1, 1, logBase) : undefined,
+          type: 'linear',
           title: {
             display: false
           },
           display: true,
           beginAtZero: true,
           ticks: {
+            callback: v =>
+              formatLabel(
+                useSymlog
+                  ? symlogInverse(v as number, 1, logBase)
+                  : (v as number)
+              ),
+
             font: {
               family: 'Sofia Pro',
               size: 14,
               weight: 400
             },
-            color: '#94A3B8',
-            callback: value => {
-              return formatNumber(Number(value));
+            color: '#94A3B8'
+          },
+          afterBuildTicks: axis => {
+            if (useSymlog) {
+              const tickValues: number[] = [];
+              let v = 1;
+              while (v <= maxValue * 1.1) {
+                tickValues.push(v);
+                v *= logBase;
+              }
+              axis.ticks = tickValues.map(value => ({
+                value: symlog(value, 1, logBase),
+                label: formatLabel(value)
+              }));
             }
           },
           grid: {

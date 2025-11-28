@@ -8,6 +8,7 @@ interface Props {
   content: ReactNode;
   trigger: ReactNode;
   align?: 'start' | 'center' | 'end';
+  asChild?: boolean;
 }
 
 interface DefaultTriggerProps {
@@ -85,7 +86,8 @@ const NameWithTooltip = ({
   maxLines = 2,
   content,
   trigger,
-  align
+  align,
+  asChild = false
 }: Props) => {
   const [isTruncate, setIsTruncate] = useState(false);
   const childrenId = `children-${id}`;
@@ -113,7 +115,7 @@ const NameWithTooltip = ({
 
   return (
     <Tooltip
-      asChild={false}
+      asChild={asChild}
       align={align}
       content={content}
       hidden={!isTruncate}

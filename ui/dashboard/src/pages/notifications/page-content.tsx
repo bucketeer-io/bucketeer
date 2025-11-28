@@ -82,7 +82,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
-        link={DOCUMENTATION_LINKS.NOTIFICATIONS}
+        link={DOCUMENTATION_LINKS.SLACK}
         placeholder={t('form:name-search-placeholder')}
         name="notifications-list-search"
         onOpenFilter={onOpenFilterModal}
