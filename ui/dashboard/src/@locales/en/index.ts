@@ -1,4 +1,5 @@
 import auth from './auth.json';
+import backend from './backend.json';
 import common from './common.json';
 import form from './form.json';
 import message from './message.json';
@@ -9,6 +10,7 @@ const enResources = {
   common,
   form,
   table,
-  message
+  message,
+  backend
 };
 export default enResources;
