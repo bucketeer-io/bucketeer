@@ -5231,6 +5231,8 @@ definitions:
       lastSeen:
         type: string
         format: int64
+      passwordSetupRequired:
+        type: boolean
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
@@ -5549,6 +5551,23 @@ definitions:
       executedAt:
         type: string
         format: int64
+  bucketeerenvironmentAuthenticationSettings:
+    type: object
+    properties:
+      enabledTypes:
+        type: array
+        items:
+          $ref: '#/definitions/bucketeerenvironmentAuthenticationType'
+        description: |-
+          Future authentication-specific settings can be added here
+           For example: password_policy, google_domain_restrictions, etc.
+  bucketeerenvironmentAuthenticationType:
+    type: string
+    enum:
+      - AUTHENTICATION_TYPE_UNSPECIFIED
+      - AUTHENTICATION_TYPE_GOOGLE
+      - AUTHENTICATION_TYPE_PASSWORD
+    default: AUTHENTICATION_TYPE_UNSPECIFIED
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -5586,6 +5605,8 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+      authenticationSettings:
+        $ref: '#/definitions/bucketeerenvironmentAuthenticationSettings'
   bucketeereventcounterSummary:
     type: object
     properties:
@@ -7017,6 +7038,7 @@ definitions:
       - ORGANIZATION_OWNER_EMAIL_CHANGED
       - ORGANIZATION_UPDATED
       - DEMO_ORGANIZATION_CREATED
+      - ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED
       - FLAG_TRIGGER_CREATED
       - FLAG_TRIGGER_RESET
       - FLAG_TRIGGER_DESCRIPTION_CHANGED

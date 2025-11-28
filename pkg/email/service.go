@@ -17,13 +17,18 @@ package email
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 )
 
 // Service defines the interface for sending emails
 type Service interface {
+	SendPasswordChangedNotification(ctx context.Context, to string, language string) error
+	SendPasswordSetupEmail(ctx context.Context, to, setupURL string, ttl time.Duration, language string) error
+	SendPasswordResetEmail(ctx context.Context, to, resetURL string, ttl time.Duration, language string) error
 	SendWelcomeEmail(ctx context.Context, to string, language string) error
+	SendMagicLinkEmail(ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string) error
 }
 
 // NewService creates an email service based on configuration
@@ -56,9 +61,51 @@ func NewNoOpService(logger *zap.Logger) Service {
 	return &NoOpService{logger: logger}
 }
 
+func (s *NoOpService) SendPasswordChangedNotification(ctx context.Context, to string, language string) error {
+	s.logger.Info("No-op email service: password changed notification not sent",
+		zap.String("to", to),
+		zap.String("language", language),
+	)
+	return nil
+}
+
+func (s *NoOpService) SendPasswordSetupEmail(
+	ctx context.Context, to, setupURL string, ttl time.Duration, language string,
+) error {
+	s.logger.Info("No-op email service: password setup email not sent",
+		zap.String("to", to),
+		zap.String("setupURL", setupURL),
+		zap.String("language", language),
+	)
+	return nil
+}
+
+func (s *NoOpService) SendPasswordResetEmail(
+	ctx context.Context, to, resetURL string, ttl time.Duration, language string,
+) error {
+	s.logger.Info("No-op email service: password reset email not sent",
+		zap.String("to", to),
+		zap.String("resetURL", resetURL),
+		zap.String("language", language),
+	)
+	return nil
+}
+
 func (s *NoOpService) SendWelcomeEmail(ctx context.Context, to string, language string) error {
 	s.logger.Info("No-op email service: welcome email not sent",
 		zap.String("to", to),
+		zap.String("language", language),
+	)
+	return nil
+}
+
+func (s *NoOpService) SendMagicLinkEmail(
+	ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string,
+) error {
+	s.logger.Info("No-op email service: magic link email not sent",
+		zap.String("to", to),
+		zap.String("magicLinkURL", magicLinkURL),
+		zap.Duration("expiresIn", expiresIn),
 		zap.String("language", language),
 	)
 	return nil

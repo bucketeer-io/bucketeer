@@ -13,6 +13,35 @@
       "https://localhost/v3/auth/callback"
     ]
   },
+  "password": {
+    "enabled": true,
+    "policy": {
+      "minLength": 8,
+      "requireUppercase": true,
+      "requireLowercase": true,
+      "requireNumbers": true,
+      "requireSymbols": false
+    },
+    "tokens": {
+      "resetTTL": "1h",
+      "setupTTL": "24h"
+    },
+    "urls": {
+      "resetPath": "/auth/reset-password",
+      "setupPath": "/auth/setup-password",
+      "tokenParam": "token"
+    }
+  },
+  "magicLink": {
+    "enabled": true,
+    "tokens": {
+      "verifyTTL": "15m"
+    },
+    "urls": {
+      "verifyPath": "/auth/verify",
+      "tokenParam": "token"
+    }
+  },
   "demoSignIn": {
     "enabled": true,
     "email": "demo@bucketeer.io",

@@ -16,6 +16,9 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 )
 
 type Authenticator interface {
@@ -56,9 +59,129 @@ type DemoSignInConfig struct {
 	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
+type PasswordPolicyConfig struct {
+	MinLength        int  `json:"minLength"`
+	RequireUppercase bool `json:"requireUppercase"`
+	RequireLowercase bool `json:"requireLowercase"`
+	RequireNumbers   bool `json:"requireNumbers"`
+	RequireSymbols   bool `json:"requireSymbols"`
+}
+
+type PasswordTokensConfig struct {
+	ResetTTL time.Duration `json:"resetTTL"`
+	SetupTTL time.Duration `json:"setupTTL"`
+}
+
+type PasswordURLsConfig struct {
+	ResetPath  string `json:"resetPath"`  // Path for password reset page
+	SetupPath  string `json:"setupPath"`  // Path for password setup page
+	TokenParam string `json:"tokenParam"` // URL parameter name for token
+}
+
+type PasswordAuthConfig struct {
+	Enabled bool                 `json:"enabled"`
+	Policy  PasswordPolicyConfig `json:"policy"`
+	Tokens  PasswordTokensConfig `json:"tokens"`
+	URLs    PasswordURLsConfig   `json:"urls"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for PasswordAuthConfig
+// to handle duration strings like "1h", "24h" in the Tokens field
+func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct with string duration fields in Tokens
+	type TokensAlias struct {
+		ResetTTL string `json:"resetTTL"`
+		SetupTTL string `json:"setupTTL"`
+	}
+
+	type Alias struct {
+		Enabled bool                 `json:"enabled"`
+		Policy  PasswordPolicyConfig `json:"policy"`
+		Tokens  TokensAlias          `json:"tokens"`
+		URLs    PasswordURLsConfig   `json:"urls"`
+	}
+
+	var aux Alias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Set non-duration values
+	c.Enabled = aux.Enabled
+	c.Policy = aux.Policy
+	c.URLs = aux.URLs
+
+	// Only parse TTL values if password auth is enabled
+	if aux.Enabled {
+		resetTTL, err := time.ParseDuration(aux.Tokens.ResetTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse resetTTL: %w", err)
+		}
+
+		setupTTL, err := time.ParseDuration(aux.Tokens.SetupTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse setupTTL: %w", err)
+		}
+
+		c.Tokens.ResetTTL = resetTTL
+		c.Tokens.SetupTTL = setupTTL
+	}
+
+	return nil
+}
+
+type MagicLinkTokensConfig struct {
+	VerifyTTL time.Duration `json:"verifyTTL"`
+}
+
+type MagicLinkURLsConfig struct {
+	VerifyPath string `json:"verifyPath"` // Path for magic link verification page
+	TokenParam string `json:"tokenParam"` // URL parameter name for token
+}
+
+type MagicLinkAuthConfig struct {
+	Enabled bool                  `json:"enabled"`
+	Tokens  MagicLinkTokensConfig `json:"tokens"`
+	URLs    MagicLinkURLsConfig   `json:"urls"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for MagicLinkAuthConfig
+// to handle duration strings like "15m", "1h" in the Tokens field
+func (c *MagicLinkAuthConfig) UnmarshalJSON(data []byte) error {
+	type TokensAlias struct {
+		VerifyTTL string `json:"verifyTTL"`
+	}
+
+	type Alias struct {
+		Enabled bool                `json:"enabled"`
+		Tokens  TokensAlias         `json:"tokens"`
+		URLs    MagicLinkURLsConfig `json:"urls"`
+	}
+
+	var aux Alias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	c.Enabled = aux.Enabled
+	c.URLs = aux.URLs
+
+	if aux.Enabled {
+		verifyTTL, err := time.ParseDuration(aux.Tokens.VerifyTTL)
+		if err != nil {
+			return fmt.Errorf("failed to parse verifyTTL: %w", err)
+		}
+		c.Tokens.VerifyTTL = verifyTTL
+	}
+
+	return nil
+}
+
 type OAuthConfig struct {
-	Issuer       string           `json:"issuer"`
-	Audience     string           `json:"audience"`
-	GoogleConfig GoogleConfig     `json:"google"`
-	DemoSignIn   DemoSignInConfig `json:"demoSignIn"`
+	Issuer       string              `json:"issuer"`
+	Audience     string              `json:"audience"`
+	GoogleConfig GoogleConfig        `json:"google"`
+	Password     PasswordAuthConfig  `json:"password"`
+	MagicLink    MagicLinkAuthConfig `json:"magicLink"`
+	DemoSignIn   DemoSignInConfig    `json:"demoSignIn"`
 }

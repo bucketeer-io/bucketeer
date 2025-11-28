@@ -43,6 +43,7 @@ message ExchangeTokenRequest {
   string code = 1;
   string redirect_url = 2;
   AuthType type = 3;
+  string organization_id = 4;
 }
 
 message ExchangeTokenResponse {
@@ -60,6 +61,7 @@ message RefreshTokenResponse {
 message SignInRequest {
   string email = 1;
   string password = 2;
+  string organization_id = 3;
 }
 
 message SignInResponse {
@@ -79,6 +81,110 @@ message GetDemoSiteStatusRequest {}
 
 message GetDemoSiteStatusResponse {
   bool is_demo_site_enabled = 1;
+}
+
+// Password Management Messages
+message UpdatePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message UpdatePasswordResponse {}
+
+// Password Setup Messages
+message InitiatePasswordSetupRequest {
+  string email = 1;
+}
+
+message InitiatePasswordSetupResponse {
+  string message = 1;
+}
+
+message SetupPasswordRequest {
+  string setup_token = 1;
+  string new_password = 2;
+}
+
+message SetupPasswordResponse {}
+
+message ValidatePasswordSetupTokenRequest {
+  string setup_token = 1;
+}
+
+message ValidatePasswordSetupTokenResponse {
+  bool is_valid = 1;
+  string email = 2;
+}
+
+// Password Reset Messages
+message InitiatePasswordResetRequest {
+  string email = 1;
+}
+
+message InitiatePasswordResetResponse {
+  string message = 1;
+}
+
+message ResetPasswordRequest {
+  string reset_token = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {}
+
+message ValidatePasswordResetTokenRequest {
+  string reset_token = 1;
+}
+
+message ValidatePasswordResetTokenResponse {
+  bool is_valid = 1;
+  string email = 2;
+}
+
+// Magic Link Authentication Messages
+message RequestMagicLinkRequest {
+  string email = 1;
+}
+
+message RequestMagicLinkResponse {
+  string message = 1;
+}
+
+message VerifyMagicLinkRequest {
+  string token = 1;
+}
+
+enum AuthenticationType {
+  AUTHENTICATION_TYPE_UNSPECIFIED = 0;
+  AUTHENTICATION_TYPE_GOOGLE = 1;
+  AUTHENTICATION_TYPE_PASSWORD = 2;
+}
+
+message AuthenticationSettings {
+  repeated AuthenticationType enabled_types = 1;
+}
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  string url_code = 3;
+  string description = 4;
+  bool disabled = 5;
+  bool archived = 6;
+  bool trial = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+  bool system_admin = 10;
+  int32 project_count = 11;
+  int32 environment_count = 12;
+  int32 user_count = 13;
+  string owner_email = 14;
+  AuthenticationSettings authentication_settings = 15;
+}
+
+message VerifyMagicLinkResponse {
+  string email = 1;
+  repeated Organization organizations = 2;
 }
 
 service AuthService {
@@ -266,6 +372,255 @@ service AuthService {
       description: "Get the status of the demo site.",
       tags: "Authentication",
       operation_id: "web.v1.auth.get_demo_site_status",
+    };
+  }
+
+  // Password Management APIs
+
+  rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {
+    option (google.api.http) = {
+      put: "/v1/auth/password"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Password",
+      description: "Update the password for the authenticated user.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.update_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Password Setup APIs
+  rpc InitiatePasswordSetup(InitiatePasswordSetupRequest)
+      returns (InitiatePasswordSetupResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/setup/initiate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Initiate Password Setup",
+      description: "Initiate password setup process by sending a setup email to users without passwords.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.initiate_password_setup",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc SetupPassword(SetupPasswordRequest) returns (SetupPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/setup"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Setup Password",
+      description: "Complete password setup using a valid setup token.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.setup_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ValidatePasswordSetupToken(ValidatePasswordSetupTokenRequest)
+      returns (ValidatePasswordSetupTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/setup/validate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Validate Password Setup Token",
+      description: "Validate if a password setup token is valid and not expired.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.validate_password_setup_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Password Reset APIs
+  rpc InitiatePasswordReset(InitiatePasswordResetRequest)
+      returns (InitiatePasswordResetResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/initiate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Initiate Password Reset",
+      description: "Initiate password reset process by sending a reset email to users with existing passwords.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.initiate_password_reset",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Reset Password",
+      description: "Complete password reset using a valid reset token.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.reset_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ValidatePasswordResetToken(ValidatePasswordResetTokenRequest)
+      returns (ValidatePasswordResetTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/password/reset/validate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Validate Password Reset Token",
+      description: "Validate if a password reset token is valid and not expired.",
+      tags: "Password Management",
+      operation_id: "web.v1.auth.validate_password_reset_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Magic Link Authentication APIs
+  rpc RequestMagicLink(RequestMagicLinkRequest)
+      returns (RequestMagicLinkResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/magic_link/request"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Request Magic Link",
+      description: "Initiate magic link authentication by sending a verification email to users. Returns a generic success message regardless of whether the email exists to prevent user enumeration attacks.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.request_magic_link",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc VerifyMagicLink(VerifyMagicLinkRequest)
+      returns (VerifyMagicLinkResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/magic_link/verify"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Verify Magic Link",
+      description: "Verify a magic link token and return the verified email address along with the user's organizations and their authentication settings.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.verify_magic_link",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Token not found or expired."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "token not found or expired", "details": [] }'
+          }
+        }
+      }
     };
   }
 }
