@@ -83,8 +83,8 @@ export const useColumns = ({
       header: `${t('name')}`,
       size: 400,
       cell: ({ row }) => {
-        const apiKey = row.original;
-        const { id, name } = apiKey;
+        const record = row.original;
+        const { id, name, apiKey } = record;
         return (
           <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
@@ -96,15 +96,15 @@ export const useColumns = ({
                   name={name}
                   maxLines={1}
                   className="min-w-[300px]"
-                  onClick={() => onActions(apiKey, 'EDIT')}
+                  onClick={() => onActions(record, 'EDIT')}
                 />
               }
               maxLines={1}
             />
 
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(id)}
-              <div onClick={() => handleCopyId(id)}>
+              {truncateTextCenter(apiKey)}
+              <div onClick={() => handleCopyId(apiKey)}>
                 <Icon
                   icon={IconCopy}
                   size={'sm'}

@@ -8,6 +8,7 @@ export type APIKeyRole =
 
 export interface APIKey {
   id: string;
+  apiKey: string;
   name: string;
   role: APIKeyRole;
   disabled: true;
