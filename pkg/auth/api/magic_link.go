@@ -31,9 +31,6 @@ import (
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
-const (
-	magicLinkTokenExpiry = 15 * time.Minute
-)
 
 // RequestMagicLink initiates the magic link authentication flow
 func (s *authService) RequestMagicLink(
@@ -62,7 +59,7 @@ func (s *authService) RequestMagicLink(
 		return nil, auth.StatusInternal.Err()
 	}
 
-	expiresAt := time.Now().Add(magicLinkTokenExpiry).Unix()
+	expiresAt := time.Now().Add(s.config.MagicLink.Tokens.VerifyTTL).Unix()
 	ipAddress := getIPAddress(ctx)
 	userAgent := getUserAgent(ctx)
 
@@ -80,9 +77,22 @@ func (s *authService) RequestMagicLink(
 		&acproto.GetMyOrganizationsByEmailRequest{Email: email},
 	)
 	if err == nil && orgsResp != nil && len(orgsResp.Organizations) > 0 {
-		if s.emailConfig != nil && s.emailConfig.BaseURL != "" {
-			magicLinkURL := fmt.Sprintf("%s/auth/verify?token=%s", s.emailConfig.BaseURL, token)
-			sendErr := s.emailService.SendMagicLinkEmail(ctx, email, magicLinkURL, magicLinkTokenExpiry, localizer.GetLocale())
+		if s.emailService != nil {
+			verifyPath := s.config.MagicLink.URLs.VerifyPath
+			if verifyPath == "" {
+				s.logger.Error("Magic link verify path not configured")
+				return nil, auth.StatusInternal.Err()
+			}
+			verifyParam := s.config.MagicLink.URLs.TokenParam
+			if verifyParam == "" {
+				s.logger.Error("Magic link verify parameter not configured")
+				return nil, auth.StatusInternal.Err()
+			}
+			magicLinkURL := fmt.Sprintf("%s%s?%s=%s",
+				s.emailConfig.BaseURL, verifyPath, verifyParam, token)
+			sendErr := s.emailService.SendMagicLinkEmail(
+				ctx, email, magicLinkURL, s.config.MagicLink.Tokens.VerifyTTL, localizer.GetLocale(),
+			)
 			if sendErr != nil {
 				s.logger.Error(
 					"Failed to send magic link email",
@@ -97,7 +107,7 @@ func (s *authService) RequestMagicLink(
 			}
 		} else {
 			s.logger.Warn(
-				"Email base URL not configured, magic link not sent",
+				"Email service not configured, magic link not sent",
 				zap.String("email", email),
 			)
 		}
