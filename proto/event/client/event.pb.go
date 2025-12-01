@@ -57,6 +57,8 @@ const (
 	SourceId_OPEN_FEATURE_JAVASCRIPT SourceId = 102
 	SourceId_OPEN_FEATURE_GO         SourceId = 103
 	SourceId_OPEN_FEATURE_NODE       SourceId = 104
+	SourceId_OPEN_FEATURE_REACT      SourceId = 105
+	SourceId_OPEN_FEATURE_REACT_NATIVE SourceId = 106
 )
 
 // Enum value maps for SourceId.
@@ -77,6 +79,8 @@ var (
 		102: "OPEN_FEATURE_JAVASCRIPT",
 		103: "OPEN_FEATURE_GO",
 		104: "OPEN_FEATURE_NODE",
+		105: "OPEN_FEATURE_REACT",
+		106: "OPEN_FEATURE_REACT_NATIVE",
 	}
 	SourceId_value = map[string]int32{
 		"UNKNOWN":                 0,
@@ -84,7 +88,7 @@ var (
 		"IOS":                     2,
 		"WEB":                     3,
 		"GO_SERVER":               5,
-		"NODE_SERVER":             6,
+		"NODE_SERVER":             6,31
 		"JAVASCRIPT":              7,
 		"FLUTTER":                 8,
 		"REACT":                   9,
@@ -94,6 +98,8 @@ var (
 		"OPEN_FEATURE_JAVASCRIPT": 102,
 		"OPEN_FEATURE_GO":         103,
 		"OPEN_FEATURE_NODE":       104,
+		"OPEN_FEATURE_REACT":      105,
+		"OPEN_FEATURE_REACT_NATIVE": 106,
 	}
 )
 
