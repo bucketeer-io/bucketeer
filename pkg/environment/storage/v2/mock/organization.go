@@ -57,6 +57,34 @@ func (mr *MockOrganizationStorageMockRecorder) CreateOrganization(ctx, p any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockOrganizationStorage)(nil).CreateOrganization), ctx, p)
 }
 
+// DeleteOrganizationData mocks base method.
+func (m *MockOrganizationStorage) DeleteOrganizationData(ctx context.Context, target string, whereParts []mysql.WherePart) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOrganizationData", ctx, target, whereParts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOrganizationData indicates an expected call of DeleteOrganizationData.
+func (mr *MockOrganizationStorageMockRecorder) DeleteOrganizationData(ctx, target, whereParts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganizationData", reflect.TypeOf((*MockOrganizationStorage)(nil).DeleteOrganizationData), ctx, target, whereParts)
+}
+
+// DeleteOrganizations mocks base method.
+func (m *MockOrganizationStorage) DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOrganizations", ctx, whereParts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOrganizations indicates an expected call of DeleteOrganizations.
+func (mr *MockOrganizationStorageMockRecorder) DeleteOrganizations(ctx, whereParts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganizations", reflect.TypeOf((*MockOrganizationStorage)(nil).DeleteOrganizations), ctx, whereParts)
+}
+
 // GetOrganization mocks base method.
 func (m *MockOrganizationStorage) GetOrganization(ctx context.Context, id string) (*domain.Organization, error) {
 	m.ctrl.T.Helper()

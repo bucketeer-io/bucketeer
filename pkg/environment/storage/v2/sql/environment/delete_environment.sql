@@ -1,0 +1,1 @@
+DELETE FROM environment_v2 %s

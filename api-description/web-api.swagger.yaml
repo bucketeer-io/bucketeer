@@ -3224,6 +3224,122 @@ paths:
             $ref: '#/definitions/environmentCreateTrialProjectRequest'
       tags:
         - Project
+  /v1/environment/delete_environment_data:
+    post:
+      summary: Delete Environment Data
+      description: Delete all data in the environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.delete_environment_data
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentDeleteEnvironmentDataResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentDeleteEnvironmentDataRequest'
+      tags:
+        - Environment
+  /v1/environment/delete_organization_data:
+    post:
+      summary: Delete Organization Data
+      description: Delete all data in an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.delete_organization_data
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentDeleteOrganizationDataResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentDeleteOrganizationDataRequest'
+      tags:
+        - Organization
   /v1/environment/disable_organization:
     post:
       summary: Disable
@@ -11001,6 +11117,24 @@ definitions:
       command:
         $ref: '#/definitions/environmentCreateTrialProjectCommand'
   environmentCreateTrialProjectResponse:
+    type: object
+  environmentDeleteEnvironmentDataRequest:
+    type: object
+    properties:
+      environmentIds:
+        type: array
+        items:
+          type: string
+  environmentDeleteEnvironmentDataResponse:
+    type: object
+  environmentDeleteOrganizationDataRequest:
+    type: object
+    properties:
+      organizationIds:
+        type: array
+        items:
+          type: string
+  environmentDeleteOrganizationDataResponse:
     type: object
   environmentDemoCreationToken:
     type: object

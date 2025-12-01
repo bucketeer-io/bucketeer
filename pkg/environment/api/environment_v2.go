@@ -779,6 +779,31 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	return &environmentproto.ArchiveEnvironmentV2Response{}, nil
 }
 
+func (s *EnvironmentService) DeleteEnvironmentData(
+	ctx context.Context,
+	req *environmentproto.DeleteEnvironmentDataRequest,
+) (*environmentproto.DeleteEnvironmentDataResponse, error) {
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		for _, environmentID := range req.EnvironmentIds {
+			for _, target := range targetEntities {
+				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environmentID, target)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		s.logger.Error("Failed to delete data from environment",
+			zap.Error(err),
+			zap.Strings("environmentId", req.EnvironmentIds),
+		)
+		return nil, err
+	}
+	return &environmentproto.DeleteEnvironmentDataResponse{}, nil
+}
+
 func validateArchiveEnvironmentV2Request(
 	req *environmentproto.ArchiveEnvironmentV2Request,
 	localizer locale.Localizer,
