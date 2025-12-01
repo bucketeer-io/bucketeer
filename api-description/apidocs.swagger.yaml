@@ -6724,7 +6724,7 @@ definitions:
       - OPEN_FEATURE_JAVASCRIPT
       - OPEN_FEATURE_GO
       - OPEN_FEATURE_NODE
-      - OPEN_FEATURE_REACT 
+      - OPEN_FEATURE_REACT
       - OPEN_FEATURE_REACT_NATIVE
     default: UNKNOWN
   coderefCodeReference:

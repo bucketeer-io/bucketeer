@@ -89,6 +89,7 @@ var (
 		"WEB":                     3,
 		"GO_SERVER":               5,
 		"NODE_SERVER":             6,31
+		"NODE_SERVER":             6,
 		"JAVASCRIPT":              7,
 		"FLUTTER":                 8,
 		"REACT":                   9,
