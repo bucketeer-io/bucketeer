@@ -547,13 +547,13 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	ctx context.Context,
 	req *http.Request,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	id := req.Header.Get(authorizationKey)
-	if id == "" {
+	apikey := req.Header.Get(authorizationKey)
+	if apikey == "" {
 		return nil, errMissingAPIKey
 	}
 	envAPIKey, err := getEnvironmentAPIKeyFromCache(
 		ctx,
-		id,
+		apikey,
 		s.environmentAPIKeyCache,
 		callerGatewayService,
 		cacheLayerInMemory,
@@ -565,15 +565,15 @@ func (s *gatewayService) findEnvironmentAPIKey(
 		"API key not found in the cache",
 		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("apiKey", obfuscateString(id, obfuscateAPIKeyLength)),
+			zap.String("apiKey", obfuscateString(apikey, obfuscateAPIKeyLength)),
 		)...,
 	)
 	k, err, _ := s.flightgroup.Do(
-		id,
+		apikey,
 		func() (interface{}, error) {
 			return s.getEnvironmentAPIKey(
 				ctx,
-				id,
+				apikey,
 				s.accountClient,
 				s.environmentAPIKeyCache,
 				s.logger,
