@@ -395,7 +395,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   menuContentSide,
   wrapTriggerStyle,
   variant = 'secondary',
-  className,
+  className = 'w-full',
   alignContent = 'start',
   trigger,
 

@@ -260,7 +260,7 @@ const FilterExperimentModal = ({
                 disabled={isLoading || !filterType}
                 placeholder={t(`select-value`)}
                 labelCustom={handleGetLabelFilterValue(filterOption)}
-                className={cn('w-full max-w-[235px] truncate', {
+                className={cn('w-full max-w-[280px] truncate', {
                   capitalize: isStatusFilter
                 })}
                 contentClassName={cn('w-[235px]', {

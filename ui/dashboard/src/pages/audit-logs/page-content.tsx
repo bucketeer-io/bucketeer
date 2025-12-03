@@ -141,6 +141,7 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
+              className="w-fit"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
