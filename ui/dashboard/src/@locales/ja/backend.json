@@ -88,7 +88,7 @@
     "SegmentUsersAlreadyUploading": "セグメントユーザーのリストはすでにアップロード中です",
     "SegmentStatusNotSucceeded": "セグメントのステータスが成功ではありません",
     "SegmentInUse": "セグメントがフィーチャーフラグで使用されているため、削除できません",
-    "HasWaitingOrRunningExperiment": "開始予定、もしくは実行中のエクスペリメントが存在します更新する場合はエクスペリメントを停止してください",
+    "HasWaitingOrRunningExperiment": "開始予定、もしくは実行中のエクスペリメントが存在します。更新する場合はエクスペリメントを停止してください",
     "InvalidArchive": "前提条件のフラグとして登録されているフラグをアーカイブすることはできません",
     "InvalidChangingVariation": "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません",
     "WaitingOrRunningProgressiveRolloutExists": "開始予定、もしくは実行中のプログレッシブロールアウトが存在します。更新する場合はプログレッシブロールアウトを停止してください",
@@ -131,4 +131,3 @@
     "ValueUpdated": "{{field_1}}の値が更新されました"
   }
 }
-
