@@ -57,10 +57,6 @@ var (
 	ErrOrganizationUnexpectedAffectedRows = pkgErr.NewErrorUnexpectedAffectedRows(
 		pkgErr.EnvironmentPackageName,
 		"organization unexpected affected rows")
-
-	targetEntitiesInOrganization = []string{
-		"account_v2",
-	}
 )
 
 type OrganizationStorage interface {
