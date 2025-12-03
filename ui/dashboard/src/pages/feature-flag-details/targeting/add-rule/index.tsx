@@ -82,7 +82,7 @@ const AddRule = ({
       options={options}
       disabled={!editable}
       showArrow={false}
-      onChange={value => onAddRule(value as RuleCategory)}
+      onChange={value => getRuleCategoryCall(value as RuleCategory)}
       alignContent="center"
       className="w-full [&>div]:flex-center border-dashed !shadow-none"
     />
