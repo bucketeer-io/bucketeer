@@ -255,64 +255,6 @@ const ConfirmationRequiredModal = ({
             <div className="relative overflow-auto w-full h-full small-scroll">
               {!!isShowChange && (
                 <>
-                  <Form.Field
-                    control={control}
-                    name="comment"
-                    render={({ field }) => (
-                      <Form.Item className="py-0">
-                        <Form.Label required={isRequireComment}>
-                          {t('form:comment-for-update')}
-                        </Form.Label>
-                        <Form.Control>
-                          <TextArea
-                            placeholder={`${t('form:placeholder-comment')}`}
-                            rows={3}
-                            {...field}
-                            onChange={value => {
-                              field.onChange(value);
-                            }}
-                            name="comment"
-                          />
-                        </Form.Control>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
-                  <Form.Field
-                    control={control}
-                    name="resetSampling"
-                    render={({ field }) => (
-                      <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                        <div className="flex items-center gap-x-2">
-                          <Form.Control>
-                            <Checkbox
-                              ref={field.ref}
-                              checked={field.value}
-                              onCheckedChange={checked =>
-                                field.onChange(checked)
-                              }
-                              title={t('form:reset-sampling')}
-                            />
-                          </Form.Control>
-                          <Tooltip
-                            align="start"
-                            content={t('form:reset-sampling-tooltip')}
-                            trigger={
-                              <div className="flex-center size-fit">
-                                <Icon
-                                  icon={IconInfo}
-                                  size="xs"
-                                  color="gray-500"
-                                />
-                              </div>
-                            }
-                            className="max-w-[400px]"
-                          />
-                        </div>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
                   <div className="sticky top-0 z-20 bg-white typo-para-small text-gray-600 w-full px-5">
                     <p className="typo-para-medium leading-4 text-gray-700 pb-5">
                       <Trans
@@ -381,16 +323,32 @@ const ConfirmationRequiredModal = ({
                       name="resetSampling"
                       render={({ field }) => (
                         <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                          <Form.Control>
-                            <Checkbox
-                              ref={field.ref}
-                              checked={field.value}
-                              onCheckedChange={checked =>
-                                field.onChange(checked)
+                          <div className="flex items-center gap-x-2">
+                            <Form.Control>
+                              <Checkbox
+                                ref={field.ref}
+                                checked={field.value}
+                                onCheckedChange={checked =>
+                                  field.onChange(checked)
+                                }
+                                title={t('form:reset-sampling')}
+                              />
+                            </Form.Control>
+                            <Tooltip
+                              align="start"
+                              content={t('form:reset-sampling-tooltip')}
+                              trigger={
+                                <div className="flex-center size-fit">
+                                  <Icon
+                                    icon={IconInfo}
+                                    size="xs"
+                                    color="gray-500"
+                                  />
+                                </div>
                               }
-                              title={t('form:reset-sampling')}
+                              className="max-w-[400px]"
                             />
-                          </Form.Control>
+                          </div>
                           <Form.Message />
                         </Form.Item>
                       )}

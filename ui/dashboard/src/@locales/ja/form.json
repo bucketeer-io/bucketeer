@@ -366,7 +366,7 @@
   "name-desc-search-placeholder": "名前、説明を検索...",
   "email-search-placeholder": "メールアドレスを検索...",
   "name-search-placeholder": "名前で検索...",
-  "yaml-note":"YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。",
+  "yaml-note": "YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。",
   "discard-unsaved-changes": "未保存の変更を破棄しますか？",
   "add_prerequisite-discard-desc": "前提条件を追加: {{flagName}}、<variantElement/>",
   "remove_prerequisite-discard-desc": "前提条件を削除: {{flagName}}、<variantElement/>",
