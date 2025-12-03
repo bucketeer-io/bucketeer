@@ -28,23 +28,19 @@ const EmptyCollection = ({
           {t(`code-refs.${isEmpty ? 'empty' : 'enable'}`)}
         </EmptyState.Title>
         <EmptyState.Description>
-          {isEmpty ? (
-            <Trans
-              i18nKey={'table:code-refs.empty-desc'}
-              components={{
-                comp: (
-                  <Link
-                    to={DOCUMENTATION_LINKS.FLAG_CODE_REFERENCE}
-                    target="_blank"
-                    className="inline-flex items-center gap-x-1 text-primary-500 underline"
-                  />
-                ),
-                icon: <Icon icon={IconLaunchOutlined} size="sm" />
-              }}
-            />
-          ) : (
-            t(`code-refs.enable-desc`)
-          )}
+          <Trans
+            i18nKey={`table:code-refs.${isEmpty ? 'empty-desc' : 'enable-desc'}`}
+            components={{
+              comp: (
+                <Link
+                  to={DOCUMENTATION_LINKS.FLAG_CODE_REFERENCE}
+                  target="_blank"
+                  className="inline-flex items-center gap-x-1 text-primary-500 underline"
+                />
+              ),
+              icon: <Icon icon={IconLaunchOutlined} size="sm" />
+            }}
+          />
         </EmptyState.Description>
       </EmptyState.Body>
       {!isEmpty && onAdd && (
