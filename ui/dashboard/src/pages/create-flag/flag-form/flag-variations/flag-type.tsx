@@ -7,12 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation, FeatureVariationType } from '@types';
 import { IconInfo } from '@icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -95,46 +90,32 @@ const FlagType = () => {
               />
             </Form.Label>
             <Form.Control>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  placeholder={t(`feature-flags.flag-type`)}
-                  trigger={
-                    <div className="flex items-center gap-x-2">
-                      {currentFlagOption?.icon && (
-                        <Icon
-                          icon={currentFlagOption?.icon}
-                          size={'md'}
-                          className="flex-center"
-                        />
-                      )}
-                      <p>{currentFlagOption?.label}</p>
-                    </div>
-                  }
-                  variant="secondary"
-                  className="w-full"
-                />
-                <DropdownMenuContent
-                  className="w-[502px]"
-                  align="start"
-                  {...field}
-                >
-                  {flagTypeOptions.map((item, index) => (
-                    <DropdownMenuItem
-                      {...field}
-                      key={index}
-                      icon={item.icon}
-                      value={item.value}
-                      label={item.label}
-                      onSelectOption={value =>
-                        handleOnChangeVariationType(
-                          value as FeatureVariationType,
-                          field.onChange
-                        )
-                      }
-                    />
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dropdown
+                options={flagTypeOptions}
+                value={field.value}
+                onChange={value =>
+                  handleOnChangeVariationType(
+                    value as FeatureVariationType,
+                    field.onChange
+                  )
+                }
+                placeholder={t('feature-flags.flag-type')}
+                variant="secondary"
+                className="w-full"
+                alignContent="start"
+                trigger={
+                  <div className="flex items-center gap-x-2">
+                    {currentFlagOption?.icon && (
+                      <Icon
+                        icon={currentFlagOption.icon}
+                        size="md"
+                        className="flex-center"
+                      />
+                    )}
+                    <p>{currentFlagOption?.label}</p>
+                  </div>
+                }
+              />
             </Form.Control>
             <Form.Message />
           </Form.Item>

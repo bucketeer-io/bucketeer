@@ -2,13 +2,7 @@ import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { RepositoryType } from '@types';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import { CodeRefFilters } from '../types';
 
 const FiltersBar = ({
@@ -43,6 +37,61 @@ const FiltersBar = ({
         ?.label || '',
     [filters, extensionOptions]
   );
+  const repositoryLabelText = useMemo(
+    () => (
+      <Trans
+        i18nKey={'table:code-refs.repository-name'}
+        values={{
+          name: repositoryLabel ? repositoryLabel : t('table:code-refs.all')
+        }}
+        components={{
+          text: (
+            <span
+              className={repositoryLabel ? 'text-gray-600' : 'text-gray-500'}
+            />
+          )
+        }}
+      />
+    ),
+    [repositoryLabel, t]
+  );
+
+  const branchLabelText = useMemo(
+    () => (
+      <Trans
+        i18nKey={'table:code-refs.branch-name'}
+        values={{
+          name: branchLabel ? branchLabel : t('table:code-refs.all')
+        }}
+        components={{
+          text: (
+            <span className={branchLabel ? 'text-gray-600' : 'text-gray-500'} />
+          )
+        }}
+      />
+    ),
+    [branchLabel, t]
+  );
+
+  const extensionLabelText = useMemo(
+    () => (
+      <Trans
+        i18nKey={'table:code-refs.file-extension-name'}
+        values={{
+          name: extensionLabel ? extensionLabel : t('table:code-refs.all')
+        }}
+        components={{
+          text: (
+            <span
+              className={extensionLabel ? 'text-gray-600' : 'text-gray-500'}
+            />
+          )
+        }}
+      />
+    ),
+    [extensionLabel, t]
+  );
+
   return (
     <div className="flex items-center justify-between w-full gap-x-10">
       <div className="flex flex-col gap-y-4">
@@ -55,118 +104,42 @@ const FiltersBar = ({
       </div>
 
       <div className="flex items-center gap-x-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            label={
-              <Trans
-                i18nKey={'table:code-refs.repository-name'}
-                values={{
-                  name: repositoryLabel
-                    ? repositoryLabel
-                    : t('table:code-refs.all')
-                }}
-                components={{
-                  text: (
-                    <span
-                      className={
-                        repositoryLabel ? 'text-gray-600' : 'text-gray-500'
-                      }
-                    />
-                  )
-                }}
-              />
-            }
-          />
-          <DropdownMenuContent>
-            {repositoryOptions.map((item, index) => (
-              <DropdownMenuItem
-                key={index}
-                label={item.label}
-                value={item.value}
-                onSelectOption={value =>
-                  onChangeFilters({
-                    repositoryType:
-                      value === 'all' ? undefined : (value as RepositoryType)
-                  })
-                }
-              />
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            label={
-              <Trans
-                i18nKey={'table:code-refs.branch-name'}
-                values={{
-                  name: branchLabel ? branchLabel : t('table:code-refs.all')
-                }}
-                components={{
-                  text: (
-                    <span
-                      className={
-                        branchLabel ? 'text-gray-600' : 'text-gray-500'
-                      }
-                    />
-                  )
-                }}
-              />
-            }
-          />
-          <DropdownMenuContent>
-            {branchOptions.map((item, index) => (
-              <DropdownMenuItem
-                key={index}
-                label={item.label}
-                value={item.value}
-                onSelectOption={value =>
-                  onChangeFilters({
-                    repositoryBranch:
-                      value === 'all' ? undefined : (value as string)
-                  })
-                }
-              />
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            label={
-              <Trans
-                i18nKey={'table:code-refs.file-extension-name'}
-                values={{
-                  name: extensionLabel
-                    ? extensionLabel
-                    : t('table:code-refs.all')
-                }}
-                components={{
-                  text: (
-                    <span
-                      className={
-                        extensionLabel ? 'text-gray-600' : 'text-gray-500'
-                      }
-                    />
-                  )
-                }}
-              />
-            }
-          />
-          <DropdownMenuContent>
-            {extensionOptions.map((item, index) => (
-              <DropdownMenuItem
-                key={index}
-                label={item.label}
-                value={item.value}
-                onSelectOption={value =>
-                  onChangeFilters({
-                    fileExtension:
-                      value === 'all' ? undefined : (value as string)
-                  })
-                }
-              />
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dropdown
+          labelCustom={repositoryLabelText}
+          options={repositoryOptions}
+          value={filters?.repositoryType || 'all'}
+          onChange={value =>
+            onChangeFilters({
+              repositoryType:
+                value === 'all' ? undefined : (value as RepositoryType)
+            })
+          }
+          isTruncate={false}
+        />
+
+        <Dropdown
+          labelCustom={branchLabelText}
+          options={branchOptions}
+          value={filters?.repositoryBranch || 'all'}
+          onChange={value =>
+            onChangeFilters({
+              repositoryBranch: value === 'all' ? undefined : (value as string)
+            })
+          }
+          isTruncate={false}
+        />
+
+        <Dropdown
+          labelCustom={extensionLabelText}
+          options={extensionOptions}
+          value={filters?.fileExtension || 'all'}
+          isTruncate={false}
+          onChange={value =>
+            onChangeFilters({
+              fileExtension: value === 'all' ? undefined : (value as string)
+            })
+          }
+        />
       </div>
     </div>
   );

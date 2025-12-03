@@ -22,13 +22,7 @@ import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elem
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownOption
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -341,47 +335,32 @@ const CreateFlagForm = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      placeholder={t(`form:feature-flags.flag-type`)}
-                      trigger={
-                        <div className="flex items-center gap-x-2">
-                          {currentFlagOption?.icon && (
-                            <Icon
-                              icon={currentFlagOption?.icon}
-                              size={'md'}
-                              className="flex-center"
-                            />
-                          )}
-                          <p>{currentFlagOption?.label}</p>
-                        </div>
-                      }
-                      disabled={isLoadingTags}
-                      variant="secondary"
-                      className="w-full"
-                    />
-                    <DropdownMenuContent
-                      className="w-[502px]"
-                      align="start"
-                      {...field}
-                    >
-                      {flagTypeOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          icon={item.icon}
-                          value={item.value}
-                          label={item.label}
-                          onSelectOption={value =>
-                            handleOnChangeVariationType(
-                              value as FeatureVariationType,
-                              field.onChange
-                            )
-                          }
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Dropdown
+                    placeholder={t(`form:feature-flags.flag-type`)}
+                    options={flagTypeOptions}
+                    trigger={
+                      <div className="flex items-center gap-x-2">
+                        {currentFlagOption?.icon && (
+                          <Icon
+                            icon={currentFlagOption?.icon}
+                            size={'md'}
+                            className="flex-center"
+                          />
+                        )}
+                        <p>{currentFlagOption?.label}</p>
+                      </div>
+                    }
+                    disabled={isLoadingTags}
+                    value={field.value}
+                    onChange={value =>
+                      handleOnChangeVariationType(
+                        value as FeatureVariationType,
+                        field.onChange
+                      )
+                    }
+                    className="w-full"
+                    contentClassName="w-[502px]"
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -419,40 +398,30 @@ const CreateFlagForm = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:placeholder-tags`)}
-                          trigger={
-                            <div className="flex items-center gap-x-2">
-                              <FlagVariationPolygon index={variationIndex} />
-                              <Trans
-                                i18nKey={'form:feature-flags.variation'}
-                                values={{
-                                  index:
-                                    currentVariations?.findIndex(
-                                      item => item.id === field.value
-                                    ) + 1
-                                }}
-                              />
-                            </div>
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent align="start" {...field}>
-                          {currentVariations?.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={`Variation ${index + 1}`}
-                              onSelectOption={() => {
-                                field.onChange(item.id);
+                      <Dropdown
+                        placeholder={t(`form:placeholder-tags`)}
+                        trigger={
+                          <div className="flex items-center gap-x-2">
+                            <FlagVariationPolygon index={variationIndex} />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index:
+                                  currentVariations?.findIndex(
+                                    item => item.id === field.value
+                                  ) + 1
                               }}
                             />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          </div>
+                        }
+                        options={currentVariations?.map((item, index) => ({
+                          label: `Variation ${index + 1}`,
+                          value: item.id
+                        }))}
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>
@@ -479,40 +448,30 @@ const CreateFlagForm = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:placeholder-tags`)}
-                          trigger={
-                            <div className="flex items-center gap-x-2">
-                              <FlagVariationPolygon index={variationIndex} />
-                              <Trans
-                                i18nKey={'form:feature-flags.variation'}
-                                values={{
-                                  index:
-                                    currentVariations?.findIndex(
-                                      item => item.id === field.value
-                                    ) + 1
-                                }}
-                              />
-                            </div>
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent align="start" {...field}>
-                          {currentVariations?.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={`Variation ${index + 1}`}
-                              onSelectOption={() => {
-                                field.onChange(item.id);
+                      <Dropdown
+                        placeholder={t(`form:placeholder-tags`)}
+                        trigger={
+                          <div className="flex items-center gap-x-2">
+                            <FlagVariationPolygon index={variationIndex} />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index:
+                                  currentVariations?.findIndex(
+                                    item => item.id === field.value
+                                  ) + 1
                               }}
                             />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          </div>
+                        }
+                        options={currentVariations?.map((item, index) => ({
+                          label: `Variation ${index + 1}`,
+                          value: item.id
+                        }))}
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>

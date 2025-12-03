@@ -23,12 +23,7 @@ import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -387,36 +382,15 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       {t('common:flag')}
                     </Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          disabled
-                          placeholder={t(`experiments.select-flag`)}
-                          label={
-                            featureFlagOptions.find(
-                              item => item.value === field.value
-                            )?.label || ''
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent
-                          className="w-[502px]"
-                          align="start"
-                          {...field}
-                        >
-                          {featureFlagOptions.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.value}
-                              label={item.label}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Dropdown
+                        disabled
+                        placeholder={t(`experiments.select-flag`)}
+                        contentClassName="min-w-[502px]"
+                        className="w-full"
+                        options={featureFlagOptions as DropdownOption[]}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>
@@ -432,36 +406,15 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                         {t('experiments.base-variation')}
                       </Form.Label>
                       <Form.Control>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            disabled
-                            placeholder={t(`experiments.select-flag`)}
-                            label={
-                              variationOptions.find(
-                                item => item.value === field.value
-                              )?.label || ''
-                            }
-                            variant="secondary"
-                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                          />
-                          <DropdownMenuContent
-                            className="w-[502px]"
-                            align="start"
-                            {...field}
-                          >
-                            {variationOptions.map((item, index) => (
-                              <DropdownMenuItem
-                                {...field}
-                                key={index}
-                                value={item.value}
-                                label={item.label}
-                                onSelectOption={value => {
-                                  field.onChange(value);
-                                }}
-                              />
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Dropdown
+                          disabled
+                          placeholder={t(`experiments.select-flag`)}
+                          options={variationOptions as DropdownOption[]}
+                          value={field.value}
+                          onChange={field.onChange}
+                          contentClassName="min-w-[502px]"
+                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                        />
                       </Form.Control>
                       <Form.Message />
                     </Form.Item>

@@ -6,12 +6,7 @@ import { UserSegmentsFilters } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import DialogModal from 'components/modal/dialog';
 
 export type FilterProps = {
@@ -74,44 +69,43 @@ const FilterUserSegmentModal = ({
             {t(`if`)}
           </div>
           <Divider vertical={true} className="border-primary-500" />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-filter`)}
-              label={selectedFilterType?.label}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {filterStatusOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setSelectedFilterType(item)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dropdown
+            value={selectedFilterType?.value}
+            onChange={value => {
+              const selected = filterStatusOptions.find(
+                item => item.value === value
+              );
+              setSelectedFilterType(selected);
+            }}
+            placeholder={t(`select-filter`)}
+            options={filterStatusOptions.map(item => ({
+              ...item,
+              label: item.label,
+              value: item.value || ''
+            }))}
+            className="w-full"
+            contentClassName="w-[235px]"
+          />
+
           <p className="typo-para-medium text-gray-600">is</p>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-value`)}
-              label={valueOption?.label}
-              disabled={!selectedFilterType}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {segmentStatusOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setValueOption(item)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dropdown
+            placeholder={t(`select-value`)}
+            disabled={!selectedFilterType}
+            options={segmentStatusOptions.map(item => ({
+              ...item,
+              label: item.label,
+              value: item.value || ''
+            }))}
+            value={valueOption?.value}
+            onChange={value => {
+              const selected = segmentStatusOptions.find(
+                item => item.value === value
+              );
+              setValueOption(selected);
+            }}
+            className="w-full"
+            contentClassName="w-[235px]"
+          />
         </div>
       </div>
 
