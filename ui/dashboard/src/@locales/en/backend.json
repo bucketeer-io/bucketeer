@@ -29,7 +29,7 @@
     "EventRate": "Event rate",
     "Experiment": "Experiment",
     "ExperimentStartDate": "Experiment start date",
-    "ExperimentEndDate": "Experiment start date",
+    "ExperimentEndDate": "Experiment end date",
     "ExperimentPeriod": "Experiment period",
     "FeatureFlagID": "Feature flag ID",
     "FeatureFlag": "Feature flag",
@@ -44,7 +44,7 @@
     "Prerequisite": "Prerequisite",
     "PrerequisiteVariation": "Prerequisite variation",
     "Project": "Project",
-    "ProgressiveRollout": "Progressive Rollout",
+    "ProgressiveRollout": "Progressive rollout",
     "Push": "Push",
     "PushTag": "Push tag",
     "RandomSampling": "Random sampling",
@@ -68,7 +68,7 @@
     "TrialProject": "Trial project",
     "Webhook": "Webhook",
     "WebhookRule": "Webhook rule",
-    "FlagTrigger": "Flag Trigger",
+    "FlagTrigger": "Flag trigger",
     "CodeReference": "Code reference"
   },
   "errors": {
@@ -131,4 +131,3 @@
     "ValueUpdated": "{{field_1}} value has been updated"
   }
 }
-
