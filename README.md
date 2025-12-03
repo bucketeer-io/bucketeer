@@ -164,7 +164,7 @@ Bucketeer adapts to your infrastructure needs—start small and scale as you gro
 ### Quick Start with Docker Compose (Lite Version)
 Perfect for local development, small teams, or proof-of-concept deployments:
 ```bash
-docker-compose up -d
+make docker-compose-up
 ```
 Get started in minutes with a fully functional Bucketeer instance. The lite version uses MySQL and Redis—minimal infrastructure, maximum value. PostgreSQL support coming soon.
 

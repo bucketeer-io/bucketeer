@@ -4,12 +4,7 @@ import { useTranslation } from 'i18n';
 import { EvaluationTimeRange } from '@types';
 import { IconInfo, IconThreeLines } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import { TimeRangeOption } from '../types';
@@ -18,11 +13,13 @@ const FilterBar = ({
   isLoading,
   timeRangeOptions,
   timeRangeLabel,
+  currentFilter,
   onChangeTimeRange
 }: {
   isLoading: boolean;
   timeRangeOptions: TimeRangeOption[];
   timeRangeLabel: string;
+  currentFilter: string;
   onChangeTimeRange: (timeRange: EvaluationTimeRange) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
@@ -53,31 +50,22 @@ const FilterBar = ({
           <Icon icon={IconLaunchOutlined} size="sm" />
           {t('documentation')}
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            showArrow={false}
-            disabled={isLoading}
-            trigger={
-              <div className="flex items-center gap-x-2">
-                <Icon icon={IconThreeLines} size="sm" />
-                <p className="text-gray-600">{timeRangeLabel}</p>
-              </div>
-            }
-            className="px-4 py-[13.5px]"
-          />
-          <DropdownMenuContent align="end">
-            {timeRangeOptions.map(item => (
-              <DropdownMenuItem
-                key={item.value}
-                label={item.label}
-                value={item.value}
-                onSelectOption={value =>
-                  onChangeTimeRange(value as EvaluationTimeRange)
-                }
-              />
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dropdown
+          trigger={
+            <div className="flex items-center gap-x-2">
+              <Icon icon={IconThreeLines} size="sm" />
+              <p className="text-gray-600">{timeRangeLabel}</p>
+            </div>
+          }
+          value={currentFilter}
+          options={timeRangeOptions as DropdownOption[]}
+          disabled={isLoading}
+          showArrow={false}
+          onChange={value => onChangeTimeRange(value as EvaluationTimeRange)}
+          alignContent="end"
+          className="px-4 py-[13.5px]"
+          wrapTriggerStyle="!w-fit"
+        />
       </div>
     </div>
   );

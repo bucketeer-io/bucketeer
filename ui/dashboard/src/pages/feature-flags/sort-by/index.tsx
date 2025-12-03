@@ -3,32 +3,13 @@ import { Trans } from 'react-i18next';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { OrderBy, OrderDirection } from '@types';
-import { IconChecked } from '@icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
-import Icon from 'components/icon';
+import Dropdown from 'components/dropdown';
 import { FlagFilters } from '../types';
 
 interface SortedState {
   orderBy: OrderBy;
   orderDirection: OrderDirection;
 }
-
-const ActiveItem = ({ isActive }: { isActive: boolean }) =>
-  isActive ? (
-    <Icon
-      icon={IconChecked}
-      color="primary-500"
-      size={'sm'}
-      className="flex-center"
-    />
-  ) : (
-    <></>
-  );
 
 const SortBy = ({
   filters,
@@ -64,56 +45,31 @@ const SortBy = ({
   );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        label={
-          currentOption ? (
-            <Trans
-              i18nKey={'common:sort-by'}
-              values={{
-                sortBy: currentOption.label
-              }}
-            />
-          ) : (
-            ''
-          )
-        }
-      />
-      <DropdownMenuContent className="!max-h-fit divide-y">
-        <div className="pb-1">
-          {flagSortByOptions.map(({ label, value }, index) => (
-            <DropdownMenuItem
-              label={label}
-              value={value}
-              key={index}
-              additionalElement={
-                <ActiveItem isActive={sortedState.orderBy === value} />
-              }
-              onSelectOption={value =>
-                handleSorting({
-                  orderBy: value as OrderBy
-                })
-              }
-            />
-          ))}
-        </div>
-        <div className="pt-1">
-          {flagSortDirectionOptions.map(({ label, value }, index) => (
-            <DropdownMenuItem
-              key={index}
-              label={label}
-              value={value}
-              additionalElement={
-                <ActiveItem isActive={sortedState.orderDirection === value} />
-              }
-              onSelectOption={value =>
-                handleSorting({ orderDirection: value as OrderDirection })
-              }
-            />
-          ))}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Dropdown
+      labelCustom={
+        currentOption ? (
+          <Trans
+            i18nKey={'common:sort-by'}
+            values={{
+              sortBy: currentOption.label
+            }}
+          />
+        ) : (
+          ''
+        )
+      }
+      options={flagSortByOptions}
+      value={sortedState.orderBy}
+      onChange={value => handleSorting({ orderBy: value as OrderBy })}
+      wrapTriggerStyle="w-fit"
+      className="w-fit"
+      contentClassName="!max-h-fit !divide-y"
+      addititonOptions={flagSortDirectionOptions}
+      additionalValue={sortedState.orderDirection}
+      onChangeAdditional={value =>
+        handleSorting({ orderDirection: value as OrderDirection })
+      }
+    />
   );
 };
 

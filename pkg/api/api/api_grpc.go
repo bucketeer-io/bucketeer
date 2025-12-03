@@ -1613,11 +1613,11 @@ func getEnvironmentAPIKey(
 
 func getEnvironmentAPIKeyFromCache(
 	ctx context.Context,
-	id string,
+	apikey string,
 	c cachev3.EnvironmentAPIKeyCache,
 	caller, layer string,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	envAPIKey, err := c.Get(id)
+	envAPIKey, err := c.Get(apikey)
 	if err == nil {
 		cacheCounter.WithLabelValues(caller, typeAPIKey, layer, codeHit).Inc()
 		return envAPIKey, nil

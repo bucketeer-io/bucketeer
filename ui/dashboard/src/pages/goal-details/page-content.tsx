@@ -50,7 +50,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
           action: t('deleted')
         })
       });
-      navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_GOALS}`);
+      navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`);
     }
   });
 

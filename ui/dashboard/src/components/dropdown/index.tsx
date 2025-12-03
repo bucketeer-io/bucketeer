@@ -7,17 +7,22 @@ import {
   Ref,
   useCallback,
   useMemo,
-  useRef
+  useRef,
+  useState
 } from 'react';
 import { IconExpandMoreRound } from 'react-icons-material-design';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { cva } from 'class-variance-authority';
+import { t } from 'i18next';
+import { capitalize, debounce, isEmpty } from 'lodash';
 import { cn } from 'utils/style';
-import { IconClose, IconSearch } from '@icons';
+import { IconChecked, IconClose, IconSearch } from '@icons';
 import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
 import Spinner from 'components/spinner';
+import { Tooltip } from 'components/tooltip';
+import DropdownList from 'elements/dropdown-list';
 import NameWithTooltip from 'elements/name-with-tooltip';
 
 export type DropdownValue = number | string;
@@ -26,7 +31,10 @@ export type DropdownOption = {
   label: ReactNode;
   value: DropdownValue;
   icon?: FunctionComponent;
+  iconElement?: ReactNode;
+  additionalElement?: ReactNode;
   description?: string;
+  tooltip?: ReactNode;
   haveCheckbox?: boolean;
   disabled?: boolean;
   labelText?: string;
@@ -202,6 +210,7 @@ const DropdownMenuItem = forwardRef<
     iconElement?: ReactNode;
     isMultiselect?: boolean;
     isSelected?: boolean;
+    isSelectedItem?: boolean;
     label?: ReactNode;
     value: DropdownValue;
     description?: string;
@@ -222,6 +231,7 @@ const DropdownMenuItem = forwardRef<
       description,
       isMultiselect,
       isSelected,
+      isSelectedItem,
       closeWhenSelected = true,
       additionalElement,
       disabled,
@@ -241,6 +251,7 @@ const DropdownMenuItem = forwardRef<
         disabled={disabled}
         className={cn(
           'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          { '!bg-gray-100': isSelectedItem },
           className
         )}
         onSelect={
@@ -298,6 +309,7 @@ const DropdownMenuItem = forwardRef<
           )}
         </div>
         {additionalElement}
+        {isSelectedItem && <IconChecked className="text-primary-500 w-6" />}
       </DropdownMenuPrimitive.Item>
     );
   }
@@ -327,12 +339,249 @@ const DropdownMenuSearch = forwardRef(
   }
 );
 
+interface DropdownProps {
+  searchModel?: 'instant' | 'debounce';
+  labelCustom?: string | ReactNode;
+  isTruncate?: boolean;
+  isExpand?: boolean;
+  cleanable?: boolean;
+  isSearchable?: boolean;
+  disabled?: boolean;
+  multiselect?: boolean;
+  showArrow?: boolean;
+  loading?: boolean;
+  isListItem?: boolean;
+  isTooltip?: boolean;
+  value?: DropdownValue | DropdownValue[];
+  additionalValue?: DropdownValue | DropdownValue[];
+  options?: DropdownOption[];
+  addititonOptions?: DropdownOption[];
+  placeholder?: string | ReactNode;
+  className?: string;
+  itemClassName?: string;
+  contentClassName?: string;
+  sideOffsetContent?: number;
+  wrapTriggerStyle?: string;
+  variant?: 'primary' | 'secondary';
+  menuContentSide?: 'top' | 'bottom' | 'left' | 'right';
+  alignContent?: 'center' | 'end' | 'start';
+  trigger?: ReactNode;
+  additionalElement?: (item: DropdownOption) => ReactNode;
+  onChange?: (value: DropdownValue | DropdownValue[]) => void;
+  onChangeAdditional?: (value: DropdownValue | DropdownValue[]) => void; // for additional options
+  onClear?: () => void;
+}
+
+const Dropdown: React.FC<DropdownProps> = ({
+  searchModel = 'debounce',
+  labelCustom,
+  isTruncate = true,
+  isExpand,
+  cleanable,
+  isSearchable = false,
+  disabled,
+  multiselect = false,
+  isTooltip = false,
+  showArrow,
+  loading,
+  isListItem = false,
+  options = [],
+  addititonOptions,
+  value,
+  additionalValue,
+  placeholder,
+  itemClassName,
+  contentClassName,
+  menuContentSide,
+  wrapTriggerStyle,
+  variant = 'secondary',
+  className,
+  alignContent = 'start',
+  trigger,
+
+  additionalElement,
+  sideOffsetContent,
+  onChange,
+  onChangeAdditional,
+  onClear
+}) => {
+  const [searchValue, setSearchValue] = useState('');
+  const [searchDebounce, setSearchDebounce] = useState('');
+  const inputSearchRef = useRef<HTMLInputElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const selectedValues = useMemo(() => {
+    return Array.isArray(value) ? value : value ? [value] : [];
+  }, [value]);
+
+  const filterOptions = useMemo(() => {
+    if (!searchDebounce) return options;
+    return (
+      options?.filter(opt =>
+        String(opt.label).toLowerCase().includes(searchDebounce.toLowerCase())
+      ) || []
+    );
+  }, [options, searchDebounce]);
+
+  const triggerLabel = useMemo(() => {
+    if (!selectedValues.length || !!labelCustom) return '';
+    const selectedOption = options?.find(o => o.value === selectedValues[0]);
+    return selectedOption?.label ?? '';
+  }, [selectedValues, options, multiselect, value]);
+
+  const debounceSearch = useMemo(
+    () => debounce((val: string) => setSearchDebounce(val), 500),
+    []
+  );
+
+  const handleFocusSearchInput = useCallback(() => {
+    setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
+
+  const handleSearchChange = (val: string) => {
+    setSearchValue(val);
+    if (searchModel === 'debounce') {
+      debounceSearch(val);
+    } else {
+      setSearchDebounce(val);
+    }
+  };
+
+  const handleClear = () => {
+    if (onClear) {
+      onClear();
+    } else {
+      onChange?.(multiselect ? [] : '');
+    }
+  };
+
+  return (
+    <DropdownMenu
+      onOpenChange={open => {
+        if (open) return handleFocusSearchInput();
+        setSearchDebounce('');
+        setSearchValue('');
+      }}
+    >
+      <div className={cn('w-full', { truncate: isTruncate }, wrapTriggerStyle)}>
+        <DropdownMenuTrigger
+          ref={triggerRef}
+          placeholder={placeholder ?? `${capitalize(t('common:selected'))}...`}
+          label={labelCustom ? labelCustom : triggerLabel}
+          trigger={trigger}
+          disabled={disabled}
+          loading={loading}
+          variant={variant}
+          showArrow={showArrow}
+          showClear={(!!selectedValues.length && multiselect) || cleanable}
+          onClear={handleClear}
+          className={className}
+        />
+      </div>
+
+      <DropdownMenuContent
+        style={isExpand ? { width: triggerRef.current?.offsetWidth } : {}}
+        align={alignContent}
+        className={contentClassName}
+        sideOffset={sideOffsetContent}
+        side={menuContentSide}
+      >
+        {isSearchable && (
+          <DropdownMenuSearch
+            ref={inputSearchRef}
+            value={searchValue}
+            onChange={handleSearchChange}
+            placeholder={`${t('common:search')}...`}
+            onKeyDown={e => e.stopPropagation()}
+          />
+        )}
+
+        <div className={cn('w-full', { 'pb-1': !!addititonOptions })}>
+          {filterOptions && !isEmpty(filterOptions) ? (
+            isListItem || multiselect ? (
+              <DropdownList
+                isMultiselect={multiselect}
+                itemSelected={value as string}
+                selectedOptions={
+                  (Array.isArray(value) ? value : []) as string[]
+                }
+                additionalElement={additionalElement}
+                options={filterOptions}
+                onSelectOption={val => onChange?.(val)}
+              />
+            ) : (
+              filterOptions?.map((opt, index) =>
+                isTooltip && !!opt.tooltip ? (
+                  <Tooltip
+                    side="right"
+                    sideOffset={10}
+                    align="start"
+                    className="w-[180px] p-3 bg-white typo-para-small text-gray-600 shadow-card"
+                    key={index}
+                    content={opt.tooltip}
+                    showArrow={false}
+                    trigger={
+                      <DropdownMenuItem
+                        icon={opt.icon}
+                        label={opt.label}
+                        value={opt.value}
+                        isNormalItem
+                        disabled={opt?.disabled}
+                        onSelectOption={
+                          onChange ? val => onChange(val) : undefined
+                        }
+                      />
+                    }
+                  />
+                ) : (
+                  <DropdownMenuItem
+                    key={opt.value}
+                    value={opt.value as DropdownValue}
+                    label={opt.label}
+                    icon={opt.icon}
+                    description={opt.description}
+                    iconElement={opt.iconElement}
+                    additionalElement={
+                      additionalElement ? additionalElement(opt) : undefined
+                    }
+                    isSelectedItem={value === opt.value}
+                    onSelectOption={val => onChange?.(val)}
+                    className={itemClassName}
+                  />
+                )
+              )
+            )
+          ) : (
+            <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+              {t('no-options-found')}
+            </div>
+          )}
+        </div>
+
+        {addititonOptions && !isEmpty(addititonOptions) && (
+          <div className="pt-1">
+            {addititonOptions.map(({ label, value }, index) => (
+              <DropdownMenuItem
+                key={index}
+                label={label}
+                value={value}
+                isSelectedItem={additionalValue === value}
+                onSelectOption={val => onChangeAdditional?.(val)}
+              />
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export default Dropdown;
 export {
   DropdownMenu,
-  DropdownMenuGroup,
-  DropdownMenuPortal,
-  DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuSearch
+  DropdownMenuPortal,
+  DropdownMenuSearch,
+  DropdownMenuTrigger
 };

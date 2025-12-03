@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import useOptions from 'hooks/use-options';
@@ -7,12 +7,7 @@ import { RuleStrategyVariation, StrategyType } from '@types';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown, { DropdownValue } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -84,6 +79,32 @@ const Strategy = ({
   const isShowPercentage =
     (type === StrategyType.ROLLOUT && strategyName === 'rolloutStrategy') ||
     currentOption === StrategyType.MANUAL;
+
+  const options = useMemo(
+    () =>
+      variationOptions.map(opt => {
+        return {
+          label: (
+            <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
+              {opt.icon && <Icon icon={opt.icon} size={'sm'} />}
+              {opt.label}
+            </div>
+          ),
+          value: opt.value,
+          type: opt.type,
+          variationValue: opt?.variationValue
+        };
+      }),
+    [variationOptions]
+  );
+  const handleChangeStrategy = (
+    val: DropdownValue | DropdownValue[],
+    onChange: (item: DropdownValue | DropdownValue[]) => void
+  ) => {
+    onChange(val);
+    const selected = variationOptions.find(opt => opt.value === val);
+    if (selected) handleSelectStrategy(selected);
+  };
 
   const handleSelectExperiment = (value: number | string) => {
     if (value === 'custom') {
@@ -173,42 +194,17 @@ const Strategy = ({
           control={control}
           name={`${rootName}.currentOption`}
           render={({ field }) => {
-            const option = variationOptions.find(
-              item => item.value === currentOption
-            );
-
             return (
               <Form.Item className="flex flex-col flex-1 py-0 w-full">
                 <Form.Control>
-                  <DropdownMenu>
-                    <div className="flex flex-col gap-y-2 w-full">
-                      <DropdownMenuTrigger
-                        trigger={
-                          <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
-                            {option?.icon && (
-                              <Icon icon={option.icon} size={'sm'} />
-                            )}
-                            {option?.label || ''}
-                          </div>
-                        }
-                        isExpand
-                        disabled={isDisabled}
-                        className="w-full"
-                      />
-                    </div>
-                    <DropdownMenuContent align="start">
-                      {variationOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          label={item.label}
-                          value={item.value}
-                          icon={item?.icon}
-                          onSelectOption={() => handleSelectStrategy(item)}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Dropdown
+                    value={currentOption}
+                    options={options}
+                    onChange={val => handleChangeStrategy(val, field.onChange)}
+                    disabled={isDisabled}
+                    wrapTriggerStyle="flex flex-col grap-y-2 w-full"
+                    className="w-full"
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -328,54 +324,21 @@ const Strategy = ({
                     <Form.Field
                       control={control}
                       name={`${rootName}.${strategyName}.audience.defaultVariation`}
-                      render={({ field }) => {
-                        const options = variationOptions.slice(0, -1);
-                        const option = options.find(
-                          item => item.value === field.value
-                        );
-
-                        return (
-                          <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                            <Form.Control>
-                              <DropdownMenu>
-                                <div className="flex flex-col gap-y-2 w-full">
-                                  <DropdownMenuTrigger
-                                    trigger={
-                                      <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
-                                        {option?.icon && (
-                                          <Icon
-                                            icon={option.icon}
-                                            size={'sm'}
-                                          />
-                                        )}
-                                        {option?.label || ''}
-                                      </div>
-                                    }
-                                    isExpand
-                                    disabled={isDisabled}
-                                    className="w-full"
-                                  />
-                                </div>
-                                <DropdownMenuContent align="start">
-                                  {options.map((item, index) => (
-                                    <DropdownMenuItem
-                                      {...field}
-                                      key={index}
-                                      label={item.label}
-                                      value={item.value}
-                                      icon={item?.icon}
-                                      onSelectOption={() => {
-                                        field.onChange(item.value);
-                                      }}
-                                    />
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </Form.Control>
-                            <Form.Message />
-                          </Form.Item>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                          <Form.Control>
+                            <Dropdown
+                              options={options.slice(0, -1)}
+                              value={field.value}
+                              onChange={field.onChange}
+                              disabled={isDisabled}
+                              className="w-full"
+                              wrapTriggerStyle="flex flex-col grap-y-2 w-full"
+                            />
+                          </Form.Control>
+                          <Form.Message />
+                        </Form.Item>
+                      )}
                     />
                   )
                 }}

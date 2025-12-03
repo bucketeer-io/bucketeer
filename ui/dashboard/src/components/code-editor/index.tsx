@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor, EditorProps, useMonaco } from '@monaco-editor/react';
+import { Editor, EditorProps, Monaco } from '@monaco-editor/react';
 import { cn } from 'utils/style';
 import { IconExpandSquar } from '@icons';
 import Button from 'components/button';
@@ -30,37 +30,78 @@ export default function ReactCodeEditor({
   ...props
 }: ReactCodeEditorProps) {
   const { t } = useTranslation('common');
-  const monaco = useMonaco();
 
-  useEffect(() => {
-    if (monaco) {
-      monaco.editor.defineTheme('customLight', {
-        base: 'vs',
-        inherit: true,
-        rules: [
-          { token: 'comment', foreground: '008000' },
-          { token: 'keyword', foreground: '0000FF' },
-          { token: 'string.key.json', foreground: 'E439AC' },
-          { token: 'string.value.json', foreground: '40BF42' }
-        ],
-        colors: {
-          'editor.background': '#FAFAFA',
-          'editor.foreground': '#475569',
-          'editorLineNumber.foreground': '#64748B',
-          'editorCursor.foreground': '#000000',
-          'editor.selectionBackground': '#64748B1F',
-          'editorBracketHighlight.foreground1': '#64748B',
-          'editorBracketHighlight.foreground2': '#64748B',
-          'editorBracketHighlight.foreground3': '#64748B',
-          'editorBracketHighlight.foreground4': '#64748B',
-          'editorBracketHighlight.foreground5': '#64748B',
-          'editorBracketHighlight.foreground6': '#64748B',
-          'editorBracketMatch.border': '#64748B1F'
-        }
-      });
-      monaco.editor.setTheme('customLight');
-    }
-  }, [monaco]);
+  const editorOptions = useMemo(
+    () => ({
+      minimap: { enabled: false },
+      fontSize: 14,
+      fontFamily: 'Sofia Pro, sans-serif',
+      padding: {
+        top: 12,
+        bottom: lastLine * 12
+      },
+      lineNumbersMinChars: 3,
+      bracketPairColorization: { enabled: true },
+      scrollBeyondLastLine: false,
+      renderIndentGuides: false,
+      renderWhitespace: 'none',
+      smoothScrolling: true,
+      wordWrap: 'on',
+      automaticLayout: true,
+      renderLineHighlight: 'all',
+      cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
+      tabSize: 4,
+      folding: true,
+      foldingHighlight: true,
+      showFoldingControls: 'always',
+      scrollbar: {
+        vertical: 'visible',
+        horizontal: 'visible',
+        verticalScrollbarSize: 3,
+        horizontalScrollbarSize: 10
+      },
+      quickSuggestions: true,
+      suggestOnTriggerCharacters: true,
+      acceptSuggestionOnEnter: 'on',
+      tabCompletion: 'on',
+      formatOnType: true,
+      formatOnPaste: true,
+      hideCursorInOverviewRuler: true,
+      overviewRulerLanes: 0,
+      overviewRulerBorder: false,
+      columnSelection: true,
+      readOnly: props?.readOnly
+    }),
+    [props?.readOnly, lastLine]
+  );
+
+  const handleBeforeMount = useCallback((monaco: Monaco) => {
+    monaco.editor.defineTheme('customLight', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '008000' },
+        { token: 'keyword', foreground: '0000FF' },
+        { token: 'string.key.json', foreground: 'E439AC' },
+        { token: 'string.value.json', foreground: '40BF42' }
+      ],
+      colors: {
+        'editor.background': '#FAFAFA',
+        'editor.foreground': '#475569',
+        'editorLineNumber.foreground': '#64748B',
+        'editorCursor.foreground': '#000000',
+        'editor.selectionBackground': '#64748B1F',
+        'editorBracketHighlight.foreground1': '#64748B',
+        'editorBracketHighlight.foreground2': '#64748B',
+        'editorBracketHighlight.foreground3': '#64748B',
+        'editorBracketHighlight.foreground4': '#64748B',
+        'editorBracketHighlight.foreground5': '#64748B',
+        'editorBracketHighlight.foreground6': '#64748B',
+        'editorBracketMatch.border': '#64748B1F'
+      }
+    });
+  }, []);
 
   return (
     <div
@@ -85,9 +126,10 @@ export default function ReactCodeEditor({
         />
       )}
       <Editor
+        {...props}
         height={'100%'}
         width={'100%'}
-        defaultLanguage={`${props.defaultLanguage || 'json'}`}
+        defaultLanguage={props.defaultLanguage || 'json'}
         theme="customLight"
         wrapperProps={{
           className: cn(
@@ -95,47 +137,8 @@ export default function ReactCodeEditor({
             wrapCls
           )
         }}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          fontFamily: 'Sofia Pro, san-serif',
-          padding: {
-            top: 12,
-            bottom: lastLine * 12
-          },
-          lineNumbersMinChars: 3,
-          bracketPairColorization: { enabled: true },
-          scrollBeyondLastLine: false,
-          renderIndentGuides: false,
-          renderWhitespace: 'none',
-          smoothScrolling: true,
-          wordWrap: 'on',
-          automaticLayout: true,
-          renderLineHighlight: 'all',
-          cursorBlinking: 'smooth',
-          cursorSmoothCaretAnimation: 'on',
-          tabSize: 4,
-          folding: true,
-          foldingHighlight: true,
-          showFoldingControls: 'always',
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            verticalScrollbarSize: 3,
-            horizontalScrollbarSize: 10
-          },
-          quickSuggestions: true,
-          suggestOnTriggerCharacters: true,
-          acceptSuggestionOnEnter: 'on',
-          tabCompletion: 'on',
-          formatOnType: true,
-          formatOnPaste: true,
-          hideCursorInOverviewRuler: true,
-          overviewRulerLanes: 0,
-          overviewRulerBorder: false,
-          columnSelection: true,
-          readOnly: props?.readOnly
-        }}
+        options={editorOptions}
+        beforeMount={handleBeforeMount}
         onMount={editor => {
           const domNode = editor.getDomNode();
           if (!domNode || !!props.isDefaulScroll) return;
@@ -183,7 +186,6 @@ export default function ReactCodeEditor({
             <Spinner />
           </div>
         }
-        {...props}
       />
     </div>
   );

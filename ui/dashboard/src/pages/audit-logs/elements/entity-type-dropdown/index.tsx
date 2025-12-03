@@ -4,12 +4,7 @@ import { useTranslation } from 'i18n';
 import { DomainEventEntityMap } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { AuditLogsFilters } from 'pages/audit-logs/types';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 
 interface Props {
   entityType?: DomainEventEntityMap;
@@ -87,53 +82,53 @@ const EntityTypeDropdown = memo(
 
       return labelKey ? t(labelKey) : '';
     }, [options, entityType, isSystemAdmin]);
-
+    const optionCustom = options.map(opt => ({
+      value: opt.value,
+      label: t(opt.labelKey)
+    }));
+    const label = useMemo(
+      () =>
+        isNotEmpty(entityType) ? (
+          <Trans
+            i18nKey={'form:kind-filter-value'}
+            values={{
+              value: entityLabel
+            }}
+          />
+        ) : (
+          ''
+        ),
+      [entityType]
+    );
+    const placeholder = (
+      <Trans
+        i18nKey={'form:kind-filter-value'}
+        values={{
+          value: t('table:code-refs.all')
+        }}
+      />
+    );
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          showClear
-          className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
-          label={
-            isNotEmpty(entityType) ? (
-              <Trans
-                i18nKey={'form:kind-filter-value'}
-                values={{
-                  value: entityLabel
-                }}
-              />
-            ) : (
-              ''
-            )
-          }
-          placeholder={
-            <Trans
-              i18nKey={'form:kind-filter-value'}
-              values={{
-                value: t('table:code-refs.all')
-              }}
-            />
-          }
-          onClear={() =>
-            onChangeFilters({
-              entityType: undefined
-            })
-          }
-        />
-        <DropdownMenuContent align="end" className="min-w-[180px]">
-          {options.map((item, index) => (
-            <DropdownMenuItem
-              key={index}
-              label={t(item.labelKey)}
-              value={item.value}
-              onSelectOption={value =>
-                onChangeFilters({
-                  entityType: +value
-                })
-              }
-            />
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Dropdown
+        options={optionCustom}
+        value={Number(entityType)}
+        labelCustom={label}
+        cleanable
+        placeholder={placeholder}
+        onClear={() =>
+          onChangeFilters({
+            entityType: undefined
+          })
+        }
+        onChange={value =>
+          onChangeFilters({
+            entityType: +value
+          })
+        }
+        className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
+        contentClassName="min-w-[180px]"
+        alignContent="end"
+      />
     );
   }
 );

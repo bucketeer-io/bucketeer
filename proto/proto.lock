@@ -19756,6 +19756,14 @@
               {
                 "name": "OPEN_FEATURE_NODE",
                 "integer": 104
+              },
+              {
+                "name": "OPEN_FEATURE_REACT",
+                "integer": 105
+              },
+              {
+                "name": "OPEN_FEATURE_REACT_NATIVE",
+                "integer": 106
               }
             ],
             "reserved_ids": [

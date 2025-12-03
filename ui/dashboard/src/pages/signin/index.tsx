@@ -1,21 +1,16 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticationUrl } from '@api/auth';
 import { useAuth } from 'auth';
-import { urls } from 'configs';
-import { DEMO_SIGN_IN_ENABLED } from 'configs';
+import { DEMO_SIGN_IN_ENABLED, urls } from 'configs';
 import { PAGE_PATH_AUTH_SIGNIN } from 'constants/routing';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
-import { useTranslation, getLanguage, Language, setLanguage } from 'i18n';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import { IconEmail, IconEnglishFlag, IconGoogle } from '@icons';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown from 'components/dropdown';
 import Icon from 'components/icon';
 import AuthWrapper from './elements/auth-wrapper';
 
@@ -41,6 +36,26 @@ const SignIn = () => {
     });
   });
 
+  const optionLanguages = useMemo(() => {
+    return languageList.map(item => ({
+      label: (
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center w-full gap-x-2">
+            <div className="flex-center size-fit mt-0.5">
+              <Icon
+                color="primary-50"
+                size="sm"
+                icon={item?.icon || IconEnglishFlag}
+              />
+            </div>
+
+            {item?.label || 'English'}
+          </div>
+        </div>
+      ),
+      value: item.value
+    }));
+  }, [languageList]);
   return (
     <AuthWrapper>
       <div className="grid gap-6">
@@ -48,48 +63,15 @@ const SignIn = () => {
           <h1 className="text-gray-900 typo-head-bold-huge">
             {t(`auth:sign-in-to-bucketeer`)}
           </h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              trigger={
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center w-full gap-x-2">
-                    <div className="flex-center size-fit mt-0.5">
-                      <Icon
-                        color="primary-50"
-                        size="sm"
-                        icon={
-                          languageList.find(item => item.value === language)
-                            ?.icon || IconEnglishFlag
-                        }
-                      />
-                    </div>
-                    {languageList.find(item => item.value === language)
-                      ?.label || 'English'}
-                  </div>
-                </div>
-              }
-              className="bg-transparent !shadow-none !border-none"
-            />
-            <DropdownMenuContent side="bottom" align="start">
-              {languageList?.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  label={item.label}
-                  value={item.value}
-                  icon={item?.icon}
-                  iconElement={
-                    item?.icon ? (
-                      <div className="flex-center size-fit mt-0.5">
-                        <Icon size="sm" icon={item?.icon} />
-                      </div>
-                    ) : null
-                  }
-                  className="[&>div>button]:!cursor-pointer"
-                  onSelectOption={value => setLanguage(value as Language)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dropdown
+            value={language}
+            options={optionLanguages}
+            onChange={value => setLanguage(value as Language)}
+            className="w-fit bg-transparent !shadow-none !border-none"
+            wrapTriggerStyle="!w-fit"
+            menuContentSide="bottom"
+            itemClassName="[&>div>button]:!cursor-pointer"
+          />
         </div>
         {isGoogleAuthError && (
           <p className="text-accent-red-500 typo-para-medium">

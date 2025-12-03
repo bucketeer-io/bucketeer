@@ -28,6 +28,7 @@ export interface DropdownMenuWithSearchProps {
   isMultiselect?: boolean;
   options: DropdownOption[];
   selectedOptions?: string[];
+  itemSelected?: string;
   createNewOption?: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
@@ -83,6 +84,7 @@ const DropdownMenuWithSearch = ({
   ariaLabel,
   inputPlaceholder,
   selectedFieldValue = 'value',
+  itemSelected,
   itemSize = 44,
   maxOptions = 15,
   notFoundOption,
@@ -194,6 +196,7 @@ const DropdownMenuWithSearch = ({
           <DropdownList
             options={dropdownOptions}
             itemSize={itemSize}
+            itemSelected={itemSelected}
             maxOptions={maxOptions}
             isMultiselect={isMultiselect}
             selectedOptions={selectedOptions}

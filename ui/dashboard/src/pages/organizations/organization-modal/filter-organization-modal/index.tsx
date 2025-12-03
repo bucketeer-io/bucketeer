@@ -6,12 +6,7 @@ import { OrganizationFilters } from 'pages/organizations/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
+import Dropdown, { DropdownOption } from 'components/dropdown';
 import DialogModal from 'components/modal/dialog';
 
 export type FilterProps = {
@@ -74,44 +69,38 @@ const FilterOrganizationModal = ({
             {t(`if`)}
           </div>
           <Divider vertical={true} className="border-primary-500" />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-filter`)}
-              label={selectedFilterType?.label}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {filterEnabledOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setSelectedFilterType(item)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dropdown
+            value={selectedFilterType?.value}
+            options={filterEnabledOptions as DropdownOption[]}
+            onChange={value => {
+              const selected = filterEnabledOptions.find(
+                item => item.value === value
+              );
+              setSelectedFilterType(selected);
+              setSelectedValue(undefined);
+            }}
+            placeholder={t(`select-filter`)}
+            className="w-full"
+            disabled={false}
+            menuContentSide="bottom"
+            itemClassName="w-[235px]"
+          />
+
           <p className="typo-para-medium text-gray-600">is</p>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-value`)}
-              label={selectedValue?.label}
-              variant="secondary"
-              disabled={!selectedFilterType}
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {enabledOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value as string}
-                  label={item.label}
-                  onSelectOption={() => setSelectedValue(item)}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dropdown
+            options={enabledOptions as DropdownOption[]}
+            value={selectedValue?.value}
+            placeholder={t(`select-value`)}
+            disabled={!selectedFilterType}
+            onChange={value => {
+              const selected = enabledOptions.find(
+                item => item.value === value
+              );
+              setSelectedValue(selected);
+            }}
+            className="w-full"
+            contentClassName="w-[235px]"
+          />
         </div>
       </div>
 

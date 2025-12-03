@@ -70,6 +70,11 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     []
   );
 
+  const timeRangeCurrent = useMemo(
+    () =>
+      timeRangeOptions.find(item => item.value === filters.period)?.value || '',
+    [timeRangeOptions, filters]
+  );
   const timeRangeLabel = useMemo(
     () =>
       timeRangeOptions.find(item => item.value === filters.period)?.label || '',
@@ -125,6 +130,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
       <FilterBar
         isLoading={isLoading}
+        currentFilter={timeRangeCurrent}
         timeRangeOptions={timeRangeOptions}
         timeRangeLabel={timeRangeLabel}
         onChangeTimeRange={range =>

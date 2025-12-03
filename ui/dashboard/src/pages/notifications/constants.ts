@@ -34,11 +34,12 @@ export const SOURCE_TYPE_ITEMS: NotificationOption[] = [
     description: translate(`source-type.goal-description`),
     value: 'DOMAIN_EVENT_GOAL'
   },
-  {
-    label: translate(`source-type.mau-count`),
-    description: translate(`source-type.mau-count-description`),
-    value: 'MAU_COUNT'
-  },
+  // FIXME: Temporarily disabled: Monthly Active Users count notification
+  // {
+  //   label: translate(`source-type.mau-count`),
+  //   description: translate(`source-type.mau-count-description`),
+  //   value: 'MAU_COUNT'
+  // },
   {
     label: translate(`source-type.notification`),
     description: translate(`source-type.notification-description`),
