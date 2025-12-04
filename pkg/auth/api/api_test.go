@@ -271,6 +271,7 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 				mysqlClient,
 				accountClient,
 				config,
+				nil, // emailConfig not needed for tests
 				p.setupFunc()...,
 			).(*authService)
 
@@ -446,6 +447,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				mysqlClient,
 				accountClient,
 				config,
+				nil, // emailConfig not needed for tests
 				opts...,
 			).(*authService)
 

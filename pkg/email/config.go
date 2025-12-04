@@ -22,7 +22,11 @@ type Template struct {
 
 // TemplatesByLanguage represents email templates for a specific language
 type TemplatesByLanguage struct {
-	Welcome Template `json:"welcome"`
+	PasswordChanged Template `json:"passwordChanged"`
+	PasswordSetup   Template `json:"passwordSetup"`
+	PasswordReset   Template `json:"passwordReset"`
+	Welcome         Template `json:"welcome"`
+	MagicLink       Template `json:"magicLink"`
 }
 
 // TemplatesConfig represents email templates for all supported languages
