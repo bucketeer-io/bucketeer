@@ -6,12 +6,78 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
+
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (
 	defaultOrganizationID = "e2e"
 )
+
+func TestCreateDeleteOrganization(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	envc := newEnvironmentClient(t)
+	ftc := newFeatureClient(t)
+	defer envc.Close()
+
+	// 1. Create Organization
+	createOrgResp, err := envc.CreateOrganization(ctx, &environmentproto.CreateOrganizationRequest{
+		Name:          fmt.Sprintf("org-e2e-%d", time.Now().UnixNano()),
+		UrlCode:       fmt.Sprintf("org-url-%d", time.Now().UnixNano()),
+		IsSystemAdmin: false,
+		OwnerEmail:    "demo@bucketeer.io",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if createOrgResp == nil || createOrgResp.Organization == nil {
+		t.Fatal("create organization response or organization is nil")
+	}
+	orgID := createOrgResp.Organization.Id
+
+	// 2. get environment
+	getEnvResp, err := envc.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+		OrganizationId: orgID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if getEnvResp == nil || len(getEnvResp.Environments) == 0 {
+		t.Fatalf("no environments found for organization %s", orgID)
+	}
+	envID := getEnvResp.Environments[0].Id
+
+	// 3. create data in organization
+	createFfResp, err := ftc.CreateFeature(ctx, newCreateFeatureReq(
+		fmt.Sprintf("feature-e2e-%d", time.Now().UnixNano()),
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if createFfResp == nil || createFfResp.Feature == nil {
+		t.Fatal("create feature response or feature is nil")
+	}
+
+	// 4. delete organization data
+	_, err = envc.DeleteOrganizationData(ctx, &environmentproto.DeleteOrganizationDataRequest{
+		OrganizationIds: []string{orgID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 5. verify data is deleted
+	_, err = ftc.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		EnvironmentId: envID,
+		Id:            createFfResp.Feature.Id,
+	})
+	if err == nil {
+		t.Fatal("expected error when getting feature from deleted organization, but got nil")
+	}
+}
 
 func TestGetOrganization(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -146,5 +212,43 @@ func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	}
 	if getResp2.Organization.Archived != false {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp2.Organization.Id)
+	}
+}
+
+func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
+	return &featureproto.CreateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Name:          "e2e-test-feature-name",
+		Description:   "e2e-test-feature-description",
+		Variations: []*featureproto.Variation{
+			{
+				Value:       "A",
+				Name:        "Variation A",
+				Description: "Thing does A",
+			},
+			{
+				Value:       "B",
+				Name:        "Variation B",
+				Description: "Thing does B",
+			},
+			{
+				Value:       "C",
+				Name:        "Variation C",
+				Description: "Thing does C",
+			},
+			{
+				Value:       "D",
+				Name:        "Variation D",
+				Description: "Thing does D",
+			},
+		},
+		Tags: []string{
+			"e2e-test-tag-1",
+			"e2e-test-tag-2",
+			"e2e-test-tag-3",
+		},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 	}
 }

@@ -44,7 +44,7 @@ var (
 	maxOrganizationNameLength = 50
 	organizationUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 
-	targetEntities = []string{
+	targetEntitiesInEnvironment = []string{
 		"subscription",
 		"experiment_result",
 		"push",
@@ -1530,108 +1530,94 @@ func (s *EnvironmentService) DeleteOrganizationData(
 		return nil, err
 	}
 
-	// 2. Delete all target entities from the environments
-	for _, environment := range environments {
-		err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-			for _, target := range targetEntities {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		// 2. Delete all target entities from the environments
+		for _, environment := range environments {
+			for _, target := range targetEntitiesInEnvironment {
 				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environment.Id, target)
 				if err != nil {
+					s.logger.Error("Could not delete target from environment",
+						zap.Error(err),
+						zap.String("environmentID", environment.Id),
+						zap.String("target", target),
+						zap.Strings("organizationIDs", req.OrganizationIds),
+					)
 					return err
 				}
 			}
-			return nil
-		})
-		if err != nil {
-			s.logger.Error("Failed to delete data from environment",
-				zap.String("environmentId", environment.Id),
-				zap.Error(err),
-			)
-			return nil, err
 		}
-	}
 
-	// 3. Delete all environments from organizations
-	err = s.deleteEnvironmentsFromOrganizations(ctx, req.OrganizationIds)
-	if err != nil {
-		s.logger.Error("Failed to delete environments",
-			zap.Strings("organizationIDs", req.OrganizationIds),
-			zap.Error(err),
-		)
-		return nil, err
-	}
+		// 3. Delete all environments from organizations
+		whereParts := []mysql.WherePart{
+			mysql.NewInFilter("organization_id", convToInterfaceSlice(req.OrganizationIds)),
+		}
+		err = s.environmentStorage.DeleteEnvironmentV2(ctxWithTx, whereParts)
+		if err != nil {
+			s.logger.Error("Could not delete environment",
+				zap.Error(err),
+				zap.Strings("organizationIDs", req.OrganizationIds),
+			)
+			return err
+		}
 
-	// 4. Delete all projects from organizations
-	err = s.deleteProjectsFromOrganizations(ctx, req.OrganizationIds)
-	if err != nil {
-		s.logger.Error("Failed to delete projects",
-			zap.Strings("organizationIDs", req.OrganizationIds),
-			zap.Error(err),
-		)
-		return nil, err
-	}
+		// 4. Delete all projects from organizations
+		whereParts = []mysql.WherePart{
+			mysql.NewInFilter("organization_id", convToInterfaceSlice(req.OrganizationIds)),
+		}
+		err = s.projectStorage.DeleteProjects(ctxWithTx, whereParts)
+		if err != nil {
+			s.logger.Error("Could not delete projects",
+				zap.Error(err),
+				zap.Strings("organizationIDs", req.OrganizationIds),
+			)
+			return err
+		}
 
-	// 5. Delete all organizations
-	err = s.deleteOrganizations(ctx, req.OrganizationIds)
+		// 5. Delete all organizations with its data
+		err = s.deleteOrganizations(ctxWithTx, req.OrganizationIds)
+		if err != nil {
+			s.logger.Error("Failed to delete organizations",
+				zap.Error(err),
+				zap.Strings("organizationIDs", req.OrganizationIds),
+			)
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		s.logger.Error("Failed to delete organizations",
-			zap.Strings("organizationIDs", req.OrganizationIds),
 			zap.Error(err),
+			zap.Strings("organizationIDs", req.OrganizationIds),
 		)
 		return nil, err
 	}
 	return &environmentproto.DeleteOrganizationDataResponse{}, nil
 }
 
-func (s *EnvironmentService) deleteEnvironmentsFromOrganizations(
-	ctx context.Context,
-	organizationIDs []string,
-) error {
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
-	}
-	err := s.environmentStorage.DeleteEnvironmentV2(ctx, whereParts)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *EnvironmentService) deleteProjectsFromOrganizations(ctx context.Context, organizationIDs []string) error {
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
-	}
-	err := s.projectStorage.DeleteProjects(ctx, whereParts)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+// deleteOrganizations deletes organizations and their related data from various target entities.
 func (s *EnvironmentService) deleteOrganizations(ctx context.Context, organizationIDs []string) error {
-	return s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		whereParts := []mysql.WherePart{
-			mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
-		}
-		for _, target := range targetEntitiesInOrganization {
-			err := s.orgStorage.DeleteOrganizationData(ctxWithTx, target, whereParts)
-			if err != nil {
-				s.logger.Error("Failed to delete data from organization",
-					zap.Error(err),
-					zap.Strings("organizationIDs", organizationIDs),
-				)
-			}
-		}
-		whereParts = []mysql.WherePart{
-			mysql.NewInFilter("id", convToInterfaceSlice(organizationIDs)),
-		}
-		err := s.orgStorage.DeleteOrganizations(ctxWithTx, whereParts)
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
+	}
+	for _, target := range targetEntitiesInOrganization {
+		err := s.orgStorage.DeleteOrganizationData(ctx, target, whereParts)
 		if err != nil {
-			s.logger.Error("Failed to delete organizations",
+			s.logger.Error("Failed to delete data from organization",
 				zap.Error(err),
 				zap.Strings("organizationIDs", organizationIDs),
 			)
-			return err
 		}
-		return nil
-	})
+	}
+	whereParts = []mysql.WherePart{
+		mysql.NewInFilter("id", convToInterfaceSlice(organizationIDs)),
+	}
+	err := s.orgStorage.DeleteOrganizations(ctx, whereParts)
+	if err != nil {
+		s.logger.Error("Failed to delete organizations",
+			zap.Error(err),
+			zap.Strings("organizationIDs", organizationIDs),
+		)
+		return err
+	}
+	return nil
 }

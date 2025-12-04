@@ -785,11 +785,19 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 ) (*environmentproto.DeleteEnvironmentDataResponse, error) {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		for _, environmentID := range req.EnvironmentIds {
-			for _, target := range targetEntities {
+			for _, target := range targetEntitiesInEnvironment {
 				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environmentID, target)
 				if err != nil {
 					return err
 				}
+			}
+
+			whereParts := []mysql.WherePart{
+				mysql.NewFilter("id", "=", environmentID),
+			}
+			err := s.environmentStorage.DeleteEnvironmentV2(ctxWithTx, whereParts)
+			if err != nil {
+				return err
 			}
 		}
 		return nil

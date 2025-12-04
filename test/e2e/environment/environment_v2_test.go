@@ -24,8 +24,10 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (
@@ -156,6 +158,57 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	}
 }
 
+func TestCreateDeleteEnvironmentV2(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	envc := newEnvironmentClient(t)
+	ftc := newFeatureClient(t)
+	defer envc.Close()
+
+	// 1. create env
+	createEnvResp, err := envc.CreateEnvironmentV2(ctx, &environmentproto.CreateEnvironmentV2Request{
+		Name:           fmt.Sprintf("%s-%d", environmentName, time.Now().UnixNano()),
+		UrlCode:        fmt.Sprintf("env-url-%d", time.Now().UnixNano()),
+		ProjectId:      defaultProjectID,
+		RequireComment: false,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if createEnvResp == nil || createEnvResp.Environment == nil {
+		t.Fatal("CreateEnvironmentV2 returned nil response")
+	}
+	envID := createEnvResp.Environment.Id
+
+	// 2. create data for the new environment
+	createFfResp, err := ftc.CreateFeature(ctx, newCreateFeatureReq(
+		fmt.Sprintf("feature-e2e-%d", time.Now().UnixNano()),
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if createFfResp == nil || createFfResp.Feature == nil {
+		t.Fatal("create feature response or feature is nil")
+	}
+
+	// 3. delete env
+	_, err = envc.DeleteEnvironmentData(ctx, &environmentproto.DeleteEnvironmentDataRequest{
+		EnvironmentIds: []string{envID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 4. verify data is deleted
+	_, err = ftc.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		EnvironmentId: envID,
+		Id:            createFfResp.Feature.Id,
+	})
+	if err == nil {
+		t.Fatal("expected error when getting feature from deleted environment, but got nil")
+	}
+}
+
 func getEnvironmentID(t *testing.T) string {
 	t.Helper()
 	if *environmentID == "" {
@@ -179,6 +232,25 @@ func newEnvironmentClient(t *testing.T) environmentclient.Client {
 	)
 	if err != nil {
 		t.Fatal("Failed to create environment client:", err)
+	}
+	return client
+}
+
+func newFeatureClient(t *testing.T) featureclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := featureclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create feature client:", err)
 	}
 	return client
 }

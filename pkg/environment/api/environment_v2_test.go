@@ -1396,3 +1396,77 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteEnvironmentV2Data(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.DeleteEnvironmentDataRequest
+		expectedErr error
+		expected    *proto.DeleteEnvironmentDataResponse
+	}{
+		{
+			desc: "Environment not found",
+			setup: func(s *EnvironmentService) {
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(statusEnvironmentNotFound.Err())
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(statusEnvironmentNotFound.Err())
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+			},
+			expectedErr: statusEnvironmentNotFound.Err(),
+			expected:    nil,
+		},
+		{
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+			},
+			expectedErr: nil,
+			expected:    &proto.DeleteEnvironmentDataResponse{},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.DeleteEnvironmentData(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, resp)
+		})
+	}
+}
