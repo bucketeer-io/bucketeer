@@ -228,6 +228,7 @@
   "rollout": "ロールアウト",
   "off-variation": "オフバリエーション",
   "reset-sampling": "ランダムサンプリングをリセット",
+  "reset-sampling-tooltip": "新しいサンプリングで全ユーザを再ランダム割り当てします。ただし、確率的に同じバリエーションが割り当てられる場合もあります。",
   "add-schedule": "スケジュールを追加",
   "condition": "条件",
   "threshold": "しきい値",
@@ -355,5 +356,5 @@
   "name-desc-search-placeholder": "名前、説明を検索...",
   "email-search-placeholder": "メールアドレスを検索...",
   "name-search-placeholder": "名前を検索...",
-  "yaml-note":"YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。"
+  "yaml-note": "YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。"
 }
