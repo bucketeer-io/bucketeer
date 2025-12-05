@@ -4249,3 +4249,172 @@ func TestRemoveVariationMinimumVariationConstraint(t *testing.T) {
 		t.Fatalf("Expected 2 variations after failed removal attempts, got %d", len(f.Variations))
 	}
 }
+
+func TestHasFeaturesDependsOnTargets(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		targets  []*ftproto.Feature
+		all      []*ftproto.Feature
+		expected bool
+	}{
+		{
+			desc: "false: no features at all",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all:      []*ftproto.Feature{},
+			expected: false,
+		},
+		{
+			desc: "false: only target feature exists",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			expected: false,
+		},
+		{
+			desc: "false: target has prerequisites but no other feature depends on it",
+			targets: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+				{Id: "feature-C"},
+			},
+			expected: false,
+		},
+		{
+			desc: "false: other features exist but none depend on target",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+				{Id: "feature-C"},
+			},
+			expected: false,
+		},
+		{
+			desc: "true: another feature has target as prerequisite",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-A", VariationId: "v1"},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "true: another feature uses target in rule clause with FEATURE_FLAG operator",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{Attribute: "feature-A", Operator: ftproto.Clause_FEATURE_FLAG},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "true: target has its own prerequisites AND another feature depends on target",
+			targets: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+				{
+					Id: "feature-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-A", VariationId: "v1"},
+					},
+				},
+				{Id: "feature-C"},
+			},
+			expected: true,
+		},
+		{
+			desc: "false: feature uses non-FEATURE_FLAG operator (should not count as dependency)",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{Attribute: "feature-A", Operator: ftproto.Clause_EQUALS},
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "true: multiple targets, one has a dependent",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+				{
+					Id: "feature-C",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-B", VariationId: "v1"},
+					},
+				},
+			},
+			expected: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result := HasFeaturesDependsOnTargets(p.targets, p.all)
+			assert.Equal(t, p.expected, result)
+		})
+	}
+}
