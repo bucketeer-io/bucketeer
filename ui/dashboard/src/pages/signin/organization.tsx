@@ -92,6 +92,7 @@ const SelectOrganization = () => {
                       field.onChange(value);
                     }}
                     placeholder={t(`organization-placeholder`)}
+                    className="w-full"
                     contentClassName="w-[442px]"
                   />
                 </Form.Control>

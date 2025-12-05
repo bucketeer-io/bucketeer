@@ -228,6 +228,7 @@
   "rollout": "Rollout",
   "off-variation": "Off Variation",
   "reset-sampling": "Reset random sampling",
+  "reset-sampling-tooltip": "Re-randomizes all users with a new sampling seed, assigning fresh variations. Note that some users may still receive the same variation by chance.",
   "add-schedule": "Add Schedule",
   "condition": "Condition",
   "threshold": "Threshold",

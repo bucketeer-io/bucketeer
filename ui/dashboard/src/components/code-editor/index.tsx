@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { RefObject, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Editor, EditorProps, Monaco } from '@monaco-editor/react';
 import { cn } from 'utils/style';
@@ -18,6 +18,7 @@ interface ReactCodeEditorProps extends EditorProps {
   isResize?: boolean;
   isExpand?: boolean;
   lastLine?: number;
+  scrollParent?: RefObject<HTMLElement>;
   onExpand?: () => void;
 }
 
@@ -27,6 +28,7 @@ export default function ReactCodeEditor({
   isExpand = true,
   isResize = true,
   lastLine = 5,
+  scrollParent,
   ...props
 }: ReactCodeEditorProps) {
   const { t } = useTranslation('common');
@@ -153,7 +155,6 @@ export default function ReactCodeEditor({
             const scrollingUp = event.deltaY < 0;
             const scrollingDown = event.deltaY > 0;
             const editorHasNoScroll = scrollHeight <= height + 0.5;
-
             if (
               editorHasNoScroll ||
               (isAtTop && scrollingUp) ||
@@ -161,7 +162,11 @@ export default function ReactCodeEditor({
             ) {
               event.preventDefault();
               event.stopImmediatePropagation();
-              window.scrollBy({ top: event.deltaY });
+              if (scrollParent) {
+                scrollParent?.current?.scrollBy({ top: event.deltaY });
+              } else {
+                window.scrollBy({ top: event.deltaY });
+              }
             }
           };
 

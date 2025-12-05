@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { DEFAULT_VALUE_YAML } from 'constants/feature-flag';
+import { getDefaultYamlValue } from 'constants/feature-flag';
 import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
@@ -52,7 +52,7 @@ const FlagType = () => {
         ? cloneVariations
         : cloneVariations.map((item, index) => ({
             ...item,
-            value: isJSON ? '{}' : isYAML ? DEFAULT_VALUE_YAML(index) : ''
+            value: isJSON ? '{}' : isYAML ? getDefaultYamlValue(index) : ''
           }));
 
       resetField('variations');

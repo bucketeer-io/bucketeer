@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { cn } from 'utils/style';
-import { IconToastWarning } from '@icons';
+import { IconInfo, IconToastWarning } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -22,6 +22,7 @@ import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import ToastMessage from 'components/toast';
+import { Tooltip } from 'components/tooltip';
 import { formSchema } from './form-schema';
 
 export type ConfirmationRequiredModalProps = {
@@ -138,14 +139,32 @@ const ConfirmationRequiredModal = ({
                     name="resetSampling"
                     render={({ field }) => (
                       <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                        <Form.Control>
-                          <Checkbox
-                            ref={field.ref}
-                            checked={field.value}
-                            onCheckedChange={checked => field.onChange(checked)}
-                            title={t('form:reset-sampling')}
+                        <div className="flex items-center gap-x-2">
+                          <Form.Control>
+                            <Checkbox
+                              ref={field.ref}
+                              checked={field.value}
+                              onCheckedChange={checked =>
+                                field.onChange(checked)
+                              }
+                              title={t('form:reset-sampling')}
+                            />
+                          </Form.Control>
+                          <Tooltip
+                            align="start"
+                            content={t('form:reset-sampling-tooltip')}
+                            trigger={
+                              <div className="flex-center size-fit">
+                                <Icon
+                                  icon={IconInfo}
+                                  size="xs"
+                                  color="gray-500"
+                                />
+                              </div>
+                            }
+                            className="max-w-[400px]"
                           />
-                        </Form.Control>
+                        </div>
                         <Form.Message />
                       </Form.Item>
                     )}

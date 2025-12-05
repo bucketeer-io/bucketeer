@@ -10,7 +10,7 @@ export const VARIATION_NUMBER_VALUE_MAX_LENGTH = 309;
 export const VARIATION_NAME_MAX_LENGTH = 100;
 export const VARIATION_DESCRIPTION_MAX_LENGTH = 100;
 
-export const DEFAULT_VALUE_YAML = (index: number) =>
+export const getDefaultYamlValue = (index: number) =>
   `
 key:
   variation_${index + 1}: value_1

@@ -279,7 +279,7 @@ const FilterAPIKeyModal = ({
                 value={
                   isEnvironmentFilter
                     ? (filterOption.filterValue as string[])
-                    : (valueOptions[filterIndex].value as string)
+                    : (filterOption.filterValue as string)
                 }
                 onChange={val => {
                   handleChangeFilterValue(val as string | number, filterIndex);
