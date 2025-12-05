@@ -1620,19 +1620,30 @@ func GetFeaturesDependsOnTargets(
 }
 
 // HasFeaturesDependsOnTargets returns true if there are features that depend on the target features.
-// This is a thin wrapper of GetFeaturesDependsOnTargets.
+// It directly checks if any feature (not in targets) has a target in its prerequisites or rules.
 func HasFeaturesDependsOnTargets(
 	targets []*feature.Feature, all []*feature.Feature,
 ) bool {
-	allfs := make(map[string]*feature.Feature, len(all))
+	// Create a set of target IDs for quick lookup
+	targetIDs := make(map[string]bool, len(targets))
+	for _, t := range targets {
+		targetIDs[t.Id] = true
+	}
+	// Check if any feature (not in targets) depends on any target
 	for _, f := range all {
-		allfs[f.Id] = f
+		// Skip if f is one of the targets
+		if targetIDs[f.Id] {
+			continue
+		}
+		// Check if f depends on any target
+		dmn := &Feature{Feature: f}
+		for _, depID := range dmn.FeatureIDsDependsOn() {
+			if targetIDs[depID] {
+				return true
+			}
+		}
 	}
-	deps := GetFeaturesDependsOnTargets(targets, allfs)
-	for _, tgt := range targets {
-		delete(deps, tgt.Id)
-	}
-	return len(deps) > 0
+	return false
 }
 
 func validateOffVariation(id string, variations []*feature.Variation) error {
