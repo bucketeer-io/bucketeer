@@ -47,7 +47,7 @@ func convertBktError(bktError *pkgErr.BktError) *status.Status {
 	st, err := st.WithDetails(&errdetails.ErrorInfo{
 		Reason:   convertErrorReason(bktError.ErrorType()),
 		Domain:   bktError.PackageName() + bktDomain,
-		Metadata: metadataFromBktError(bktError),
+		Metadata: metadataFrom(bktError),
 	})
 	if err != nil {
 		return status.New(codes.Internal, err.Error())
@@ -55,10 +55,10 @@ func convertBktError(bktError *pkgErr.BktError) *status.Status {
 	return st
 }
 
-func metadataFromBktError(err *pkgErr.BktError) map[string]string {
+func metadataFrom(err *pkgErr.BktError) map[string]string {
 	m := make(map[string]string)
 	m[metadataMessageKey] = err.MessageKey()
-	for k, v := range err.EmbedKeyValues() {
+	for k, v := range err.EmbeddedKeyValues() {
 		m[k] = v
 	}
 	return m

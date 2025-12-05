@@ -65,14 +65,14 @@ type BktError struct {
 	wrappedError error
 	field        string // optional
 
-	embedKeyValues map[string]string
+	embeddedKeyValues map[string]string
 }
 
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
 
-func (e *BktError) MessageKey() string                { return string(e.errorType) }
-func (e *BktError) EmbedKeyValues() map[string]string { return e.embedKeyValues }
+func (e *BktError) MessageKey() string                    { return string(e.errorType) }
+func (e *BktError) EmbeddedKeyValues() map[string]string { return e.embeddedKeyValues }
 
 func (e *BktError) Error() string {
 	msg := fmt.Sprintf("%s:%s", e.packageName, e.message)
@@ -108,7 +108,7 @@ func newBktFieldError(pkg string, errorType ErrorType, message string, field str
 		errorType:   errorType,
 		message:     message,
 		field:       field,
-		embedKeyValues: map[string]string{
+		embeddedKeyValues: map[string]string{
 			"field": field,
 		},
 	}
