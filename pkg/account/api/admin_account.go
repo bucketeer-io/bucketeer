@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	proto "google.golang.org/protobuf/proto"
@@ -29,7 +28,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -40,31 +38,16 @@ func (s *AccountService) GetMe(
 	ctx context.Context,
 	req *accountproto.GetMeRequest,
 ) (*accountproto.GetMeResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	t, ok := rpc.GetAccessToken(ctx)
 	if !ok {
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 	if !verifyEmailFormat(t.Email) {
 		s.logger.Error(
 			"Email inside IDToken has an invalid format",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", t.Email))...,
 		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidEmail.Err()
 	}
 	projects, err := s.listProjectsByOrganizationID(ctx, req.OrganizationId)
 	if err != nil {
@@ -92,14 +75,7 @@ func (s *AccountService) GetMe(
 					zap.String("organizationID", req.OrganizationId),
 				)...,
 			)
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusOrganizationNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get organization",
@@ -108,7 +84,7 @@ func (s *AccountService) GetMe(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// system admin account response
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, t.Email, localizer)
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, t.Email)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -173,7 +149,7 @@ func (s *AccountService) GetMe(
 		}}, nil
 	}
 	// non admin account response
-	account, err := s.getAccount(ctx, t.Email, req.OrganizationId, localizer)
+	account, err := s.getAccount(ctx, t.Email, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +201,6 @@ func (s *AccountService) getAccount(
 	ctx context.Context,
 	email string,
 	organizationID string,
-	localizer locale.Localizer,
 ) (*accountproto.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
@@ -234,14 +209,7 @@ func (s *AccountService) getAccount(
 				zap.String("email", email),
 				zap.String("organizationId", organizationID),
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -250,14 +218,7 @@ func (s *AccountService) getAccount(
 			zap.String("email", email),
 			zap.String("organizationId", organizationID),
 		)
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 	return account.AccountV2, nil
 }
@@ -316,19 +277,11 @@ func (s *AccountService) GetMyOrganizations(
 	ctx context.Context,
 	_ *accountproto.GetMyOrganizationsRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	t, ok := rpc.GetAccessToken(ctx)
 	if !ok {
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
-	myOrgs, err := s.getMyOrganizations(ctx, t.Email, localizer)
+	myOrgs, err := s.getMyOrganizations(ctx, t.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -339,8 +292,7 @@ func (s *AccountService) GetMyOrganizationsByEmail(
 	ctx context.Context,
 	req *accountproto.GetMyOrganizationsByEmailRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -349,16 +301,9 @@ func (s *AccountService) GetMyOrganizationsByEmail(
 			"Email inside request has an invalid format",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", req.Email))...,
 		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidEmail.Err()
 	}
-	myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
+	myOrgs, err := s.getMyOrganizations(ctx, req.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +313,6 @@ func (s *AccountService) GetMyOrganizationsByEmail(
 func (s *AccountService) getMyOrganizations(
 	ctx context.Context,
 	email string,
-	localizer locale.Localizer,
 ) ([]*environmentproto.Organization, error) {
 	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email)
 	if err != nil {
@@ -424,19 +368,11 @@ func (s *AccountService) containsSystemAdminOrganization(
 func (s *AccountService) getSystemAdminAccountV2(
 	ctx context.Context,
 	email string,
-	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetSystemAdminAccountV2(ctx, email)
 	if err != nil {
 		if errors.Is(err, v2as.ErrSystemAdminAccountNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get system admin account",

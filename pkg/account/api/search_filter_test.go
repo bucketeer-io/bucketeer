@@ -20,18 +20,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -48,15 +44,6 @@ func TestCreateSearchFilter(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -93,7 +80,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "err: email is empty",
@@ -124,7 +111,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "err: organization_id is empty",
@@ -155,7 +142,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "err: internal error",
@@ -195,7 +182,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: account not found",
@@ -237,7 +224,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "err: command is nil",
@@ -263,7 +250,7 @@ func TestCreateSearchFilter(t *testing.T) {
 				EnvironmentId:  "envID0",
 				Command:        nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "err: SearchFilter Name is empty",
@@ -291,7 +278,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: createError(statusSearchFilterNameIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusSearchFilterNameIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter Query is empty",
@@ -320,7 +307,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					Query: "",
 				},
 			},
-			expectedErr: createError(statusSearchFilterQueryIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query")),
+			expectedErr: statusSearchFilterQueryIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter targetFilter is unknown",
@@ -350,7 +337,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					FilterTargetType: accountproto.FilterTargetType_UNKNOWN,
 				},
 			},
-			expectedErr: createError(statusSearchFilterTargetTypeIsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type")),
+			expectedErr: statusSearchFilterTargetTypeIsRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -543,15 +530,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -585,7 +563,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "err: email is empty",
@@ -613,7 +591,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "err: organization_id is empty",
@@ -641,7 +619,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "err: internal error",
@@ -715,7 +693,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "err: command is empty",
@@ -740,7 +718,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "err: SearchFilter ID is empty",
@@ -769,7 +747,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "filter",
 				},
 			},
-			expectedErr: createError(statusSearchFilterIDIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusSearchFilterIDIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter Name is empty",
@@ -798,7 +776,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: createError(statusSearchFilterNameIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusSearchFilterNameIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter ID is empty for ChangeNameCommand",
@@ -827,7 +805,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name: "update-name",
 				},
 			},
-			expectedErr: createError(statusSearchFilterIDIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusSearchFilterIDIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter Query is empty",
@@ -856,7 +834,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Query: "",
 				},
 			},
-			expectedErr: createError(statusSearchFilterQueryIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query")),
+			expectedErr: statusSearchFilterQueryIsEmpty.Err(),
 		},
 		{
 			desc: "err: SearchFilter ID is empty for ChangeQueryCommand",
@@ -884,7 +862,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Query: "update-query",
 				},
 			},
-			expectedErr: createError(statusSearchFilterIDIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusSearchFilterIDIsEmpty.Err(),
 		},
 		{
 			desc: "success",
@@ -1005,7 +983,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
 			},
-
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1104,15 +1081,6 @@ func TestDeleteSearchFilter(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1145,7 +1113,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "filterID",
 				},
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "err: email is empty",
@@ -1172,7 +1140,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "filterID",
 				},
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "err: organization_id is empty",
@@ -1199,7 +1167,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "filterID",
 				},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "err: internal error",
@@ -1271,7 +1239,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "filterID",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "err: command is nil",
@@ -1297,7 +1265,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				EnvironmentId:  "envID0",
 				Command:        nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "err: SearchFilterID is empty",
@@ -1325,7 +1293,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 					Id: "",
 				},
 			},
-			expectedErr: createError(statusSearchFilterIDIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter_id")),
+			expectedErr: statusSearchFilterIDIsEmpty.Err(),
 		},
 		{
 			desc: "success",

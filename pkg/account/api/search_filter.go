@@ -19,7 +19,6 @@ import (
 	"errors"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -28,7 +27,6 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
@@ -37,15 +35,14 @@ func (s *AccountService) CreateSearchFilter(
 	ctx context.Context,
 	req *accountproto.CreateSearchFilterRequest,
 ) (*accountproto.CreateSearchFilterResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := validateCreateSearchFilterRequest(req, localizer); err != nil {
+	if err := validateCreateSearchFilterRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -59,7 +56,7 @@ func (s *AccountService) CreateSearchFilter(
 	// If the target account is a system admin, we must use the system admin organization ID
 	// Otherwise, it will return a not found error
 	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -87,23 +84,9 @@ func (s *AccountService) CreateSearchFilter(
 			)...,
 		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 
 	return &accountproto.CreateSearchFilterResponse{}, nil
@@ -113,16 +96,15 @@ func (s *AccountService) UpdateSearchFilter(
 	ctx context.Context,
 	req *accountproto.UpdateSearchFilterRequest,
 ) (*accountproto.UpdateSearchFilterResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	commands := s.getUpdateSearchFilterCommands(req)
 
-	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
+	if err := validateUpdateSearchFilterRequest(req, commands); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -136,7 +118,7 @@ func (s *AccountService) UpdateSearchFilter(
 	// If the target account is a system admin, we must use the system admin organization ID
 	// Otherwise, it will return a not found error
 	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -160,23 +142,9 @@ func (s *AccountService) UpdateSearchFilter(
 			)...,
 		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSearchFilterIDNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -201,15 +169,14 @@ func (s *AccountService) DeleteSearchFilter(
 	ctx context.Context,
 	req *accountproto.DeleteSearchFilterRequest,
 ) (*accountproto.DeleteSearchFilterResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := validateDeleteSearchFilterRequest(req, localizer); err != nil {
+	if err := validateDeleteSearchFilterRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to validate request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -223,7 +190,7 @@ func (s *AccountService) DeleteSearchFilter(
 	// If the target account is a system admin, we must use the system admin organization ID
 	// Otherwise, it will return a not found error
 	// because the account doesn't exist in non-system admin organizations.
-	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -248,24 +215,10 @@ func (s *AccountService) DeleteSearchFilter(
 			)...,
 		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSearchFilterIDNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
