@@ -1606,6 +1606,7 @@ func (s *EnvironmentService) deleteOrganizations(ctx context.Context, organizati
 				zap.Error(err),
 				zap.Strings("organizationIDs", organizationIDs),
 			)
+			return err
 		}
 	}
 	whereParts = []mysql.WherePart{

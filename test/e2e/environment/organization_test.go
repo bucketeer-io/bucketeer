@@ -53,6 +53,7 @@ func TestCreateDeleteOrganization(t *testing.T) {
 	// 3. create data in organization
 	createFfResp, err := ftc.CreateFeature(ctx, newCreateFeatureReq(
 		fmt.Sprintf("feature-e2e-%d", time.Now().UnixNano()),
+		envID,
 	))
 	if err != nil {
 		t.Fatal(err)
@@ -215,10 +216,10 @@ func TestArchiveAndUnarchiveOrganization(t *testing.T) {
 	}
 }
 
-func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
+func newCreateFeatureReq(featureID, envID string) *featureproto.CreateFeatureRequest {
 	return &featureproto.CreateFeatureRequest{
 		Id:            featureID,
-		EnvironmentId: *environmentID,
+		EnvironmentId: envID,
 		Name:          "e2e-test-feature-name",
 		Description:   "e2e-test-feature-description",
 		Variations: []*featureproto.Variation{

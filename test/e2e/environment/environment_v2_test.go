@@ -183,6 +183,7 @@ func TestCreateDeleteEnvironmentV2(t *testing.T) {
 	// 2. create data for the new environment
 	createFfResp, err := ftc.CreateFeature(ctx, newCreateFeatureReq(
 		fmt.Sprintf("feature-e2e-%d", time.Now().UnixNano()),
+		envID,
 	))
 	if err != nil {
 		t.Fatal(err)
