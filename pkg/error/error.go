@@ -71,7 +71,7 @@ type BktError struct {
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
 
-func (e *BktError) MessageKey() string                    { return string(e.errorType) }
+func (e *BktError) MessageKey() string                   { return string(e.errorType) }
 func (e *BktError) EmbeddedKeyValues() map[string]string { return e.embeddedKeyValues }
 
 func (e *BktError) Error() string {
