@@ -1479,3 +1479,79 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.DeleteOrganizationDataRequest
+		expectedErr error
+		expected    *proto.DeleteOrganizationDataResponse
+	}{
+		{
+			desc:  "err: ErrOrganizationIDsRequired",
+			setup: func(s *EnvironmentService) {},
+			req: &proto.DeleteOrganizationDataRequest{
+				OrganizationIds: []string{},
+			},
+			expectedErr: statusOrganizationIDRequired.Err(),
+			expected:    nil,
+		},
+		{
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().
+					DeleteProjects(gomock.Any(), gomock.Any()).
+					Return(nil)
+				for range targetEntitiesInOrganization {
+					s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+						DeleteOrganizationData(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+					DeleteOrganizations(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+			},
+			expectedErr: nil,
+			req: &proto.DeleteOrganizationDataRequest{
+				OrganizationIds: []string{"org-1"},
+			},
+			expected: &proto.DeleteOrganizationDataResponse{},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.DeleteOrganizationData(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, resp)
+		})
+	}
+}
