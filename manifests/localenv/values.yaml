@@ -8,8 +8,18 @@ vault:
 
 redis:
   architecture: "standalone"
+  image:
+    registry: docker.io
+    repository: redis
+    tag: 8.4.0
   auth: 
     enabled: false
+  volumePermissions:
+    enabled: true
+    image:
+      registry: docker.io
+      repository: bitnami/os-shell
+      tag: latest
 
 nginx:
   controller:
@@ -21,21 +31,27 @@ nginx:
 
 mysql:
   image:
-    tag: "8.0"
+    registry: docker.io
+    repository: mysql
+    tag: "9"
   initdbScriptsConfigMap: mysql-initdb
   #diagnosticMode:
   #  enabled: true
   volumePermissions:
     enabled: true
+    image:
+      registry: docker.io
+      repository: bitnami/os-shell
+      tag: latest
   auth:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
   primary:
-   service:
-     type: NodePort
-     nodePorts:
-       mysql: 32000
+    service:
+      type: NodePort
+      nodePorts:
+        mysql: 32000
 
 bq:
   project: bucketeer-test
