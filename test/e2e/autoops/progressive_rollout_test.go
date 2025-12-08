@@ -52,8 +52,9 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -72,8 +73,11 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
 	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	if actualClause.ControlVariationId != feature.Variations[0].Id {
+		t.Fatalf("different control variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.ControlVariationId)
+	}
+	if actualClause.TargetVariationId != feature.Variations[1].Id {
+		t.Fatalf("different target variation id, expected: %v, actual: %v", feature.Variations[1].Id, actualClause.TargetVariationId)
 	}
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
@@ -99,8 +103,9 @@ func TestGetProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -119,8 +124,11 @@ func TestGetProgressiveRollout(t *testing.T) {
 		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
 	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	if actualClause.ControlVariationId != feature.Variations[0].Id {
+		t.Fatalf("different control variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.ControlVariationId)
+	}
+	if actualClause.TargetVariationId != feature.Variations[1].Id {
+		t.Fatalf("different target variation id, expected: %v, actual: %v", feature.Variations[1].Id, actualClause.TargetVariationId)
 	}
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
@@ -146,8 +154,9 @@ func TestCreateAndGetProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -166,8 +175,11 @@ func TestCreateAndGetProgressiveRollout(t *testing.T) {
 		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
 	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	if actualClause.ControlVariationId != feature.Variations[0].Id {
+		t.Fatalf("different control variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.ControlVariationId)
+	}
+	if actualClause.TargetVariationId != feature.Variations[1].Id {
+		t.Fatalf("different target variation id, expected: %v, actual: %v", feature.Variations[1].Id, actualClause.TargetVariationId)
 	}
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
@@ -193,8 +205,9 @@ func TestStopProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -232,8 +245,9 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -276,8 +290,9 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -298,11 +313,11 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	expectedStrategy := &featureproto.RolloutStrategy{
 		Variations: []*featureproto.RolloutStrategy_Variation{
 			{
-				Variation: feature.Variations[0].Id,
+				Variation: feature.Variations[1].Id,
 				Weight:    schedules[0].Weight,
 			},
 			{
-				Variation: feature.Variations[1].Id,
+				Variation: feature.Variations[0].Id,
 				Weight:    totalVariationWeight - schedules[0].Weight,
 			},
 		},
@@ -318,8 +333,11 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_RUNNING)
 	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	if actualClause.ControlVariationId != feature.Variations[0].Id {
+		t.Fatalf("different control variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.ControlVariationId)
+	}
+	if actualClause.TargetVariationId != feature.Variations[1].Id {
+		t.Fatalf("different target variation id, expected: %v, actual: %v", feature.Variations[1].Id, actualClause.TargetVariationId)
 	}
 	if len(actualClause.Schedules) != len(schedules) {
 		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
@@ -354,8 +372,9 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -374,11 +393,11 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 		expectedStrategy := &featureproto.RolloutStrategy{
 			Variations: []*featureproto.RolloutStrategy_Variation{
 				{
-					Variation: feature.Variations[0].Id,
+					Variation: feature.Variations[1].Id,
 					Weight:    schedules[0].Weight,
 				},
 				{
-					Variation: feature.Variations[1].Id,
+					Variation: feature.Variations[0].Id,
 					Weight:    totalVariationWeight - schedules[0].Weight,
 				},
 			},
@@ -394,8 +413,11 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 			t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_FINISHED)
 		}
 		actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
-		if actualClause.VariationId != feature.Variations[0].Id {
-			t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+		if actualClause.ControlVariationId != feature.Variations[0].Id {
+			t.Fatalf("different control variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.ControlVariationId)
+		}
+		if actualClause.TargetVariationId != feature.Variations[1].Id {
+			t.Fatalf("different target variation id, expected: %v, actual: %v", feature.Variations[1].Id, actualClause.TargetVariationId)
 		}
 		if actualClause.Schedules[0].TriggeredAt == 0 {
 			t.Fatalf("triggered at is empty")
