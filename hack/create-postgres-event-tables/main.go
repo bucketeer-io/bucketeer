@@ -12,31 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package postgres
+package main
 
 import (
-	"errors"
+	"log"
 
-	"github.com/lib/pq"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 )
 
 var (
-	ErrDuplicateEntry = errors.New("postgres: duplicate entry")
-	ErrNoRows         = errors.New("postgres: no rows")
-	ErrTxDone         = errors.New("postgres: tx done")
+	name    = "create-postgres-event-tables"
+	version = ""
+	build   = ""
 )
 
-const uniqueViolation pq.ErrorCode = "23505"
-
-func convertPostgresError(err error) error {
-	if err == nil {
-		return nil
+func main() {
+	app := cli.NewApp(name, "Bucketeer tool to create PostgresQL event tables for data warehouse", version, build)
+	registerCommand(app, app)
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
 	}
-	if postgresErr, ok := err.(*pq.Error); ok {
-		switch postgresErr.Code {
-		case uniqueViolation:
-			return ErrDuplicateEntry
-		}
-	}
-	return err
 }

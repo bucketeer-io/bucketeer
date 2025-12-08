@@ -8,6 +8,13 @@ mysql:
   user: ""
   password: ""
   database: ""
+postgres:
+  useMainConnection: false
+  host: ""
+  port: 5432
+  user: ""
+  password: ""
+  database: ""
 bigquery:
   project: ""
   dataset: ""

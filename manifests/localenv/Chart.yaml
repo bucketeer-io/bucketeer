@@ -15,6 +15,9 @@ dependencies:
 - name: mysql
   version: "9.11.0"
   repository: "oci://registry-1.docker.io/bitnamicharts"
+- name: timescaledb
+  version: "0.6.1"
+  repository: "oci://registry-1.docker.io/cloudpirates/timescaledb"
 - name: vault
   version: "0.23.0"
   repository: "https://helm.releases.hashicorp.com"

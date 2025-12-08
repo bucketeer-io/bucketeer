@@ -215,6 +215,19 @@ create-mysql-event-tables:
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: create-postgres-event-tables
+create-postgres-event-tables:
+	@echo "Creating Postgres event tables for data warehouse..."
+	go run ./hack/create-postgres-event-tables create \
+		--postgres-host=${POSTGRES_HOST} \
+		--postgres-port=${POSTGRES_PORT} \
+		--postgres-user=${POSTGRES_USER} \
+		--postgres-pass=${POSTGRES_PASS} \
+		--postgres-db-name=${POSTGRES_DB_NAME} \
+		--no-profile \
+		--no-gcp-trace-enabled \
+		--log-level=debug
+
 .PHONY: generate-service-token
 generate-service-token:
 	go run ./hack/generate-service-token generate \
@@ -454,10 +467,13 @@ docker-compose-setup:
 		echo "Creating docker-compose/secrets directory..."; \
 		mkdir -p docker-compose/secrets; \
 		echo "Generating MySQL secret files..."; \
+		echo "Generating PostgresQL secret files..."; \
 		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
+		echo "bucketeer" > docker-compose/secrets/postgres_password.txt; \
 		chmod 600 docker-compose/secrets/*.txt; \
 		echo "✅ MySQL secrets created"; \
+		echo "✅ PostgresQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
 	fi
@@ -553,3 +569,13 @@ docker-compose-create-mysql-event-tables:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ create-mysql-event-tables
+
+.PHONY: docker-compose-create-postgres-event-tables
+docker-compose-create-postgres-event-tables:
+	@echo "Creating Postgres event tables for Docker Compose data warehouse..."
+	POSTGRES_USER=bucketeer \
+	POSTGRES_PASS=bucketeer \
+	POSTGRES_HOST=localhost \
+	POSTGRES_PORT=5432 \
+	POSTGRES_DB_NAME=bucketeer \
+	make -C ./ create-postgres-event-tables

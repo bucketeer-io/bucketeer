@@ -22,10 +22,15 @@ import (
 
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 )
 
+type contextKey string
+
 const (
-	postgres = "postgres"
+	postgres                  = "postgres"
+	transactionKey contextKey = "transaction"
 )
 
 type options struct {
@@ -33,6 +38,7 @@ type options struct {
 	maxOpenConns    int
 	maxIdleConns    int
 	logger          *zap.Logger
+	metrics         metrics.Registerer
 }
 
 func defaultOptions() *options {
@@ -48,8 +54,19 @@ type Execer interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error)
 }
 
-type Client interface {
+type Queryer interface {
+	QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) Row
+}
+
+type QueryExecer interface {
+	Queryer
 	Execer
+}
+
+type Client interface {
+	QueryExecer
+	RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
 	Close() error
 }
 
@@ -85,6 +102,12 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+func WithMetrics(r metrics.Registerer) Option {
+	return func(opts *options) {
+		opts.metrics = r
+	}
+}
+
 func NewClient(
 	ctx context.Context,
 	dbUser, dbPass, dbHost string,
@@ -98,7 +121,7 @@ func NewClient(
 	}
 	logger := dopts.logger.Named(postgres)
 	dsn := fmt.Sprintf(
-		"%s://%s:%s@%s:%d/%s",
+		"%s://%s:%s@%s:%d/%s?sslmode=disable",
 		postgres, dbUser, dbPass, dbHost, dbPort, dbName,
 	)
 	db, err := sql.Open(postgres, dsn)
@@ -122,11 +145,67 @@ func NewClient(
 
 func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
 	var err error
+	defer record()(operationExec, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.ExecContext(ctx, query, args...)
+	}
+
 	sret, err := c.db.ExecContext(ctx, query, args...)
 	err = convertPostgresError(err)
 	return &result{sret}, err
 }
 
+func (c *client) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
+	var err error
+	defer record()(operationQuery, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.QueryContext(ctx, query, args...)
+	}
+
+	srows, err := c.db.QueryContext(ctx, query, args...)
+	return &rows{srows}, err
+}
+
+func (c *client) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
+	var err error
+	defer record()(operationQueryRow, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.QueryRowContext(ctx, query, args...)
+	}
+
+	r := &row{c.db.QueryRowContext(ctx, query, args...)}
+	err = r.Err()
+	return r
+}
+
 func (c *client) Close() error {
 	return c.db.Close()
+}
+
+func (c *client) RunInTransactionV2(
+	ctx context.Context,
+	f func(ctx context.Context, ctxWithTx Transaction) error) error {
+	stx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("client: begin tx: %w", err)
+	}
+	tx := &transaction{stx: stx}
+
+	ctx = context.WithValue(ctx, transactionKey, tx)
+	defer record()(operationRunInTransaction, &err)
+	defer func() {
+		if err != nil {
+			tx.Rollback() // nolint:errcheck
+		}
+	}()
+	if err = f(ctx, tx); err == nil {
+		err = tx.Commit()
+	}
+	return err
 }
