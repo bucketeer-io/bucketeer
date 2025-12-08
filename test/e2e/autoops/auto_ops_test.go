@@ -729,8 +729,9 @@ func TestOpsEventRateBatch(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -803,8 +804,9 @@ func TestDatetimeBatch(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
@@ -860,8 +862,9 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 		autoOpsClient,
 		featureID,
 		&autoopsproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: feature.Variations[0].Id,
+			Schedules:          schedules,
+			ControlVariationId: feature.Variations[0].Id,
+			TargetVariationId:  feature.Variations[1].Id,
 		},
 		nil,
 	)
