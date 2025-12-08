@@ -20,11 +20,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -33,7 +30,6 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
@@ -48,15 +44,6 @@ func TestGetMeMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{lang},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	org := environmentproto.Organization{Id: "org0"}
 
 	patterns := []struct {
@@ -73,7 +60,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.GetMeRequest{},
 			expected:    nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc:        "errInvalidEmail",
@@ -81,7 +68,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.GetMeRequest{},
 			expected:    nil,
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -159,7 +146,7 @@ func TestGetMeMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected:    nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "err: account not found",
@@ -204,7 +191,7 @@ func TestGetMeMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected:    nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "success",
@@ -751,15 +738,6 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -772,7 +750,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			desc:        "errBadRequest: Invalid email format",
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer"},
 			expected:    nil,
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errInternal: GetAccountsWithOrganization",
@@ -879,7 +857,6 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
 
 	patterns := []struct {
 		desc        string
@@ -1206,7 +1183,7 @@ func TestGetMyOrganizationsAdminRole(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			actual, err := service.getMyOrganizations(ctx, p.email, localizer)
+			actual, err := service.getMyOrganizations(ctx, p.email)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			assert.Equal(t, p.expected, actual, p.desc)
 		})
