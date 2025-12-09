@@ -144,7 +144,12 @@ var (
 			"DestinationEnvironment",
 		))
 	statusExceededMaxPageSizePerRequest = api.NewGRPCStatus(
-		pkgErr.NewErrorExceededMax(pkgErr.FeaturePackageName, "max page size allowed is exceeded", "PageSize", maxPageSizePerRequest))
+		pkgErr.NewErrorExceededMax(
+			pkgErr.FeaturePackageName,
+			"max page size allowed is exceeded",
+			"PageSize",
+			maxPageSizePerRequest,
+		))
 	statusFeatureNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "not found", "FeatureFlag"))
 	statusSegmentNotFound = api.NewGRPCStatus(
