@@ -20,7 +20,6 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -28,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -45,17 +43,16 @@ func (s *FeatureService) CreateSegment(
 	ctx context.Context,
 	req *featureproto.CreateSegmentRequest,
 ) (*featureproto.CreateSegmentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createSegmentNoCommand(ctx, req, editor, localizer)
+		return s.createSegmentNoCommand(ctx, req, editor)
 	}
-	if err = validateCreateSegmentRequest(req.Command, localizer); err != nil {
+	if err = validateCreateSegmentRequest(req.Command); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -110,14 +107,7 @@ func (s *FeatureService) CreateSegment(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create segment",
@@ -137,9 +127,8 @@ func (s *FeatureService) createSegmentNoCommand(
 	ctx context.Context,
 	req *featureproto.CreateSegmentRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.CreateSegmentResponse, error) {
-	if err := validateCreateSegmentNoCommandRequest(req, localizer); err != nil {
+	if err := validateCreateSegmentNoCommandRequest(req); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -192,14 +181,7 @@ func (s *FeatureService) createSegmentNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create segment",
@@ -219,17 +201,16 @@ func (s *FeatureService) DeleteSegment(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentRequest,
 ) (*featureproto.DeleteSegmentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.deleteSegmentNoCommand(ctx, req, editor, localizer)
+		return s.deleteSegmentNoCommand(ctx, req, editor)
 	}
-	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
+	if err := validateDeleteSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -239,7 +220,7 @@ func (s *FeatureService) DeleteSegment(
 		)
 		return nil, err
 	}
-	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	if _, err := s.updateSegment(
@@ -248,7 +229,6 @@ func (s *FeatureService) DeleteSegment(
 		[]command.Command{req.Command},
 		req.Id,
 		req.EnvironmentId,
-		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -259,9 +239,8 @@ func (s *FeatureService) deleteSegmentNoCommand(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.DeleteSegmentResponse, error) {
-	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
+	if err := validateDeleteSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -271,7 +250,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 		)
 		return nil, err
 	}
-	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -308,14 +287,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to delete segment",
@@ -331,7 +303,6 @@ func (s *FeatureService) deleteSegmentNoCommand(
 func (s *FeatureService) checkSegmentInUse(
 	ctx context.Context,
 	segmentID, environmentId string,
-	localizer locale.Localizer,
 ) error {
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	filters := []*mysql.FilterV2{
@@ -374,14 +345,7 @@ func (s *FeatureService) checkSegmentInUse(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSegmentInUse.Err()
 	}
 	return nil
 }
@@ -407,10 +371,9 @@ func (s *FeatureService) UpdateSegment(
 	ctx context.Context,
 	req *featureproto.UpdateSegmentRequest,
 ) (*featureproto.UpdateSegmentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Permission denied",
@@ -422,7 +385,7 @@ func (s *FeatureService) UpdateSegment(
 		return nil, err
 	}
 	if req.Commands == nil {
-		return s.updateSegmentNoCommand(ctx, req, editor, localizer)
+		return s.updateSegmentNoCommand(ctx, req, editor)
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
@@ -439,7 +402,7 @@ func (s *FeatureService) UpdateSegment(
 		}
 		commands = append(commands, cmd)
 	}
-	if err := validateUpdateSegment(req.Id, commands, localizer); err != nil {
+	if err := validateUpdateSegment(req.Id, commands); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -455,7 +418,6 @@ func (s *FeatureService) UpdateSegment(
 		commands,
 		req.Id,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -469,9 +431,8 @@ func (s *FeatureService) updateSegmentNoCommand(
 	ctx context.Context,
 	req *featureproto.UpdateSegmentRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.UpdateSegmentResponse, error) {
-	err := validateUpdateSegmentNoCommand(req, localizer)
+	err := validateUpdateSegmentNoCommand(req)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -531,14 +492,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update segment",
@@ -559,7 +513,6 @@ func (s *FeatureService) updateSegment(
 	editor *eventproto.Editor,
 	commands []command.Command,
 	segmentID, environmentId string,
-	localizer locale.Localizer,
 ) (*featureproto.Segment, error) {
 	var updatedSegment *featureproto.Segment
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -600,14 +553,7 @@ func (s *FeatureService) updateSegment(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update segment",
@@ -625,14 +571,13 @@ func (s *FeatureService) GetSegment(
 	ctx context.Context,
 	req *featureproto.GetSegmentRequest,
 ) (*featureproto.GetSegmentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSegmentRequest(req, localizer); err != nil {
+	if err := validateGetSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -645,14 +590,7 @@ func (s *FeatureService) GetSegment(
 	segment, featureIDs, err := s.segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment",
@@ -690,14 +628,13 @@ func (s *FeatureService) ListSegments(
 	ctx context.Context,
 	req *featureproto.ListSegmentsRequest,
 ) (*featureproto.ListSegmentsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListSegmentsRequest(req, localizer); err != nil {
+	if err := validateListSegmentsRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -733,7 +670,7 @@ func (s *FeatureService) ListSegments(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -748,14 +685,7 @@ func (s *FeatureService) ListSegments(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
@@ -811,7 +741,6 @@ func (s *FeatureService) ListSegments(
 func (s *FeatureService) newSegmentListOrders(
 	orderBy featureproto.ListSegmentsRequest_OrderBy,
 	orderDirection featureproto.ListSegmentsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -827,14 +756,7 @@ func (s *FeatureService) newSegmentListOrders(
 	case featureproto.ListSegmentsRequest_CONNECTIONS:
 		column = "feature_ids"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListSegmentsRequest_DESC {
