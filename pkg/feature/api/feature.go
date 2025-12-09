@@ -1087,6 +1087,21 @@ func (s *FeatureService) UpdateFeature(
 			)
 		}
 
+		// Check if this is an archive request and if other features depend on this one.
+		// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
+		if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+			if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
+				dt, err := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
+
 		updated, err := feature.Update(
 			req.Name,
 			req.Description,

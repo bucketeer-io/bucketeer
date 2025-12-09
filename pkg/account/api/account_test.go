@@ -23,9 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -34,7 +32,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	alstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -53,16 +50,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -88,7 +75,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -109,7 +96,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errAccountAlreadyExists",
@@ -143,7 +130,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				},
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAccountAlreadyExists.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -316,15 +303,6 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -350,7 +328,7 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -371,7 +349,7 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errAccountAlreadyExists",
@@ -405,7 +383,7 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountAlreadyExists)
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAccountAlreadyExists.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -516,16 +494,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -550,7 +518,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -576,7 +544,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					LastName: "newLastName",
 				},
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errOrganizationIDIsEmpty",
@@ -602,7 +570,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					LastName: "newLastName",
 				},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "errInvalidNewName",
@@ -626,7 +594,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					FirstName: strings.Repeat("a", 251),
 				},
 			},
-			expectedErr: createError(statusInvalidFirstName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name")),
+			expectedErr: statusInvalidFirstName.Err(),
 		},
 		{
 			desc: "errInvalidNewOrganizationRole",
@@ -650,7 +618,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					Role: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 				},
 			},
-			expectedErr: createError(statusInvalidOrganizationRole, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role")),
+			expectedErr: statusInvalidOrganizationRole.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -686,7 +654,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -893,16 +861,6 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -927,7 +885,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -949,7 +907,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 				FirstName:      wrapperspb.String("newFirstName"),
 				LastName:       wrapperspb.String("newLastName"),
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errOrganizationIDIsEmpty",
@@ -971,7 +929,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 				FirstName: wrapperspb.String("newFirstName"),
 				LastName:  wrapperspb.String("newLastName"),
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "errInvalidNewName",
@@ -993,7 +951,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 				OrganizationId: "org0",
 				FirstName:      wrapperspb.String(strings.Repeat("a", 251)),
 			},
-			expectedErr: createError(statusInvalidFirstName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name")),
+			expectedErr: statusInvalidFirstName.Err(),
 		},
 		{
 			desc: "errInvalidNewOrganizationRole",
@@ -1017,7 +975,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 					Role: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 				},
 			},
-			expectedErr: createError(statusInvalidOrganizationRole, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role")),
+			expectedErr: statusInvalidOrganizationRole.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -1052,7 +1010,7 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -1171,16 +1129,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -1204,7 +1152,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.EnableAccountV2Request{
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -1224,7 +1172,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errOrganizationIDIsEmpty",
@@ -1243,7 +1191,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.EnableAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -1267,7 +1215,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -1358,16 +1306,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -1391,7 +1329,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DisableAccountV2Request{
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -1411,7 +1349,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errOrganizationIDIsEmpty",
@@ -1430,7 +1368,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DisableAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -1454,7 +1392,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -1556,16 +1494,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -1589,7 +1517,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DeleteAccountV2Request{
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "errInvalidEmail",
@@ -1609,7 +1537,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errOrganizationIDIsEmpty",
@@ -1628,7 +1556,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DeleteAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -1652,7 +1580,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -1735,16 +1663,6 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -1769,7 +1687,7 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				Email:         "bucketeer@",
 				EnvironmentId: "env0",
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "errAccountNotFound",
@@ -1793,7 +1711,7 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				Email:         "bucketeer@example.com",
 				EnvironmentId: "env0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -1873,16 +1791,6 @@ func TestListAccountsV2MySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -1906,7 +1814,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 			},
 			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0", Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "errInternal",

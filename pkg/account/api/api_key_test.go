@@ -21,16 +21,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -47,15 +44,6 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -70,7 +58,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{Name: ""},
 			},
-			expectedErr: createError(statusMissingAPIKeyName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name")),
+			expectedErr: statusMissingAPIKeyName.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -134,15 +122,6 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -157,7 +136,7 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 			req: &accountproto.CreateAPIKeyRequest{
 				Name: "",
 			},
-			expectedErr: createError(statusMissingAPIKeyName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name")),
+			expectedErr: statusMissingAPIKeyName.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -224,15 +203,6 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -247,7 +217,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "",
 			},
-			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
+			expectedErr: statusMissingAPIKeyID.Err(),
 		},
 		{
 			desc:          "errNoCommand",
@@ -256,7 +226,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 				Id:      "id",
 				Command: nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "errNotFound",
@@ -272,7 +242,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAPIKeyNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -341,15 +311,6 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -364,7 +325,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			req: &accountproto.EnableAPIKeyRequest{
 				Id: "",
 			},
-			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
+			expectedErr: statusMissingAPIKeyID.Err(),
 		},
 		{
 			desc:          "errNoCommand",
@@ -373,7 +334,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "errNotFound",
@@ -387,7 +348,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAPIKeyNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -452,15 +413,6 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -475,7 +427,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			req: &accountproto.DisableAPIKeyRequest{
 				Id: "",
 			},
-			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
+			expectedErr: statusMissingAPIKeyID.Err(),
 		},
 		{
 			desc:          "errNoCommand",
@@ -484,7 +436,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "errNotFound",
@@ -498,7 +450,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusAPIKeyNotFound.Err(),
 		},
 		{
 			desc: "errInternal",
@@ -558,28 +510,19 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc           string
 		context        context.Context
 		setup          func(*AccountService)
 		req            *accountproto.GetAPIKeyRequest
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "errMissingAPIKeyID",
 			context: createContextWithDefaultToken(t, true),
 			req:     &accountproto.GetAPIKeyRequest{Id: ""},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"))
+			getExpectedErr: func() error {
+				return statusMissingAPIKeyID.Err()
 			},
 		},
 		{
@@ -591,8 +534,8 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				).Return(nil, v2as.ErrAPIKeyNotFound)
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id"},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusNotFound, localizer.MustLocalize(locale.NotFoundError))
+			getExpectedErr: func() error {
+				return statusAPIKeyNotFound.Err()
 			},
 		},
 		{
@@ -608,7 +551,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				}, nil)
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -639,7 +582,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				}, nil)
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentId: "ns0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -663,8 +606,8 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				}, nil).AnyTimes()
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentId: "ns0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -679,9 +622,8 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			localizer := locale.NewLocalizer(ctx)
 			res, err := service.GetAPIKey(ctx, p.req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 			if err == nil {
 				assert.NotNil(t, res)
 			}
@@ -694,22 +636,13 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc           string
 		context        context.Context
 		setup          func(*AccountService)
 		input          *accountproto.ListAPIKeysRequest
 		expected       *accountproto.ListAPIKeysResponse
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "errInvalidCursor",
@@ -720,8 +653,8 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				Cursor:         "XXX",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"))
+			getExpectedErr: func() error {
+				return statusInvalidCursor.Err()
 			},
 		},
 		{
@@ -737,7 +670,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal")).Err()
 			},
 		},
@@ -765,8 +698,8 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 		{
@@ -783,7 +716,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				Cursor:         "",
 			},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -814,7 +747,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -826,14 +759,12 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
-
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			actual, err := service.ListAPIKeys(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+			assert.Equal(t, p.getExpectedErr(), err, p.desc)
 			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}

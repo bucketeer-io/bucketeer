@@ -5109,6 +5109,112 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
+			desc: "fail: archive feature with dependencies",
+			setup: func(s *FeatureService) {
+				targetVID := newUUID(t)
+				targetVID2 := newUUID(t)
+				dependentVID1 := newUUID(t)
+				dependentVID2 := newUUID(t)
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					// The error is expected because another feature depends on the target
+					assert.Error(t, err)
+				}).Return(func() error {
+					dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
+					})
+					return dt.Err()
+				}())
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					// Target feature to be archived
+					{
+						Id: "target-feature",
+						Variations: []*featureproto.Variation{
+							{
+								Id:    targetVID,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    targetVID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: targetVID2,
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: targetVID,
+							},
+						},
+						Tags: []string{"test"},
+					},
+					// Dependent feature that uses target-feature as a prerequisite
+					{
+						Id: "dependent-feature",
+						Variations: []*featureproto.Variation{
+							{
+								Id:    dependentVID1,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    dependentVID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: dependentVID2,
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: dependentVID1,
+							},
+						},
+						// This feature depends on target-feature
+						Prerequisites: []*featureproto.Prerequisite{
+							{
+								FeatureId:   "target-feature",
+								VariationId: targetVID,
+							},
+						},
+						Tags: []string{"test"},
+					},
+				}, 0, int64(0), nil)
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "target-feature",
+				Archived:      wrapperspb.Bool(true),
+			},
+			expectedErr: func() error {
+				dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
+				})
+				return dt.Err()
+			}(),
+		},
+		{
 			desc: "success",
 			setup: func(s *FeatureService) {
 				vID1 := newUUID(t)

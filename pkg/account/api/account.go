@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
@@ -31,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -47,20 +45,18 @@ func (s *AccountService) CreateAccountV2(
 	ctx context.Context,
 	req *accountproto.CreateAccountV2Request,
 ) (*accountproto.CreateAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createAccountV2NoCommand(ctx, req, localizer, editor)
+		return s.createAccountV2NoCommand(ctx, req, editor)
 	}
-	if err := validateCreateAccountV2Request(req, localizer); err != nil {
+	if err := validateCreateAccountV2Request(req); err != nil {
 		s.logger.Error(
 			"Failed to create account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -95,14 +91,7 @@ func (s *AccountService) CreateAccountV2(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create account",
@@ -138,10 +127,9 @@ func (s *AccountService) CreateAccountV2(
 func (s *AccountService) createAccountV2NoCommand(
 	ctx context.Context,
 	req *accountproto.CreateAccountV2Request,
-	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*accountproto.CreateAccountV2Response, error) {
-	err := validateCreateAccountV2NoCommandRequest(req, localizer)
+	err := validateCreateAccountV2NoCommandRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create account",
@@ -202,14 +190,7 @@ func (s *AccountService) createAccountV2NoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create account",
@@ -327,13 +308,11 @@ func (s *AccountService) UpdateAccountV2(
 	ctx context.Context,
 	req *accountproto.UpdateAccountV2Request,
 ) (*accountproto.UpdateAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	isAdmin := false
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		// If not admin, check if user is updating their own account
@@ -341,27 +320,19 @@ func (s *AccountService) UpdateAccountV2(
 			ctx,
 			accountproto.AccountV2_Role_Organization_MEMBER,
 			req.OrganizationId,
-			localizer,
 		)
 		if err != nil {
 			return nil, err
 		}
 		if editor.Email != req.Email {
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		}
 	} else {
 		isAdmin = true
 	}
 
 	if !isAdmin {
-		if err := s.checkRestrictedCommands(req, localizer); err != nil {
+		if err := s.checkRestrictedCommands(req); err != nil {
 			s.logger.Error(
 				"Member user is not allowed to update organization role or environment roles",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -375,10 +346,10 @@ func (s *AccountService) UpdateAccountV2(
 	}
 
 	if isNoUpdateAccountV2Command(req) {
-		return s.updateAccountV2NoCommand(ctx, req, localizer, editor)
+		return s.updateAccountV2NoCommand(ctx, req, editor)
 	}
 	commands := s.getUpdateAccountV2Commands(req)
-	if err := validateUpdateAccountV2Request(req, commands, localizer); err != nil {
+	if err := validateUpdateAccountV2Request(req, commands); err != nil {
 		s.logger.Error(
 			"Failed to update account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -392,14 +363,7 @@ func (s *AccountService) UpdateAccountV2(
 	updatedAccountPb, err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update account",
@@ -438,18 +402,10 @@ func (s *AccountService) UpdateAccountV2(
 // and returns a permission denied error if it does
 func (s *AccountService) checkRestrictedCommands(
 	req *accountproto.UpdateAccountV2Request,
-	localizer locale.Localizer,
 ) error {
 	if req.ChangeOrganizationRoleCommand != nil ||
 		req.OrganizationRole != nil {
-		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusPermissionDenied.Err()
 	}
 	return nil
 }
@@ -457,10 +413,9 @@ func (s *AccountService) checkRestrictedCommands(
 func (s *AccountService) updateAccountV2NoCommand(
 	ctx context.Context,
 	req *accountproto.UpdateAccountV2Request,
-	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*accountproto.UpdateAccountV2Response, error) {
-	err := validateUpdateAccountV2NoCommandRequest(req, localizer)
+	err := validateUpdateAccountV2NoCommandRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -483,14 +438,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update account",
@@ -594,17 +542,15 @@ func (s *AccountService) EnableAccountV2(
 	ctx context.Context,
 	req *accountproto.EnableAccountV2Request,
 ) (*accountproto.EnableAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableAccountV2Request(req, localizer); err != nil {
+	if err := validateEnableAccountV2Request(req); err != nil {
 		s.logger.Error(
 			"Failed to enable account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -634,14 +580,7 @@ func (s *AccountService) EnableAccountV2(
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to enable account",
@@ -662,17 +601,15 @@ func (s *AccountService) DisableAccountV2(
 	ctx context.Context,
 	req *accountproto.DisableAccountV2Request,
 ) (*accountproto.DisableAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableAccountV2Request(req, localizer); err != nil {
+	if err := validateDisableAccountV2Request(req); err != nil {
 		s.logger.Error(
 			"Failed to disable account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -702,14 +639,7 @@ func (s *AccountService) DisableAccountV2(
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to disable account",
@@ -835,17 +765,15 @@ func (s *AccountService) DeleteAccountV2(
 	ctx context.Context,
 	req *accountproto.DeleteAccountV2Request,
 ) (*accountproto.DeleteAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteAccountV2Request(req, localizer); err != nil {
+	if err := validateDeleteAccountV2Request(req); err != nil {
 		s.logger.Error(
 			"Failed to delete account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -883,14 +811,7 @@ func (s *AccountService) DeleteAccountV2(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to delete account",
@@ -909,17 +830,15 @@ func (s *AccountService) GetAccountV2(
 	ctx context.Context,
 	req *accountproto.GetAccountV2Request,
 ) (*accountproto.GetAccountV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetAccountV2Request(req, localizer); err != nil {
+	if err := validateGetAccountV2Request(req); err != nil {
 		s.logger.Error(
 			"Failed to get account",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -930,7 +849,7 @@ func (s *AccountService) GetAccountV2(
 		)
 		return nil, err
 	}
-	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
+	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
 	if err != nil {
 		return nil, err
 	}
@@ -940,19 +859,11 @@ func (s *AccountService) GetAccountV2(
 func (s *AccountService) getAccountV2(
 	ctx context.Context,
 	email, organizationID string,
-	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get account",
@@ -971,17 +882,15 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 	ctx context.Context,
 	req *accountproto.GetAccountV2ByEnvironmentIDRequest,
 ) (*accountproto.GetAccountV2ByEnvironmentIDResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetAccountV2ByEnvironmentIDRequest(req, localizer); err != nil {
+	if err := validateGetAccountV2ByEnvironmentIDRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to get account by environment id",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -992,7 +901,7 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 		)
 		return nil, err
 	}
-	account, err := s.getAccountV2ByEnvironmentID(ctx, req.Email, req.EnvironmentId, localizer)
+	account, err := s.getAccountV2ByEnvironmentID(ctx, req.Email, req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -1002,19 +911,11 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 func (s *AccountService) getAccountV2ByEnvironmentID(
 	ctx context.Context,
 	email, environmentID string,
-	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get account by environment id",
@@ -1033,12 +934,10 @@ func (s *AccountService) ListAccountsV2(
 	ctx context.Context,
 	req *accountproto.ListAccountsV2Request,
 ) (*accountproto.ListAccountsV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.OrganizationId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -1174,7 +1073,7 @@ func (s *AccountService) ListAccountsV2(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -1189,14 +1088,7 @@ func (s *AccountService) ListAccountsV2(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -1261,7 +1153,6 @@ func (s *AccountService) constructEnvironmentRoles(
 func (s *AccountService) newAccountV2ListOrders(
 	orderBy accountproto.ListAccountsV2Request_OrderBy,
 	orderDirection accountproto.ListAccountsV2Request_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -1285,14 +1176,7 @@ func (s *AccountService) newAccountV2ListOrders(
 	case accountproto.ListAccountsV2Request_TEAMS:
 		column = "teams"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == accountproto.ListAccountsV2Request_DESC {

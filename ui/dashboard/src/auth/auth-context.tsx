@@ -150,6 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setMyOrganizations(organizationsList);
     } catch (error) {
       errorNotify(error);
+      setIsInitialLoading(false);
     }
   };
 
@@ -184,20 +185,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    const handleTokenRefreshed = () => {
-      setIsInitialLoading(false);
-    };
-    window.addEventListener('tokenRefreshed', handleTokenRefreshed);
-    window.addEventListener('unauthenticated', () => {
+    const handleUnauthenticated = () => {
       logout();
       clearOrgIdStorage();
-    });
+    };
+    window.addEventListener('unauthenticated', handleUnauthenticated);
     return () => {
-      window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
-      window.removeEventListener('unauthenticated', () => {
-        logout();
-        clearOrgIdStorage();
-      });
+      window.removeEventListener('unauthenticated', handleUnauthenticated);
     };
   }, []);
 

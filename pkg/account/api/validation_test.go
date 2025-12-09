@@ -15,32 +15,16 @@
 package api
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
 
 func TestValidateCreateAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		req         *accountproto.CreateAccountV2Request
@@ -51,7 +35,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "err: missing email",
@@ -59,7 +43,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 				OrganizationId: "org-id",
 				Command:        &accountproto.CreateAccountV2Command{},
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "err: invalid email",
@@ -69,7 +53,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 					Email: "invalid-email",
 				},
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "err: invalid organization role",
@@ -80,7 +64,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 					OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 				},
 			},
-			expectedErr: createError(statusInvalidOrganizationRole, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role")),
+			expectedErr: statusInvalidOrganizationRole.Err(),
 		},
 		{
 			desc: "err: missing environment roles for member",
@@ -91,7 +75,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				},
 			},
-			expectedErr: createError(statusInvalidEnvironmentRole, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles")),
+			expectedErr: statusInvalidEnvironmentRole.Err(),
 		},
 		{
 			desc: "success: admin role without environment roles",
@@ -121,7 +105,7 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateCreateAccountV2Request(p.req, localizer)
+			err := validateCreateAccountV2Request(p.req)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr.Error(), err.Error())
 			} else {
@@ -151,18 +135,6 @@ func TestVerifyEmailFormat(t *testing.T) {
 
 func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		req         *accountproto.CreateAccountV2Request
@@ -173,14 +145,14 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{},
 			},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc: "err: missing email",
 			req: &accountproto.CreateAccountV2Request{
 				OrganizationId: "org-id",
 			},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc: "err: invalid email",
@@ -188,7 +160,7 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 				OrganizationId: "org-id",
 				Email:          "invalid-email",
 			},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc: "err: invalid organization role",
@@ -197,7 +169,7 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 				Email:            "test@example.com",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 			},
-			expectedErr: createError(statusInvalidOrganizationRole, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role")),
+			expectedErr: statusInvalidOrganizationRole.Err(),
 		},
 		{
 			desc: "err: missing environment roles for member",
@@ -206,7 +178,7 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 				Email:            "test@example.com",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			},
-			expectedErr: createError(statusInvalidEnvironmentRole, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles")),
+			expectedErr: statusInvalidEnvironmentRole.Err(),
 		},
 		{
 			desc: "success: admin role without environment roles",
@@ -232,7 +204,7 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateCreateAccountV2NoCommandRequest(p.req, localizer)
+			err := validateCreateAccountV2NoCommandRequest(p.req)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr.Error(), err.Error())
 			} else {
@@ -244,18 +216,6 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 
 func TestValidateDeleteAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		req         *accountproto.DeleteAccountV2Request
@@ -264,17 +224,17 @@ func TestValidateDeleteAccountV2Request(t *testing.T) {
 		{
 			desc:        "err: missing email",
 			req:         &accountproto.DeleteAccountV2Request{OrganizationId: "org-id"},
-			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expectedErr: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:        "err: invalid email",
 			req:         &accountproto.DeleteAccountV2Request{Email: "invalid", OrganizationId: "org-id"},
-			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: statusInvalidEmail.Err(),
 		},
 		{
 			desc:        "err: missing organization id",
 			req:         &accountproto.DeleteAccountV2Request{Email: "test@example.com"},
-			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
 			desc:        "success",
@@ -284,7 +244,7 @@ func TestValidateDeleteAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateDeleteAccountV2Request(p.req, localizer)
+			err := validateDeleteAccountV2Request(p.req)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr.Error(), err.Error())
 			} else {
@@ -296,18 +256,6 @@ func TestValidateDeleteAccountV2Request(t *testing.T) {
 
 func TestValidateUpdateAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.UpdateAccountV2Request
@@ -318,7 +266,7 @@ func TestValidateUpdateAccountV2Request(t *testing.T) {
 			desc:     "err: no command",
 			req:      &accountproto.UpdateAccountV2Request{Email: "email@example.com", OrganizationId: "org-id"},
 			commands: []command.Command{},
-			expected: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expected: statusNoCommand.Err(),
 		},
 		{
 			desc: "success",
@@ -331,7 +279,7 @@ func TestValidateUpdateAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateAccountV2Request(p.req, p.commands, localizer)
+			err := validateUpdateAccountV2Request(p.req, p.commands)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
@@ -343,18 +291,6 @@ func TestValidateUpdateAccountV2Request(t *testing.T) {
 
 func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.UpdateAccountV2Request
@@ -363,7 +299,7 @@ func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
 		{
 			desc:     "err: missing email",
 			req:      &accountproto.UpdateAccountV2Request{OrganizationId: "org-id"},
-			expected: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expected: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:     "success",
@@ -373,7 +309,7 @@ func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateAccountV2NoCommandRequest(p.req, localizer)
+			err := validateUpdateAccountV2NoCommandRequest(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
@@ -385,18 +321,6 @@ func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
 
 func TestValidateEnableAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.EnableAccountV2Request
@@ -405,7 +329,7 @@ func TestValidateEnableAccountV2Request(t *testing.T) {
 		{
 			desc:     "err: missing email",
 			req:      &accountproto.EnableAccountV2Request{OrganizationId: "org-id"},
-			expected: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expected: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:     "success",
@@ -415,7 +339,7 @@ func TestValidateEnableAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateEnableAccountV2Request(p.req, localizer)
+			err := validateEnableAccountV2Request(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
@@ -427,18 +351,6 @@ func TestValidateEnableAccountV2Request(t *testing.T) {
 
 func TestValidateDisableAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.DisableAccountV2Request
@@ -447,7 +359,7 @@ func TestValidateDisableAccountV2Request(t *testing.T) {
 		{
 			desc:     "err: missing email",
 			req:      &accountproto.DisableAccountV2Request{OrganizationId: "org-id"},
-			expected: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+			expected: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:     "success",
@@ -457,7 +369,7 @@ func TestValidateDisableAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateDisableAccountV2Request(p.req, localizer)
+			err := validateDisableAccountV2Request(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
@@ -469,18 +381,6 @@ func TestValidateDisableAccountV2Request(t *testing.T) {
 
 func TestValidateGetAccountV2Request(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.GetAccountV2Request
@@ -489,7 +389,7 @@ func TestValidateGetAccountV2Request(t *testing.T) {
 		{
 			desc:     "err: missing email",
 			req:      &accountproto.GetAccountV2Request{OrganizationId: "org-id"},
-			expected: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expected: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:     "success",
@@ -499,7 +399,7 @@ func TestValidateGetAccountV2Request(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateGetAccountV2Request(p.req, localizer)
+			err := validateGetAccountV2Request(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
@@ -511,18 +411,6 @@ func TestValidateGetAccountV2Request(t *testing.T) {
 
 func TestValidateGetAccountV2ByEnvironmentIDRequest(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(s *status.Status, msg string) error {
-		st, err := s.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		req      *accountproto.GetAccountV2ByEnvironmentIDRequest
@@ -531,7 +419,7 @@ func TestValidateGetAccountV2ByEnvironmentIDRequest(t *testing.T) {
 		{
 			desc:     "err: missing email",
 			req:      &accountproto.GetAccountV2ByEnvironmentIDRequest{},
-			expected: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expected: statusEmailIsEmpty.Err(),
 		},
 		{
 			desc:     "success",
@@ -541,7 +429,7 @@ func TestValidateGetAccountV2ByEnvironmentIDRequest(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateGetAccountV2ByEnvironmentIDRequest(p.req, localizer)
+			err := validateGetAccountV2ByEnvironmentIDRequest(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {
