@@ -5132,13 +5132,7 @@ func TestUpdateFeature(t *testing.T) {
 					err := fn(ctx, nil)
 					// The error is expected because another feature depends on the target
 					assert.Error(t, err)
-				}).Return(func() error {
-					dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-						Locale:  localizer.GetLocale(),
-						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-					})
-					return dt.Err()
-				}())
+				}).Return(statusInvalidArchive.Err())
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
@@ -5206,13 +5200,7 @@ func TestUpdateFeature(t *testing.T) {
 				Id:            "target-feature",
 				Archived:      wrapperspb.Bool(true),
 			},
-			expectedErr: func() error {
-				dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-				})
-				return dt.Err()
-			}(),
+			expectedErr: statusInvalidArchive.Err(),
 		},
 		{
 			desc: "success",
