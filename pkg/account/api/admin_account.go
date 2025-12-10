@@ -29,7 +29,6 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
