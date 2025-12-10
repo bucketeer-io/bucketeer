@@ -10,7 +10,7 @@
     "clientSecret": "",
     "redirectUrls": [
       "https://localhost/auth/callback",
-      "https://localhost/v3/auth/callback"
+      "https://web-gateway.bucketeer.io/auth/callback"
     ]
   },
   "password": {
