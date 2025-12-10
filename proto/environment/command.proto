@@ -90,10 +90,6 @@ message ChangeOwnerEmailOrganizationCommand {
   string owner_email = 1;
 }
 
-message UpdateAuthenticationSettingsOrganizationCommand {
-  AuthenticationSettings authentication_settings = 1;
-}
-
 message ChangeRequireCommentCommand {
   bool require_comment = 1;
 }

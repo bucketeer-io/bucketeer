@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.59.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-resty/resty/v2 v2.17.1
@@ -33,7 +34,6 @@ require (
 	github.com/mailersend/mailersend-go v1.6.2
 	github.com/mna/redisc v1.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
-	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
@@ -138,7 +138,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
