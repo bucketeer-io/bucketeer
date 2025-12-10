@@ -40,6 +40,10 @@ func TestNewEnvironmentV2(t *testing.T) {
 	assert.Equal(t, "desc", env.Description)
 	assert.Equal(t, "project-id", env.ProjectId)
 	assert.Equal(t, false, env.Archived)
+	// Auto-archive default values
+	assert.Equal(t, false, env.AutoArchiveEnabled)
+	assert.Equal(t, int32(90), env.AutoArchiveUnusedDays)
+	assert.Equal(t, true, env.AutoArchiveRequireNoCodeRefs)
 }
 
 func TestUpdateEnvironmentV2(t *testing.T) {
@@ -60,12 +64,19 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		wrapperspb.String("new-desc"),
 		wrapperspb.Bool(false),
 		wrapperspb.Bool(true),
+		wrapperspb.Bool(true),
+		wrapperspb.Int32(30),
+		wrapperspb.Bool(false),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "new-name", updated.Name)
 	assert.Equal(t, "new-desc", updated.Description)
 	assert.Equal(t, false, updated.RequireComment)
 	assert.Equal(t, true, updated.Archived)
+	// Auto-archive settings
+	assert.Equal(t, true, updated.AutoArchiveEnabled)
+	assert.Equal(t, int32(30), updated.AutoArchiveUnusedDays)
+	assert.Equal(t, false, updated.AutoArchiveRequireNoCodeRefs)
 }
 
 func TestRenameEnvironmentV2(t *testing.T) {

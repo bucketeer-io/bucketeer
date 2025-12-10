@@ -45,16 +45,19 @@ func NewEnvironmentV2(
 	}
 	now := time.Now().Unix()
 	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:             uid.String(),
-		Name:           name,
-		UrlCode:        urlCode,
-		Description:    description,
-		ProjectId:      projectID,
-		OrganizationId: organizationID,
-		Archived:       false,
-		RequireComment: requireComment,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		Id:                           uid.String(),
+		Name:                         name,
+		UrlCode:                      urlCode,
+		Description:                  description,
+		ProjectId:                    projectID,
+		OrganizationId:               organizationID,
+		Archived:                     false,
+		RequireComment:               requireComment,
+		CreatedAt:                    now,
+		UpdatedAt:                    now,
+		AutoArchiveEnabled:           false,
+		AutoArchiveUnusedDays:        90,
+		AutoArchiveRequireNoCodeRefs: true,
 	}}, nil
 }
 
@@ -63,6 +66,9 @@ func (e *EnvironmentV2) Update(
 	description *wrapperspb.StringValue,
 	requireComment *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
+	autoArchiveEnabled *wrapperspb.BoolValue,
+	autoArchiveUnusedDays *wrapperspb.Int32Value,
+	autoArchiveRequireNoCodeRefs *wrapperspb.BoolValue,
 ) (*EnvironmentV2, error) {
 	updated := &EnvironmentV2{}
 	if err := copier.Copy(updated, e); err != nil {
@@ -80,6 +86,15 @@ func (e *EnvironmentV2) Update(
 	}
 	if archived != nil {
 		updated.Archived = archived.Value
+	}
+	if autoArchiveEnabled != nil {
+		updated.AutoArchiveEnabled = autoArchiveEnabled.Value
+	}
+	if autoArchiveUnusedDays != nil {
+		updated.AutoArchiveUnusedDays = autoArchiveUnusedDays.Value
+	}
+	if autoArchiveRequireNoCodeRefs != nil {
+		updated.AutoArchiveRequireNoCodeRefs = autoArchiveRequireNoCodeRefs.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()

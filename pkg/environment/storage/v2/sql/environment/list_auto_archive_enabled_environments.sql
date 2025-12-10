@@ -1,4 +1,4 @@
-INSERT INTO environment_v2 (
+SELECT
     id,
     name,
     url_code,
@@ -12,4 +12,9 @@ INSERT INTO environment_v2 (
     auto_archive_enabled,
     auto_archive_unused_days,
     auto_archive_require_no_code_refs
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+FROM
+    environment_v2
+WHERE
+    auto_archive_enabled = TRUE
+ORDER BY
+    id ASC

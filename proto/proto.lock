@@ -11423,6 +11423,10 @@
               {
                 "name": "TagDeleter",
                 "integer": 18
+              },
+              {
+                "name": "FeatureAutoArchiver",
+                "integer": 19
               }
             ]
           }
@@ -13251,6 +13255,21 @@
                 "id": 11,
                 "name": "feature_flag_count",
                 "type": "int32"
+              },
+              {
+                "id": 12,
+                "name": "auto_archive_enabled",
+                "type": "bool"
+              },
+              {
+                "id": 13,
+                "name": "auto_archive_unused_days",
+                "type": "int32"
+              },
+              {
+                "id": 14,
+                "name": "auto_archive_require_no_code_refs",
+                "type": "bool"
               }
             ]
           }
@@ -13900,6 +13919,21 @@
               {
                 "id": 8,
                 "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 9,
+                "name": "auto_archive_enabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 10,
+                "name": "auto_archive_unused_days",
+                "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 11,
+                "name": "auto_archive_require_no_code_refs",
                 "type": "google.protobuf.BoolValue"
               }
             ]

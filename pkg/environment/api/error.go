@@ -120,4 +120,10 @@ var (
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled"))
 	statusUserAlreadyInOrganization = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization"))
+	statusInvalidAutoArchiveUnusedDays = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"auto_archive_unused_days must be greater than 0 when auto_archive is enabled",
+			"auto_archive_unused_days",
+		))
 )

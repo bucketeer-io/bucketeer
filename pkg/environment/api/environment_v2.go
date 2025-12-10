@@ -565,7 +565,15 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		if err != nil {
 			return err
 		}
-		updated, err := environment.Update(req.Name, req.Description, req.RequireComment, req.Archived)
+		updated, err := environment.Update(
+			req.Name,
+			req.Description,
+			req.RequireComment,
+			req.Archived,
+			req.AutoArchiveEnabled,
+			req.AutoArchiveUnusedDays,
+			req.AutoArchiveRequireNoCodeRefs,
+		)
 		if err != nil {
 			return err
 		}
@@ -718,6 +726,19 @@ func validateUpdateEnvironmentV2RequestNoCommand(
 			dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	// Auto-archive validation
+	if req.AutoArchiveEnabled != nil && req.AutoArchiveEnabled.Value {
+		if req.AutoArchiveUnusedDays == nil || req.AutoArchiveUnusedDays.Value <= 0 {
+			dt, err := statusInvalidAutoArchiveUnusedDays.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_unused_days"),
 			})
 			if err != nil {
 				return statusInternal.Err()

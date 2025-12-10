@@ -13,17 +13,17 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	environment "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockProjectStorage is a mock of ProjectStorage interface.
 type MockProjectStorage struct {
 	ctrl     *gomock.Controller
 	recorder *MockProjectStorageMockRecorder
+	isgomock struct{}
 }
 
 // MockProjectStorageMockRecorder is the mock recorder for MockProjectStorage.
