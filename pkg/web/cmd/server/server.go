@@ -977,6 +977,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		oAuthConfig,
 		emailConfig,
 		authstorage.NewCredentialsStorage(mysqlClient),
+		authstorage.NewDomainPolicyStorage(mysqlClient),
 		logger,
 	)
 	if err != nil {
@@ -985,6 +986,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	authServer := rpc.NewServer(authService, *s.certPath, *s.keyPath,
 		"auth-server",
 		rpc.WithPort(*s.authServicePort),
+		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
@@ -1646,7 +1648,8 @@ func (s *server) createAuthService(
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	emailConfig *email.Config,
-	credentialsStorage authstorage.CredentialsStorage,
+	credentialsStorage  authstorage.CredentialsStorage,
+	domainPolicyStorage authstorage.DomainPolicyStorage,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	signer, err := token.NewSigner(*s.oauthPrivateKeyPath)
@@ -1680,6 +1683,7 @@ func (s *server) createAuthService(
 		config,
 		emailConfig,
 		credentialsStorage,
+		domainPolicyStorage,
 		serviceOptions...,
 	), nil
 }

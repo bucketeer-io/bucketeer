@@ -21,6 +21,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/auth/token.proto";
+import "proto/auth/domain_policy.proto";
 
 enum AuthType {
   AUTH_TYPE_UNSPECIFIED = 0;
@@ -63,6 +64,15 @@ message SignInRequest {
 }
 
 message SignInResponse {
+  Token token = 1;
+}
+
+message SignInPasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SignInPasswordResponse {
   Token token = 1;
 }
 
@@ -137,6 +147,113 @@ message ValidatePasswordResetTokenRequest {
 message ValidatePasswordResetTokenResponse {
   bool is_valid = 1;
   string email = 2;
+}
+
+// Domain Auth Policy Messages
+
+message GetAuthOptionsByEmailRequest {
+  string email = 1;
+}
+
+message GetAuthOptionsByEmailResponse {
+  DomainAuthOptions options = 1;
+}
+
+// Google OIDC Messages
+
+message GetGoogleOidcAuthURLRequest {
+  string state = 1;
+  string redirect_url = 2;
+}
+
+message GetGoogleOidcAuthURLResponse {
+  string url = 1;
+}
+
+message ExchangeGoogleOidcTokenRequest {
+  string code = 1;
+  string state = 2;
+  string redirect_url = 3;
+}
+
+message ExchangeGoogleOidcTokenResponse {
+  Token token = 1;  // Temporary token, not org-scoped yet
+}
+
+// Company OIDC Messages
+
+message GetCompanyOidcAuthURLRequest {
+  string email = 1;
+  string state = 2;
+  string redirect_url = 3;
+  string code_challenge = 4;         // PKCE code challenge
+  string code_challenge_method = 5;  // PKCE method (S256)
+}
+
+message GetCompanyOidcAuthURLResponse {
+  string url = 1;
+  string nonce = 2;  // To validate ID token
+}
+
+message ExchangeCompanyOidcTokenRequest {
+  string code = 1;
+  string state = 2;
+  string redirect_url = 3;
+  string email = 4;          // Original email to verify domain
+  string code_verifier = 5;  // PKCE code verifier
+  string nonce = 6;          // To validate ID token
+}
+
+message ExchangeCompanyOidcTokenResponse {
+  Token token = 1;  // Temporary token, not org-scoped yet
+}
+
+// Admin: Domain Auth Policy Management
+
+message CreateDomainAuthPolicyRequest {
+  string domain = 1;
+  AuthPolicy auth_policy = 2;
+}
+
+message CreateDomainAuthPolicyResponse {
+  DomainAuthPolicy policy = 1;
+}
+
+message UpdateDomainAuthPolicyRequest {
+  string domain = 1;
+  AuthPolicy auth_policy = 2;
+  bool enabled = 3;
+}
+
+message UpdateDomainAuthPolicyResponse {
+  DomainAuthPolicy policy = 1;
+}
+
+message GetDomainAuthPolicyRequest {
+  string domain = 1;
+}
+
+message GetDomainAuthPolicyResponse {
+  DomainAuthPolicy policy = 1;
+}
+
+message DeleteDomainAuthPolicyRequest {
+  string domain = 1;
+}
+
+message DeleteDomainAuthPolicyResponse {}
+
+message ListDomainAuthPoliciesRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  string order_by = 3;         // created_at, updated_at, domain
+  string order_direction = 4;  // asc, desc
+}
+
+message ListDomainAuthPoliciesResponse {
+  repeated DomainAuthPolicy policies = 1;
+  string cursor = 2;
+  int64 total_count = 3;
 }
 
 service AuthService {
@@ -258,6 +375,41 @@ service AuthService {
         key: "401"
         value: {
           description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc SignInPassword(SignInPasswordRequest) returns (SignInPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/signin_password"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Sign In with Password",
+      description: "Sign in using email and password, returns a temporary token (5 minutes) without organization scope. User must call GetMyOrganizations and then SwitchOrganization to get an org-scoped token.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.signin_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (invalid credentials)."
           schema: { json_schema: { ref: ".google.rpc.Status" } }
           examples: {
             key: "application/json"
@@ -508,6 +660,347 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Domain Auth Policy APIs
+
+  rpc GetAuthOptionsByEmail(GetAuthOptionsByEmailRequest)
+      returns (GetAuthOptionsByEmailResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/options"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Auth Options By Email",
+      description: "Get authentication options available for an email domain (public, no auth required).",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_auth_options_by_email",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Google OIDC APIs
+
+  rpc GetGoogleOidcAuthURL(GetGoogleOidcAuthURLRequest)
+      returns (GetGoogleOidcAuthURLResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/google_oidc/url"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Google OIDC Auth URL",
+      description: "Generate authorization URL for Google OIDC login (public, no auth required). Returns temporary token after exchange.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_google_oidc_auth_url",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ExchangeGoogleOidcToken(ExchangeGoogleOidcTokenRequest)
+      returns (ExchangeGoogleOidcTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/google_oidc/token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Google OIDC Token",
+      description: "Exchange Google authorization code for Bucketeer temporary token (public, no auth required). Returns 5-minute token without org scope.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.exchange_google_oidc_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Company OIDC APIs
+
+  rpc GetCompanyOidcAuthURL(GetCompanyOidcAuthURLRequest)
+      returns (GetCompanyOidcAuthURLResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/company_oidc/url"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Company OIDC Auth URL",
+      description: "Generate authorization URL for company OIDC provider (public, no auth required).",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_company_oidc_auth_url",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "No company OIDC configured for domain."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ExchangeCompanyOidcToken(ExchangeCompanyOidcTokenRequest)
+      returns (ExchangeCompanyOidcTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/company_oidc/token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Company OIDC Token",
+      description: "Exchange authorization code for Bucketeer token via company OIDC (public, no auth required).",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.exchange_company_oidc_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc CreateDomainAuthPolicy(CreateDomainAuthPolicyRequest)
+      returns (CreateDomainAuthPolicyResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/domain_policy"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Domain Auth Policy",
+      description: "Create a new domain authentication policy (admin only).",
+      tags: "Domain Policy Management",
+      operation_id: "web.v1.auth.create_domain_auth_policy",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc UpdateDomainAuthPolicy(UpdateDomainAuthPolicyRequest)
+      returns (UpdateDomainAuthPolicyResponse) {
+    option (google.api.http) = {
+      put: "/v1/auth/domain_policy/{domain}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Domain Auth Policy",
+      description: "Update an existing domain authentication policy (admin only).",
+      tags: "Domain Policy Management",
+      operation_id: "web.v1.auth.update_domain_auth_policy",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Domain policy not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc GetDomainAuthPolicy(GetDomainAuthPolicyRequest)
+      returns (GetDomainAuthPolicyResponse) {
+    option (google.api.http) = {
+      get: "/v1/auth/domain_policy/{domain}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Domain Auth Policy",
+      description: "Get a domain authentication policy by domain (admin only).",
+      tags: "Domain Policy Management",
+      operation_id: "web.v1.auth.get_domain_auth_policy",
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Domain policy not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc DeleteDomainAuthPolicy(DeleteDomainAuthPolicyRequest)
+      returns (DeleteDomainAuthPolicyResponse) {
+    option (google.api.http) = {
+      delete: "/v1/auth/domain_policy/{domain}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Domain Auth Policy",
+      description: "Delete a domain authentication policy (admin only).",
+      tags: "Domain Policy Management",
+      operation_id: "web.v1.auth.delete_domain_auth_policy",
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Domain policy not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ListDomainAuthPolicies(ListDomainAuthPoliciesRequest)
+      returns (ListDomainAuthPoliciesResponse) {
+    option (google.api.http) = {
+      get: "/v1/auth/domain_policies"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Domain Auth Policies",
+      description: "List all domain authentication policies (admin only).",
+      tags: "Domain Policy Management",
+      operation_id: "web.v1.auth.list_domain_auth_policies",
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
           }
         }
       }
