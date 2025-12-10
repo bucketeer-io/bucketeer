@@ -16,6 +16,8 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
+	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	auth "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 // MockCredentialsStorage is a mock of CredentialsStorage interface.
@@ -139,4 +141,101 @@ func (m *MockCredentialsStorage) UpdatePassword(ctx context.Context, email, pass
 func (mr *MockCredentialsStorageMockRecorder) UpdatePassword(ctx, email, passwordHash any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockCredentialsStorage)(nil).UpdatePassword), ctx, email, passwordHash)
+}
+
+// MockDomainPolicyStorage is a mock of DomainPolicyStorage interface.
+type MockDomainPolicyStorage struct {
+	ctrl     *gomock.Controller
+	recorder *MockDomainPolicyStorageMockRecorder
+}
+
+// MockDomainPolicyStorageMockRecorder is the mock recorder for MockDomainPolicyStorage.
+type MockDomainPolicyStorageMockRecorder struct {
+	mock *MockDomainPolicyStorage
+}
+
+// NewMockDomainPolicyStorage creates a new mock instance.
+func NewMockDomainPolicyStorage(ctrl *gomock.Controller) *MockDomainPolicyStorage {
+	mock := &MockDomainPolicyStorage{ctrl: ctrl}
+	mock.recorder = &MockDomainPolicyStorageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDomainPolicyStorage) EXPECT() *MockDomainPolicyStorageMockRecorder {
+	return m.recorder
+}
+
+// CreateDomainPolicy mocks base method.
+func (m *MockDomainPolicyStorage) CreateDomainPolicy(ctx context.Context, policy *domain.DomainAuthPolicy) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDomainPolicy", ctx, policy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDomainPolicy indicates an expected call of CreateDomainPolicy.
+func (mr *MockDomainPolicyStorageMockRecorder) CreateDomainPolicy(ctx, policy any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDomainPolicy", reflect.TypeOf((*MockDomainPolicyStorage)(nil).CreateDomainPolicy), ctx, policy)
+}
+
+// DeleteDomainPolicy mocks base method.
+func (m *MockDomainPolicyStorage) DeleteDomainPolicy(ctx context.Context, domainName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDomainPolicy", ctx, domainName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteDomainPolicy indicates an expected call of DeleteDomainPolicy.
+func (mr *MockDomainPolicyStorageMockRecorder) DeleteDomainPolicy(ctx, domainName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDomainPolicy", reflect.TypeOf((*MockDomainPolicyStorage)(nil).DeleteDomainPolicy), ctx, domainName)
+}
+
+// GetDomainPolicy mocks base method.
+func (m *MockDomainPolicyStorage) GetDomainPolicy(ctx context.Context, domainName string) (*domain.DomainAuthPolicy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDomainPolicy", ctx, domainName)
+	ret0, _ := ret[0].(*domain.DomainAuthPolicy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDomainPolicy indicates an expected call of GetDomainPolicy.
+func (mr *MockDomainPolicyStorageMockRecorder) GetDomainPolicy(ctx, domainName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDomainPolicy", reflect.TypeOf((*MockDomainPolicyStorage)(nil).GetDomainPolicy), ctx, domainName)
+}
+
+// ListDomainPolicies mocks base method.
+func (m *MockDomainPolicyStorage) ListDomainPolicies(ctx context.Context, options *mysql.ListOptions) ([]*auth.DomainAuthPolicy, int, int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDomainPolicies", ctx, options)
+	ret0, _ := ret[0].([]*auth.DomainAuthPolicy)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(int64)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// ListDomainPolicies indicates an expected call of ListDomainPolicies.
+func (mr *MockDomainPolicyStorageMockRecorder) ListDomainPolicies(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDomainPolicies", reflect.TypeOf((*MockDomainPolicyStorage)(nil).ListDomainPolicies), ctx, options)
+}
+
+// UpdateDomainPolicy mocks base method.
+func (m *MockDomainPolicyStorage) UpdateDomainPolicy(ctx context.Context, policy *domain.DomainAuthPolicy) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDomainPolicy", ctx, policy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateDomainPolicy indicates an expected call of UpdateDomainPolicy.
+func (mr *MockDomainPolicyStorageMockRecorder) UpdateDomainPolicy(ctx, policy any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDomainPolicy", reflect.TypeOf((*MockDomainPolicyStorage)(nil).UpdateDomainPolicy), ctx, policy)
 }

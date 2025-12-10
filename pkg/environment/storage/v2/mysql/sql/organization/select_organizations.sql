@@ -8,7 +8,6 @@ SELECT
     organization.archived,
     organization.trial,
     organization.system_admin,
-    organization.authentication_settings,
     organization.created_at,
     organization.updated_at,
     COUNT(DISTINCT project.id) AS projects,
@@ -30,7 +29,6 @@ GROUP BY
     organization.archived,
     organization.trial,
     organization.system_admin,
-    organization.authentication_settings,
     organization.created_at,
     organization.updated_at
 %s
