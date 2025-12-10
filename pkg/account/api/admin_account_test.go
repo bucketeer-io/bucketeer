@@ -53,7 +53,7 @@ func TestGetMeMySQL(t *testing.T) {
 				environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
 			},
 		},
-		}
+	}
 
 	patterns := []struct {
 		desc        string
