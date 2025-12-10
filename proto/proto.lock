@@ -5530,6 +5530,198 @@
       }
     },
     {
+      "protopath": "auth:/:domain_policy.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "PasswordAuthOption",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled",
+                "type": "bool"
+              },
+              {
+                "id": 2,
+                "name": "required",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "GoogleOidcOption",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled",
+                "type": "bool"
+              },
+              {
+                "id": 2,
+                "name": "required",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "display_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CompanyOidcOption",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled",
+                "type": "bool"
+              },
+              {
+                "id": 2,
+                "name": "required",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "issuer",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "client_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "client_secret",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "redirect_uri",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "scopes",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "display_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AuthPolicy",
+            "fields": [
+              {
+                "id": 1,
+                "name": "password",
+                "type": "PasswordAuthOption"
+              },
+              {
+                "id": 2,
+                "name": "google_oidc",
+                "type": "GoogleOidcOption"
+              },
+              {
+                "id": 3,
+                "name": "company_oidc",
+                "type": "CompanyOidcOption"
+              }
+            ]
+          },
+          {
+            "name": "DomainAuthPolicy",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "auth_policy",
+                "type": "AuthPolicy"
+              },
+              {
+                "id": 3,
+                "name": "enabled",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "DomainAuthOptions",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "password_enabled",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "google_oidc_enabled",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "google_oidc_display_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "company_oidc_enabled",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "company_oidc_display_name",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "company_oidc_auth_url",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "oidc_required",
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.auth"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/v2/proto/auth"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "auth:/:service.proto",
       "def": {
         "enums": [
@@ -5658,6 +5850,31 @@
           },
           {
             "name": "SignInResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
+            "name": "SignInPasswordRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SignInPasswordResponse",
             "fields": [
               {
                 "id": 1,
@@ -5845,6 +6062,305 @@
                 "id": 2,
                 "name": "email",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAuthOptionsByEmailRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAuthOptionsByEmailResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "options",
+                "type": "DomainAuthOptions"
+              }
+            ]
+          },
+          {
+            "name": "GetGoogleOidcAuthURLRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetGoogleOidcAuthURLResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeGoogleOidcTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeGoogleOidcTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
+            "name": "GetCompanyOidcAuthURLRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "code_challenge",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "code_challenge_method",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetCompanyOidcAuthURLResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "nonce",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeCompanyOidcTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "code_verifier",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "nonce",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeCompanyOidcTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
+            "name": "CreateDomainAuthPolicyRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "auth_policy",
+                "type": "AuthPolicy"
+              }
+            ]
+          },
+          {
+            "name": "CreateDomainAuthPolicyResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "policy",
+                "type": "DomainAuthPolicy"
+              }
+            ]
+          },
+          {
+            "name": "UpdateDomainAuthPolicyRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "auth_policy",
+                "type": "AuthPolicy"
+              },
+              {
+                "id": 3,
+                "name": "enabled",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "UpdateDomainAuthPolicyResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "policy",
+                "type": "DomainAuthPolicy"
+              }
+            ]
+          },
+          {
+            "name": "GetDomainAuthPolicyRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetDomainAuthPolicyResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "policy",
+                "type": "DomainAuthPolicy"
+              }
+            ]
+          },
+          {
+            "name": "DeleteDomainAuthPolicyRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "domain",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteDomainAuthPolicyResponse"
+          },
+          {
+            "name": "ListDomainAuthPoliciesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListDomainAuthPoliciesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "policies",
+                "type": "DomainAuthPolicy",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
               }
             ]
           }
@@ -6296,6 +6812,137 @@
                               {
                                 "name": "description",
                                 "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "SignInPassword",
+                "in_type": "SignInPasswordRequest",
+                "out_type": "SignInPasswordResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/signin_password"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Sign In with Password"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Sign in using email and password, returns a temporary token (5 minutes) without organization scope. User must call GetMyOrganizations and then SwitchOrganization to get an org-scoped token."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.signin_password"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (invalid credentials)."
                               },
                               {
                                 "name": "schema",
@@ -7191,6 +7838,1214 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetAuthOptionsByEmail",
+                "in_type": "GetAuthOptionsByEmailRequest",
+                "out_type": "GetAuthOptionsByEmailResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/options"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Auth Options By Email"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get authentication options available for an email domain (public, no auth required)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_auth_options_by_email"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetGoogleOidcAuthURL",
+                "in_type": "GetGoogleOidcAuthURLRequest",
+                "out_type": "GetGoogleOidcAuthURLResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/google_oidc/url"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Google OIDC Auth URL"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Generate authorization URL for Google OIDC login (public, no auth required). Returns temporary token after exchange."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_google_oidc_auth_url"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExchangeGoogleOidcToken",
+                "in_type": "ExchangeGoogleOidcTokenRequest",
+                "out_type": "ExchangeGoogleOidcTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/google_oidc/token"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Exchange Google OIDC Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Exchange Google authorization code for Bucketeer temporary token (public, no auth required). Returns 5-minute token without org scope."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.exchange_google_oidc_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetCompanyOidcAuthURL",
+                "in_type": "GetCompanyOidcAuthURLRequest",
+                "out_type": "GetCompanyOidcAuthURLResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/company_oidc/url"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Company OIDC Auth URL"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Generate authorization URL for company OIDC provider (public, no auth required)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_company_oidc_auth_url"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "No company OIDC configured for domain."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExchangeCompanyOidcToken",
+                "in_type": "ExchangeCompanyOidcTokenRequest",
+                "out_type": "ExchangeCompanyOidcTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/company_oidc/token"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Exchange Company OIDC Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Exchange authorization code for Bucketeer token via company OIDC (public, no auth required)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.exchange_company_oidc_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateDomainAuthPolicy",
+                "in_type": "CreateDomainAuthPolicyRequest",
+                "out_type": "CreateDomainAuthPolicyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/domain_policy"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Domain Auth Policy"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new domain authentication policy (admin only)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Domain Policy Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.create_domain_auth_policy"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authorized (permission denied)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"permission denied\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateDomainAuthPolicy",
+                "in_type": "UpdateDomainAuthPolicyRequest",
+                "out_type": "UpdateDomainAuthPolicyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "put",
+                        "value": "/v1/auth/domain_policy/{domain}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Domain Auth Policy"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an existing domain authentication policy (admin only)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Domain Policy Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.update_domain_auth_policy"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authorized (permission denied)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"permission denied\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Domain policy not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetDomainAuthPolicy",
+                "in_type": "GetDomainAuthPolicyRequest",
+                "out_type": "GetDomainAuthPolicyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/auth/domain_policy/{domain}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Domain Auth Policy"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a domain authentication policy by domain (admin only)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Domain Policy Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_domain_auth_policy"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authorized (permission denied)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"permission denied\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Domain policy not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteDomainAuthPolicy",
+                "in_type": "DeleteDomainAuthPolicyRequest",
+                "out_type": "DeleteDomainAuthPolicyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/auth/domain_policy/{domain}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Domain Auth Policy"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a domain authentication policy (admin only)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Domain Policy Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.delete_domain_auth_policy"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authorized (permission denied)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"permission denied\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Domain policy not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListDomainAuthPolicies",
+                "in_type": "ListDomainAuthPoliciesRequest",
+                "out_type": "ListDomainAuthPoliciesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/auth/domain_policies"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Domain Auth Policies"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List all domain authentication policies (admin only)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Domain Policy Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.list_domain_auth_policies"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authorized (permission denied)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"permission denied\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -7204,6 +9059,9 @@
           },
           {
             "path": "proto/auth/token.proto"
+          },
+          {
+            "path": "proto/auth/domain_policy.proto"
           }
         ],
         "package": {
@@ -12535,16 +14393,6 @@
             ]
           },
           {
-            "name": "UpdateAuthenticationSettingsOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
-              }
-            ]
-          },
-          {
             "name": "ChangeRequireCommentCommand",
             "fields": [
               {
@@ -12680,36 +14528,7 @@
     {
       "protopath": "environment:/:organization.proto",
       "def": {
-        "enums": [
-          {
-            "name": "AuthenticationType",
-            "enum_fields": [
-              {
-                "name": "AUTHENTICATION_TYPE_UNSPECIFIED"
-              },
-              {
-                "name": "AUTHENTICATION_TYPE_GOOGLE",
-                "integer": 1
-              },
-              {
-                "name": "AUTHENTICATION_TYPE_PASSWORD",
-                "integer": 2
-              }
-            ]
-          }
-        ],
         "messages": [
-          {
-            "name": "AuthenticationSettings",
-            "fields": [
-              {
-                "id": 1,
-                "name": "enabled_types",
-                "type": "AuthenticationType",
-                "is_repeated": true
-              }
-            ]
-          },
           {
             "name": "Organization",
             "fields": [
@@ -12782,11 +14601,6 @@
                 "id": 14,
                 "name": "owner_email",
                 "type": "string"
-              },
-              {
-                "id": 15,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           }
@@ -13855,11 +15669,6 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -13955,11 +15764,6 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "google.protobuf.StringValue"
-              },
-              {
-                "id": 8,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -20433,10 +22237,6 @@
                 "integer": 1510
               },
               {
-                "name": "ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED",
-                "integer": 1511
-              },
-              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -23592,21 +25392,6 @@
                 "id": 2,
                 "name": "owner_email",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "OrganizationAuthenticationSettingsUpdatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "authentication_settings",
-                "type": "bucketeer.environment.AuthenticationSettings"
               }
             ]
           },

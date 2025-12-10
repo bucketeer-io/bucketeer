@@ -23,7 +23,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -38,7 +37,7 @@ func (s *authService) SignIn(
 
 	// Then, try password authentication if enabled
 	if s.config.Password.Enabled {
-		return s.handlePasswordSignIn(ctx, request, localizer)
+		return s.handlePasswordSignIn(ctx, request)
 	}
 
 	// If neither is enabled nor credentials don't match, deny access
@@ -46,20 +45,12 @@ func (s *authService) SignIn(
 		zap.String("email", request.Email),
 		zap.Bool("passwordAuthEnabled", s.config.Password.Enabled),
 	)
-	dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.PermissionDenied),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return nil, dt.Err()
+	return nil, statusAccessDenied.Err()
 }
 
 func (s *authService) handlePasswordSignIn(
 	ctx context.Context,
 	request *authproto.SignInRequest,
-	localizer locale.Localizer,
 ) (*authproto.SignInResponse, error) {
 	email := request.Email
 
@@ -76,14 +67,7 @@ func (s *authService) handlePasswordSignIn(
 				zap.String("email", email),
 			)
 		}
-		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusAccessDenied.Err()
 	}
 
 	// Verify password
@@ -91,24 +75,17 @@ func (s *authService) handlePasswordSignIn(
 		s.logger.Error("Password sign in failed - invalid password",
 			zap.String("email", email),
 		)
-		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusAccessDenied.Err()
 	}
 
 	// Get organizations for the user
-	organizations, err := s.getOrganizationsByEmail(ctx, email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check account status - user should have at least one enabled account
-	account, err := s.checkAccountStatus(ctx, email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account status for password sign in",
 			zap.Error(err),
@@ -121,11 +98,63 @@ func (s *authService) handlePasswordSignIn(
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
 	// Generate token for successful authentication
-	token, err := s.generateToken(ctx, email, accountDomain, isSystemAdmin, localizer)
+	token, err := s.generateToken(ctx, email, accountDomain, isSystemAdmin)
 	if err != nil {
 		return nil, err
 	}
 
 	s.logger.Info("Successful password authentication", zap.String("email", email))
 	return &authproto.SignInResponse{Token: token}, nil
+}
+
+func (s *authService) SignInPassword(
+	ctx context.Context,
+	request *authproto.SignInPasswordRequest,
+) (*authproto.SignInPasswordResponse, error) {
+	err := validateSignInPasswordRequest(request)
+	if err != nil {
+		s.logger.Error("SignInPassword request validation failed", zap.Error(err))
+		return nil, err
+	}
+
+	// Get credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, request.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			s.logger.Error("SignInPassword failed - no credentials found",
+				zap.String("email", request.Email),
+			)
+		} else {
+			s.logger.Error("SignInPassword failed - credentials lookup error",
+				zap.Error(err),
+				zap.String("email", request.Email),
+			)
+		}
+		return nil, statusAccessDenied.Err()
+	}
+
+	// Verify password
+	if !auth.ValidatePassword(request.Password, credentials.PasswordHash) {
+		s.logger.Error("SignInPassword failed - invalid password",
+			zap.String("email", request.Email),
+		)
+		return nil, statusAccessDenied.Err()
+	}
+
+	// Create temporary token using existing helper
+	userInfo := &auth.UserInfo{
+		Email: request.Email,
+		Name:  request.Email, // Use email as fallback name
+	}
+
+	token, err := s.createTemporaryToken(ctx, userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("SignInPassword successful - temporary token issued",
+		zap.String("email", request.Email),
+	)
+
+	return &authproto.SignInPasswordResponse{Token: token}, nil
 }

@@ -248,7 +248,6 @@ message Event {
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
     ORGANIZATION_UPDATED = 1509;
     DEMO_ORGANIZATION_CREATED = 1510;
-    ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED = 1511;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -1189,11 +1188,6 @@ message OrganizationDescriptionChangedEvent {
 message OrganizationOwnerEmailChangedEvent {
   string id = 1;
   string owner_email = 2;
-}
-
-message OrganizationAuthenticationSettingsUpdatedEvent {
-  string id = 1;
-  bucketeer.environment.AuthenticationSettings authentication_settings = 2;
 }
 
 message OrganizationNameChangedEvent {

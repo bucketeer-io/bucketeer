@@ -8,7 +8,6 @@ SELECT
     organization.archived,
     organization.trial,
     organization.system_admin,
-    organization.authentication_settings,
     organization.created_at,
     organization.updated_at,
     (SELECT COUNT(DISTINCT id) FROM project WHERE organization_id = organization.id) AS project_count,

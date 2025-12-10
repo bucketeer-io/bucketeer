@@ -626,6 +626,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	authServer := rpc.NewServer(authService, *s.certPath, *s.keyPath,
 		"auth-server",
 		rpc.WithPort(*s.authServicePort),
+		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)

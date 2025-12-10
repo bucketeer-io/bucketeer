@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
@@ -34,8 +33,7 @@ func (s *authService) UpdatePassword(
 	ctx context.Context,
 	request *authproto.UpdatePasswordRequest,
 ) (*authproto.UpdatePasswordResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateUpdatePasswordRequest(request, localizer)
+	err := validateUpdatePasswordRequest(request)
 	if err != nil {
 		s.logger.Error("UpdatePassword request validation failed", zap.Error(err))
 		return nil, err
@@ -44,21 +42,14 @@ func (s *authService) UpdatePassword(
 	// Check if password authentication is enabled
 	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
-		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get email from context (user must be authenticated)
 	email := extractEmailFromContext(ctx)
 	if email == "" {
 		s.logger.Error("No email in context")
-		return nil, auth.StatusUnauthenticated.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 
 	// Get current credentials
@@ -66,14 +57,7 @@ func (s *authService) UpdatePassword(
 	if err != nil {
 		if errors.Is(err, storage.ErrCredentialsNotFound) {
 			s.logger.Error("No password found for user", zap.String("email", email))
-			dt, err := auth.StatusPasswordNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, statusPasswordNotFound.Err()
 		}
 		s.logger.Error("Failed to get credentials", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
@@ -82,28 +66,14 @@ func (s *authService) UpdatePassword(
 	// Verify current password
 	if !auth.ValidatePassword(request.CurrentPassword, credentials.PasswordHash) {
 		s.logger.Error("Current password mismatch", zap.String("email", email))
-		dt, err := auth.StatusPasswordMismatch.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusPasswordMismatch.Err()
 	}
 
 	// Validate new password complexity
 	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("New password complexity validation failed", zap.Error(err))
-		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: err.Error(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusPasswordTooWeak.Err()
 	}
 
 	// Hash new password
@@ -122,7 +92,7 @@ func (s *authService) UpdatePassword(
 
 	// Send notification email if email service is enabled
 	if s.emailConfig.Enabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, email, localizer.GetLocale())
+		err = s.emailService.SendPasswordChangedNotification(ctx, email, locale.En)
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
 				zap.Error(err),
@@ -140,8 +110,7 @@ func (s *authService) InitiatePasswordSetup(
 	ctx context.Context,
 	request *authproto.InitiatePasswordSetupRequest,
 ) (*authproto.InitiatePasswordSetupResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateInitiatePasswordSetupRequest(request, localizer)
+	err := validateInitiatePasswordSetupRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -149,24 +118,17 @@ func (s *authService) InitiatePasswordSetup(
 	// Check if email service is enabled
 	if !s.emailConfig.Enabled {
 		s.logger.Error("Password setup requires email service to be enabled")
-		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusEmailServiceUnavailable.Err()
 	}
 
 	email := request.Email
 
 	// Validate that the user has organizations (i.e., account exists)
-	organizations, err := s.getOrganizationsByEmail(ctx, email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, email)
 	if err != nil || len(organizations) == 0 {
 		s.logger.Warn("Password setup attempted for non-existent account", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
-			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
+			Message: "If an account with this email exists, a password setup email has been sent.",
 		}, nil
 	}
 
@@ -174,7 +136,7 @@ func (s *authService) InitiatePasswordSetup(
 	if !s.config.Password.Enabled {
 		s.logger.Info("Password authentication disabled, sending welcome email only", zap.String("email", email))
 		if s.emailService != nil {
-			err = s.emailService.SendWelcomeEmail(ctx, email, localizer.GetLocale())
+			err = s.emailService.SendWelcomeEmail(ctx, email, locale.En)
 			if err != nil {
 				s.logger.Error("Failed to send welcome email",
 					zap.Error(err),
@@ -186,7 +148,7 @@ func (s *authService) InitiatePasswordSetup(
 			}
 		}
 		return &authproto.InitiatePasswordSetupResponse{
-			Message: localizer.MustLocalize(locale.WelcomeEmailSent),
+			Message: "A welcome email has been sent.",
 		}, nil
 	}
 
@@ -196,7 +158,7 @@ func (s *authService) InitiatePasswordSetup(
 		// Password already exists, don't reveal this for security
 		s.logger.Warn("Password setup attempted for account with existing password", zap.String("email", email))
 		return &authproto.InitiatePasswordSetupResponse{
-			Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
+			Message: "If an account with this email exists, a password setup email has been sent.",
 		}, nil
 	}
 	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
@@ -241,7 +203,7 @@ func (s *authService) InitiatePasswordSetup(
 		setupURL := fmt.Sprintf("%s%s?%s=%s",
 			s.emailConfig.BaseURL, setupPath, setupParam, setupToken)
 		err = s.emailService.SendPasswordSetupEmail(
-			ctx, email, setupURL, s.config.Password.Tokens.SetupTTL, localizer.GetLocale(),
+			ctx, email, setupURL, s.config.Password.Tokens.SetupTTL, locale.En,
 		)
 		if err != nil {
 			s.logger.Error("Failed to send password setup email",
@@ -254,7 +216,7 @@ func (s *authService) InitiatePasswordSetup(
 
 	s.logger.Info("Password setup initiated", zap.String("email", email))
 	return &authproto.InitiatePasswordSetupResponse{
-		Message: localizer.MustLocalize(locale.PasswordSetupEmailSent),
+		Message: "If an account with this email exists, a password setup email has been sent.",
 	}, nil
 }
 
@@ -262,8 +224,7 @@ func (s *authService) SetupPassword(
 	ctx context.Context,
 	request *authproto.SetupPasswordRequest,
 ) (*authproto.SetupPasswordResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateSetupPasswordRequest(request, localizer)
+	err := validateSetupPasswordRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -271,14 +232,7 @@ func (s *authService) SetupPassword(
 	// Check if password authentication is enabled
 	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
-		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get and validate setup token (reusing password reset token infrastructure)
@@ -286,14 +240,7 @@ func (s *authService) SetupPassword(
 	if err != nil {
 		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
 			s.logger.Error("Invalid setup token", zap.String("token", request.SetupToken))
-			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, statusInvalidResetToken.Err()
 		}
 		s.logger.Error("Failed to get setup token", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
@@ -302,42 +249,21 @@ func (s *authService) SetupPassword(
 	// Check if token is expired
 	if setupToken.IsExpired() {
 		s.logger.Error("Expired setup token", zap.String("email", setupToken.Email))
-		dt, err := auth.StatusExpiredResetToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusExpiredResetToken.Err()
 	}
 
 	// Validate new password complexity
 	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("Password complexity validation failed", zap.Error(err))
-		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: err.Error(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusPasswordTooWeak.Err()
 	}
 
 	// Check if credentials already exist (prevent double setup)
 	credentials, err := s.credentialsStorage.GetCredentials(ctx, setupToken.Email)
 	if err == nil && credentials.PasswordHash != "" {
 		s.logger.Error("Setup attempted for account with existing password", zap.String("email", setupToken.Email))
-		dt, err := auth.StatusPasswordAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AlreadyExistsError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusPasswordAlreadyExists.Err()
 	}
 	if err != nil && !errors.Is(err, storage.ErrCredentialsNotFound) {
 		s.logger.Error("Failed to check credentials during setup", zap.Error(err))
@@ -367,7 +293,7 @@ func (s *authService) SetupPassword(
 
 	// Send welcome email if email service is enabled
 	if s.emailConfig.Enabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email, localizer.GetLocale())
+		err = s.emailService.SendPasswordChangedNotification(ctx, setupToken.Email, locale.En)
 		if err != nil {
 			s.logger.Warn("Failed to send password setup completion notification",
 				zap.Error(err),
@@ -385,8 +311,7 @@ func (s *authService) ValidatePasswordSetupToken(
 	ctx context.Context,
 	request *authproto.ValidatePasswordSetupTokenRequest,
 ) (*authproto.ValidatePasswordSetupTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validatePasswordSetupTokenRequest(request, localizer)
+	err := validatePasswordSetupTokenRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -435,8 +360,7 @@ func (s *authService) InitiatePasswordReset(
 	ctx context.Context,
 	request *authproto.InitiatePasswordResetRequest,
 ) (*authproto.InitiatePasswordResetResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateInitiatePasswordResetRequest(request, localizer)
+	err := validateInitiatePasswordResetRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -444,14 +368,7 @@ func (s *authService) InitiatePasswordReset(
 	// Check if password authentication and email service are enabled
 	if !s.config.Password.Enabled || !s.emailConfig.Enabled {
 		s.logger.Error("Password reset not available")
-		dt, err := auth.StatusEmailServiceUnavailable.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusEmailServiceUnavailable.Err()
 	}
 
 	email := request.Email
@@ -463,7 +380,7 @@ func (s *authService) InitiatePasswordReset(
 			// Don't reveal whether the account exists for security
 			s.logger.Warn("Password reset attempted for non-existent account", zap.String("email", email))
 			return &authproto.InitiatePasswordResetResponse{
-				Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
+				Message: "If an account with this email exists, a password reset email has been sent.",
 			}, nil
 		}
 		s.logger.Error("Failed to check credentials for password reset", zap.Error(err))
@@ -475,7 +392,7 @@ func (s *authService) InitiatePasswordReset(
 		// Don't reveal this information for security
 		s.logger.Warn("Password reset attempted for account without password", zap.String("email", email))
 		return &authproto.InitiatePasswordResetResponse{
-			Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
+			Message: "If an account with this email exists, a password reset email has been sent.",
 		}, nil
 	}
 
@@ -509,7 +426,7 @@ func (s *authService) InitiatePasswordReset(
 		resetURL := fmt.Sprintf("%s%s?%s=%s",
 			s.emailConfig.BaseURL, resetPath, resetParam, resetToken)
 		err = s.emailService.SendPasswordResetEmail(
-			ctx, email, resetURL, s.config.Password.Tokens.ResetTTL, localizer.GetLocale(),
+			ctx, email, resetURL, s.config.Password.Tokens.ResetTTL, locale.En,
 		)
 		if err != nil {
 			s.logger.Error("Failed to send password reset email",
@@ -522,7 +439,7 @@ func (s *authService) InitiatePasswordReset(
 
 	s.logger.Info("Password reset initiated", zap.String("email", email))
 	return &authproto.InitiatePasswordResetResponse{
-		Message: localizer.MustLocalize(locale.PasswordResetEmailSent),
+		Message: "If an account with this email exists, a password reset email has been sent.",
 	}, nil
 }
 
@@ -530,8 +447,7 @@ func (s *authService) ResetPassword(
 	ctx context.Context,
 	request *authproto.ResetPasswordRequest,
 ) (*authproto.ResetPasswordResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateResetPasswordRequest(request, localizer)
+	err := validateResetPasswordRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -539,14 +455,7 @@ func (s *authService) ResetPassword(
 	// Check if password authentication is enabled
 	if !s.config.Password.Enabled {
 		s.logger.Error("Password authentication not enabled")
-		dt, err := auth.StatusInvalidEmailConfig.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidEmailConfig.Err()
 	}
 
 	// Get and validate reset token (reusing password reset token infrastructure)
@@ -554,14 +463,7 @@ func (s *authService) ResetPassword(
 	if err != nil {
 		if errors.Is(err, storage.ErrPasswordResetTokenNotFound) {
 			s.logger.Error("Invalid reset token", zap.String("token", request.ResetToken))
-			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, statusInvalidResetToken.Err()
 		}
 		s.logger.Error("Failed to get reset token", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
@@ -570,28 +472,14 @@ func (s *authService) ResetPassword(
 	// Check if token is expired
 	if resetToken.IsExpired() {
 		s.logger.Error("Expired reset token", zap.String("email", resetToken.Email))
-		dt, err := auth.StatusExpiredResetToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusExpiredResetToken.Err()
 	}
 
 	// Validate new password complexity
 	err = auth.ValidatePasswordComplexity(request.NewPassword, s.config.Password)
 	if err != nil {
 		s.logger.Error("Password complexity validation failed", zap.Error(err))
-		dt, err := auth.StatusPasswordTooWeak.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: err.Error(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusPasswordTooWeak.Err()
 	}
 
 	// Check if credentials exist (should exist since reset token was valid)
@@ -599,14 +487,7 @@ func (s *authService) ResetPassword(
 	if err != nil {
 		if errors.Is(err, storage.ErrCredentialsNotFound) {
 			s.logger.Error("Reset attempted for account without credentials", zap.String("email", resetToken.Email))
-			dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, statusInvalidResetToken.Err()
 		}
 		s.logger.Error("Failed to check credentials during reset", zap.Error(err))
 		return nil, auth.StatusInternal.Err()
@@ -615,14 +496,7 @@ func (s *authService) ResetPassword(
 	// Check if user has a password (should have one since reset was initiated)
 	if credentials.PasswordHash == "" {
 		s.logger.Error("Reset attempted for account without password", zap.String("email", resetToken.Email))
-		dt, err := auth.StatusInvalidResetToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidResetToken.Err()
 	}
 
 	// Hash new password
@@ -648,7 +522,7 @@ func (s *authService) ResetPassword(
 
 	// Send password changed notification email if email service is enabled
 	if s.emailConfig.Enabled && s.emailService != nil {
-		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email, localizer.GetLocale())
+		err = s.emailService.SendPasswordChangedNotification(ctx, resetToken.Email, locale.En)
 		if err != nil {
 			s.logger.Warn("Failed to send password changed notification",
 				zap.Error(err),
@@ -666,8 +540,7 @@ func (s *authService) ValidatePasswordResetToken(
 	ctx context.Context,
 	request *authproto.ValidatePasswordResetTokenRequest,
 ) (*authproto.ValidatePasswordResetTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validatePasswordResetTokenRequest(request, localizer)
+	err := validatePasswordResetTokenRequest(request)
 	if err != nil {
 		return nil, err
 	}

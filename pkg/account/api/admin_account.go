@@ -29,7 +29,6 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -200,32 +199,11 @@ func (s *AccountService) GetMe(
 	}}, nil
 }
 
-// isPasswordAuthenticationEnabled checks if password authentication is enabled in the organization
-func (s *AccountService) isPasswordAuthenticationEnabled(organization *environmentproto.Organization) bool {
-	if organization.AuthenticationSettings == nil {
-		return false
-	}
-
-	// Check if PASSWORD authentication type is in the enabled types
-	for _, authType := range organization.AuthenticationSettings.EnabledTypes {
-		if authType == environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD {
-			return true
-		}
-	}
-	return false
-}
-
 // checkPasswordSetupRequired determines if the user needs to set up a password
-// It checks both whether the user has existing credentials AND if the organization allows password authentication
+// It checks whether the user has existing credentials
 // When setup is required, it proactively creates empty credentials for the frontend password setup flow
 func (s *AccountService) checkPasswordSetupRequired(ctx context.Context, email string,
 	organization *environmentproto.Organization) bool {
-	// First check if the organization allows password authentication
-	if organization != nil && !s.isPasswordAuthenticationEnabled(organization) {
-		// Organization has disabled password authentication, no setup required
-		return false
-	}
-
 	// Check if user already has password credentials
 	credentials, err := s.credentialsStorage.GetCredentials(ctx, email)
 	if err == nil && credentials.PasswordHash != "" {
