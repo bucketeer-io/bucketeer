@@ -107,7 +107,13 @@
     "Webhook": "Webhook",
     "WebhookRule": "Webhook rule",
     "FlagTrigger": "Flag trigger",
-    "CodeReference": "Code reference"
+    "CodeReference": "Code reference",
+    "CodeReferenceFilePath": "Code reference file path",
+    "CodeReferenceLineNumber": "Code reference line number",
+    "CodeReferenceCodeSnippet": "Code reference code snippet",
+    "CodeReferenceContentHash": "Code reference content hash",
+    "CodeReferenceRepositoryInfo": "Code reference repository info",
+    "CodeReferenceRepositoryType": "Code reference repository type"
   },
   "errors": {
     "RequiredField": "{{field_1}} is required",
