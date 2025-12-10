@@ -26,7 +26,6 @@ type TemplatesByLanguage struct {
 	PasswordSetup   Template `json:"passwordSetup"`
 	PasswordReset   Template `json:"passwordReset"`
 	Welcome         Template `json:"welcome"`
-	MagicLink       Template `json:"magicLink"`
 }
 
 // TemplatesConfig represents email templates for all supported languages

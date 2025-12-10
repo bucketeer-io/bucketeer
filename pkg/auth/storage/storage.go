@@ -32,11 +32,3 @@ type CredentialsStorage interface {
 	GetPasswordResetToken(ctx context.Context, token string) (*domain.PasswordResetToken, error)
 	DeletePasswordResetToken(ctx context.Context, token string) error
 }
-
-// EmailVerificationStorage defines the interface for managing email verification tokens
-type EmailVerificationStorage interface {
-	CreateVerificationToken(ctx context.Context, email, token string, expiresAt int64, ipAddress, userAgent string) error
-	GetVerificationToken(ctx context.Context, token string) (*domain.EmailVerificationToken, error)
-	MarkVerified(ctx context.Context, token string, verifiedAt int64) error
-	DeleteExpiredTokens(ctx context.Context, before int64) error
-}

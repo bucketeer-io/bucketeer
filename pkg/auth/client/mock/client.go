@@ -174,26 +174,6 @@ func (mr *MockClientMockRecorder) RefreshToken(ctx, in any, opts ...any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockClient)(nil).RefreshToken), varargs...)
 }
 
-// RequestMagicLink mocks base method.
-func (m *MockClient) RequestMagicLink(ctx context.Context, in *auth.RequestMagicLinkRequest, opts ...grpc.CallOption) (*auth.RequestMagicLinkResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RequestMagicLink", varargs...)
-	ret0, _ := ret[0].(*auth.RequestMagicLinkResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RequestMagicLink indicates an expected call of RequestMagicLink.
-func (mr *MockClientMockRecorder) RequestMagicLink(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestMagicLink", reflect.TypeOf((*MockClient)(nil).RequestMagicLink), varargs...)
-}
-
 // ResetPassword mocks base method.
 func (m *MockClient) ResetPassword(ctx context.Context, in *auth.ResetPasswordRequest, opts ...grpc.CallOption) (*auth.ResetPasswordResponse, error) {
 	m.ctrl.T.Helper()
@@ -332,24 +312,4 @@ func (mr *MockClientMockRecorder) ValidatePasswordSetupToken(ctx, in any, opts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatePasswordSetupToken", reflect.TypeOf((*MockClient)(nil).ValidatePasswordSetupToken), varargs...)
-}
-
-// VerifyMagicLink mocks base method.
-func (m *MockClient) VerifyMagicLink(ctx context.Context, in *auth.VerifyMagicLinkRequest, opts ...grpc.CallOption) (*auth.VerifyMagicLinkResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "VerifyMagicLink", varargs...)
-	ret0, _ := ret[0].(*auth.VerifyMagicLinkResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VerifyMagicLink indicates an expected call of VerifyMagicLink.
-func (mr *MockClientMockRecorder) VerifyMagicLink(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyMagicLink", reflect.TypeOf((*MockClient)(nil).VerifyMagicLink), varargs...)
 }

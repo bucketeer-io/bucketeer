@@ -15,8 +15,6 @@
 package api
 
 import (
-	"strings"
-
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
@@ -133,51 +131,6 @@ func validateSignInRequest(
 		dt, err := auth.StateMissingPassword.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "password"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateRequestMagicLinkRequest(
-	req *authproto.RequestMagicLinkRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Email == "" {
-		dt, err := auth.StatusMissingEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	// Basic email format validation
-	if !strings.Contains(req.Email, "@") {
-		dt, err := auth.StatusMissingEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateVerifyMagicLinkRequest(
-	req *authproto.VerifyMagicLinkRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Token == "" {
-		dt, err := auth.StatusMissingToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "token"),
 		})
 		if err != nil {
 			return auth.StatusInternal.Err()
