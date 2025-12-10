@@ -53,11 +53,11 @@ func NewEnvironmentV2(
 		OrganizationId:               organizationID,
 		Archived:                     false,
 		RequireComment:               requireComment,
-		CreatedAt:                    now,
-		UpdatedAt:                    now,
-		AutoArchiveEnabled:           false,
-		AutoArchiveUnusedDays:        90,
-		AutoArchiveRequireNoCodeRefs: true,
+		CreatedAt:                 now,
+		UpdatedAt:                 now,
+		AutoArchiveEnabled:        false,
+		AutoArchiveUnusedDays:     90,
+		AutoArchiveCheckCodeRefs:  true,
 	}}, nil
 }
 
@@ -68,7 +68,7 @@ func (e *EnvironmentV2) Update(
 	archived *wrapperspb.BoolValue,
 	autoArchiveEnabled *wrapperspb.BoolValue,
 	autoArchiveUnusedDays *wrapperspb.Int32Value,
-	autoArchiveRequireNoCodeRefs *wrapperspb.BoolValue,
+	autoArchiveCheckCodeRefs *wrapperspb.BoolValue,
 ) (*EnvironmentV2, error) {
 	updated := &EnvironmentV2{}
 	if err := copier.Copy(updated, e); err != nil {
@@ -93,8 +93,8 @@ func (e *EnvironmentV2) Update(
 	if autoArchiveUnusedDays != nil {
 		updated.AutoArchiveUnusedDays = autoArchiveUnusedDays.Value
 	}
-	if autoArchiveRequireNoCodeRefs != nil {
-		updated.AutoArchiveRequireNoCodeRefs = autoArchiveRequireNoCodeRefs.Value
+	if autoArchiveCheckCodeRefs != nil {
+		updated.AutoArchiveCheckCodeRefs = autoArchiveCheckCodeRefs.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()

@@ -6,7 +6,7 @@ ALTER TABLE environment_v2
   ADD COLUMN auto_archive_unused_days INT NOT NULL DEFAULT 90;
 
 ALTER TABLE environment_v2
-  ADD COLUMN auto_archive_require_no_code_refs BOOLEAN NOT NULL DEFAULT TRUE;
+  ADD COLUMN auto_archive_check_code_refs BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Create index for efficient lookup of environments with auto-archive enabled
 CREATE INDEX idx_environment_auto_archive_enabled

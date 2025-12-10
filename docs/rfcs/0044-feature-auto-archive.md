@@ -48,7 +48,7 @@ Add three columns to the existing `environment_v2` table to store auto-archive c
 ALTER TABLE environment_v2
   ADD COLUMN auto_archive_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN auto_archive_unused_days INT NOT NULL DEFAULT 90,
-  ADD COLUMN auto_archive_require_no_code_refs BOOLEAN NOT NULL DEFAULT TRUE;
+  ADD COLUMN auto_archive_check_code_refs BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE INDEX idx_environment_auto_archive_enabled
   ON environment_v2 (auto_archive_enabled);
@@ -95,7 +95,7 @@ message EnvironmentV2 {
   // NEW: Auto-archive configuration
   bool auto_archive_enabled = 12;
   int32 auto_archive_unused_days = 13;
-  bool auto_archive_require_no_code_refs = 14;
+  bool auto_archive_check_code_refs = 14;
 }
 ```
 
@@ -111,7 +111,7 @@ message UpdateEnvironmentV2Request {
   // NEW: Auto-archive configuration
   google.protobuf.BoolValue auto_archive_enabled = X;
   google.protobuf.Int32Value auto_archive_unused_days = Y;
-  google.protobuf.BoolValue auto_archive_require_no_code_refs = Z;
+  google.protobuf.BoolValue auto_archive_check_code_refs = Z;
 }
 ```
 

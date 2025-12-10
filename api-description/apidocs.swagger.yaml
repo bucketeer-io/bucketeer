@@ -7091,7 +7091,7 @@ definitions:
       autoArchiveUnusedDays:
         type: integer
         format: int32
-      autoArchiveRequireNoCodeRefs:
+      autoArchiveCheckCodeRefs:
         type: boolean
   environmentListEnvironmentsV2RequestOrderBy:
     type: string

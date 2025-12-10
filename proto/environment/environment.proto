@@ -32,5 +32,5 @@ message EnvironmentV2 {
   // Auto-archive configuration
   bool auto_archive_enabled = 12;
   int32 auto_archive_unused_days = 13;
-  bool auto_archive_require_no_code_refs = 14;
+  bool auto_archive_check_code_refs = 14;
 }

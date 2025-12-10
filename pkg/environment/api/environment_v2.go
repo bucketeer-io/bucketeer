@@ -572,7 +572,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 			req.Archived,
 			req.AutoArchiveEnabled,
 			req.AutoArchiveUnusedDays,
-			req.AutoArchiveRequireNoCodeRefs,
+			req.AutoArchiveCheckCodeRefs,
 		)
 		if err != nil {
 			return err

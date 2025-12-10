@@ -88,7 +88,7 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 		e.UpdatedAt,
 		e.AutoArchiveEnabled,
 		e.AutoArchiveUnusedDays,
-		e.AutoArchiveRequireNoCodeRefs,
+		e.AutoArchiveCheckCodeRefs,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -111,7 +111,7 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 		e.UpdatedAt,
 		e.AutoArchiveEnabled,
 		e.AutoArchiveUnusedDays,
-		e.AutoArchiveRequireNoCodeRefs,
+		e.AutoArchiveCheckCodeRefs,
 		e.Id,
 	)
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 		&environment.UpdatedAt,
 		&environment.AutoArchiveEnabled,
 		&environment.AutoArchiveUnusedDays,
-		&environment.AutoArchiveRequireNoCodeRefs,
+		&environment.AutoArchiveCheckCodeRefs,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -203,7 +203,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 			&environment.UpdatedAt,
 			&environment.AutoArchiveEnabled,
 			&environment.AutoArchiveUnusedDays,
-			&environment.AutoArchiveRequireNoCodeRefs,
+			&environment.AutoArchiveCheckCodeRefs,
 			&environment.FeatureFlagCount,
 		)
 		if err != nil {
@@ -247,7 +247,7 @@ func (s *environmentStorage) ListAutoArchiveEnabledEnvironments(ctx context.Cont
 			&environment.UpdatedAt,
 			&environment.AutoArchiveEnabled,
 			&environment.AutoArchiveUnusedDays,
-			&environment.AutoArchiveRequireNoCodeRefs,
+			&environment.AutoArchiveCheckCodeRefs,
 		)
 		if err != nil {
 			return nil, err

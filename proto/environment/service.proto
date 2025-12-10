@@ -113,7 +113,7 @@ message UpdateEnvironmentV2Request {
   // Auto-archive configuration
   google.protobuf.BoolValue auto_archive_enabled = 9;
   google.protobuf.Int32Value auto_archive_unused_days = 10;
-  google.protobuf.BoolValue auto_archive_require_no_code_refs = 11;
+  google.protobuf.BoolValue auto_archive_check_code_refs = 11;
 }
 
 message UpdateEnvironmentV2Response {}

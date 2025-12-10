@@ -11091,7 +11091,7 @@ definitions:
       autoArchiveUnusedDays:
         type: integer
         format: int32
-      autoArchiveRequireNoCodeRefs:
+      autoArchiveCheckCodeRefs:
         type: boolean
   environmentExchangeDemoTokenRequest:
     type: object
@@ -11340,7 +11340,7 @@ definitions:
       autoArchiveUnusedDays:
         type: integer
         format: int32
-      autoArchiveRequireNoCodeRefs:
+      autoArchiveCheckCodeRefs:
         type: boolean
     required:
       - id

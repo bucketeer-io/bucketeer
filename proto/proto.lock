@@ -13268,7 +13268,7 @@
               },
               {
                 "id": 14,
-                "name": "auto_archive_require_no_code_refs",
+                "name": "auto_archive_check_code_refs",
                 "type": "bool"
               }
             ]
@@ -13933,7 +13933,7 @@
               },
               {
                 "id": 11,
-                "name": "auto_archive_require_no_code_refs",
+                "name": "auto_archive_check_code_refs",
                 "type": "google.protobuf.BoolValue"
               }
             ]

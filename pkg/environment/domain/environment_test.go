@@ -43,7 +43,7 @@ func TestNewEnvironmentV2(t *testing.T) {
 	// Auto-archive default values
 	assert.Equal(t, false, env.AutoArchiveEnabled)
 	assert.Equal(t, int32(90), env.AutoArchiveUnusedDays)
-	assert.Equal(t, true, env.AutoArchiveRequireNoCodeRefs)
+	assert.Equal(t, true, env.AutoArchiveCheckCodeRefs)
 }
 
 func TestUpdateEnvironmentV2(t *testing.T) {
@@ -76,7 +76,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	// Auto-archive settings
 	assert.Equal(t, true, updated.AutoArchiveEnabled)
 	assert.Equal(t, int32(30), updated.AutoArchiveUnusedDays)
-	assert.Equal(t, false, updated.AutoArchiveRequireNoCodeRefs)
+	assert.Equal(t, false, updated.AutoArchiveCheckCodeRefs)
 }
 
 func TestRenameEnvironmentV2(t *testing.T) {
