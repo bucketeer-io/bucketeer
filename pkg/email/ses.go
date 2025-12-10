@@ -136,26 +136,6 @@ func (s *SESService) SendWelcomeEmail(ctx context.Context, to string, language s
 	return nil
 }
 
-func (s *SESService) SendMagicLinkEmail(
-	ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string,
-) error {
-	subject, body := s.renderer.RenderMagicLinkEmail(language, magicLinkURL, expiresIn, to)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send magic link email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send magic link email: %w", err)
-	}
-
-	s.logger.Info("Magic link email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
 func (s *SESService) sendEmail(ctx context.Context, to, subject, body string) error {
 	input := &sesv2.SendEmailInput{
 		FromEmailAddress: aws.String(s.config.Sender.Email),

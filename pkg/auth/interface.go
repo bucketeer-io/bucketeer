@@ -130,58 +130,10 @@ func (c *PasswordAuthConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type MagicLinkTokensConfig struct {
-	VerifyTTL time.Duration `json:"verifyTTL"`
-}
-
-type MagicLinkURLsConfig struct {
-	VerifyPath string `json:"verifyPath"` // Path for magic link verification page
-	TokenParam string `json:"tokenParam"` // URL parameter name for token
-}
-
-type MagicLinkAuthConfig struct {
-	Enabled bool                  `json:"enabled"`
-	Tokens  MagicLinkTokensConfig `json:"tokens"`
-	URLs    MagicLinkURLsConfig   `json:"urls"`
-}
-
-// UnmarshalJSON implements custom JSON unmarshaling for MagicLinkAuthConfig
-// to handle duration strings like "15m", "1h" in the Tokens field
-func (c *MagicLinkAuthConfig) UnmarshalJSON(data []byte) error {
-	type TokensAlias struct {
-		VerifyTTL string `json:"verifyTTL"`
-	}
-
-	type Alias struct {
-		Enabled bool                `json:"enabled"`
-		Tokens  TokensAlias         `json:"tokens"`
-		URLs    MagicLinkURLsConfig `json:"urls"`
-	}
-
-	var aux Alias
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	c.Enabled = aux.Enabled
-	c.URLs = aux.URLs
-
-	if aux.Enabled {
-		verifyTTL, err := time.ParseDuration(aux.Tokens.VerifyTTL)
-		if err != nil {
-			return fmt.Errorf("failed to parse verifyTTL: %w", err)
-		}
-		c.Tokens.VerifyTTL = verifyTTL
-	}
-
-	return nil
-}
-
 type OAuthConfig struct {
-	Issuer       string              `json:"issuer"`
-	Audience     string              `json:"audience"`
-	GoogleConfig GoogleConfig        `json:"google"`
-	Password     PasswordAuthConfig  `json:"password"`
-	MagicLink    MagicLinkAuthConfig `json:"magicLink"`
-	DemoSignIn   DemoSignInConfig    `json:"demoSignIn"`
+	Issuer       string             `json:"issuer"`
+	Audience     string             `json:"audience"`
+	GoogleConfig GoogleConfig       `json:"google"`
+	Password     PasswordAuthConfig `json:"password"`
+	DemoSignIn   DemoSignInConfig   `json:"demoSignIn"`
 }

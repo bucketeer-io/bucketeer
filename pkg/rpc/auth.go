@@ -44,8 +44,6 @@ const (
 	initiatePasswordSetupName  = "/bucketeer.auth.AuthService/InitiatePasswordSetup"
 	setupPasswordName          = "/bucketeer.auth.AuthService/SetupPassword"
 	validatePasswordSetupName  = "/bucketeer.auth.AuthService/ValidatePasswordSetupToken"
-	requestMagicLinkName       = "/bucketeer.auth.AuthService/RequestMagicLink"
-	verifyMagicLinkName        = "/bucketeer.auth.AuthService/VerifyMagicLink"
 )
 
 type authFunc func(verifier token.Verifier, token string) (interface{}, error)
@@ -82,8 +80,6 @@ var (
 		initiatePasswordSetupName,
 		setupPasswordName,
 		validatePasswordSetupName,
-		requestMagicLinkName,
-		verifyMagicLinkName,
 	}
 )
 

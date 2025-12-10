@@ -119,26 +119,6 @@ func (s *MailerSendService) SendWelcomeEmail(ctx context.Context, to string, lan
 	return nil
 }
 
-func (s *MailerSendService) SendMagicLinkEmail(
-	ctx context.Context, to, magicLinkURL string, expiresIn time.Duration, language string,
-) error {
-	subject, body := s.renderer.RenderMagicLinkEmail(language, magicLinkURL, expiresIn, to)
-
-	err := s.sendEmail(ctx, to, subject, body)
-	if err != nil {
-		s.logger.Error("Failed to send magic link email",
-			zap.Error(err),
-			zap.String("to", to),
-		)
-		return fmt.Errorf("failed to send magic link email: %w", err)
-	}
-
-	s.logger.Info("Magic link email sent successfully",
-		zap.String("to", to),
-	)
-	return nil
-}
-
 func (s *MailerSendService) sendEmail(ctx context.Context, to, subject, body string) error {
 	// Create the message using MailerSend's message builder
 	message := s.client.Email.NewMessage()

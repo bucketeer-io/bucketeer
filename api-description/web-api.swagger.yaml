@@ -1476,95 +1476,6 @@ paths:
             $ref: '#/definitions/authExchangeTokenRequest'
       tags:
         - Authentication
-  /v1/auth/magic_link/request:
-    post:
-      summary: Request Magic Link
-      description: Initiate magic link authentication by sending a verification email to users. Returns a generic success message regardless of whether the email exists to prevent user enumeration attacks.
-      operationId: web.v1.auth.request_magic_link
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authRequestMagicLinkResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authRequestMagicLinkRequest'
-      tags:
-        - Authentication
-  /v1/auth/magic_link/verify:
-    post:
-      summary: Verify Magic Link
-      description: Verify a magic link token and return the verified email address along with the user's organizations and their authentication settings.
-      operationId: web.v1.auth.verify_magic_link
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/authVerifyMagicLinkResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "404":
-          description: Token not found or expired.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 5
-              details: []
-              message: token not found or expired
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/authVerifyMagicLinkRequest'
-      tags:
-        - Authentication
   /v1/auth/password:
     put:
       summary: Update Password
@@ -9656,8 +9567,6 @@ definitions:
         type: string
       type:
         $ref: '#/definitions/authAuthType'
-      organizationId:
-        type: string
   authExchangeTokenResponse:
     type: object
     properties:
@@ -9714,17 +9623,6 @@ definitions:
     properties:
       token:
         $ref: '#/definitions/authToken'
-  authRequestMagicLinkRequest:
-    type: object
-    properties:
-      email:
-        type: string
-    title: Magic Link Authentication Messages
-  authRequestMagicLinkResponse:
-    type: object
-    properties:
-      message:
-        type: string
   authResetPasswordRequest:
     type: object
     properties:
@@ -9749,8 +9647,6 @@ definitions:
       email:
         type: string
       password:
-        type: string
-      organizationId:
         type: string
   authSignInResponse:
     type: object
@@ -9815,21 +9711,6 @@ definitions:
         type: boolean
       email:
         type: string
-  authVerifyMagicLinkRequest:
-    type: object
-    properties:
-      token:
-        type: string
-  authVerifyMagicLinkResponse:
-    type: object
-    properties:
-      email:
-        type: string
-      organizations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerauthOrganization'
   autoopsActionType:
     type: string
     enum:
@@ -10339,58 +10220,6 @@ definitions:
       - UPDATE
       - DELETE
     default: UNSPECIFIED
-  bucketeerauthAuthenticationSettings:
-    type: object
-    properties:
-      enabledTypes:
-        type: array
-        items:
-          $ref: '#/definitions/bucketeerauthAuthenticationType'
-  bucketeerauthAuthenticationType:
-    type: string
-    enum:
-      - AUTHENTICATION_TYPE_UNSPECIFIED
-      - AUTHENTICATION_TYPE_GOOGLE
-      - AUTHENTICATION_TYPE_PASSWORD
-    default: AUTHENTICATION_TYPE_UNSPECIFIED
-  bucketeerauthOrganization:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      urlCode:
-        type: string
-      description:
-        type: string
-      disabled:
-        type: boolean
-      archived:
-        type: boolean
-      trial:
-        type: boolean
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      systemAdmin:
-        type: boolean
-      projectCount:
-        type: integer
-        format: int32
-      environmentCount:
-        type: integer
-        format: int32
-      userCount:
-        type: integer
-        format: int32
-      ownerEmail:
-        type: string
-      authenticationSettings:
-        $ref: '#/definitions/bucketeerauthAuthenticationSettings'
   bucketeerautoopsChangeType:
     type: string
     enum:
@@ -10416,23 +10245,6 @@ definitions:
     properties:
       id:
         type: string
-  bucketeerenvironmentAuthenticationSettings:
-    type: object
-    properties:
-      enabledTypes:
-        type: array
-        items:
-          $ref: '#/definitions/bucketeerenvironmentAuthenticationType'
-        description: |-
-          Future authentication-specific settings can be added here
-           For example: password_policy, google_domain_restrictions, etc.
-  bucketeerenvironmentAuthenticationType:
-    type: string
-    enum:
-      - AUTHENTICATION_TYPE_UNSPECIFIED
-      - AUTHENTICATION_TYPE_GOOGLE
-      - AUTHENTICATION_TYPE_PASSWORD
-    default: AUTHENTICATION_TYPE_UNSPECIFIED
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -10471,7 +10283,7 @@ definitions:
       ownerEmail:
         type: string
       authenticationSettings:
-        $ref: '#/definitions/bucketeerenvironmentAuthenticationSettings'
+        $ref: '#/definitions/environmentAuthenticationSettings'
   bucketeereventcounterSummary:
     type: object
     properties:
@@ -11059,6 +10871,23 @@ definitions:
         $ref: '#/definitions/environmentArchiveOrganizationCommand'
   environmentArchiveOrganizationResponse:
     type: object
+  environmentAuthenticationSettings:
+    type: object
+    properties:
+      enabledTypes:
+        type: array
+        items:
+          $ref: '#/definitions/environmentAuthenticationType'
+        description: |-
+          Future authentication-specific settings can be added here
+           For example: password_policy, google_domain_restrictions, etc.
+  environmentAuthenticationType:
+    type: string
+    enum:
+      - AUTHENTICATION_TYPE_UNSPECIFIED
+      - AUTHENTICATION_TYPE_GOOGLE
+      - AUTHENTICATION_TYPE_PASSWORD
+    default: AUTHENTICATION_TYPE_UNSPECIFIED
   environmentChangeDescriptionEnvironmentV2Command:
     type: object
     properties:
@@ -11203,7 +11032,7 @@ definitions:
       ownerEmail:
         type: string
       authenticationSettings:
-        $ref: '#/definitions/bucketeerenvironmentAuthenticationSettings'
+        $ref: '#/definitions/environmentAuthenticationSettings'
     required:
       - name
       - urlCode
@@ -11632,7 +11461,7 @@ definitions:
       ownerEmail:
         type: string
       authenticationSettings:
-        $ref: '#/definitions/bucketeerenvironmentAuthenticationSettings'
+        $ref: '#/definitions/environmentAuthenticationSettings'
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:

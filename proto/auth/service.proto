@@ -43,7 +43,6 @@ message ExchangeTokenRequest {
   string code = 1;
   string redirect_url = 2;
   AuthType type = 3;
-  string organization_id = 4;
 }
 
 message ExchangeTokenResponse {
@@ -61,7 +60,6 @@ message RefreshTokenResponse {
 message SignInRequest {
   string email = 1;
   string password = 2;
-  string organization_id = 3;
 }
 
 message SignInResponse {
@@ -139,52 +137,6 @@ message ValidatePasswordResetTokenRequest {
 message ValidatePasswordResetTokenResponse {
   bool is_valid = 1;
   string email = 2;
-}
-
-// Magic Link Authentication Messages
-message RequestMagicLinkRequest {
-  string email = 1;
-}
-
-message RequestMagicLinkResponse {
-  string message = 1;
-}
-
-message VerifyMagicLinkRequest {
-  string token = 1;
-}
-
-enum AuthenticationType {
-  AUTHENTICATION_TYPE_UNSPECIFIED = 0;
-  AUTHENTICATION_TYPE_GOOGLE = 1;
-  AUTHENTICATION_TYPE_PASSWORD = 2;
-}
-
-message AuthenticationSettings {
-  repeated AuthenticationType enabled_types = 1;
-}
-
-message Organization {
-  string id = 1;
-  string name = 2;
-  string url_code = 3;
-  string description = 4;
-  bool disabled = 5;
-  bool archived = 6;
-  bool trial = 7;
-  int64 created_at = 8;
-  int64 updated_at = 9;
-  bool system_admin = 10;
-  int32 project_count = 11;
-  int32 environment_count = 12;
-  int32 user_count = 13;
-  string owner_email = 14;
-  AuthenticationSettings authentication_settings = 15;
-}
-
-message VerifyMagicLinkResponse {
-  string email = 1;
-  repeated Organization organizations = 2;
 }
 
 service AuthService {
@@ -556,68 +508,6 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-
-  // Magic Link Authentication APIs
-  rpc RequestMagicLink(RequestMagicLinkRequest)
-      returns (RequestMagicLinkResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/magic_link/request"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Request Magic Link",
-      description: "Initiate magic link authentication by sending a verification email to users. Returns a generic success message regardless of whether the email exists to prevent user enumeration attacks.",
-      tags: "Authentication",
-      operation_id: "web.v1.auth.request_magic_link",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-
-  rpc VerifyMagicLink(VerifyMagicLinkRequest)
-      returns (VerifyMagicLinkResponse) {
-    option (google.api.http) = {
-      post: "/v1/auth/magic_link/verify"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Verify Magic Link",
-      description: "Verify a magic link token and return the verified email address along with the user's organizations and their authentication settings.",
-      tags: "Authentication",
-      operation_id: "web.v1.auth.verify_magic_link",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "404"
-        value: {
-          description: "Token not found or expired."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 5, "message": "token not found or expired", "details": [] }'
           }
         }
       }

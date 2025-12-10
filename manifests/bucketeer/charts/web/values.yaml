@@ -118,13 +118,6 @@ oauth:
       resetPath:
       setupPath:
       tokenParam:
-  magicLink:
-    enabled:
-    tokens:
-      verifyTTL: 15m
-    urls:
-      verifyPath:
-      tokenParam:
 demoSignIn:
     enabled:
     email:
