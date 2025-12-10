@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import (
 	"context"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 // CredentialsStorage defines the interface for managing account credentials
@@ -31,4 +33,13 @@ type CredentialsStorage interface {
 	SetPasswordResetToken(ctx context.Context, email, token string, expiresAt int64) error
 	GetPasswordResetToken(ctx context.Context, token string) (*domain.PasswordResetToken, error)
 	DeletePasswordResetToken(ctx context.Context, token string) error
+}
+
+// DomainPolicyStorage defines the interface for managing domain authentication policies
+type DomainPolicyStorage interface {
+	CreateDomainPolicy(ctx context.Context, policy *domain.DomainAuthPolicy) error
+	GetDomainPolicy(ctx context.Context, domainName string) (*domain.DomainAuthPolicy, error)
+	UpdateDomainPolicy(ctx context.Context, policy *domain.DomainAuthPolicy) error
+	DeleteDomainPolicy(ctx context.Context, domainName string) error
+	ListDomainPolicies(ctx context.Context, options *mysql.ListOptions) ([]*authproto.DomainAuthPolicy, int, int64, error)
 }

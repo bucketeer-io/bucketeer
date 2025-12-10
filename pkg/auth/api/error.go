@@ -44,4 +44,36 @@ var (
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "access denied"))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.AuthPackageName, "not authenticated"))
+
+	// Password-related errors
+	statusMissingCurrentPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "current password must not be empty", "CurrentPassword"))
+	statusMissingNewPassword = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "new password must not be empty", "NewPassword"))
+	statusPasswordsIdentical = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AuthPackageName,
+			"new password must be different from current password",
+			"NewPassword",
+		))
+	statusMissingEmail = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "Email"))
+	statusInvalidEmailConfig = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid email configuration", "EmailConfig"))
+	statusPasswordNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "password not found", "Password"))
+	statusPasswordMismatch = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password mismatch", "Password"))
+	statusPasswordTooWeak = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "password too weak", "Password"))
+	statusPasswordAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.AuthPackageName, "password already exists"))
+	statusInvalidResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid reset token", "ResetToken"))
+	statusExpiredResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.AuthPackageName, "reset token expired"))
+	statusMissingResetToken = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "reset token must not be empty", "ResetToken"))
+	statusEmailServiceUnavailable = api.NewGRPCStatus(
+		pkgErr.NewErrorUnavailable(pkgErr.AuthPackageName, "email service unavailable"))
 )
