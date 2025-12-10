@@ -192,13 +192,6 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		return nil, err
 	}
 
-	// Demo organizations need both Google and Password authentication enabled
-	authSettings := &environmentproto.AuthenticationSettings{
-		EnabledTypes: []environmentproto.AuthenticationType{
-			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
-			environmentproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
-		},
-	}
 	organization, err := s.createOrganizationMySQL(
 		ctx,
 		req.Name,
@@ -207,7 +200,6 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
-		authSettings,
 	)
 	if err != nil {
 		return nil, err
@@ -321,7 +313,6 @@ func (s *EnvironmentService) CreateOrganization(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
-		req.AuthenticationSettings,
 	)
 	if err != nil {
 		return nil, err
@@ -386,7 +377,6 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
-	authenticationSettings *environmentproto.AuthenticationSettings,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
 		name,
@@ -395,7 +385,6 @@ func (s *EnvironmentService) createOrganizationMySQL(
 		description,
 		isTrial,
 		isSystemAdmin,
-		authenticationSettings,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -623,7 +612,6 @@ func (s *EnvironmentService) UpdateOrganization(
 			req.Name,
 			req.Description,
 			req.OwnerEmail,
-			req.AuthenticationSettings,
 		)
 		if err != nil {
 			return err
