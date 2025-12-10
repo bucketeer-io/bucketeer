@@ -112,6 +112,7 @@ type authService struct {
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	credentialsStorage  storage.CredentialsStorage
+	domainPolicyStorage storage.DomainPolicyStorage
 	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
@@ -130,7 +131,8 @@ func NewAuthService(
 	environmentStorage envstotage.EnvironmentStorage,
 	config *auth.OAuthConfig,
 	emailConfig *email.Config,
-	credentialsStorage storage.CredentialsStorage,
+	credentialsStorage  storage.CredentialsStorage,
+	domainPolicyStorage storage.DomainPolicyStorage,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -167,10 +169,11 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		credentialsStorage: credentialsStorage,
-		emailService:       emailService,
-		opts:               &options,
-		logger:             logger,
+		credentialsStorage:  credentialsStorage,
+		domainPolicyStorage: domainPolicyStorage,
+		emailService:        emailService,
+		opts:                &options,
+		logger:              logger,
 	}
 	service.PrepareDemoUser()
 	return service
@@ -279,7 +282,7 @@ func (s *authService) ExchangeToken(
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -291,7 +294,7 @@ func (s *authService) ExchangeToken(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
+	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
@@ -779,12 +782,6 @@ func (s *authService) PrepareDemoUser() {
 						CreatedAt:   now.Unix(),
 						UpdatedAt:   now.Unix(),
 						SystemAdmin: config.IsSystemAdmin,
-						AuthenticationSettings: &envproto.AuthenticationSettings{
-							EnabledTypes: []envproto.AuthenticationType{
-								envproto.AuthenticationType_AUTHENTICATION_TYPE_GOOGLE,
-								envproto.AuthenticationType_AUTHENTICATION_TYPE_PASSWORD,
-							},
-						},
 					},
 				})
 			}
