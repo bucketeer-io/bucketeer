@@ -119,6 +119,9 @@ func NewClient(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	if dopts.metrics != nil {
+		registerMetrics(dopts.metrics)
+	}
 	logger := dopts.logger.Named(postgres)
 	dsn := fmt.Sprintf(
 		"%s://%s:%s@%s:%d/%s?sslmode=disable",

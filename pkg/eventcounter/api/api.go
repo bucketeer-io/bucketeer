@@ -45,6 +45,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
@@ -72,6 +73,7 @@ type DataWarehouseConfig struct {
 	Timezone  string                      `yaml:"timezone"`
 	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
 	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
+	Postgres  DataWarehousePostgresConfig `yaml:"postgres"`
 }
 
 type DataWarehouseBigQueryConfig struct {
@@ -81,6 +83,15 @@ type DataWarehouseBigQueryConfig struct {
 }
 
 type DataWarehouseMySQLConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
+}
+
+type DataWarehousePostgresConfig struct {
 	UseMainConnection bool   `yaml:"useMainConnection"`
 	Host              string `yaml:"host"`
 	Port              int    `yaml:"port"`
@@ -137,6 +148,7 @@ type eventCounterService struct {
 
 func NewEventCounterService(
 	mc mysql.Client,
+	pc postgres.Client,
 	e experimentclient.Client,
 	f featureclient.Client,
 	a accountclient.Client,
@@ -192,6 +204,37 @@ func NewEventCounterService(
 				zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
 			)
 			eventStorage = v2ecstorage.NewMySQLEventStorage(customMySQLClient, dopts.logger)
+		}
+	case "postgres":
+		// Use the main Postgres client if useMainConnection is true or no custom connection specified
+		if dopts.dataWarehouseConfig.MySQL.UseMainConnection || dopts.dataWarehouseConfig.Postgres.Host == "" {
+			eventStorage = v2ecstorage.NewPostgresEventStorage(pc, dopts.logger)
+		} else {
+			// Create custom Postgres client with the specified connection details
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			customPostgresClient, err := createCustomPostgresClient(
+				ctx,
+				dopts.dataWarehouseConfig.Postgres,
+				dopts.logger,
+			)
+			if err != nil {
+				dopts.logger.Error("Failed to create custom Postgres client for data warehouse",
+					zap.Error(err),
+					zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
+					zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
+				)
+				// Return nil to cause service initialization to fail
+				// This prevents data inconsistency by ensuring we don't silently fall back
+				return nil
+			}
+
+			dopts.logger.Info("Using custom Postgres connection for data warehouse",
+				zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
+				zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
+			)
+			eventStorage = v2ecstorage.NewPostgresEventStorage(customPostgresClient, dopts.logger)
 		}
 	case "bigquery":
 		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
@@ -1617,6 +1660,47 @@ func createCustomMySQLClient(
 	}
 
 	logger.Info("Created custom MySQL client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+
+	return client, nil
+}
+
+// createCustomPostgresClient creates a dedicated Postgres client with the specified connection details
+func createCustomPostgresClient(
+	ctx context.Context,
+	config DataWarehousePostgresConfig,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	// Validate required fields
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("postgres host, database, and user are required for custom connection")
+	}
+
+	// Set default port if not specified
+	port := config.Port
+	if port == 0 {
+		port = 5432 // Default Postgres port
+	}
+
+	// Create Postgres client with custom connection
+	client, err := postgres.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		postgres.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Postgres client: %w", err)
+	}
+
+	logger.Info("Created custom Postgres client for data warehouse",
 		zap.String("host", config.Host),
 		zap.Int("port", port),
 		zap.String("database", config.Database),

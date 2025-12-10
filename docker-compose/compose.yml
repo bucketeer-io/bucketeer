@@ -33,7 +33,7 @@ services:
       - bucketeer
 
   postgres:
-    image: timescale/timescaledb:${POSTGRES_TIMESCALEDB_VERSION:-2.24.0-pg18}
+    image: postgres:${POSTGRES_VERSION:-18}
     container_name: bucketeer-postgres
     restart: unless-stopped
     environment:
@@ -46,10 +46,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-    command: [
-      "postgres",
-      "-c", "shared_preload_libraries=timescaledb"
-    ]
     healthcheck:
       test: [ "CMD-SHELL", "export PGPASSWORD=`cat /run/secrets/db_password` && pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
@@ -86,7 +82,7 @@ services:
       - migrate
       - apply
       - -u
-      - mysql://bucketeer:bucketeer@mysql:3306/bucketeer
+      - mysql://root:root@mysql:3306/bucketeer
       - --baseline
       - "20240626022133"
     networks:
@@ -108,6 +104,11 @@ services:
       - BUCKETEER_WEB_MYSQL_HOST=mysql
       - BUCKETEER_WEB_MYSQL_PORT=3306
       - BUCKETEER_WEB_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_WEB_POSTGRES_USER=bucketeer
+      - BUCKETEER_WEB_POSTGRES_PASS=bucketeer
+      - BUCKETEER_WEB_POSTGRES_HOST=postgres
+      - BUCKETEER_WEB_POSTGRES_PORT=5432
+      - BUCKETEER_WEB_POSTGRES_DB_NAME=bucketeer
       - BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME=persistent-redis
       - BUCKETEER_WEB_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_WEB_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -346,6 +347,11 @@ services:
       - BUCKETEER_SUBSCRIBER_MYSQL_PORT=3306
       - BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS=50
+      - BUCKETEER_SUBSCRIBER_POSTGRES_USER=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_PASS=bucketeer
+      - BUCKETEER_SUBSCRIBER_POSTGRES_HOST=postgres
+      - BUCKETEER_SUBSCRIBER_POSTGRES_PORT=5432
+      - BUCKETEER_SUBSCRIBER_POSTGRES_DB_NAME=bucketeer
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR=redis:6379
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_IDLE=25

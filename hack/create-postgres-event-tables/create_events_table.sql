@@ -1,6 +1,3 @@
--- -- Enable TimescaleDB extension
-CREATE EXTENSION IF NOT EXISTS timescaledb;
-
 -- Create Evaluation Event Table
 CREATE TABLE IF NOT EXISTS evaluation_event (
     id VARCHAR(255) NOT NULL,
@@ -15,7 +12,7 @@ CREATE TABLE IF NOT EXISTS evaluation_event (
     tag VARCHAR(255),
     source_id VARCHAR(255),
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, "timestamp") -- Add timestamp to primary key for timescaleDB partitioning
+    PRIMARY KEY (id)
 );
 
 -- Create Indexes
@@ -24,19 +21,6 @@ CREATE INDEX IF NOT EXISTS  idx_evaluation_timestamp ON evaluation_event ("times
 CREATE INDEX IF NOT EXISTS  idx_evaluation_feature_id ON evaluation_event (feature_id);
 CREATE INDEX IF NOT EXISTS  idx_evaluation_user_id ON evaluation_event (user_id);
 CREATE INDEX IF NOT EXISTS  idx_evaluation_variation_id ON evaluation_event (variation_id);
-
--- -- Convert to hypertable with 1 month chunks
-SELECT create_hypertable('evaluation_event', 'timestamp', chunk_time_interval => INTERVAL '1 month');
-
--- Create compression policy
-ALTER TABLE evaluation_event SET (
-    timescaledb.compress,
-    timescaledb.compress_segmentby = 'environment_id,feature_id',
-    timescaledb.compress_orderby = 'timestamp DESC'
-);
-
--- Automatically compress chunks older than 7 days
-SELECT add_compression_policy('evaluation_event', INTERVAL '7 days');
 
 -- Create Goal Event Table
 CREATE TABLE IF NOT EXISTS goal_event (
@@ -54,7 +38,7 @@ CREATE TABLE IF NOT EXISTS goal_event (
     variation_id VARCHAR(255),
     reason TEXT,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, "timestamp") -- Add timestamp to primary key for timescaleDB partitioning
+    PRIMARY KEY (id)
 );
 
 -- Create Indexes
@@ -64,16 +48,3 @@ CREATE INDEX IF NOT EXISTS idx_goal_goal_id ON goal_event (goal_id);
 CREATE INDEX IF NOT EXISTS idx_goal_user_id ON goal_event (user_id);
 CREATE INDEX IF NOT EXISTS idx_goal_feature_id ON goal_event (feature_id);
 CREATE INDEX IF NOT EXISTS idx_goal_variation_id ON goal_event (variation_id);
-
--- -- Convert to hypertable with 1 month chunks
-SELECT create_hypertable('goal_event', 'timestamp', chunk_time_interval => INTERVAL '1 month');
-
--- Create compression policy
-ALTER TABLE goal_event SET (
-    timescaledb.compress,
-    timescaledb.compress_segmentby = 'environment_id,goal_id,feature_id',
-    timescaledb.compress_orderby = 'timestamp DESC'
-);
-
--- Automatically compress chunks older than 7 days
-SELECT add_compression_policy('goal_event', INTERVAL '7 days');

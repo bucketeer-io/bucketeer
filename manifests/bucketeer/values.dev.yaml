@@ -6,8 +6,8 @@ global:
   # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
-    # Supported types: bigquery, mysql
-    type: mysql # Options: bigquery, mysql
+    # Supported types: bigquery, mysql, postgres
+    type: mysql # Options: bigquery, mysql, postgres
     batchSize: 1000
     timezone: "UTC"
 
@@ -22,6 +22,15 @@ global:
       useMainConnection: true
       host: ""
       port: 3306
+      user: ""
+      password: ""
+      database: ""
+
+    # Postgres configuration (used when type: postgres)
+    postgres:
+      useMainConnection: true
+      host: ""
+      port: 5432
       user: ""
       password: ""
       database: ""
@@ -69,7 +78,7 @@ migration:
 
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name
-  dbUrl: mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer
+  dbUrl: mysql://root:YnVja2V0ZWVy@localenv-mysql.default.svc:3306/bucketeer
 
   # The migration baseline
   # First revision
@@ -95,6 +104,11 @@ web:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
+    postgresUser: bucketeer
+    postgresPass: bucketeer
+    postgresHost: localenv-postgresql-hl.default.svc.cluster.local
+    postgresPort: 5432
+    postgresDbName: bucketeer
     persistentRedis:
       serverName: backend
       addr: localenv-redis-headless.default.svc.cluster.local:6379
@@ -330,6 +344,11 @@ subscriber:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
+    postgresUser: bucketeer
+    postgresPass: bucketeer
+    postgresHost: localenv-postgresql-hl.default.svc.cluster.local
+    postgresPort: 5432
+    postgresDbName: bucketeer
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
@@ -593,6 +612,13 @@ subscriber:
           user: ""
           password: ""
           database: ""
+        postgres:
+          useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
         bigquery:
           project: ""
           dataset: ""
@@ -614,6 +640,13 @@ subscriber:
         timezone: ""
         mysql:
           useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
+        postgres:
+          useMainConnection: true
           host: ""
           port: 0
           user: ""

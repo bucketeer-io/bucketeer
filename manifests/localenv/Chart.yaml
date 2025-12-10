@@ -13,11 +13,11 @@ dependencies:
   version: "17.7.5"
   repository: "https://charts.bitnami.com/bitnami"
 - name: mysql
-  version: "9.11.0"
+  version: "14.0.3"
   repository: "oci://registry-1.docker.io/bitnamicharts"
-- name: timescaledb
-  version: "0.6.1"
-  repository: "oci://registry-1.docker.io/cloudpirates/timescaledb"
+- name: postgresql
+  version: "18.1.13"
+  repository: "oci://registry-1.docker.io/bitnamicharts"
 - name: vault
   version: "0.23.0"
   repository: "https://helm.releases.hashicorp.com"

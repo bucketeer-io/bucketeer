@@ -40,6 +40,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/processor"
 )
@@ -68,6 +69,12 @@ type server struct {
 	mysqlPort        *int
 	mysqlDBName      *string
 	mysqlDBOpenConns *int
+	// Postgres
+	postgresUser   *string
+	postgresPass   *string
+	postgresHost   *string
+	postgresPort   *int
+	postgresDBName *string
 	// gRPC service
 	environmentService          *string
 	experimentService           *string
@@ -113,6 +120,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
+		postgresUser:     cmd.Flag("postgres-user", "Postgres user.").Required().String(),
+		postgresPass:     cmd.Flag("postgres-pass", "Postgres password.").Required().String(),
+		postgresHost:     cmd.Flag("postgres-host", "Postgres host.").Required().String(),
+		postgresPort:     cmd.Flag("postgres-port", "Postgres port.").Required().Int(),
+		postgresDBName:   cmd.Flag("postgres-db-name", "Postgres database name.").Required().String(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
@@ -212,6 +224,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
+	}
+	postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
+	if err != nil {
+		// TODO: postgres client is optional for now to support mysql only setup, handle this more gracefully
+		logger.Warn("Failed to create Postgres client", zap.Error(err))
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
@@ -323,6 +340,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		ctx,
 		environmentClient,
 		mysqlClient,
+		postgresClient,
 		persistentRedisClient,
 		nonPersistentRedisClient,
 		experimentClient,
@@ -415,6 +433,23 @@ func (s *server) createMySQLClient(
 	)
 }
 
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
+	)
+}
+
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
@@ -492,6 +527,7 @@ func (s *server) registerPubSubProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
+	postgresClient postgres.Client,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -644,6 +680,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
 			mysqlClient,
+			postgresClient,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,
@@ -664,6 +701,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
 			mysqlClient,
+			postgresClient,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,

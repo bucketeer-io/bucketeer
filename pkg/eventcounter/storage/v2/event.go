@@ -45,12 +45,26 @@ var (
 	//go:embed sql/goal_count.sql
 	goalCountSQL string
 
-	ErrUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+	ErrBQUnexpectedMultipleResults = pkgErr.NewErrorInternal(
 		pkgErr.EventCounterPackageName,
 		"bigquery: unexpected multiple results")
-	ErrNoResultsFound = pkgErr.NewErrorInternal(
+	ErrBQNoResultsFound = pkgErr.NewErrorInternal(
 		pkgErr.EventCounterPackageName,
 		"bigquery: no results found")
+
+	ErrMySQLUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"MySQL: unexpected multiple results")
+	ErrMySQLNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"MySQL: no results found")
+
+	ErrPostgresUnexpectedMultipleResults = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"Postgres: unexpected multiple results")
+	ErrPostgresNoResultsFound = pkgErr.NewErrorInternal(
+		pkgErr.EventCounterPackageName,
+		"Postgres: no results found")
 )
 
 type EventStorage interface {
@@ -311,7 +325,7 @@ func (es *eventStorage) QueryUserEvaluation(
 
 	// Check if there are unexpected multiple rows
 	if iter.TotalRows > 1 {
-		return nil, ErrUnexpectedMultipleResults
+		return nil, ErrBQUnexpectedMultipleResults
 	}
 
 	// Retrieve the single expected row
@@ -326,7 +340,7 @@ func (es *eventStorage) QueryUserEvaluation(
 				zap.Any("params", params),
 			)...,
 		)
-		return nil, ErrNoResultsFound
+		return nil, ErrBQNoResultsFound
 	}
 	if err != nil {
 		es.logger.Error(

@@ -32,11 +32,9 @@ nginx:
 mysql:
   image:
     registry: docker.io
-    repository: mysql
-    tag: "9"
+    repository: bitnamilegacy/mysql
+    tag: "8.4.5-debian-12-r0"
   initdbScriptsConfigMap: mysql-initdb
-  #diagnosticMode:
-  #  enabled: true
   volumePermissions:
     enabled: true
     image:
@@ -44,14 +42,41 @@ mysql:
       repository: bitnami/os-shell
       tag: latest
   auth:
-    database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
+    database: "bucketeer"
+    rootPassword: "YnVja2V0ZWVy"
   primary:
     service:
       type: NodePort
       nodePorts:
-        mysql: 32000
+        postgresql: 32000
+
+postgresql:
+  image:
+    registry: docker.io
+    repository: postgres
+    tag: "18"
+  auth:
+    username: "bucketeer"
+    password: "bucketeer"
+    database: "bucketeer"
+    postgresPassword: "bucketeer"
+  volumePermissions:
+    enabled: true
+  primary:
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+    service:
+      type: NodePort
+      nodePorts:
+        postgresql: 32100
 
 bq:
   project: bucketeer-test
