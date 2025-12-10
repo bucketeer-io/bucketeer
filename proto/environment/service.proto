@@ -248,7 +248,6 @@ message CreateOrganizationRequest {
   bool is_trial = 5;
   bool is_system_admin = 6;
   string owner_email = 7;
-  AuthenticationSettings authentication_settings = 8;
 }
 
 message CreateOrganizationResponse {
@@ -263,7 +262,6 @@ message UpdateOrganizationRequest {
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
   google.protobuf.StringValue owner_email = 7;
-  AuthenticationSettings authentication_settings = 8;
 }
 
 message UpdateOrganizationResponse {}
