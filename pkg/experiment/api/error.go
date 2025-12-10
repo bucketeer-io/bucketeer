@@ -39,7 +39,13 @@ var (
 	statusGoalNameRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "goal name must be specified", "Goal"))
 	statusExperimentPeriodOutOfRange = api.NewGRPCStatus(
-		pkgErr.NewErrorOutOfRange(pkgErr.ExperimentPackageName, "period too long", "ExperimentPeriod", 0, maxExperimentPeriod))
+		pkgErr.NewErrorOutOfRange(
+			pkgErr.ExperimentPackageName,
+			"period too long",
+			"ExperimentPeriod",
+			0,
+			maxExperimentPeriod,
+		))
 	statusExperimentPeriodInvalid = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "period is invalid", "ExperimentPeriod"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
