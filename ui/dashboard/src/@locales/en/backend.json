@@ -60,6 +60,8 @@
     "IndividualUser": "Individual user",
     "Name": "Name",
     "Notification": "Notification",
+    "NotificationRecipient": "Notification recipient",
+    "NotificationSlackRecipient": "Notification Slack recipient",
     "NotificationType": "Notification type",
     "OffVariation": "Off variation",
     "OrderBy": "Order condition",

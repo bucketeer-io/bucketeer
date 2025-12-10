@@ -20,13 +20,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	staragemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
@@ -48,15 +44,6 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -72,7 +59,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: nil,
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "err: ErrNoCommand",
@@ -81,7 +68,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:          "err: ErrSourceTypesRequired",
@@ -95,7 +82,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
+			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
 			desc:          "err: ErrRecipientRequired",
@@ -109,7 +96,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant")),
+			expectedErr: statusRecipientRequired.Err(),
 		},
 		{
 			desc:          "err: ErrSlackRecipientRequired",
@@ -126,7 +113,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusSlackRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant")),
+			expectedErr: statusSlackRecipientRequired.Err(),
 		},
 		{
 			desc:          "err: ErrSlackRecipientWebhookURLRequired",
@@ -144,7 +131,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusSlackRecipientWebhookURLRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url")),
+			expectedErr: statusSlackRecipientWebhookURLRequired.Err(),
 		},
 		{
 			desc:          "err: ErrNameRequired",
@@ -161,7 +148,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusNameRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -218,18 +205,6 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -242,13 +217,13 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrPermissionDenied",
 			isSystemAdmin: false,
 			input:         &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc:          "err: ErrNoCommand",
@@ -256,7 +231,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:          "err: add notification types: ErrSourceTypesRequired",
@@ -265,7 +240,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 				Id:                    "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{},
 			},
-			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
+			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
 			desc:          "err: delete notification types: ErrSourceTypesRequired",
@@ -274,7 +249,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 				Id:                       "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{},
 			},
-			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
+			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -298,7 +273,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusNotFound.Err(),
 		},
 		{
 			desc: "success: addSourceTypes",
@@ -438,15 +413,6 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -459,13 +425,13 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrPermissionDenied",
 			isSystemAdmin: false,
 			input:         &proto.EnableAdminSubscriptionRequest{},
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.EnableAdminSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc:          "err: ErrNoCommand",
@@ -473,7 +439,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "success",
@@ -529,15 +495,6 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -550,7 +507,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.DisableAdminSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc:          "err: ErrNoCommand",
@@ -558,7 +515,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "success",
@@ -613,15 +570,6 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -634,7 +582,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.DeleteAdminSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc:          "err: ErrNoCommand",
@@ -642,7 +590,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "success",
@@ -696,15 +644,6 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -717,13 +656,13 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrPermissionDenied",
 			isSystemAdmin: false,
 			input:         &proto.GetAdminSubscriptionRequest{},
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.GetAdminSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -766,15 +705,6 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -790,7 +720,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			input:         &proto.ListAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
 			expected:      nil,
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc: "success",
@@ -836,15 +766,6 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -860,7 +781,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 			isSystemAdmin: false,
 			input:         &proto.ListEnabledAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
 			expected:      nil,
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc: "success",

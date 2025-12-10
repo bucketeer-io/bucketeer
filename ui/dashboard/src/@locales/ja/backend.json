@@ -60,6 +60,8 @@
     "IndividualUser": "単体ユーザー",
     "Name": "名前",
     "Notification": "通知設定",
+    "NotificationRecipient": "通知設定の受信者",
+    "NotificationSlackRecipient": "通知設定のSlack受信者",
     "NotificationType": "通知設定のタイプ",
     "OffVariation": "オフバリエーション",
     "OrderBy": "並べ替えキー",
