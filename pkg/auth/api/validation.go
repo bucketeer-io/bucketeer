@@ -15,10 +15,6 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
-	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -69,6 +65,45 @@ func validateSignInRequest(
 	}
 	if req.Password == "" {
 		return statusMissingPassword.Err()
+	}
+	return nil
+}
+
+func validateSignInPasswordRequest(
+	req *authproto.SignInPasswordRequest,
+) error {
+	if req.Email == "" {
+		return statusMissingEmail.Err()
+	}
+	if req.Password == "" {
+		return statusMissingPassword.Err()
+	}
+	return nil
+}
+
+func validateGetGoogleOidcAuthURLRequest(
+	req *authproto.GetGoogleOidcAuthURLRequest,
+) error {
+	if req.State == "" {
+		return statusMissingState.Err()
+	}
+	if req.RedirectUrl == "" {
+		return statusMissingRedirectURL.Err()
+	}
+	return nil
+}
+
+func validateExchangeGoogleOidcTokenRequest(
+	req *authproto.ExchangeGoogleOidcTokenRequest,
+) error {
+	if req.Code == "" {
+		return statusMissingCode.Err()
+	}
+	if req.State == "" {
+		return statusMissingState.Err()
+	}
+	if req.RedirectUrl == "" {
+		return statusMissingRedirectURL.Err()
 	}
 	return nil
 }
