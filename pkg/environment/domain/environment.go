@@ -45,19 +45,19 @@ func NewEnvironmentV2(
 	}
 	now := time.Now().Unix()
 	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:                           uid.String(),
-		Name:                         name,
-		UrlCode:                      urlCode,
-		Description:                  description,
-		ProjectId:                    projectID,
-		OrganizationId:               organizationID,
-		Archived:                     false,
-		RequireComment:               requireComment,
-		CreatedAt:                 now,
-		UpdatedAt:                 now,
-		AutoArchiveEnabled:        false,
-		AutoArchiveUnusedDays:     90,
-		AutoArchiveCheckCodeRefs:  true,
+		Id:                       uid.String(),
+		Name:                     name,
+		UrlCode:                  urlCode,
+		Description:              description,
+		ProjectId:                projectID,
+		OrganizationId:           organizationID,
+		Archived:                 false,
+		RequireComment:           requireComment,
+		CreatedAt:                now,
+		UpdatedAt:                now,
+		AutoArchiveEnabled:       false,
+		AutoArchiveUnusedDays:    90,
+		AutoArchiveCheckCodeRefs: true,
 	}}, nil
 }
 
