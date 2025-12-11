@@ -1,6 +1,7 @@
 {
   "nouns": {
     "Account": "Account",
+    "AuditLog": "Audit log",
     "AccountRole": "Account role",
     "AccountName": "Account name",
     "AccountFirstName": "Account first name",
