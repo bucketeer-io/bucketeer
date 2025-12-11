@@ -23,33 +23,33 @@ var (
 	statusInternal = api.NewGRPCStatus(
 		pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "eventcounter: internal"))
 	statusFeatureIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature id is required", "feature_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature id is required", "FeatureFlagID"))
 	statusFeatureVersionRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature version is required", "feature_version"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature flag version is required", "FeatureFlagVersion"))
 	statusVariationIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "variation id is required", "variation_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "variation id is required", "VariationId"))
 	statusExperimentIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "experiment id is required", "experiment_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "experiment id is required", "ExperimentId"))
 	statusMAUYearMonthRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "mau year month is required", "mau_year_month"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "mau year month is required", "MauYearMonth"))
 	statusGoalIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "goal id is required", "goal_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "goal id is required", "Goal"))
 	statusStartAtRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "start at is required", "start_at"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "start at is required", "StartAt"))
 	statusEndAtRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "end at is required", "end_at"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "end at is required", "EndAt"))
 	statusStartAtIsAfterEndAt = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "start at is after end at", "start_at"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "start at is after end at", "StartAt"))
 	statusAutoOpsRuleIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "auto ops rule id is required", "auto_ops_rule_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "auto ops rule id is required", "AutoOperationRuleId"))
 	statusClauseIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "clause id is required", "clause_id"))
-	statusNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.EventCounterPackageName, "not found", "eventcounter"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "clause id is required", "ClauseId"))
+	statusExperimentResultNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EventCounterPackageName, "experiment result not found", "ExperimentResult"))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.EventCounterPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.EventCounterPackageName, "permission denied"))
 	statusUnknownTimeRange = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "unknown time range", "time_range"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "unknown time range", "TimeRange"))
 )
