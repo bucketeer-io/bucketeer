@@ -21,7 +21,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -31,10 +30,9 @@ func (s *FeatureService) GetUserAttributeKeys(
 	ctx context.Context,
 	req *featureproto.GetUserAttributeKeysRequest,
 ) (*featureproto.GetUserAttributeKeysResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		s.logger.Error("Failed to get user attribute keys", zap.Error(err))
 		return nil, err
