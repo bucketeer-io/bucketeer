@@ -21,12 +21,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/push"
@@ -36,7 +32,6 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
@@ -92,18 +87,6 @@ func TestCreatePushMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -117,7 +100,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				FcmServiceAccount: nil,
 			},
-			expectedErr: createError(statusFCMServiceAccountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account")),
+			expectedErr: statusFCMServiceAccountRequired.Err(),
 		},
 
 		{
@@ -127,7 +110,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				FcmServiceAccount: fcmServiceAccountDummy,
 				Tags:              []string{}, // Tags are now optional
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusNameRequired.Err(),
 		},
 		{
 			desc: "err: ErrAlreadyExists",
@@ -150,7 +133,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				Tags:              []string{"tag-0"},
 				Name:              "name-1",
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAlreadyExists.Err(),
 		},
 		{
 			desc: "success: with tags",
@@ -220,18 +203,6 @@ func TestUpdatePushMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -242,7 +213,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &pushproto.UpdatePushRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -260,7 +231,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:   "key-1",
 				Name: wrapperspb.String("push-0"),
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusNotFound.Err(),
 		},
 		{
 			desc: "success update name",
@@ -377,19 +348,6 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc              string
@@ -401,10 +359,7 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 			desc:              "err: invalid service account",
 			fcmServiceAccount: []byte(`"key":"value"`),
 			pushes:            nil,
-			expected: createError(
-				statusFCMServiceAccountInvalid,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "FCM service account"),
-			),
+			expected:          statusFCMServiceAccountInvalid.Err(),
 		},
 		{
 			desc:              "err: internal error",
@@ -414,10 +369,7 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 					FcmServiceAccount: "`{\"key\":\"value\"}`",
 				},
 			},
-			expected: createError(
-				statusInternal,
-				localizer.MustLocalize(locale.InternalServerError),
-			),
+			expected: statusInternal.Err(),
 		},
 		{
 			desc:              "err: service account already exists",
@@ -427,10 +379,7 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 					FcmServiceAccount: string(fcmServiceAccountDummy),
 				},
 			},
-			expected: createError(
-				statusFCMServiceAccountAlreadyExists,
-				localizer.MustLocalizeWithTemplate(locale.AlreadyExistsError, "FCM service account"),
-			),
+			expected: statusFCMServiceAccountAlreadyExists.Err(),
 		},
 	}
 
@@ -441,7 +390,6 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 				ctx,
 				p.pushes,
 				p.fcmServiceAccount,
-				localizer,
 			)
 			assert.Equal(t, p.expected, err)
 		})
@@ -454,18 +402,6 @@ func TestDeletePushMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -476,7 +412,7 @@ func TestDeletePushMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &pushproto.DeletePushRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -494,7 +430,7 @@ func TestDeletePushMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Id:            "key-1",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -541,18 +477,6 @@ func TestListPushesMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, false)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -570,7 +494,7 @@ func TestListPushesMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &pushproto.ListPushesRequest{Cursor: "XXX", EnvironmentId: "ns0"},
 			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -581,7 +505,7 @@ func TestListPushesMySQL(t *testing.T) {
 			},
 			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc:        "err: ErrPermissionDenied",
@@ -589,7 +513,7 @@ func TestListPushesMySQL(t *testing.T) {
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -670,18 +594,6 @@ func TestGetPushMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithToken(t, true)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -692,7 +604,7 @@ func TestGetPushMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &pushproto.GetPushRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -705,7 +617,7 @@ func TestGetPushMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Id:            "key-1",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusNotFound.Err(),
 		},
 		{
 			desc: "success",
