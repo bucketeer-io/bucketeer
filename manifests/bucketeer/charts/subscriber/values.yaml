@@ -18,6 +18,11 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
+  postgresUser:
+  postgresPass:
+  postgresHost:
+  postgresPort:
+  postgresDbName:
   bigqueryQuerierEmulatorHost:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
@@ -301,6 +306,13 @@ onDemandProcessors:
       batchSize: 0
       timezone: ""
       mysql:
+        useMainConnection: false
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
+      postgres:
         useMainConnection: false
         host: ""
         port: 0

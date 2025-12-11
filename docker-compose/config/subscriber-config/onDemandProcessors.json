@@ -4,13 +4,21 @@
     "flushInterval": 5,
     "flushTimeout": 30,
     "dataWarehouse": {
-      "type": "mysql",
+      "type": "postgres",
       "batchSize": 1000,
       "timezone": "UTC",
       "mysql": {
         "useMainConnection": true,
         "host": "mysql",
         "port": 3306,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
+      "postgres": {
+        "useMainConnection": true,
+        "host": "postgres",
+        "port": 5432,
         "user": "bucketeer",
         "password": "bucketeer",
         "database": "bucketeer"
@@ -34,13 +42,21 @@
     "maxRetryGoalEventPeriod": 86400,
     "retryGoalEventInterval": 300,
     "dataWarehouse": {
-      "type": "mysql",
+      "type": "postgres",
       "batchSize": 1000,
       "timezone": "UTC",
       "mysql": {
         "useMainConnection": true,
         "host": "mysql",
         "port": 3306,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
+      "postgres": {
+        "useMainConnection": true,
+        "host": "postgres",
+        "port": 5432,
         "user": "bucketeer",
         "password": "bucketeer",
         "database": "bucketeer"

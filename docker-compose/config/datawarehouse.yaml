@@ -1,10 +1,17 @@
-type: mysql
+type: postgres
 batchSize: 1000
 timezone: "UTC"
 mysql:
   useMainConnection: true
   host: ""
   port: 3306
+  user: ""
+  password: ""
+  database: ""
+postgres:
+  useMainConnection: true
+  host: ""
+  port: 5432
   user: ""
   password: ""
   database: ""

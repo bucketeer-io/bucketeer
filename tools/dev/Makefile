@@ -44,6 +44,7 @@ pre-cache-docker-images:
 	docker pull gcr.io/k8s-minikube/storage-provisioner:v5 || echo "Failed to pull storage provisioner"
 	@echo "Pulling application images..."
 	docker pull mysql:8.0 || echo "Failed to pull mysql"
+	docker pull timescale/timescaledb:2.24.0-pg18 || echo "Failed to pull timescaledb"
 	docker pull ghcr.io/bucketeer-io/bigquery-emulator:latest || echo "Failed to pull bigquery emulator"
 	docker pull gcr.io/google.com/cloudsdktool/cloud-sdk:449.0.0 || echo "Failed to pull cloud-sdk"
 	@echo "Docker image pre-caching completed. These images will persist across minikube deletions."

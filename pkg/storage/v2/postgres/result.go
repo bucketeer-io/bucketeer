@@ -25,3 +25,39 @@ type Result interface {
 type result struct {
 	sql.Result
 }
+
+type Row interface {
+	Err() error
+	Scan(dest ...interface{}) error
+}
+
+type row struct {
+	srow *sql.Row
+}
+
+func (r *row) Err() error {
+	err := r.srow.Err()
+	if err == sql.ErrNoRows {
+		return ErrNoRows
+	}
+	return err
+}
+
+func (r *row) Scan(dest ...interface{}) error {
+	err := r.srow.Scan(dest...)
+	if err == sql.ErrNoRows {
+		return ErrNoRows
+	}
+	return err
+}
+
+type Rows interface {
+	Close() error
+	Err() error
+	Next() bool
+	Scan(dest ...interface{}) error
+}
+
+type rows struct {
+	*sql.Rows
+}

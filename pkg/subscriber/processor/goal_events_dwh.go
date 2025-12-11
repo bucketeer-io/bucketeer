@@ -34,6 +34,7 @@ import (
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage"
 	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -64,6 +65,7 @@ type goalEvtWriter struct {
 type GoalEventWriterOption struct {
 	DataWarehouseType string
 	MySQLClient       mysql.Client
+	PostgresClient    postgres.Client
 	BatchSize         int
 }
 
@@ -117,7 +119,35 @@ func NewGoalEventWriter(
 		}
 		w.StartRetryProcessor(ctx)
 		return w, nil
+	case "postgres":
+		if option.PostgresClient == nil {
+			return nil, errors.New("postgres client is required when using Postgres storage")
+		}
 
+		goalStorage := storagev2.NewPostgresGoalEventStorage(option.PostgresClient)
+		postgresEventStorage := ecstorage.NewPostgresEventStorage(option.PostgresClient, logger)
+
+		// Calculate lock TTL as 80% of retry interval
+		if retryGoalEventInterval == 0 {
+			retryGoalEventInterval = defaultRetryGoalEventInterval
+		}
+		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
+
+		w := &goalEvtWriter{
+			writer:                  storage.NewPostgresGoalEventWriter(goalStorage),
+			eventStorage:            postgresEventStorage,
+			experimentClient:        exClient,
+			featureClient:           ftClient,
+			redisClient:             redisClient,
+			locker:                  NewGoalEventLocker(redisClient, lockTTL),
+			cache:                   cache,
+			location:                location,
+			logger:                  logger,
+			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
+			retryGoalEventInterval:  retryGoalEventInterval,
+		}
+		w.StartRetryProcessor(ctx)
+		return w, nil
 	case "bigquery":
 		// Fall through to BigQuery implementation below
 	default:
@@ -375,7 +405,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			exp.StopAt,
 		)
 		if err != nil {
-			if errors.Is(err, ecstorage.ErrNoResultsFound) {
+			if errors.Is(err, ecstorage.ErrBQNoResultsFound) {
 				w.logger.Error("Evaluation not found",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
