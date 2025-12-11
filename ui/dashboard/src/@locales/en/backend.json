@@ -52,6 +52,7 @@
     "ExperimentStartDate": "Experiment start date",
     "ExperimentEndDate": "Experiment end date",
     "ExperimentPeriod": "Experiment period",
+    "FCMServiceAccount": "FCM service account",
     "FeatureFlagID": "Feature flag ID",
     "FeatureFlag": "Feature flag",
     "FeatureFlagVariation": "Feature flag variation",

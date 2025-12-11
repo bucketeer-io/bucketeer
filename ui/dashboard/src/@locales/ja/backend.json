@@ -52,6 +52,7 @@
     "ExperimentStartDate": "エクスペリメントの開始時間",
     "ExperimentEndDate": "エクスペリメントの終了時間",
     "ExperimentPeriod": "エクスペリメントの期間",
+    "FCMServiceAccount": "FCMサービスアカウント",
     "FeatureFlagID": "フィーチャーフラグID",
     "FeatureFlag": "フィーチャーフラグ",
     "FeatureFlagVariation": "フィーチャーフラグのバリエーション",
