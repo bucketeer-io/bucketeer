@@ -25,7 +25,8 @@ var (
 	statusFeatureIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature id is required", "FeatureFlagID"))
 	statusFeatureVersionRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "feature flag version is required", "FeatureFlagVersion"))
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.EventCounterPackageName, "feature flag version is required", "FeatureFlagVersion"))
 	statusVariationIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "variation id is required", "VariationId"))
 	statusExperimentIDRequired = api.NewGRPCStatus(

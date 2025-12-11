@@ -43,14 +43,22 @@ import (
 )
 
 var (
-	statusNameRequired     = api.NewGRPCStatus(bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "Name"))
-	statusTeamIDRequired   = api.NewGRPCStatus(bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "team id must be specified", "TeamId"))
-	statusInvalidCursor    = api.NewGRPCStatus(bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "Cursor"))
-	statusInvalidOrderBy   = api.NewGRPCStatus(bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "OrderBy"))
-	statusUnauthenticated  = api.NewGRPCStatus(bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"))
-	statusTeamNotFound     = api.NewGRPCStatus(bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "Team"))
-	statusTeamInUsed       = api.NewGRPCStatus(bkterr.NewErrorFailedPrecondition(bkterr.TeamPackageName, "team is in use by an account"))
+	statusNameRequired = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "Name"))
+	statusTeamIDRequired = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "team id must be specified", "TeamId"))
+	statusInvalidCursor = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "Cursor"))
+	statusInvalidOrderBy = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "OrderBy"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"))
+	statusTeamNotFound = api.NewGRPCStatus(
+		bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "Team"))
+	statusTeamInUsed = api.NewGRPCStatus(
+		bkterr.NewErrorFailedPrecondition(bkterr.TeamPackageName, "team is in use by an account"))
 )
 
 type options struct {
