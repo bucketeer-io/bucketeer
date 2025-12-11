@@ -427,6 +427,7 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pYnVja2V0ZWVy -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 
 #############################
