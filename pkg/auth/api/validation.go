@@ -15,127 +15,56 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
-	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func validateGetAuthenticationURLRequest(
 	req *authproto.GetAuthenticationURLRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
-		dt, err := auth.StatusMissingAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_type"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingAuthType.Err()
 	}
 	if req.State == "" {
-		dt, err := auth.StatusMissingState.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "state"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingState.Err()
 	}
 	if req.RedirectUrl == "" {
-		dt, err := auth.StatusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingRedirectURL.Err()
 	}
 	return nil
 }
 
 func validateExchangeTokenRequest(
 	req *authproto.ExchangeTokenRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
-		dt, err := auth.StatusMissingAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_type"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingAuthType.Err()
 	}
 	if req.Code == "" {
-		dt, err := auth.StatusMissingCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingCode.Err()
 	}
 	if req.RedirectUrl == "" {
-		dt, err := auth.StatusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingRedirectURL.Err()
 	}
 	return nil
 }
 
 func validateRefreshTokenRequest(
 	req *authproto.RefreshTokenRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.RefreshToken == "" {
-		dt, err := auth.StatusMissingRefreshToken.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "refresh_token"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingRefreshToken.Err()
 	}
 	return nil
 }
 
 func validateSignInRequest(
 	req *authproto.SignInRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Email == "" {
-		dt, err := auth.StateMissingUsername.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "username"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingUsername.Err()
 	}
 	if req.Password == "" {
-		dt, err := auth.StateMissingPassword.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "password"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingPassword.Err()
 	}
 	return nil
 }
