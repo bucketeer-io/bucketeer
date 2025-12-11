@@ -23,15 +23,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -67,18 +64,6 @@ func TestCreateTagMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithTokenRoleOwner(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -93,7 +78,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusNameRequired.Err(),
 			expectedTag: nil,
 		},
 		{
@@ -102,7 +87,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Name:          "test-tag",
 			},
-			expectedErr: createError(statusEntityTypeRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "entity_type")),
+			expectedErr: statusEntityTypeRequired.Err(),
 			expectedTag: nil,
 		},
 		{
@@ -134,7 +119,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "storage error")), localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "storage error")).Err(),
 			expectedTag: nil,
 		},
 		{
@@ -154,7 +139,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag name not found", "tag_name")), localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag name not found", "tag_name")).Err(),
 			expectedTag: nil,
 		},
 		{
@@ -189,7 +174,7 @@ func TestCreateTagMySQL(t *testing.T) {
 				Name:          "test-tag",
 				EntityType:    proto.Tag_FEATURE_FLAG,
 			},
-			expectedErr: createError(api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "publish error")), localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "publish error")).Err(),
 			expectedTag: nil,
 		},
 		{
@@ -306,18 +291,6 @@ func TestListTagsMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithTokenRoleUnassigned(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -332,7 +305,7 @@ func TestListTagsMySQL(t *testing.T) {
 			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:       func(s *TagService) {},
 			req:         &proto.ListTagsRequest{EnvironmentId: "ns0", PageSize: 10, Cursor: "0"},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 			expected:    nil,
 		},
 		{
@@ -397,18 +370,6 @@ func TestDeleteTagMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := createContextWithTokenRoleOwner(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -421,7 +382,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 			req: &proto.DeleteTagRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusNameRequired.Err(),
 		},
 		{
 			desc: "err: GetTag",
@@ -439,7 +400,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 				Id:            "tag-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag")), localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: api.NewGRPCStatus(err.NewErrorNotFound(err.TagPackageName, "tag not found", "tag")).Err(),
 		},
 		{
 			desc: "err: in used",
@@ -472,7 +433,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 				Id:            "tag-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusTagInUsed, localizer.MustLocalize(locale.Tag)),
+			expectedErr: statusTagInUsed.Err(),
 		},
 		{
 			desc: "success",
