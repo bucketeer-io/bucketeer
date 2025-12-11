@@ -55,11 +55,8 @@
     "ExperimentStartDate": "Experiment start date",
     "ExperimentEndDate": "Experiment end date",
     "ExperimentPeriod": "Experiment period",
-<<<<<<< HEAD
-    "FCMServiceAccount": "FCM service account",
-=======
     "ExperimentResult": "Experiment result",
->>>>>>> i18n/replace/eventcounter
+    "FCMServiceAccount": "FCM service account",
     "FeatureFlagID": "Feature flag ID",
     "FeatureFlag": "Feature flag",
     "FeatureFlagVariation": "Feature flag variation",
