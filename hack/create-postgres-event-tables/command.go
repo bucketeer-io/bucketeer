@@ -44,29 +44,29 @@ type command struct {
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
-	cmd := p.Command("create", "Create PostgresQL event tables for data warehouse")
+	cmd := p.Command("create", "Create PostgreSQL event tables for data warehouse")
 	command := &command{
 		CmdClause:      cmd,
-		postgresUser:   cmd.Flag("postgres-user", "PostgresQL user.").Required().String(),
-		postgresPass:   cmd.Flag("postgres-pass", "PostgresQL password.").Required().String(),
-		postgresHost:   cmd.Flag("postgres-host", "PostgresQL host.").Required().String(),
-		postgresPort:   cmd.Flag("postgres-port", "PostgresQL port.").Default("5432").Int(),
-		postgresDBName: cmd.Flag("postgres-db-name", "PostgresQL database name.").Required().String(),
+		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").Required().String(),
+		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").Required().String(),
+		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").Required().String(),
+		postgresPort:   cmd.Flag("postgres-port", "PostgreSQL port.").Default("5432").Int(),
+		postgresDBName: cmd.Flag("postgres-db-name", "PostgreSQL database name.").Required().String(),
 	}
 	r.RegisterCommand(command)
 	return command
 }
 
 func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
-	logger.Info("Starting PostgresQL event tables creation",
+	logger.Info("Starting PostgreSQL event tables creation",
 		zap.String("host", *c.postgresHost),
 		zap.Int("port", *c.postgresPort),
 		zap.String("database", *c.postgresDBName))
 
-	// Create PostgresQL client
+	// Create PostgreSQL client
 	client, err := c.createPostgresClient(ctx, logger)
 	if err != nil {
-		logger.Error("Failed to create PostgresQL client", zap.Error(err))
+		logger.Error("Failed to create PostgreSQL client", zap.Error(err))
 		return err
 	}
 	defer client.Close()
@@ -105,7 +105,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		return err
 	}
 
-	logger.Info("Successfully completed PostgresQL event tables setup")
+	logger.Info("Successfully completed PostgreSQL event tables setup")
 	return nil
 }
 

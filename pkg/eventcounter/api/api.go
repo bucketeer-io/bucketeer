@@ -207,7 +207,7 @@ func NewEventCounterService(
 		}
 	case "postgres":
 		// Use the main Postgres client if useMainConnection is true or no custom connection specified
-		if dopts.dataWarehouseConfig.MySQL.UseMainConnection || dopts.dataWarehouseConfig.Postgres.Host == "" {
+		if dopts.dataWarehouseConfig.Postgres.UseMainConnection || dopts.dataWarehouseConfig.Postgres.Host == "" {
 			eventStorage = v2ecstorage.NewPostgresEventStorage(pc, dopts.logger)
 		} else {
 			// Create custom Postgres client with the specified connection details

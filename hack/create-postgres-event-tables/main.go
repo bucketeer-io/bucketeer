@@ -27,7 +27,7 @@ var (
 )
 
 func main() {
-	app := cli.NewApp(name, "Bucketeer tool to create PostgresQL event tables for data warehouse", version, build)
+	app := cli.NewApp(name, "Bucketeer tool to create PostgreSQL event tables for data warehouse", version, build)
 	registerCommand(app, app)
 	if err := app.Run(); err != nil {
 		log.Fatal(err)

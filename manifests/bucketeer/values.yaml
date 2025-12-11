@@ -22,7 +22,7 @@ global:
       user: ""
       password: ""
       database: ""
-    # PostgresQL configuration (used when type: postgres)
+    # PostgreSQL configuration (used when type: postgres)
     postgres:
       useMainConnection: true
       host: ""

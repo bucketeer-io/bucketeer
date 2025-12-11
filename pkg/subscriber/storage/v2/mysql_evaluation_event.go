@@ -99,5 +99,5 @@ func (s *mysqlEvaluationEventStorage) createEvaluationEventsBatch(
 	if err != nil {
 		return fmt.Errorf("failed to execute batch insert: %w", err)
 	}
-	return err
+	return nil
 }
