@@ -15,4 +15,6 @@ SELECT
 FROM
     environment_v2
 WHERE
-    id = ?
+    auto_archive_enabled = TRUE
+ORDER BY
+    id ASC

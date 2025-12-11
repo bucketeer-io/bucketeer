@@ -72,6 +72,21 @@ func (mr *MockEnvironmentStorageMockRecorder) GetEnvironmentV2(ctx, id any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).GetEnvironmentV2), ctx, id)
 }
 
+// ListAutoArchiveEnabledEnvironments mocks base method.
+func (m *MockEnvironmentStorage) ListAutoArchiveEnabledEnvironments(ctx context.Context) ([]*domain.EnvironmentV2, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAutoArchiveEnabledEnvironments", ctx)
+	ret0, _ := ret[0].([]*domain.EnvironmentV2)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAutoArchiveEnabledEnvironments indicates an expected call of ListAutoArchiveEnabledEnvironments.
+func (mr *MockEnvironmentStorageMockRecorder) ListAutoArchiveEnabledEnvironments(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoArchiveEnabledEnvironments", reflect.TypeOf((*MockEnvironmentStorage)(nil).ListAutoArchiveEnabledEnvironments), ctx)
+}
+
 // ListEnvironmentsV2 mocks base method.
 func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, options *mysql.ListOptions) ([]*environment.EnvironmentV2, int, int64, error) {
 	m.ctrl.T.Helper()
