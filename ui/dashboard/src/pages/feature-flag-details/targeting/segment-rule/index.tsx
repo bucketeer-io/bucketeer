@@ -3,7 +3,8 @@ import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import {
   IconArrowDownwardFilled,
-  IconArrowUpwardFilled
+  IconArrowUpwardFilled,
+  IconUndoOutlined
 } from 'react-icons-material-design';
 import { Fragment } from 'react/jsx-runtime';
 import { useQueryAttributeKeys } from '@queries/attribute-keys';
@@ -12,14 +13,14 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { IconClose, IconInfo } from '@icons';
+import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import { TargetingDivider } from '..';
 import Card from '../../elements/card';
 import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
-import { RuleCategory } from '../types';
+import { DiscardChangesType, RuleCategory } from '../types';
 import RuleForm from './rule';
 import SegmentVariation from './variation';
 
@@ -33,9 +34,11 @@ interface Props {
   segmentRules: RuleSchemaFields[];
   isDisableAddIndividualRules: boolean;
   isDisableAddPrerequisite: boolean;
-  onAddRule: (rule: RuleCategory) => void;
+  onAddRule: (rule: RuleCategory, index?: number) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
+  handleDiscardChanges: (type: DiscardChangesType, index?: number) => void;
+  handleCheckEdit: (type: RuleCategory, index?: number) => boolean;
 }
 
 const TargetSegmentRule = ({
@@ -45,8 +48,9 @@ const TargetSegmentRule = ({
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
   onAddRule,
-  segmentRulesRemove,
-  segmentRulesSwap
+  segmentRulesSwap,
+  handleDiscardChanges,
+  handleCheckEdit
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
   const { consoleAccount } = useAuth();
@@ -72,7 +76,9 @@ const TargetSegmentRule = ({
   const segmentRulesWatch = watch('segmentRules');
   const userSegments = segmentCollection?.segments || [];
   const sdkAttributeKeys = keysCollection?.userAttributeKeys || [];
-
+  const editSegmentRule = (index: number) => {
+    return handleCheckEdit(RuleCategory.CUSTOM, index);
+  };
   const handleChangeIndexRule = useCallback(
     (type: 'increase' | 'decrease', currentIndex: number) => {
       segmentRulesSwap(
@@ -96,12 +102,14 @@ const TargetSegmentRule = ({
                   isDisableAddIndividualRules={isDisableAddIndividualRules}
                   isDisableAddPrerequisite={isDisableAddPrerequisite}
                   onAddRule={onAddRule}
+                  indexInsertSegmentRule={segmentIndex}
+                  isInsertSegmentRule={true}
                 />
                 <TargetingDivider />
               </>
             )}
             <Card>
-              <div className="flex items-center justify-between w-full">
+              <div className="w-full h-8 flex items-center justify-between">
                 <div className="flex items-center gap-x-2">
                   <p className="typo-para-medium leading-5 text-gray-700">
                     <Trans
@@ -123,18 +131,24 @@ const TargetSegmentRule = ({
                     className="max-w-[400px]"
                   />
                 </div>
-
                 <div className="flex items-center gap-x-2">
-                  <div
-                    className="flex-center cursor-pointer group"
-                    onClick={() => segmentRulesRemove(segmentIndex)}
-                  >
-                    <Icon
-                      icon={IconClose}
-                      size={'sm'}
-                      className="flex-center text-gray-500 group-hover:text-gray-700"
-                    />
-                  </div>
+                  {editSegmentRule(segmentIndex) && (
+                    <div
+                      className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+                      onClick={() =>
+                        handleDiscardChanges(
+                          DiscardChangesType.CUSTOM,
+                          segmentIndex
+                        )
+                      }
+                    >
+                      <Icon
+                        icon={IconUndoOutlined}
+                        size={'sm'}
+                        className="flex-center text-gray-500 group-hover:text-gray-700"
+                      />
+                    </div>
+                  )}
                   {segmentRules.length > 1 && (
                     <div className="flex items-center gap-x-1">
                       {segmentIndex !== segmentRules.length - 1 && (
