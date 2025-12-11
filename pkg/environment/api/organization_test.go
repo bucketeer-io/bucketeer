@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -22,7 +20,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -39,15 +36,6 @@ func TestGetOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -59,7 +47,7 @@ func TestGetOrganizationMySQL(t *testing.T) {
 			desc:        "err: ErrOrganizationIDRequired",
 			setup:       nil,
 			id:          "",
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -69,7 +57,7 @@ func TestGetOrganizationMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrOrganizationNotFound)
 			},
 			id:          "err-id-0",
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -119,15 +107,6 @@ func TestListOrganizationsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -141,7 +120,7 @@ func TestListOrganizationsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListOrganizationsRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -188,15 +167,6 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	orgExpected, err := domain.NewOrganization(
 		"name",
@@ -230,7 +200,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: ""},
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: only space",
@@ -238,7 +208,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: "    "},
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
@@ -246,7 +216,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidOrganizationName.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationUrlCode: can't use uppercase",
@@ -254,7 +224,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "CODE"},
 			},
-			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationUrlCode: max id length exceeded",
@@ -262,7 +232,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationAlreadyExists: duplicate id",
@@ -274,7 +244,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			req: &proto.CreateOrganizationRequest{
 				Command: &proto.CreateOrganizationCommand{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
 			},
-			expectedErr: createError(statusOrganizationAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusOrganizationAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -371,15 +341,6 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -394,7 +355,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 				Id:            "id-0",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: ""},
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: only space",
@@ -403,7 +364,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 				Id:            "id-0",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "    "},
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
@@ -412,7 +373,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 				Id:            "id-0",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidOrganizationName.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -425,7 +386,7 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 				Id:            "err-id-0",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-0"},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -486,15 +447,6 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -509,7 +461,7 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 				Id:   "id-0",
 				Name: wrapperspb.String(""),
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: only space",
@@ -518,7 +470,7 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 				Id:   "id-0",
 				Name: wrapperspb.String("    "),
 			},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
@@ -527,7 +479,7 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 				Id:   "id-0",
 				Name: wrapperspb.String(strings.Repeat("a", 51)),
 			},
-			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidOrganizationName.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -540,7 +492,7 @@ func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 				Id:   "err-id-0",
 				Name: wrapperspb.String("id-0"),
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -593,15 +545,6 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -615,7 +558,7 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 			req: &proto.EnableOrganizationRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrOrganizationIDRequired",
@@ -623,7 +566,7 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 			req: &proto.EnableOrganizationRequest{
 				Command: &proto.EnableOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -636,7 +579,7 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.EnableOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -697,15 +640,6 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -719,7 +653,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 			req: &proto.DisableOrganizationRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrOrganizationIDRequired",
@@ -727,7 +661,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 			req: &proto.DisableOrganizationRequest{
 				Command: &proto.DisableOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -740,7 +674,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.DisableOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrCannotUpdateSystemAdmin",
@@ -753,7 +687,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.DisableOrganizationCommand{},
 			},
-			expectedErr: createError(statusCannotUpdateSystemAdmin, localizer.MustLocalize(locale.InvalidArgumentError)),
+			expectedErr: statusCannotUpdateSystemAdmin.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -814,15 +748,6 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -836,7 +761,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 			req: &proto.ArchiveOrganizationRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrOrganizationIDRequired",
@@ -844,7 +769,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 			req: &proto.ArchiveOrganizationRequest{
 				Command: &proto.ArchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -857,7 +782,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.ArchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrCannotUpdateSystemAdmin",
@@ -870,7 +795,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.ArchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusCannotUpdateSystemAdmin, localizer.MustLocalize(locale.InvalidArgumentError)),
+			expectedErr: statusCannotUpdateSystemAdmin.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -931,15 +856,6 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -953,7 +869,7 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 			req: &proto.UnarchiveOrganizationRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrOrganizationIDRequired",
@@ -961,7 +877,7 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 			req: &proto.UnarchiveOrganizationRequest{
 				Command: &proto.UnarchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -974,7 +890,7 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.UnarchiveOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1035,15 +951,6 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1057,7 +964,7 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 			req: &proto.ConvertTrialOrganizationRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrOrganizationIDRequired",
@@ -1065,7 +972,7 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 			req: &proto.ConvertTrialOrganizationRequest{
 				Command: &proto.ConvertTrialOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationNotFound",
@@ -1078,7 +985,7 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.ConvertTrialOrganizationCommand{},
 			},
-			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusOrganizationNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1139,15 +1046,6 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	orgExpected, err := domain.NewOrganization(
 		"name",
@@ -1170,31 +1068,31 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 			desc:        "err: ErrInvalidOrganizationName: empty name",
 			setup:       nil,
 			req:         &proto.CreateDemoOrganizationRequest{Name: ""},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:        "err: ErrInvalidOrganizationName: only space",
 			setup:       nil,
 			req:         &proto.CreateDemoOrganizationRequest{Name: "    "},
-			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusOrganizationNameRequired.Err(),
 		},
 		{
 			desc:        "err: ErrInvalidOrganizationName: max name length exceeded",
 			setup:       nil,
 			req:         &proto.CreateDemoOrganizationRequest{Name: strings.Repeat("a", 51)},
-			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidOrganizationName.Err(),
 		},
 		{
 			desc:        "err: ErrInvalidOrganizationUrlCode: can't use uppercase",
 			setup:       nil,
 			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: "CODE"},
-			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
 		{
 			desc:        "err: ErrInvalidOrganizationUrlCode: max id length exceeded",
 			setup:       nil,
 			req:         &proto.CreateDemoOrganizationRequest{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
-			expectedErr: createError(statusInvalidOrganizationUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
 		{
 			desc: "err: ErrOrganizationAlreadyExists: duplicate id",
@@ -1204,7 +1102,7 @@ func TestEnvironmentService_CreateDemoOrganization(t *testing.T) {
 				).Return(v2es.ErrOrganizationAlreadyExists)
 			},
 			req:         &proto.CreateDemoOrganizationRequest{Name: "id-0", UrlCode: "id-0"},
-			expectedErr: createError(statusOrganizationAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusOrganizationAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1287,16 +1185,6 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 
-	localizer := locale.NewLocalizer(ctxAdmin)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		ctx         context.Context
@@ -1336,10 +1224,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 				Id:         "org-1",
 				OwnerEmail: wrapperspb.String("current-owner@example.com"),
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(
-				locale.InvalidArgumentError,
-				"new owner email is the same as the current owner",
-			)),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "err: non-owner trying to transfer ownership",
@@ -1366,7 +1251,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 				Id:         "org-1",
 				OwnerEmail: wrapperspb.String("new-owner@example.com"),
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "err: new owner account not found",
@@ -1388,7 +1273,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 				Id:         "org-1",
 				OwnerEmail: wrapperspb.String("new-owner@example.com"),
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, "new owner account not found in organization")),
+			expectedErr: statusAccountNotFound.Err(),
 		},
 		{
 			desc: "err: new owner account is disabled",
@@ -1415,7 +1300,7 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 				Id:         "org-1",
 				OwnerEmail: wrapperspb.String("new-owner@example.com"),
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "new owner account is disabled")),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "success: valid ownership transfer passes validation",

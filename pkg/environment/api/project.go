@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -32,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -52,11 +50,10 @@ func (s *EnvironmentService) GetProject(
 	ctx context.Context,
 	req *environmentproto.GetProjectRequest,
 ) (*environmentproto.GetProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateGetProjectRequest(req, localizer); err != nil {
+	if err := validateGetProjectRequest(req); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id, localizer)
+	project, err := s.getProject(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +61,6 @@ func (s *EnvironmentService) GetProject(
 		ctx,
 		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_MEMBER,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -74,16 +70,9 @@ func (s *EnvironmentService) GetProject(
 	}, nil
 }
 
-func validateGetProjectRequest(req *environmentproto.GetProjectRequest, localizer locale.Localizer) error {
+func validateGetProjectRequest(req *environmentproto.GetProjectRequest) error {
 	if req.Id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	return nil
 }
@@ -91,19 +80,11 @@ func validateGetProjectRequest(req *environmentproto.GetProjectRequest, localize
 func (s *EnvironmentService) getProject(
 	ctx context.Context,
 	id string,
-	localizer locale.Localizer,
 ) (*domain.Project, error) {
 	project, err := s.projectStorage.GetProject(ctx, id)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
-			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusProjectNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -114,8 +95,7 @@ func (s *EnvironmentService) ListProjects(
 	ctx context.Context,
 	req *environmentproto.ListProjectsRequest,
 ) (*environmentproto.ListProjectsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +122,7 @@ func (s *EnvironmentService) ListProjects(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -157,14 +137,7 @@ func (s *EnvironmentService) ListProjects(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -209,7 +182,6 @@ func convToInterfaceSlice(
 func (s *EnvironmentService) newProjectListOrders(
 	orderBy environmentproto.ListProjectsRequest_OrderBy,
 	orderDirection environmentproto.ListProjectsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -231,14 +203,7 @@ func (s *EnvironmentService) newProjectListOrders(
 	case environmentproto.ListProjectsRequest_CREATOR_EMAIL:
 		column = "project.creator_email"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == environmentproto.ListProjectsRequest_DESC {
@@ -251,20 +216,18 @@ func (s *EnvironmentService) CreateProject(
 	ctx context.Context,
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		req.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createProjectNoCommand(ctx, req, localizer, editor)
+		return s.createProjectNoCommand(ctx, req, editor)
 	}
-	if err := validateCreateProjectRequest(req, localizer); err != nil {
+	if err := validateCreateProjectRequest(req); err != nil {
 		return nil, err
 	}
 	name := strings.TrimSpace(req.Command.Name)
@@ -286,7 +249,7 @@ func (s *EnvironmentService) CreateProject(
 		)
 		return nil, err
 	}
-	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
+	if err := s.createProject(ctx, req.Command, project, editor); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateProjectResponse{Project: project.Project}, nil
@@ -295,10 +258,9 @@ func (s *EnvironmentService) CreateProject(
 func (s *EnvironmentService) createProjectNoCommand(
 	ctx context.Context,
 	req *environmentproto.CreateProjectRequest,
-	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*environmentproto.CreateProjectResponse, error) {
-	if err := validateCreateProjectRequestNoCommand(req, localizer); err != nil {
+	if err := validateCreateProjectRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	newProj, err := domain.NewProject(
@@ -322,10 +284,10 @@ func (s *EnvironmentService) createProjectNoCommand(
 		return storage.CreateProject(ctxWithTx, newProj)
 	})
 	if err != nil {
-		return nil, s.reportCreateProjectRequestError(ctx, req, err, localizer)
+		return nil, s.reportCreateProjectRequestError(ctx, req, err)
 	}
 	if err := s.publisher.Publish(ctx, domainEvent); err != nil {
-		return nil, s.reportCreateProjectRequestError(ctx, req, err, localizer)
+		return nil, s.reportCreateProjectRequestError(ctx, req, err)
 	}
 	return &environmentproto.CreateProjectResponse{
 		Project: newProj.Project,
@@ -334,48 +296,19 @@ func (s *EnvironmentService) createProjectNoCommand(
 
 func validateCreateProjectRequestNoCommand(
 	req *environmentproto.CreateProjectRequest,
-	localizer locale.Localizer,
 ) error {
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
-		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectNameRequired.Err()
 	}
-	if len(name) > maxEnvironmentNameLength {
-		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if len(name) > maxProjectNameLength {
+		return statusInvalidProjectName.Err()
 	}
-	if !environmentUrlCodeRegex.MatchString(req.UrlCode) {
-		dt, err := statusInvalidEnvironmentUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if !projectUrlCodeRegex.MatchString(req.UrlCode) {
+		return statusInvalidProjectUrlCode.Err()
 	}
 	if req.OrganizationId == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -384,7 +317,6 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 	ctx context.Context,
 	req *environmentproto.CreateProjectRequest,
 	err error,
-	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Failed to create project",
@@ -396,15 +328,8 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 			zap.String("projectUrlCode", req.UrlCode),
 		)...,
 	)
-	if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
-		dt, err := statusEnvironmentAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AlreadyExistsError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if errors.Is(err, v2es.ErrProjectAlreadyExists) {
+		return statusProjectAlreadyExists.Err()
 	}
 	return api.NewGRPCStatus(err).Err()
 }
@@ -436,48 +361,20 @@ func (s *EnvironmentService) newCreateDomainEvent(
 	return event, nil
 }
 
-func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, localizer locale.Localizer) error {
+func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	name := strings.TrimSpace(req.Command.Name)
 	if name == "" {
-		dt, err := statusProjectNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectNameRequired.Err()
 	}
 	if len(name) > maxProjectNameLength {
-		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidProjectName.Err()
 	}
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	if !projectUrlCodeRegex.MatchString(urlCode) {
-		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidProjectUrlCode.Err()
 	}
 	return nil
 }
@@ -487,7 +384,6 @@ func (s *EnvironmentService) createProject(
 	cmd command.Command,
 	project *domain.Project,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
@@ -501,14 +397,7 @@ func (s *EnvironmentService) createProject(
 	})
 	if err != nil {
 		if err == v2es.ErrProjectAlreadyExists {
-			dt, err := statusProjectAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusProjectAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create project",
@@ -523,31 +412,23 @@ func (s *EnvironmentService) CreateTrialProject(
 	ctx context.Context,
 	req *environmentproto.CreateTrialProjectRequest,
 ) (*environmentproto.CreateTrialProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateTrialProjectRequest(req, localizer); err != nil {
+	if err := validateCreateTrialProjectRequest(req); err != nil {
 		return nil, err
 	}
 	editor := &eventproto.Editor{
 		Email:   req.Command.Email,
 		IsAdmin: false,
 	}
-	existingProject, err := s.getTrialProjectByEmail(ctx, editor.Email, localizer)
+	existingProject, err := s.getTrialProjectByEmail(ctx, editor.Email)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
 	if existingProject != nil {
-		dt, err := statusProjectAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AlreadyExistsError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusProjectAlreadyExists.Err()
 	}
 	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
 	name := strings.TrimSpace(req.Command.Name)
@@ -584,7 +465,7 @@ func (s *EnvironmentService) CreateTrialProject(
 		Description: organization.Description,
 		IsTrial:     true,
 	}
-	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
+	if err = s.createOrganization(ctx, createOrgCmd, organization, editor); err != nil {
 		s.logger.Error(
 			"Failed to save organization",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -610,10 +491,10 @@ This is a temporary implementation during the transition period.`,
 		)
 		return nil, err
 	}
-	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
+	if err := s.createProject(ctx, req.Command, project, editor); err != nil {
 		return nil, err
 	}
-	if err := s.createTrialEnvironmentsAndAccounts(ctx, project, editor, localizer); err != nil {
+	if err := s.createTrialEnvironmentsAndAccounts(ctx, project, editor); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateTrialProjectResponse{}, nil
@@ -621,59 +502,23 @@ This is a temporary implementation during the transition period.`,
 
 func validateCreateTrialProjectRequest(
 	req *environmentproto.CreateTrialProjectRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	// TODO Once we support new create project API requiring name instead of id, we should validate name using regex.
 	name := strings.TrimSpace(req.Command.Name)
 	if name == "" {
-		dt, err := statusProjectNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectNameRequired.Err()
 	}
 	if len(name) > maxProjectNameLength {
-		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidProjectName.Err()
 	}
 	if req.Command.UrlCode != "" && !projectUrlCodeRegex.MatchString(req.Command.UrlCode) {
-		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidProjectUrlCode.Err()
 	}
 	if !emailRegex.MatchString(req.Command.Email) {
-		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidProjectCreatorEmail.Err()
 	}
 	return nil
 }
@@ -681,19 +526,11 @@ func validateCreateTrialProjectRequest(
 func (s *EnvironmentService) getTrialProjectByEmail(
 	ctx context.Context,
 	email string,
-	localizer locale.Localizer,
 ) (*environmentproto.Project, error) {
 	project, err := s.projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
-			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusProjectNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -704,7 +541,6 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	ctx context.Context,
 	project *domain.Project,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) error {
 	envRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0, 2)
 	envNames := []string{
@@ -723,7 +559,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		if err != nil {
 			return err
 		}
-		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor, localizer); err != nil {
+		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor); err != nil {
 			return err
 		}
 		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
@@ -751,12 +587,11 @@ func (s *EnvironmentService) UpdateProject(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	if isNoUpdatePushCommand(req) {
-		if err := validateUpdateProjectRequestNoCommand(req, localizer); err != nil {
+		if err := validateUpdateProjectRequestNoCommand(req); err != nil {
 			return nil, err
 		}
-		project, err := s.getProject(ctx, req.Id, localizer)
+		project, err := s.getProject(ctx, req.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -764,18 +599,17 @@ func (s *EnvironmentService) UpdateProject(
 			ctx,
 			project.OrganizationId,
 			accountproto.AccountV2_Role_Organization_ADMIN,
-			localizer,
 		)
 		if err != nil {
 			return nil, err
 		}
-		return s.updateProjectNoCommand(ctx, req, project, localizer, editor)
+		return s.updateProjectNoCommand(ctx, req, project, editor)
 	}
 	commands := getUpdateProjectCommands(req)
-	if err := validateUpdateProjectRequest(req.Id, commands, localizer); err != nil {
+	if err := validateUpdateProjectRequest(req.Id, commands); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id, localizer)
+	project, err := s.getProject(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -783,12 +617,11 @@ func (s *EnvironmentService) UpdateProject(
 		ctx,
 		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, localizer, commands...); err != nil {
+	if err := s.updateProject(ctx, project, editor, commands...); err != nil {
 		return nil, err
 	}
 	return &environmentproto.UpdateProjectResponse{}, nil
@@ -810,49 +643,21 @@ func isNoUpdatePushCommand(req *environmentproto.UpdateProjectRequest) bool {
 		req.ChangeDescriptionCommand == nil
 }
 
-func validateUpdateProjectRequest(id string, commands []command.Command, localizer locale.Localizer) error {
+func validateUpdateProjectRequest(id string, commands []command.Command) error {
 	if len(commands) == 0 {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	for _, cmd := range commands {
 		if c, ok := cmd.(*environmentproto.RenameProjectCommand); ok {
 			name := strings.TrimSpace(c.Name)
 			if name == "" {
-				dt, err := statusProjectNameRequired.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
+				return statusProjectNameRequired.Err()
 			}
 			if len(name) > maxProjectNameLength {
-				dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
+				return statusInvalidProjectName.Err()
 			}
 		}
 	}
@@ -863,7 +668,6 @@ func (s *EnvironmentService) updateProjectNoCommand(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
 	project *domain.Project,
-	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateProjectResponse, error) {
 	var domainEvent *eventproto.Event
@@ -882,7 +686,6 @@ func (s *EnvironmentService) updateProjectNoCommand(
 			project.Project,
 			req,
 			editor,
-			localizer,
 		)
 		if err != nil {
 			return err
@@ -890,47 +693,25 @@ func (s *EnvironmentService) updateProjectNoCommand(
 		return storage.UpdateProject(ctxWithTx, updated)
 	})
 	if err != nil {
-		return nil, s.reportUpdateProjectRequestError(ctx, req, err, localizer)
+		return nil, s.reportUpdateProjectRequestError(ctx, req, err)
 	}
 	if err := s.publisher.Publish(ctx, domainEvent); err != nil {
-		return nil, s.reportUpdateProjectRequestError(ctx, req, err, localizer)
+		return nil, s.reportUpdateProjectRequestError(ctx, req, err)
 	}
 	return &environmentproto.UpdateProjectResponse{}, nil
 }
 
 func validateUpdateProjectRequestNoCommand(
 	req *environmentproto.UpdateProjectRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	if req.Name != nil && strings.TrimSpace(req.Name.Value) == "" {
-		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectNameRequired.Err()
 	}
-	if req.Name != nil && len(strings.TrimSpace(req.Name.Value)) > maxEnvironmentNameLength {
-		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if req.Name != nil && len(strings.TrimSpace(req.Name.Value)) > maxProjectNameLength {
+		return statusInvalidProjectName.Err()
 	}
 	return nil
 }
@@ -939,7 +720,6 @@ func (s *EnvironmentService) reportUpdateProjectRequestError(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
 	err error,
-	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Failed to update project",
@@ -952,14 +732,7 @@ func (s *EnvironmentService) reportUpdateProjectRequestError(
 		)...,
 	)
 	if errors.Is(err, v2es.ErrProjectNotFound) {
-		dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectNotFound.Err()
 	}
 	return api.NewGRPCStatus(err).Err()
 }
@@ -969,7 +742,6 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 	updated, prev *environmentproto.Project,
 	req *environmentproto.UpdateProjectRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*eventproto.Event, error) {
 	event, err := domainevent.NewAdminEvent(
 		editor,
@@ -995,7 +767,6 @@ func (s *EnvironmentService) updateProject(
 	ctx context.Context,
 	project *domain.Project,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -1012,14 +783,7 @@ func (s *EnvironmentService) updateProject(
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
-			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusProjectNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update project",
@@ -1034,11 +798,10 @@ func (s *EnvironmentService) EnableProject(
 	ctx context.Context,
 	req *environmentproto.EnableProjectRequest,
 ) (*environmentproto.EnableProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateEnableProjectRequest(req, localizer); err != nil {
+	if err := validateEnableProjectRequest(req); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id, localizer)
+	project, err := s.getProject(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -1046,37 +809,22 @@ func (s *EnvironmentService) EnableProject(
 		ctx,
 		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
+	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.EnableProjectResponse{}, nil
 }
 
-func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest, localizer locale.Localizer) error {
+func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	return nil
 }
@@ -1085,11 +833,10 @@ func (s *EnvironmentService) DisableProject(
 	ctx context.Context,
 	req *environmentproto.DisableProjectRequest,
 ) (*environmentproto.DisableProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateDisableProjectRequest(req, localizer); err != nil {
+	if err := validateDisableProjectRequest(req); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id, localizer)
+	project, err := s.getProject(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -1097,37 +844,22 @@ func (s *EnvironmentService) DisableProject(
 		ctx,
 		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
+	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.DisableProjectResponse{}, nil
 }
 
-func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest, localizer locale.Localizer) error {
+func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	return nil
 }
@@ -1136,11 +868,10 @@ func (s *EnvironmentService) ConvertTrialProject(
 	ctx context.Context,
 	req *environmentproto.ConvertTrialProjectRequest,
 ) (*environmentproto.ConvertTrialProjectResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateConvertTrialProjectRequest(req, localizer); err != nil {
+	if err := validateConvertTrialProjectRequest(req); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id, localizer)
+	project, err := s.getProject(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -1148,12 +879,11 @@ func (s *EnvironmentService) ConvertTrialProject(
 		ctx,
 		project.OrganizationId,
 		accountproto.AccountV2_Role_Organization_ADMIN,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, localizer, req.Command); err != nil {
+	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.ConvertTrialProjectResponse{}, nil
@@ -1161,27 +891,12 @@ func (s *EnvironmentService) ConvertTrialProject(
 
 func validateConvertTrialProjectRequest(
 	req *environmentproto.ConvertTrialProjectRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusProjectIDRequired.Err()
 	}
 	return nil
 }
@@ -1190,13 +905,11 @@ func (s *EnvironmentService) ListProjectsV2(
 	ctx context.Context,
 	req *environmentproto.ListProjectsV2Request,
 ) (*environmentproto.ListProjectsV2Response, error) {
-	localizer := locale.NewLocalizer(ctx)
 	// Check if the user has at least Member role in the requested organization
 	_, err := s.checkOrganizationRole(
 		ctx,
 		req.OrganizationId,
 		accountproto.AccountV2_Role_Organization_MEMBER,
-		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -1230,7 +943,7 @@ func (s *EnvironmentService) ListProjectsV2(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newProjectListV2Orders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newProjectListV2Orders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -1245,14 +958,7 @@ func (s *EnvironmentService) ListProjectsV2(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -1287,7 +993,6 @@ func (s *EnvironmentService) ListProjectsV2(
 func (s *EnvironmentService) newProjectListV2Orders(
 	orderBy environmentproto.ListProjectsV2Request_OrderBy,
 	orderDirection environmentproto.ListProjectsV2Request_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -1309,14 +1014,7 @@ func (s *EnvironmentService) newProjectListV2Orders(
 	case environmentproto.ListProjectsV2Request_CREATOR_EMAIL:
 		column = "project.creator_email"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == environmentproto.ListProjectsV2Request_DESC {
