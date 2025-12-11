@@ -21,7 +21,6 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -111,7 +110,7 @@ func (s *auditlogService) GetAuditLog(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -121,18 +120,10 @@ func (s *auditlogService) GetAuditLog(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMissingID.Err()
 	}
 	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		var dt *status.Status
 		s.logger.Error("Failed to get audit log",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -141,21 +132,13 @@ func (s *auditlogService) GetAuditLog(
 			)...,
 		)
 		if errors.Is(err, v2als.ErrAuditLogNotFound) {
-			dt, err = statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "auditlog"),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-		} else {
-			return nil, api.NewGRPCStatus(err).Err()
+			return nil, statusAuditLogNotFound.Err()
 		}
-		return nil, dt.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 
-	accounts, err := s.getAccountMapByEmails(ctx, []string{auditlog.Editor.Email}, req.EnvironmentId, localizer)
+	accounts, err := s.getAccountMapByEmails(ctx, []string{auditlog.Editor.Email}, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error("Failed to get account map by emails",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -190,7 +173,7 @@ func (s *auditlogService) ListAuditLogs(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -207,14 +190,7 @@ func (s *auditlogService) ListAuditLogs(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	var filters = []*mysql.FilterV2{
 		{
@@ -251,7 +227,7 @@ func (s *auditlogService) ListAuditLogs(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -282,7 +258,7 @@ func (s *auditlogService) ListAuditLogs(
 		editorEmails = append(editorEmails, auditlog.Editor.Email)
 	}
 	editorEmails = deDuplicateStrings(editorEmails)
-	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId, localizer)
+	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +285,6 @@ func (s *auditlogService) ListAuditLogs(
 func (s *auditlogService) newAuditLogListOrders(
 	orderBy proto.ListAuditLogsRequest_OrderBy,
 	orderDirection proto.ListAuditLogsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -317,14 +292,7 @@ func (s *auditlogService) newAuditLogListOrders(
 		proto.ListAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListAuditLogsRequest_ASC {
@@ -338,7 +306,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	req *proto.ListAdminAuditLogsRequest,
 ) (*proto.ListAdminAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +339,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -392,14 +360,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -432,7 +393,6 @@ func (s *auditlogService) ListAdminAuditLogs(
 func (s *auditlogService) newAdminAuditLogListOrders(
 	orderBy proto.ListAdminAuditLogsRequest_OrderBy,
 	orderDirection proto.ListAdminAuditLogsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -440,14 +400,7 @@ func (s *auditlogService) newAdminAuditLogListOrders(
 		proto.ListAdminAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListAdminAuditLogsRequest_ASC {
@@ -463,8 +416,7 @@ func (s *auditlogService) ListFeatureHistory(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +458,7 @@ func (s *auditlogService) ListFeatureHistory(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -527,14 +479,7 @@ func (s *auditlogService) ListFeatureHistory(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -572,7 +517,6 @@ func (s *auditlogService) getAccountMapByEmails(
 	ctx context.Context,
 	emails []string,
 	environmentID string,
-	localizer locale.Localizer,
 ) (accountMap map[string]*accountproto.AccountV2, err error) {
 	accountMap = make(map[string]*accountproto.AccountV2)
 	if len(emails) == 0 {
@@ -621,7 +565,6 @@ func (s *auditlogService) getAccountMapByEmails(
 func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
 	orderBy proto.ListFeatureHistoryRequest_OrderBy,
 	orderDirection proto.ListFeatureHistoryRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -629,14 +572,7 @@ func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
 		proto.ListFeatureHistoryRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListFeatureHistoryRequest_ASC {
@@ -649,7 +585,6 @@ func (s *auditlogService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentId string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
@@ -675,14 +610,7 @@ func (s *auditlogService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -691,14 +619,7 @@ func (s *auditlogService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -715,7 +636,6 @@ func (s *auditlogService) checkEnvironmentRole(
 
 func (s *auditlogService) checkSystemAdminRole(
 	ctx context.Context,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
@@ -725,27 +645,13 @@ func (s *auditlogService) checkSystemAdminRole(
 				"Unauthenticated",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
