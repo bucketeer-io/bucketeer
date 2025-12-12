@@ -317,6 +317,11 @@
                 "id": 14,
                 "name": "last_seen",
                 "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "password_setup_required",
+                "type": "bool"
               }
             ],
             "messages": [
@@ -6672,6 +6677,150 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "name": "UpdatePasswordRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "current_password",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "new_password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "UpdatePasswordResponse"
+          },
+          {
+            "name": "InitiatePasswordSetupRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "InitiatePasswordSetupResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "message",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SetupPasswordRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "setup_token",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "new_password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SetupPasswordResponse"
+          },
+          {
+            "name": "ValidatePasswordSetupTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "setup_token",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ValidatePasswordSetupTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "is_valid",
+                "type": "bool"
+              },
+              {
+                "id": 2,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "InitiatePasswordResetRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "InitiatePasswordResetResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "message",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ResetPasswordRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "reset_token",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "new_password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ResetPasswordResponse"
+          },
+          {
+            "name": "ValidatePasswordResetTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "reset_token",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ValidatePasswordResetTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "is_valid",
+                "type": "bool"
+              },
+              {
+                "id": 2,
+                "name": "email",
+                "type": "string"
+              }
+            ]
           }
         ],
         "services": [
@@ -7365,6 +7514,653 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.auth.get_demo_site_status"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdatePassword",
+                "in_type": "UpdatePasswordRequest",
+                "out_type": "UpdatePasswordResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "put",
+                        "value": "/v1/auth/password"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Password"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update the password for the authenticated user."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.update_password"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "InitiatePasswordSetup",
+                "in_type": "InitiatePasswordSetupRequest",
+                "out_type": "InitiatePasswordSetupResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/setup/initiate"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Initiate Password Setup"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Initiate password setup process by sending a setup email to users without passwords."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.initiate_password_setup"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "SetupPassword",
+                "in_type": "SetupPasswordRequest",
+                "out_type": "SetupPasswordResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/setup"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Setup Password"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Complete password setup using a valid setup token."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.setup_password"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ValidatePasswordSetupToken",
+                "in_type": "ValidatePasswordSetupTokenRequest",
+                "out_type": "ValidatePasswordSetupTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/setup/validate"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Validate Password Setup Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Validate if a password setup token is valid and not expired."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.validate_password_setup_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "InitiatePasswordReset",
+                "in_type": "InitiatePasswordResetRequest",
+                "out_type": "InitiatePasswordResetResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/reset/initiate"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Initiate Password Reset"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Initiate password reset process by sending a reset email to users with existing passwords."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.initiate_password_reset"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ResetPassword",
+                "in_type": "ResetPasswordRequest",
+                "out_type": "ResetPasswordResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/reset"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Reset Password"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Complete password reset using a valid reset token."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.reset_password"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ValidatePasswordResetToken",
+                "in_type": "ValidatePasswordResetTokenRequest",
+                "out_type": "ValidatePasswordResetTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/password/reset/validate"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Validate Password Reset Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Validate if a password reset token is valid and not expired."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Password Management"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.validate_password_reset_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -13154,6 +13950,16 @@
             ]
           },
           {
+            "name": "UpdateAuthenticationSettingsOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
+              }
+            ]
+          },
+          {
             "name": "ChangeRequireCommentCommand",
             "fields": [
               {
@@ -13177,6 +13983,11 @@
           },
           {
             "name": "ConvertTrialOrganizationCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
@@ -13269,7 +14080,36 @@
     {
       "protopath": "environment:/:organization.proto",
       "def": {
+        "enums": [
+          {
+            "name": "AuthenticationType",
+            "enum_fields": [
+              {
+                "name": "AUTHENTICATION_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_GOOGLE",
+                "integer": 1
+              },
+              {
+                "name": "AUTHENTICATION_TYPE_PASSWORD",
+                "integer": 2
+              }
+            ]
+          }
+        ],
         "messages": [
+          {
+            "name": "AuthenticationSettings",
+            "fields": [
+              {
+                "id": 1,
+                "name": "enabled_types",
+                "type": "AuthenticationType",
+                "is_repeated": true
+              }
+            ]
+          },
           {
             "name": "Organization",
             "fields": [
@@ -13342,6 +14182,11 @@
                 "id": 14,
                 "name": "owner_email",
                 "type": "string"
+              },
+              {
+                "id": 15,
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           }
@@ -14395,6 +15240,11 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -14490,6 +15340,11 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 8,
+                "name": "authentication_settings",
+                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -20959,6 +21814,10 @@
                 "integer": 1510
               },
               {
+                "name": "ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED",
+                "integer": 1511
+              },
+              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -24090,6 +24949,21 @@
             ]
           },
           {
+            "name": "OrganizationAuthenticationSettingsUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "authentication_settings",
+                "type": "bucketeer.environment.AuthenticationSettings"
+              }
+            ]
+          },
+          {
             "name": "OrganizationNameChangedEvent",
             "fields": [
               {
@@ -24811,6 +25685,9 @@
           },
           {
             "path": "proto/account/api_key.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           },
           {
             "path": "proto/autoops/auto_ops_rule.proto"

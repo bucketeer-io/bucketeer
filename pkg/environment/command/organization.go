@@ -72,6 +72,8 @@ func (h *organizationCommandHandler) Handle(ctx context.Context, cmd Command) er
 		return h.convertTrial(ctx, c)
 	case *proto.ChangeOwnerEmailOrganizationCommand:
 		return h.changeOwnerEmail(ctx, c)
+	case *proto.UpdateAuthenticationSettingsOrganizationCommand:
+		return h.updateAuthenticationSettings(ctx, c)
 	default:
 		return errUnknownCommand
 	}
@@ -86,6 +88,18 @@ func (h *organizationCommandHandler) changeOwnerEmail(
 		&eventproto.OrganizationOwnerEmailChangedEvent{
 			Id:         h.organization.Id,
 			OwnerEmail: h.organization.OwnerEmail,
+		})
+}
+
+func (h *organizationCommandHandler) updateAuthenticationSettings(
+	ctx context.Context,
+	cmd *proto.UpdateAuthenticationSettingsOrganizationCommand,
+) error {
+	h.organization.UpdateAuthenticationSettings(cmd.AuthenticationSettings)
+	return h.send(ctx, eventproto.Event_ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED,
+		&eventproto.OrganizationAuthenticationSettingsUpdatedEvent{
+			Id:                     h.organization.Id,
+			AuthenticationSettings: cmd.AuthenticationSettings,
 		})
 }
 
