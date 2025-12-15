@@ -12,6 +12,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
+import { getDependentFlags } from 'utils/feature-dependencies';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from 'pages/feature-flag-details/elements/confirm-required-modal';
@@ -65,14 +66,13 @@ const PageLoader = () => {
   });
 
   const features = useMemo(() => collection?.features || [], [collection]);
-
   const activeFeatures = useMemo(
-    () => features.filter(item => !item.archived) || [],
+    () => features.filter(item => !item.archived),
     [features]
   );
-
-  const hasPrerequisiteFlags = activeFeatures.filter(item =>
-    item.prerequisites.find(p => p.featureId === selectedFlag?.id)
+  const dependentFlags = getDependentFlags(
+    selectedFlag ? [selectedFlag] : [],
+    activeFeatures
   );
   const onHandleActions = useCallback(
     (flag: Feature, type: FlagActionType) => {
@@ -178,7 +178,7 @@ const PageLoader = () => {
           isArchiving={isArchiving}
           isOpen={openConfirmModal}
           isLoading={mutation.isPending}
-          hasPrerequisiteFlags={hasPrerequisiteFlags}
+          dependentFlags={dependentFlags}
           isShowWarning={
             isArchiving &&
             getFlagStatus(selectedFlag) ===

@@ -9,7 +9,8 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
-import PrerequisiteBanner from 'pages/feature-flag-details/targeting/prerequisite-rule/prerequisite-banner';
+import { getDependentFlags } from 'utils/feature-dependencies';
+import { DependentFlagWarning } from 'pages/feature-flag-details/targeting/prerequisite-rule';
 import { getFlagStatus } from 'pages/feature-flags/collection-layout/elements/utils';
 import ArchiveModal from 'pages/feature-flags/flags-modal/archive-modal';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
@@ -48,13 +49,10 @@ const ArchiveFlag = ({
   const features = useMemo(() => collection?.features || [], [collection]);
 
   const activeFeatures = useMemo(
-    () => features.filter(item => !item.archived) || [],
+    () => features.filter(item => !item.archived),
     [features]
   );
-
-  const hasPrerequisiteFlags = activeFeatures.filter(item =>
-    item.prerequisites.find(p => p.featureId === feature.id)
-  );
+  const dependentFlags = getDependentFlags([feature], activeFeatures);
 
   const mutation = useMutation({
     mutationFn: async (params: Partial<FeatureUpdaterParams>) => {
@@ -100,15 +98,15 @@ const ArchiveFlag = ({
             : 'form:archive-flag-desc'
         )}
       </p>
-      {hasPrerequisiteFlags?.length > 0 && (
-        <PrerequisiteBanner hasPrerequisiteFlags={hasPrerequisiteFlags} />
+      {dependentFlags?.length > 0 && (
+        <DependentFlagWarning dependentFlags={dependentFlags} />
       )}
       <DisabledButtonTooltip
         align="start"
         hidden={!disabled}
         trigger={
           <Button
-            disabled={disabled || !!hasPrerequisiteFlags?.length}
+            disabled={disabled || !!dependentFlags?.length}
             className="w-fit"
             variant="secondary"
             onClick={onOpenArchiveFlagModal}

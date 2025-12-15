@@ -5,7 +5,7 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Feature } from '@types';
 import { cn } from 'utils/style';
-import PrerequisiteBanner from 'pages/feature-flag-details/targeting/prerequisite-rule/prerequisite-banner';
+import { DependentFlagWarning } from 'pages/feature-flag-details/targeting/prerequisite-rule';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
@@ -21,7 +21,7 @@ export type ArchiveModalProps = {
   description: React.ReactElement | string;
   className?: string;
   isLoading?: boolean;
-  hasPrerequisiteFlags?: Feature[];
+  dependentFlags?: Feature[];
   onClose: () => void;
   onSubmit: ({ comment }: { comment?: string }) => Promise<void>;
 };
@@ -34,7 +34,7 @@ const ArchiveModal = ({
   description,
   className,
   isLoading,
-  hasPrerequisiteFlags,
+  dependentFlags,
   onClose,
   onSubmit
 }: ArchiveModalProps) => {
@@ -76,8 +76,8 @@ const ArchiveModal = ({
         <div className="typo-para-small text-gray-600 w-full">
           {description}
         </div>
-        {hasPrerequisiteFlags && hasPrerequisiteFlags?.length > 0 && (
-          <PrerequisiteBanner hasPrerequisiteFlags={hasPrerequisiteFlags} />
+        {dependentFlags && !!dependentFlags?.length && (
+          <DependentFlagWarning dependentFlags={dependentFlags} />
         )}
         {isShowWarning && <ArchiveWarning />}
         <FormProvider {...form}>
@@ -110,7 +110,7 @@ const ArchiveModal = ({
         secondaryButton={
           <Button
             loading={isSubmitting || isLoading}
-            disabled={!isValid || !editable || !!hasPrerequisiteFlags?.length}
+            disabled={!isValid || !editable || !!dependentFlags?.length}
             onClick={form.handleSubmit(onSubmit)}
           >
             {t(isArchiving ? `archive-flag` : 'unarchive-flag')}
