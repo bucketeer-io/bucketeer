@@ -108,7 +108,7 @@ const ArchiveFlag = ({
         hidden={!disabled}
         trigger={
           <Button
-            disabled
+            disabled={disabled || !!hasPrerequisiteFlags?.length}
             className="w-fit"
             variant="secondary"
             onClick={onOpenArchiveFlagModal}
