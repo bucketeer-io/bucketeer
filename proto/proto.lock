@@ -6758,7 +6758,13 @@
               {
                 "id": 2,
                 "name": "variation_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -6794,7 +6800,13 @@
               {
                 "id": 4,
                 "name": "variation_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
