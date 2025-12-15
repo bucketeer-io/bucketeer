@@ -29,6 +29,11 @@ type EnvironmentV2 struct {
 	*proto.EnvironmentV2
 }
 
+const (
+	defaultAutoArchiveUnusedDays    int32 = 90
+	defaultAutoArchiveCheckCodeRefs       = true
+)
+
 func NewEnvironmentV2(
 	name,
 	urlCode,
@@ -56,8 +61,8 @@ func NewEnvironmentV2(
 		CreatedAt:                now,
 		UpdatedAt:                now,
 		AutoArchiveEnabled:       false,
-		AutoArchiveUnusedDays:    90,
-		AutoArchiveCheckCodeRefs: true,
+		AutoArchiveUnusedDays:    defaultAutoArchiveUnusedDays,
+		AutoArchiveCheckCodeRefs: defaultAutoArchiveCheckCodeRefs,
 	}}, nil
 }
 
