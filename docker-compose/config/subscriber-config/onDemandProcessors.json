@@ -4,7 +4,7 @@
     "flushInterval": 5,
     "flushTimeout": 30,
     "dataWarehouse": {
-      "type": "postgres",
+      "type": "mysql",
       "batchSize": 1000,
       "timezone": "UTC",
       "mysql": {
@@ -42,7 +42,7 @@
     "maxRetryGoalEventPeriod": 86400,
     "retryGoalEventInterval": 300,
     "dataWarehouse": {
-      "type": "postgres",
+      "type": "mysql",
       "batchSize": 1000,
       "timezone": "UTC",
       "mysql": {

@@ -1,4 +1,4 @@
-type: postgres
+type: mysql
 batchSize: 1000
 timezone: "UTC"
 mysql:
