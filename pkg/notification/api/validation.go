@@ -15,35 +15,17 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	notificationproto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
 func (s *NotificationService) validateCreateSubscriptionRequest(
 	req *notificationproto.CreateSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	if len(req.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSourceTypesRequired.Err()
 	}
 	// We should only save the tags if the Feature source type is in the list
 	if req.FeatureFlagTags != nil {
@@ -55,17 +37,10 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 			}
 		}
 		if !found {
-			dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "SourceTypes"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusSourceTypesRequired.Err()
 		}
 	}
-	if err := s.validateRecipient(req.Recipient, localizer); err != nil {
+	if err := s.validateRecipient(req.Recipient); err != nil {
 		return err
 	}
 	return nil
@@ -73,113 +48,53 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 
 func (s *NotificationService) validateRecipient(
 	recipient *notificationproto.Recipient,
-	localizer locale.Localizer,
 ) error {
 	if recipient == nil {
-		dt, err := statusRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusRecipientRequired.Err()
 	}
 	if recipient.Type == notificationproto.Recipient_SlackChannel {
-		return s.validateSlackRecipient(recipient.SlackChannelRecipient, localizer)
+		return s.validateSlackRecipient(recipient.SlackChannelRecipient)
 	}
-	dt, err := statusUnknownRecipient.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "recipant"),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return statusUnknownRecipient.Err()
 }
 
 func (s *NotificationService) validateSlackRecipient(
 	sr *notificationproto.SlackChannelRecipient,
-	localizer locale.Localizer,
 ) error {
 	// TODO: Check ping to the webhook URL?
 	if sr == nil {
-		dt, err := statusSlackRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSlackRecipientRequired.Err()
 	}
 	if sr.WebhookUrl == "" {
-		dt, err := statusSlackRecipientWebhookURLRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSlackRecipientWebhookURLRequired.Err()
 	}
 	return nil
 }
 
 func (s *NotificationService) validateUpdateSubscriptionRequest(
 	req *notificationproto.UpdateSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	if req.Name != nil && req.Name.Value == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	return nil
 }
 
 func validateDeleteSubscriptionRequest(
 	req *notificationproto.DeleteSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	return nil
 }
 
-func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest, localizer locale.Localizer) error {
+func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	return nil
 }

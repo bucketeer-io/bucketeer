@@ -22,6 +22,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-db:/docker-entrypoint-initdb.d
+      - ./config/mysql-conf:/etc/mysql/conf.d
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bucketeer", "-pbucketeer"]
