@@ -47,6 +47,7 @@ mysql:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
+    rootPassword: "YnVja2V0ZWVy"
   primary:
     service:
       type: NodePort
