@@ -34,4 +34,11 @@ type CodeReferenceStorage interface {
 		limit, offset int,
 	) ([]*domain.CodeReference, int, int64, error)
 	DeleteCodeReference(ctx context.Context, id string) error
+	// GetCodeReferenceCountsByFeatureIDs returns a map of feature ID to code reference count
+	// for the given environment. This is used for bulk archivability evaluation.
+	GetCodeReferenceCountsByFeatureIDs(
+		ctx context.Context,
+		environmentID string,
+		featureIDs []string,
+	) (map[string]int64, error)
 }
