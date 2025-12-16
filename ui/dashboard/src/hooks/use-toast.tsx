@@ -45,13 +45,11 @@ export const useToast = () => {
     );
 
   const errorNotify = (error?: unknown, message?: string) => {
-    const { message: _message, status } = (error as ServerErrorType) || {};
+    const { response } = (error as ServerErrorType) || {};
+    const _message = response?.data.message;
     return notify({
       messageType: 'error',
-      message:
-        status === 409
-          ? t('same-data-exists')
-          : message || _message || t('something-went-wrong')
+      message: message || _message || t('something-went-wrong')
     });
   };
   return {

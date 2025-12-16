@@ -69,7 +69,7 @@ migration:
 
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name
-  dbUrl: mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer
+  dbUrl: mysql://root:YnVja2V0ZWVy@localenv-mysql.default.svc:3306/bucketeer
 
   # The migration baseline
   # First revision
