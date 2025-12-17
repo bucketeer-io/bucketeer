@@ -105,6 +105,7 @@
     "VariationId": "Variation ID",
     "VariationWeight": "Variation weight",
     "Webhook": "Webhook",
+    "WebhookURL": "Webhook URL",
     "WebhookRule": "Webhook rule",
     "FlagTrigger": "Flag trigger",
     "CodeReference": "Code reference"
