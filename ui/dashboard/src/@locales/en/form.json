@@ -122,7 +122,7 @@
   "placeholder-search": "Search",
   "feature-flags": {
     "clone-title": "Clone Feature Flag",
-    "clone-desc": "It will copy the full targeting configuration, including on/off variation from the original flag to the new flag.",
+    "clone-desc": "This will copy the targeting rules from the original flag to a new flag in the destination environment. The new flag will be created in a disabled state. Prerequisites, flag-based rules, and segment-based rules are not included.",
     "flag-id": "Flag ID",
     "placeholder-flag": "Enter flag id",
     "flag-variations": "Flag Variations",
@@ -213,9 +213,9 @@
   "flag-type-tooltip": "Select the data type for your feature flag's variations. This cannot be changed after creation.",
   "history-details": "History Details",
   "placeholder-maintainer": "Enter maintainer",
-  "clone-flag-desc": "Cloning the flag will copy its targeting configuration and on/off state for all environments",
-  "archive-flag-desc": "This flag will be archived across all environments and will only appear in your list when filtered for",
-  "unarchive-flag-desc": "This flag will be unarchive across all environments",
+  "clone-flag-desc": "Cloning a flag copies its targeting rules to the destination environment and creates the flag in a disabled state. Prerequisites, flag-based rules, and segment-based rules are not copied.",
+  "archive-flag-desc": "When a flag is archived, it will only appear on the list page when filters are applied and will be excluded from user evaluations.",
+  "unarchive-flag-desc": "When a flag is unarchived, it will appear on the list page again and be included in user evaluations.",
   "placeholder-value": "Enter value",
   "before": "Before",
   "after": "After",
@@ -356,5 +356,5 @@
   "name-desc-search-placeholder": "Search by name or description...",
   "email-search-placeholder": "Search by email...",
   "name-search-placeholder": "Search by name...",
-  "yaml-note":"YAML values are compiled into a JSON structure before user evaluation and are returned to the client SDK through the object variation interface, just like JSON flags."
+  "yaml-note": "YAML values are compiled into a JSON structure before user evaluation and are returned to the client SDK through the object variation interface, just like JSON flags."
 }
