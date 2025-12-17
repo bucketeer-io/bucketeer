@@ -13,7 +13,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { IconInfo } from '@icons';
+import { IconClose, IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import { TargetingDivider } from '..';
@@ -48,6 +48,7 @@ const TargetSegmentRule = ({
   isDisableAddIndividualRules,
   isDisableAddPrerequisite,
   onAddRule,
+  segmentRulesRemove,
   segmentRulesSwap,
   handleDiscardChanges,
   handleCheckEdit
@@ -181,6 +182,16 @@ const TargetSegmentRule = ({
                       )}
                     </div>
                   )}
+                  <div
+                    className="flex-center cursor-pointer group"
+                    onClick={() => segmentRulesRemove(segmentIndex)}
+                  >
+                    <Icon
+                      icon={IconClose}
+                      size={'sm'}
+                      className="flex-center text-gray-500 group-hover:text-gray-700"
+                    />
+                  </div>
                 </div>
               </div>
               <Fragment>
