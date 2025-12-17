@@ -64,6 +64,7 @@ import {
   handleCheckIndividualRules,
   handleCheckPrerequisiteDiscardChanges,
   handleCheckPrerequisites,
+  handleCheckRuleDeleted,
   handleCheckSegmentRules,
   handleCheckSegmentRulesDiscardChanges,
   handleCreateDefaultValues,
@@ -367,6 +368,19 @@ const TargetingPage = ({
     },
     [segmentRulesWatch]
   );
+
+  const handleSegmentRuleDeleted = () => {
+    return handleCheckRuleDeleted(
+      featureRef.rules,
+      feature.rules,
+      features,
+      segmentCollection?.segments || [],
+      situationOptions,
+      operatorOptions,
+      feature.variations,
+      t
+    );
+  };
 
   const handleSegmentRuleChangeDiscard = (index: number, isAction: boolean) => {
     const preRules =
@@ -723,6 +737,7 @@ const TargetingPage = ({
           isOpen={isOpenConfirmModal}
           isShowScheduleSelect={isShowUpdateSchedule}
           onSegmentRuleChannge={handleSegmentRuleChangeDiscard}
+          onSegmentRuleDeleted={handleSegmentRuleDeleted}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()
