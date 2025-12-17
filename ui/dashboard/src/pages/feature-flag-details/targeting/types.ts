@@ -55,7 +55,8 @@ export interface DiscardChangesStateData {
     | 'default-strategy'
     | 'default-audience'
     | 'audience'
-    | 'new-rule';
+    | 'new-rule'
+    | 'deleted-rule';
   ruleOrders?: RuleOrders;
   variation?: FeatureVariation;
   ruleIndex?: number;

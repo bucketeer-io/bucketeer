@@ -409,6 +409,7 @@
   "add-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を追加します",
   "remove-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を削除します",
   "add-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を追加:",
-  "update-custom-rule-audience-discard-desc":"対象ユーザーのトラフィック配分:",
-  "add-new-rule": "ルールを追加: <b>{{clauseLabel}} の場合</b>、<variantElement/> を返す"
+  "update-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分:",
+  "add-new-rule": "ルールを追加: <b>{{clauseLabel}} の場合</b>、<variantElement/> を返す",
+  "delete-rule": "<b>{{clauseLabel}}の場合</b>、<variantElement/> を返す"
 }

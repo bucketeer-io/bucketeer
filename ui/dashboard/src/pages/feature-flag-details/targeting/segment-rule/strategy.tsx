@@ -178,6 +178,7 @@ const Strategy = ({
       );
     }
   }, [variations, rolloutStrategy]);
+  
   return (
     <div className="px-2">
       {label && (

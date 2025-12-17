@@ -167,6 +167,8 @@ const RuleHeader = ({
 }: RuleHeader) => {
   const { t } = useTranslation(['common', 'form']);
   if (isAddNew) return null;
+  const isNewRule = changeType === 'new-rule';
+  const isDeleteRule = changeType === 'deleted-rule';
 
   return (
     <div className="flex w-full gap-x-2">
@@ -174,11 +176,11 @@ const RuleHeader = ({
         <ActionIcon labelType={labelType} />
       </div>
       <div className="typo-para-medium text-gray-700">
-        {changeType === 'new-rule' ? (
+        {isNewRule || isDeleteRule ? (
           <div className="inline items-center">
             <div className="inline">
               <Trans
-                i18nKey={'form:add-new-rule'}
+                i18nKey={isNewRule ? 'form:add-new-rule' : 'form:delete-rule'}
                 values={{
                   clauseLabel: label
                 }}
@@ -335,8 +337,9 @@ export const CustomRuleDiscardItem = ({
     ['default-audience', 'audience'].includes(changeType || '') &&
     audienceExcluded;
   const showVariationPercent =
-    ['strategy', 'default-strategy', 'new-rule'].includes(changeType || '') &&
-    !!variationPercent?.length;
+    ['strategy', 'default-strategy', 'new-rule', 'deleted-rule'].includes(
+      changeType || ''
+    ) && !!variationPercent?.length;
   return (
     <div className={cn('flex flex-col w-full pl-4')}>
       <RuleHeader

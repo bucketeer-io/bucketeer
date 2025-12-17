@@ -297,7 +297,7 @@
   "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
   "leave-page": "ページを離れる",
-  "note":"メモ",
+  "note": "メモ",
   "full-screen-mode":"フルスクリーンモード",
   "custom-individual-rule": "カスタム個別ターゲティング",
   "custom-prerequises-rule": "カスタム前提条件",
@@ -306,6 +306,9 @@
   "custom-segment-rule": "カスタムルール {{rule}}",
   "edit-rule": "<b>ルール {{rule}}</b> を編集",
   "custom-rule": "カスタムルール",
-  "comma":"、",
-  "change": "変更する"
+  "comma": "、",
+  "change": "変更する",
+  "rule": "ルール",
+  "rules": "ルール",
+  "rule-deleted": "({{count}}) {{tailTitle}} が削除されます："
 }

@@ -400,7 +400,8 @@
   "custom-rule-default-audience-discard-desc": "Update default audience allocation:",
   "add-custom-rule-clause-value-discard-desc": "Add value <b>{{value}}</b> to ",
   "remove-custom-rule-clause-value-discard-desc": "Remove value <b>{{value}}</b> from ",
-  "add-custom-rule-audience-discard-desc":"Add audience traffic allocation with:",
-  "update-custom-rule-audience-discard-desc":"Update audience traffic allocation with:",
-  "add-new-rule":" Add rule: <b>If {{clauseLabel}}</b>, serve <variantElement/>"
+  "add-custom-rule-audience-discard-desc": "Add audience traffic allocation with:",
+  "update-custom-rule-audience-discard-desc": "Update audience traffic allocation with:",
+  "add-new-rule": "Add rule: <b>If {{clauseLabel}}</b>, serve <variantElement/>",
+  "delete-rule": "<b>If {{clauseLabel}}</b>, serve <variantElement/>"
 }

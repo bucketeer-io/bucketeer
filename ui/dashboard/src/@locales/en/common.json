@@ -299,13 +299,16 @@
   "leave-page": "Leave page",
   "note": "Note",
   "full-screen-mode": "Fullscreen Mode",
-  "custom-individual-rule":"Custom Individual Targeting",
-  "custom-prerequises-rule":"Custom Prerequisites",
-  "custom-default-rule":"Custom Default Rule",
+  "custom-individual-rule": "Custom Individual Targeting",
+  "custom-prerequises-rule": "Custom Prerequisites",
+  "custom-default-rule": "Custom Default Rule",
   "change-count": "{{count}} {{changeText}} detected. Saving will update the flag and increment the version to <b>{{versionFeature}}</b>.",
-  "custom-segment-rule":"Custom Rule {{rule}}",
+  "custom-segment-rule": "Custom Rule {{rule}}",
   "edit-rule": "Edit <b>Rule {{rule}}</b>",
-  "custom-rule":"Custom Rule",
-  "comma":",",
-  "change":"Change"
+  "custom-rule": "Custom Rule",
+  "comma": ",",
+  "change": "Change",
+  "rule": "rule",
+  "rules": "rules",
+  "rule-deleted": "({{count}}) {{tailTitle}} will be deleted:"
 }

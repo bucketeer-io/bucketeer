@@ -47,6 +47,7 @@ export type ConfirmationRequiredModalProps = {
   isOpen: boolean;
   isShowScheduleSelect?: boolean;
   isShowRolloutWarning?: boolean;
+  onSegmentRuleDeleted?: () => DiscardChangesStateData[];
   onSegmentRuleChannge?: (
     index: number,
     isAction: boolean
@@ -76,6 +77,7 @@ const ConfirmationRequiredModal = ({
   isOpen,
   isShowScheduleSelect,
   isShowRolloutWarning,
+  onSegmentRuleDeleted,
   onSegmentRuleChannge,
   onClose,
   onSubmit
@@ -121,8 +123,17 @@ const ConfirmationRequiredModal = ({
         : [],
     [targetingRule]
   );
+
+  const segmentRuleDeletedChanges = useMemo(() => {
+    if (onSegmentRuleDeleted) {
+      return onSegmentRuleDeleted();
+    }
+    return [];
+  }, [onSegmentRuleDeleted]);
+
   const segmentRulesChange = useMemo(() => {
     const change: { rule: number; changes: DiscardChangesStateData[] }[] = [];
+
     if (!targetingRule) return [];
     for (let i = 0; i < targetingRule.segmentRules!.length; i++) {
       if (!onSegmentRuleChannge) continue;
@@ -156,14 +167,16 @@ const ConfirmationRequiredModal = ({
       (segmentRulesChange?.length ?? 0) +
       (defaultRulesChange?.length ?? 0) +
       (individualChange?.length ?? 0) +
-      (prerequisiteChanges?.length ?? 0);
+      (prerequisiteChanges?.length ?? 0) +
+      (segmentRuleDeletedChanges?.length ?? 0);
 
     return totalChanges;
   }, [
     segmentRulesChange?.length,
     defaultRulesChange?.length,
     individualChange?.length,
-    prerequisiteChanges?.length
+    prerequisiteChanges?.length,
+    segmentRuleDeletedChanges?.length
   ]);
 
   const form = useForm({
@@ -209,7 +222,9 @@ const ConfirmationRequiredModal = ({
   };
 
   const renderSegmentRuleChanges = (): ReactNode => {
-    if (!segmentRulesChange || !segmentRulesChange.length) return null;
+    const showCustomRuleChange =
+      !!segmentRulesChange.length || !!segmentRuleDeletedChanges.length;
+    if (!showCustomRuleChange) return null;
     return (
       <DiscardChangeItems title={t('common:custom-rule')}>
         <div className="flex flex-col gap-2 pl-4">
@@ -220,7 +235,7 @@ const ConfirmationRequiredModal = ({
                   i18nKey="common:edit-rule"
                   values={{ rule }}
                   components={{
-                    b: <strong></strong>
+                    b: <strong />
                   }}
                 />
               </div>
@@ -231,6 +246,25 @@ const ConfirmationRequiredModal = ({
               })}
             </div>
           ))}
+          {!!segmentRuleDeletedChanges.length && (
+            <div className="w-full">
+              <p className="typo-para-medium text-accent-red-500">
+                <Trans
+                  i18nKey="common:rule-deleted"
+                  values={{
+                    count: segmentRuleDeletedChanges.length,
+                    tailTitle:
+                      segmentRuleDeletedChanges.length > 1
+                        ? t('common:rules')
+                        : t('common:rule')
+                  }}
+                />
+              </p>
+              {segmentRuleDeletedChanges.map((item, index) => (
+                <CustomRuleDiscardItem key={index} {...item} />
+              ))}
+            </div>
+          )}
         </div>
       </DiscardChangeItems>
     );
@@ -272,13 +306,13 @@ const ConfirmationRequiredModal = ({
                   <div className="w-full flex flex-col px-5 pb-5 gap-4 ">
                     {renderDiscardSection({
                       title: t('form:feature-flags.prerequisites'),
-                      items: prerequisiteChanges!,
+                      items: prerequisiteChanges ? prerequisiteChanges : [],
                       Renderer: PrerequisiteDiscardItem
                     })}
 
                     {renderDiscardSection({
                       title: t('form:targeting.individual-target'),
-                      items: individualChange!,
+                      items: individualChange ? individualChange : [],
                       Renderer: IndividualDiscardItem
                     })}
 
@@ -286,7 +320,7 @@ const ConfirmationRequiredModal = ({
 
                     {renderDiscardSection({
                       title: t('form:targeting.default-rule'),
-                      items: defaultRulesChange!,
+                      items: defaultRulesChange ? defaultRulesChange : [],
                       Renderer: CustomRuleDiscardItem
                     })}
                   </div>

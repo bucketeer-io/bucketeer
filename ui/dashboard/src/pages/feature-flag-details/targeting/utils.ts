@@ -16,6 +16,7 @@ import {
   FeatureVariation,
   PrerequisiteChange,
   RuleChange,
+  RuleStrategyVariation,
   StrategyType,
   TargetChange,
   UserSegment
@@ -668,6 +669,13 @@ const getVariation = (features: Feature[], clause: FeatureRuleClause) => {
   return variationFeatures || [];
 };
 
+const normalizedWeightVariations = (variations: RuleStrategyVariation[]) => {
+  return variations.map(v => ({
+    ...v,
+    weight: v.weight >= 0 && v.weight <= 100 ? v.weight : v.weight / 1000
+  }));
+};
+
 export const getClauseLabel = (
   segmentUsers: UserSegment[],
   clause: FeatureRuleClause,
@@ -706,6 +714,7 @@ export const getClauseLabel = (
     .join(' ');
 
   const valueLabel = values;
+
   return { fullLabel, valueLabel };
 };
 
@@ -717,6 +726,7 @@ const getVariationInfo = (
     variationFeatures,
     variationId
   );
+
   return indexVariation === -1
     ? { variationLabel: '', indexVariation: -1, variationId: '' }
     : {
@@ -725,6 +735,7 @@ const getVariationInfo = (
         variationId: variation?.id || ''
       };
 };
+
 const getStrategyVariationWeight = (
   strategy: FeatureRuleStrategy,
   variationFeatures: FeatureVariation[]
@@ -735,6 +746,7 @@ const getStrategyVariationWeight = (
       variationFeatures,
       strategy.fixedStrategy.variation
     );
+
     return [
       {
         variationId: variationId,
@@ -761,6 +773,7 @@ const getStrategyVariationWeight = (
       })
       .filter(Boolean) as VariationPercent[];
   }
+
   return [];
 };
 
@@ -782,6 +795,7 @@ export const getClauseLabelsFromRule = (
       operatorOptions,
       t
     );
+
     return `${fullLabel}`;
   });
 
@@ -1076,10 +1090,9 @@ const diffStrategy = (
   ) {
     const { variationPercents, audienceExcluded, audienceIncluded } =
       getAudienceChangeData(currentStrategy, variationFeatures);
-    const preRollout = preStrategy.rolloutStrategy?.variations.map(v => ({
-      ...v,
-      weight: v.weight >= 0 && v.weight <= 100 ? v.weight : v.weight / 1000
-    }));
+    const preRollout = normalizedWeightVariations(
+      preStrategy.rolloutStrategy?.variations || []
+    );
 
     if (
       !isEqual(
@@ -1194,4 +1207,58 @@ export const handleCheckSegmentRulesDiscardChanges = (
     changes: [...clauseChanges, ...strategyChanges],
     action: actionChange as 'new-rule' | 'edit-rule' | undefined
   };
+};
+
+export const handleCheckRuleDeleted = (
+  currentRules: FeatureRule[],
+  oldRules: FeatureRule[],
+  features: Feature[],
+  segmentUsers: UserSegment[],
+  situationOptions: VariationFeatures[],
+  operatorOptions: VariationFeatures[],
+  variationFeatures: FeatureVariation[],
+  t: TFunction
+) => {
+  let deletes: DiscardChangesStateData[] = [];
+  const deletedRules: FeatureRule[] = [];
+  oldRules.forEach(oldRule => {
+    const isExist = currentRules.find(
+      currentRule => currentRule.id === oldRule.id
+    );
+    if (!isExist) {
+      deletedRules.push(oldRule);
+    }
+  });
+  deletes = deletedRules.map(deletedRule => {
+    const clauseLabels = getClauseLabelsFromRule(
+      deletedRule,
+      features,
+      segmentUsers,
+      situationOptions,
+      operatorOptions,
+      t
+    ).join(` ${t('common:and')} `);
+    const normalizedWeight = {
+      ...deletedRule.strategy,
+      rolloutStrategy: {
+        ...deletedRule.strategy?.rolloutStrategy,
+        variations: normalizedWeightVariations(
+          deletedRule.strategy?.rolloutStrategy?.variations ?? []
+        )
+      }
+    };
+    const variationPercents = getStrategyVariationWeight(
+      normalizedWeight,
+      variationFeatures
+    );
+    return {
+      label: clauseLabels,
+      variationPercent: variationPercents,
+      changeType: 'deleted-rule' as const,
+      labelType: 'REMOVE' as const,
+      variationIndex: 0
+    };
+  });
+
+  return deletes;
 };
