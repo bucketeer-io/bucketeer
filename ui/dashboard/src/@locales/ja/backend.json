@@ -104,6 +104,7 @@
     "VariationId": "バリエーションID",
     "VariationWeight": "バリエーションの重み",
     "Webhook": "Webhook",
+    "WebhookURL": "Webhook URL",
     "WebhookRule": "Webhookのルール",
     "FlagTrigger": "フラグトリガー",
     "CodeReference": "コードリファレンス",

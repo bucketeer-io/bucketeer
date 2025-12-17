@@ -47,7 +47,7 @@ var (
 	statusSlackRecipientWebhookURLRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
 		err.NotificationPackageName,
 		"webhook URL must be specified",
-		"Webhook",
+		"WebhookURL",
 	))
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "cursor is invalid", "Cursor"),
