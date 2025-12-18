@@ -22,6 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -171,16 +172,38 @@ func (p *ProgressiveRollout) ExtractSchedules() ([]*autoopsproto.ProgressiveRoll
 	return nil, ErrProgressiveRolloutInvalidType
 }
 
-func (p *ProgressiveRollout) GetControlVariationID() (string, error) {
+// inferControlVariationID infers the control variation for backward compatibility.
+// For old progressive rollouts with only variation_id (target), we need to find
+// the other variation (control) from the feature's variations.
+// Old rollouts only supported features with exactly 2 variations.
+func inferControlVariationID(feature *ftdomain.Feature, targetVariationID string) (string, error) {
+	if feature == nil || len(feature.Variations) != 2 {
+		return "", nil
+	}
+	// Find the variation that is NOT the target
+	for _, v := range feature.Variations {
+		if v.Id != targetVariationID {
+			return v.Id, nil
+		}
+	}
+	return "", nil
+}
+
+func (p *ProgressiveRollout) GetControlVariationID(feature *ftdomain.Feature) (string, error) {
 	switch p.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
 		c, err := unmarshalProgressiveRolloutManualClause(p.Clause)
 		if err != nil {
 			return "", err
 		}
-		// Try new field first, fallback to empty for backward compatibility
+		// Try new field first
 		if c.ControlVariationId != "" {
 			return c.ControlVariationId, nil
+		}
+		// Backward compatibility: infer control from feature variations
+		// For old rollouts with only variation_id (target), the control is the other variation
+		if c.VariationId != "" {
+			return inferControlVariationID(feature, c.VariationId)
 		}
 		return "", nil
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
@@ -190,6 +213,10 @@ func (p *ProgressiveRollout) GetControlVariationID() (string, error) {
 		}
 		if c.ControlVariationId != "" {
 			return c.ControlVariationId, nil
+		}
+		// Backward compatibility: infer control from feature variations
+		if c.VariationId != "" {
+			return inferControlVariationID(feature, c.VariationId)
 		}
 		return "", nil
 	}
