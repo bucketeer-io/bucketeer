@@ -43,6 +43,21 @@ func (m *MockOrganizationStorage) EXPECT() *MockOrganizationStorageMockRecorder 
 	return m.recorder
 }
 
+// CountEnvTargetEntitiesInOrganization mocks base method.
+func (m *MockOrganizationStorage) CountEnvTargetEntitiesInOrganization(ctx context.Context, organizationID, target string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountEnvTargetEntitiesInOrganization", ctx, organizationID, target)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountEnvTargetEntitiesInOrganization indicates an expected call of CountEnvTargetEntitiesInOrganization.
+func (mr *MockOrganizationStorageMockRecorder) CountEnvTargetEntitiesInOrganization(ctx, organizationID, target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEnvTargetEntitiesInOrganization", reflect.TypeOf((*MockOrganizationStorage)(nil).CountEnvTargetEntitiesInOrganization), ctx, organizationID, target)
+}
+
 // CreateOrganization mocks base method.
 func (m *MockOrganizationStorage) CreateOrganization(ctx context.Context, p *domain.Organization) error {
 	m.ctrl.T.Helper()

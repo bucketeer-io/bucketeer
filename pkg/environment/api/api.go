@@ -33,11 +33,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
@@ -81,6 +83,8 @@ type EnvironmentService struct {
 	orgStorage          v2.OrganizationStorage
 	environmentStorage  v2.EnvironmentStorage
 	accountStorage      v2acc.AccountStorage
+	teamStorage         storage.TeamStorage
+	fluiStorage         ftstorage.FeatureLastUsedInfoStorage
 	publisher           publisher.Publisher
 	googleAuthenticator auth.Authenticator
 	verifier            token.Verifier
@@ -113,6 +117,8 @@ func NewEnvironmentService(
 		orgStorage:         v2.NewOrganizationStorage(mysqlClient),
 		environmentStorage: v2.NewEnvironmentStorage(mysqlClient),
 		accountStorage:     v2acc.NewAccountStorage(mysqlClient),
+		teamStorage:        storage.NewTeamStorage(mysqlClient),
+		fluiStorage:        ftstorage.NewFeatureLastUsedInfoStorage(mysqlClient),
 		publisher:          publisher,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,

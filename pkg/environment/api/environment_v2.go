@@ -783,7 +783,50 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 	ctx context.Context,
 	req *environmentproto.DeleteEnvironmentDataRequest,
 ) (*environmentproto.DeleteEnvironmentDataResponse, error) {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(req.EnvironmentIds) == 0 {
+		return nil, statusEnvironmentIDRequired.Err()
+	}
+
+	deletionSummary := make([]*environmentproto.EnvironmentDeletionSummary, 0, len(req.EnvironmentIds))
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		// 1. Count all target entities in the environments
+		for _, environmentID := range req.EnvironmentIds {
+			targetInEnv, err := s.countTargetDeletionEntitiesInEnvironment(ctxWithTx, environmentID)
+			if err != nil {
+				s.logger.Error("Failed to count target entities in environment",
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)
+				return err
+			}
+			deletionSummary = append(deletionSummary, targetInEnv)
+		}
+		if req.DryRun && !req.Force {
+			return nil
+		}
+
+		// 2. safety checks if features receiving request
+		if !req.Force {
+			isRunning, err := s.checkRunningFeaturesInEnvironments(ctxWithTx, req.EnvironmentIds)
+			if err != nil {
+				s.logger.Error("Could not check running features in environments",
+					zap.Error(err),
+					zap.Strings("environmentIDs", req.EnvironmentIds),
+				)
+				return err
+			}
+			if isRunning {
+				return statusCannotDeleteOrganization.Err()
+			}
+		}
+
+		// 3. Delete all target entities in the environments and the environments
 		for _, environmentID := range req.EnvironmentIds {
 			for _, target := range targetEntitiesInEnvironment {
 				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environmentID, target)
@@ -809,7 +852,130 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 		)
 		return nil, err
 	}
-	return &environmentproto.DeleteEnvironmentDataResponse{}, nil
+	return &environmentproto.DeleteEnvironmentDataResponse{
+		Summaries: deletionSummary,
+	}, nil
+}
+
+func (s *EnvironmentService) countTargetDeletionEntitiesInEnvironment(
+	ctx context.Context,
+	environmentID string,
+) (*environmentproto.EnvironmentDeletionSummary, error) {
+	featuresCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "feature")
+	if err != nil {
+		s.logger.Error("Failed to count target entities in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	experimentsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "experiment")
+	if err != nil {
+		s.logger.Error("Failed to count target entities in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	subscriptionsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "subscription")
+	if err != nil {
+		s.logger.Error("Failed to count subscriptions in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	pushesCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "push")
+	if err != nil {
+		s.logger.Error("Failed to count pushes in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	tagsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "tag")
+	if err != nil {
+		s.logger.Error("Failed to count tags in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	segmentsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "segment")
+	if err != nil {
+		s.logger.Error("Failed to count segments in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	flagTriggersCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "flag_trigger")
+	if err != nil {
+		s.logger.Error("Failed to count flag triggers in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	apiKeysCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "api_key")
+	if err != nil {
+		s.logger.Error("Failed to count api keys in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	operationsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "auto_ops_rule")
+	if err != nil {
+		s.logger.Error("Failed to count operations in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	featureLastUsedInfosCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(
+		ctx, environmentID, "feature_last_used_info",
+	)
+	if err != nil {
+		s.logger.Error("Failed to count feature last used infos in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	goalsCount, err := s.environmentStorage.CountTargetEntitiesInEnvironmentV2(ctx, environmentID, "goal")
+	if err != nil {
+		s.logger.Error("Failed to count goals in environment",
+			zap.Error(err),
+			zap.String("environmentID", environmentID),
+		)
+		return nil, err
+	}
+
+	return &environmentproto.EnvironmentDeletionSummary{
+		EnvironmentId:               environmentID,
+		FeaturesDeleted:             featuresCount,
+		ExperimentsDeleted:          experimentsCount,
+		SubscriptionsDeleted:        subscriptionsCount,
+		PushesDeleted:               pushesCount,
+		TagsDeleted:                 tagsCount,
+		SegmentsDeleted:             segmentsCount,
+		FlagTriggersDeleted:         flagTriggersCount,
+		ApiKeysDeleted:              apiKeysCount,
+		OperationsDeleted:           operationsCount,
+		FeatureLastUsedInfosDeleted: featureLastUsedInfosCount,
+		GoalsDeleted:                goalsCount,
+	}, nil
 }
 
 func validateArchiveEnvironmentV2Request(

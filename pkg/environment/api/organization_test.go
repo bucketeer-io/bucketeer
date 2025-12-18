@@ -22,12 +22,16 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
+	teamstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	teamproto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
 func TestGetOrganizationMySQL(t *testing.T) {
@@ -1504,13 +1508,102 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 			expected:    nil,
 		},
 		{
-			desc: "success",
+			desc: "success dry",
 			setup: func(s *EnvironmentService) {
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
 					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
 					Return([]*proto.EnvironmentV2{
 						{Id: "env-1", OrganizationId: "org-1"},
 					}, 0, int64(1), nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().
+					ListProjects(gomock.Any(), gomock.Any()).
+					Return([]*proto.Project{}, 0, int64(0), nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
+					ListAccountsV2(gomock.Any(), gomock.Any()).
+					Return([]*accountproto.AccountV2{
+						{Email: "demo@bucketeer.io", OrganizationId: "org-1"},
+					}, 1, int64(1), nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().
+					ListTeams(gomock.Any(), gomock.Any()).
+					Return([]*teamproto.Team{
+						{Id: "team-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				for range 11 {
+					s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+						CountEnvTargetEntitiesInOrganization(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(0), nil)
+				}
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+			},
+			expectedErr: nil,
+			req: &proto.DeleteOrganizationDataRequest{
+				OrganizationIds: []string{"org-1"},
+				DryRun:          true,
+			},
+			expected: &proto.DeleteOrganizationDataResponse{
+				Summaries: []*proto.OrganizationDeletionSummary{
+					{
+						OrganizationId:              "org-1",
+						EnvironmentsDeleted:         1,
+						ProjectsDeleted:             0,
+						FeaturesDeleted:             0,
+						AccountsDeleted:             1,
+						ExperimentsDeleted:          0,
+						SubscriptionsDeleted:        0,
+						PushesDeleted:               0,
+						TagsDeleted:                 0,
+						TeamsDeleted:                1,
+						SegmentsDeleted:             0,
+						FlagTriggersDeleted:         0,
+						ApiKeysDeleted:              0,
+						OperationsDeleted:           0,
+						FeatureLastUsedInfosDeleted: 0,
+						GoalsDeleted:                0,
+					},
+				},
+			},
+		},
+		{
+			desc: "success force",
+			setup: func(s *EnvironmentService) {
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().
+					ListProjects(gomock.Any(), gomock.Any()).
+					Return([]*proto.Project{}, 0, int64(0), nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
+					ListAccountsV2(gomock.Any(), gomock.Any()).
+					Return([]*accountproto.AccountV2{
+						{Email: "demo@bucketeer.io", OrganizationId: "org-1"},
+					}, 1, int64(1), nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().
+					ListTeams(gomock.Any(), gomock.Any()).
+					Return([]*teamproto.Team{
+						{Id: "team-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				for range 11 {
+					s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+						CountEnvTargetEntitiesInOrganization(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(0), nil)
+				}
+
 				for range targetEntitiesInEnvironment {
 					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
 						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -1539,8 +1632,118 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 			expectedErr: nil,
 			req: &proto.DeleteOrganizationDataRequest{
 				OrganizationIds: []string{"org-1"},
+				Force:           true,
 			},
-			expected: &proto.DeleteOrganizationDataResponse{},
+			expected: &proto.DeleteOrganizationDataResponse{
+				Summaries: []*proto.OrganizationDeletionSummary{
+					{
+						OrganizationId:       "org-1",
+						EnvironmentsDeleted:  1,
+						ProjectsDeleted:      0,
+						FeaturesDeleted:      0,
+						AccountsDeleted:      1,
+						ExperimentsDeleted:   0,
+						SubscriptionsDeleted: 0,
+						PushesDeleted:        0,
+						TagsDeleted:          0,
+						TeamsDeleted:         1,
+						SegmentsDeleted:      0,
+						FlagTriggersDeleted:  0,
+						ApiKeysDeleted:       0,
+						OperationsDeleted:    0,
+						GoalsDeleted:         0,
+					},
+				},
+			},
+		},
+		{
+			desc: "success no force",
+			setup: func(s *EnvironmentService) {
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+					Return([]*proto.EnvironmentV2{
+						{Id: "env-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().
+					ListProjects(gomock.Any(), gomock.Any()).
+					Return([]*proto.Project{}, 0, int64(0), nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
+					ListAccountsV2(gomock.Any(), gomock.Any()).
+					Return([]*accountproto.AccountV2{
+						{Email: "demo@bucketeer.io", OrganizationId: "org-1"},
+					}, 1, int64(1), nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().
+					ListTeams(gomock.Any(), gomock.Any()).
+					Return([]*teamproto.Team{
+						{Id: "team-1", OrganizationId: "org-1"},
+					}, 0, int64(1), nil)
+				for range 11 {
+					s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+						CountEnvTargetEntitiesInOrganization(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(2), nil)
+				}
+
+				s.fluiStorage.(*ftstoragemock.MockFeatureLastUsedInfoStorage).EXPECT().
+					SelectFeatureLastUsedInfos(gomock.Any(), gomock.Any()).
+					Return([]*ftproto.FeatureLastUsedInfo{}, nil)
+
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().
+					DeleteProjects(gomock.Any(), gomock.Any()).
+					Return(nil)
+				for range targetEntitiesInOrganization {
+					s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+						DeleteOrganizationData(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().
+					DeleteOrganizations(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+			},
+			expectedErr: nil,
+			req: &proto.DeleteOrganizationDataRequest{
+				OrganizationIds: []string{"org-1"},
+				Force:           false,
+			},
+			expected: &proto.DeleteOrganizationDataResponse{
+				Summaries: []*proto.OrganizationDeletionSummary{
+					{
+						OrganizationId:              "org-1",
+						EnvironmentsDeleted:         1,
+						ProjectsDeleted:             0,
+						FeaturesDeleted:             2,
+						AccountsDeleted:             1,
+						ExperimentsDeleted:          2,
+						SubscriptionsDeleted:        2,
+						PushesDeleted:               2,
+						TagsDeleted:                 2,
+						TeamsDeleted:                1,
+						SegmentsDeleted:             2,
+						FlagTriggersDeleted:         2,
+						ApiKeysDeleted:              2,
+						OperationsDeleted:           2,
+						FeatureLastUsedInfosDeleted: 2,
+						GoalsDeleted:                2,
+					},
+				},
+			},
 		},
 	}
 	for _, p := range patterns {

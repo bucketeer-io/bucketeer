@@ -44,6 +44,8 @@ var (
 	deleteOrganizationsSQL string
 	//go:embed sql/organization/delete_organization_data.sql
 	deleteOrganizationDataSQL string
+	//go:embed sql/organization/count_env_target_entities_in_organization.sql
+	countTargetEntitiesInOrganizationSQL string
 )
 
 var (
@@ -70,6 +72,11 @@ type OrganizationStorage interface {
 	) ([]*proto.Organization, int, int64, error)
 	DeleteOrganizations(ctx context.Context, whereParts []mysql.WherePart) error
 	DeleteOrganizationData(ctx context.Context, target string, whereParts []mysql.WherePart) error
+	CountEnvTargetEntitiesInOrganization(
+		ctx context.Context,
+		organizationID string,
+		target string,
+	) (int64, error)
 }
 
 type organizationStorage struct {
@@ -287,4 +294,31 @@ func (s *organizationStorage) DeleteOrganizationData(
 		return err
 	}
 	return nil
+}
+
+func (s *organizationStorage) CountEnvTargetEntitiesInOrganization(
+	ctx context.Context,
+	organizationID string,
+	target string,
+) (int64, error) {
+	rows, err := s.qe.QueryContext(
+		ctx,
+		fmt.Sprintf(countTargetEntitiesInOrganizationSQL, target, target),
+		organizationID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	var count int64
+	if rows.Next() {
+		err := rows.Scan(&count)
+		if err != nil {
+			return 0, err
+		}
+	}
+	if rows.Err() != nil {
+		return 0, err
+	}
+	return count, nil
 }

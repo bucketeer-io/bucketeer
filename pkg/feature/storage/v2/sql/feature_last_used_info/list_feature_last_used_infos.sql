@@ -1,0 +1,9 @@
+SELECT
+    feature_id,
+    version,
+    last_used_at,
+    client_oldest_version,
+    client_latest_version,
+    created_at
+FROM
+    feature_last_used_info

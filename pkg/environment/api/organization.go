@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -43,6 +44,7 @@ import (
 var (
 	maxOrganizationNameLength = 50
 	organizationUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	featureActiveDays         = 7 * 24 * time.Hour
 
 	targetEntitiesInEnvironment = []string{
 		"subscription",
@@ -1529,9 +1531,46 @@ func (s *EnvironmentService) DeleteOrganizationData(
 		s.logger.Error("Could not list environments", zap.Error(err))
 		return nil, err
 	}
+	environmentIDs := make([]string, 0, len(environments))
+	for _, environment := range environments {
+		environmentIDs = append(environmentIDs, environment.Id)
+	}
 
+	deletionSummary := make([]*environmentproto.OrganizationDeletionSummary, 0, len(req.OrganizationIds))
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		// 2. Delete all target entities from the environments
+		// 2. Count all target entities in the organizations
+		for _, orgID := range req.OrganizationIds {
+			targetInOrg, err := s.countTargetDeletionEntitiesInOrganizations(ctxWithTx, orgID)
+			if err != nil {
+				s.logger.Error("Could not count target entities in organization",
+					zap.Error(err),
+					zap.String("organizationID", orgID),
+				)
+				return err
+			}
+			deletionSummary = append(deletionSummary, targetInOrg)
+		}
+		if req.DryRun && !req.Force {
+			return nil
+		}
+
+		// 3. safety checks if features receiving request
+		if !req.Force {
+			isRunning, err := s.checkRunningFeaturesInEnvironments(ctxWithTx, environmentIDs)
+			if err != nil {
+				s.logger.Error("Could not check running features in environments",
+					zap.Error(err),
+					zap.Strings("organizationIDs", req.OrganizationIds),
+					zap.Strings("environmentIDs", environmentIDs),
+				)
+				return err
+			}
+			if isRunning {
+				return statusCannotDeleteOrganization.Err()
+			}
+		}
+
+		// 4. Delete all target entities from the environments
 		for _, environment := range environments {
 			for _, target := range targetEntitiesInEnvironment {
 				err := s.environmentStorage.DeleteTargetFromEnvironmentV2(ctxWithTx, environment.Id, target)
@@ -1547,7 +1586,7 @@ func (s *EnvironmentService) DeleteOrganizationData(
 			}
 		}
 
-		// 3. Delete all environments from organizations
+		// 5. Delete all environments from organizations
 		whereParts := []mysql.WherePart{
 			mysql.NewInFilter("organization_id", convToInterfaceSlice(req.OrganizationIds)),
 		}
@@ -1560,7 +1599,7 @@ func (s *EnvironmentService) DeleteOrganizationData(
 			return err
 		}
 
-		// 4. Delete all projects from organizations
+		// 6. Delete all projects from organizations
 		whereParts = []mysql.WherePart{
 			mysql.NewInFilter("organization_id", convToInterfaceSlice(req.OrganizationIds)),
 		}
@@ -1573,7 +1612,7 @@ func (s *EnvironmentService) DeleteOrganizationData(
 			return err
 		}
 
-		// 5. Delete all organizations with its data
+		// 7. Delete all organizations with its data
 		err = s.deleteOrganizations(ctxWithTx, req.OrganizationIds)
 		if err != nil {
 			s.logger.Error("Failed to delete organizations",
@@ -1591,7 +1630,268 @@ func (s *EnvironmentService) DeleteOrganizationData(
 		)
 		return nil, err
 	}
-	return &environmentproto.DeleteOrganizationDataResponse{}, nil
+	return &environmentproto.DeleteOrganizationDataResponse{
+		Summaries: deletionSummary,
+	}, nil
+}
+
+func (s *EnvironmentService) checkRunningFeaturesInEnvironments(
+	ctx context.Context,
+	environmentIDs []string,
+) (bool, error) {
+	listOptions := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: mysql.QueryNoOffset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "last_used_at",
+				Operator: mysql.OperatorGreaterThanOrEqual,
+				Value:    time.Now().Add(-featureActiveDays).Unix(),
+			},
+		},
+		InFilters: []*mysql.InFilter{
+			{
+				Column: "environment_id",
+				Values: convToInterfaceSlice(environmentIDs),
+			},
+		},
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	flui, err := s.fluiStorage.SelectFeatureLastUsedInfos(ctx, listOptions)
+	if err != nil {
+		s.logger.Error("Could not list feature last used infos",
+			zap.Error(err),
+			zap.Strings("environmentIDs", environmentIDs),
+		)
+		return false, err
+	}
+	return len(flui) > 0, nil
+}
+
+func (s *EnvironmentService) countTargetDeletionEntitiesInOrganizations(
+	ctx context.Context,
+	organizationID string,
+) (*environmentproto.OrganizationDeletionSummary, error) {
+	listEnvironmentOptions := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: mysql.QueryNoOffset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "organization_id",
+				Operator: mysql.OperatorEqual,
+				Value:    organizationID,
+			},
+		},
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	_, _, environmentsCount, err := s.environmentStorage.ListEnvironmentsV2(ctx, listEnvironmentOptions)
+	if err != nil {
+		s.logger.Error("Failed to count environments in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+	listProjectsOptions := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: mysql.QueryNoOffset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "project.organization_id",
+				Operator: mysql.OperatorEqual,
+				Value:    organizationID,
+			},
+		},
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	_, _, projectsCount, err := s.projectStorage.ListProjects(ctx, listProjectsOptions)
+	if err != nil {
+		s.logger.Error("Failed to count projects in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+	listAccountOptions := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: mysql.QueryNoOffset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "organization_id",
+				Operator: mysql.OperatorEqual,
+				Value:    organizationID,
+			},
+		},
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	_, _, accountsCount, err := s.accountStorage.ListAccountsV2(ctx, listAccountOptions)
+	if err != nil {
+		s.logger.Error("Failed to count account_v2 entities in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	listTeamsOptions := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: mysql.QueryNoOffset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "organization_id",
+				Operator: mysql.OperatorEqual,
+				Value:    organizationID,
+			},
+		},
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	_, _, teamsCount, err := s.teamStorage.ListTeams(ctx, listTeamsOptions)
+	if err != nil {
+		s.logger.Error("Failed to count teams in environment",
+			zap.Error(err),
+			zap.String("organization_id", organizationID),
+		)
+		return nil, err
+	}
+
+	featuresCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "feature")
+	if err != nil {
+		s.logger.Error("Failed to count feature entities in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	experimentsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "experiment")
+	if err != nil {
+		s.logger.Error("Failed to count experiment entities in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	subscriptionsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "subscription")
+	if err != nil {
+		s.logger.Error("Failed to count subscriptions in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	pushesCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "push")
+	if err != nil {
+		s.logger.Error("Failed to count pushes in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	tagsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "tag")
+	if err != nil {
+		s.logger.Error("Failed to count tags in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	segmentsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "segment")
+	if err != nil {
+		s.logger.Error("Failed to count segments in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	flagTriggersCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "flag_trigger")
+	if err != nil {
+		s.logger.Error("Failed to count flag triggers in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	apiKeysCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "api_key")
+	if err != nil {
+		s.logger.Error("Failed to count api keys in organization",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	operationsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "auto_ops_rule")
+	if err != nil {
+		s.logger.Error("Failed to count operations in environment",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	featureLastUsedInfosCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(
+		ctx, organizationID, "feature_last_used_info",
+	)
+	if err != nil {
+		s.logger.Error("Failed to count feature last used infos in environment",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	goalsCount, err := s.orgStorage.CountEnvTargetEntitiesInOrganization(ctx, organizationID, "goal")
+	if err != nil {
+		s.logger.Error("Failed to count goals in environment",
+			zap.Error(err),
+			zap.String("organizationID", organizationID),
+		)
+		return nil, err
+	}
+
+	return &environmentproto.OrganizationDeletionSummary{
+		OrganizationId:              organizationID,
+		EnvironmentsDeleted:         environmentsCount,
+		ProjectsDeleted:             projectsCount,
+		FeaturesDeleted:             featuresCount,
+		AccountsDeleted:             accountsCount,
+		ExperimentsDeleted:          experimentsCount,
+		SubscriptionsDeleted:        subscriptionsCount,
+		PushesDeleted:               pushesCount,
+		TagsDeleted:                 tagsCount,
+		TeamsDeleted:                teamsCount,
+		SegmentsDeleted:             segmentsCount,
+		FlagTriggersDeleted:         flagTriggersCount,
+		ApiKeysDeleted:              apiKeysCount,
+		OperationsDeleted:           operationsCount,
+		FeatureLastUsedInfosDeleted: featureLastUsedInfosCount,
+		GoalsDeleted:                goalsCount,
+	}, nil
 }
 
 // deleteOrganizations deletes organizations and their related data from various target entities.

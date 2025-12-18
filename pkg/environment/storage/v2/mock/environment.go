@@ -43,6 +43,21 @@ func (m *MockEnvironmentStorage) EXPECT() *MockEnvironmentStorageMockRecorder {
 	return m.recorder
 }
 
+// CountTargetEntitiesInEnvironmentV2 mocks base method.
+func (m *MockEnvironmentStorage) CountTargetEntitiesInEnvironmentV2(ctx context.Context, environmentID, target string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountTargetEntitiesInEnvironmentV2", ctx, environmentID, target)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountTargetEntitiesInEnvironmentV2 indicates an expected call of CountTargetEntitiesInEnvironmentV2.
+func (mr *MockEnvironmentStorageMockRecorder) CountTargetEntitiesInEnvironmentV2(ctx, environmentID, target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTargetEntitiesInEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).CountTargetEntitiesInEnvironmentV2), ctx, environmentID, target)
+}
+
 // CreateEnvironmentV2 mocks base method.
 func (m *MockEnvironmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
 	m.ctrl.T.Helper()

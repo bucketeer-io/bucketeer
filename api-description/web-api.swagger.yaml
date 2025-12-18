@@ -11125,8 +11125,20 @@ definitions:
         type: array
         items:
           type: string
+      dryRun:
+        type: boolean
+        description: Set to true to preview the data that would be deleted.
+      force:
+        type: boolean
+        description: force flag to bypass safety checks
   environmentDeleteEnvironmentDataResponse:
     type: object
+    properties:
+      summaries:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentEnvironmentDeletionSummary'
   environmentDeleteOrganizationDataRequest:
     type: object
     properties:
@@ -11134,8 +11146,20 @@ definitions:
         type: array
         items:
           type: string
+      dryRun:
+        type: boolean
+        description: Set to true to preview the data that would be deleted.
+      force:
+        type: boolean
+        description: force flag to bypass safety checks
   environmentDeleteOrganizationDataResponse:
     type: object
+    properties:
+      summaries:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentOrganizationDeletionSummary'
   environmentDemoCreationToken:
     type: object
     properties:
@@ -11190,6 +11214,44 @@ definitions:
         $ref: '#/definitions/environmentEnableProjectCommand'
   environmentEnableProjectResponse:
     type: object
+  environmentEnvironmentDeletionSummary:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      featuresDeleted:
+        type: string
+        format: int64
+      experimentsDeleted:
+        type: string
+        format: int64
+      subscriptionsDeleted:
+        type: string
+        format: int64
+      pushesDeleted:
+        type: string
+        format: int64
+      tagsDeleted:
+        type: string
+        format: int64
+      segmentsDeleted:
+        type: string
+        format: int64
+      flagTriggersDeleted:
+        type: string
+        format: int64
+      apiKeysDeleted:
+        type: string
+        format: int64
+      operationsDeleted:
+        type: string
+        format: int64
+      featureLastUsedInfosDeleted:
+        type: string
+        format: int64
+      goalsDeleted:
+        type: string
+        format: int64
   environmentEnvironmentV2:
     type: object
     properties:
@@ -11372,6 +11434,56 @@ definitions:
       cursor:
         type: string
       totalCount:
+        type: string
+        format: int64
+  environmentOrganizationDeletionSummary:
+    type: object
+    properties:
+      organizationId:
+        type: string
+      environmentsDeleted:
+        type: string
+        format: int64
+      projectsDeleted:
+        type: string
+        format: int64
+      featuresDeleted:
+        type: string
+        format: int64
+      accountsDeleted:
+        type: string
+        format: int64
+      experimentsDeleted:
+        type: string
+        format: int64
+      subscriptionsDeleted:
+        type: string
+        format: int64
+      pushesDeleted:
+        type: string
+        format: int64
+      tagsDeleted:
+        type: string
+        format: int64
+      teamsDeleted:
+        type: string
+        format: int64
+      segmentsDeleted:
+        type: string
+        format: int64
+      flagTriggersDeleted:
+        type: string
+        format: int64
+      apiKeysDeleted:
+        type: string
+        format: int64
+      operationsDeleted:
+        type: string
+        format: int64
+      featureLastUsedInfosDeleted:
+        type: string
+        format: int64
+      goalsDeleted:
         type: string
         format: int64
   environmentProject:

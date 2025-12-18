@@ -53,6 +53,17 @@ var (
 	deleteTargetFromEnvironmentSQL string
 	//go:embed sql/environment/delete_environment.sql
 	deleteEnvironmentSQL string
+	//go:embed sql/environment/count_target_entities_in_environment.sql
+	countTargetEntitiesInEnvironmentSQL string
+
+	allowedTables = map[string]bool{
+		"subscription": true, "experiment_result": true, "push": true,
+		"ops_count": true, "auto_ops_rule": true, "segment_user": true,
+		"segment": true, "goal": true, "experiment": true, "tag": true,
+		"ops_progressive_rollout": true, "flag_trigger": true,
+		"code_reference": true, "feature": true, "api_key": true,
+		"audit_log": true, "account_v2": true,
+	}
 )
 
 type EnvironmentStorage interface {
@@ -69,6 +80,11 @@ type EnvironmentStorage interface {
 		targetID string,
 	) error
 	DeleteEnvironmentV2(ctx context.Context, whereParts []mysql.WherePart) error
+	CountTargetEntitiesInEnvironmentV2(
+		ctx context.Context,
+		environmentID string,
+		target string,
+	) (int64, error)
 }
 
 type environmentStorage struct {
@@ -224,6 +240,9 @@ func (s *environmentStorage) DeleteTargetFromEnvironmentV2(
 	environmentID string,
 	target string,
 ) error {
+	if !allowedTables[target] {
+		return fmt.Errorf("table %s is not allowed to delete from", target)
+	}
 	args := []interface{}{
 		environmentID,
 	}
@@ -252,4 +271,31 @@ func (s *environmentStorage) DeleteEnvironmentV2(ctx context.Context, whereParts
 		return err
 	}
 	return nil
+}
+
+func (s *environmentStorage) CountTargetEntitiesInEnvironmentV2(
+	ctx context.Context,
+	environmentID string,
+	target string,
+) (int64, error) {
+	rows, err := s.qe.QueryContext(
+		ctx,
+		fmt.Sprintf(countTargetEntitiesInEnvironmentSQL, target),
+		environmentID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	var count int64
+	if rows.Next() {
+		err := rows.Scan(&count)
+		if err != nil {
+			return 0, err
+		}
+	}
+	if rows.Err() != nil {
+		return 0, err
+	}
+	return count, nil
 }

@@ -14759,11 +14759,136 @@
                 "name": "organization_ids",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Set to true to preview the data that would be deleted."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "force flag to bypass safety checks"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "DeleteOrganizationDataResponse"
+            "name": "DeleteOrganizationDataResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summaries",
+                "type": "OrganizationDeletionSummary",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "OrganizationDeletionSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "projects_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "features_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "accounts_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "experiments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "subscriptions_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "pushes_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "tags_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "teams_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 11,
+                "name": "segments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "flag_triggers_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 13,
+                "name": "api_keys_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 14,
+                "name": "operations_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "feature_last_used_infos_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 16,
+                "name": "goals_deleted",
+                "type": "int64"
+              }
+            ]
           },
           {
             "name": "DeleteEnvironmentDataRequest",
@@ -14773,11 +14898,116 @@
                 "name": "environment_ids",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Set to true to preview the data that would be deleted."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "force flag to bypass safety checks"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "DeleteEnvironmentDataResponse"
+            "name": "DeleteEnvironmentDataResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summaries",
+                "type": "EnvironmentDeletionSummary",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentDeletionSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "features_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "experiments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "subscriptions_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "pushes_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "tags_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "segments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "flag_triggers_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "api_keys_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "operations_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 11,
+                "name": "feature_last_used_infos_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "goals_deleted",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [

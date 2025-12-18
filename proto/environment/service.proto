@@ -413,15 +413,69 @@ message CreateDemoOrganizationResponse {
 
 message DeleteOrganizationDataRequest {
   repeated string organization_ids = 1;
+  bool dry_run = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Set to true to preview the data that would be deleted."
+      }];
+  bool force = 3
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "force flag to bypass safety checks"
+      }];
 }
 
-message DeleteOrganizationDataResponse {}
+message DeleteOrganizationDataResponse {
+  repeated OrganizationDeletionSummary summaries = 1;
+}
+
+message OrganizationDeletionSummary {
+  string organization_id = 1;
+  int64 environments_deleted = 2;
+  int64 projects_deleted = 3;
+  int64 features_deleted = 4;
+  int64 accounts_deleted = 5;
+  int64 experiments_deleted = 6;
+  int64 subscriptions_deleted = 7;
+  int64 pushes_deleted = 8;
+  int64 tags_deleted = 9;
+  int64 teams_deleted = 10;
+  int64 segments_deleted = 11;
+  int64 flag_triggers_deleted = 12;
+  int64 api_keys_deleted = 13;
+  int64 operations_deleted = 14;
+  int64 feature_last_used_infos_deleted = 15;
+  int64 goals_deleted = 16;
+}
 
 message DeleteEnvironmentDataRequest {
   repeated string environment_ids = 1;
+  bool dry_run = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Set to true to preview the data that would be deleted."
+      }];
+  bool force = 3
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "force flag to bypass safety checks"
+      }];
 }
 
-message DeleteEnvironmentDataResponse {}
+message DeleteEnvironmentDataResponse {
+  repeated EnvironmentDeletionSummary summaries = 1;
+}
+
+message EnvironmentDeletionSummary {
+  string environment_id = 1;
+  int64 features_deleted = 2;
+  int64 experiments_deleted = 3;
+  int64 subscriptions_deleted = 4;
+  int64 pushes_deleted = 5;
+  int64 tags_deleted = 6;
+  int64 segments_deleted = 7;
+  int64 flag_triggers_deleted = 8;
+  int64 api_keys_deleted = 9;
+  int64 operations_deleted = 10;
+  int64 feature_last_used_infos_deleted = 11;
+  int64 goals_deleted = 12;
+}
 
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
