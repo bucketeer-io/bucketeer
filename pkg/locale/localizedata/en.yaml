@@ -102,7 +102,7 @@ WaitingOrRunningProgressiveRolloutExists: "There is a progressive rollout schedu
 
 # Auto Ops errors
 AutoOpsInvalidScheduleSpans: "Scheduled time intervals must be at least 5 minutes apart"
-AutoOpsInsufficientVariations: "The feature must have at least 2 variations for progressive rollout"
+AutoOpsInsufficientVariations: "The feature flag must have at least 2 variations"
 AutoOpsWaitingOrRunningExperimentExists: "There is a scheduled or running experiment. Please stop the experiment before creating it"
 AutoOpsProgressiveRolloutInProgress: "There is a Proressive Rollout in progress. Please stop or delete it before making changes"
 AutoOpsProgressiveRolloutVariationsMustBeDifferent: "Control and target variations must be different"
