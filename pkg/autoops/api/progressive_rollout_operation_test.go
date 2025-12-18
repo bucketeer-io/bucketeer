@@ -69,8 +69,8 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
 					Variations: []*featureproto.RolloutStrategy_Variation{
-						{Variation: "variation-b", Weight: 30000},
-						{Variation: "variation-a", Weight: 70000},
+						{Variation: "variation-a", Weight: 70000}, // Control (first in feature)
+						{Variation: "variation-b", Weight: 30000}, // Target (second in feature)
 					},
 				},
 			},
@@ -90,8 +90,8 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
 					Variations: []*featureproto.RolloutStrategy_Variation{
-						{Variation: "variation-b", Weight: 20000},
-						{Variation: "variation-a", Weight: 80000}, // Inferred control
+						{Variation: "variation-a", Weight: 80000}, // Inferred control (first in feature)
+						{Variation: "variation-b", Weight: 20000}, // Target (second in feature)
 					},
 				},
 			},
@@ -112,8 +112,8 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
 					Variations: []*featureproto.RolloutStrategy_Variation{
-						{Variation: "var-2", Weight: 50000},
-						{Variation: "var-1", Weight: 50000},
+						{Variation: "var-1", Weight: 50000}, // Control (first in feature)
+						{Variation: "var-2", Weight: 50000}, // Target (second in feature)
 					},
 				},
 			},
@@ -133,8 +133,8 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
 					Variations: []*featureproto.RolloutStrategy_Variation{
-						{Variation: "var-2", Weight: 10000},
-						{Variation: "var-1", Weight: 90000}, // Inferred control
+						{Variation: "var-1", Weight: 90000}, // Inferred control (first in feature)
+						{Variation: "var-2", Weight: 10000}, // Target (second in feature)
 					},
 				},
 			},
@@ -155,8 +155,102 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
 					Variations: []*featureproto.RolloutStrategy_Variation{
-						{Variation: "target", Weight: 100000},
 						{Variation: "control", Weight: 0},
+						{Variation: "target", Weight: 100000},
+					},
+				},
+			},
+		},
+		{
+			desc: "4 variations: 10% rollout, other variations reset to 0",
+			rolloutClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				ControlVariationId: "variation-a",
+				TargetVariationId:  "variation-b",
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{ScheduleId: "schedule-1", Weight: 10000},
+				},
+			},
+			rolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			feature:     createFeature("variation-a", "variation-b", "variation-c", "variation-d"),
+			scheduleID:  "schedule-1",
+			expectedStrategy: &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{Variation: "variation-a", Weight: 90000}, // Control
+						{Variation: "variation-b", Weight: 10000}, // Target
+						{Variation: "variation-c", Weight: 0},     // Reset to 0
+						{Variation: "variation-d", Weight: 0},     // Reset to 0
+					},
+				},
+			},
+		},
+		{
+			desc: "4 variations: 50% rollout midpoint",
+			rolloutClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				ControlVariationId: "var-a",
+				TargetVariationId:  "var-b",
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{ScheduleId: "mid-schedule", Weight: 50000},
+				},
+			},
+			rolloutType: autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+			feature:     createFeature("var-a", "var-b", "var-c", "var-d"),
+			scheduleID:  "mid-schedule",
+			expectedStrategy: &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{Variation: "var-a", Weight: 50000},
+						{Variation: "var-b", Weight: 50000},
+						{Variation: "var-c", Weight: 0},
+						{Variation: "var-d", Weight: 0},
+					},
+				},
+			},
+		},
+		{
+			desc: "4 variations: 100% complete rollout",
+			rolloutClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				ControlVariationId: "var-a",
+				TargetVariationId:  "var-b",
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{ScheduleId: "final", Weight: 100000},
+				},
+			},
+			rolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			feature:     createFeature("var-a", "var-b", "var-c", "var-d"),
+			scheduleID:  "final",
+			expectedStrategy: &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{Variation: "var-a", Weight: 0},      // Control now at 0%
+						{Variation: "var-b", Weight: 100000}, // Target at 100%
+						{Variation: "var-c", Weight: 0},
+						{Variation: "var-d", Weight: 0},
+					},
+				},
+			},
+		},
+		{
+			desc: "4 variations: old format with backward compatibility",
+			rolloutClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				VariationId: "var-b", // Old format - target only
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{ScheduleId: "schedule-1", Weight: 20000},
+				},
+			},
+			rolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			// Old rollouts only had 2 variations
+			feature:    createFeature("var-a", "var-b"),
+			scheduleID: "schedule-1",
+			expectedStrategy: &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{Variation: "var-a", Weight: 80000}, // Inferred control
+						{Variation: "var-b", Weight: 20000}, // Target
 					},
 				},
 			},
@@ -202,18 +296,33 @@ func TestExecuteProgressiveRolloutOperation(t *testing.T) {
 
 func TestGetRolloutStrategyVariations(t *testing.T) {
 	t.Parallel()
+
+	createFeature := func(variationIDs ...string) *ftdomain.Feature {
+		variations := make([]*featureproto.Variation, len(variationIDs))
+		for i, id := range variationIDs {
+			variations[i] = &featureproto.Variation{Id: id}
+		}
+		return &ftdomain.Feature{
+			Feature: &featureproto.Feature{
+				Variations: variations,
+			},
+		}
+	}
+
 	patterns := []struct {
 		desc               string
 		controlVariationID string
 		targetVariationID  string
 		targetWeight       int32
+		feature            *ftdomain.Feature
 		expected           []*featureproto.RolloutStrategy_Variation
 	}{
 		{
-			desc:               "success: weight is max",
+			desc:               "2 variations: weight is max",
 			controlVariationID: "vid-2",
 			targetVariationID:  "vid-1",
 			targetWeight:       totalVariationWeight,
+			feature:            createFeature("vid-1", "vid-2"),
 			expected: []*featureproto.RolloutStrategy_Variation{
 				{
 					Variation: "vid-1",
@@ -226,18 +335,69 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 			},
 		},
 		{
-			desc:               "success: weight is not max",
+			desc:               "2 variations: weight is not max",
 			controlVariationID: "vid-1",
 			targetVariationID:  "vid-2",
 			targetWeight:       20,
+			feature:            createFeature("vid-1", "vid-2"),
 			expected: []*featureproto.RolloutStrategy_Variation{
+				{
+					Variation: "vid-1",
+					Weight:    totalVariationWeight - 20,
+				},
 				{
 					Variation: "vid-2",
 					Weight:    20,
 				},
+			},
+		},
+		{
+			desc:               "4 variations: other variations reset to 0",
+			controlVariationID: "variation-a",
+			targetVariationID:  "variation-b",
+			targetWeight:       10000,
+			feature:            createFeature("variation-a", "variation-b", "variation-c", "variation-d"),
+			expected: []*featureproto.RolloutStrategy_Variation{
 				{
-					Variation: "vid-1",
-					Weight:    totalVariationWeight - 20,
+					Variation: "variation-a",
+					Weight:    90000, // Control gets remainder
+				},
+				{
+					Variation: "variation-b",
+					Weight:    10000, // Target gets specified weight
+				},
+				{
+					Variation: "variation-c",
+					Weight:    0, // Other variation reset to 0
+				},
+				{
+					Variation: "variation-d",
+					Weight:    0, // Other variation reset to 0
+				},
+			},
+		},
+		{
+			desc:               "4 variations: 50% rollout",
+			controlVariationID: "var-a",
+			targetVariationID:  "var-b",
+			targetWeight:       50000,
+			feature:            createFeature("var-a", "var-b", "var-c", "var-d"),
+			expected: []*featureproto.RolloutStrategy_Variation{
+				{
+					Variation: "var-a",
+					Weight:    50000,
+				},
+				{
+					Variation: "var-b",
+					Weight:    50000,
+				},
+				{
+					Variation: "var-c",
+					Weight:    0,
+				},
+				{
+					Variation: "var-d",
+					Weight:    0,
 				},
 			},
 		},
@@ -248,6 +408,7 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 				p.controlVariationID,
 				p.targetVariationID,
 				p.targetWeight,
+				p.feature,
 			)
 			assert.Equal(t, p.expected, actual)
 		})

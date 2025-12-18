@@ -366,12 +366,12 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	expectedStrategy := &featureproto.RolloutStrategy{
 		Variations: []*featureproto.RolloutStrategy_Variation{
 			{
-				Variation: feature.Variations[1].Id,
-				Weight:    schedules[0].Weight,
+				Variation: feature.Variations[0].Id, // Control (first in feature)
+				Weight:    totalVariationWeight - schedules[0].Weight,
 			},
 			{
-				Variation: feature.Variations[0].Id,
-				Weight:    totalVariationWeight - schedules[0].Weight,
+				Variation: feature.Variations[1].Id, // Target (second in feature)
+				Weight:    schedules[0].Weight,
 			},
 		},
 	}
@@ -379,7 +379,7 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 		t.Fatalf("Flag shouldn't be disabled at this point")
 	}
 	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
+		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.DefaultStrategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
 	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
@@ -442,12 +442,12 @@ func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
 	expectedStrategy := &featureproto.RolloutStrategy{
 		Variations: []*featureproto.RolloutStrategy_Variation{
 			{
-				Variation: feature.Variations[1].Id,
-				Weight:    schedules[0].Weight,
+				Variation: feature.Variations[0].Id, // Control (first in feature)
+				Weight:    totalVariationWeight - schedules[0].Weight,
 			},
 			{
-				Variation: feature.Variations[0].Id,
-				Weight:    totalVariationWeight - schedules[0].Weight,
+				Variation: feature.Variations[1].Id, // Target (second in feature)
+				Weight:    schedules[0].Weight,
 			},
 		},
 	}
@@ -455,7 +455,7 @@ func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
 		t.Fatalf("Flag shouldn't be disabled at this point")
 	}
 	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
+		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.DefaultStrategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
 	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
