@@ -31,7 +31,7 @@ func ExecuteProgressiveRolloutOperation(
 	scheduleID string,
 ) (*featureproto.Strategy, error) {
 	// Extract control and target variation IDs
-	controlVariationID, err := progressiveRollout.GetControlVariationID()
+	controlVariationID, err := progressiveRollout.GetControlVariationID(feature)
 	if err != nil {
 		return nil, err
 	}
