@@ -35,15 +35,20 @@ docker-build-arm64:
 
 .PHONY: docker-build-multiarch
 docker-build-multiarch:
-	@echo "Building bigquery-emulator for both architectures in parallel..."
-	@echo "Note: Requires sufficient memory (16GB+ recommended)"
-	@echo "Note: Builds images locally - use 'make docker-push-multiarch' to push after authentication"
-	@echo "Note: Use 'make docker-build-multiarch-sequential' if you encounter OOM issues"
+	@echo "Building bigquery-emulator for both architectures..."
+	@echo "Note: Building each platform separately (--load doesn't support multi-platform)"
 	docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
+	@echo "Building AMD64..."
 	docker buildx build \
-		--platform linux/amd64,linux/arm64 \
+		--platform linux/amd64 \
 		--build-arg VERSION=$(VERSION) \
 		-t $(GHCR_IMAGE)-amd64 \
+		--load \
+		.
+	@echo "Building ARM64..."
+	docker buildx build \
+		--platform linux/arm64 \
+		--build-arg VERSION=$(VERSION) \
 		-t $(GHCR_IMAGE)-arm64 \
 		--load \
 		.
@@ -70,13 +75,8 @@ docker-build-multiarch-sequential:
 		--push \
 		.
 	@echo "Creating and pushing multi-arch manifest..."
-	@make docker-manifest-create
-	@make docker-manifest-push
-	@echo "Tagging latest..."
-	docker manifest create ghcr.io/bucketeer-io/bigquery-emulator:latest \
-		--amend $(GHCR_IMAGE)-amd64 \
-		--amend $(GHCR_IMAGE)-arm64
-	docker manifest push ghcr.io/bucketeer-io/bigquery-emulator:latest
+	@$(MAKE) docker-manifest-create
+	@$(MAKE) docker-manifest-push
 	@echo "Multi-arch build complete!"
 
 .PHONY: docker-push-multiarch
@@ -125,31 +125,14 @@ docker-manifest-create:
 	@echo "Removing old local manifests if they exist..."
 	-docker manifest rm $(GHCR_IMAGE) 2>/dev/null || true
 	-docker manifest rm ghcr.io/bucketeer-io/bigquery-emulator:latest 2>/dev/null || true
-	@echo "Extracting image digests from architecture-specific manifest lists..."
-	@AMD64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-amd64 2>/dev/null | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest' | head -1); \
-	ARM64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-arm64 2>/dev/null | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest' | head -1); \
-	if [ -z "$$AMD64_DIGEST" ] || [ -z "$$ARM64_DIGEST" ]; then \
-		echo "Error: Could not extract digests. Trying alternative method..."; \
-		AMD64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-amd64 2>/dev/null | grep -A 5 '"amd64"' | grep '"digest"' | head -1 | sed 's/.*"digest": "\([^"]*\)".*/\1/'); \
-		ARM64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-arm64 2>/dev/null | grep -A 5 '"arm64"' | grep '"digest"' | head -1 | sed 's/.*"digest": "\([^"]*\)".*/\1/'); \
-	fi; \
-	if [ -z "$$AMD64_DIGEST" ] || [ -z "$$ARM64_DIGEST" ]; then \
-		echo "Error: Failed to get image digests"; \
-		exit 1; \
-	fi; \
-	echo "Using digests: AMD64=$$AMD64_DIGEST, ARM64=$$ARM64_DIGEST"; \
+	@echo "Creating versioned manifest..."
 	docker manifest create $(GHCR_IMAGE) \
-		--amend ghcr.io/bucketeer-io/bigquery-emulator@$$AMD64_DIGEST \
-		--amend ghcr.io/bucketeer-io/bigquery-emulator@$$ARM64_DIGEST
-	@AMD64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-amd64 2>/dev/null | jq -r '.manifests[] | select(.platform.architecture == "amd64") | .digest' | head -1); \
-	ARM64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-arm64 2>/dev/null | jq -r '.manifests[] | select(.platform.architecture == "arm64") | .digest' | head -1); \
-	if [ -z "$$AMD64_DIGEST" ] || [ -z "$$ARM64_DIGEST" ]; then \
-		AMD64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-amd64 2>/dev/null | grep -A 5 '"amd64"' | grep '"digest"' | head -1 | sed 's/.*"digest": "\([^"]*\)".*/\1/'); \
-		ARM64_DIGEST=$$(docker manifest inspect $(GHCR_IMAGE)-arm64 2>/dev/null | grep -A 5 '"arm64"' | grep '"digest"' | head -1 | sed 's/.*"digest": "\([^"]*\)".*/\1/'); \
-	fi; \
+		--amend $(GHCR_IMAGE)-amd64 \
+		--amend $(GHCR_IMAGE)-arm64
+	@echo "Creating latest manifest..."
 	docker manifest create ghcr.io/bucketeer-io/bigquery-emulator:latest \
-		--amend ghcr.io/bucketeer-io/bigquery-emulator@$$AMD64_DIGEST \
-		--amend ghcr.io/bucketeer-io/bigquery-emulator@$$ARM64_DIGEST
+		--amend $(GHCR_IMAGE)-amd64 \
+		--amend $(GHCR_IMAGE)-arm64
 
 .PHONY: docker-manifest-push
 docker-manifest-push:
