@@ -63,10 +63,9 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 			logger.Info("dataset already exists, skipping creation",
 				zap.String("dataset", *c.dataset))
 		} else {
-			logger.Error("failed to create dataset",
+			logger.Warn("failed to create dataset, continuing anyway",
 				zap.Error(err),
 			)
-			// Continue anyway - might be a transient error
 		}
 	}
 

@@ -2,7 +2,8 @@
 # Builds from upstream goccy/bigquery-emulator source with ARM64 support
 # Note: Base image (go-zetasql) only supports AMD64, so ARM64 builds use emulation
 # This is expected and harmless - the final binary will be native ARM64
-FROM ghcr.io/goccy/go-zetasql:latest AS builder
+# Pin to specific version for reproducible builds
+FROM ghcr.io/goccy/go-zetasql:0.5.5 AS builder
 
 ARG VERSION=0.6.6
 ARG TARGETARCH
@@ -12,7 +13,6 @@ ARG TARGETOS
 ENV GOPROXY=https://proxy.golang.org,direct
 ENV GOSUMDB=sum.golang.org
 ENV GOPRIVATE=
-ENV CGO_ENABLED=1
 
 # Set Go build target architecture (required for cross-compilation)
 # TARGETARCH is set by Docker buildx (amd64, arm64, etc.)
@@ -57,6 +57,8 @@ RUN go mod verify
 # Explicitly set GOARCH/GOOS to ensure correct target architecture
 # This is critical when building ARM64 on AMD64 base image with emulation
 # For ARM64 cross-compilation, use clang with cross-compilation target
+# CGO_ENABLED=1 is scoped to the build command for explicit behavior
+# -trimpath removes local paths for reproducible builds
 RUN if [ "$TARGETARCH" = "arm64" ] && [ "$(uname -m)" != "aarch64" ]; then \
         CC="clang -target aarch64-linux-gnu" \
         CXX="clang++ -target aarch64-linux-gnu" \
@@ -64,12 +66,13 @@ RUN if [ "$TARGETARCH" = "arm64" ] && [ "$(uname -m)" != "aarch64" ]; then \
         CGO_CXXFLAGS="-target aarch64-linux-gnu" \
         GOARCH=${GOARCH} GOOS=${GOOS} \
         CGO_ENABLED=1 \
-        go build -o bigquery-emulator \
+        go build -trimpath -o bigquery-emulator \
         -ldflags='-s -w -X main.version=${VERSION}' \
         ./cmd/bigquery-emulator; \
     else \
         CXX=clang++ GOARCH=${GOARCH} GOOS=${GOOS} \
-        go build -o bigquery-emulator \
+        CGO_ENABLED=1 \
+        go build -trimpath -o bigquery-emulator \
         -ldflags='-s -w -X main.version=${VERSION}' \
         ./cmd/bigquery-emulator; \
     fi
