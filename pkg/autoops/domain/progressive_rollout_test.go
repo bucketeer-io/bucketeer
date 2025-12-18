@@ -588,11 +588,11 @@ func TestInferControlVariationID(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc               string
-		feature            *ftdomain.Feature
-		targetVariationID  string
-		expectedControlID  string
-		expectedErr        error
+		desc              string
+		feature           *ftdomain.Feature
+		targetVariationID string
+		expectedControlID string
+		expectedErr       error
 	}{
 		{
 			desc:              "feature with 2 variations - returns the other variation",
