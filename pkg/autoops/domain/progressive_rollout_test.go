@@ -23,7 +23,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoiface"
 
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestNewProgressiveRollout(t *testing.T) {
@@ -438,6 +440,203 @@ func TestStop(t *testing.T) {
 				assert.NotZero(t, pr.StoppedAt, p.desc)
 				assert.True(t, pr.UpdatedAt > time.Now().Add(time.Second*-2).Unix(), p.desc)
 			}
+		})
+	}
+}
+
+func TestGetControlVariationID(t *testing.T) {
+	// Helper to create a feature with variations
+	createFeature := func(variationIDs ...string) *ftdomain.Feature {
+		variations := make([]*featureproto.Variation, len(variationIDs))
+		for i, id := range variationIDs {
+			variations[i] = &featureproto.Variation{Id: id}
+		}
+		return &ftdomain.Feature{
+			Feature: &featureproto.Feature{
+				Variations: variations,
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc                   string
+		progressiveRolloutType autoopsproto.ProgressiveRollout_Type
+		clause                 protoiface.MessageV1
+		feature                *ftdomain.Feature
+		expected               string
+		expectedErr            error
+	}{
+		{
+			desc:                   "manual: new format with both control and target IDs",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:          []*autoopsproto.ProgressiveRolloutSchedule{},
+				ControlVariationId: "control-var-id",
+				TargetVariationId:  "target-var-id",
+			},
+			feature:  createFeature("control-var-id", "target-var-id"),
+			expected: "control-var-id",
+		},
+		{
+			desc:                   "manual: old format with variation_id only - infer control from 2 variations",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
+				VariationId: "target-var-id", // Old field - this is the target
+			},
+			feature:  createFeature("control-var-id", "target-var-id"),
+			expected: "control-var-id", // Should infer the other variation
+		},
+		{
+			desc:                   "manual: old format with variation_id but feature has 3 variations - cannot infer",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
+				VariationId: "target-var-id",
+			},
+			feature:  createFeature("var-1", "var-2", "var-3"),
+			expected: "", // Cannot infer with != 2 variations
+		},
+		{
+			desc:                   "manual: old format with variation_id but nil feature - cannot infer",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
+				VariationId: "target-var-id",
+			},
+			feature:  nil,
+			expected: "",
+		},
+		{
+			desc:                   "manual: no variation IDs set",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{},
+			},
+			feature:  createFeature("var-1", "var-2"),
+			expected: "",
+		},
+		{
+			desc:                   "template: new format with both control and target IDs",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				Schedules:          []*autoopsproto.ProgressiveRolloutSchedule{},
+				ControlVariationId: "control-var-id",
+				TargetVariationId:  "target-var-id",
+			},
+			feature:  createFeature("control-var-id", "target-var-id"),
+			expected: "control-var-id",
+		},
+		{
+			desc:                   "template: old format with variation_id only - infer control from 2 variations",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
+				VariationId: "target-var-id",
+			},
+			feature:  createFeature("control-var-id", "target-var-id"),
+			expected: "control-var-id",
+		},
+		{
+			desc:                   "template: old format with variation_id but feature has 3 variations - cannot infer",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
+				VariationId: "target-var-id",
+			},
+			feature:  createFeature("var-1", "var-2", "var-3"),
+			expected: "",
+		},
+		{
+			desc:                   "invalid type",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_Type(99),
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{},
+			},
+			feature:     createFeature("var-1", "var-2"),
+			expected:    "",
+			expectedErr: ErrProgressiveRolloutInvalidType,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			pr := createProgressiveRollout(t)
+			ac, err := ptypes.MarshalAny(p.clause)
+			require.NoError(t, err)
+			pr.Clause = ac
+			pr.Type = p.progressiveRolloutType
+
+			actual, err := pr.GetControlVariationID(p.feature)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
+func TestInferControlVariationID(t *testing.T) {
+	createFeature := func(variationIDs ...string) *ftdomain.Feature {
+		variations := make([]*featureproto.Variation, len(variationIDs))
+		for i, id := range variationIDs {
+			variations[i] = &featureproto.Variation{Id: id}
+		}
+		return &ftdomain.Feature{
+			Feature: &featureproto.Feature{
+				Variations: variations,
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc               string
+		feature            *ftdomain.Feature
+		targetVariationID  string
+		expectedControlID  string
+		expectedErr        error
+	}{
+		{
+			desc:              "feature with 2 variations - returns the other variation",
+			feature:           createFeature("variation-a", "variation-b"),
+			targetVariationID: "variation-b",
+			expectedControlID: "variation-a",
+		},
+		{
+			desc:              "feature with 2 variations - returns the other variation (reversed)",
+			feature:           createFeature("variation-a", "variation-b"),
+			targetVariationID: "variation-a",
+			expectedControlID: "variation-b",
+		},
+		{
+			desc:              "feature with 3 variations - returns empty",
+			feature:           createFeature("var-1", "var-2", "var-3"),
+			targetVariationID: "var-2",
+			expectedControlID: "",
+		},
+		{
+			desc:              "feature with 1 variation - returns empty",
+			feature:           createFeature("var-1"),
+			targetVariationID: "var-1",
+			expectedControlID: "",
+		},
+		{
+			desc:              "nil feature - returns empty",
+			feature:           nil,
+			targetVariationID: "var-1",
+			expectedControlID: "",
+		},
+		{
+			desc:              "feature with 0 variations - returns empty",
+			feature:           createFeature(),
+			targetVariationID: "var-1",
+			expectedControlID: "",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := inferControlVariationID(p.feature, p.targetVariationID)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedControlID, actual)
 		})
 	}
 }
