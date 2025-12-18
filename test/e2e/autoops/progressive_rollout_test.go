@@ -313,12 +313,12 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	expectedStrategy := &featureproto.RolloutStrategy{
 		Variations: []*featureproto.RolloutStrategy_Variation{
 			{
-				Variation: feature.Variations[1].Id,
-				Weight:    schedules[0].Weight,
+				Variation: feature.Variations[0].Id, // Control (first in feature)
+				Weight:    totalVariationWeight - schedules[0].Weight,
 			},
 			{
-				Variation: feature.Variations[0].Id,
-				Weight:    totalVariationWeight - schedules[0].Weight,
+				Variation: feature.Variations[1].Id, // Target (second in feature)
+				Weight:    schedules[0].Weight,
 			},
 		},
 	}
