@@ -69,6 +69,7 @@ func ExecuteProgressiveRolloutOperation(
 		controlVariationID,
 		targetVariationID,
 		weight,
+		feature,
 	)
 }
 
@@ -88,8 +89,9 @@ func newRolloutStrategy(
 	controlVariationID string,
 	targetVariationID string,
 	weight int32,
+	feature *ftdomain.Feature,
 ) (*featureproto.Strategy, error) {
-	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight)
+	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight, feature)
 	strategy := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -103,16 +105,29 @@ func getRolloutStrategyVariations(
 	controlVariationID string,
 	targetVariationID string,
 	weight int32,
+	feature *ftdomain.Feature,
 ) []*featureproto.RolloutStrategy_Variation {
-	// Only include the two selected variations in the rollout
-	return []*featureproto.RolloutStrategy_Variation{
-		{
-			Variation: targetVariationID,
-			Weight:    weight,
-		},
-		{
-			Variation: controlVariationID,
-			Weight:    totalVariationWeight - weight,
-		},
+	// Create variations for all feature variations
+	// Control and target get their calculated weights, all others get 0
+	variations := make([]*featureproto.RolloutStrategy_Variation, 0, len(feature.Variations))
+
+	for _, v := range feature.Variations {
+		var varWeight int32
+		switch v.Id {
+		case targetVariationID:
+			varWeight = weight
+		case controlVariationID:
+			varWeight = totalVariationWeight - weight
+		default:
+			// All other variations are reset to 0
+			varWeight = 0
+		}
+
+		variations = append(variations, &featureproto.RolloutStrategy_Variation{
+			Variation: v.Id,
+			Weight:    varWeight,
+		})
 	}
+
+	return variations
 }
