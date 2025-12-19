@@ -26,13 +26,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -87,15 +84,6 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
@@ -112,7 +100,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				FeatureId:     fID,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
+			expectedErr: statusStartAtRequired.Err(),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
@@ -121,7 +109,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				FeatureId:     fID,
 				StartAt:       correctStartAtUnix,
 			},
-			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
+			expectedErr: statusEndAtRequired.Err(),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
@@ -131,7 +119,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				StartAt:       now.Unix(),
 				EndAt:         now.Add(-31 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
+			expectedErr: statusStartAtIsAfterEndAt.Err(),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -140,7 +128,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				StartAt:       correctStartAtUnix,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -155,7 +143,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				VariationIds:   []string{vID1},
 			},
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success: one variation",
@@ -321,15 +309,6 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -342,7 +321,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		{
 			desc:        "error: ErrExperimentIDRequired",
 			input:       &ecproto.GetExperimentResultRequest{EnvironmentId: "ns0"},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -355,7 +334,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 				ExperimentId:  "eid",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentResultNotFound.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -365,7 +344,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 				ExperimentId:  "eid",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success: get the result from storage",
@@ -407,15 +386,6 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -429,7 +399,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 		{
 			desc:        "error: ErrFeatureIDRequired",
 			input:       &ecproto.ListExperimentResultsRequest{EnvironmentId: "ns0"},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -443,7 +413,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expected:    nil,
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentResultNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -470,7 +440,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success: no results",
@@ -584,15 +554,6 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		orgRole     *accountproto.AccountV2_Role_Organization
@@ -610,7 +571,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				GoalId:        gID,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
+			expectedErr: statusStartAtRequired.Err(),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
@@ -620,7 +581,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				GoalId:        gID,
 				StartAt:       correctStartAtUnix,
 			},
-			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
+			expectedErr: statusEndAtRequired.Err(),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
@@ -631,7 +592,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:       now.Unix(),
 				EndAt:         now.Add(-30 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
+			expectedErr: statusStartAtIsAfterEndAt.Err(),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -641,7 +602,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:       correctStartAtUnix,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrGoalIDRequired",
@@ -651,7 +612,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:       correctStartAtUnix,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -663,7 +624,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:       correctStartAtUnix,
 				EndAt:         correctEndAtUnix,
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success: one variation",
@@ -787,15 +748,6 @@ func TestGetMAUCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	input := &ecproto.GetMAUCountRequest{
 		EnvironmentId: "ns0",
 		YearMonth:     "201212",
@@ -810,13 +762,10 @@ func TestGetMAUCount(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:     "error: mau year month is required",
-			input:    &ecproto.GetMAUCountRequest{EnvironmentId: "ns0"},
-			expected: nil,
-			expectedErr: createError(
-				statusMAUYearMonthRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
-			),
+			desc:        "error: mau year month is required",
+			input:       &ecproto.GetMAUCountRequest{EnvironmentId: "ns0"},
+			expected:    nil,
+			expectedErr: statusMAUYearMonthRequired.Err(),
 		},
 		{
 			desc: "err: internal",
@@ -835,7 +784,7 @@ func TestGetMAUCount(t *testing.T) {
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input:       input,
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -875,15 +824,6 @@ func TestSummarizeMAUCounts(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	input := &ecproto.SummarizeMAUCountsRequest{
 		YearMonth:  "201212",
 		IsFinished: false,
@@ -898,13 +838,10 @@ func TestSummarizeMAUCounts(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:     "error: mau year month is required",
-			input:    &ecproto.SummarizeMAUCountsRequest{},
-			expected: nil,
-			expectedErr: createError(
-				statusMAUYearMonthRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
-			),
+			desc:        "error: mau year month is required",
+			input:       &ecproto.SummarizeMAUCountsRequest{},
+			expected:    nil,
+			expectedErr: statusMAUYearMonthRequired.Err(),
 		},
 		{
 			desc: "err: internal",
@@ -1217,15 +1154,6 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1241,7 +1169,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrUnknownTimeRange",
@@ -1249,7 +1177,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				EnvironmentId: "ns0",
 				FeatureId:     fID,
 			},
-			expectedErr: createError(statusUnknownTimeRange, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range")),
+			expectedErr: statusUnknownTimeRange.Err(),
 		},
 		{
 			desc: "error: get feature failed",
@@ -1293,7 +1221,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "error: MergeMultiKeys failed",
@@ -1320,7 +1248,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "error: GetUserCountsV2 failed",
@@ -1351,7 +1279,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				FeatureId:     fID,
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -1363,7 +1291,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -1478,15 +1406,6 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
@@ -1506,7 +1425,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
+			expectedErr: statusAutoOpsRuleIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrClauseIDRequired",
@@ -1517,7 +1436,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+			expectedErr: statusClauseIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -1528,7 +1447,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrFeatureVersionRequired",
@@ -1539,7 +1458,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureId:     fID,
 				VariationId:   vID0,
 			},
-			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
+			expectedErr: statusFeatureVersionRequired.Err(),
 		},
 		{
 			desc: "error: ErrVariationIDRequired",
@@ -1550,7 +1469,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 			},
-			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusVariationIDRequired.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -1563,7 +1482,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -1639,15 +1558,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
@@ -1667,7 +1577,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
+			expectedErr: statusAutoOpsRuleIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrClauseIDRequired",
@@ -1678,7 +1588,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+			expectedErr: statusClauseIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -1689,7 +1599,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrFeatureVersionRequired",
@@ -1700,7 +1610,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureId:     fID,
 				VariationId:   vID0,
 			},
-			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
+			expectedErr: statusFeatureVersionRequired.Err(),
 		},
 		{
 			desc: "error: ErrVariationIDRequired",
@@ -1711,7 +1621,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 			},
-			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusVariationIDRequired.Err(),
 		},
 		{
 			desc:    "error: ErrPermissionDenied",
@@ -1724,7 +1634,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -2009,19 +1919,6 @@ func TestCheckAdminRole(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.Background()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		inputCtx    context.Context
@@ -2030,12 +1927,12 @@ func TestCheckAdminRole(t *testing.T) {
 		{
 			desc:        "error: Unauthenticated",
 			inputCtx:    context.Background(),
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalizeWithTemplate(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc:        "error: PermissionDenied",
 			inputCtx:    createContextWithToken(t, false),
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:        "success",
@@ -2046,7 +1943,7 @@ func TestCheckAdminRole(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newEventCounterService(t, mockController, nil, nil, nil)
-			_, actualErr := gs.checkSystemAdminRole(p.inputCtx, localizer)
+			_, actualErr := gs.checkSystemAdminRole(p.inputCtx)
 			assert.Equal(t, actualErr, p.expectedErr)
 		})
 	}

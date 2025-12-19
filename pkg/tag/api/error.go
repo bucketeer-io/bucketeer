@@ -20,20 +20,22 @@ import (
 )
 
 var (
-	statusInternal     = api.NewGRPCStatus(err.NewErrorInternal(err.TagPackageName, "internal"))
 	statusNameRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.TagPackageName, "name must be specified", "name"),
+		err.NewErrorInvalidArgEmpty(err.TagPackageName, "name must be specified", "Name"),
 	)
 	statusEntityTypeRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.TagPackageName, "entity_type must be specified", "entity_type"),
+		err.NewErrorInvalidArgEmpty(err.TagPackageName, "entity_type must be specified", "EntityType"),
 	)
-	statusTagInUsed     = api.NewGRPCStatus(err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use"))
+	statusTagInUsed = api.NewGRPCStatus(
+		err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use"))
 	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "cursor"),
+		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "Cursor"),
 	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "order_by"),
+		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "OrderBy"),
 	)
-	statusUnauthenticated  = api.NewGRPCStatus(err.NewErrorUnauthenticated(err.TagPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(err.NewErrorPermissionDenied(err.TagPackageName, "permission denied"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		err.NewErrorUnauthenticated(err.TagPackageName, "unauthenticated"))
+	statusPermissionDenied = api.NewGRPCStatus(
+		err.NewErrorPermissionDenied(err.TagPackageName, "permission denied"))
 )

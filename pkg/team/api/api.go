@@ -23,7 +23,6 @@ import (
 
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
@@ -32,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -45,28 +43,22 @@ import (
 )
 
 var (
-	statusInternal     = api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.TeamPackageName, "internal"))
 	statusNameRequired = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "name"),
-	)
+		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "Name"))
+	statusTeamIDRequired = api.NewGRPCStatus(
+		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "team id must be specified", "TeamId"))
 	statusInvalidCursor = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "cursor"),
-	)
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "cursor is invalid", "Cursor"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "order_by"),
-	)
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "OrderBy"))
 	statusUnauthenticated = api.NewGRPCStatus(
-		bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"),
-	)
+		bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
-		bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"),
-	)
+		bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"))
 	statusTeamNotFound = api.NewGRPCStatus(
-		bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "team"),
-	)
+		bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "Team"))
 	statusTeamInUsed = api.NewGRPCStatus(
-		bkterr.NewErrorUnexpectedAffectedRows(bkterr.TeamPackageName, "team is in use by an account"),
-	)
+		bkterr.NewErrorFailedPrecondition(bkterr.TeamPackageName, "team is in use by an account"))
 )
 
 type options struct {
@@ -120,14 +112,13 @@ func (s *TeamService) CreateTeam(
 	ctx context.Context,
 	req *proto.CreateTeamRequest,
 ) (*proto.CreateTeamResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN, localizer)
+		accountproto.AccountV2_Role_Organization_ADMIN)
 	if err != nil {
 		return nil, err
 	}
-	err = s.validateCreateTeamRequest(req, localizer)
+	err = s.validateCreateTeamRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate create team request",
@@ -237,17 +228,10 @@ func (s *TeamService) CreateTeam(
 	}, nil
 }
 
-func (s *TeamService) validateCreateTeamRequest(req *proto.CreateTeamRequest, localizer locale.Localizer) error {
+func (s *TeamService) validateCreateTeamRequest(req *proto.CreateTeamRequest) error {
 	req.Name = strings.TrimSpace(req.Name)
 	if len(req.Name) == 0 {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	return nil
 }
@@ -256,14 +240,13 @@ func (s *TeamService) DeleteTeam(
 	ctx context.Context,
 	req *proto.DeleteTeamRequest,
 ) (*proto.DeleteTeamResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN, localizer)
+		accountproto.AccountV2_Role_Organization_ADMIN)
 	if err != nil {
 		return nil, err
 	}
-	err = s.validateDeleteTeamRequest(req, localizer)
+	err = s.validateDeleteTeamRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate delete team request",
@@ -326,24 +309,10 @@ func (s *TeamService) DeleteTeam(
 	})
 	if err != nil {
 		if errors.Is(err, statusTeamInUsed.Err()) {
-			dt, err := statusTeamInUsed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.Team),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTeamInUsed.Err()
 		}
 		if errors.Is(err, storage.ErrTeamNotFound) {
-			dt, err := statusTeamNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTeamNotFound.Err()
 		}
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
@@ -379,19 +348,9 @@ func (s *TeamService) listAccountsFromOrganization(
 	return resp.Accounts, nil
 }
 
-func (s *TeamService) validateDeleteTeamRequest(
-	req *proto.DeleteTeamRequest,
-	localizer locale.Localizer,
-) error {
+func (s *TeamService) validateDeleteTeamRequest(req *proto.DeleteTeamRequest) error {
 	if len(strings.TrimSpace(req.Id)) == 0 {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "team_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusTeamIDRequired.Err()
 	}
 	return nil
 }
@@ -400,10 +359,9 @@ func (s *TeamService) ListTeams(
 	ctx context.Context,
 	req *proto.ListTeamsRequest,
 ) (*proto.ListTeamsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER, localizer)
+		accountproto.AccountV2_Role_Organization_MEMBER)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +381,7 @@ func (s *TeamService) ListTeams(
 		}
 	}
 
-	orders, err := s.newListTeamsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newListTeamsOrdersMySQL(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Failed to valid list teams API. Invalid argument.",
@@ -442,14 +400,7 @@ func (s *TeamService) ListTeams(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Filters:     filters,
@@ -483,7 +434,6 @@ func (s *TeamService) ListTeams(
 func (s *TeamService) newListTeamsOrdersMySQL(
 	orderBy proto.ListTeamsRequest_OrderBy,
 	orderDirection proto.ListTeamsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -497,14 +447,7 @@ func (s *TeamService) newListTeamsOrdersMySQL(
 	case proto.ListTeamsRequest_ORGANIZATION:
 		column = "team.organization_id"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListTeamsRequest_DESC {
@@ -517,7 +460,6 @@ func (s *TeamService) checkOrganizationRole(
 	ctx context.Context,
 	organizationID string,
 	requiredRole accountproto.AccountV2_Role_Organization,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(
 		ctx,
@@ -536,27 +478,13 @@ func (s *TeamService) checkOrganizationRole(
 				"Unauthenticated",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",

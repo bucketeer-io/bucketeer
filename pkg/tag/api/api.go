@@ -23,7 +23,6 @@ import (
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -98,14 +96,13 @@ func (s *TagService) CreateTag(
 	ctx context.Context,
 	req *proto.CreateTagRequest,
 ) (*proto.CreateTagResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateTagRquest(req, localizer); err != nil {
+	if err := s.validateCreateTagRquest(req); err != nil {
 		s.logger.Error(
 			"Failed to create a tag",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -127,7 +124,7 @@ func (s *TagService) CreateTag(
 				zap.Any("tag", tag),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 
 	var event *eventproto.Event
@@ -200,34 +197,20 @@ func (s *TagService) CreateTag(
 				zap.Any("tag", tag),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	if err := s.publisher.Publish(ctx, event); err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	return &proto.CreateTagResponse{Tag: actualTag.Tag}, nil
 }
 
-func (s *TagService) validateCreateTagRquest(req *proto.CreateTagRequest, localizer locale.Localizer) error {
+func (s *TagService) validateCreateTagRquest(req *proto.CreateTagRequest) error {
 	if len(strings.TrimSpace(req.Name)) == 0 {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	if req.EntityType == proto.Tag_UNSPECIFIED {
-		dt, err := statusEntityTypeRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "entity_type"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusEntityTypeRequired.Err()
 	}
 	return nil
 }
@@ -236,14 +219,13 @@ func (s *TagService) ListTags(
 	ctx context.Context,
 	req *proto.ListTagsRequest,
 ) (*proto.ListTagsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	inFilters := make([]*mysql.InFilter, 0)
 	filters := []*mysql.FilterV2{}
 	if req.OrganizationId != "" {
 		// New console
 		editor, err := s.checkOrganizationRole(
 			ctx, accproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId, localizer)
+			req.OrganizationId)
 		if err != nil {
 			return nil, err
 		}
@@ -267,7 +249,7 @@ func (s *TagService) ListTags(
 		// Current console
 		_, err := s.checkEnvironmentRole(
 			ctx, accproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId, localizer)
+			req.EnvironmentId)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +273,7 @@ func (s *TagService) ListTags(
 			Value:    req.EntityType,
 		})
 	}
-	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Failed to valid list tags API. Invalid argument.",
@@ -309,14 +291,7 @@ func (s *TagService) ListTags(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Filters:     filters,
@@ -337,7 +312,7 @@ func (s *TagService) ListTags(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	return &proto.ListTagsResponse{
 		Tags:       tags,
@@ -350,14 +325,13 @@ func (s *TagService) DeleteTag(
 	ctx context.Context,
 	req *proto.DeleteTagRequest,
 ) (*proto.DeleteTagResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateDeleteTagRquest(req, localizer); err != nil {
+	if err := s.validateDeleteTagRquest(req); err != nil {
 		s.logger.Error(
 			"Failed to delete a tag",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -412,16 +386,9 @@ func (s *TagService) DeleteTag(
 	})
 	if err != nil {
 		if errors.Is(err, statusTagInUsed.Err()) {
-			dt, err := statusTagInUsed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.Tag),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTagInUsed.Err()
 		}
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	// Publish event
 	event, err := domainevent.NewEvent(
@@ -438,10 +405,10 @@ func (s *TagService) DeleteTag(
 		tag, // Previous state: what was deleted
 	)
 	if err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	if err = s.publisher.Publish(ctx, event); err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	return &proto.DeleteTagResponse{}, nil
 }
@@ -479,16 +446,9 @@ func (s *TagService) listFeaturesFromEnvironment(
 	return features, nil
 }
 
-func (s *TagService) validateDeleteTagRquest(req *proto.DeleteTagRequest, localizer locale.Localizer) error {
+func (s *TagService) validateDeleteTagRquest(req *proto.DeleteTagRequest) error {
 	if req.Id == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	return nil
 }
@@ -497,7 +457,6 @@ func (s *TagService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accproto.AccountV2_Role_Environment,
 	environmentId string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
@@ -523,14 +482,7 @@ func (s *TagService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -539,14 +491,7 @@ func (s *TagService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -565,7 +510,6 @@ func (s *TagService) checkOrganizationRole(
 	ctx context.Context,
 	requiredRole accproto.AccountV2_Role_Organization,
 	organizationID string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(
 		email string,
@@ -589,14 +533,7 @@ func (s *TagService) checkOrganizationRole(
 					zap.String("organizationID", organizationID),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -605,14 +542,7 @@ func (s *TagService) checkOrganizationRole(
 					zap.String("organizationID", organizationID),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -658,7 +588,6 @@ func (s *TagService) getAllowedEnvironments(
 func (s *TagService) newListTagsOrdersMySQL(
 	orderBy proto.ListTagsRequest_OrderBy,
 	orderDirection proto.ListTagsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -672,14 +601,7 @@ func (s *TagService) newListTagsOrdersMySQL(
 	case proto.ListTagsRequest_ENTITY_TYPE:
 		column = "tag.entity_type"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListTagsRequest_DESC {
@@ -692,7 +614,6 @@ func (s *TagService) reportInternalServerError(
 	ctx context.Context,
 	err error,
 	environmentId string,
-	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Internal server error",
@@ -701,13 +622,5 @@ func (s *TagService) reportInternalServerError(
 			zap.String("environmentId", environmentId),
 		)...,
 	)
-	st := api.NewGRPCStatus(err)
-	dt, err := st.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return api.NewGRPCStatus(err).Err()
 }
