@@ -356,5 +356,12 @@
   "name-desc-search-placeholder": "Search by name or description...",
   "email-search-placeholder": "Search by email...",
   "name-search-placeholder": "Search by name...",
-  "yaml-note":"YAML values are compiled into a JSON structure before user evaluation and are returned to the client SDK through the object variation interface, just like JSON flags."
+  "yaml-note":"YAML values are compiled into a JSON structure before user evaluation and are returned to the client SDK through the object variation interface, just like JSON flags.",
+  "auto-archive-settings": "Auto-Archive Settings",
+  "auto-archive-enable": "Enable automatic archiving",
+  "auto-archive-enable-tooltip": "When enabled, feature flags that meet the specified criteria will be automatically archived by the daily batch job. This policy applies to all flags in this environment.",
+  "auto-archive-unused-days": "Unused days threshold",
+  "auto-archive-unused-days-placeholder": "e.g., 90",
+  "auto-archive-check-code-refs": "Check code references",
+  "auto-archive-check-code-refs-tooltip": "Skip archiving if code references exist"
 }

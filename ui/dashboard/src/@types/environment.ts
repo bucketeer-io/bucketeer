@@ -10,6 +10,9 @@ export interface Environment {
   featureFlagCount: number;
   updatedAt: string;
   urlCode: string;
+  autoArchiveEnabled: boolean;
+  autoArchiveUnusedDays: number;
+  autoArchiveCheckCodeRefs: boolean;
 }
 
 export interface EnvironmentCollection {
