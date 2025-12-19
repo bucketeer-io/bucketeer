@@ -103,7 +103,22 @@ oauth:
     clientId:
     clientSecret:
     redirectUrls:
-  demoSignIn:
+  password:
+    enabled:
+    policy:
+      minLength: 8
+      requireUppercase: true
+      requireLowercase: true
+      requireNumbers: true
+      requireSymbols: true
+    tokens:
+      resetTTL: 1800s
+      setupTTL: 24h
+    urls:
+      resetPath:
+      setupPath:
+      tokenParam:
+demoSignIn:
     enabled:
     email:
     password:

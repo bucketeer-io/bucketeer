@@ -26,6 +26,7 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -271,6 +272,7 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 				mysqlClient,
 				accountClient,
 				config,
+				&email.Config{},
 				p.setupFunc()...,
 			).(*authService)
 
@@ -446,6 +448,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				mysqlClient,
 				accountClient,
 				config,
+				&email.Config{},
 				opts...,
 			).(*authService)
 
