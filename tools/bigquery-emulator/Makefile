@@ -75,8 +75,8 @@ docker-build-multiarch-sequential:
 		--push \
 		.
 	@echo "Creating and pushing multi-arch manifest..."
-	@$(MAKE) docker-manifest-create
-	@$(MAKE) docker-manifest-push
+	@make docker-manifest-create
+	@make docker-manifest-push
 	@echo "Multi-arch build complete!"
 
 .PHONY: docker-push-multiarch
@@ -143,13 +143,13 @@ docker-manifest-push:
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  docker-build          - Build for current platform"
-	@echo "  docker-build-amd64    - Build for linux/amd64"
-	@echo "  docker-build-arm64   - Build for linux/arm64"
-	@echo "  docker-build-multiarch - Build multi-arch images locally (faster, needs 16GB+ RAM)"
-	@echo "  docker-push-multiarch - Push multi-arch images to GHCR (requires PAT and GITHUB_USER_NAME)"
-	@echo "  docker-build-multiarch-sequential - Build architectures one at a time (safer, slower)"
-	@echo "  docker-push-ghcr     - Push to GHCR (requires PAT and GITHUB_USER_NAME)"
-	@echo "  docker-push-gar      - Push to GAR (Google Artifact Registry)"
-	@echo "  docker-manifest-create - Create multi-arch manifest"
-	@echo "  docker-manifest-push  - Push multi-arch manifest"
+	@echo "  docker-build                       - Build for current platform"
+	@echo "  docker-build-amd64                 - Build for linux/amd64"
+	@echo "  docker-build-arm64                 - Build for linux/arm64"
+	@echo "  docker-build-multiarch             - Build both architectures locally"
+	@echo "  docker-build-multiarch-sequential  - Build architectures one at a time (safer)"
+	@echo "  docker-push-multiarch              - Push multi-arch images to GHCR"
+	@echo "  docker-push-ghcr                   - Push single image to GHCR"
+	@echo "  docker-push-gar                    - Push to GAR (Google Artifact Registry)"
+	@echo "  docker-manifest-create             - Create multi-arch manifest"
+	@echo "  docker-manifest-push               - Push multi-arch manifest"
