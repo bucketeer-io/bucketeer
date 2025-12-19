@@ -1,17 +1,14 @@
-# Default values for bq.
+# Default values for mysql.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
-project: "default"
-
 image:
-  # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)
-  repository: ghcr.io/bucketeer-io/bigquery-emulator
+  repository: mysql
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.6.6"
+  tag: "8.0"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -28,32 +25,25 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  fsGroup: 999
 
 securityContext: {}
 
-service:
-  type: ClusterIP
-  port: 9050
-  httpNodePort: 31000
-  portgrpc: 9060
+auth:
+  database: "bucketeer"
+  username: "bucketeer"
+  password: "bucketeer"
+  rootPassword: "bucketeer"
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+service:
+  type: NodePort
+  port: 3306
+  nodePort: 32000
+
+storage:
+  size: "1Gi"
+  class: "" # Use default storage class
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -67,15 +57,9 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
+
