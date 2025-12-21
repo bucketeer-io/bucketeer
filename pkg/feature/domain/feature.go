@@ -1220,6 +1220,10 @@ func (f *Feature) Clone(
 	maintainer string,
 ) (*Feature, error) {
 	now := time.Now().Unix()
+	// Filter out rules that contain clauses referencing environment-specific
+	// entities (feature flags or segments) since they may not exist in the
+	// destination environment.
+	filteredRules := f.filterRulesWithEnvironmentReferences(f.Rules)
 	newFeature := &Feature{Feature: &feature.Feature{
 		Id:              f.Id,
 		Name:            f.Name,
@@ -1232,7 +1236,7 @@ func (f *Feature) Clone(
 		Variations:      f.Variations,
 		Prerequisites:   []*feature.Prerequisite{},
 		Targets:         f.Targets,
-		Rules:           f.Rules,
+		Rules:           filteredRules,
 		DefaultStrategy: f.DefaultStrategy,
 		OffVariation:    f.OffVariation,
 		Tags:            f.Tags,
@@ -1266,6 +1270,28 @@ func (f *Feature) Clone(
 		newFeature.Variations[i].Id = id.String()
 	}
 	return newFeature, nil
+}
+
+// filterRulesWithEnvironmentReferences returns rules that don't contain clauses
+// referencing environment-specific entities (feature flags or segments).
+// These rules are excluded because the referenced entities may not exist
+// in the destination environment when cloning.
+func (f *Feature) filterRulesWithEnvironmentReferences(rules []*feature.Rule) []*feature.Rule {
+	filtered := make([]*feature.Rule, 0, len(rules))
+	for _, rule := range rules {
+		hasEnvironmentReference := false
+		for _, clause := range rule.Clauses {
+			if clause.Operator == feature.Clause_FEATURE_FLAG ||
+				clause.Operator == feature.Clause_SEGMENT {
+				hasEnvironmentReference = true
+				break
+			}
+		}
+		if !hasEnvironmentReference {
+			filtered = append(filtered, rule)
+		}
+	}
+	return filtered
 }
 
 func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
@@ -1620,19 +1646,30 @@ func GetFeaturesDependsOnTargets(
 }
 
 // HasFeaturesDependsOnTargets returns true if there are features that depend on the target features.
-// This is a thin wrapper of GetFeaturesDependsOnTargets.
+// It directly checks if any feature (not in targets) has a target in its prerequisites or rules.
 func HasFeaturesDependsOnTargets(
 	targets []*feature.Feature, all []*feature.Feature,
 ) bool {
-	allfs := make(map[string]*feature.Feature, len(all))
+	// Create a set of target IDs for quick lookup
+	targetIDs := make(map[string]bool, len(targets))
+	for _, t := range targets {
+		targetIDs[t.Id] = true
+	}
+	// Check if any feature (not in targets) depends on any target
 	for _, f := range all {
-		allfs[f.Id] = f
+		// Skip if f is one of the targets
+		if targetIDs[f.Id] {
+			continue
+		}
+		// Check if f depends on any target
+		dmn := &Feature{Feature: f}
+		for _, depID := range dmn.FeatureIDsDependsOn() {
+			if targetIDs[depID] {
+				return true
+			}
+		}
 	}
-	deps := GetFeaturesDependsOnTargets(targets, allfs)
-	for _, tgt := range targets {
-		delete(deps, tgt.Id)
-	}
-	return len(deps) > 0
+	return false
 }
 
 func validateOffVariation(id string, variations []*feature.Variation) error {

@@ -1,29 +1,41 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariationType } from '@types';
+import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
+import ReactCodeEditor from 'components/code-editor';
+import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
-import TextArea from 'components/textarea';
 
 const Variations = ({
-  variationType
+  variationType,
+  refModel
 }: {
   variationType: FeatureVariationType;
+  refModel?: React.RefObject<HTMLDivElement>;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
   const methods = useFormContext<FlagFormSchema>();
-  const { control, watch } = methods;
+  const {
+    control,
+    watch,
+    trigger,
+    formState: { errors }
+  } = methods;
 
+  const [variationSelected, setVariationSelected] = useState<number | null>(
+    null
+  );
   const {
     fields: variations,
     append,
@@ -53,51 +65,34 @@ const Variations = ({
     remove(itemIndex);
   };
 
+  const revalidateVariations = () => {
+    if (!errors || !errors?.variations || !errors.variations.length) return;
+    errors.variations.map?.((_, index) => {
+      trigger(`variations.${index}.value`);
+    });
+  };
   return (
     <>
       {variations.map((item, variationIndex) => (
-        <div key={item.flagVariation} className="flex flex-col w-full">
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.value`}
-            render={({ field }) => (
-              <Form.Item className="py-2">
-                <div className="flex items-center gap-x-2 mb-1">
-                  <FlagVariationPolygon index={variationIndex} />
-                  <Form.Label required>
-                    <Trans
-                      i18nKey={'form:feature-flags.variation'}
-                      values={{
-                        index: `${variationIndex + 1}`
-                      }}
-                    />
-                  </Form.Label>
-                </div>
-                <Form.Control>
-                  {isJSON || isYAML ? (
-                    <TextArea
-                      {...field}
-                      placeholder={t(
-                        'form:feature-flags.placeholder-variation'
-                      )}
-                    />
-                  ) : (
-                    <Input
-                      {...field}
-                      placeholder={t(
-                        'form:feature-flags.placeholder-variation'
-                      )}
-                      disabled={isBoolean}
-                      className={isBoolean ? 'capitalize' : ''}
-                    />
-                  )}
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <div className="flex items-end mt-5 gap-x-4">
-            <div className="flex flex-col flex-1 gap-y-5 pl-4 border-l border-primary-500">
+        <Fragment key={item.flagVariation}>
+          <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600">
+            <FlagVariationPolygon index={variationIndex} />
+            <Trans
+              i18nKey={'form:feature-flags.variation'}
+              values={{
+                index: `${variationIndex + 1}`
+              }}
+            />
+          </div>
+          <div
+            key={item.flagVariation}
+            className={cn('flex w-full gap-x-4 mb-3 ')}
+          >
+            <div
+              className={cn('w-full flex gap-x-4 [&>div]:flex-1', {
+                'flex-col': isJSON || isYAML
+              })}
+            >
               <Form.Field
                 control={control}
                 name={`variations.${variationIndex}.name`}
@@ -115,17 +110,80 @@ const Variations = ({
                   </Form.Item>
                 )}
               />
+
               <Form.Field
                 control={control}
-                name={`variations.${variationIndex}.description`}
+                name={`variations.${variationIndex}.value`}
                 render={({ field }) => (
-                  <Form.Item className="py-0">
-                    <Form.Label>{t('form:description')}</Form.Label>
+                  <Form.Item
+                    className={cn('py-0', { 'py-3': isJSON || isYAML })}
+                  >
+                    <div className="flex items-center gap-x-2">
+                      <Form.Label required>
+                        {t('form:feature-flags.value')}
+                      </Form.Label>
+                    </div>
                     <Form.Control>
-                      <TextArea
-                        {...field}
-                        placeholder={t('form:placeholder-desc')}
-                      />
+                      {isJSON || isYAML ? (
+                        <div className="flex flex-col gap-y-2">
+                          <div className="w-full max-h-[100px] overflow-hidden">
+                            <ReactCodeEditor
+                              scrollParent={refModel}
+                              defaultLanguage={isYAML ? 'yaml' : 'json'}
+                              value={field.value}
+                              onChange={value => {
+                                field.onChange(value);
+                                revalidateVariations();
+                              }}
+                              onExpand={() =>
+                                setVariationSelected(variationIndex)
+                              }
+                              className="!min-h-[100px] h-full"
+                              lastLine={2}
+                            />
+                          </div>
+                          <ReactCodeEditorModal
+                            defaultLanguage={isYAML ? 'yaml' : 'json'}
+                            isOpen={variationSelected === variationIndex}
+                            onClose={() => {
+                              setVariationSelected(null);
+                            }}
+                            title={
+                              <div className="flex items-center gap-x-2 typo-para-big text-gray-600 font-bold">
+                                <FlagVariationPolygon index={variationIndex} />
+                                <Trans
+                                  i18nKey={'form:feature-flags.variation'}
+                                  values={{
+                                    index: `${variationIndex + 1}`
+                                  }}
+                                />
+                              </div>
+                            }
+                            value={field.value}
+                            onChange={value => {
+                              field.onChange(value);
+                              revalidateVariations();
+                            }}
+                            error={
+                              errors.variations?.[variationIndex]?.value
+                                ?.message as string
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <Input
+                          {...field}
+                          placeholder={t(
+                            'form:feature-flags.placeholder-variation'
+                          )}
+                          onChange={value => {
+                            field.onChange(value);
+                            revalidateVariations();
+                          }}
+                          disabled={isBoolean}
+                          className={isBoolean ? 'capitalize' : ''}
+                        />
+                      )}
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>
@@ -145,7 +203,7 @@ const Variations = ({
                 </Button>
               )}
           </div>
-        </div>
+        </Fragment>
       ))}
       <Button
         onClick={onAddVariation}

@@ -726,13 +726,15 @@ const ExperimentCreateUpdateModal = ({
       )}
       {isOpenCreateFlagModal && (
         <DialogModal
-          className="w-[500px] h-full max-h-[700px] overflow-hidden"
+          className="max-w-[850px] w-full h-full max-h-[90vh] overflow-hidden"
           title={t('common:new-flag')}
           isOpen={isOpenCreateFlagModal}
           onClose={onHiddenCreateFlagModal}
         >
           <CreateFlagForm
-            className={'flex flex-col flex-1 h-full overflow-auto pb-[170px]'}
+            className={
+              'flex flex-col flex-1 h-full overflow-auto small-scroll max-h-[90vh] pb-[170px]'
+            }
             onClose={onHiddenCreateFlagModal}
             onCompleted={flag => {
               form.setValue('featureId', flag.id);

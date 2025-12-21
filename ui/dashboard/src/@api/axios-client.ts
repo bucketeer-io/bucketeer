@@ -41,7 +41,7 @@ axiosClient.interceptors.response.use(
       !isRefreshing
     ) {
       isRefreshing = true;
-      refreshTokenFetcher(authToken?.refreshToken)
+      return refreshTokenFetcher(authToken?.refreshToken)
         .then(response => {
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
@@ -51,6 +51,7 @@ axiosClient.interceptors.response.use(
               bubbles: true
             })
           );
+          isRefreshing = false;
           return axiosClient(originalRequest);
         })
         .catch(err => {

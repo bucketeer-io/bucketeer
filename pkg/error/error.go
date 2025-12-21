@@ -17,6 +17,7 @@ package error
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -35,46 +36,57 @@ const (
 	ExperimentPackageName   = "experiment"
 	AuthPackageName         = "auth"
 
-	invalidTypeUnknown        = "unknown"
-	invalidTypeEmpty          = "empty"
-	invalidTypeNil            = "nil"
-	invalidTypeNotMatchFormat = "not_match_format"
-	invalidTypeDuplicated     = "duplicated"
-
-	invalidPrefix = "invalid"
+	invalidPrefix = "Invalid"
 )
 
+// ErrorType is also used as the message key.
 type ErrorType string
 
 const (
-	ErrorTypeNotFound                 ErrorType = "not_found"
-	ErrorTypeAlreadyExists            ErrorType = "already_exists"
-	ErrorTypeUnauthenticated          ErrorType = "unauthenticated"
-	ErrorTypePermissionDenied         ErrorType = "permission_denied"
-	ErrorTypeUnexpectedAffectedRows   ErrorType = "unexpected_affected_rows"
-	ErrorTypeInternal                 ErrorType = "internal"
-	ErrorTypeFailedPrecondition       ErrorType = "failed_precondition"
-	ErrorTypeUnavailable              ErrorType = "unavailable"
-	ErrorTypeAborted                  ErrorType = "aborted"
-	ErrorTypeInvalidArgUnknown        ErrorType = invalidPrefix + "_" + invalidTypeUnknown
-	ErrorTypeInvalidArgEmpty          ErrorType = invalidPrefix + "_" + invalidTypeEmpty
-	ErrorTypeInvalidArgNil            ErrorType = invalidPrefix + "_" + invalidTypeNil
-	ErrorTypeInvalidArgNotMatchFormat ErrorType = invalidPrefix + "_" + invalidTypeNotMatchFormat
-	ErrorTypeInvalidArgDuplicated     ErrorType = invalidPrefix + "_" + invalidTypeDuplicated
+	ErrorTypeNotFound                 ErrorType = "NotFoundError"
+	ErrorTypeAlreadyExists            ErrorType = "AlreadyExistsError"
+	ErrorTypeUnauthenticated          ErrorType = "UnauthenticatedError"
+	ErrorTypePermissionDenied         ErrorType = "PermissionDeniedError"
+	ErrorTypeUnexpectedAffectedRows   ErrorType = "UnexpectedAffectedRowsError"
+	ErrorTypeInternal                 ErrorType = "InternalServerError"
+	ErrorTypeFailedPrecondition       ErrorType = "FailedPreconditionError"
+	ErrorTypeUnavailable              ErrorType = "UnavailableError"
+	ErrorTypeAborted                  ErrorType = "AbortedError"
+	ErrorTypeInvalidArgUnknown        ErrorType = "InvalidArgumentUnknownError"
+	ErrorTypeInvalidArgEmpty          ErrorType = "InvalidArgumentEmptyError"
+	ErrorTypeInvalidArgNil            ErrorType = "InvalidArgumentNilError"
+	ErrorTypeInvalidArgNotMatchFormat ErrorType = "InvalidArgumentNotMatchFormatError"
+	ErrorTypeInvalidArgDuplicated     ErrorType = "InvalidArgumentDuplicatedError"
+	ErrorTypeExceededMax              ErrorType = "ExceededMaxError"
+	ErrorTypeOutOfRange               ErrorType = "OutOfRangeError"
+	ErrorTypeDifferentVariationsSize  ErrorType = "DifferentVariationsSizeError"
 )
 
-// Base error - no field needed
 type BktError struct {
 	packageName  string
 	errorType    ErrorType
 	message      string
 	wrappedError error
+	field        string // optional
+
+	embeddedKeyValues map[string]string
 }
 
 func (e *BktError) PackageName() string  { return e.packageName }
 func (e *BktError) ErrorType() ErrorType { return e.errorType }
+
+func (e *BktError) MessageKey() string                   { return string(e.errorType) }
+func (e *BktError) EmbeddedKeyValues() map[string]string { return e.embeddedKeyValues }
+
 func (e *BktError) Error() string {
-	msg := e.packageName + ":" + e.message
+	msg := fmt.Sprintf("%s:%s", e.packageName, e.message)
+	if e.field != "" {
+		if strings.HasPrefix(string(e.errorType), invalidPrefix) {
+			msg += fmt.Sprintf("[%s:%s]", e.field, e.errorType)
+		} else {
+			msg += fmt.Sprintf(", %s", e.field)
+		}
+	}
 	if e.wrappedError != nil {
 		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
 	}
@@ -86,31 +98,6 @@ func (e *BktError) Wrap(err error) {
 	e.wrappedError = errors.Join(e.wrappedError, err)
 }
 
-// BktFieldError represents an error with a specific field
-type BktFieldError struct {
-	*BktError
-	field string
-}
-
-func (e *BktFieldError) Error() string {
-	msg := e.packageName + ":" + e.message
-	if e.field != "" {
-		if strings.HasPrefix(string(e.errorType), invalidPrefix) {
-			msg += "[" + e.field + ":" + string(e.errorType) + "]"
-		} else {
-			msg += ", " + e.field
-		}
-	}
-	if e.wrappedError != nil {
-		return fmt.Sprintf("%s: %v", msg, e.wrappedError)
-	}
-	return msg
-}
-
-func (e *BktFieldError) Field() string {
-	return e.field
-}
-
 func newBktError(pkg string, errorType ErrorType, message string) *BktError {
 	return &BktError{
 		packageName: pkg,
@@ -119,18 +106,19 @@ func newBktError(pkg string, errorType ErrorType, message string) *BktError {
 	}
 }
 
-func newBktFieldError(pkg string, errorType ErrorType, message string, field string) *BktFieldError {
-	return &BktFieldError{
-		BktError: &BktError{
-			packageName: pkg,
-			errorType:   errorType,
-			message:     message,
+func newBktFieldError(pkg string, errorType ErrorType, message string, field string) *BktError {
+	return &BktError{
+		packageName: pkg,
+		errorType:   errorType,
+		message:     message,
+		field:       field,
+		embeddedKeyValues: map[string]string{
+			"field": field,
 		},
-		field: field,
 	}
 }
 
-func NewErrorNotFound(pkg string, message string, field string) *BktFieldError {
+func NewErrorNotFound(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeNotFound, message, field)
 }
 
@@ -166,22 +154,53 @@ func NewErrorAborted(pkg string, message string) *BktError {
 	return newBktError(pkg, ErrorTypeAborted, message)
 }
 
-func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgUnknown(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgUnknown, message, field)
 }
 
-func NewErrorInvalidArgEmpty(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgEmpty(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgEmpty, message, field)
 }
 
-func NewErrorInvalidArgNil(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgNil(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNil, message, field)
 }
 
-func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgNotMatchFormat, message, field)
 }
 
-func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktFieldError {
+func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
+}
+
+func NewErrorExceededMax(pkg string, message string, field string, max int) *BktError {
+	return &BktError{
+		packageName: pkg,
+		errorType:   ErrorTypeExceededMax,
+		message:     message,
+		field:       field,
+		embeddedKeyValues: map[string]string{
+			"field": field,
+			"max":   strconv.Itoa(max),
+		},
+	}
+}
+
+func NewErrorOutOfRange(pkg string, message string, field string, min int, max int) *BktError {
+	return &BktError{
+		packageName: pkg,
+		errorType:   ErrorTypeOutOfRange,
+		message:     message,
+		field:       field,
+		embeddedKeyValues: map[string]string{
+			"field": field,
+			"min":   strconv.Itoa(min),
+			"max":   strconv.Itoa(max),
+		},
+	}
+}
+
+func NewErrorDifferentVariationsSize(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeDifferentVariationsSize, message)
 }

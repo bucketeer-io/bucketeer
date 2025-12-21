@@ -40,10 +40,10 @@ func TestNewGRPCStatus(t *testing.T) {
 			name:            "ErrorInvalidEmpty",
 			err:             pkgErr.NewErrorInvalidArgEmpty("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
-			expectedMessage: "test:invalid argument[field1:invalid_empty]",
+			expectedMessage: "test:invalid argument[field1:InvalidArgumentEmptyError]",
 			expectedReason:  "INVALID_ARGUMENT_EMPTY",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.invalid_empty",
+				"messagekey": "InvalidArgumentEmptyError",
 				"field":      "field1",
 			},
 		},
@@ -51,10 +51,10 @@ func TestNewGRPCStatus(t *testing.T) {
 			name:            "ErrorInvalidNil",
 			err:             pkgErr.NewErrorInvalidArgNil("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
-			expectedMessage: "test:invalid argument[field1:invalid_nil]",
+			expectedMessage: "test:invalid argument[field1:InvalidArgumentNilError]",
 			expectedReason:  "INVALID_ARGUMENT_NIL",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.invalid_nil",
+				"messagekey": "InvalidArgumentNilError",
 				"field":      "field1",
 			},
 		},
@@ -62,10 +62,10 @@ func TestNewGRPCStatus(t *testing.T) {
 			name:            "ErrorInvalidNotMatchFormat",
 			err:             pkgErr.NewErrorInvalidArgNotMatchFormat("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
-			expectedMessage: "test:invalid argument[field1:invalid_not_match_format]",
+			expectedMessage: "test:invalid argument[field1:InvalidArgumentNotMatchFormatError]",
 			expectedReason:  "INVALID_ARGUMENT_NOT_MATCH_FORMAT",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.invalid_not_match_format",
+				"messagekey": "InvalidArgumentNotMatchFormatError",
 				"field":      "field1",
 			},
 		},
@@ -73,10 +73,10 @@ func TestNewGRPCStatus(t *testing.T) {
 			name:            "ErrorInvalidUnknown",
 			err:             pkgErr.NewErrorInvalidArgUnknown("test", "invalid argument", "field1"),
 			expectedCode:    codes.InvalidArgument,
-			expectedMessage: "test:invalid argument[field1:invalid_unknown]",
+			expectedMessage: "test:invalid argument[field1:InvalidArgumentUnknownError]",
 			expectedReason:  "INVALID_ARGUMENT",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.invalid_unknown",
+				"messagekey": "InvalidArgumentUnknownError",
 				"field":      "field1",
 			},
 		},
@@ -87,7 +87,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:not found, resource",
 			expectedReason:  "NOT_FOUND",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.not_found",
+				"messagekey": "NotFoundError",
 				"field":      "resource",
 			},
 		},
@@ -98,7 +98,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:already exists",
 			expectedReason:  "ALREADY_EXISTS",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.already_exists",
+				"messagekey": "AlreadyExistsError",
 			},
 		},
 		{
@@ -108,7 +108,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:unauthenticated",
 			expectedReason:  "UNAUTHENTICATED",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.unauthenticated",
+				"messagekey": "UnauthenticatedError",
 			},
 		},
 		{
@@ -118,7 +118,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:permission denied",
 			expectedReason:  "PERMISSION_DENIED",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.permission_denied",
+				"messagekey": "PermissionDeniedError",
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:unexpected affected rows",
 			expectedReason:  "UNEXPECTED_AFFECTED_ROWS",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.unexpected_affected_rows",
+				"messagekey": "UnexpectedAffectedRowsError",
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:internal error",
 			expectedReason:  "INTERNAL",
 			expectedMetadata: map[string]string{
-				"messagekey": "test.internal",
+				"messagekey": "InternalServerError",
 			},
 		},
 		{
@@ -149,7 +149,6 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedReason:  "UNKNOWN",
 			expectedMetadata: map[string]string{
 				"messagekey": "unknown",
-				"message":    "standard error",
 			},
 		},
 	}
@@ -172,7 +171,6 @@ func TestNewGRPCStatus(t *testing.T) {
 					assert.NotEmpty(t, errorInfo.Metadata)
 					assert.Equal(t, tt.expectedMetadata["messagekey"], errorInfo.Metadata["messageKey"])
 					assert.Equal(t, tt.expectedMetadata["field"], errorInfo.Metadata["field"])
-					assert.Equal(t, tt.expectedMetadata["message"], errorInfo.Metadata["message"])
 				} else if localizedMessage, ok := detail.(*errdetails.LocalizedMessage); ok {
 					assert.Equal(t, "en", localizedMessage.Locale)
 					assert.Equal(t, st.Message(), localizedMessage.Message)

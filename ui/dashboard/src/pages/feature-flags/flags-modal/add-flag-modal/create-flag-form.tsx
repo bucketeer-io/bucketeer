@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureCreator } from '@api/features/feature-creator';
@@ -7,6 +7,7 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { getDefaultYamlValue } from 'constants/feature-flag';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
@@ -26,7 +27,6 @@ import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
-import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import SelectMenu from 'elements/select-menu';
@@ -72,6 +72,7 @@ const CreateFlagForm = ({
   const editable = hasEditable(consoleAccount!);
   const formSchema = useFormSchema(createFlagFormSchema);
   const { flagTypeOptions } = useOptions();
+  const refFormModel = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
 
@@ -104,6 +105,7 @@ const CreateFlagForm = ({
     },
     mode: 'onChange'
   });
+
   const {
     formState: { isDirty, isValid },
     watch
@@ -123,14 +125,33 @@ const CreateFlagForm = ({
       onChange: (value: FeatureVariationType) => void
     ) => {
       const cloneVariations = cloneDeep(defaultVariations);
-      const newVariations =
-        value === 'BOOLEAN'
-          ? cloneVariations
-          : cloneVariations.map(item => ({
-              ...item,
-              value: ''
-            }));
-      form.setValue('variations', newVariations);
+      const isBoolean = value === 'BOOLEAN';
+      const isJSON = value === 'JSON';
+      const isYAML = value === 'YAML';
+
+      let newVariations;
+
+      if (isBoolean) {
+        newVariations = cloneVariations;
+      } else {
+        newVariations = cloneVariations.map((item, index) => {
+          let defaultValue = '';
+
+          if (isJSON) {
+            defaultValue = '{}';
+          } else if (isYAML) {
+            defaultValue = getDefaultYamlValue(index);
+          }
+
+          return {
+            ...item,
+            value: defaultValue
+          };
+        });
+      }
+
+      form.resetField('variations', { defaultValue: newVariations });
+
       onChange(value);
       let timerId: NodeJS.Timeout | null = null;
       if (timerId) clearTimeout(timerId);
@@ -194,110 +215,113 @@ const CreateFlagForm = ({
   }, [tags]);
 
   return (
-    <div className={cn('w-full p-5 pb-28', className)}>
+    <div ref={refFormModel} className={cn('w-full p-5 pb-28', className)}>
       <p className="text-gray-700 typo-head-bold-small mb-2">
         {t('form:general-info')}
       </p>
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
-          <Form.Field
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required className="!mb-2">
-                  {t('name')}
-                </Form.Label>
-                <Form.Control>
-                  <Input
-                    placeholder={`${t('form:placeholder-name')}`}
-                    {...field}
-                    onChange={value => {
-                      const isFlagIdDirty =
-                        form.getFieldState('flagId').isDirty;
-                      const flagId = form.getValues('flagId');
-                      field.onChange(value);
-                      form.setValue(
-                        'flagId',
-                        isFlagIdDirty ? flagId : onGenerateSlug(value)
-                      );
-                    }}
-                    name="flag-name"
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="flagId"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required className="relative w-fit !mb-2">
-                  {t('form:feature-flags.flag-id')}
-                  <Tooltip
-                    align="start"
-                    alignOffset={-56}
-                    trigger={
-                      <div className="flex-center absolute top-0 -right-6">
-                        <Icon icon={IconInfo} size={'sm'} color="gray-500" />
-                      </div>
-                    }
-                    content={t('form:flag-id-tooltip')}
-                    className="!z-[100] max-w-[400px]"
-                  />
-                </Form.Label>
-                <Form.Control>
-                  <Input
-                    placeholder={`${t('form:feature-flags.placeholder-flag')}`}
-                    {...field}
-                    name="flag-id"
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label optional className="!mb-2">
-                  {t('form:description')}
-                </Form.Label>
-                <Form.Control>
-                  <TextArea
-                    placeholder={t('form:placeholder-desc')}
-                    rows={4}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name={`tags`}
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required className="!mb-2">
-                  {t('tags')}
-                </Form.Label>
-                <Form.Control>
-                  <SelectMenu
-                    options={tagOptions}
-                    fieldValues={field.value}
-                    onChange={field.onChange}
-                    disabled={isLoadingTags}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
+          <div className="w-full flex gap-x-4 [&>div]:flex-1">
+            <Form.Field
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <Form.Item className="py-2.5">
+                  <Form.Label required className="!mb-2">
+                    {t('name')}
+                  </Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={`${t('form:placeholder-name')}`}
+                      {...field}
+                      onChange={value => {
+                        const isFlagIdDirty =
+                          form.getFieldState('flagId').isDirty;
+                        const flagId = form.getValues('flagId');
+                        field.onChange(value);
+                        form.setValue(
+                          'flagId',
+                          isFlagIdDirty ? flagId : onGenerateSlug(value)
+                        );
+                      }}
+                      name="flag-name"
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="flagId"
+              render={({ field }) => (
+                <Form.Item className="py-2.5">
+                  <Form.Label required className="relative w-fit !mb-2">
+                    {t('form:feature-flags.flag-id')}
+                    <Tooltip
+                      align="start"
+                      alignOffset={-56}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={t('form:flag-id-tooltip')}
+                      className="!z-[100] max-w-[400px]"
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={`${t('form:feature-flags.placeholder-flag')}`}
+                      {...field}
+                      name="flag-id"
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+          </div>
+          <div className="w-full flex gap-x-4 [&>div]:flex-1">
+            <Form.Field
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <Form.Item className="py-2.5">
+                  <Form.Label optional className="!mb-2">
+                    {t('form:description')}
+                  </Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={t('form:placeholder-desc')}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name={`tags`}
+              render={({ field }) => (
+                <Form.Item className="py-2.5">
+                  <Form.Label required className="!mb-2">
+                    {t('tags')}
+                  </Form.Label>
+                  <Form.Control>
+                    <SelectMenu
+                      options={tagOptions}
+                      fieldValues={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoadingTags}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+          </div>
           <Divider className="mt-2.5 mb-4" />
           <p className="text-gray-700 typo-head-bold-small mb-2">
             {t('form:feature-flags.flag-variations')}
@@ -372,7 +396,10 @@ const CreateFlagForm = ({
             render={() => (
               <Form.Item>
                 <Form.Control>
-                  <Variations variationType={watch('variationType')} />
+                  <Variations
+                    refModel={refFormModel}
+                    variationType={watch('variationType')}
+                  />
                 </Form.Control>
               </Form.Item>
             )}

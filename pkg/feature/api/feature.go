@@ -24,7 +24,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -37,7 +36,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
@@ -64,14 +62,13 @@ func (s *FeatureService) GetFeature(
 	ctx context.Context,
 	req *featureproto.GetFeatureRequest,
 ) (*featureproto.GetFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetFeatureRequest(req, localizer); err != nil {
+	if err := validateGetFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
@@ -88,14 +85,7 @@ func (s *FeatureService) GetFeature(
 	}
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -148,7 +138,6 @@ func (s *FeatureService) GetFeature(
 		ctx,
 		[]*featureproto.Feature{feature.Feature},
 		req.EnvironmentId,
-		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -159,14 +148,13 @@ func (s *FeatureService) GetFeatures(
 	ctx context.Context,
 	req *featureproto.GetFeaturesRequest,
 ) (*featureproto.GetFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetFeaturesRequest(req, localizer); err != nil {
+	if err := validateGetFeaturesRequest(req); err != nil {
 		return nil, err
 	}
 	filters := []*mysql.FilterV2{
@@ -256,10 +244,9 @@ func (s *FeatureService) ListFeatures(
 	ctx context.Context,
 	req *featureproto.ListFeaturesRequest,
 ) (*featureproto.ListFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +366,6 @@ func (s *FeatureService) listFeatures(
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	localizer := locale.NewLocalizer(ctx)
 	filters := []*mysql.FilterV2{
 		{
 			Column:   "feature.deleted",
@@ -484,7 +470,7 @@ func (s *FeatureService) listFeatures(
 			Value:    time.Now().Add(-activeDays).Unix(),
 		})
 	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
+	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -501,14 +487,7 @@ func (s *FeatureService) listFeatures(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Filters:     filters,
@@ -551,7 +530,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	hasExperiment bool,
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	localizer := locale.NewLocalizer(ctx)
 	filters := []*mysql.FilterV2{
 		{
 			Column:   "feature.deleted",
@@ -661,7 +639,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			Value:    time.Now().Add(-activeDays).Unix(),
 		})
 	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
+	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -678,14 +656,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInvalidCursor.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	options := &mysql.ListOptions{
@@ -715,7 +686,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 func (s *FeatureService) newListFeaturesOrdersMySQL(
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -733,14 +703,7 @@ func (s *FeatureService) newListFeaturesOrdersMySQL(
 	case featureproto.ListFeaturesRequest_AUTO_OPS:
 		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListFeaturesRequest_DESC {
@@ -753,10 +716,9 @@ func (s *FeatureService) ListEnabledFeatures(
 	ctx context.Context,
 	req *featureproto.ListEnabledFeaturesRequest,
 ) (*featureproto.ListEnabledFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -803,14 +765,7 @@ func (s *FeatureService) ListEnabledFeatures(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	options := &mysql.ListOptions{
@@ -834,7 +789,7 @@ func (s *FeatureService) ListEnabledFeatures(
 		)
 		return nil, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentId, localizer); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &featureproto.ListEnabledFeaturesResponse{
@@ -847,17 +802,16 @@ func (s *FeatureService) CreateFeature(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 ) (*featureproto.CreateFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createFeatureNoCommand(ctx, req, editor, localizer)
+		return s.createFeatureNoCommand(ctx, req, editor)
 	}
-	if err = validateCreateFeatureRequest(req.Command, localizer); err != nil {
+	if err = validateCreateFeatureRequest(req.Command); err != nil {
 		return nil, err
 	}
 	feature, err := domain.NewFeature(
@@ -908,14 +862,7 @@ func (s *FeatureService) CreateFeature(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create feature",
@@ -934,14 +881,7 @@ func (s *FeatureService) CreateFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
@@ -951,9 +891,8 @@ func (s *FeatureService) createFeatureNoCommand(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.CreateFeatureResponse, error) {
-	err := validateCreateFeatureRequestNoCommand(req, localizer)
+	err := validateCreateFeatureRequestNoCommand(req)
 	if err != nil {
 		return nil, err
 	}
@@ -1013,14 +952,7 @@ func (s *FeatureService) createFeatureNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create feature",
@@ -1050,27 +982,19 @@ func (s *FeatureService) UpdateFeature(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureRequest,
 ) (*featureproto.UpdateFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMissingID.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	var event *eventproto.Event
@@ -1117,22 +1041,16 @@ func (s *FeatureService) UpdateFeature(
 			}
 		}
 		if feature == nil {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
+			err := statusFeatureNotFound.Err()
 			s.logger.Error(
 				"Failed to find feature",
 				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(dt.Err()),
+					zap.Error(err),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			return dt.Err()
+			return err
 		}
 
 		// Clean up any orphaned variation references BEFORE validation
@@ -1167,6 +1085,14 @@ func (s *FeatureService) UpdateFeature(
 					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
 				)...,
 			)
+		}
+
+		// Check if this is an archive request and if other features depend on this one.
+		// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
+		if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+			if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
+				return statusInvalidArchive.Err()
+			}
 		}
 
 		updated, err := feature.Update(
@@ -1206,7 +1132,7 @@ func (s *FeatureService) UpdateFeature(
 			return err
 		}
 		// Validate that variations being deleted are not used in other features
-		if err := validateVariationDeletion(req.VariationChanges, features, req.Id, localizer); err != nil {
+		if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
 			return err
 		}
 		updatedpb = updated.Feature
@@ -1252,14 +1178,7 @@ func (s *FeatureService) UpdateFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureResponse{
@@ -1271,27 +1190,19 @@ func (s *FeatureService) UpdateFeatureDetails(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureDetailsRequest,
 ) (*featureproto.UpdateFeatureDetailsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMissingID.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	var handler = command.NewEmptyFeatureCommandHandler()
@@ -1409,14 +1320,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureDetailsResponse{}, nil
@@ -1515,17 +1419,16 @@ func (s *FeatureService) EnableFeature(
 	ctx context.Context,
 	req *featureproto.EnableFeatureRequest,
 ) (*featureproto.EnableFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateEnableFeatureRequest(req, localizer); err != nil {
+	if err := validateEnableFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1534,7 +1437,6 @@ func (s *FeatureService) EnableFeature(
 		req.Id,
 		req.EnvironmentId,
 		req.Comment,
-		localizer,
 		editor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1557,17 +1459,16 @@ func (s *FeatureService) DisableFeature(
 	ctx context.Context,
 	req *featureproto.DisableFeatureRequest,
 ) (*featureproto.DisableFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateDisableFeatureRequest(req, localizer); err != nil {
+	if err := validateDisableFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1576,7 +1477,6 @@ func (s *FeatureService) DisableFeature(
 		req.Id,
 		req.EnvironmentId,
 		req.Comment,
-		localizer,
 		editor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1597,8 +1497,7 @@ func (s *FeatureService) ArchiveFeature(
 	ctx context.Context,
 	req *featureproto.ArchiveFeatureRequest,
 ) (*featureproto.ArchiveFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateArchiveFeatureRequest(req, localizer); err != nil {
+	if err := validateArchiveFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	filters := []*mysql.FilterV2{
@@ -1654,33 +1553,19 @@ func (s *FeatureService) ArchiveFeature(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusFeatureNotFound.Err()
 	}
 	if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgtF.Feature}, features) {
-		dt, err := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidArchive.Err()
 	}
 
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1689,7 +1574,6 @@ func (s *FeatureService) ArchiveFeature(
 		req.Id,
 		req.EnvironmentId,
 		req.Comment,
-		localizer,
 		editor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1710,17 +1594,16 @@ func (s *FeatureService) UnarchiveFeature(
 	ctx context.Context,
 	req *featureproto.UnarchiveFeatureRequest,
 ) (*featureproto.UnarchiveFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateUnarchiveFeatureRequest(req, localizer); err != nil {
+	if err := validateUnarchiveFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1729,7 +1612,6 @@ func (s *FeatureService) UnarchiveFeature(
 		req.Id,
 		req.EnvironmentId,
 		req.Comment,
-		localizer,
 		editor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1750,17 +1632,16 @@ func (s *FeatureService) DeleteFeature(
 	ctx context.Context,
 	req *featureproto.DeleteFeatureRequest,
 ) (*featureproto.DeleteFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateDeleteFeatureRequest(req, localizer); err != nil {
+	if err := validateDeleteFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1769,7 +1650,6 @@ func (s *FeatureService) DeleteFeature(
 		req.Id,
 		req.EnvironmentId,
 		req.Comment,
-		localizer,
 		editor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1790,28 +1670,13 @@ func (s *FeatureService) updateFeature(
 	ctx context.Context,
 	cmd command.Command,
 	id, environmentId, comment string,
-	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) error {
 	if id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingID.Err()
 	}
 	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingCommand.Err()
 	}
 	var handler = command.NewEmptyFeatureCommandHandler()
 
@@ -1907,7 +1772,7 @@ func (s *FeatureService) updateFeature(
 		return nil
 	})
 	if err != nil {
-		return s.convUpdateFeatureError(err, localizer)
+		return s.convUpdateFeatureError(err)
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -1917,32 +1782,18 @@ func (s *FeatureService) updateFeature(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return nil
 }
 
-func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Localizer) error {
+func (s *FeatureService) convUpdateFeatureError(err error) error {
 	switch err {
 	case v2fs.ErrFeatureNotFound,
 		v2fs.ErrFeatureUnexpectedAffectedRows,
 		storage.ErrKeyNotFound:
-		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureNotFound.Err()
 	default:
 		return api.NewGRPCStatus(err).Err()
 	}
@@ -1952,27 +1803,19 @@ func (s *FeatureService) UpdateFeatureVariations(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureVariationsRequest,
 ) (*featureproto.UpdateFeatureVariationsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMissingID.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
@@ -2024,7 +1867,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 			)
 			return err
 		}
-		f, err := findFeature(features, req.Id, localizer)
+		f, err := findFeature(features, req.Id)
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
@@ -2043,7 +1886,6 @@ func (s *FeatureService) UpdateFeatureVariations(
 				req.EnvironmentId,
 				f,
 				cmd,
-				localizer,
 			); err != nil {
 				s.logger.Error(
 					"Invalid argument",
@@ -2108,14 +1950,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureVariationsResponse{}, nil
@@ -2133,17 +1968,16 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureTargetingRequest,
 ) (*featureproto.UpdateFeatureTargetingResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateUpdateFeatureTargetingRequest(req, localizer); err != nil {
+	if err := validateUpdateFeatureTargetingRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
@@ -2161,7 +1995,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		}
 		commands = append(commands, cmd)
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	// TODO: clean this up.
@@ -2204,7 +2038,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			)
 			return err
 		}
-		f, err := findFeature(features, req.Id, localizer)
+		f, err := findFeature(features, req.Id)
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
@@ -2223,7 +2057,6 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				features,
 				f,
 				cmd,
-				localizer,
 			); err != nil {
 				s.logger.Error(
 					"Invalid argument",
@@ -2336,14 +2169,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureTargetingResponse{}, nil
@@ -2406,20 +2232,13 @@ func convToInterfaceSlice(
 	return result
 }
 
-func findFeature(fs []*featureproto.Feature, id string, localizer locale.Localizer) (*featureproto.Feature, error) {
+func findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
 	for _, f := range fs {
 		if f.Id == id {
 			return f, nil
 		}
 	}
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return nil, statusInternal.Err()
-	}
-	return nil, dt.Err()
+	return nil, statusInternal.Err()
 }
 
 func (s *FeatureService) evaluateFeatures(
@@ -2428,7 +2247,6 @@ func (s *FeatureService) evaluateFeatures(
 	user *userproto.User,
 	EnvironmentId string,
 	tag string,
-	localizer locale.Localizer,
 ) (*featureproto.UserEvaluations, error) {
 	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
@@ -2578,14 +2396,13 @@ func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	EnvironmentId string,
-	localizer locale.Localizer,
 ) error {
 	for i := 0; i < len(features); i += getMultiChunkSize {
 		end := i + getMultiChunkSize
 		if end > len(features) {
 			end = len(features)
 		}
-		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], EnvironmentId, localizer); err != nil {
+		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], EnvironmentId); err != nil {
 			return err
 		}
 	}
@@ -2596,7 +2413,6 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	EnvironmentId string,
-	localizer locale.Localizer,
 ) error {
 	ids := make([]string, 0, len(features))
 	for _, f := range features {
@@ -2628,14 +2444,13 @@ func (s *FeatureService) EvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.EvaluateFeaturesRequest,
 ) (*featureproto.EvaluateFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEvaluateFeatures(req, localizer); err != nil {
+	if err := validateEvaluateFeatures(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -2662,7 +2477,7 @@ func (s *FeatureService) EvaluateFeatures(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	// If the feature ID is set in the request, it will evaluate a single feature.
-	features, err := s.getTargetFeatures(fs.([]*featureproto.Feature), req.FeatureId, localizer)
+	features, err := s.getTargetFeatures(fs.([]*featureproto.Feature), req.FeatureId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get target features",
@@ -2673,7 +2488,7 @@ func (s *FeatureService) EvaluateFeatures(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentId, req.Tag, localizer)
+	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentId, req.Tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -2711,14 +2526,13 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.DebugEvaluateFeaturesRequest,
 ) (*featureproto.DebugEvaluateFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	err = validateDebugEvaluateFeatures(req, localizer)
+	err = validateDebugEvaluateFeatures(req)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -2751,7 +2565,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	var archivedFS = make([]string, 0)
 	// If the feature ID is set in the request, it will evaluate a single feature.
 	if len(req.FeatureIds) == 1 {
-		features, err = s.getTargetFeatures(features, req.FeatureIds[0], localizer)
+		features, err = s.getTargetFeatures(features, req.FeatureIds[0])
 		if err != nil {
 			s.logger.Error(
 				"Failed to get target features",
@@ -2766,7 +2580,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 
 	for i := range req.Users {
 		userEvaluations, err := s.evaluateFeatures(
-			ctx, features, req.Users[i], req.EnvironmentId, "", localizer,
+			ctx, features, req.Users[i], req.EnvironmentId, "",
 		)
 		if err != nil {
 			s.logger.Error(
@@ -2798,12 +2612,11 @@ func (s *FeatureService) DebugEvaluateFeatures(
 func (s *FeatureService) getTargetFeatures(
 	fs []*featureproto.Feature,
 	id string,
-	localizer locale.Localizer,
 ) ([]*featureproto.Feature, error) {
 	if id == "" {
 		return fs, nil
 	}
-	feature, err := findFeature(fs, id, localizer)
+	feature, err := findFeature(fs, id)
 	if err != nil {
 		return nil, err
 	}
@@ -2857,31 +2670,23 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	if req.Command == nil {
-		return s.cloneFeatureNoCommand(ctx, req, localizer)
+		return s.cloneFeatureNoCommand(ctx, req)
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.Command.EnvironmentId, localizer,
+		req.Command.EnvironmentId,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCloneFeatureRequest(req, localizer); err != nil {
+	if err := validateCloneFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -2930,14 +2735,7 @@ func (s *FeatureService) CloneFeature(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to clone feature",
@@ -2956,14 +2754,7 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil
@@ -2972,16 +2763,15 @@ func (s *FeatureService) CloneFeature(
 func (s *FeatureService) cloneFeatureNoCommand(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
-	localizer locale.Localizer,
 ) (*featureproto.CloneFeatureResponse, error) {
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.TargetEnvironmentId, localizer,
+		req.TargetEnvironmentId,
 	)
 	if err != nil {
 		return nil, err
 	}
-	err = validateCloneFeatureRequestNoCommand(req, localizer)
+	err = validateCloneFeatureRequestNoCommand(req)
 	if err != nil {
 		return nil, err
 	}
@@ -2989,14 +2779,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -3068,14 +2851,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to clone feature",

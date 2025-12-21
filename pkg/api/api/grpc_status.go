@@ -26,15 +26,14 @@ import (
 
 const (
 	bktDomain = ".bucketeer.io"
+	// The frontend generates error messages using this key.
+	metadataMessageKey = "messageKey"
 )
 
 func NewGRPCStatus(err error) *status.Status {
 	var bucketeerErr *pkgErr.BktError
-	var bktFieldError *pkgErr.BktFieldError
 	if err == nil {
 		return status.New(codes.Unknown, "")
-	} else if errors.As(err, &bktFieldError) {
-		return convertFieldError(bktFieldError)
 	} else if errors.As(err, &bucketeerErr) {
 		return convertBktError(bucketeerErr)
 	} else {
@@ -44,14 +43,11 @@ func NewGRPCStatus(err error) *status.Status {
 
 func convertBktError(bktError *pkgErr.BktError) *status.Status {
 	st := status.New(convertStatusCode(bktError.ErrorType()), bktError.Error())
-	metadata := map[string]string{
-		"messageKey": bktError.PackageName() + "." + string(bktError.ErrorType()),
-	}
 
 	st, err := st.WithDetails(&errdetails.ErrorInfo{
 		Reason:   convertErrorReason(bktError.ErrorType()),
 		Domain:   bktError.PackageName() + bktDomain,
-		Metadata: metadata,
+		Metadata: metadataFrom(bktError),
 	})
 	if err != nil {
 		return status.New(codes.Internal, err.Error())
@@ -59,29 +55,19 @@ func convertBktError(bktError *pkgErr.BktError) *status.Status {
 	return st
 }
 
-func convertFieldError(fieldError *pkgErr.BktFieldError) *status.Status {
-	st := status.New(convertStatusCode(fieldError.ErrorType()), fieldError.Error())
-	metadata := map[string]string{
-		"messageKey": fieldError.PackageName() + "." + string(fieldError.ErrorType()),
-		"field":      fieldError.Field(),
+func metadataFrom(err *pkgErr.BktError) map[string]string {
+	m := make(map[string]string)
+	m[metadataMessageKey] = err.MessageKey()
+	for k, v := range err.EmbeddedKeyValues() {
+		m[k] = v
 	}
-
-	st, err := st.WithDetails(&errdetails.ErrorInfo{
-		Reason:   convertErrorReason(fieldError.ErrorType()),
-		Domain:   fieldError.PackageName() + bktDomain,
-		Metadata: metadata,
-	})
-	if err != nil {
-		return status.New(codes.Internal, err.Error())
-	}
-	return st
+	return m
 }
 
 func convertUnknownError(err error) *status.Status {
 	st := status.New(codes.Unknown, err.Error())
 	metadata := map[string]string{
-		"messageKey": "unknown",
-		"message":    err.Error(),
+		metadataMessageKey: "unknown",
 	}
 	st, detailErr := st.WithDetails(&errdetails.ErrorInfo{
 		Reason:   "UNKNOWN",
@@ -124,6 +110,12 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "UNAVAILABLE"
 	case pkgErr.ErrorTypeAborted:
 		return "ABORTED"
+	case pkgErr.ErrorTypeDifferentVariationsSize:
+		return "DIFFERENT_VARIATIONS_SIZE"
+	case pkgErr.ErrorTypeExceededMax:
+		return "EXCEEDED_MAX"
+	case pkgErr.ErrorTypeOutOfRange:
+		return "OUT_OF_RANGE"
 	default:
 		return "UNKNOWN"
 	}

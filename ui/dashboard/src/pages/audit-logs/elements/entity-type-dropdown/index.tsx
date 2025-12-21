@@ -3,17 +3,19 @@ import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { DomainEventEntityMap } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { cn } from 'utils/style';
 import { AuditLogsFilters } from 'pages/audit-logs/types';
 import Dropdown from 'components/dropdown';
 
 interface Props {
   entityType?: DomainEventEntityMap;
   isSystemAdmin: boolean;
+  className?: string;
   onChangeFilters: (filters: Partial<AuditLogsFilters>) => void;
 }
 
 const EntityTypeDropdown = memo(
-  ({ entityType, isSystemAdmin, onChangeFilters }: Props) => {
+  ({ entityType, isSystemAdmin, className, onChangeFilters }: Props) => {
     const { t } = useTranslation(['common', 'form', 'table']);
 
     const options = useMemo(() => {
@@ -109,26 +111,28 @@ const EntityTypeDropdown = memo(
       />
     );
     return (
-      <Dropdown
-        options={optionCustom}
-        value={Number(entityType)}
-        labelCustom={label}
-        cleanable
-        placeholder={placeholder}
-        onClear={() =>
-          onChangeFilters({
-            entityType: undefined
-          })
-        }
-        onChange={value =>
-          onChangeFilters({
-            entityType: +value
-          })
-        }
-        className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
-        contentClassName="min-w-[180px]"
-        alignContent="end"
-      />
+      <div className={cn('w-full', className)}>
+        <Dropdown
+          options={optionCustom}
+          value={Number(entityType)}
+          labelCustom={label}
+          cleanable
+          placeholder={placeholder}
+          onClear={() =>
+            onChangeFilters({
+              entityType: undefined
+            })
+          }
+          onChange={value =>
+            onChangeFilters({
+              entityType: +value
+            })
+          }
+          className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
+          contentClassName="min-w-[180px]"
+          alignContent="end"
+        />
+      </div>
     );
   }
 );

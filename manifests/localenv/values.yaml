@@ -1,41 +1,38 @@
-version: 0.1.0
-
-vault:
-  server:
-    dev:
-      enabled: true
-      devRootToken: "root"
-
 redis:
-  architecture: "standalone"
-  auth: 
-    enabled: false
+  # Using official Redis image (aligned with docker-compose)
+  image:
+    repository: redis
+    tag: "7.2-alpine"
+    pullPolicy: IfNotPresent
+  storage:
+    size: "1Gi"
+    class: "" # Use default storage class
 
 nginx:
   controller:
     service:
       loadBalancerIP: "192.168.49.2"
       externalIPs:
-      - 127.0.0.1
-      - 192.168.49.2
+        - 127.0.0.1
+        - 192.168.49.2
 
 mysql:
+  # Using official MySQL image (aligned with docker-compose)
   image:
+    repository: mysql
     tag: "8.0"
-  initdbScriptsConfigMap: mysql-initdb
-  #diagnosticMode:
-  #  enabled: true
-  volumePermissions:
-    enabled: true
+    pullPolicy: IfNotPresent
+  storage:
+    size: "1Gi"
+    class: "" # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32000
   auth:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
-  primary:
-   service:
-     type: NodePort
-     nodePorts:
-       mysql: 32000
+    rootPassword: "bucketeer"
 
 bq:
   project: bucketeer-test
@@ -43,8 +40,21 @@ bq:
     type: NodePort
     httpNodePort: 31000
   image:
+    # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)
     repository: ghcr.io/bucketeer-io/bigquery-emulator
-    
-pubsub: 
-  image: 
-    tag: "449.0.0"
+    tag: "0.6.6"
+
+pubsub:
+  image:
+    repository: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    # Use non-slim version - pubsub emulator requires Java which is not in slim variant
+    tag: "545.0.0"
+  service:
+    type: NodePort
+    nodePort: 30089
+
+vault:
+  server:
+    dev:
+      enabled: true
+      devRootToken: "root"

@@ -168,7 +168,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			message:              "invalid argument",
 			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "email",
-			expectedErrorMessage: "account:invalid argument[email:invalid_empty]",
+			expectedErrorMessage: "account:invalid argument[email:InvalidArgumentEmptyError]",
 			expectedField:        "email",
 		},
 		{
@@ -177,7 +177,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			message:              "invalid input",
 			errorType:            ErrorTypeInvalidArgNil,
 			field:                "name",
-			expectedErrorMessage: "feature:invalid input[name:invalid_nil]",
+			expectedErrorMessage: "feature:invalid input[name:InvalidArgumentNilError]",
 			expectedField:        "name",
 		},
 		{
@@ -186,7 +186,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			message:              "format error",
 			errorType:            ErrorTypeInvalidArgNotMatchFormat,
 			field:                "date",
-			expectedErrorMessage: "validation:format error[date:invalid_not_match_format]",
+			expectedErrorMessage: "validation:format error[date:InvalidArgumentNotMatchFormatError]",
 			expectedField:        "date",
 		},
 		{
@@ -195,7 +195,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			message:              "",
 			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "field",
-			expectedErrorMessage: "test:[field:invalid_empty]",
+			expectedErrorMessage: "test:[field:InvalidArgumentEmptyError]",
 			expectedField:        "field",
 		},
 		{
@@ -205,7 +205,7 @@ func TestNewErrorInvalidArgument(t *testing.T) {
 			errorType:            ErrorTypeInvalidArgEmpty,
 			field:                "field",
 			wrappedError:         errors.New("wrapped error"),
-			expectedErrorMessage: "test:invalid argument[field:invalid_empty]: wrapped error",
+			expectedErrorMessage: "test:invalid argument[field:InvalidArgumentEmptyError]: wrapped error",
 			expectedField:        "field",
 		},
 	}
@@ -255,16 +255,16 @@ func TestErrorType_String(t *testing.T) {
 		errorType ErrorType
 		expected  string
 	}{
-		{ErrorTypeNotFound, "not_found"},
-		{ErrorTypeAlreadyExists, "already_exists"},
-		{ErrorTypeUnauthenticated, "unauthenticated"},
-		{ErrorTypePermissionDenied, "permission_denied"},
-		{ErrorTypeUnexpectedAffectedRows, "unexpected_affected_rows"},
-		{ErrorTypeInternal, "internal"},
-		{ErrorTypeInvalidArgUnknown, "invalid_unknown"},
-		{ErrorTypeInvalidArgEmpty, "invalid_empty"},
-		{ErrorTypeInvalidArgNil, "invalid_nil"},
-		{ErrorTypeInvalidArgNotMatchFormat, "invalid_not_match_format"},
+		{ErrorTypeNotFound, "NotFoundError"},
+		{ErrorTypeAlreadyExists, "AlreadyExistsError"},
+		{ErrorTypeUnauthenticated, "UnauthenticatedError"},
+		{ErrorTypePermissionDenied, "PermissionDeniedError"},
+		{ErrorTypeUnexpectedAffectedRows, "UnexpectedAffectedRowsError"},
+		{ErrorTypeInternal, "InternalServerError"},
+		{ErrorTypeInvalidArgUnknown, "InvalidArgumentUnknownError"},
+		{ErrorTypeInvalidArgEmpty, "InvalidArgumentEmptyError"},
+		{ErrorTypeInvalidArgNil, "InvalidArgumentNilError"},
+		{ErrorTypeInvalidArgNotMatchFormat, "InvalidArgumentNotMatchFormatError"},
 	}
 
 	for _, tt := range tests {
@@ -303,17 +303,19 @@ func TestErrorAs(t *testing.T) {
 	fieldErr := NewErrorNotFound("test", "not found", "resource")
 	fieldErr.Wrap(originalErr)
 
-	var targetErr *BktFieldError
+	var targetErr *BktError
 	if errors.As(fieldErr, &targetErr) {
 		assert.Equal(t, "test", targetErr.PackageName())
 		assert.Equal(t, "not found", targetErr.message)
-		assert.Equal(t, "resource", targetErr.Field())
+		assert.Equal(t, "resource", targetErr.field)
+		assert.Equal(t, "test:not found, resource: test:permission denied", targetErr.Error())
 	} else {
-		t.Error("Expected fieldErr to be of type *BktFieldError")
+		t.Error("Expected fieldErr to be of type *BktError")
 	}
 
+	// Check that wrapped error can be extracted
 	var wrappedErr *BktError
-	if errors.As(fieldErr, &wrappedErr) {
+	if errors.As(fieldErr.Unwrap(), &wrappedErr) {
 		assert.Equal(t, "test", wrappedErr.PackageName())
 		assert.Equal(t, "permission denied", wrappedErr.message)
 		assert.Equal(t, "test:permission denied", wrappedErr.Error())

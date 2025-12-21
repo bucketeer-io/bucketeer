@@ -23,7 +23,6 @@ import (
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -32,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
@@ -46,14 +44,13 @@ func (s *FeatureService) AddSegmentUser(
 	ctx context.Context,
 	req *featureproto.AddSegmentUserRequest,
 ) (*featureproto.AddSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateAddSegmentUserRequest(req, localizer); err != nil {
+	if err := validateAddSegmentUserRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -63,7 +60,7 @@ func (s *FeatureService) AddSegmentUser(
 		)
 		return nil, err
 	}
-	if err := validateAddSegmentUserCommand(req.Command, localizer); err != nil {
+	if err := validateAddSegmentUserCommand(req.Command); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -82,7 +79,6 @@ func (s *FeatureService) AddSegmentUser(
 		false,
 		req.Command,
 		req.EnvironmentId,
-		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -93,14 +89,13 @@ func (s *FeatureService) DeleteSegmentUser(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentUserRequest,
 ) (*featureproto.DeleteSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteSegmentUserRequest(req, localizer); err != nil {
+	if err := validateDeleteSegmentUserRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -110,7 +105,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		)
 		return nil, err
 	}
-	if err := validateDeleteSegmentUserCommand(req.Command, localizer); err != nil {
+	if err := validateDeleteSegmentUserCommand(req.Command); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -129,7 +124,6 @@ func (s *FeatureService) DeleteSegmentUser(
 		true,
 		req.Command,
 		req.EnvironmentId,
-		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -145,7 +139,6 @@ func (s *FeatureService) updateSegmentUser(
 	deleted bool,
 	cmd command.Command,
 	environmentId string,
-	localizer locale.Localizer,
 ) error {
 	segmentUsers := make([]*featureproto.SegmentUser, 0, len(userIDs))
 	for _, userID := range userIDs {
@@ -201,14 +194,7 @@ func (s *FeatureService) updateSegmentUser(
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrSegmentUnexpectedAffectedRows {
-			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to upsert segment user",
@@ -226,14 +212,13 @@ func (s *FeatureService) GetSegmentUser(
 	ctx context.Context,
 	req *featureproto.GetSegmentUserRequest,
 ) (*featureproto.GetSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSegmentUserRequest(req, localizer); err != nil {
+	if err := validateGetSegmentUserRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -247,14 +232,7 @@ func (s *FeatureService) GetSegmentUser(
 	user, err := s.segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentUserNotFound {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment user",
@@ -274,14 +252,13 @@ func (s *FeatureService) ListSegmentUsers(
 	ctx context.Context,
 	req *featureproto.ListSegmentUsersRequest,
 ) (*featureproto.ListSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListSegmentUsersRequest(req, localizer); err != nil {
+	if err := validateListSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -309,14 +286,7 @@ func (s *FeatureService) ListSegmentUsers(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	users, nextCursor, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
@@ -345,17 +315,16 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkUploadSegmentUsersRequest,
 ) (*featureproto.BulkUploadSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.bulkUploadSegmentUsersNoCommand(ctx, req, editor, localizer)
+		return s.bulkUploadSegmentUsersNoCommand(ctx, req, editor)
 	}
-	if err := validateBulkUploadSegmentUsersRequest(req, localizer); err != nil {
+	if err := validateBulkUploadSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -365,7 +334,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 		return nil, err
 	}
-	if err := validateBulkUploadSegmentUsersCommand(req.Command, localizer); err != nil {
+	if err := validateBulkUploadSegmentUsersCommand(req.Command); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -381,14 +350,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			return err
 		}
 		if segment.Status == featureproto.Segment_UPLOADING {
-			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.SegmentUsersAlreadyUploading),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusSegmentUsersAlreadyUploading.Err()
 		}
 		handler, err := command.NewSegmentCommandHandler(
 			editor,
@@ -423,14 +385,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrFeatureUnexpectedAffectedRows) {
-			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		if status.Code(err) == codes.FailedPrecondition {
 			return nil, err
@@ -451,9 +406,8 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 	ctx context.Context,
 	req *featureproto.BulkUploadSegmentUsersRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.BulkUploadSegmentUsersResponse, error) {
-	if err := validateBulkUploadSegmentUsersNoCommandRequest(req, localizer); err != nil {
+	if err := validateBulkUploadSegmentUsersNoCommandRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -469,14 +423,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 			return err
 		}
 		if segment.Status == featureproto.Segment_UPLOADING {
-			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.SegmentUsersAlreadyUploading),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusSegmentUsersAlreadyUploading.Err()
 		}
 		prev := &domain.Segment{}
 		if err := copier.Copy(prev, segment); err != nil {
@@ -518,14 +465,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrFeatureUnexpectedAffectedRows) {
-			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		if status.Code(err) == codes.FailedPrecondition {
 			return nil, err
@@ -569,14 +509,13 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkDownloadSegmentUsersRequest,
 ) (*featureproto.BulkDownloadSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateBulkDownloadSegmentUsersRequest(req, localizer); err != nil {
+	if err := validateBulkDownloadSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -589,14 +528,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	segment, _, err := s.segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) {
-			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusSegmentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment",
@@ -608,14 +540,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	if segment.Status != featureproto.Segment_SUCEEDED {
-		dt, err := statusSegmentStatusNotSuceeded.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.SegmentStatusNotSucceeded),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusSegmentStatusNotSuceeded.Err()
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("segment_id", "=", req.SegmentId),

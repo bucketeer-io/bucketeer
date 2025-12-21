@@ -2298,6 +2298,299 @@ func TestNewClonedFeature(t *testing.T) {
 	}
 }
 
+func TestCloneExcludesEnvironmentSpecificRules(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc              string
+		inputFunc         func() *Feature
+		expectedRuleCount int
+		expectedRuleIDs   []string
+	}{
+		{
+			desc: "exclude all rules when all have FEATURE_FLAG clauses",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-1",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "other-feature-id",
+								Operator:  ftproto.Clause_FEATURE_FLAG,
+								Values:    []string{"variation-id-1"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 0,
+			expectedRuleIDs:   []string{},
+		},
+		{
+			desc: "exclude all rules when all have SEGMENT clauses",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-1",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "",
+								Operator:  ftproto.Clause_SEGMENT,
+								Values:    []string{"segment-id-1"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 0,
+			expectedRuleIDs:   []string{},
+		},
+		{
+			desc: "keep rules without environment-specific clauses",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-1",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "name",
+								Operator:  ftproto.Clause_EQUALS,
+								Values:    []string{"user1"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 1,
+			expectedRuleIDs:   []string{"rule-1"},
+		},
+		{
+			desc: "filter mixed rules - exclude flag-based and segment-based rules",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-1-safe",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "name",
+								Operator:  ftproto.Clause_EQUALS,
+								Values:    []string{"user1"},
+							},
+						},
+					},
+					{
+						Id: "rule-2-flag-based",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-B",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-2",
+								Attribute: "other-feature-id",
+								Operator:  ftproto.Clause_FEATURE_FLAG,
+								Values:    []string{"variation-id-1"},
+							},
+						},
+					},
+					{
+						Id: "rule-3-segment-based",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-C",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-3",
+								Attribute: "",
+								Operator:  ftproto.Clause_SEGMENT,
+								Values:    []string{"segment-id-1"},
+							},
+						},
+					},
+					{
+						Id: "rule-4-safe",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-4",
+								Attribute: "country",
+								Operator:  ftproto.Clause_IN,
+								Values:    []string{"US", "JP"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 2,
+			expectedRuleIDs:   []string{"rule-1-safe", "rule-4-safe"},
+		},
+		{
+			desc: "exclude rule when any clause is FEATURE_FLAG",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-with-mixed-clauses",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "name",
+								Operator:  ftproto.Clause_EQUALS,
+								Values:    []string{"user1"},
+							},
+							{
+								Id:        "clause-2",
+								Attribute: "other-feature-id",
+								Operator:  ftproto.Clause_FEATURE_FLAG,
+								Values:    []string{"variation-id-1"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 0,
+			expectedRuleIDs:   []string{},
+		},
+		{
+			desc: "exclude rule when any clause is SEGMENT",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.DefaultStrategy = &ftproto.Strategy{
+					Type: ftproto.Strategy_FIXED,
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-A",
+					},
+				}
+				f.Rules = []*ftproto.Rule{
+					{
+						Id: "rule-with-mixed-clauses",
+						Strategy: &ftproto.Strategy{
+							Type: ftproto.Strategy_FIXED,
+							FixedStrategy: &ftproto.FixedStrategy{
+								Variation: "variation-A",
+							},
+						},
+						Clauses: []*ftproto.Clause{
+							{
+								Id:        "clause-1",
+								Attribute: "name",
+								Operator:  ftproto.Clause_EQUALS,
+								Values:    []string{"user1"},
+							},
+							{
+								Id:        "clause-2",
+								Attribute: "",
+								Operator:  ftproto.Clause_SEGMENT,
+								Values:    []string{"segment-id-1"},
+							},
+						},
+					},
+				}
+				return f
+			},
+			expectedRuleCount: 0,
+			expectedRuleIDs:   []string{},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			f := p.inputFunc()
+			actual, err := f.Clone("test@example.com")
+			assert.NoError(t, err)
+			assert.Equal(t, p.expectedRuleCount, len(actual.Rules), "rule count mismatch")
+			for i, expectedID := range p.expectedRuleIDs {
+				assert.Equal(t, expectedID, actual.Rules[i].Id, "rule ID mismatch at index %d", i)
+			}
+			// Verify prerequisites are always empty
+			assert.NotNil(t, actual.Prerequisites)
+			assert.Equal(t, 0, len(actual.Prerequisites))
+		})
+	}
+}
+
 func TestResetSamplingSeed(t *testing.T) {
 	f := makeFeature("test-feature")
 	assert.Empty(t, f.SamplingSeed)
@@ -4247,5 +4540,174 @@ func TestRemoveVariationMinimumVariationConstraint(t *testing.T) {
 	// Verify we still have 2 variations (removal should have failed)
 	if len(f.Variations) != 2 {
 		t.Fatalf("Expected 2 variations after failed removal attempts, got %d", len(f.Variations))
+	}
+}
+
+func TestHasFeaturesDependsOnTargets(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		targets  []*ftproto.Feature
+		all      []*ftproto.Feature
+		expected bool
+	}{
+		{
+			desc: "false: no features at all",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all:      []*ftproto.Feature{},
+			expected: false,
+		},
+		{
+			desc: "false: only target feature exists",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			expected: false,
+		},
+		{
+			desc: "false: target has prerequisites but no other feature depends on it",
+			targets: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+				{Id: "feature-C"},
+			},
+			expected: false,
+		},
+		{
+			desc: "false: other features exist but none depend on target",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+				{Id: "feature-C"},
+			},
+			expected: false,
+		},
+		{
+			desc: "true: another feature has target as prerequisite",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-A", VariationId: "v1"},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "true: another feature uses target in rule clause with FEATURE_FLAG operator",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{Attribute: "feature-A", Operator: ftproto.Clause_FEATURE_FLAG},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "true: target has its own prerequisites AND another feature depends on target",
+			targets: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "feature-A",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-C", VariationId: "v1"},
+					},
+				},
+				{
+					Id: "feature-B",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-A", VariationId: "v1"},
+					},
+				},
+				{Id: "feature-C"},
+			},
+			expected: true,
+		},
+		{
+			desc: "false: feature uses non-FEATURE_FLAG operator (should not count as dependency)",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{
+					Id: "feature-B",
+					Rules: []*ftproto.Rule{
+						{
+							Clauses: []*ftproto.Clause{
+								{Attribute: "feature-A", Operator: ftproto.Clause_EQUALS},
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "true: multiple targets, one has a dependent",
+			targets: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+			},
+			all: []*ftproto.Feature{
+				{Id: "feature-A"},
+				{Id: "feature-B"},
+				{
+					Id: "feature-C",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "feature-B", VariationId: "v1"},
+					},
+				},
+			},
+			expected: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result := HasFeaturesDependsOnTargets(p.targets, p.all)
+			assert.Equal(t, p.expected, result)
+		})
 	}
 }
