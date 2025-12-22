@@ -21305,6 +21305,10 @@
                 "integer": 610
               },
               {
+                "name": "ENVIRONMENT_V2_DELETED",
+                "integer": 611
+              },
+              {
                 "name": "ADMIN_ACCOUNT_CREATED",
                 "integer": 700,
                 "options": [
@@ -21567,6 +21571,10 @@
               {
                 "name": "DEMO_ORGANIZATION_CREATED",
                 "integer": 1510
+              },
+              {
+                "name": "ORGANIZATION_DELETED",
+                "integer": 1511
               },
               {
                 "name": "FLAG_TRIGGER_CREATED",
@@ -23901,6 +23909,26 @@
             ]
           },
           {
+            "name": "EnvironmentV2DeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summary",
+                "type": "bucketeer.environment.OrganizationDeletionSummary"
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "AutoOpsRuleCreatedEvent",
             "fields": [
               {
@@ -24790,6 +24818,26 @@
             ]
           },
           {
+            "name": "OrganizationDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summary",
+                "type": "bucketeer.environment.OrganizationDeletionSummary"
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "forced",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "FlagTriggerCreatedEvent",
             "fields": [
               {
@@ -25460,6 +25508,9 @@
           },
           {
             "path": "proto/coderef/code_reference.proto"
+          },
+          {
+            "path": "proto/environment/service.proto"
           }
         ],
         "package": {

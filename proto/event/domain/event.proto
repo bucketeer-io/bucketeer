@@ -42,6 +42,7 @@ import "proto/tag/tag.proto";
 import "proto/experiment/goal.proto";
 import "proto/experiment/experiment.proto";
 import "proto/coderef/code_reference.proto";
+import "proto/environment/service.proto";
 
 message Event {
   enum EntityType {
@@ -180,6 +181,7 @@ message Event {
     ENVIRONMENT_V2_UNARCHIVED = 608;
     ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED = 609;
     ENVIRONMENT_V2_UPDATED = 610;
+    ENVIRONMENT_V2_DELETED = 611;
     ADMIN_ACCOUNT_CREATED = 700 [deprecated = true];
     ADMIN_ACCOUNT_ENABLED = 702 [deprecated = true];
     ADMIN_ACCOUNT_DISABLED = 703 [deprecated = true];
@@ -246,6 +248,7 @@ message Event {
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
     ORGANIZATION_UPDATED = 1509;
     DEMO_ORGANIZATION_CREATED = 1510;
+    ORGANIZATION_DELETED = 1511;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -921,6 +924,12 @@ message EnvironmentV2UpdatedEvent {
   google.protobuf.BoolValue require_comment = 4;
 }
 
+message EnvironmentV2DeletedEvent {
+  bucketeer.environment.OrganizationDeletionSummary summary = 1;
+  bool dry_run = 2;
+  bool force = 3;
+}
+
 message AutoOpsRuleCreatedEvent {
   string feature_id = 1;
   bucketeer.autoops.OpsType ops_type = 2;
@@ -1210,6 +1219,12 @@ message OrganizationUnarchivedEvent {
 
 message OrganizationTrialConvertedEvent {
   string id = 1;
+}
+
+message OrganizationDeletedEvent {
+  bucketeer.environment.OrganizationDeletionSummary summary = 1;
+  bool dry_run = 2;
+  bool forced = 3;
 }
 
 message FlagTriggerCreatedEvent {

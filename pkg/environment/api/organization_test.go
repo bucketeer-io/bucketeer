@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	protobuf "github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -1543,6 +1544,8 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			expectedErr: nil,
 			req: &proto.DeleteOrganizationDataRequest{
@@ -1628,6 +1631,8 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			expectedErr: nil,
 			req: &proto.DeleteOrganizationDataRequest{
@@ -1716,6 +1721,8 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			expectedErr: nil,
 			req: &proto.DeleteOrganizationDataRequest{
@@ -1754,7 +1761,9 @@ func TestEnvironmentService_DeleteOrganizationData(t *testing.T) {
 			}
 			resp, err := service.DeleteOrganizationData(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected, resp)
+			if !protobuf.Equal(p.expected, resp) {
+				t.Errorf("expected %+v, got %+v", p.expected, resp)
+			}
 		})
 	}
 }

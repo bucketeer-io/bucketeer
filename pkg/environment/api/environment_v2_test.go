@@ -1457,6 +1457,8 @@ func TestDeleteEnvironmentV2Data(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			req: &proto.DeleteEnvironmentDataRequest{
 				EnvironmentIds: []string{"env-id"},
@@ -1506,6 +1508,8 @@ func TestDeleteEnvironmentV2Data(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			req: &proto.DeleteEnvironmentDataRequest{
 				EnvironmentIds: []string{"env-id"},
@@ -1551,6 +1555,8 @@ func TestDeleteEnvironmentV2Data(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			},
 			req: &proto.DeleteEnvironmentDataRequest{
 				EnvironmentIds: []string{"env-id"},

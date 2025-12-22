@@ -784,7 +784,7 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 	req *environmentproto.DeleteEnvironmentDataRequest,
 ) (*environmentproto.DeleteEnvironmentDataResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -793,7 +793,7 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 		return nil, statusEnvironmentIDRequired.Err()
 	}
 
-	deletionSummary := make([]*environmentproto.EnvironmentDeletionSummary, 0, len(req.EnvironmentIds))
+	deletionSummaries := make([]*environmentproto.EnvironmentDeletionSummary, 0, len(req.EnvironmentIds))
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		// 1. Count all target entities in the environments
 		for _, environmentID := range req.EnvironmentIds {
@@ -805,7 +805,7 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 				)
 				return err
 			}
-			deletionSummary = append(deletionSummary, targetInEnv)
+			deletionSummaries = append(deletionSummaries, targetInEnv)
 		}
 		if req.DryRun && !req.Force {
 			return nil
@@ -852,8 +852,39 @@ func (s *EnvironmentService) DeleteEnvironmentData(
 		)
 		return nil, err
 	}
+	for _, summary := range deletionSummaries {
+		event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ENVIRONMENT,
+			summary.EnvironmentId,
+			eventproto.Event_ENVIRONMENT_V2_UPDATED,
+			&eventproto.EnvironmentDeletedEvent{},
+			summary,
+			nil,
+		)
+		if err != nil {
+			s.logger.Error("Failed to create environment deletion event",
+				zap.Error(err),
+				zap.String("environmentID", summary.EnvironmentId),
+				zap.Any("summary", summary),
+				zap.Bool("dryRun", req.DryRun),
+				zap.Bool("forced", req.Force),
+			)
+			return nil, err
+		}
+		if err := s.publisher.Publish(ctx, event); err != nil {
+			s.logger.Error("Failed to publish environment deletion event",
+				zap.Error(err),
+				zap.String("environmentID", summary.EnvironmentId),
+				zap.Any("event", event),
+				zap.Bool("dryRun", req.DryRun),
+				zap.Bool("forced", req.Force),
+			)
+			return nil, err
+		}
+	}
 	return &environmentproto.DeleteEnvironmentDataResponse{
-		Summaries: deletionSummary,
+		Summaries: deletionSummaries,
 	}, nil
 }
 

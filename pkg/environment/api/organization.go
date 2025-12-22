@@ -1500,7 +1500,7 @@ func (s *EnvironmentService) DeleteOrganizationData(
 	req *environmentproto.DeleteOrganizationDataRequest,
 ) (*environmentproto.DeleteOrganizationDataResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1630,6 +1630,42 @@ func (s *EnvironmentService) DeleteOrganizationData(
 		)
 		return nil, err
 	}
+
+	// 8. send audit log event for organization deletion
+	for _, summary := range deletionSummary {
+		event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			summary.OrganizationId,
+			eventproto.Event_DEMO_ORGANIZATION_CREATED,
+			&eventproto.OrganizationDeletedEvent{
+				Summary: summary,
+				DryRun:  req.DryRun,
+				Forced:  req.Force,
+			},
+			summary,
+			nil,
+		)
+		if err != nil {
+			s.logger.Error("Failed to create organization event",
+				zap.Error(err),
+				zap.Any("summary", summary),
+				zap.Bool("dryRun", req.DryRun),
+				zap.Bool("forced", req.Force),
+			)
+			return nil, api.NewGRPCStatus(err).Err()
+		}
+		if err = s.publisher.Publish(ctx, event); err != nil {
+			s.logger.Error("failed to publish event",
+				zap.Error(err),
+				zap.Any("event", event),
+				zap.Bool("dryRun", req.DryRun),
+				zap.Bool("forced", req.Force),
+			)
+			return nil, api.NewGRPCStatus(err).Err()
+		}
+	}
+
 	return &environmentproto.DeleteOrganizationDataResponse{
 		Summaries: deletionSummary,
 	}, nil
