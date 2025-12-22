@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mysql.fullname" . }}
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "NodePort" }}
+  {{- if eq (.Values.service.type | default "NodePort") "NodePort" }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  {{- end }}
+  selector:
+    {{- include "mysql.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mysql.fullname" . }}-headless
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    {{- include "mysql.selectorLabels" . | nindent 4 }}
+

@@ -110,6 +110,12 @@ func convertErrorReason(errorType pkgErr.ErrorType) string {
 		return "UNAVAILABLE"
 	case pkgErr.ErrorTypeAborted:
 		return "ABORTED"
+	case pkgErr.ErrorTypeDifferentVariationsSize:
+		return "DIFFERENT_VARIATIONS_SIZE"
+	case pkgErr.ErrorTypeExceededMax:
+		return "EXCEEDED_MAX"
+	case pkgErr.ErrorTypeOutOfRange:
+		return "OUT_OF_RANGE"
 	default:
 		return "UNKNOWN"
 	}

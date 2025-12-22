@@ -280,12 +280,31 @@ install_node_deps() {
 
     cd "$dir"
 
+    # Handle .npmrc file if it requires NPM_TOKEN but token is not set
+    local npmrc_backup=""
+    if [ -f ".npmrc" ] && grep -q "\${NPM_TOKEN}" .npmrc 2>/dev/null; then
+        if [ -z "${NPM_TOKEN:-}" ]; then
+            print_status "$name: NPM_TOKEN not set, temporarily disabling .npmrc for installation"
+            npmrc_backup=".npmrc.backup"
+            mv .npmrc "$npmrc_backup" || true
+        fi
+    fi
+
     # Use optimized yarn flags for faster, deterministic installs
     yarn install --frozen-lockfile --silent || {
         print_error "yarn install failed for $name, continuing..."
+        # Restore .npmrc if it was backed up
+        if [ -n "$npmrc_backup" ] && [ -f "$npmrc_backup" ]; then
+            mv "$npmrc_backup" .npmrc || true
+        fi
         cd /workspaces/bucketeer
         return 1
     }
+
+    # Restore .npmrc if it was backed up
+    if [ -n "$npmrc_backup" ] && [ -f "$npmrc_backup" ]; then
+        mv "$npmrc_backup" .npmrc || true
+    fi
 
     cd /workspaces/bucketeer
     print_success "$name dependencies installed"

@@ -118,7 +118,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:permission denied",
 			expectedReason:  "PERMISSION_DENIED",
 			expectedMetadata: map[string]string{
-				"messagekey": "PermissionDenied",
+				"messagekey": "PermissionDeniedError",
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestNewGRPCStatus(t *testing.T) {
 			expectedMessage: "test:unexpected affected rows",
 			expectedReason:  "UNEXPECTED_AFFECTED_ROWS",
 			expectedMetadata: map[string]string{
-				"messagekey": "UnexpectedAffectedRows",
+				"messagekey": "UnexpectedAffectedRowsError",
 			},
 		},
 		{

@@ -44,9 +44,8 @@ pre-cache-docker-images:
 	docker pull gcr.io/k8s-minikube/storage-provisioner:v5 || echo "Failed to pull storage provisioner"
 	@echo "Pulling application images..."
 	docker pull mysql:8.0 || echo "Failed to pull mysql"
-	docker pull timescale/timescaledb:2.24.0-pg18 || echo "Failed to pull timescaledb"
-	docker pull ghcr.io/bucketeer-io/bigquery-emulator:latest || echo "Failed to pull bigquery emulator"
-	docker pull gcr.io/google.com/cloudsdktool/cloud-sdk:449.0.0 || echo "Failed to pull cloud-sdk"
+	docker pull ghcr.io/bucketeer-io/bigquery-emulator:0.6.6 || echo "Failed to pull bigquery emulator"
+	docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:545.0.0 || echo "Failed to pull cloud-sdk"
 	@echo "Docker image pre-caching completed. These images will persist across minikube deletions."
 
 # Smart minikube setup that uses cached images when available
@@ -66,19 +65,24 @@ setup-minikube:
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
 	helm install localenv ../../manifests/localenv
 
-start-minikube: 
+start-minikube:
 	minikube start --cache-images
 	# ensure ingress addon is enabled
 	minikube addons enable ingress
 	# used to enable ssl-passthrough for nginx ingress container
 	kubectl config use-context minikube
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
-	# install localenv if not already installed
-	helm list | grep -q localenv || helm install localenv ../../manifests/localenv
+	# update helm dependencies
+	cd ../../manifests/localenv && helm dependency update
+	# Delete old Bitnami StatefulSets if they exist (migration from Bitnami charts)
+	# This is needed because selector labels changed from app.kubernetes.io/name: localenv to app.kubernetes.io/name: redis/mysql
+	kubectl delete statefulset localenv-mysql localenv-redis -n default --ignore-not-found=true
+	# Install or upgrade localenv
+	helm list | grep -q localenv && helm upgrade localenv ../../manifests/localenv || helm install localenv ../../manifests/localenv
 
 # Clean Docker cache and volumes (use when troubleshooting or freeing space)
 clean-cache:
-	@echo "🧹 Cleaning Docker cache and persistent volumes..."
+	@echo "Cleaning Docker cache and persistent volumes..."
 	@echo "This will remove all cached images and force fresh downloads next time."
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "Stopping minikube..."
@@ -87,25 +91,25 @@ clean-cache:
 	docker system prune -a -f
 	@echo "Removing persistent volumes..."
 	-docker volume rm bucketeer-docker-cache bucketeer-minikube-cache 2>/dev/null || echo "Volumes didn't exist"
-	@echo "✅ Cache cleaned! Run 'make pre-cache-docker-images' to rebuild cache."
+	@echo "Cache cleaned! Run 'make pre-cache-docker-images' to rebuild cache."
 
 # Light cleanup - only remove unused Docker images (keeps volumes)
 clean-cache-light:
-	@echo "🧽 Light cleanup: removing unused Docker images only..."
+	@echo "Light cleanup: removing unused Docker images only..."
 	docker image prune -f
-	@echo "✅ Unused images removed. Volumes and cached images preserved."
+	@echo "Unused images removed. Volumes and cached images preserved."
 
 # Show cache status and disk usage
 cache-status:
-	@echo "📊 Cache Status"
+	@echo "Cache Status"
 	@echo "=================="
-	@echo "\n🐳 Docker Images:"
+	@echo "\nDocker Images:"
 	docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | head -20
-	@echo "\n📦 Persistent Volumes:"
+	@echo "\nPersistent Volumes:"
 	docker volume ls | grep bucketeer || echo "No bucketeer volumes found"
-	@echo "\n💾 Disk Usage:"
+	@echo "\nDisk Usage:"
 	docker system df
 	@if command -v minikube >/dev/null 2>&1 && minikube status >/dev/null 2>&1; then \
-		echo "\n🎡 Minikube Cache:"; \
+		echo "\nMinikube Cache:"; \
 		minikube cache list || echo "No minikube cache"; \
 	fi

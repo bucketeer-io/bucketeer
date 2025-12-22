@@ -13,18 +13,18 @@ global:
 
     # BigQuery configuration (used when type: bigquery)
     bigquery:
-      project: ""
-      dataset: ""
+      project: "bucketeer"
+      dataset: "bucketeer"
       location: "US"
 
     # MySQL configuration (used when type: mysql)
     mysql:
       useMainConnection: true
-      host: ""
+      host: "localenv-mysql-headless.default.svc.cluster.local"
       port: 3306
-      user: ""
-      password: ""
-      database: ""
+      user: "bucketeer"
+      password: "bucketeer"
+      database: "bucketeer"
 
     # Postgres configuration (used when type: postgres)
     postgres:
@@ -36,13 +36,16 @@ global:
       database: ""
 
   pubsub:
-    type: redis-stream
+    type: google # Options: redis-stream, google
+    # Redis configuration (used when type is redis-stream)
     redis:
       serverName: non-persistent-redis
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolSize: 25
       minIdle: 25
+      partitionCount: 16 # Must match between publisher (API) and subscriber
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    # Google Cloud project ID when type is google
     project: bucketeer-test
 
   email:
@@ -78,7 +81,7 @@ migration:
 
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name
-  dbUrl: mysql://root:YnVja2V0ZWVy@localenv-mysql.default.svc:3306/bucketeer
+  dbUrl: mysql://root:bucketeer@localenv-mysql.default.svc:3306/bucketeer
 
   # The migration baseline
   # First revision
@@ -632,7 +635,7 @@ subscriber:
       flushInterval: 5
       flushTimeout: 30
       maxRetryGoalEventPeriod: 86400 # 1 day
-      retryGoalEventInterval: 30 # 30 seconds
+      retryGoalEventInterval: 5 # 5 seconds (reduced for faster retries in dev/test with Redis Stream)
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
         type: ""
