@@ -34,6 +34,23 @@ mysql:
     password: "bucketeer"
     rootPassword: "bucketeer"
 
+postgresql:
+  # Using official Postgres image (aligned with docker-compose)
+  image:
+    repository: postgres
+    tag: "18"
+    pullPolicy: IfNotPresent
+  storage:
+    size: "1Gi"
+    class: "" # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32100
+  auth:
+    database: "bucketeer"
+    username: "bucketeer"
+    password: "bucketeer"
+
 bq:
   project: bucketeer-test
   service:

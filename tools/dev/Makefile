@@ -44,6 +44,7 @@ pre-cache-docker-images:
 	docker pull gcr.io/k8s-minikube/storage-provisioner:v5 || echo "Failed to pull storage provisioner"
 	@echo "Pulling application images..."
 	docker pull mysql:8.0 || echo "Failed to pull mysql"
+	docker pull postgres:18 || echo "Failed to pull postgres"
 	docker pull ghcr.io/bucketeer-io/bigquery-emulator:0.6.6 || echo "Failed to pull bigquery emulator"
 	docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:545.0.0 || echo "Failed to pull cloud-sdk"
 	@echo "Docker image pre-caching completed. These images will persist across minikube deletions."
@@ -75,8 +76,8 @@ start-minikube:
 	# update helm dependencies
 	cd ../../manifests/localenv && helm dependency update
 	# Delete old Bitnami StatefulSets if they exist (migration from Bitnami charts)
-	# This is needed because selector labels changed from app.kubernetes.io/name: localenv to app.kubernetes.io/name: redis/mysql
-	kubectl delete statefulset localenv-mysql localenv-redis -n default --ignore-not-found=true
+	# This is needed because selector labels changed from app.kubernetes.io/name: localenv to app.kubernetes.io/name: redis/mysql/postgres
+	kubectl delete statefulset localenv-mysql localenv-redis localenv-postgresql -n default --ignore-not-found=true
 	# Install or upgrade localenv
 	helm list | grep -q localenv && helm upgrade localenv ../../manifests/localenv || helm install localenv ../../manifests/localenv
 

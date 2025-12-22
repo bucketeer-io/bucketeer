@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "postgres.fullname" . }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "postgres.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "postgres.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "postgres.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "postgres.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: postgresql
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: postgres
+          containerPort: 5432
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        # --- Health Probes ---
+        # Liveness: Determines if the pod needs to be restarted.
+        livenessProbe:
+          exec:
+            command:
+            - /usr/bin/pg_isready
+            - -U
+            - {{ .Values.auth.username | quote }}
+            - -d
+            - {{ .Values.auth.database | quote }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 20
+        # Readiness: Determines if the pod is ready to accept traffic.
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/pg_isready
+            - -U
+            - {{ .Values.auth.username | quote }}
+            - -d
+            - {{ .Values.auth.database | quote }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.auth.database | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "postgres.fullname" . }}-secret
+              key: postgres-password
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.storage.class }}
+      storageClassName: {{ .Values.storage.class }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.storage.size | default "1Gi" }}
