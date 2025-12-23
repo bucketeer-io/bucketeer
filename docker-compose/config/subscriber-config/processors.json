@@ -11,7 +11,7 @@
     "writeCacheInterval": 10
   },
   "segmentUserPersister": {
-    "domainEventProject": "bucketeer-test",
+    "domainEventProject": "bucketeer-dev",
     "domainEventTopic": "domain",
     "flushSize": 100,
     "flushInterval": 10,
@@ -21,7 +21,7 @@
     "redisPoolSize": 25,
     "redisMinIdle": 25,
     "redisPartitionCount": 16,
-    "project": "bucketeer-test"
+    "project": "bucketeer-dev"
   },
   "userEventPersister": {
     "flushSize": 200,
