@@ -58,7 +58,6 @@ var (
 )
 
 func TestGetAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -102,7 +101,6 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestCreateAccountV2(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -179,7 +177,6 @@ func TestCreateAccountV2(t *testing.T) {
 }
 
 func TestCreateAccountV2Admin(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -226,7 +223,6 @@ func TestCreateAccountV2Admin(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -269,7 +265,6 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -558,7 +553,6 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 }
 
 func TestEnableAndDisableAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -626,7 +620,6 @@ func TestEnableAndDisableAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -679,7 +672,6 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestCreateSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -765,7 +757,6 @@ func TestCreateSearchFilter(t *testing.T) {
 }
 
 func TestUpdateSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -902,7 +893,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 }
 
 func TestDeleteSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)

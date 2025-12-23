@@ -4,7 +4,7 @@ global:
     imagePullSecrets:
 
 env:
-  project: bucketeer-test
+  project: bucketeer-dev
   profile: false
   gcpEnabled: false
   mysqlUser: bucketeer
@@ -111,7 +111,7 @@ subscribers:
   # This is the processor's name. It must match the same name defined in the
   # pkg/batch/subscriber/processor/processors.go
   auditLogPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: domain
     subscription: auditlog-persister
     pullerNumGoroutines: 5
@@ -120,7 +120,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   domainEventInformer:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: domain
     subscription: domain-subscription
     pullerNumGoroutines: 5
@@ -129,7 +129,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   evaluationCountEventPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: evaluation
     subscription: evaluation-count-sub
     pullerNumGoroutines: 5
@@ -138,7 +138,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   metricsEventPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: metrics
     subscription: metrics-sub
     pullerNumGoroutines: 5
@@ -147,7 +147,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   pushSender:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: domain
     subscription: push-sender-domain-sub
     pullerNumGoroutines: 5
@@ -156,7 +156,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   segmentUserPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: bulk-segment-users-received
     subscription: bulk-segment-users-received-subscription
     pullerNumGoroutines: 5
@@ -165,7 +165,7 @@ subscribers:
     maxMps: 50
     workerNum: 1
   userEventPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: user
     subscription: user-sub
     pullerNumGoroutines: 5
@@ -176,7 +176,7 @@ subscribers:
 
 onDemandSubscribers:
   evaluationCountEventDWHPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: evaluation
     subscription: evaluation-dwh-sub
     pullerNumGoroutines: 1
@@ -186,7 +186,7 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 5
   evaluationCountEventOPSPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: evaluation
     subscription: evaluation-ops-sub
     pullerNumGoroutines: 1
@@ -196,7 +196,7 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 5
   goalCountEventDWHPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: goal
     subscription: goal-dwh-sub
     pullerNumGoroutines: 1
@@ -206,7 +206,7 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 5
   goalCountEventOPSPersister:
-    project: bucketeer-test
+    project: bucketeer-dev
     topic: goal
     subscription: goal-ops-sub
     pullerNumGoroutines: 1
@@ -230,7 +230,7 @@ processors:
     writeCacheInterval: 10
     userAttributeKeyTtl: 3600 # 1 hour
   segmentUserPersister:
-    domainEventProject: bucketeer-test
+    domainEventproject: bucketeer-dev
     domainEventTopic: domain
     flushSize: 100
     flushInterval: 10

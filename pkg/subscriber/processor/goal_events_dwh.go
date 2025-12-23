@@ -44,6 +44,7 @@ import (
 const (
 	goalEventTable                = "goal_event"
 	defaultRetryGoalEventInterval = 5 * time.Minute
+	minLockTTL                    = 15 * time.Second
 )
 
 type goalEvtWriter struct {
@@ -102,6 +103,20 @@ func NewGoalEventWriter(
 		}
 		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
 
+		// Ensure lock TTL is at least 15 seconds to allow time for:
+		// - listExperiments() network call
+		// - linkGoalEventByExperiment() MySQL query
+		// - writer.AppendRows() MySQL write
+		// Increased to 15s to handle server load and retry processing
+		originalLockTTL := lockTTL
+		if lockTTL < minLockTTL {
+			lockTTL = minLockTTL
+			logger.Info("Adjusted lock TTL to minimum",
+				zap.Duration("original", originalLockTTL),
+				zap.Duration("adjusted", lockTTL),
+			)
+		}
+
 		w := &goalEvtWriter{
 			writer:                  storage.NewMysqlGoalEventWriter(goalStorage),
 			eventStorage:            mysqlEventStorage,
@@ -153,6 +168,20 @@ func NewGoalEventWriter(
 	}
 	// Calculate lock TTL as 80% of retry interval
 	lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
+
+	// Ensure lock TTL is at least 15 seconds to allow time for:
+	// - listExperiments() network call
+	// - linkGoalEventByExperiment() BigQuery query
+	// - writer.AppendRows() BigQuery write
+	// Increased to 15s to handle server load and retry processing
+	originalLockTTL := lockTTL
+	if lockTTL < minLockTTL {
+		lockTTL = minLockTTL
+		logger.Info("Adjusted lock TTL to minimum",
+			zap.Duration("original", originalLockTTL),
+			zap.Duration("adjusted", lockTTL),
+		)
+	}
 
 	w := &goalEvtWriter{
 		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),

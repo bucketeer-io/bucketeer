@@ -225,6 +225,10 @@ func NewEventsDWHPersister(
 		location_str := persisterConfig.DataWarehouse.BigQuery.Location
 		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
 
+		// Get the max retry period and retry interval
+		maxRetryPeriod := time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod) * time.Second
+		retryInterval := time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval) * time.Second
+
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
 			logger,
@@ -237,8 +241,8 @@ func NewEventsDWHPersister(
 			bigQueryBatchSize,
 			location,
 			persistentRedisClient,
-			time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod)*time.Second,
-			time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval)*time.Second,
+			maxRetryPeriod,
+			retryInterval,
 			registerer,
 			goalOptions...,
 		)
@@ -305,6 +309,7 @@ func (e *eventsDWHPersister) Switch(ctx context.Context) (bool, error) {
 	experimentStorage := storage.NewExperimentStorage(e.mysqlClient)
 	count, err := experimentStorage.CountRunningExperiments(ctx)
 	if err != nil {
+		e.logger.Error("Failed to count running experiments", zap.Error(err))
 		return false, err
 	}
 	return count > 0, nil
