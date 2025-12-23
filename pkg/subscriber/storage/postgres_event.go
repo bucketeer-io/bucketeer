@@ -17,7 +17,6 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
@@ -85,7 +84,6 @@ func (w *postgresEvalEventWriter) AppendRows(
 	if len(batchEvents) > 0 {
 		err := w.storage.CreateEvaluationEvents(ctx, batchEvents)
 		if err != nil {
-			fmt.Printf("Error inserting evaluation events: %v\n", err)
 			// If batch fails, mark all events as failed
 			for _, evt := range events {
 				fails[evt.Id] = true

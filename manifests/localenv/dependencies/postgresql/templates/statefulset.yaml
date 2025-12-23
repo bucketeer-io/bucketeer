@@ -74,7 +74,7 @@ spec:
               key: postgres-password
         volumeMounts:
         - name: postgres-data
-          mountPath: /var/lib/postgresql
+          mountPath: /var/lib/postgresql/data
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

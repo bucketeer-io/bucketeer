@@ -544,7 +544,7 @@ docker-compose-setup:
 		echo "Creating docker-compose/secrets directory..."; \
 		mkdir -p docker-compose/secrets; \
 		echo "Generating MySQL secret files..."; \
-		echo "Generating PostgresQL secret files..."; \
+		echo "Generating PostgreSQL secret files..."; \
 		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/postgres_password.txt; \
@@ -624,7 +624,7 @@ docker-compose-regenerate-secrets:
 	@mkdir -p docker-compose/secrets
 	@echo "root" > docker-compose/secrets/mysql_root_password.txt
 	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
-	@echo "bucketeer" > docker-compose/secrets/postgres_mysql_root_password.txt
+	@echo "bucketeer" > docker-compose/secrets/postgres_password.txt
 	@chmod 600 docker-compose/secrets/*.txt
 	@echo "MySQL and Postgres secrets regenerated"
 

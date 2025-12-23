@@ -21,7 +21,7 @@ env:
   postgresUser:
   postgresPass:
   postgresHost:
-  postgresPort:
+  postgresPort: 5432
   postgresDbName:
   bigqueryQuerierEmulatorHost:
   bigqueryWriterEmulatorHost:
