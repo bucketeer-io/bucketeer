@@ -230,7 +230,7 @@ processors:
     writeCacheInterval: 10
     userAttributeKeyTtl: 3600 # 1 hour
   segmentUserPersister:
-    domainEventproject: bucketeer-dev
+    domainEventProject: bucketeer-dev
     domainEventTopic: domain
     flushSize: 100
     flushInterval: 10
