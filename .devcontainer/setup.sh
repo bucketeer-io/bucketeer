@@ -301,6 +301,9 @@ install_node_deps() {
         return 1
     }
 
+    # Update node_modules timestamp to prevent false warnings with Docker volumes
+    touch node_modules
+
     # Restore .npmrc if it was backed up
     if [ -n "$npmrc_backup" ] && [ -f "$npmrc_backup" ]; then
         mv "$npmrc_backup" .npmrc || true
