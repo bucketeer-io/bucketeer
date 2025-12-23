@@ -190,7 +190,7 @@ install_go_tools() {
     }
 
     print_status "Installing golangci-lint..."
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.7.2
+    go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2
 
     print_status "Installing mockgen..."
     go install go.uber.org/mock/mockgen@v0.4.0

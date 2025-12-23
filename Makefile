@@ -37,7 +37,7 @@ local-deps:
 	cd ~/go-tools; \
 	if [ ! -e go.mod ]; then go mod init go-tools; fi; \
 	go install golang.org/x/tools/cmd/goimports@v0.40.0; \
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.7.2; \
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2; \
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
