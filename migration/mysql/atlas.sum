@@ -1,4 +1,4 @@
-h1:bSdglghXdzR+Vs0zgUfybxwYEnjWYKIyuzpfVbW+di4=
+h1:oXb5HBMPDXmas5xjFplqWwdKVBoGKfeQ6ndXrJ/o9GY=
 20240626022133_initialization.sql h1:reSmqMhqnsrdIdPU2ezv/PXSL0COlRFX4gQA4U3/wMo=
 20240708065726_update_audit_log_table.sql h1:fi8Xxw4WfSlHDyvq2Ni/8JUiZW8z/0qWWyWm6jFdUy8=
 20240815043128_update_auto_ops_rule_table.sql h1:IKSW9W/XO6SWAYl5WPLJSg6KdsfcZ3rfQhIrf7aOnYc=
@@ -35,3 +35,5 @@ h1:bSdglghXdzR+Vs0zgUfybxwYEnjWYKIyuzpfVbW+di4=
 20251028072327_update_last_used_at_api_key_table.sql h1:Xbyb2JgQlvPqRY1KQesP1Sv9LJ0wduy1NWbpMTW4ne4=
 20251120090044_add_account_password_table.sql h1:PYJOkb6WlizgZ85OSnjNgpcpWQxD/eLI+IB5Wk2pIEQ=
 20251120104314_add_organization_password_auth.sql h1:UDJJFnwYxhRWaan4BLQNllRlxzAAAYtsGD6+saQT24A=
+20251128034652_reset_apikey_id.sql h1:v6DeD5HT0HDzT2X5vOjl/YswZ2Agigk4lddH0Q0GnEE=
+20251223160530_create_domain_auth_policy_table.sql h1:uy9zZFBuPz444YKi6VucStW2MNIcTCzxubUaPKVeCws=

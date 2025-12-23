@@ -79,4 +79,14 @@ var (
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid email configuration", "emailConfig"))
 	StatusMissingEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "email"))
+
+	// Domain Auth Policy errors
+	StatusInvalidArguments = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid arguments", "arguments"))
+	StatusAlreadyExists = api.NewGRPCStatus(
+		pkgErr.NewErrorAlreadyExists(pkgErr.AuthPackageName, "already exists"))
+	StatusNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuthPackageName, "not found", "resource"))
+	StatusPermissionDenied = api.NewGRPCStatus(
+		pkgErr.NewErrorPermissionDenied(pkgErr.AuthPackageName, "permission denied"))
 )

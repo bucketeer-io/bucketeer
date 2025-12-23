@@ -54,6 +54,46 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
+// CreateDomainAuthPolicy mocks base method.
+func (m *MockClient) CreateDomainAuthPolicy(ctx context.Context, in *auth.CreateDomainAuthPolicyRequest, opts ...grpc.CallOption) (*auth.CreateDomainAuthPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateDomainAuthPolicy", varargs...)
+	ret0, _ := ret[0].(*auth.CreateDomainAuthPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDomainAuthPolicy indicates an expected call of CreateDomainAuthPolicy.
+func (mr *MockClientMockRecorder) CreateDomainAuthPolicy(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).CreateDomainAuthPolicy), varargs...)
+}
+
+// DeleteDomainAuthPolicy mocks base method.
+func (m *MockClient) DeleteDomainAuthPolicy(ctx context.Context, in *auth.DeleteDomainAuthPolicyRequest, opts ...grpc.CallOption) (*auth.DeleteDomainAuthPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteDomainAuthPolicy", varargs...)
+	ret0, _ := ret[0].(*auth.DeleteDomainAuthPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDomainAuthPolicy indicates an expected call of DeleteDomainAuthPolicy.
+func (mr *MockClientMockRecorder) DeleteDomainAuthPolicy(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).DeleteDomainAuthPolicy), varargs...)
+}
+
 // ExchangeToken mocks base method.
 func (m *MockClient) ExchangeToken(ctx context.Context, in *auth.ExchangeTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeTokenResponse, error) {
 	m.ctrl.T.Helper()
@@ -72,6 +112,26 @@ func (mr *MockClientMockRecorder) ExchangeToken(ctx, in any, opts ...any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeToken", reflect.TypeOf((*MockClient)(nil).ExchangeToken), varargs...)
+}
+
+// GetAuthOptionsByEmail mocks base method.
+func (m *MockClient) GetAuthOptionsByEmail(ctx context.Context, in *auth.GetAuthOptionsByEmailRequest, opts ...grpc.CallOption) (*auth.GetAuthOptionsByEmailResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAuthOptionsByEmail", varargs...)
+	ret0, _ := ret[0].(*auth.GetAuthOptionsByEmailResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthOptionsByEmail indicates an expected call of GetAuthOptionsByEmail.
+func (mr *MockClientMockRecorder) GetAuthOptionsByEmail(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthOptionsByEmail", reflect.TypeOf((*MockClient)(nil).GetAuthOptionsByEmail), varargs...)
 }
 
 // GetAuthenticationURL mocks base method.
@@ -114,6 +174,26 @@ func (mr *MockClientMockRecorder) GetDemoSiteStatus(ctx, in any, opts ...any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDemoSiteStatus", reflect.TypeOf((*MockClient)(nil).GetDemoSiteStatus), varargs...)
 }
 
+// GetDomainAuthPolicy mocks base method.
+func (m *MockClient) GetDomainAuthPolicy(ctx context.Context, in *auth.GetDomainAuthPolicyRequest, opts ...grpc.CallOption) (*auth.GetDomainAuthPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetDomainAuthPolicy", varargs...)
+	ret0, _ := ret[0].(*auth.GetDomainAuthPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDomainAuthPolicy indicates an expected call of GetDomainAuthPolicy.
+func (mr *MockClientMockRecorder) GetDomainAuthPolicy(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).GetDomainAuthPolicy), varargs...)
+}
+
 // InitiatePasswordReset mocks base method.
 func (m *MockClient) InitiatePasswordReset(ctx context.Context, in *auth.InitiatePasswordResetRequest, opts ...grpc.CallOption) (*auth.InitiatePasswordResetResponse, error) {
 	m.ctrl.T.Helper()
@@ -152,6 +232,26 @@ func (mr *MockClientMockRecorder) InitiatePasswordSetup(ctx, in any, opts ...any
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitiatePasswordSetup", reflect.TypeOf((*MockClient)(nil).InitiatePasswordSetup), varargs...)
+}
+
+// ListDomainAuthPolicies mocks base method.
+func (m *MockClient) ListDomainAuthPolicies(ctx context.Context, in *auth.ListDomainAuthPoliciesRequest, opts ...grpc.CallOption) (*auth.ListDomainAuthPoliciesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListDomainAuthPolicies", varargs...)
+	ret0, _ := ret[0].(*auth.ListDomainAuthPoliciesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDomainAuthPolicies indicates an expected call of ListDomainAuthPolicies.
+func (mr *MockClientMockRecorder) ListDomainAuthPolicies(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDomainAuthPolicies", reflect.TypeOf((*MockClient)(nil).ListDomainAuthPolicies), varargs...)
 }
 
 // RefreshToken mocks base method.
@@ -252,6 +352,26 @@ func (mr *MockClientMockRecorder) SwitchOrganization(ctx, in any, opts ...any) *
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwitchOrganization", reflect.TypeOf((*MockClient)(nil).SwitchOrganization), varargs...)
+}
+
+// UpdateDomainAuthPolicy mocks base method.
+func (m *MockClient) UpdateDomainAuthPolicy(ctx context.Context, in *auth.UpdateDomainAuthPolicyRequest, opts ...grpc.CallOption) (*auth.UpdateDomainAuthPolicyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateDomainAuthPolicy", varargs...)
+	ret0, _ := ret[0].(*auth.UpdateDomainAuthPolicyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDomainAuthPolicy indicates an expected call of UpdateDomainAuthPolicy.
+func (mr *MockClientMockRecorder) UpdateDomainAuthPolicy(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).UpdateDomainAuthPolicy), varargs...)
 }
 
 // UpdatePassword mocks base method.

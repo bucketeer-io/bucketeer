@@ -112,6 +112,7 @@ type authService struct {
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	credentialsStorage  storage.CredentialsStorage
+	domainPolicyStorage storage.DomainPolicyStorage
 	emailService        email.Service
 	opts                *options
 	logger              *zap.Logger
@@ -162,10 +163,11 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
-		credentialsStorage: storage.NewCredentialsStorage(mysqlClient),
-		emailService:       emailService,
-		opts:               &options,
-		logger:             logger,
+		credentialsStorage:  storage.NewCredentialsStorage(mysqlClient),
+		domainPolicyStorage: storage.NewDomainPolicyStorage(mysqlClient),
+		emailService:        emailService,
+		opts:                &options,
+		logger:              logger,
 	}
 	service.PrepareDemoUser()
 	return service
