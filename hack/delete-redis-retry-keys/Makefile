@@ -24,4 +24,3 @@ docker-push:
 .PHONY: clean
 clean:
 	rm -f ./delete-redis-retry-keys
-

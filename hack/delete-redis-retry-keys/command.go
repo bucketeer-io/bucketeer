@@ -116,4 +116,3 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 	return nil
 }
-
