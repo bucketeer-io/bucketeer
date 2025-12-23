@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -140,23 +138,15 @@ func (s *EnvironmentService) ExchangeDemoToken(
 	ctx context.Context,
 	req *environmentproto.ExchangeDemoTokenRequest,
 ) (*environmentproto.ExchangeDemoTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	if !s.opts.isDemoSiteEnabled {
 		s.logger.Error("Demo site is not enabled",
 			zap.Any("type", req.Type),
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := statusDemoSiteDisabled.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.Organization),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusDemoSiteDisabled.Err()
 	}
-	if err := validateExchangeDemoTokenRequest(req, localizer); err != nil {
+	if err := validateExchangeDemoTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate the exchange demo token request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
@@ -165,7 +155,7 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		)
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(req.Type, localizer)
+	authenticator, err := s.getAuthenticator(req.Type)
 	if err != nil {
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
@@ -173,14 +163,7 @@ func (s *EnvironmentService) ExchangeDemoToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 	userInfo, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl)
 	if err != nil {
@@ -190,16 +173,9 @@ func (s *EnvironmentService) ExchangeDemoToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
-	existedInSystem, err := s.checkEmailExistedInSystem(ctx, userInfo.Email, localizer)
+	existedInSystem, err := s.checkEmailExistedInSystem(ctx, userInfo.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -210,17 +186,10 @@ func (s *EnvironmentService) ExchangeDemoToken(
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
-		dt, err := statusUserAlreadyInOrganization.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.Organization),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUserAlreadyInOrganization.Err()
 	}
 
-	demoToken, err := s.generateDemoToken(ctx, userInfo.Email, localizer)
+	demoToken, err := s.generateDemoToken(ctx, userInfo.Email)
 	if err != nil {
 		s.logger.Error("Failed to generate demoToken",
 			zap.Error(err),
@@ -238,7 +207,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 func (s *EnvironmentService) checkEmailExistedInSystem(
 	ctx context.Context,
 	email string,
-	localizer locale.Localizer,
 ) (bool, error) {
 	getAccountOrgs, err := s.accountClient.GetMyOrganizationsByEmail(ctx, &accproto.GetMyOrganizationsByEmailRequest{
 		Email: email,
@@ -248,14 +216,7 @@ func (s *EnvironmentService) checkEmailExistedInSystem(
 			"Failed to get organizations by email",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", email), zap.Error(err))...,
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return false, auth.StatusInternal.Err()
-		}
-		return false, dt.Err()
+		return false, statusInternal.Err()
 	}
 	if len(getAccountOrgs.Organizations) > 0 {
 		s.logger.Error(
@@ -269,9 +230,8 @@ func (s *EnvironmentService) checkEmailExistedInSystem(
 func (s *EnvironmentService) generateDemoToken(
 	ctx context.Context,
 	userEmail string,
-	localizer locale.Localizer,
 ) (*environmentproto.DemoCreationToken, error) {
-	if err := s.checkEmail(userEmail, localizer); err != nil {
+	if err := s.checkEmail(userEmail); err != nil {
 		s.logger.Error(
 			"Access denied email",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", userEmail))...,
@@ -296,14 +256,7 @@ func (s *EnvironmentService) generateDemoToken(
 			"Failed to sign access token",
 			zap.Error(err),
 		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 
 	return &environmentproto.DemoCreationToken{
@@ -315,7 +268,6 @@ func (s *EnvironmentService) generateDemoToken(
 
 func (s *EnvironmentService) checkEmail(
 	email string,
-	localizer locale.Localizer,
 ) error {
 	if s.opts.emailFilter == nil {
 		return nil
@@ -323,19 +275,11 @@ func (s *EnvironmentService) checkEmail(
 	if s.opts.emailFilter.MatchString(email) {
 		return nil
 	}
-	dt, err := auth.StatusAccessDeniedEmail.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.PermissionDenied),
-	})
-	if err != nil {
-		return auth.StatusInternal.Err()
-	}
-	return dt.Err()
+	return statusPermissionDenied.Err()
 }
 
 func (s *EnvironmentService) getAuthenticator(
 	authType authproto.AuthType,
-	localizer locale.Localizer,
 ) (auth.Authenticator, error) {
 	var authenticator auth.Authenticator
 	switch authType {
@@ -345,58 +289,28 @@ func (s *EnvironmentService) getAuthenticator(
 
 	default:
 		s.logger.Error("Unknown auth type", zap.String("authType", authType.String()))
-		dt, err := auth.StatusUnknownAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auth_type"),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, auth.StatusUnknownAuthType.Err()
 	}
 	return authenticator, nil
 }
 
 func validateExchangeDemoTokenRequest(
 	req *environmentproto.ExchangeDemoTokenRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
-		dt, err := auth.StatusMissingAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_type"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return auth.StatusMissingAuthType.Err()
 	}
 	if req.Code == "" {
-		dt, err := auth.StatusMissingCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return auth.StatusMissingCode.Err()
 	}
 	if req.RedirectUrl == "" {
-		dt, err := auth.StatusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
+		return auth.StatusMissingRedirectURL.Err()
 	}
 	return nil
 }
 
 func (s *EnvironmentService) checkSystemAdminRole(
 	ctx context.Context,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
@@ -406,27 +320,13 @@ func (s *EnvironmentService) checkSystemAdminRole(
 				"Unauthenticated",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -442,7 +342,6 @@ func (s *EnvironmentService) checkOrganizationRole(
 	ctx context.Context,
 	organizationID string,
 	requiredRole accproto.AccountV2_Role_Organization,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(
 		ctx,
@@ -461,27 +360,13 @@ func (s *EnvironmentService) checkOrganizationRole(
 				"Unauthenticated",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -497,14 +382,13 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 	ctx context.Context,
 	requiredRole accproto.AccountV2_Role_Organization,
 	environmentID string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(
 		ctx,
 		requiredRole,
 		func(email string,
 		) (*accproto.GetAccountV2Response, error) {
-			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID, localizer)
+			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID)
 			if err != nil {
 				return nil, err
 			}
@@ -520,14 +404,7 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 					zap.String("environmentID", environmentID),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -536,14 +413,7 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 					zap.String("environmentID", environmentID),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -561,20 +431,12 @@ func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
 func (s *EnvironmentService) getAccountV2ByEnvironmentID(
 	ctx context.Context,
 	email, environmentID string,
-	localizer locale.Localizer,
 ) (*accdomain.AccountV2, error) {
 	storage := v2acc.NewAccountStorage(s.mysqlClient)
 	account, err := storage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
 	if err != nil {
 		if errors.Is(err, v2acc.ErrAccountNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAccountNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get account by environment id",

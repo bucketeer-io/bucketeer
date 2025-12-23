@@ -22,9 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -34,7 +32,6 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -52,15 +49,6 @@ func TestGetEnvironmentV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -76,7 +64,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 				).Return(nil, v2es.ErrEnvironmentNotFound)
 			},
 			id:          "id-0",
-			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusEnvironmentNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -125,15 +113,6 @@ func TestListEnvironmentsV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -143,14 +122,11 @@ func TestListEnvironmentsV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:     "err: ErrInvalidCursor",
-			setup:    nil,
-			input:    &proto.ListEnvironmentsV2Request{Cursor: "XXX"},
-			expected: nil,
-			expectedErr: createError(
-				statusInvalidCursor,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-			),
+			desc:        "err: ErrInvalidCursor",
+			setup:       nil,
+			input:       &proto.ListEnvironmentsV2Request{Cursor: "XXX"},
+			expected:    nil,
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -197,15 +173,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	envExpectedTrue, err := domain.NewEnvironmentV2(
 		"Env Name-dev01",
@@ -243,10 +210,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: ""},
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: only space",
@@ -254,10 +218,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "    "},
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
@@ -265,10 +226,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
+			expectedErr: statusInvalidEnvironmentName.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: empty url code",
@@ -276,10 +234,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: ""},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use uppercase",
@@ -287,10 +242,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "URLCODE"},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use space",
@@ -298,10 +250,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url code"},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: max url code length exceeded",
@@ -309,10 +258,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -320,10 +266,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url-code", ProjectId: ""},
 			},
-			expectedErr: createError(
-				statusProjectIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
-			),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -335,7 +278,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url-code", ProjectId: "project-id"},
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrEnvironmentAlreadyExists",
@@ -352,7 +295,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url-code", ProjectId: "project-id"},
 			},
-			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusEnvironmentAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -463,15 +406,6 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	envExpectedTrue, err := domain.NewEnvironmentV2(
 		"Env Name-dev01",
@@ -509,10 +443,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Name: "",
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: only space",
@@ -520,10 +451,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Name: "    ",
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
@@ -531,10 +459,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 			req: &proto.CreateEnvironmentV2Request{
 				Name: strings.Repeat("a", 51),
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
+			expectedErr: statusInvalidEnvironmentName.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: empty url code",
@@ -543,10 +468,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use uppercase",
@@ -555,10 +477,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "URLCODE",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use space",
@@ -567,10 +486,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "url code",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentUrlCode: max url code length exceeded",
@@ -579,10 +495,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: strings.Repeat("a", 51),
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidEnvironmentUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -592,10 +505,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				UrlCode:   "url-code",
 				ProjectId: "",
 			},
-			expectedErr: createError(
-				statusProjectIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
-			),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -609,7 +519,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				UrlCode:   "url-code",
 				ProjectId: "project-id",
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrEnvironmentAlreadyExists",
@@ -628,7 +538,7 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 				UrlCode:   "url-code",
 				ProjectId: "project-id",
 			},
-			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusEnvironmentAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -732,15 +642,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -756,10 +657,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				RenameCommand:            &proto.RenameEnvironmentV2Command{Name: "  "},
 				ChangeDescriptionCommand: &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
@@ -769,10 +667,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				RenameCommand:            &proto.RenameEnvironmentV2Command{Name: strings.Repeat("a", 51)},
 				ChangeDescriptionCommand: &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
+			expectedErr: statusInvalidEnvironmentName.Err(),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -785,7 +680,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				Id:            "id01",
 				RenameCommand: &proto.RenameEnvironmentV2Command{Name: "name-0"},
 			},
-			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusEnvironmentNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -848,15 +743,6 @@ func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -872,10 +758,7 @@ func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
 				Name:        wrapperspb.String("  "),
 				Description: wrapperspb.String("desc-1"),
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusEnvironmentNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
@@ -885,10 +768,7 @@ func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
 				Name:        wrapperspb.String(strings.Repeat("a", 51)),
 				Description: wrapperspb.String("desc-1"),
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
+			expectedErr: statusInvalidEnvironmentName.Err(),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -901,7 +781,7 @@ func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
 				Id:   "id01",
 				Name: wrapperspb.String("name-0"),
 			},
-			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusEnvironmentNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -954,15 +834,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -977,11 +848,8 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
-			req: &proto.ArchiveEnvironmentV2Request{Id: "id01", Command: &proto.ArchiveEnvironmentV2Command{}},
-			expectedErr: createError(
-				statusEnvironmentNotFound,
-				localizer.MustLocalize(locale.NotFoundError),
-			),
+			req:         &proto.ArchiveEnvironmentV2Request{Id: "id01", Command: &proto.ArchiveEnvironmentV2Command{}},
+			expectedErr: statusEnvironmentNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1037,15 +905,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1060,11 +919,8 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
-			req: &proto.UnarchiveEnvironmentV2Request{Id: "id01", Command: &proto.UnarchiveEnvironmentV2Command{}},
-			expectedErr: createError(
-				statusEnvironmentNotFound,
-				localizer.MustLocalize(locale.NotFoundError),
-			),
+			req:         &proto.UnarchiveEnvironmentV2Request{Id: "id01", Command: &proto.UnarchiveEnvironmentV2Command{}},
+			expectedErr: statusEnvironmentNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1108,17 +964,8 @@ func TestEnvironmentV2APIs_Unauthenticated(t *testing.T) {
 	unauthCtx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(unauthCtx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
-	expectedErr := createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError))
+	expectedErr := statusUnauthenticated.Err()
 
 	patterns := []struct {
 		desc      string
@@ -1225,17 +1072,8 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 	roleTestCtx := metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(roleTestCtx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
-	expectedErr := createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+	expectedErr := statusPermissionDenied.Err()
 
 	rolePatterns := []struct {
 		role      string
