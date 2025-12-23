@@ -330,6 +330,7 @@ start-minikube:
 		make -C tools/dev start-minikube; \
 	fi
 	sleep 5
+	helm uninstall bucketeer --ignore-not-found
 	make -C ./ modify-hosts
 	make -C ./ setup-localenv
 

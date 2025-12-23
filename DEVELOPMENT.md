@@ -223,6 +223,7 @@ make e2e
 ```shell
 make delete-dev-container-mysql-data
 make delete-mysql-data-warehouse-data
+make delete-redis-retry-keys
 ```
 
 ## For Docker Compose Setup
