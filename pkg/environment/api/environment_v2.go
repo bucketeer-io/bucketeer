@@ -22,12 +22,14 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -593,8 +595,6 @@ func validateUpdateEnvironmentV2RequestNoCommand(
 			return statusInvalidEnvironmentName.Err()
 		}
 	}
-	// Note: Auto-archive validation is now handled in the domain layer (environment.Update)
-	// to properly check the current state of the environment
 	return nil
 }
 
