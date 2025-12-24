@@ -52,6 +52,7 @@ const (
 	JobDatetimeWatcher           = "datetime_watcher"
 	JobEventCountWatcher         = "event_count_watcher"
 	JobProgressiveRolloutWatcher = "progressive_rollout_watcher"
+	JobFeatureAutoArchiver       = "feature_auto_archiver"
 
 	// Error types
 	ErrorTypeTimeout    = "Timeout"

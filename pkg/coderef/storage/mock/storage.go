@@ -13,16 +13,16 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockCodeReferenceStorage is a mock of CodeReferenceStorage interface.
 type MockCodeReferenceStorage struct {
 	ctrl     *gomock.Controller
 	recorder *MockCodeReferenceStorageMockRecorder
+	isgomock struct{}
 }
 
 // MockCodeReferenceStorageMockRecorder is the mock recorder for MockCodeReferenceStorage.
@@ -83,6 +83,21 @@ func (m *MockCodeReferenceStorage) GetCodeReference(ctx context.Context, id stri
 func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReference(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReference), ctx, id)
+}
+
+// GetCodeReferenceCountsByFeatureIDs mocks base method.
+func (m *MockCodeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(ctx context.Context, environmentID string, featureIDs []string) (map[string]int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCodeReferenceCountsByFeatureIDs", ctx, environmentID, featureIDs)
+	ret0, _ := ret[0].(map[string]int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCodeReferenceCountsByFeatureIDs indicates an expected call of GetCodeReferenceCountsByFeatureIDs.
+func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReferenceCountsByFeatureIDs(ctx, environmentID, featureIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReferenceCountsByFeatureIDs", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReferenceCountsByFeatureIDs), ctx, environmentID, featureIDs)
 }
 
 // ListCodeReferences mocks base method.

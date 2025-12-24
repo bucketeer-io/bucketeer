@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/api"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/autoarchive"
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
@@ -570,6 +571,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		deleter.NewTagDeleter(
 			mysqlClient,
 			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		autoarchive.NewFeatureAutoArchiver(
+			mysqlClient,
+			featureClient,
+			jobs.WithTimeout(10*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,

@@ -332,23 +332,23 @@ func TestListAuditLogs(t *testing.T) {
 				Limit:  limit,
 				Offset: offset,
 				Filters: []*mysql.FilterV2{
-					&mysql.FilterV2{
+					{
 						Column:   "timestamp",
 						Operator: mysql.OperatorGreaterThanOrEqual,
 						Value:    timestamp,
 					},
-					&mysql.FilterV2{
+					{
 						Column:   "entity_type",
 						Operator: mysql.OperatorEqual,
 						Value:    entityType,
 					},
 				},
 				Orders: []*mysql.Order{
-					&mysql.Order{
+					{
 						Column:    "id",
 						Direction: mysql.OrderDirectionAsc,
 					},
-					&mysql.Order{
+					{
 						Column:    "timestamp",
 						Direction: mysql.OrderDirectionDesc,
 					},
