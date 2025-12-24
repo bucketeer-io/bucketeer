@@ -126,4 +126,10 @@ var (
 			"auto_archive_unused_days must be greater than 0 when auto_archive is enabled",
 			"auto_archive_unused_days",
 		))
+	statusAutoArchiveNotEnabled = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"cannot update auto-archive settings when auto_archive_enabled is false",
+			"auto_archive_settings",
+		))
 )

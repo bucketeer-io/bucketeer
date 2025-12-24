@@ -610,6 +610,26 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 			}
 			return nil, dt.Err()
 		}
+		if errors.Is(err, domain.ErrAutoArchiveUnusedDaysRequired) {
+			dt, err := statusInvalidAutoArchiveUnusedDays.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_unused_days"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if errors.Is(err, domain.ErrAutoArchiveNotEnabled) {
+			dt, err := statusAutoArchiveNotEnabled.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_settings"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		s.logger.Error(
 			"Failed to update environment",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -733,19 +753,8 @@ func validateUpdateEnvironmentV2RequestNoCommand(
 			return dt.Err()
 		}
 	}
-	// Auto-archive validation
-	if req.AutoArchiveEnabled != nil && req.AutoArchiveEnabled.Value {
-		if req.AutoArchiveUnusedDays == nil || req.AutoArchiveUnusedDays.Value <= 0 {
-			dt, err := statusInvalidAutoArchiveUnusedDays.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_unused_days"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-	}
+	// Note: Auto-archive validation is now handled in the domain layer (environment.Update)
+	// to properly check the current state of the environment
 	return nil
 }
 
