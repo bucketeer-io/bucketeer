@@ -21,7 +21,6 @@ import (
 
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -30,7 +29,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -48,27 +46,19 @@ func (s *experimentService) GetExperiment(
 	ctx context.Context,
 	req *proto.GetExperimentRequest,
 ) (*proto.GetExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetExperimentRequest(req, localizer); err != nil {
+	if err := validateGetExperimentRequest(req); err != nil {
 		return nil, err
 	}
 	experiment, err := s.experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusExperimentNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -77,16 +67,9 @@ func (s *experimentService) GetExperiment(
 	}, nil
 }
 
-func validateGetExperimentRequest(req *proto.GetExperimentRequest, localizer locale.Localizer) error {
+func validateGetExperimentRequest(req *proto.GetExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	return nil
 }
@@ -95,10 +78,9 @@ func (s *experimentService) ListExperiments(
 	ctx context.Context,
 	req *proto.ListExperimentsRequest,
 ) (*proto.ListExperimentsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +172,7 @@ func (s *experimentService) ListExperiments(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -205,14 +187,7 @@ func (s *experimentService) ListExperiments(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -266,7 +241,6 @@ func (s *experimentService) ListExperiments(
 func (s *experimentService) newExperimentListOrders(
 	orderBy proto.ListExperimentsRequest_OrderBy,
 	orderDirection proto.ListExperimentsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -286,14 +260,7 @@ func (s *experimentService) newExperimentListOrders(
 	case proto.ListExperimentsRequest_GOALS_COUNT:
 		column = "JSON_LENGTH(ex.goal_ids)"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListExperimentsRequest_DESC {
@@ -306,17 +273,16 @@ func (s *experimentService) CreateExperiment(
 	ctx context.Context,
 	req *proto.CreateExperimentRequest,
 ) (*proto.CreateExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createExperimentNoCommand(ctx, req, editor, localizer)
+		return s.createExperimentNoCommand(ctx, req, editor)
 	}
-	if err := validateCreateExperimentRequest(req, localizer); err != nil {
+	if err := validateCreateExperimentRequest(req); err != nil {
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
@@ -325,14 +291,7 @@ func (s *experimentService) CreateExperiment(
 	})
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
-			dt, err := statusFeatureNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -347,14 +306,7 @@ func (s *experimentService) CreateExperiment(
 		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2es.ErrGoalNotFound) {
-				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.NotFoundError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
+				return nil, statusGoalNotFound.Err()
 			}
 			return nil, api.NewGRPCStatus(err).Err()
 		}
@@ -401,14 +353,7 @@ func (s *experimentService) CreateExperiment(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create experiment",
@@ -428,9 +373,8 @@ func (s *experimentService) createExperimentNoCommand(
 	ctx context.Context,
 	req *proto.CreateExperimentRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*proto.CreateExperimentResponse, error) {
-	err := validateCreateExperimentRequestNoCommand(req, localizer)
+	err := validateCreateExperimentRequestNoCommand(req)
 	if err != nil {
 		return nil, err
 	}
@@ -440,14 +384,7 @@ func (s *experimentService) createExperimentNoCommand(
 	})
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
-			dt, err := statusFeatureNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -528,34 +465,13 @@ func (s *experimentService) createExperimentNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) {
-			dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusInvalidGoalID.Err()
 		}
 		if errors.Is(err, statusGoalTypeMismatch.Err()) {
-			dt, err := statusGoalTypeMismatch.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusGoalTypeMismatch.Err()
 		}
 		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create experiment",
@@ -571,40 +487,19 @@ func (s *experimentService) createExperimentNoCommand(
 	}, nil
 }
 
-func validateCreateExperimentRequest(req *proto.CreateExperimentRequest, localizer locale.Localizer) error {
+func validateCreateExperimentRequest(req *proto.CreateExperimentRequest) error {
 	if req.Command.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if len(req.Command.GoalIds) == 0 {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	for _, gid := range req.Command.GoalIds {
 		if gid == "" {
-			dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusGoalIDRequired.Err()
 		}
 	}
-	if err := validateExperimentPeriod(req.Command.StartAt, req.Command.StopAt, localizer); err != nil {
+	if err := validateExperimentPeriod(req.Command.StartAt, req.Command.StopAt); err != nil {
 		return err
 	}
 	// TODO: validate name empty check
@@ -613,67 +508,31 @@ func validateCreateExperimentRequest(req *proto.CreateExperimentRequest, localiz
 
 func validateCreateExperimentRequestNoCommand(
 	req *proto.CreateExperimentRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if len(req.GoalIds) == 0 {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	for _, gid := range req.GoalIds {
 		if gid == "" {
-			dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusGoalIDRequired.Err()
 		}
 	}
-	if err := validateExperimentPeriod(req.StartAt, req.StopAt, localizer); err != nil {
+	if err := validateExperimentPeriod(req.StartAt, req.StopAt); err != nil {
 		return err
 	}
 	if req.Name == "" {
-		dt, err := statusExperimentNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentNameRequired.Err()
 	}
 	return nil
 }
 
-func validateExperimentPeriod(startAt, stopAt int64, localizer locale.Localizer) error {
+func validateExperimentPeriod(startAt, stopAt int64) error {
 	period := stopAt - startAt
 	if period <= 0 || period > int64(maxExperimentPeriod) {
-		dt, err := statusPeriodTooLong.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentPeriodOutOfRange.Err()
 	}
 	return nil
 }
@@ -682,19 +541,18 @@ func (s *experimentService) UpdateExperiment(
 	ctx context.Context,
 	req *proto.UpdateExperimentRequest,
 ) (*proto.UpdateExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.ChangeExperimentPeriodCommand == nil &&
 		req.ChangeNameCommand == nil &&
 		req.ChangeDescriptionCommand == nil {
-		return s.updateExperimentNoCommand(ctx, req, editor, localizer)
+		return s.updateExperimentNoCommand(ctx, req, editor)
 	}
-	if err := validateUpdateExperimentRequest(req, localizer); err != nil {
+	if err := validateUpdateExperimentRequest(req); err != nil {
 		return nil, err
 	}
 	var experimentPb *proto.Experiment
@@ -754,14 +612,7 @@ func (s *experimentService) UpdateExperiment(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusExperimentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update experiment",
@@ -781,9 +632,8 @@ func (s *experimentService) updateExperimentNoCommand(
 	ctx context.Context,
 	req *proto.UpdateExperimentRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*proto.UpdateExperimentResponse, error) {
-	err := validateUpdateExperimentNoCommandRequest(req, localizer)
+	err := validateUpdateExperimentNoCommandRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed validate update experiment no command req",
@@ -853,14 +703,7 @@ func (s *experimentService) updateExperimentNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusExperimentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update experiment",
@@ -876,22 +719,14 @@ func (s *experimentService) updateExperimentNoCommand(
 	}, nil
 }
 
-func validateUpdateExperimentRequest(req *proto.UpdateExperimentRequest, localizer locale.Localizer) error {
+func validateUpdateExperimentRequest(req *proto.UpdateExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.ChangeExperimentPeriodCommand != nil {
 		if err := validateExperimentPeriod(
 			req.ChangeExperimentPeriodCommand.StartAt,
 			req.ChangeExperimentPeriodCommand.StopAt,
-			localizer,
 		); err != nil {
 			return err
 		}
@@ -901,44 +736,21 @@ func validateUpdateExperimentRequest(req *proto.UpdateExperimentRequest, localiz
 
 func validateUpdateExperimentNoCommandRequest(
 	req *proto.UpdateExperimentRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.Name != nil && req.Name.Value == "" {
-		dt, err := statusExperimentNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentNameRequired.Err()
 	}
 	if (req.StartAt != nil && req.StopAt == nil) ||
 		(req.StartAt == nil && req.StopAt != nil) {
-		dt, err := statusPeriodInvalid.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentPeriodInvalid.Err()
 	}
 	if req.StartAt != nil && req.StopAt != nil {
 		if err := validateExperimentPeriod(
 			req.StartAt.Value,
 			req.StopAt.Value,
-			localizer,
 		); err != nil {
 			return err
 		}
@@ -950,42 +762,27 @@ func (s *experimentService) StartExperiment(
 	ctx context.Context,
 	req *proto.StartExperimentRequest,
 ) (*proto.StartExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateStartExperimentRequest(req, localizer); err != nil {
+	if err := validateStartExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &proto.StartExperimentResponse{}, nil
 }
 
-func validateStartExperimentRequest(req *proto.StartExperimentRequest, localizer locale.Localizer) error {
+func validateStartExperimentRequest(req *proto.StartExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -994,42 +791,27 @@ func (s *experimentService) FinishExperiment(
 	ctx context.Context,
 	req *proto.FinishExperimentRequest,
 ) (*proto.FinishExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateFinishExperimentRequest(req, localizer); err != nil {
+	if err := validateFinishExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &proto.FinishExperimentResponse{}, nil
 }
 
-func validateFinishExperimentRequest(req *proto.FinishExperimentRequest, localizer locale.Localizer) error {
+func validateFinishExperimentRequest(req *proto.FinishExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -1038,42 +820,27 @@ func (s *experimentService) StopExperiment(
 	ctx context.Context,
 	req *proto.StopExperimentRequest,
 ) (*proto.StopExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateStopExperimentRequest(req, localizer); err != nil {
+	if err := validateStopExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &proto.StopExperimentResponse{}, nil
 }
 
-func validateStopExperimentRequest(req *proto.StopExperimentRequest, localizer locale.Localizer) error {
+func validateStopExperimentRequest(req *proto.StopExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -1082,32 +849,17 @@ func (s *experimentService) ArchiveExperiment(
 	ctx context.Context,
 	req *proto.ArchiveExperimentRequest,
 ) (*proto.ArchiveExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusExperimentIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusNoCommand.Err()
 	}
 	err = s.updateExperiment(
 		ctx,
@@ -1115,7 +867,6 @@ func (s *experimentService) ArchiveExperiment(
 		req.Command,
 		req.Id,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -1134,42 +885,27 @@ func (s *experimentService) DeleteExperiment(
 	ctx context.Context,
 	req *proto.DeleteExperimentRequest,
 ) (*proto.DeleteExperimentResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteExperimentRequest(req, localizer); err != nil {
+	if err := validateDeleteExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &proto.DeleteExperimentResponse{}, nil
 }
 
-func validateDeleteExperimentRequest(req *proto.DeleteExperimentRequest, localizer locale.Localizer) error {
+func validateDeleteExperimentRequest(req *proto.DeleteExperimentRequest) error {
 	if req.Id == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusExperimentIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -1179,7 +915,6 @@ func (s *experimentService) updateExperiment(
 	editor *eventproto.Editor,
 	cmd command.Command,
 	id, environmentId string,
-	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		experiment, err := s.experimentStorage.GetExperiment(contextWithTx, id, environmentId)
@@ -1211,14 +946,7 @@ func (s *experimentService) updateExperiment(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusExperimentNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update experiment",

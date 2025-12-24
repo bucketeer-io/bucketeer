@@ -20,17 +20,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -46,15 +42,6 @@ func TestGetExperimentMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup         func(*experimentService)
@@ -66,7 +53,7 @@ func TestGetExperimentMySQL(t *testing.T) {
 			setup:         nil,
 			id:            "",
 			environmentId: "ns0",
-			expectedErr:   createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusExperimentIDRequired.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -74,7 +61,7 @@ func TestGetExperimentMySQL(t *testing.T) {
 			},
 			id:            "id-0",
 			environmentId: "ns0",
-			expectedErr:   createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr:   statusExperimentNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -106,15 +93,6 @@ func TestListExperimentsMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -129,7 +107,7 @@ func TestListExperimentsMySQL(t *testing.T) {
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -215,15 +193,6 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -238,7 +207,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 				GoalIds:       []string{"gid"},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
 			desc: "missing goal id",
@@ -247,7 +216,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 				GoalIds:       nil,
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc: "empty goal id",
@@ -256,7 +225,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 				GoalIds:       []string{""},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc: "empty goal id",
@@ -265,7 +234,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 				GoalIds:       []string{"gid", ""},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc: "period too long",
@@ -276,7 +245,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 				StopAt:        30*24*60*60 + 2,
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+			expectedErr: statusExperimentPeriodOutOfRange.Err(),
 		},
 		{
 			desc: "success",
@@ -315,19 +284,6 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 
 func TestValidateCreateExperimentRequest(t *testing.T) {
 	t.Parallel()
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		in       *experimentproto.CreateExperimentRequest
 		expected error
@@ -352,7 +308,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expected: statusFeatureIDRequired.Err(),
 		},
 		{
 			in: &experimentproto.CreateExperimentRequest{
@@ -362,7 +318,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expected: statusGoalIDRequired.Err(),
 		},
 		{
 			in: &experimentproto.CreateExperimentRequest{
@@ -372,7 +328,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expected: statusGoalIDRequired.Err(),
 		},
 		{
 			in: &experimentproto.CreateExperimentRequest{
@@ -382,7 +338,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expected: statusGoalIDRequired.Err(),
 		},
 		{
 			in: &experimentproto.CreateExperimentRequest{
@@ -394,7 +350,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+			expected: statusExperimentPeriodOutOfRange.Err(),
 		},
 		{
 			in: &experimentproto.CreateExperimentRequest{
@@ -410,7 +366,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateCreateExperimentRequest(p.in, localizer)
+		err := validateCreateExperimentRequest(p.in)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -423,15 +379,6 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup       func(*experimentService)
@@ -443,7 +390,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 			req: &experimentproto.UpdateExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			setup: nil,
@@ -455,7 +402,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+			expectedErr: statusExperimentPeriodOutOfRange.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -473,7 +420,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 					Name: "new-name",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -515,15 +462,6 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -537,7 +475,7 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 			req: &experimentproto.UpdateExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			desc:  "period too long",
@@ -548,7 +486,7 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 31).Unix()),
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+			expectedErr: statusExperimentPeriodOutOfRange.Err(),
 		},
 		{
 			desc:  "invalid period input",
@@ -559,7 +497,7 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 				StopAt:        nil,
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPeriodInvalid, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+			expectedErr: statusExperimentPeriodInvalid.Err(),
 		},
 		{
 			desc: "experiment not found",
@@ -573,7 +511,7 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Name:          wrapperspb.String("new-name"),
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -610,15 +548,6 @@ func TestStartExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -632,7 +561,7 @@ func TestStartExperimentMySQL(t *testing.T) {
 			req: &experimentproto.StartExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			desc:  "error no command",
@@ -641,7 +570,7 @@ func TestStartExperimentMySQL(t *testing.T) {
 				Id:            "eid",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "error not found",
@@ -658,7 +587,7 @@ func TestStartExperimentMySQL(t *testing.T) {
 				Command:       &experimentproto.StartExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -701,15 +630,6 @@ func TestFinishExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -723,7 +643,7 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			req: &experimentproto.FinishExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			desc:  "error no command",
@@ -732,7 +652,7 @@ func TestFinishExperimentMySQL(t *testing.T) {
 				Id:            "eid",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc: "error not found",
@@ -749,7 +669,7 @@ func TestFinishExperimentMySQL(t *testing.T) {
 				Command:       &experimentproto.FinishExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -792,15 +712,6 @@ func TestStopExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup       func(*experimentService)
@@ -812,7 +723,7 @@ func TestStopExperimentMySQL(t *testing.T) {
 			req: &experimentproto.StopExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			setup: nil,
@@ -820,7 +731,7 @@ func TestStopExperimentMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -836,7 +747,7 @@ func TestStopExperimentMySQL(t *testing.T) {
 				Command:       &experimentproto.StopExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -876,15 +787,6 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup       func(*experimentService)
@@ -896,7 +798,7 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 			req: &experimentproto.ArchiveExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			setup: nil,
@@ -904,7 +806,7 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -920,7 +822,7 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 				Command:       &experimentproto.ArchiveExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -960,15 +862,6 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup       func(*experimentService)
@@ -980,7 +873,7 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 			req: &experimentproto.DeleteExperimentRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
 			setup: nil,
@@ -988,7 +881,7 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -1004,7 +897,7 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 				Command:       &experimentproto.DeleteExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -1051,15 +944,6 @@ func TestExperimentPermissionDenied(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		action   func(context.Context, *experimentService) error
@@ -1071,7 +955,7 @@ func TestExperimentPermissionDenied(t *testing.T) {
 				_, err := es.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateExperiment",
@@ -1079,7 +963,7 @@ func TestExperimentPermissionDenied(t *testing.T) {
 				_, err := es.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "StopExperiment",
@@ -1087,7 +971,7 @@ func TestExperimentPermissionDenied(t *testing.T) {
 				_, err := es.StopExperiment(ctx, &experimentproto.StopExperimentRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "DeleteExperiment",
@@ -1095,7 +979,7 @@ func TestExperimentPermissionDenied(t *testing.T) {
 				_, err := es.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 	}
 	for _, p := range patterns {

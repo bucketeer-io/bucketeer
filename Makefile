@@ -332,6 +332,7 @@ start-minikube:
 	sleep 5
 	make -C ./ modify-hosts
 	make -C ./ setup-bigquery-vault
+	make -C ./ setup-data-warehouse
 
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
@@ -344,12 +345,60 @@ enable-vault-transit:
 	kubectl config use-context minikube
 	kubectl exec localenv-vault-0 -- vault secrets enable transit
 
-# create bigquery-emulator tables
+# create bigquery-emulator tables (idempotent - safe to run multiple times)
+.PHONY: create-pubsub-topics
+create-pubsub-topics:
+	@echo "Creating PubSub topics..."
+	kubectl config use-context minikube
+	@# Get NodePort and use minikube IP (simple approach)
+	@PUBSUB_NODEPORT=$$(kubectl get svc localenv-pubsub -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "30089"); \
+	echo "Using PubSub NodePort: $$PUBSUB_NODEPORT"; \
+	go run ./hack/create-pubsub-topics create \
+		--pubsub-emulator-host=$$(minikube ip):$$PUBSUB_NODEPORT \
+		--project=bucketeer-test \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: create-bigquery-emulator-tables
 create-bigquery-emulator-tables:
 	go run ./hack/create-big-query-table create \
 		--bigquery-emulator=http://$$(minikube ip):31000 \
 		--no-gcp-trace-enabled \
 		--no-profile
+
+# create mysql event tables for minikube
+create-mysql-event-tables-minikube:
+	@echo "Creating MySQL event tables for minikube data warehouse..."
+	kubectl config use-context minikube
+	@echo "Waiting for MySQL pod to be ready..."
+	@while [ "$$(kubectl get pod localenv-mysql-0 -o jsonpath='{.status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ]; \
+	do \
+		echo "MySQL pod not ready yet, waiting 5 seconds..."; \
+		sleep 5; \
+	done; \
+	echo "MySQL pod is ready"
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=$$(minikube ip) \
+	MYSQL_PORT=32000 \
+	MYSQL_DB_NAME=bucketeer \
+	make create-mysql-event-tables
+
+.PHONY: delete-mysql-data-warehouse-data
+delete-mysql-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-mysql-data-warehouse clean build-darwin
+else
+	make -C hack/delete-mysql-data-warehouse clean build
+endif
+	./hack/delete-mysql-data-warehouse/delete-mysql-data-warehouse truncate \
+		--mysql-user=bucketeer \
+		--mysql-pass=bucketeer \
+		--mysql-host=$$(minikube ip) \
+		--mysql-port=32000 \
+		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled
 
 setup-bigquery-vault:
 	kubectl config use-context minikube
@@ -359,6 +408,33 @@ setup-bigquery-vault:
 	done; \
 	make create-bigquery-emulator-tables
 	make enable-vault-transit
+
+# setup data warehouse tables based on configuration (supports both BigQuery and MySQL)
+setup-data-warehouse:
+	kubectl config use-context minikube
+	@echo "Setting up data warehouse tables..."
+	@# Wait for services to be ready
+	@echo "Waiting for services to be ready..."
+	@while [ "$$(kubectl get pods -l app.kubernetes.io/name=bq -o jsonpath='{.items[0].status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ] || \
+	      [ "$$(kubectl get pods -l app.kubernetes.io/name=pubsub -o jsonpath='{.items[0].status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ]; \
+	do \
+		echo "Services not ready yet, waiting 5 seconds..."; \
+		sleep 5; \
+	done; \
+	echo "Services are ready"
+	@# Always create BigQuery tables (for BigQuery data warehouse)
+	make create-bigquery-emulator-tables || echo "BigQuery table creation failed or skipped"
+	@# Conditionally create MySQL tables only if data warehouse type is mysql
+	@DW_TYPE=$$(yq eval '.global.dataWarehouse.type' manifests/bucketeer/values.dev.yaml 2>/dev/null || echo "bigquery"); \
+	if [ "$$DW_TYPE" = "mysql" ]; then \
+		echo "Data warehouse type is MySQL, creating MySQL event tables..."; \
+		make create-mysql-event-tables-minikube || echo "MySQL table creation failed or skipped"; \
+	else \
+		echo "Data warehouse type is $$DW_TYPE, skipping MySQL table creation"; \
+	fi
+	@echo "Data warehouse tables setup completed"
+	@# Note: PubSub topics are created automatically when services start and try to publish
+	@# The createTopicForEmulator function in pkg/pubsub/pubsub.go handles this
 
 DEV_IMAGES := gcr.io/distroless/base docker.io/arigaio/atlas:latest
 pull-dev-images:
@@ -414,6 +490,7 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 
 #############################
@@ -457,21 +534,21 @@ docker-compose-setup:
 		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
 		chmod 600 docker-compose/secrets/*.txt; \
-		echo "✅ MySQL secrets created"; \
+		echo "MySQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
 	fi
-	@echo "✅ Docker Compose setup complete"
+	@echo "Docker Compose setup complete"
 
 .PHONY: docker-compose-init-env
 docker-compose-init-env:
 	@if [ -f docker-compose/.env ]; then \
-		echo "⚠️  docker-compose/.env already exists. Skipping..."; \
+		echo "docker-compose/.env already exists. Skipping..."; \
 		echo "To recreate it, run: rm docker-compose/.env && make docker-compose-init-env"; \
 	else \
-		echo "📝 Creating docker-compose/.env from template..."; \
+		echo "Creating docker-compose/.env from template..."; \
 		cp docker-compose/env.default docker-compose/.env; \
-		echo "✅ Created docker-compose/.env"; \
+		echo "Created docker-compose/.env"; \
 		echo ""; \
 		echo "You can now customize the environment variables in docker-compose/.env"; \
 		echo "Then run 'make docker-compose-up' to start the services."; \
@@ -484,7 +561,7 @@ docker-compose-build:
 	GOOS=linux make -C ./ build-go-embed
 	@echo "Building Docker images with TAG=localenv..."
 	TAG=localenv make -C ./ build-docker-images
-	@echo "✅ Docker images built successfully"
+	@echo "Docker images built successfully"
 
 # To skip the build step when starting services, run:
 # make docker-compose-up SKIP_BUILD=true
@@ -532,7 +609,7 @@ docker-compose-regenerate-secrets:
 	@echo "root" > docker-compose/secrets/mysql_root_password.txt
 	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
 	@chmod 600 docker-compose/secrets/*.txt
-	@echo "✅ MySQL secrets regenerated"
+	@echo "MySQL secrets regenerated"
 
 .PHONY: docker-compose-delete-data
 docker-compose-delete-data:
@@ -553,3 +630,19 @@ docker-compose-create-mysql-event-tables:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ create-mysql-event-tables
+
+.PHONY: docker-compose-delete-mysql-data-warehouse-data
+docker-compose-delete-mysql-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-mysql-data-warehouse clean build-darwin
+else
+	make -C hack/delete-mysql-data-warehouse clean build
+endif
+	./hack/delete-mysql-data-warehouse/delete-mysql-data-warehouse truncate \
+		--mysql-user=bucketeer \
+		--mysql-pass=bucketeer \
+		--mysql-host=localhost \
+		--mysql-port=3306 \
+		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled

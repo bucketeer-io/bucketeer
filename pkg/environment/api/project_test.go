@@ -23,10 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -35,7 +32,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pubmock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -55,15 +51,6 @@ func TestGetProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -75,7 +62,7 @@ func TestGetProjectMySQL(t *testing.T) {
 			desc:        "err: ErrProjectIDRequired",
 			setup:       nil,
 			id:          "",
-			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -85,7 +72,7 @@ func TestGetProjectMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			id:          "err-id-0",
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -134,15 +121,6 @@ func TestListProjectsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -156,7 +134,7 @@ func TestListProjectsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListProjectsRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -203,15 +181,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	projExpected, err := domain.NewProject(
 		"name",
@@ -236,7 +205,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: only space",
@@ -244,7 +213,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: "    "},
 			},
-			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: max name length exceeded",
@@ -252,7 +221,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
@@ -260,7 +229,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "CODE"},
 			},
-			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
@@ -268,7 +237,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: duplicate id",
@@ -280,7 +249,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-0", UrlCode: "id-0"},
 			},
-			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusProjectAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -353,15 +322,6 @@ func TestCreateProjectNoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	expected, err := domain.NewProject(
 		"project name",
@@ -385,13 +345,10 @@ func TestCreateProjectNoCommand(t *testing.T) {
 			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"accept-language": []string{"ja"},
 			}),
-			desc:  "err: unauthenticated",
-			setup: nil,
-			req:   &proto.CreateProjectRequest{},
-			expectedErr: createError(
-				statusUnauthenticated,
-				localizer.MustLocalize(locale.UnauthenticatedError),
-			),
+			desc:        "err: unauthenticated",
+			setup:       nil,
+			req:         &proto.CreateProjectRequest{},
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			ctx: metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
@@ -407,11 +364,8 @@ func TestCreateProjectNoCommand(t *testing.T) {
 					},
 				}, nil)
 			},
-			req: &proto.CreateProjectRequest{},
-			expectedErr: createError(
-				statusPermissionDenied,
-				localizer.MustLocalize(locale.PermissionDenied),
-			),
+			req:         &proto.CreateProjectRequest{},
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -420,10 +374,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Name: "",
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -432,10 +383,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Name: "    ",
 			},
-			expectedErr: createError(
-				statusEnvironmentNameRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -444,10 +392,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Name: strings.Repeat("a", 51),
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			),
+			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -457,10 +402,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -470,10 +412,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "URLCODE",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -483,10 +422,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: "url code",
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -496,10 +432,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				Name:    "name",
 				UrlCode: strings.Repeat("a", 51),
 			},
-			expectedErr: createError(
-				statusInvalidEnvironmentUrlCode,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-			),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			ctx:   ctx,
@@ -510,10 +443,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				UrlCode:        "url-code",
 				OrganizationId: "",
 			},
-			expectedErr: createError(
-				statusProjectIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
-			),
+			expectedErr: statusOrganizationIDRequired.Err(),
 		},
 		{
 			ctx:  ctx,
@@ -529,7 +459,7 @@ func TestCreateProjectNoCommand(t *testing.T) {
 				OrganizationId: expected.Project.OrganizationId,
 				Description:    expected.Project.Description,
 			},
-			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusEnvironmentAlreadyExists.Err(),
 		},
 		{
 			ctx:  ctx,
@@ -618,15 +548,6 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -640,7 +561,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: nil,
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: empty name",
@@ -648,7 +569,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: only space",
@@ -656,7 +577,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "   "},
 			},
-			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: max id length exceeded",
@@ -664,7 +585,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
@@ -672,7 +593,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: "CODE"},
 			},
-			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
@@ -680,7 +601,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+			expectedErr: statusInvalidProjectUrlCode.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectCreatorEmail",
@@ -688,7 +609,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "email"},
 			},
-			expectedErr: createError(statusInvalidProjectCreatorEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email")),
+			expectedErr: statusInvalidProjectCreatorEmail.Err(),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: trial exists",
@@ -702,7 +623,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
-			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusProjectAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: duplicated id",
@@ -716,7 +637,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
-			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusProjectAlreadyExists.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -805,17 +726,6 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-
-	// Helper to create errors with localized messages
-	createError := func(st *status.Status, msg string) error {
-		stWithDetails, err := st.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return stWithDetails.Err()
-	}
 
 	editor := &eventproto.Editor{
 		Email: "test@bucketer.io",
@@ -854,10 +764,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 				Name:        &wrappers.StringValue{Value: "ValidName"},
 				Description: &wrappers.StringValue{Value: "updated description"},
 			},
-			expectedErr: createError(
-				statusProjectNotFound,
-				localizer.MustLocalize(locale.NotFoundError),
-			),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			ctx:  ctx,
@@ -922,7 +829,7 @@ func TestUpdateProjectNoCommand(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			resp, err := service.updateProjectNoCommand(p.ctx, p.req, testProject, localizer, editor)
+			resp, err := service.updateProjectNoCommand(p.ctx, p.req, testProject, editor)
 			if resp != nil {
 				// For a successful update, compare the expected response.
 				assert.Equal(t, p.expected, resp)
@@ -943,15 +850,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -965,7 +863,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			req: &proto.UpdateProjectRequest{
 				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
 			},
-			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName",
@@ -974,7 +872,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				Id:            "id-0",
 				RenameCommand: &proto.RenameProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
 			desc:  "err: empty name (no-command path)",
@@ -984,7 +882,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				Name:        &wrappers.StringValue{Value: "    "},
 				Description: &wrappers.StringValue{Value: "updated description"},
 			},
-			expectedErr: createError(statusEnvironmentNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
 			desc:  "err: max name length exceeded (no-command path)",
@@ -994,7 +892,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				Name:        &wrappers.StringValue{Value: strings.Repeat("a", 51)},
 				Description: &wrappers.StringValue{Value: "updated description"},
 			},
-			expectedErr: createError(statusInvalidEnvironmentName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -1007,7 +905,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				Id:                       "id-0",
 				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1075,15 +973,6 @@ func TestEnableProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1097,7 +986,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 			req: &proto.EnableProjectRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -1105,7 +994,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 			req: &proto.EnableProjectRequest{
 				Command: &proto.EnableProjectCommand{},
 			},
-			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -1118,7 +1007,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.EnableProjectCommand{},
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1184,15 +1073,6 @@ func TestDisableProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1206,7 +1086,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 			req: &proto.DisableProjectRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -1214,7 +1094,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 			req: &proto.DisableProjectRequest{
 				Command: &proto.DisableProjectCommand{},
 			},
-			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -1227,7 +1107,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.DisableProjectCommand{},
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1293,15 +1173,6 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1315,7 +1186,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 			req: &proto.ConvertTrialProjectRequest{
 				Id: "id-0",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: statusNoCommand.Err(),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -1323,7 +1194,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 			req: &proto.ConvertTrialProjectRequest{
 				Command: &proto.ConvertTrialProjectCommand{},
 			},
-			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProjectIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -1336,7 +1207,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				Id:      "id-0",
 				Command: &proto.ConvertTrialProjectCommand{},
 			},
-			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusProjectNotFound.Err(),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -1401,15 +1272,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc     string
@@ -1426,7 +1288,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "EnableProject",
@@ -1456,7 +1318,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "DisableProject",
@@ -1486,7 +1348,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateProject",
@@ -1516,7 +1378,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateProjectNoCommand",
@@ -1549,7 +1411,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "ConvertTrialProject",
@@ -1579,7 +1441,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 	}
 	for _, p := range patterns {
@@ -1604,15 +1466,6 @@ func TestListProjectsV2(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -1667,7 +1520,7 @@ func TestListProjectsV2(t *testing.T) {
 				OrganizationId: "org-1",
 			},
 			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "failure: invalid cursor",
@@ -1686,7 +1539,7 @@ func TestListProjectsV2(t *testing.T) {
 				OrganizationId: "org-1",
 			},
 			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "failure: internal error",
