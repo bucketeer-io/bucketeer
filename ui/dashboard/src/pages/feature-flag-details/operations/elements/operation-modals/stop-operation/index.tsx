@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { OpsTypeMap } from 'pages/feature-flag-details/operations/types';
 import Button from 'components/button';
@@ -43,12 +42,8 @@ const StopOperationModal = ({
     >
       <div className="flex flex-col w-full items-start px-5 py-8">
         <div className="typo-para-medium text-accent-red-500 w-full">
-          <Trans
-            i18nKey={'table:stop-operation-type-desc'}
-            values={{
-              type: t(`form:feature-flags.${transKey}`)
-            }}
-          />
+          <p>{t('table:stop-operation-rollout.title')}</p>
+          <p>{t('table:stop-operation-rollout.desc')}</p>
         </div>
       </div>
 
