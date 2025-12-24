@@ -442,6 +442,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	req *environmentproto.UpdateEnvironmentV2Request,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateUpdateEnvironmentV2RequestNoCommand(req); err != nil {
 		return nil, err
 	}

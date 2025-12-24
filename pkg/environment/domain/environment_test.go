@@ -149,12 +149,12 @@ func TestUpdateEnvironmentV2_AutoArchiveValidation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name                     string
+		name                       string
 		existingAutoArchiveEnabled bool
-		autoArchiveEnabled       *wrapperspb.BoolValue
-		autoArchiveUnusedDays    *wrapperspb.Int32Value
-		autoArchiveCheckCodeRefs *wrapperspb.BoolValue
-		expectedError            error
+		autoArchiveEnabled         *wrapperspb.BoolValue
+		autoArchiveUnusedDays      *wrapperspb.Int32Value
+		autoArchiveCheckCodeRefs   *wrapperspb.BoolValue
+		expectedError              error
 	}{
 		{
 			name:                       "err: enable auto-archive without unused_days",
