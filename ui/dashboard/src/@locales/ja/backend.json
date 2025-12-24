@@ -117,6 +117,12 @@
     "WebhookRule": "Webhookのルール",
     "FlagTrigger": "フラグトリガー",
     "CodeReference": "コードリファレンス",
+    "CodeReferenceFilePath": "コードリファレンスのファイルパス",
+    "CodeReferenceLineNumber": "コードリファレンスの行番号",
+    "CodeReferenceCodeSnippet": "コードリファレンスのコードスニペット",
+    "CodeReferenceContentHash": "コードリファレンスのコンテンツハッシュ",
+    "CodeReferenceRepositoryInfo": "コードリファレンスのリポジトリ情報",
+    "CodeReferenceRepositoryType": "コードリファレンスのリポジトリタイプ",
     "Team": "チーム"
   },
   "errors": {
