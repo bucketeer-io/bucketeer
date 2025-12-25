@@ -60,7 +60,10 @@ message ProgressiveRolloutSchedule {
 
 message ProgressiveRolloutManualScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
-  string variation_id = 2;
+  // Deprecated: Use control_variation_id and target_variation_id instead.
+  string variation_id = 2 [deprecated = true];
+  string control_variation_id = 3;
+  string target_variation_id = 4;
 }
 
 message ProgressiveRolloutTemplateScheduleClause {
@@ -75,5 +78,8 @@ message ProgressiveRolloutTemplateScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
   Interval interval = 2;
   int64 increments = 3;
-  string variation_id = 4;
+  // Deprecated: Use control_variation_id and target_variation_id instead.
+  string variation_id = 4 [deprecated = true];
+  string control_variation_id = 5;
+  string target_variation_id = 6;
 }
