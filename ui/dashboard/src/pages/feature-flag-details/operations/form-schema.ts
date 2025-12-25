@@ -240,7 +240,8 @@ export interface RolloutSchemaType {
   progressiveRolloutType: RolloutTypeMap;
   progressiveRollout: {
     template: {
-      variationId: string;
+      targetVariationId: string;
+      controlVariationId: string;
       increments: number;
       startDate: Date;
       schedulesList: SchedulesListType[];
@@ -248,7 +249,8 @@ export interface RolloutSchemaType {
     };
     manual: {
       schedulesList: SchedulesListType[];
-      variationId: string;
+      targetVariationId: string;
+      controlVariationId: string;
     };
   };
 }
@@ -265,7 +267,8 @@ export const rolloutSchema = ({
     progressiveRolloutType: yup.mixed<RolloutTypeMap>().required(),
     progressiveRollout: yup.object().shape({
       template: yup.object().shape({
-        variationId: yup.string().required(),
+        targetVariationId: yup.string().required(),
+        controlVariationId: yup.string().required(),
         increments: yup
           .number()
           .transform(value => (isNaN(value) ? undefined : value))
@@ -302,7 +305,8 @@ export const rolloutSchema = ({
           .required(requiredMessage)
       }),
       manual: yup.object().shape({
-        variationId: yup.string().required(requiredMessage),
+        targetVariationId: yup.string().required(requiredMessage),
+        controlVariationId: yup.string().required(requiredMessage),
         schedulesList: schedulesListSchema({ requiredMessage, translation })
       })
     })
