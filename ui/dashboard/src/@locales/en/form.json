@@ -241,6 +241,8 @@
     "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
   },
   "flag-variation": "Flag Variation",
+  "target-variation": "Target Variation",
+  "control-variation": "Control Variation",
   "template": "Template",
   "manual": "Manual",
   "increments": "Increments",
@@ -272,12 +274,16 @@
   "rollout-tooltips": {
     "template": {
       "variation": "Select the variation to roll out over time. Avoid using the same variation configured as the OFF variation to prevent evaluation issues.",
+      "target-variation": "Select the variation to progressively roll out to users over time. As the rollout progresses, more users will receive this variation instead of the control variation.",
+      "control-variation": "Select the baseline variation that users will receive before being included in the rollout. This serves as the starting point before users are progressively rolled into the target variation.",
       "start-date": "The date and time when the first rollout phase begins.",
       "increment": "The percentage increase applied to each rollout phase. For example, using 10% will divide the rollout into 10 equal stages.",
       "frequency": "The time interval between each rollout phase. Based on the Start Date, Bucketeer will automatically release each stage hourly, daily, or weekly."
     },
     "manual": {
       "variation": "Select the variation to gradually roll out. This must be different from the OFF variation to prevent conflicts during evaluation.",
+      "target-variation": "Select the variation to progressively roll out to users over time. As the rollout progresses, more users will receive this variation instead of the control variation.",
+      "control-variation": "Select the baseline variation that users will receive before being included in the rollout. This serves as the starting point before users are progressively rolled into the target variation.",
       "weight": "The percentage of users who will receive this variation when this phase is executed.",
       "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
     }

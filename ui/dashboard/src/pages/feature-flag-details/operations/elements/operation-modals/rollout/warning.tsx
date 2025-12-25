@@ -2,20 +2,18 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { Experiment, FeatureVariation } from '@types';
+import { Experiment } from '@types';
 import { IconToastWarning } from '@icons';
 import Icon from 'components/icon';
 
 const RolloutWarning = ({
   urlCode,
   experiments,
-  hasRolloutRunning,
-  variations
+  hasRolloutRunning
 }: {
   urlCode: string;
   experiments: Experiment[];
   hasRolloutRunning: boolean;
-  variations: FeatureVariation[];
 }) => {
   const { t } = useTranslation(['form']);
   return (
@@ -40,9 +38,6 @@ const RolloutWarning = ({
             </li>
           )}
           {hasRolloutRunning && <li>{t('rollout-warning-desc')}</li>}
-          {variations.length !== 2 && (
-            <li>{t('rollout-variations-warning')}</li>
-          )}
         </ul>
 
         <div className="mt-4">
