@@ -19,13 +19,11 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -38,7 +36,6 @@ func executeAutoOpsRuleOperation(
 	actionType autoopsproto.ActionType,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
-	localizer locale.Localizer,
 	publisher publisher.Publisher,
 	editor *eventproto.Editor,
 ) error {
@@ -48,14 +45,7 @@ func executeAutoOpsRuleOperation(
 	case autoopsproto.ActionType_DISABLE:
 		return disableFeature(ctx, ftStorage, environmentId, feature, logger, publisher, editor)
 	}
-	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
+	return statusUnknownOpsType.Err()
 }
 
 // If the flag is already enabled, we only print an error log.
