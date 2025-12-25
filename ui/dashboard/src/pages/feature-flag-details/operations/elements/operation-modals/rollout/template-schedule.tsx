@@ -109,15 +109,53 @@ const TemplateSchedule = ({
     <div className="flex flex-col w-full gap-y-4">
       <Form.Field
         control={control}
-        name={`progressiveRollout.template.variationId`}
+        name={`progressiveRollout.template.targetVariationId`}
         render={({ field }) => (
           <Form.Item className="py-0">
             <Form.Label required className="relative w-fit">
-              {t('flag-variation')}
+              {t('target-variation')}
               <Tooltip
                 align="start"
                 alignOffset={-73}
-                content={t('rollout-tooltips.template.variation')}
+                content={t('rollout-tooltips.template.target-variation')}
+                trigger={
+                  <div className="flex-center size-fit absolute top-0 -right-6">
+                    <Icon icon={IconInfo} size="xs" color="gray-500" />
+                  </div>
+                }
+                className="max-w-[300px]"
+              />
+            </Form.Label>
+            <Form.Control>
+              <DropdownMenuWithSearch
+                align="end"
+                label={
+                  variationOptions.find(item => item.value === field.value)
+                    ?.label || ''
+                }
+                itemSelected={field.value}
+                contentClassName="[&>div.wrapper-menu-items>div]:px-4"
+                options={variationOptions}
+                disabled={isDisabled}
+                onSelectOption={field.onChange}
+              />
+            </Form.Control>
+            <Form.Message />
+          </Form.Item>
+        )}
+      />
+
+      <Form.Field
+        control={control}
+        name={`progressiveRollout.template.controlVariationId`}
+        render={({ field }) => (
+          <Form.Item className="py-0">
+            <Form.Label required className="relative w-fit">
+              {t('control-variation')}
+              <Tooltip
+                align="start"
+                alignOffset={-73}
+                content={t('rollout-tooltips.template.control-variation')}
                 trigger={
                   <div className="flex-center size-fit absolute top-0 -right-6">
                     <Icon icon={IconInfo} size="xs" color="gray-500" />
