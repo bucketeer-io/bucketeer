@@ -41,6 +41,8 @@ export interface RolloutSchedule {
 export interface RolloutManualScheduleClause {
   schedules: RolloutSchedule[];
   variationId: string;
+  targetVariationId: string;
+  controlVariationId: string;
 }
 
 export interface RolloutTemplateScheduleClause {
@@ -48,4 +50,6 @@ export interface RolloutTemplateScheduleClause {
   interval: IntervalType;
   increments: string;
   variationId: string;
+  targetVariationId: string;
+  controlVariationId: string;
 }

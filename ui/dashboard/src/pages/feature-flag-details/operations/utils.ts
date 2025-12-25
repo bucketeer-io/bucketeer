@@ -36,11 +36,13 @@ export const createProgressiveRollout = (feature: Feature) => ({
     startDate: createInitialDatetimeClause().time,
     interval: 'HOURLY',
     increments: 10,
-    variationId: feature.variations[0].id,
+    targetVariationId: feature.variations[0].id,
+    controlVariationId: feature.variations[1].id,
     schedulesList: []
   },
   manual: {
-    variationId: feature.variations[0].id,
+    targetVariationId: feature.variations[0].id,
+    controlVariationId: feature.variations[1].id,
     schedulesList: [
       {
         scheduleId: uuid(),
