@@ -20,15 +20,14 @@ import (
 )
 
 var (
-	statusInternal        = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal"))
 	statusUnauthenticated = api.NewGRPCStatus(
 		pkgErr.NewErrorUnauthenticated(pkgErr.AuditlogPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuditlogPackageName, "permission denied"))
 	statusMissingID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing ID", "ID"))
-	statusNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "not found", "auditlog"))
+	statusAuditLogNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "audit log not found", "AuditLog"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuditlogPackageName, "cursor is invalid", "cursor"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
