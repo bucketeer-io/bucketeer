@@ -5,12 +5,23 @@ metadata:
   labels:
     {{- include "redis.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  {{- if eq (.Values.service.type | default "ClusterIP") "NodePort" }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 6379
       protocol: TCP
       name: redis
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 6379
+      protocol: TCP
+      name: redis
+  {{- end }}
   selector:
     {{- include "redis.selectorLabels" . | nindent 4 }}
 ---

@@ -82,9 +82,6 @@ func TestGetFeatureByVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// wait for the audit log
-	time.Sleep(5 * time.Second)
-
 	// get feature with latest version
 	updatedFeature, err := featureClient.GetFeature(ctx, &feature.GetFeatureRequest{
 		Id:            req.Id,
@@ -93,14 +90,25 @@ func TestGetFeatureByVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// get feature by version
-	oldFeature, err := featureClient.GetFeature(ctx, &feature.GetFeatureRequest{
-		Id:             req.Id,
-		FeatureVersion: wrapperspb.Int32(1),
-		EnvironmentId:  *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
+
+	// get feature by version with retry (audit log takes time to persist)
+	var oldFeature *feature.GetFeatureResponse
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		if i > 0 {
+			time.Sleep(2 * time.Second)
+		}
+		oldFeature, err = featureClient.GetFeature(ctx, &feature.GetFeatureRequest{
+			Id:             req.Id,
+			FeatureVersion: wrapperspb.Int32(1),
+			EnvironmentId:  *environmentID,
+		})
+		if err == nil {
+			break
+		}
+		if i == maxRetries-1 {
+			t.Fatal(err)
+		}
 	}
 
 	assert.Equal(t, oldFeature.Feature.Version, int32(1))
@@ -520,11 +528,18 @@ func TestListFeaturesPageSize(t *testing.T) {
 func TestListFeaturesCursor(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	createRandomIDFeatures(t, 3, client)
+	// Create a unique prefix for this test to filter features
+	testPrefix := fmt.Sprintf("cursor-test-%s", newUUID(t))
+	// Create 3 features with the unique prefix
+	for i := 0; i < 3; i++ {
+		featureID := fmt.Sprintf("%s-%d", testPrefix, i)
+		createFeature(t, client, newCreateFeatureCommand(featureID))
+	}
 	size := int64(1)
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
 		EnvironmentId: *environmentID,
+		SearchKeyword: testPrefix,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -540,6 +555,7 @@ func TestListFeaturesCursor(t *testing.T) {
 		PageSize:      size,
 		Cursor:        response.Cursor,
 		EnvironmentId: *environmentID,
+		SearchKeyword: testPrefix,
 	}
 	response, err = client.ListFeatures(ctx, listReq)
 	if err != nil {

@@ -72,8 +72,6 @@ start-minikube:
 	# used to enable ssl-passthrough for nginx ingress container
 	kubectl config use-context minikube
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
-	# update helm dependencies
-	cd ../../manifests/localenv && helm dependency update
 	# Delete old Bitnami StatefulSets if they exist (migration from Bitnami charts)
 	# This is needed because selector labels changed from app.kubernetes.io/name: localenv to app.kubernetes.io/name: redis/mysql
 	kubectl delete statefulset localenv-mysql localenv-redis -n default --ignore-not-found=true

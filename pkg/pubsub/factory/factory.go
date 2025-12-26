@@ -70,6 +70,7 @@ type options struct {
 	metrics        metrics.Registerer
 	logger         *zap.Logger
 	partitionCount int
+	idleTime       int // Redis Stream idle time in seconds
 }
 
 // Option is a function that configures options.
@@ -114,6 +115,13 @@ func WithLogger(logger *zap.Logger) Option {
 func WithPartitionCount(count int) Option {
 	return func(opts *options) {
 		opts.partitionCount = count
+	}
+}
+
+// WithIdleTime sets the idle time for Redis Stream pending message reclaim (in seconds)
+func WithIdleTime(idleTimeSeconds int) Option {
+	return func(opts *options) {
+		opts.idleTime = idleTimeSeconds
 	}
 }
 
@@ -167,6 +175,9 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 		}
 		if options.partitionCount > 0 {
 			streamOpts = append(streamOpts, redis.WithStreamPartitionCount(options.partitionCount))
+		}
+		if options.idleTime > 0 {
+			streamOpts = append(streamOpts, redis.WithStreamIdleTime(options.idleTime))
 		}
 
 		// Create Redis Stream client

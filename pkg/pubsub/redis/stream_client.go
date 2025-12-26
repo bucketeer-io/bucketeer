@@ -17,6 +17,7 @@ package redis
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -48,6 +49,7 @@ type streamOptions struct {
 	metrics        metrics.Registerer
 	logger         *zap.Logger
 	partitionCount int
+	idleTime       int // Idle time in seconds for pending message reclaim
 }
 
 type StreamOption func(*streamOptions)
@@ -70,6 +72,13 @@ func WithStreamLogger(logger *zap.Logger) StreamOption {
 func WithStreamPartitionCount(count int) StreamOption {
 	return func(opts *streamOptions) {
 		opts.partitionCount = count
+	}
+}
+
+// WithStreamIdleTime sets the idle time in seconds for pending message reclaim
+func WithStreamIdleTime(idleTimeSeconds int) StreamOption {
+	return func(opts *streamOptions) {
+		opts.idleTime = idleTimeSeconds
 	}
 }
 
@@ -124,6 +133,9 @@ func (c *StreamClient) CreatePuller(subscription, topic string) (puller.Puller, 
 	}
 	if c.opts.metrics != nil {
 		options = append(options, WithStreamPullerMetrics(c.opts.metrics))
+	}
+	if c.opts.idleTime > 0 {
+		options = append(options, WithStreamPullerIdleTime(time.Duration(c.opts.idleTime)*time.Second))
 	}
 
 	return NewStreamPuller(c.redisClient, subscription, topic, options...), nil

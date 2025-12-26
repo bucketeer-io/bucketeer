@@ -7,7 +7,7 @@ env:
   gcpEnabled: false
   profile: false
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-  project: bucketeer-test
+  project: bucketeer-dev
   database:
     mysql:
       user: bucketeer

@@ -4,7 +4,7 @@
 
 replicaCount: 1
 
-project: "default"
+project: "bucketeer-dev"
 
 image:
   # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)

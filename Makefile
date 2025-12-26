@@ -36,8 +36,8 @@ local-deps:
 	mkdir -p ~/go-tools; \
 	cd ~/go-tools; \
 	if [ ! -e go.mod ]; then go mod init go-tools; fi; \
-	go install golang.org/x/tools/cmd/goimports@latest; \
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	go install golang.org/x/tools/cmd/goimports@v0.40.0; \
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2; \
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
@@ -330,9 +330,9 @@ start-minikube:
 		make -C tools/dev start-minikube; \
 	fi
 	sleep 5
+	helm uninstall bucketeer --ignore-not-found
 	make -C ./ modify-hosts
-	make -C ./ setup-bigquery-vault
-	make -C ./ setup-data-warehouse
+	make -C ./ setup-localenv
 
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
@@ -350,18 +350,16 @@ enable-vault-transit:
 create-pubsub-topics:
 	@echo "Creating PubSub topics..."
 	kubectl config use-context minikube
-	@# Get NodePort and use minikube IP (simple approach)
-	@PUBSUB_NODEPORT=$$(kubectl get svc localenv-pubsub -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "30089"); \
-	echo "Using PubSub NodePort: $$PUBSUB_NODEPORT"; \
 	go run ./hack/create-pubsub-topics create \
-		--pubsub-emulator-host=$$(minikube ip):$$PUBSUB_NODEPORT \
-		--project=bucketeer-test \
+		--pubsub-emulator-host=$$(minikube ip):30089 \
+		--project=bucketeer-dev \
 		--no-profile \
 		--no-gcp-trace-enabled
 
 .PHONY: create-bigquery-emulator-tables
 create-bigquery-emulator-tables:
 	go run ./hack/create-big-query-table create \
+		--project=bucketeer-dev \
 		--bigquery-emulator=http://$$(minikube ip):31000 \
 		--no-gcp-trace-enabled \
 		--no-profile
@@ -371,12 +369,8 @@ create-mysql-event-tables-minikube:
 	@echo "Creating MySQL event tables for minikube data warehouse..."
 	kubectl config use-context minikube
 	@echo "Waiting for MySQL pod to be ready..."
-	@while [ "$$(kubectl get pod localenv-mysql-0 -o jsonpath='{.status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ]; \
-	do \
-		echo "MySQL pod not ready yet, waiting 5 seconds..."; \
-		sleep 5; \
-	done; \
-	echo "MySQL pod is ready"
+	kubectl wait --for=condition=ready pod localenv-mysql-0 --timeout=300s
+	@echo "MySQL pod is ready"
 	MYSQL_USER=bucketeer \
 	MYSQL_PASS=bucketeer \
 	MYSQL_HOST=$$(minikube ip) \
@@ -400,41 +394,38 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
-setup-bigquery-vault:
-	kubectl config use-context minikube
-	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \
-	do \
-		sleep 5; \
-	done; \
-	make create-bigquery-emulator-tables
-	make enable-vault-transit
+.PHONY: delete-redis-retry-keys
+delete-redis-retry-keys:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-redis-retry-keys clean build-darwin
+else
+	make -C hack/delete-redis-retry-keys clean build
+endif
+	./hack/delete-redis-retry-keys/delete-redis-retry-keys delete \
+		--redis-addr=$(if $(REDIS_ADDR),$(REDIS_ADDR),$$(minikube ip):32001) \
+		--environment-id=e2e \
+		--no-profile \
+		--no-gcp-trace-enabled
 
-# setup data warehouse tables based on configuration (supports both BigQuery and MySQL)
-setup-data-warehouse:
+setup-localenv:
 	kubectl config use-context minikube
+	@echo "Ensuring localenv chart is up to date..."
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv || helm install localenv manifests/localenv
+	@echo "Force restarting infrastructure pods to start fresh..."
+	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=pubsub --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
+	@echo "Waiting for infrastructure pods to be ready..."
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	@echo "Pods are ready"
 	@echo "Setting up data warehouse tables..."
-	@# Wait for services to be ready
-	@echo "Waiting for services to be ready..."
-	@while [ "$$(kubectl get pods -l app.kubernetes.io/name=bq -o jsonpath='{.items[0].status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ] || \
-	      [ "$$(kubectl get pods -l app.kubernetes.io/name=pubsub -o jsonpath='{.items[0].status.containerStatuses[0].ready}' 2>/dev/null)" != "true" ]; \
-	do \
-		echo "Services not ready yet, waiting 5 seconds..."; \
-		sleep 5; \
-	done; \
-	echo "Services are ready"
-	@# Always create BigQuery tables (for BigQuery data warehouse)
-	make create-bigquery-emulator-tables || echo "BigQuery table creation failed or skipped"
-	@# Conditionally create MySQL tables only if data warehouse type is mysql
-	@DW_TYPE=$$(yq eval '.global.dataWarehouse.type' manifests/bucketeer/values.dev.yaml 2>/dev/null || echo "bigquery"); \
-	if [ "$$DW_TYPE" = "mysql" ]; then \
-		echo "Data warehouse type is MySQL, creating MySQL event tables..."; \
-		make create-mysql-event-tables-minikube || echo "MySQL table creation failed or skipped"; \
-	else \
-		echo "Data warehouse type is $$DW_TYPE, skipping MySQL table creation"; \
-	fi
-	@echo "Data warehouse tables setup completed"
-	@# Note: PubSub topics are created automatically when services start and try to publish
-	@# The createTopicForEmulator function in pkg/pubsub/pubsub.go handles this
+	make create-bigquery-emulator-tables
+	make create-mysql-event-tables-minikube
+	make enable-vault-transit
 
 DEV_IMAGES := gcr.io/distroless/base docker.io/arigaio/atlas:latest
 pull-dev-images:
@@ -491,6 +482,9 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
+	@echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."
+	make -C ./ create-bigquery-emulator-tables
+	@echo "Installing Bucketeer services..."
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 
 #############################

@@ -37,6 +37,8 @@ global:
       minIdle: 25
       # Redis stream partition count
       partitionCount: 16
+      # Idle time in seconds for pending message reclaim
+      idleTime: 600
     # PubSub emulator host (for local development)
     emulatorHost: ""
     # Google Cloud project ID
