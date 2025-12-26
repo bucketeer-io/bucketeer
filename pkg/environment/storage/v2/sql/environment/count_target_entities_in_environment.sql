@@ -1,0 +1,1 @@
+SELECT COUNT(1) FROM %s WHERE environment_id = ?
