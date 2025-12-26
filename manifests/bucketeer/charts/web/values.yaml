@@ -23,6 +23,11 @@ env:
   mysqlHost:
   mysqlPort: 3306
   mysqlDbName:
+  postgresUser:
+  postgresPass:
+  postgresHost:
+  postgresPort: 5432
+  postgresDbName:
   persistentRedis:
     serverName:
     addr:

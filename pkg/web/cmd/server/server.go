@@ -63,6 +63,7 @@ import (
 	gatewayapi "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	tagapi "github.com/bucketeer-io/bucketeer/v2/pkg/tag/api"
 	teamapi "github.com/bucketeer-io/bucketeer/v2/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
@@ -117,6 +118,11 @@ type server struct {
 	mysqlHost                       *string
 	mysqlPort                       *int
 	mysqlDBName                     *string
+	postgresUser                    *string
+	postgresPass                    *string
+	postgresHost                    *string
+	postgresPort                    *int
+	postgresDBName                  *string
 	persistentRedisServerName       *string
 	persistentRedisAddr             *string
 	persistentRedisPoolMaxIdle      *int
@@ -178,6 +184,7 @@ type DataWarehouseConfig struct {
 	Timezone  string                      `yaml:"timezone"`
 	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
 	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
+	Postgres  DataWarehousePostgresConfig `yaml:"postgres"`
 }
 
 type DataWarehouseBigQueryConfig struct {
@@ -195,6 +202,15 @@ type DataWarehouseMySQLConfig struct {
 	Database          string `yaml:"database"`
 }
 
+type DataWarehousePostgresConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
+}
+
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
@@ -204,11 +220,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		isDemoSiteEnabled: cmd.Flag(
 			"demo-site-enabled",
 			"Is demo site enabled").Default("false").Bool(),
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		postgresUser:   cmd.Flag("postgres-user", "Postgres user.").Required().String(),
+		postgresPass:   cmd.Flag("postgres-pass", "Postgres password.").Required().String(),
+		postgresHost:   cmd.Flag("postgres-host", "Postgres host.").Required().String(),
+		postgresPort:   cmd.Flag("postgres-port", "Postgres port.").Required().Int(),
+		postgresDBName: cmd.Flag("postgres-db-name", "Postgres database name.").Required().String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
 			"Name of the persistent redis.",
@@ -345,7 +366,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("localhost:9001").String(),
 		dataWarehouseType: cmd.Flag(
 			"data-warehouse-type",
-			"Data warehouse type (bigquery, mysql).",
+			"Data warehouse type (bigquery, mysql, postgres).",
 		).Default("bigquery").String(),
 		dataWarehouseConfigPath: cmd.Flag(
 			"data-warehouse-config-path",
@@ -455,6 +476,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
+	}
+	//postgresClient
+	postgresClient, err := s.createPostgresClient(ctx, registerer, logger)
+	if err != nil {
+		// TODO: postgres client is optional for now to support mysql only setup, handle this more gracefully
+		logger.Warn("Failed to create Postgres client", zap.Error(err))
 	}
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
@@ -686,6 +713,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
 		mysqlClient,
+		postgresClient,
 		experimentClient,
 		featureClient,
 		accountClient,
@@ -971,6 +999,23 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createPostgresClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (postgres.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return postgres.NewClient(
+		ctx,
+		*s.postgresUser, *s.postgresPass, *s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDBName,
+		postgres.WithLogger(logger),
+		postgres.WithMetrics(registerer),
 	)
 }
 

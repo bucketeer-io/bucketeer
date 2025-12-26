@@ -15,6 +15,14 @@
         "password": "bucketeer",
         "database": "bucketeer"
       },
+      "postgres": {
+        "useMainConnection": true,
+        "host": "postgres",
+        "port": 5432,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
       "bigquery": {
         "project": "",
         "dataset": "",
@@ -41,6 +49,14 @@
         "useMainConnection": true,
         "host": "mysql",
         "port": 3306,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
+      "postgres": {
+        "useMainConnection": true,
+        "host": "postgres",
+        "port": 5432,
         "user": "bucketeer",
         "password": "bucketeer",
         "database": "bucketeer"
