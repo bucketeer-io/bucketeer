@@ -481,6 +481,7 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
+	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
 	@echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."
 	make -C ./ create-bigquery-emulator-tables
 	@echo "Installing Bucketeer services..."
