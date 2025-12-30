@@ -150,6 +150,34 @@ message GetAuthOptionsByEmailResponse {
   DomainAuthOptions options = 1;
 }
 
+// Company OIDC Messages
+
+message GetCompanyOidcAuthURLRequest {
+  string email = 1;
+  string state = 2;
+  string redirect_url = 3;
+  string code_challenge = 4;         // PKCE code challenge
+  string code_challenge_method = 5;  // PKCE method (S256)
+}
+
+message GetCompanyOidcAuthURLResponse {
+  string url = 1;
+  string nonce = 2;  // To validate ID token
+}
+
+message ExchangeCompanyOidcTokenRequest {
+  string code = 1;
+  string state = 2;
+  string redirect_url = 3;
+  string email = 4;          // Original email to verify domain
+  string code_verifier = 5;  // PKCE code verifier
+  string nonce = 6;          // To validate ID token
+}
+
+message ExchangeCompanyOidcTokenResponse {
+  Token token = 1;  // Temporary token, not org-scoped yet
+}
+
 // Admin: Domain Auth Policy Management
 
 message CreateDomainAuthPolicyRequest {
@@ -594,6 +622,80 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Company OIDC APIs
+
+  rpc GetCompanyOidcAuthURL(GetCompanyOidcAuthURLRequest)
+      returns (GetCompanyOidcAuthURLResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/company_oidc/url"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Company OIDC Auth URL",
+      description: "Generate authorization URL for company OIDC provider (public, no auth required).",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_company_oidc_auth_url",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "No company OIDC configured for domain."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ExchangeCompanyOidcToken(ExchangeCompanyOidcTokenRequest)
+      returns (ExchangeCompanyOidcTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/company_oidc/token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Company OIDC Token",
+      description: "Exchange authorization code for Bucketeer token via company OIDC (public, no auth required).",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.exchange_company_oidc_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
           }
         }
       }

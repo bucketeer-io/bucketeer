@@ -6051,6 +6051,96 @@
             ]
           },
           {
+            "name": "GetCompanyOidcAuthURLRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "code_challenge",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "code_challenge_method",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetCompanyOidcAuthURLResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "nonce",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeCompanyOidcTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "code_verifier",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "nonce",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeCompanyOidcTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
             "name": "CreateDomainAuthPolicyRequest",
             "fields": [
               {
@@ -7603,6 +7693,268 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetCompanyOidcAuthURL",
+                "in_type": "GetCompanyOidcAuthURLRequest",
+                "out_type": "GetCompanyOidcAuthURLResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/company_oidc/url"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Company OIDC Auth URL"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Generate authorization URL for company OIDC provider (public, no auth required)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_company_oidc_auth_url"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "No company OIDC configured for domain."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExchangeCompanyOidcToken",
+                "in_type": "ExchangeCompanyOidcTokenRequest",
+                "out_type": "ExchangeCompanyOidcTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/company_oidc/token"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Exchange Company OIDC Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Exchange authorization code for Bucketeer token via company OIDC (public, no auth required)."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.exchange_company_oidc_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
                                   }
                                 ]
                               }
