@@ -276,7 +276,7 @@ func (s *authService) ExchangeToken(
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -288,7 +288,7 @@ func (s *authService) ExchangeToken(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
+	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
