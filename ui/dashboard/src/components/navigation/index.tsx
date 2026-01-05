@@ -1,19 +1,28 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from 'assets/logos/logo-white.svg';
-import { useAuth, getCurrentEnvironment } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import * as ROUTING from 'constants/routing';
-import { useToggleOpen } from 'hooks';
+import { useScreen, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import flatMapDeep from 'lodash/flatMapDeep';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import DialogModal from 'components/modal/dialog';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
 import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
+
+const LogoIcon = () => (
+  <span className="mt-4 block w-full bg-primary-600 p-[5px] rounded-md text-2xl font-bold text-white text-center">
+    B
+  </span>
+);
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { t } = useTranslation(['common']);
@@ -21,6 +30,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const navigate = useNavigate();
   const { consoleAccount } = useAuth();
 
+  const { fromTabletScreen, fromMobileScreen } = useScreen();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
 
@@ -131,11 +141,55 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
     useToggleOpen(false);
 
+  const [isExpanded, setIsExpanded, setIsCloseExpand] = useToggleOpen(false);
+
+  useEffect(() => {
+    if (fromTabletScreen) {
+      setIsCloseExpand();
+    }
+    if (!fromMobileScreen) {
+      setIsExpanded();
+    }
+  }, [fromTabletScreen, fromMobileScreen, setIsCloseExpand]);
   return (
-    <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
-      <div className="flex flex-col size-full relative overflow-hidden">
+    <div
+      className={cn(
+        'fixed h-screen bg-primary-500 z-50 transition-transform duration-200 ',
+        !fromTabletScreen && isExpanded
+          ? 'w-[248px] px-6 py-4'
+          : !fromMobileScreen
+            ? 'w-[248px] px-6 py-4'
+            : 'w-[60px] md:w-[248px] py-4 px-2 md:px-6 md:py-8'
+      )}
+    >
+      <div className="flex flex-col size-full relative overflow-hidden pt-4 md:pt-0">
+        {!fromTabletScreen && (
+          <button
+            onClick={() => (!isExpanded ? setIsExpanded() : setIsCloseExpand())}
+            className={cn(
+              'hidden sm:block hover:bg-gray-50 hover:rounded-full w-6 h-6',
+              isExpanded
+                ? 'absolute right-0 top-4'
+                : 'absolute right-[8px] top-0'
+            )}
+          >
+            <Icon
+              icon={isExpanded ? ChevronLeft : ChevronRight}
+              size="sm"
+              color="primary-50"
+            />
+          </button>
+        )}
         <Link to={ROUTING.PAGE_PATH_ROOT} onClick={onCloseSetting}>
-          <img src={logo} alt="Bucketer" />
+          {!fromTabletScreen ? (
+            isExpanded ? (
+              <img src={logo} alt="Bucketer" />
+            ) : (
+              <LogoIcon />
+            )
+          ) : (
+            <img src={logo} alt="Bucketer" />
+          )}
         </Link>
 
         <div className="flex flex-col flex-1 items-center pt-6">
@@ -145,20 +199,38 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               { 'right-0': isOpenSetting }
             )}
           >
-            <button
-              onClick={() => {
-                onCloseSetting();
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
-              }}
-              className="flex items-center gap-x-2 text-primary-50"
+            <div
+              className={cn(
+                'w-full flex ',
+                !fromTabletScreen
+                  ? isExpanded
+                    ? 'justify-start'
+                    : 'justify-center'
+                  : 'justify-start'
+              )}
             >
-              <Icon icon={IconSystem.IconBackspace} />
-              <span>{t(`navigation.back-to-main`)}</span>
-            </button>
+              <button
+                onClick={() => {
+                  onCloseSetting();
+                  navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
+                }}
+                className="flex items-center gap-x-2 text-primary-50"
+              >
+                <Icon icon={IconSystem.IconBackspace} />
+                <span
+                  className={cn(
+                    isExpanded ? 'inline-block' : 'hidden md:inline-block'
+                  )}
+                >
+                  {t(`navigation.back-to-main`)}
+                </span>
+              </button>
+            </div>
             <Divider className="my-5 bg-primary-50 opacity-10" />
             {settingMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
+                isExpanded={isExpanded}
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -171,14 +243,20 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               { 'left-0': !isOpenSetting }
             )}
           >
-            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+            <div
+              className={cn(
+                'px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3',
+                isExpanded ? 'block' : 'hidden md:block'
+              )}
+            >
               {t(`environment`)}
             </div>
-            <MyProjects />
+            <MyProjects isExpanded={isExpanded} />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             {mainMenuSections.map((item, index) => (
               <SectionMenu
                 key={index}
+                isExpanded={isExpanded}
                 className="first:mt-0 mt-4"
                 title={item.title}
                 items={item.menus}
@@ -190,7 +268,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
-        <div className="flex items-center justify-between">
+        <div
+          className={cn(
+            'flex gap-5 items-center justify-between',
+            isExpanded ? 'flex-row' : 'flex-col md:flex-row'
+          )}
+        >
           <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
           <button
             type="button"
@@ -207,11 +290,28 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </button>
         </div>
       </div>
-      <SwitchOrganization
-        isOpen={isOpenSwitchOrg}
-        onCloseSwitchOrg={onCloseSwitchOrg}
-        onCloseSetting={onCloseSetting}
-      />
+      {fromMobileScreen && isOpenSetting ? (
+        <SwitchOrganization
+          isExpanded={isExpanded}
+          isOpen={isOpenSwitchOrg}
+          onCloseSwitchOrg={onCloseSwitchOrg}
+          onCloseSetting={onCloseSetting}
+        />
+      ) : (
+        <DialogModal
+          className="w-full max-w-[350px]"
+          title=""
+          isOpen={isOpenSwitchOrg}
+          onClose={onCloseSwitchOrg}
+        >
+          <SwitchOrganization
+            isExpanded={isExpanded}
+            isOpen={isOpenSwitchOrg}
+            onCloseSwitchOrg={onCloseSwitchOrg}
+            onCloseSetting={onCloseSetting}
+          />
+        </DialogModal>
+      )}
     </div>
   );
 };
