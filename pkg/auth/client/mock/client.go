@@ -94,6 +94,26 @@ func (mr *MockClientMockRecorder) DeleteDomainAuthPolicy(ctx, in any, opts ...an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).DeleteDomainAuthPolicy), varargs...)
 }
 
+// ExchangeCompanyOidcToken mocks base method.
+func (m *MockClient) ExchangeCompanyOidcToken(ctx context.Context, in *auth.ExchangeCompanyOidcTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeCompanyOidcTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExchangeCompanyOidcToken", varargs...)
+	ret0, _ := ret[0].(*auth.ExchangeCompanyOidcTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExchangeCompanyOidcToken indicates an expected call of ExchangeCompanyOidcToken.
+func (mr *MockClientMockRecorder) ExchangeCompanyOidcToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeCompanyOidcToken", reflect.TypeOf((*MockClient)(nil).ExchangeCompanyOidcToken), varargs...)
+}
+
 // ExchangeToken mocks base method.
 func (m *MockClient) ExchangeToken(ctx context.Context, in *auth.ExchangeTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeTokenResponse, error) {
 	m.ctrl.T.Helper()
@@ -152,6 +172,26 @@ func (mr *MockClientMockRecorder) GetAuthenticationURL(ctx, in any, opts ...any)
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticationURL", reflect.TypeOf((*MockClient)(nil).GetAuthenticationURL), varargs...)
+}
+
+// GetCompanyOidcAuthURL mocks base method.
+func (m *MockClient) GetCompanyOidcAuthURL(ctx context.Context, in *auth.GetCompanyOidcAuthURLRequest, opts ...grpc.CallOption) (*auth.GetCompanyOidcAuthURLResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetCompanyOidcAuthURL", varargs...)
+	ret0, _ := ret[0].(*auth.GetCompanyOidcAuthURLResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCompanyOidcAuthURL indicates an expected call of GetCompanyOidcAuthURL.
+func (mr *MockClientMockRecorder) GetCompanyOidcAuthURL(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompanyOidcAuthURL", reflect.TypeOf((*MockClient)(nil).GetCompanyOidcAuthURL), varargs...)
 }
 
 // GetDemoSiteStatus mocks base method.

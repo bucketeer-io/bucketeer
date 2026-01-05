@@ -51,7 +51,11 @@ var (
 	statusMissingNewPassword = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "new password must not be empty", "NewPassword"))
 	statusPasswordsIdentical = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "new password must be different from current password", "NewPassword"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.AuthPackageName,
+			"new password must be different from current password",
+			"NewPassword",
+		))
 	statusMissingEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "Email"))
 	statusInvalidEmailConfig = api.NewGRPCStatus(

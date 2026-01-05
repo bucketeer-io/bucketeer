@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.59.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-resty/resty/v2 v2.17.1
@@ -91,7 +92,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
