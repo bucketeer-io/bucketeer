@@ -11,7 +11,7 @@ import {
 } from 'auth';
 import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
-import { useToast } from 'hooks';
+import { useScreen, useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import {
   clearCurrentEnvIdStorage,
@@ -32,10 +32,11 @@ import List from 'components/list';
 import { ScrollArea } from 'components/scroll-area';
 import SearchInput from 'components/search-input';
 
-const MyProjects = () => {
+const MyProjects = ({ isExpanded = true }: { isExpanded?: boolean }) => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
+  const { fromMobileScreen } = useScreen();
   const { errorNotify } = useToast();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -179,8 +180,8 @@ const MyProjects = () => {
     <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
         <Popover.Content align="start" className="border-none mt-2 z-20">
-          <div className="w-[600px] bg-white rounded-lg shadow-menu">
-            <div className="flex items-center justify-between px-5 py-4">
+          <div className="w-[350px] sm:w-[600px] bg-white rounded-lg shadow-menu">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-4">
               <h1 className="typo-head-bold-huge text-gray-900 capitalize">
                 {t(`navigation.my-projects`)}
               </h1>
@@ -189,7 +190,7 @@ const MyProjects = () => {
               </Popover.Close>
             </div>
             <Divider />
-            <div className="p-5">
+            <div className="p-3 sm:p-5">
               <SearchInput
                 name="my-project-search"
                 placeholder={t(`search`)}
@@ -197,7 +198,7 @@ const MyProjects = () => {
                 onChange={onSearchProject}
               />
               {projects && projects?.length > 0 ? (
-                <div className="mt-5 grid grid-cols-2 gap-4">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                   <div className="flex flex-col gap-3">
                     <List.Title>{t(`projects`)}</List.Title>
                     <ScrollArea className="h-[120px] pr-2">
@@ -214,6 +215,7 @@ const MyProjects = () => {
                       />
                     </ScrollArea>
                   </div>
+                  {!fromMobileScreen && <Divider />}
                   <div className="flex flex-col gap-3">
                     <List.Title>{t(`environments`)}</List.Title>
                     <ScrollArea className="h-[120px] pr-2">
@@ -254,11 +256,23 @@ const MyProjects = () => {
         >
           <div className="flex items-center gap-x-2 truncate">
             <Icon color="primary-50" icon={IconFolder} size="sm" />
-            <span className="truncate text-ellipsis">
+            <span
+              className={cn(
+                'truncate text-ellipsis',
+                isExpanded ? 'inline-block' : 'hidden md:inline-block'
+              )}
+            >
               {selectedEnvironment?.name}
             </span>
           </div>
-          <Icon color="primary-50" size="sm" icon={IconChevronRight} />
+          <Icon
+            className={cn(
+              isExpanded ? 'md:inline-block' : 'hidden md:inline-block'
+            )}
+            color="primary-50"
+            size="sm"
+            icon={IconChevronRight}
+          />
         </div>
       </Popover.Trigger>
     </Popover.Root>

@@ -30,6 +30,7 @@ import IconInfo from './customized-icons/info.svg?react';
 import IconJapanFlag from './customized-icons/japan-flag.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
 import IconLink from './customized-icons/link.svg?react';
+import IconMenu from './customized-icons/menu.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
 import IconOperationArrowXL from './customized-icons/operation-arrow-xl.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
@@ -122,6 +123,7 @@ export {
   IconLogout,
   IconBuilding,
   // Customized icons
+  IconMenu,
   IconAlert,
   IconExpandSquar,
   IconFlagYaml,
