@@ -28966,26 +28966,6 @@
             "name": "CreateGoalRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -29030,6 +29010,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
@@ -29137,46 +29118,6 @@
                 ]
               },
               {
-                "id": 2,
-                "name": "rename_command",
-                "type": "RenameGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 5,
                 "name": "environment_id",
                 "type": "string",
@@ -29215,6 +29156,8 @@
               }
             ],
             "reserved_ids": [
+              2,
+              3,
               4
             ]
           },
@@ -29389,26 +29332,6 @@
             "name": "CreateExperimentRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateExperimentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -29493,6 +29416,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
@@ -29517,66 +29441,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "change_experiment_period_command",
-                "type": "ChangeExperimentPeriodCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "change_name_command",
-                "type": "ChangeExperimentNameCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 7,
-                "name": "change_description_command",
-                "type": "ChangeExperimentDescriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -29636,7 +29500,10 @@
             "reserved_ids": [
               2,
               3,
-              4
+              4,
+              5,
+              6,
+              7
             ],
             "messages": [
               {

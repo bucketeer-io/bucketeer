@@ -67,12 +67,7 @@ message ListGoalsResponse {
 }
 
 message CreateGoalRequest {
-  CreateGoalCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateGoalCommand
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -110,18 +105,8 @@ message DeleteGoalResponse {}
 
 message UpdateGoalRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  RenameGoalCommand rename_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeDescriptionGoalCommand change_description_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // RenameGoalCommand rename_command
+  reserved 3;  // ChangeDescriptionGoalCommand change_description_command
   reserved 4;
   string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 6;
@@ -192,12 +177,7 @@ message ListExperimentsResponse {
 }
 
 message CreateExperimentRequest {
-  CreateExperimentCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateExperimentCommand
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -223,24 +203,9 @@ message UpdateExperimentRequest {
   reserved 3;  // ChangeStopAtExperimentCommand change_stop_at_command = 3
                // [deprecated = true];
   reserved 4;
-  ChangeExperimentPeriodCommand change_experiment_period_command = 5 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeExperimentNameCommand change_name_command = 6 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeExperimentDescriptionCommand change_description_command = 7 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 5;  // ChangeExperimentPeriodCommand change_experiment_period_command
+  reserved 6;  // ChangeExperimentNameCommand change_name_command
+  reserved 7;  // ChangeExperimentDescriptionCommand change_description_command
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 9;
   google.protobuf.StringValue description = 10;

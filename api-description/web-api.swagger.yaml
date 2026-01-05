@@ -11650,57 +11650,9 @@ definitions:
     type: object
   experimentArchiveGoalResponse:
     type: object
-  experimentChangeDescriptionGoalCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  experimentChangeExperimentDescriptionCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  experimentChangeExperimentNameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  experimentChangeExperimentPeriodCommand:
-    type: object
-    properties:
-      startAt:
-        type: string
-        format: int64
-      stopAt:
-        type: string
-        format: int64
-  experimentCreateExperimentCommand:
-    type: object
-    properties:
-      featureId:
-        type: string
-      startAt:
-        type: string
-        format: int64
-      stopAt:
-        type: string
-        format: int64
-      goalIds:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
-      description:
-        type: string
-      baseVariationId:
-        type: string
   experimentCreateExperimentRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/experimentCreateExperimentCommand'
-        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -11734,23 +11686,9 @@ definitions:
     properties:
       experiment:
         $ref: '#/definitions/experimentExperiment'
-  experimentCreateGoalCommand:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-      connectionType:
-        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/experimentCreateGoalCommand'
-        description: deprecated
       environmentId:
         type: string
       id:
@@ -11964,11 +11902,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  experimentRenameGoalCommand:
-    type: object
-    properties:
-      name:
-        type: string
   experimentStartExperimentCommand:
     type: object
   experimentStartExperimentResponse:
@@ -11982,15 +11915,6 @@ definitions:
     properties:
       id:
         type: string
-      changeExperimentPeriodCommand:
-        $ref: '#/definitions/experimentChangeExperimentPeriodCommand'
-        description: deprecated
-      changeNameCommand:
-        $ref: '#/definitions/experimentChangeExperimentNameCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/experimentChangeExperimentDescriptionCommand'
-        description: deprecated
       environmentId:
         type: string
       name:
@@ -12021,12 +11945,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/experimentRenameGoalCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/experimentChangeDescriptionGoalCommand'
-        description: deprecated
       environmentId:
         type: string
       name:

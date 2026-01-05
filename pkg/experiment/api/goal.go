@@ -233,57 +233,7 @@ func (s *experimentService) CreateGoal(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createGoalNoCommand(ctx, req, editor)
-	}
-	if err := validateCreateGoalRequest(req); err != nil {
-		return nil, err
-	}
-	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description, req.Command.ConnectionType)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new goal",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.goalStorage.CreateGoal(ctxWithTx, goal, req.EnvironmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create goal",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.CreateGoalResponse{
-		Goal: goal.Goal,
-	}, nil
-}
-
-func (s *experimentService) createGoalNoCommand(
-	ctx context.Context,
-	req *proto.CreateGoalRequest,
-	editor *eventproto.Editor,
-) (*proto.CreateGoalResponse, error) {
-	if err := validateCreateGoalNoCommandRequest(req); err != nil {
+	if err = validateCreateGoalRequest(req); err != nil {
 		return nil, err
 	}
 	goal, err := domain.NewGoal(req.Id, req.Name, req.Description, req.ConnectionType)
@@ -343,19 +293,6 @@ func (s *experimentService) createGoalNoCommand(
 }
 
 func validateCreateGoalRequest(req *proto.CreateGoalRequest) error {
-	if req.Command.Id == "" {
-		return statusGoalIDRequired.Err()
-	}
-	if !goalIDRegex.MatchString(req.Command.Id) {
-		return statusInvalidGoalID.Err()
-	}
-	if req.Command.Name == "" {
-		return statusGoalNameRequired.Err()
-	}
-	return nil
-}
-
-func validateCreateGoalNoCommandRequest(req *proto.CreateGoalRequest) error {
 	if req.Id == "" {
 		return statusGoalIDRequired.Err()
 	}
@@ -378,48 +315,7 @@ func (s *experimentService) UpdateGoal(
 	if err != nil {
 		return nil, err
 	}
-	if req.ChangeDescriptionCommand == nil && req.RenameCommand == nil {
-		return s.updateGoalNoCommand(ctx, req, editor)
-	}
-	if req.Id == "" {
-		return nil, statusGoalIDRequired.Err()
-	}
-	commands := make([]command.Command, 0)
-	if req.RenameCommand != nil {
-		commands = append(commands, req.RenameCommand)
-	}
-	if req.ChangeDescriptionCommand != nil {
-		commands = append(commands, req.ChangeDescriptionCommand)
-	}
-	if len(commands) == 0 {
-		return nil, statusNoCommand.Err()
-	}
-	err = s.updateGoal(
-		ctx,
-		editor,
-		req.EnvironmentId,
-		req.Id,
-		commands,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to update goal",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	return &proto.UpdateGoalResponse{}, nil
-}
-
-func (s *experimentService) updateGoalNoCommand(
-	ctx context.Context,
-	req *proto.UpdateGoalRequest,
-	editor *eventproto.Editor,
-) (*proto.UpdateGoalResponse, error) {
-	err := s.validateUpdateGoalNoCommandRequest(req)
+	err = s.validateUpdateGoalRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +374,7 @@ func (s *experimentService) updateGoalNoCommand(
 	}, nil
 }
 
-func (s *experimentService) validateUpdateGoalNoCommandRequest(
+func (s *experimentService) validateUpdateGoalRequest(
 	req *proto.UpdateGoalRequest,
 ) error {
 	if req.Id == "" {
