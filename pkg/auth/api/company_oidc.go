@@ -19,12 +19,10 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authdomain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/oidc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
@@ -33,10 +31,8 @@ func (s *authService) GetCompanyOidcAuthURL(
 	ctx context.Context,
 	request *authproto.GetCompanyOidcAuthURLRequest,
 ) (*authproto.GetCompanyOidcAuthURLResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Validate request
-	if err := validateGetCompanyOidcAuthURLRequest(request, localizer); err != nil {
+	if err := validateGetCompanyOidcAuthURLRequest(request); err != nil {
 		return nil, err
 	}
 
@@ -46,14 +42,7 @@ func (s *authService) GetCompanyOidcAuthURL(
 		s.logger.Error("oidc: failed to normalize email",
 			zap.String("email", request.Email),
 			zap.Error(err))
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, auth.StatusInvalidArguments.Err()
 	}
 
 	domain, err := authdomain.ExtractDomain(normalizedEmail)
@@ -114,10 +103,8 @@ func (s *authService) ExchangeCompanyOidcToken(
 	ctx context.Context,
 	request *authproto.ExchangeCompanyOidcTokenRequest,
 ) (*authproto.ExchangeCompanyOidcTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Validate request
-	if err := validateExchangeCompanyOidcTokenRequest(request, localizer); err != nil {
+	if err := validateExchangeCompanyOidcTokenRequest(request); err != nil {
 		return nil, err
 	}
 
@@ -127,14 +114,7 @@ func (s *authService) ExchangeCompanyOidcToken(
 		s.logger.Error("oidc: failed to normalize email",
 			zap.String("email", request.Email),
 			zap.Error(err))
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, auth.StatusInvalidArguments.Err()
 	}
 
 	domain, err := authdomain.ExtractDomain(normalizedEmail)
@@ -248,51 +228,22 @@ func (s *authService) createTemporaryToken(ctx context.Context, userInfo *auth.U
 
 func validateGetCompanyOidcAuthURLRequest(
 	req *authproto.GetCompanyOidcAuthURLRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Email == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.State == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "state"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.RedirectUrl == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	// PKCE validation: If code_challenge is provided, code_challenge_method must be provided too
 	if req.CodeChallenge != "" && req.CodeChallengeMethod == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code_challenge_method"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	return nil
@@ -300,50 +251,21 @@ func validateGetCompanyOidcAuthURLRequest(
 
 func validateExchangeCompanyOidcTokenRequest(
 	req *authproto.ExchangeCompanyOidcTokenRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Code == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.State == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "state"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.RedirectUrl == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.Email == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	return nil

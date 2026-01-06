@@ -21,12 +21,10 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authdomain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
@@ -36,8 +34,7 @@ func (s *authService) GetAuthOptionsByEmail(
 	ctx context.Context,
 	request *authproto.GetAuthOptionsByEmailRequest,
 ) (*authproto.GetAuthOptionsByEmailResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateGetAuthOptionsByEmailRequest(request, localizer)
+	err := validateGetAuthOptionsByEmailRequest(request)
 	if err != nil {
 		s.logger.Error("GetAuthOptionsByEmail request validation failed", zap.Error(err))
 		return nil, err
@@ -50,14 +47,7 @@ func (s *authService) GetAuthOptionsByEmail(
 			zap.Error(err),
 			zap.String("email", request.Email),
 		)
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, auth.StatusInvalidArguments.Err()
 	}
 
 	domain, err := authdomain.ExtractDomain(normalizedEmail)
@@ -66,14 +56,7 @@ func (s *authService) GetAuthOptionsByEmail(
 			zap.Error(err),
 			zap.String("email", normalizedEmail),
 		)
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, auth.StatusInvalidArguments.Err()
 	}
 
 	// Lookup domain policy
@@ -98,14 +81,12 @@ func (s *authService) CreateDomainAuthPolicy(
 	ctx context.Context,
 	request *authproto.CreateDomainAuthPolicyRequest,
 ) (*authproto.CreateDomainAuthPolicyResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Check system admin permission
-	if err := s.checkSystemAdminPermission(ctx, localizer); err != nil {
+	if err := s.checkSystemAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
-	err := validateCreateDomainAuthPolicyRequest(request, localizer)
+	err := validateCreateDomainAuthPolicyRequest(request)
 	if err != nil {
 		s.logger.Error("CreateDomainAuthPolicy request validation failed", zap.Error(err))
 		return nil, err
@@ -124,14 +105,7 @@ func (s *authService) CreateDomainAuthPolicy(
 	if err != nil {
 		if errors.Is(err, storage.ErrDomainPolicyAlreadyExists) {
 			s.logger.Error("Domain policy already exists", zap.String("domain", request.Domain))
-			dt, err := auth.StatusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusAlreadyExists.Err()
 		}
 		s.logger.Error("Failed to create domain policy",
 			zap.Error(err),
@@ -150,14 +124,12 @@ func (s *authService) UpdateDomainAuthPolicy(
 	ctx context.Context,
 	request *authproto.UpdateDomainAuthPolicyRequest,
 ) (*authproto.UpdateDomainAuthPolicyResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Check system admin permission
-	if err := s.checkSystemAdminPermission(ctx, localizer); err != nil {
+	if err := s.checkSystemAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
-	err := validateUpdateDomainAuthPolicyRequest(request, localizer)
+	err := validateUpdateDomainAuthPolicyRequest(request)
 	if err != nil {
 		s.logger.Error("UpdateDomainAuthPolicy request validation failed", zap.Error(err))
 		return nil, err
@@ -168,14 +140,7 @@ func (s *authService) UpdateDomainAuthPolicy(
 	if err != nil {
 		if errors.Is(err, storage.ErrDomainPolicyNotFound) {
 			s.logger.Error("Domain policy not found", zap.String("domain", request.Domain))
-			dt, err := auth.StatusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusNotFound.Err()
 		}
 		s.logger.Error("Failed to get domain policy",
 			zap.Error(err),
@@ -208,14 +173,12 @@ func (s *authService) GetDomainAuthPolicy(
 	ctx context.Context,
 	request *authproto.GetDomainAuthPolicyRequest,
 ) (*authproto.GetDomainAuthPolicyResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Check system admin permission
-	if err := s.checkSystemAdminPermission(ctx, localizer); err != nil {
+	if err := s.checkSystemAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
-	err := validateGetDomainAuthPolicyRequest(request, localizer)
+	err := validateGetDomainAuthPolicyRequest(request)
 	if err != nil {
 		s.logger.Error("GetDomainAuthPolicy request validation failed", zap.Error(err))
 		return nil, err
@@ -225,14 +188,7 @@ func (s *authService) GetDomainAuthPolicy(
 	if err != nil {
 		if errors.Is(err, storage.ErrDomainPolicyNotFound) {
 			s.logger.Error("Domain policy not found", zap.String("domain", request.Domain))
-			dt, err := auth.StatusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusNotFound.Err()
 		}
 		s.logger.Error("Failed to get domain policy",
 			zap.Error(err),
@@ -250,14 +206,12 @@ func (s *authService) DeleteDomainAuthPolicy(
 	ctx context.Context,
 	request *authproto.DeleteDomainAuthPolicyRequest,
 ) (*authproto.DeleteDomainAuthPolicyResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Check system admin permission
-	if err := s.checkSystemAdminPermission(ctx, localizer); err != nil {
+	if err := s.checkSystemAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
-	err := validateDeleteDomainAuthPolicyRequest(request, localizer)
+	err := validateDeleteDomainAuthPolicyRequest(request)
 	if err != nil {
 		s.logger.Error("DeleteDomainAuthPolicy request validation failed", zap.Error(err))
 		return nil, err
@@ -267,14 +221,7 @@ func (s *authService) DeleteDomainAuthPolicy(
 	if err != nil {
 		if errors.Is(err, storage.ErrDomainPolicyUnexpectedAffectedRows) {
 			s.logger.Error("Domain policy not found", zap.String("domain", request.Domain))
-			dt, err := auth.StatusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusNotFound.Err()
 		}
 		s.logger.Error("Failed to delete domain policy",
 			zap.Error(err),
@@ -291,14 +238,12 @@ func (s *authService) ListDomainAuthPolicies(
 	ctx context.Context,
 	request *authproto.ListDomainAuthPoliciesRequest,
 ) (*authproto.ListDomainAuthPoliciesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
 	// Check system admin permission
-	if err := s.checkSystemAdminPermission(ctx, localizer); err != nil {
+	if err := s.checkSystemAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
-	err := validateListDomainAuthPoliciesRequest(request, localizer)
+	err := validateListDomainAuthPoliciesRequest(request)
 	if err != nil {
 		s.logger.Error("ListDomainAuthPolicies request validation failed", zap.Error(err))
 		return nil, err
@@ -310,14 +255,7 @@ func (s *authService) ListDomainAuthPolicies(
 		parsedOffset, err := strconv.Atoi(request.Cursor)
 		if err != nil {
 			s.logger.Error("Failed to parse cursor", zap.Error(err), zap.String("cursor", request.Cursor))
-			dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusInvalidArguments.Err()
 		}
 		offset = parsedOffset
 	}
@@ -368,32 +306,18 @@ func (s *authService) ListDomainAuthPolicies(
 
 // Helper functions
 
-func (s *authService) checkSystemAdminPermission(ctx context.Context, localizer locale.Localizer) error {
+func (s *authService) checkSystemAdminPermission(ctx context.Context) error {
 	accessToken, ok := rpc.GetAccessToken(ctx)
 	if !ok || accessToken == nil {
 		s.logger.Error("No access token in context")
-		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusUnauthenticated.Err()
 	}
 
 	if !accessToken.IsSystemAdmin {
 		s.logger.Error("Permission denied: not a system admin",
 			zap.String("email", accessToken.Email),
 		)
-		dt, err := auth.StatusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusPermissionDenied.Err()
 	}
 
 	return nil

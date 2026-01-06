@@ -80,7 +80,6 @@ var (
 	StatusMissingEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuthPackageName, "email must not be empty", "email"))
 
-	// Domain Auth Policy errors
 	StatusInvalidArguments = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AuthPackageName, "invalid arguments", "arguments"))
 	StatusAlreadyExists = api.NewGRPCStatus(

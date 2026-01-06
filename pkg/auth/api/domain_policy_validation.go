@@ -15,54 +15,28 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
 func validateGetAuthOptionsByEmailRequest(
 	req *authproto.GetAuthOptionsByEmailRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Email == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 	return nil
 }
 
 func validateCreateDomainAuthPolicyRequest(
 	req *authproto.CreateDomainAuthPolicyRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Domain == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "domain"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.AuthPolicy == nil {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_policy"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	return nil
@@ -70,28 +44,13 @@ func validateCreateDomainAuthPolicyRequest(
 
 func validateUpdateDomainAuthPolicyRequest(
 	req *authproto.UpdateDomainAuthPolicyRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Domain == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "domain"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	if req.AuthPolicy == nil {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_policy"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 
 	return nil
@@ -99,41 +58,24 @@ func validateUpdateDomainAuthPolicyRequest(
 
 func validateGetDomainAuthPolicyRequest(
 	req *authproto.GetDomainAuthPolicyRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Domain == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "domain"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 	return nil
 }
 
 func validateDeleteDomainAuthPolicyRequest(
 	req *authproto.DeleteDomainAuthPolicyRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Domain == "" {
-		dt, err := auth.StatusInvalidArguments.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "domain"),
-		})
-		if err != nil {
-			return err
-		}
-		return dt.Err()
+		return auth.StatusInvalidArguments.Err()
 	}
 	return nil
 }
 
 func validateListDomainAuthPoliciesRequest(
 	req *authproto.ListDomainAuthPoliciesRequest,
-	localizer locale.Localizer,
 ) error {
 	// All fields are optional for list request
 	return nil
