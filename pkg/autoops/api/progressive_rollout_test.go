@@ -138,7 +138,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: statusProgressiveRolloutInvalidVariationSize.Err(),
+			expectedErr: statusProgressiveRolloutInsufficientVariations.Err(),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -225,7 +225,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{},
 				},
 			},
-			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
+			expectedErr: statusProgressiveRolloutControlVariationRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrControlVariationNotFound",
@@ -257,7 +257,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: statusProgressiveRolloutClauseInvalidVariationID.Err(),
+			expectedErr: statusProgressiveRolloutControlVariationNotFound.Err(),
 		},
 		{
 			desc: "err: template ErrControlVariationIdRequired",
@@ -286,7 +286,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 				},
 			},
-			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
+			expectedErr: statusProgressiveRolloutControlVariationRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrSchedulesRequired",
@@ -931,7 +931,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: statusProgressiveRolloutInvalidVariationSize.Err(),
+			expectedErr: statusProgressiveRolloutInsufficientVariations.Err(),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -1012,7 +1012,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				FeatureId:                              "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{},
 			},
-			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
+			expectedErr: statusProgressiveRolloutControlVariationRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrInvalidVariationId",
@@ -1042,7 +1042,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					TargetVariationId:  "invalid",
 				},
 			},
-			expectedErr: statusProgressiveRolloutClauseInvalidVariationID.Err(),
+			expectedErr: statusProgressiveRolloutTargetVariationNotFound.Err(),
 		},
 		{
 			desc: "err: template ErrControlVariationIdRequired",
@@ -1069,7 +1069,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				FeatureId:                                "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 			},
-			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
+			expectedErr: statusProgressiveRolloutControlVariationRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrSchedulesRequired",
