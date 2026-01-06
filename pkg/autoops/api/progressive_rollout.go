@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -733,14 +732,7 @@ func (s *AutoOpsService) validateTargetFeature(
 	f *featureproto.Feature,
 ) error {
 	if len(f.Variations) < 2 {
-		dt, err := statusProgressiveRolloutInsufficientVariations.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsInsufficientVariations),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutInsufficientVariations.Err()
 	}
 	if err := s.checkIfHasExperiment(ctx, f.Id); err != nil {
 		return err
@@ -842,62 +834,27 @@ func (s *AutoOpsService) validateProgressiveRolloutClauseVariations(
 ) error {
 	// Check control variation
 	if controlVariationID == "" {
-		dt, err := statusProgressiveRolloutControlVariationRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "control_variation_id"),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutControlVariationRequired.Err()
 	}
 
 	// Check target variation
 	if targetVariationID == "" {
-		dt, err := statusProgressiveRolloutTargetVariationRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "target_variation_id"),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutTargetVariationRequired.Err()
 	}
 
 	// Check that they are different
 	if controlVariationID == targetVariationID {
-		dt, err := statusProgressiveRolloutVariationsMustBeDifferent.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsProgressiveRolloutVariationsMustBeDifferent),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutVariationsMustBeDifferent.Err()
 	}
 
 	// Check control variation exists in feature
 	if exist := s.existVariationID(f, controlVariationID); !exist {
-		dt, err := statusProgressiveRolloutControlVariationNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "control_variation_id"),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutControlVariationNotFound.Err()
 	}
 
 	// Check target variation exists in feature
 	if exist := s.existVariationID(f, targetVariationID); !exist {
-		dt, err := statusProgressiveRolloutTargetVariationNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "target_variation_id"),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return statusProgressiveRolloutTargetVariationNotFound.Err()
 	}
 
 	return nil
