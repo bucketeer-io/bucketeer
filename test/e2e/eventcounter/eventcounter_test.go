@@ -137,7 +137,8 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -274,7 +275,8 @@ func TestExperimentGoalCount(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -414,11 +416,13 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 1, 2 and 3
 	// Register variation a
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	// where the feature version changes between getFeature() and createExperiment()
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], experiment.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], experiment.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -437,10 +441,11 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 4 and 5
 	// Register variation
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], experiment.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], experiment.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -585,11 +590,13 @@ func TestExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	// where the feature version changes between getFeature() and createExperiment()
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[2], f.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -608,10 +615,10 @@ func TestExperimentResult(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[4], f.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[3], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -759,8 +766,9 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -986,8 +994,9 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -1210,7 +1219,8 @@ func TestHTTPTrack(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// Evaluation events must always be sent before goal events
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, f.Variations[0].Id, tag, reason)
 
 	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
 	time.Sleep(10 * time.Second)
@@ -1344,9 +1354,10 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1474,9 +1485,10 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	// IMPORTANT: Use experiment.FeatureVersion instead of f.Version to avoid race condition
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, experiment.FeatureVersion, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -2253,7 +2265,12 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+		// Retry on transient BigQuery emulator errors:
+		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
+		// - "job is not found": job may not be registered yet in the emulator
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
+				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
 			time.Sleep(5 * time.Second)
 			continue
@@ -2290,7 +2307,12 @@ func getExperimentEvaluationCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+		// Retry on transient BigQuery emulator errors:
+		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
+		// - "job is not found": job may not be registered yet in the emulator
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
+				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
 			continue
@@ -2328,7 +2350,12 @@ func getExperimentGoalCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+		// Retry on transient BigQuery emulator errors:
+		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
+		// - "job is not found": job may not be registered yet in the emulator
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
+				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 			time.Sleep(5 * time.Second)
 			continue
@@ -2393,7 +2420,12 @@ func getEvaluationTimeseriesCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+		// Retry on transient BigQuery emulator errors:
+		// - "database table is locked": SQLite backend used by the emulator can't handle concurrent writes
+		// - "job is not found": job may not be registered yet in the emulator
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal ||
+			(st.Code() == codes.Unknown && (strings.Contains(err.Error(), "database table is locked") ||
+				strings.Contains(err.Error(), "job") && strings.Contains(err.Error(), "is not found"))) {
 			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 			time.Sleep(5 * time.Second)
 			continue

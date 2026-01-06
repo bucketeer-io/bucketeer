@@ -42,7 +42,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	command := &command{
 		CmdClause:          cmd,
 		pubsubEmulatorHost: cmd.Flag("pubsub-emulator-host", "PubSub Emulator Host").Default("localhost:8089").String(),
-		project:            cmd.Flag("project", "Project ID").Default("bucketeer-test").String(),
+		project:            cmd.Flag("project", "Project ID").Default("bucketeer-dev").String(),
 		topics:             cmd.Flag("topic", "Topic name to create (can be specified multiple times)").Strings(),
 	}
 	r.RegisterCommand(command)
