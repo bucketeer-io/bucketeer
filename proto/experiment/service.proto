@@ -91,12 +91,7 @@ message ArchiveGoalResponse {}
 
 message DeleteGoalRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  DeleteGoalCommand command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // DeleteGoalCommand
   reserved 3;
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }

@@ -958,19 +958,16 @@ func unmarshalDatetimeClause(t *testing.T, clause *autoopsproto.Clause) *autoops
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {
 	t.Helper()
 	goalID := createGoalID(t)
-	cmd := &experimentproto.CreateGoalCommand{
+	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
 		Id:          goalID,
 		Name:        goalID,
 		Description: goalID,
-	}
-	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		Command:       cmd,
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return cmd.Id
+	return goalID
 }
 
 func createOpsEventRateClause(t *testing.T, variationID, goalID string) *autoopsproto.OpsEventRateClause {

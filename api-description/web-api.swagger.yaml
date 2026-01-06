@@ -11712,8 +11712,6 @@ definitions:
     type: object
   experimentDeleteExperimentResponse:
     type: object
-  experimentDeleteGoalCommand:
-    type: object
   experimentDeleteGoalResponse:
     type: object
   experimentExperiment:

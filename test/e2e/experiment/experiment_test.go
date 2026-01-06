@@ -249,45 +249,6 @@ func TestUpdateExperiment(t *testing.T) {
 	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
 	startAt = now.Local().Add(time.Minute * 30)
 	stopAt = now.Local().Add(time.Minute * 60)
-	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
-		Id:                            e.Id,
-		ChangeExperimentPeriodCommand: &experimentproto.ChangeExperimentPeriodCommand{StartAt: startAt.Unix(), StopAt: stopAt.Unix()},
-		EnvironmentId:                 *environmentID,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
-		Id:            e.Id,
-		EnvironmentId: *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if startAt.Unix() != getResp.Experiment.StartAt {
-		t.Fatalf("StartAt is not equal. Expected: %d, actual: %d", startAt.Unix(), getResp.Experiment.StartAt)
-	}
-	if stopAt.Unix() != getResp.Experiment.StopAt {
-		t.Fatalf("StopAt is not equal. Expected: %d, actual: %d", stopAt.Unix(), getResp.Experiment.StopAt)
-	}
-	stopExperiment(ctx, t, c, e.Id)
-}
-
-func TestUpdateExperimentNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newExperimentClient(t)
-	defer c.Close()
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureID)
-	goalIDs := createGoals(ctx, t, c, 1)
-	now := time.Now()
-	feature := getFeature(ctx, t, featureID)
-	startAt := time.Now()
-	stopAt := startAt.Local().Add(time.Hour * 1)
-	e := createExperimentWithMultiGoalsNoCommand(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
-	startAt = now.Local().Add(time.Minute * 30)
-	stopAt = now.Local().Add(time.Minute * 60)
 	newName := fmt.Sprintf("%s-new-exp-name-%s", prefixTestName, newUUID(t))
 	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            e.Id,
@@ -313,15 +274,6 @@ func TestUpdateExperimentNoCommand(t *testing.T) {
 	}
 	if newName != getResp.Experiment.Name {
 		t.Fatalf("Name is not equal. Expected: %s, actual: %s", newName, getResp.Experiment.Name)
-	}
-
-	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
-		Id:            e.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
-		EnvironmentId: *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 	stopExperiment(ctx, t, c, e.Id)
 }
@@ -424,10 +376,10 @@ func TestUpdateGoal(t *testing.T) {
 	expectedName := fmt.Sprintf("%s-goal-new-name", prefixTestName)
 	expectedDescription := fmt.Sprintf("%s-goal-new-description", prefixTestName)
 	_, err := c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
-		Id:                       goalID,
-		RenameCommand:            &experimentproto.RenameGoalCommand{Name: expectedName},
-		ChangeDescriptionCommand: &experimentproto.ChangeDescriptionGoalCommand{Description: expectedDescription},
-		EnvironmentId:            *environmentID,
+		Id:            goalID,
+		Name:          wrapperspb.String(expectedName),
+		Description:   wrapperspb.String(expectedDescription),
+		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -506,6 +458,73 @@ func TestDeleteGoal(t *testing.T) {
 	assert.Contains(t, err.Error(), "goal not found")
 }
 
+func TestStatusUpdateFromWaitingToRunningAndForceStopped(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureID)
+	goalIDs := createGoals(ctx, t, c, 1)
+	startAt := time.Now()
+	stopAt := startAt.Local().Add(time.Hour)
+	feature := getFeature(ctx, t, featureID)
+	expected := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
+	resp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Experiment.Status != experimentproto.Experiment_WAITING {
+		t.Fatalf("Experiment status is not waiting. actual: %d", resp.Experiment.Status)
+	}
+
+	_, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to update experiment status: %v", err)
+	}
+	resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Experiment.Status != experimentproto.Experiment_RUNNING {
+		t.Fatalf("Experiment status is not running. actual: %d", resp.Experiment.Status)
+	}
+	_, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_FORCE_STOPPED,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to update experiment status: %v", err)
+	}
+	resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Experiment.Status != experimentproto.Experiment_FORCE_STOPPED {
+		t.Fatalf("Experiment status is not force stopped. actual: %d", resp.Experiment.Status)
+	}
+	stopExperiment(ctx, t, c, expected.Id)
+}
+
 func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -572,69 +591,10 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 	if resp.Experiment.Status != experimentproto.Experiment_WAITING {
 		t.Fatalf("Experiment status is not waiting. actual: %d", resp.Experiment.Status)
 	}
-	if _, err = c.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
-		Id:            expected.Id,
-		Command:       &experimentproto.StartExperimentCommand{},
-		EnvironmentId: *environmentID,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
-		Id:            expected.Id,
-		EnvironmentId: *environmentID,
-	})
-	if resp.Experiment.Status != experimentproto.Experiment_RUNNING {
-		t.Fatalf("Experiment status is not running. actual: %d", resp.Experiment.Status)
-	}
-	for i := 0; i < retryTimes; i++ {
-		resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
-			Id:            expected.Id,
-			EnvironmentId: *environmentID,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if resp.Experiment.Status == experimentproto.Experiment_STOPPED {
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
-		}
-		time.Sleep(time.Second)
-	}
-	stopExperiment(ctx, t, c, expected.Id)
-}
-
-func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	c := newExperimentClient(t)
-	defer c.Close()
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureID)
-	goalIDs := createGoals(ctx, t, c, 1)
-	now := time.Now()
-	startAt := now.Local().Add(-4 * 24 * time.Hour)
-	stopAt := now.Local().Add(-3 * 24 * time.Hour)
-	feature := getFeature(ctx, t, featureID)
-	expected := createExperimentWithMultiGoalsNoCommand(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
-	resp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
-		Id:            expected.Id,
-		EnvironmentId: *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.Experiment.Status != experimentproto.Experiment_WAITING {
-		t.Fatalf("Experiment status is not waiting. actual: %d", resp.Experiment.Status)
-	}
 	if _, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
-		Id: expected.Id,
-		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
-			Status: experimentproto.Experiment_RUNNING,
-		},
+		Id:            expected.Id,
 		EnvironmentId: *environmentID,
+		StartAt:       wrapperspb.Int64(time.Now().Unix()),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -660,15 +620,6 @@ func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
 			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
 		}
 		time.Sleep(time.Second)
-	}
-
-	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
-		Id:            resp.Experiment.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
-		EnvironmentId: *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 	stopExperiment(ctx, t, c, expected.Id)
 }
@@ -716,7 +667,7 @@ func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 	stopExperiment(ctx, t, c, expected.Id)
 }
 
-func TestCreateListGoalsNoCommand(t *testing.T) {
+func TestCreateListGoals(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -768,7 +719,7 @@ func TestCreateListGoalsNoCommand(t *testing.T) {
 	}
 }
 
-func TestCreateUpdateGoalNoCommand(t *testing.T) {
+func TestCreateUpdateGoal(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -824,15 +775,12 @@ func TestCreateUpdateGoalNoCommand(t *testing.T) {
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {
 	t.Helper()
 	goalID := createGoalID(t)
-	cmd := &experimentproto.CreateGoalCommand{
+	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
 		Id:             goalID,
 		Name:           fmt.Sprintf("%s-goal-name", goalID),
 		Description:    fmt.Sprintf("%s-goal-description", goalID),
 		ConnectionType: experimentproto.Goal_EXPERIMENT,
-	}
-	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
+		EnvironmentId:  *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -866,32 +814,6 @@ func createExperimentsWithMultiGoals(
 }
 
 func createExperimentWithMultiGoals(
-	ctx context.Context,
-	t *testing.T,
-	client experimentclient.Client,
-	featureID, baseVariationID string,
-	goalIDs []string,
-	startAt, stopAt time.Time,
-) *experimentproto.Experiment {
-	cmd := &experimentproto.CreateExperimentCommand{
-		FeatureId:       featureID,
-		StartAt:         startAt.Unix(),
-		StopAt:          stopAt.Unix(),
-		GoalIds:         goalIDs,
-		Name:            strings.Join(goalIDs, ","),
-		BaseVariationId: baseVariationID,
-	}
-	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resp.Experiment
-}
-
-func createExperimentWithMultiGoalsNoCommand(
 	ctx context.Context,
 	t *testing.T,
 	client experimentclient.Client,
@@ -961,10 +883,30 @@ func createFeature(ctx context.Context, t *testing.T, featureID string) {
 	t.Helper()
 	client := newFeatureClient(t)
 	defer client.Close()
-	cmd := newCreateFeatureCommand(featureID)
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
 		EnvironmentId: *environmentID,
+		Id:            featureID,
+		Name:          featureID,
+		Description:   "e2e-test-gateway-feature-description",
+		Variations: []*featureproto.Variation{
+			{
+				Value:       "A",
+				Name:        "Variation A",
+				Description: "Thing does A",
+			},
+			{
+				Value:       "B",
+				Name:        "Variation B",
+				Description: "Thing does B",
+			},
+		},
+		Tags: []string{
+			"e2e-test-tag-1",
+			"e2e-test-tag-2",
+			"e2e-test-tag-3",
+		},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 	}
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -991,66 +933,16 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 	return featureClient
 }
 
-func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureCommand {
-	return &featureproto.CreateFeatureCommand{
-		Id:          featureID,
-		Name:        featureID,
-		Description: "e2e-test-gateway-feature-description",
-		Variations: []*featureproto.Variation{
-			{
-				Value:       "A",
-				Name:        "Variation A",
-				Description: "Thing does A",
-			},
-			{
-				Value:       "B",
-				Name:        "Variation B",
-				Description: "Thing does B",
-			},
-		},
-		Tags: []string{
-			"e2e-test-tag-1",
-			"e2e-test-tag-2",
-			"e2e-test-tag-3",
-		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-	}
-}
-
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
-		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		Enabled:       wrapperspb.Bool(true),
+		EnvironmentId: *environmentID,
+	}); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
-	}
-}
-
-func compareExperiments(t *testing.T, expected []*experimentproto.Experiment, actual []*experimentproto.Experiment) {
-	t.Helper()
-	if len(actual) != len(expected) {
-		t.Fatalf("Different sizes. Expected: %d, actual: %d", len(expected), len(actual))
-	}
-	for i := 0; i < len(expected); i++ {
-		assert.Equal(t, expected[i].Id, actual[i].Id)
-		assert.Equal(t, expected[i].Name, actual[i].Name)
-		assert.Equal(t, expected[i].Description, actual[i].Description)
-		assert.Equal(t, expected[i].FeatureId, actual[i].FeatureId)
-		assert.Equal(t, expected[i].FeatureVersion, actual[i].FeatureVersion)
-		assert.Equal(t, expected[i].BaseVariationId, actual[i].BaseVariationId)
-		assert.Equal(t, expected[i].StartAt, actual[i].StartAt)
-		assert.Equal(t, expected[i].StopAt, actual[i].StopAt)
-		assert.Equal(t, expected[i].Status, actual[i].Status)
-		assert.Equal(t, expected[i].GoalIds, actual[i].GoalIds)
-		assert.Equal(t, expected[i].Deleted, actual[i].Deleted)
-		assert.Equal(t, expected[i].Archived, actual[i].Archived)
-		assert.Equal(t, expected[i].Maintainer, actual[i].Maintainer)
 	}
 }
 

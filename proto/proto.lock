@@ -29065,26 +29065,6 @@
                 ]
               },
               {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string",
@@ -29097,6 +29077,7 @@
               }
             ],
             "reserved_ids": [
+              2,
               3
             ]
           },
