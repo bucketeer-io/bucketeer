@@ -285,7 +285,7 @@ func TestFeatureAutoArchiver_ArchiveFeature(t *testing.T) {
 						Id:            "feature-1",
 						EnvironmentId: "env-1",
 						Archived:      wrapperspb.Bool(true),
-						Comment:       "Automatically archived by auto-archive batch job",
+						Comment:       "Archived automatically due to inactivity (environment setting)",
 					}).
 					Return(&featureproto.UpdateFeatureResponse{}, nil)
 			},

@@ -236,7 +236,7 @@ func (a *featureAutoArchiver) ArchiveFeature(
 		Id:            featureID,
 		EnvironmentId: environmentID,
 		Archived:      wrapperspb.Bool(true),
-		Comment:       "Automatically archived by auto-archive batch job",
+		Comment:       "Archived automatically due to inactivity (environment setting)",
 	})
 	if err != nil {
 		a.logger.Error("Failed to archive feature",
