@@ -554,23 +554,48 @@ func TestUpdateExperiment(t *testing.T) {
 			},
 		},
 		{
-			desc:       "success update status",
+			desc:       "success start",
 			experiment: experiment,
 			setup: func(e *Experiment) {
-				e.Status = experimentproto.Experiment_RUNNING
+				e.Status = experimentproto.Experiment_WAITING
 			},
 			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
-				Status: experimentproto.Experiment_STOPPED,
+				Status: experimentproto.Experiment_RUNNING,
 			},
 			expected: &Experiment{
 				Experiment: &experimentproto.Experiment{
 					Id:          experiment.Id,
 					Name:        experiment.Name,
 					Description: experiment.Description,
-					Status:      experimentproto.Experiment_STOPPED,
-					StartAt:     experiment.StartAt,
+					Status:      experimentproto.Experiment_RUNNING,
+					StartAt:     now,
 					StopAt:      experiment.StopAt,
 					StoppedAt:   experiment.StoppedAt,
+					CreatedAt:   experiment.CreatedAt,
+					UpdatedAt:   experiment.UpdatedAt,
+					Archived:    experiment.Archived,
+					Deleted:     experiment.Deleted,
+				},
+			},
+		},
+		{
+			desc:       "success force stop",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_RUNNING
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_FORCE_STOPPED,
+			},
+			expected: &Experiment{
+				Experiment: &experimentproto.Experiment{
+					Id:          experiment.Id,
+					Name:        experiment.Name,
+					Description: experiment.Description,
+					Status:      experimentproto.Experiment_FORCE_STOPPED,
+					StartAt:     experiment.StartAt,
+					StopAt:      experiment.StopAt,
+					StoppedAt:   now,
 					CreatedAt:   experiment.CreatedAt,
 					UpdatedAt:   experiment.UpdatedAt,
 					Archived:    experiment.Archived,
