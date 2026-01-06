@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -24,6 +25,7 @@ import (
 	authdomain "github.com/bucketeer-io/bucketeer/v2/pkg/auth/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/oidc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -198,18 +200,49 @@ func (s *authService) ExchangeCompanyOidcToken(
 
 // createTemporaryToken creates a temporary, not-yet-org-scoped token
 func (s *authService) createTemporaryToken(ctx context.Context, userInfo *auth.UserInfo) (*authproto.Token, error) {
-	// TODO: Implement token creation logic
-	// This should create a temporary token that is:
-	// 1. Not scoped to any organization yet
-	// 2. Valid for a short period (e.g., 5 minutes)
-	// 3. Can be used to call GetMyOrganizations and then SwitchOrganization
-	//
-	// For now, return a placeholder
+	// Check email filter
+	if err := s.checkEmail(userInfo.Email); err != nil {
+		s.logger.Error(
+			"oidc: access denied email",
+			zap.String("email", userInfo.Email),
+		)
+		return nil, err
+	}
+
+	// Create temporary access token without organization ID
+	// This token can ONLY be used to:
+	// 1. Call GetMyOrganizations to see available orgs
+	// 2. Call SwitchOrganization to get an org-scoped token
+	timeNow := time.Now()
+	temporaryTokenTTL := 5 * time.Minute
+
+	accessToken := &token.AccessToken{
+		Issuer:         s.issuer,
+		Audience:       s.audience,
+		Expiry:         timeNow.Add(temporaryTokenTTL),
+		IssuedAt:       timeNow,
+		Email:          userInfo.Email,
+		Name:           userInfo.Name,
+		OrganizationID: "", // Empty - not org-scoped
+		IsSystemAdmin:  false,
+	}
+
+	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
+	if err != nil {
+		s.logger.Error(
+			"oidc: failed to sign temporary access token",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
+		)
+		return nil, auth.StatusInternal.Err()
+	}
+
+	// No refresh token for temporary tokens - they must complete org selection quickly
 	return &authproto.Token{
-		AccessToken:  "temporary-token-" + userInfo.Email,
-		RefreshToken: "",
+		AccessToken:  signedAccessToken,
+		RefreshToken: "", // No refresh token for temporary auth
 		TokenType:    "Bearer",
-		Expiry:       0,
+		Expiry:       timeNow.Add(temporaryTokenTTL).Unix(),
 	}, nil
 }
 
