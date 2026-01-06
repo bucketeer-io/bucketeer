@@ -1,6 +1,7 @@
 {
   "nouns": {
     "Account": "アカウント",
+    "AuditLog": "監査ログ",
     "AccountRole": "アカウントの権限",
     "AccountName": "アカウントの名前",
     "AccountFirstName": "アカウントのファーストネーム",
