@@ -244,6 +244,7 @@ const Strategy = ({
                       <div className="flex items-center w-full gap-x-2">
                         {audienceTrafficOptions.map((item, index) => (
                           <AudienceSelect
+                            disabled={isDisabled}
                             key={index}
                             label={item.label}
                             value={item.value}
@@ -365,16 +366,26 @@ const Strategy = ({
             />
           </div>
           <RadioGroup
+            disabled={isDisabled}
             value={splitOptionType}
             onValueChange={onChangeSplitType}
             className="flex gap-x-6 mt-5 px-1"
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">
-                <RadioGroupItem value={value} id={value} />
+                <RadioGroupItem
+                  disabled={isDisabled}
+                  value={value}
+                  id={value}
+                />
                 <label
                   htmlFor={value}
-                  className="typo-para-medium leading-4 text-gray-600 cursor-pointer"
+                  className={cn(
+                    'typo-para-medium leading-4 text-gray-600',
+                    isDisabled
+                      ? 'cursor-not-allowed pointer-events-none'
+                      : 'cursor-pointer'
+                  )}
                 >
                   {label}
                 </label>
