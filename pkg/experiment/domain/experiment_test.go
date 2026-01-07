@@ -629,7 +629,7 @@ func TestUpdateExperiment(t *testing.T) {
 			},
 		},
 		{
-			desc:       "error invalid status already stopped",
+			desc:       "error invalid status already stopped to waiting",
 			experiment: experiment,
 			setup: func(e *Experiment) {
 				e.Status = experimentproto.Experiment_STOPPED
@@ -641,13 +641,61 @@ func TestUpdateExperiment(t *testing.T) {
 			expectedErr: ErrExperimentStatusInvalid,
 		},
 		{
-			desc:       "error invalid status already force stopped",
+			desc:       "error invalid status already stopped to running",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_STOPPED
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_RUNNING,
+			},
+			expected:    nil,
+			expectedErr: ErrExperimentStatusInvalid,
+		},
+		{
+			desc:       "error invalid status already stopped to force stopped",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_STOPPED
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_FORCE_STOPPED,
+			},
+			expected:    nil,
+			expectedErr: ErrExperimentStatusInvalid,
+		},
+		{
+			desc:       "error invalid status already force stopped to waiting",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_FORCE_STOPPED
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_WAITING,
+			},
+			expected:    nil,
+			expectedErr: ErrExperimentStatusInvalid,
+		},
+		{
+			desc:       "error invalid status already force stopped to running",
 			experiment: experiment,
 			setup: func(e *Experiment) {
 				e.Status = experimentproto.Experiment_FORCE_STOPPED
 			},
 			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
 				Status: experimentproto.Experiment_RUNNING,
+			},
+			expected:    nil,
+			expectedErr: ErrExperimentStatusInvalid,
+		},
+		{
+			desc:       "error invalid status already force stopped to stopped",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_FORCE_STOPPED
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_STOPPED,
 			},
 			expected:    nil,
 			expectedErr: ErrExperimentStatusInvalid,

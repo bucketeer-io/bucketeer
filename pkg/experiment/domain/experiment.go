@@ -204,6 +204,9 @@ func (e *Experiment) updateStatus(status experimentproto.Experiment_Status, now 
 		e.Status = experimentproto.Experiment_STOPPED
 		e.StoppedAt = now
 	case experimentproto.Experiment_FORCE_STOPPED:
+		if e.Status != experimentproto.Experiment_WAITING && e.Status != experimentproto.Experiment_RUNNING {
+			return ErrExperimentStatusInvalid
+		}
 		e.Status = experimentproto.Experiment_FORCE_STOPPED
 		e.StoppedAt = now
 	default:
