@@ -42,6 +42,12 @@ const ManualSchedule = ({
   const watchScheduleList = [
     ...watch('progressiveRollout.manual.schedulesList')
   ];
+  const controlVariationId = watch(
+    'progressiveRollout.manual.controlVariationId'
+  );
+  const targetVariationId = watch(
+    'progressiveRollout.manual.targetVariationId'
+  );
   const {
     fields: schedulesList,
     append,
@@ -74,6 +80,16 @@ const ManualSchedule = ({
   const isDisabled = useMemo(
     () => isDisableCreateRollout || disabled,
     [isDisableCreateRollout, disabled]
+  );
+
+  const controlVariationOption = useMemo(
+    () => variationOptions.filter(option => option.value !== targetVariationId),
+    [variationOptions, targetVariationId]
+  );
+  const targetVariationOption = useMemo(
+    () =>
+      variationOptions.filter(option => option.value !== controlVariationId),
+    [variationOptions, controlVariationId]
   );
 
   const handleAddIncrement = useCallback(() => {
@@ -144,7 +160,7 @@ const ManualSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={variationOptions}
+                options={targetVariationOption}
                 disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
@@ -182,7 +198,7 @@ const ManualSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={variationOptions}
+                options={controlVariationOption}
                 disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
