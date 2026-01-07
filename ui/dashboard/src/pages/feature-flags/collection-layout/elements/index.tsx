@@ -54,7 +54,7 @@ export const GridViewRoot = ({ children }: PropsWithChildren) => (
 );
 
 export const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="grid grid-cols-12 items-center w-full max-w-full p-5 gap-x-10 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
+  <div className="grid grid-cols-12 grid-rows-2 lg:grid-rows-1 gap-y-2 items-center w-full max-w-full p-5 gap-x-2 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
     {children}
   </div>
 );
@@ -226,7 +226,7 @@ export const FlagNameElement = ({
   return (
     <div
       className={cn(
-        'flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden',
+        'flex items-center col-span-6 lg:col-span-5 row-span-1 w-full max-w-full gap-x-10 overflow-hidden',
         className
       )}
     >
