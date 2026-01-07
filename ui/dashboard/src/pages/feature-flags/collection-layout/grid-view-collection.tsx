@@ -124,7 +124,7 @@ const GridViewCollection = ({
               />
               <div
                 id="variations-wrapper"
-                className="flex flex-col gap-y-3 col-span-4 flex-1"
+                className="flex flex-col gap-y-3 col-span-12 lg:col-span-4 row-start-2 p-2 lg:p-0 lg:row-start-auto flex-1 rounded-lg bg-gray-100"
               >
                 <FlagVariationsElement variations={variations} />
                 <div className="flex items-center flex-wrap w-full gap-2">
@@ -146,7 +146,7 @@ const GridViewCollection = ({
                   />
                 </div>
               </div>
-              <div className="flex col-span-3 justify-end self-start gap-x-2">
+              <div className="flex col-span-6 lg:col-span-3 row-span-1 justify-end self-start gap-x-2">
                 <div className="flex-center">
                   <Icon icon={IconWatch} size={'xxs'} />
                 </div>

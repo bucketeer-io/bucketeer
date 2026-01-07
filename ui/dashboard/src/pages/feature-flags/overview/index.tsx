@@ -56,7 +56,7 @@ const Overview = ({
 
   return (
     <div className="w-full px-6">
-      <div className="flex flex-wrap items-center w-full gap-6 pb-8">
+      <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll sm:overflow-visible px-2 sm:px-0 hidden-scroll items-center w-full gap-6 pb-8">
         {overviewOptions.map((item, index) => (
           <Tooltip
             key={index}

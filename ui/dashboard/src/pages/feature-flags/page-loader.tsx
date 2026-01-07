@@ -185,7 +185,7 @@ const PageLoader = () => {
               FeatureActivityStatus.RECEIVING_TRAFFIC
           }
           onClose={onCloseConfirmModal}
-          className="py-5"
+          className="py-5 max-w-[320px]"
           title={
             isArchiving
               ? t(`table:popover.archive-flag`)

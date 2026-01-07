@@ -3,12 +3,14 @@ import { useQueryAccounts } from '@queries/accounts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useScreen } from 'hooks';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagFilters } from '../types';
@@ -31,6 +33,7 @@ const CollectionLoader = memo(
     onClearFilters: () => void;
   }) => {
     const { consoleAccount } = useAuth();
+    const { fromMobileScreen } = useScreen();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
@@ -122,17 +125,29 @@ const CollectionLoader = memo(
     ) : isError ? (
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
-      <TableListContent className="gap-y-6 min-w-[904px]">
-        <GridViewCollection
-          filterTags={filters?.tags}
-          autoOpsRules={autoOpsRules}
-          rollouts={rollouts}
-          accounts={accounts}
-          data={features}
-          onActions={onHandleActions}
-          emptyState={emptyState}
-          handleTagFilters={handleTagFilters}
-        />
+      <TableListContent className="gap-y-6">
+        {fromMobileScreen ? (
+          <GridViewCollection
+            filterTags={filters?.tags}
+            autoOpsRules={autoOpsRules}
+            rollouts={rollouts}
+            accounts={accounts}
+            data={features}
+            onActions={onHandleActions}
+            emptyState={emptyState}
+            handleTagFilters={handleTagFilters}
+          />
+        ) : (
+          <CardCollection
+            filterTags={filters?.tags}
+            autoOpsRules={autoOpsRules}
+            rollouts={rollouts}
+            accounts={accounts}
+            data={features}
+            onActions={onHandleActions}
+            handleTagFilters={handleTagFilters}
+          />
+        )}
 
         {!isLoading && (
           <Pagination

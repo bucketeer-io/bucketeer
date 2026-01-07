@@ -4,9 +4,7 @@ import { cn } from 'utils/style';
 const TableListContent = memo(
   ({ children, className }: { children: ReactNode; className?: string }) => {
     return (
-      <div className={cn('flex flex-col w-full min-w-[900px]', className)}>
-        {children}
-      </div>
+      <div className={cn('flex flex-col w-full', className)}>{children}</div>
     );
   }
 );

@@ -298,5 +298,7 @@
   "continue-editing": "Continue editing",
   "leave-page": "Leave page",
   "note": "Note",
-  "full-screen-mode": "Fullscreen Mode"
+  "full-screen-mode": "Fullscreen Mode",
+  "detail": "Detail",
+  "last-seen": "Last seen"
 }
