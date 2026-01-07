@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,13 +21,11 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -91,31 +89,22 @@ func (s *CodeReferenceService) GetCodeReference(
 	ctx context.Context,
 	req *proto.GetCodeReferenceRequest,
 ) (*proto.GetCodeReferenceResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetCodeReferenceRequest(req, localizer); err != nil {
+	if err := validateGetCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
 	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get code reference",
@@ -136,17 +125,15 @@ func (s *CodeReferenceService) ListCodeReferences(
 	ctx context.Context,
 	req *proto.ListCodeReferencesRequest,
 ) (*proto.ListCodeReferencesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListCodeReferencesRequest(req, localizer); err != nil {
+	if err := validateListCodeReferencesRequest(req); err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
@@ -180,14 +167,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	if req.Cursor != "" {
 		c, err := strconv.Atoi(req.Cursor)
 		if err != nil {
-			dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusInvalidCursor.Err()
 		}
 		cursor = c
 	}
@@ -226,17 +206,15 @@ func (s *CodeReferenceService) CreateCodeReference(
 	ctx context.Context,
 	req *proto.CreateCodeReferenceRequest,
 ) (*proto.CreateCodeReferenceResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateCodeReferenceRequest(req, localizer); err != nil {
+	if err := validateCreateCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
 	codeRef, err := domain.NewCodeReference(
@@ -325,17 +303,15 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	ctx context.Context,
 	req *proto.UpdateCodeReferenceRequest,
 ) (*proto.UpdateCodeReferenceResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateUpdateCodeReferenceRequest(req, localizer); err != nil {
+	if err := validateUpdateCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
 	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
@@ -346,14 +322,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		codeRef, err = codeRefStorage.GetCodeReference(ctx, req.Id)
 		if err != nil {
 			if errors.Is(err, storage.ErrCodeReferenceNotFound) {
-				dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.NotFoundError),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
+				return statusNotFound.Err()
 			}
 			s.logger.Error(
 				"Failed to get code reference",
@@ -446,31 +415,22 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	ctx context.Context,
 	req *proto.DeleteCodeReferenceRequest,
 ) (*proto.DeleteCodeReferenceResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteCodeReferenceRequest(req, localizer); err != nil {
+	if err := validateDeleteCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
 	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get code reference",

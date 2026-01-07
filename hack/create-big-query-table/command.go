@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"strings"
 
 	"cloud.google.com/go/bigquery"
 	"go.uber.org/zap"
@@ -38,7 +39,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	command := &command{
 		CmdClause:        cmd,
 		bigQueryEmulator: cmd.Flag("bigquery-emulator", "Big Query Emulator Host").Default("http://localhost:9050").String(),
-		project:          cmd.Flag("project", "Project ID").Default("bucketeer-test").String(),
+		project:          cmd.Flag("project", "Project ID").Default("bucketeer-dev").String(),
 		dataset:          cmd.Flag("dataset", "Dataset ID").Default("bucketeer").String(),
 	}
 	r.RegisterCommand(command)
@@ -56,11 +57,16 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	defer client.Close()
 
 	// Create dataset
-	err = createDataset(ctx, client, *c.dataset)
+	err = createDataset(ctx, client, logger, *c.dataset)
 	if err != nil {
-		logger.Error("failed to create dataset",
-			zap.Error(err),
-		)
+		if isAlreadyExistsError(err) {
+			logger.Info("dataset already exists, skipping creation",
+				zap.String("dataset", *c.dataset))
+		} else {
+			logger.Warn("failed to create dataset, continuing anyway",
+				zap.Error(err),
+			)
+		}
 	}
 
 	// Create tables
@@ -79,10 +85,18 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	err = createTable(ctx, client, logger, *c.project, *c.dataset, "evaluation_event", evaluationEventSchema)
 	if err != nil {
-		logger.Error("failed to create evaluation_event table",
-			zap.Error(err),
-		)
+		if isAlreadyExistsError(err) {
+			logger.Info("evaluation_event table already exists, skipping creation")
+		} else {
+			logger.Error("failed to create evaluation_event table",
+				zap.Error(err),
+			)
+			return err
+		}
+	} else {
+		logger.Info("successfully created evaluation_event table")
 	}
+
 	goalEventSchema := bigquery.Schema{
 		{Name: "id", Type: bigquery.StringFieldType},
 		{Name: "environment_id", Type: bigquery.StringFieldType},
@@ -100,20 +114,36 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	err = createTable(ctx, client, logger, *c.project, *c.dataset, "goal_event", goalEventSchema)
 	if err != nil {
-		logger.Error("failed to create goal_event table",
-			zap.Error(err),
-		)
+		if isAlreadyExistsError(err) {
+			logger.Info("goal_event table already exists, skipping creation")
+		} else {
+			logger.Error("failed to create goal_event table",
+				zap.Error(err),
+			)
+			return err
+		}
+	} else {
+		logger.Info("successfully created goal_event table")
 	}
+
+	logger.Info("BigQuery table creation completed successfully")
 	return nil
 }
 
 func createDataset(ctx context.Context,
-	client *bigquery.Client, datasetID string,
+	client *bigquery.Client, logger *zap.Logger, datasetID string,
 ) error {
 	meta := &bigquery.DatasetMetadata{}
 	if err := client.Dataset(datasetID).Create(ctx, meta); err != nil {
+		if isAlreadyExistsError(err) {
+			logger.Info("dataset already exists, skipping creation",
+				zap.String("dataset", datasetID))
+			return nil
+		}
 		return err
 	}
+	logger.Info("successfully created dataset",
+		zap.String("dataset", datasetID))
 	return nil
 }
 
@@ -127,9 +157,21 @@ func createTable(ctx context.Context,
 	}
 	tableRef := client.Dataset(datasetID).Table(tableID)
 	if err := tableRef.Create(ctx, tableMetadata); err != nil {
-		logger.Error("failed to create empty table",
-			zap.Error(err))
 		return err
 	}
 	return nil
+}
+
+// isAlreadyExistsError checks if the error indicates the resource already exists.
+// BigQuery emulator may return different error messages, so we check for common patterns.
+func isAlreadyExistsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	// Check for common "already exists" patterns
+	return strings.Contains(errStr, "already exists") ||
+		strings.Contains(errStr, "already created") ||
+		strings.Contains(errStr, "duplicate") ||
+		strings.Contains(errStr, "409") // HTTP 409 Conflict
 }

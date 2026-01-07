@@ -1,32 +1,24 @@
 apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-secrets
-type: Opaque
-data:
-  mysql-root-password: YnVja2V0ZWVy
-  mysql-password: YnVja2V0ZWVy
-
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-initdb
+  name: {{ include "mysql.fullname" . }}-initdb
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
 data:
   mysql_dump.sql: |
     --
     -- Create the Database
     --
 
-    DROP DATABASE IF EXISTS {{ .Values.mysql.auth.database }};
-    CREATE DATABASE {{ .Values.mysql.auth.database }};
-    USE {{ .Values.mysql.auth.database }};
+    DROP DATABASE IF EXISTS {{ .Values.auth.database }};
+    CREATE DATABASE {{ .Values.auth.database }};
+    USE {{ .Values.auth.database }};
 
     --
     -- Alter Databse character and collate to support the dev container
     --
 
-    ALTER DATABASE {{ .Values.mysql.auth.database }} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+    ALTER DATABASE {{ .Values.auth.database }} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
     --
     -- Table structure for table `organization`
@@ -556,3 +548,4 @@ data:
       `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       PRIMARY KEY (`id`,`environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+

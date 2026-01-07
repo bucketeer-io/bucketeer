@@ -1,67 +1,63 @@
-version: 0.1.0
-
-vault:
-  server:
-    dev:
-      enabled: true
-      devRootToken: "root"
-
 redis:
-  architecture: "standalone"
+  # Using official Redis image (aligned with docker-compose)
   image:
-    registry: docker.io
     repository: redis
-    tag: 8.4.0
-  auth: 
-    enabled: false
-  volumePermissions:
-    enabled: true
-    image:
-      registry: docker.io
-      repository: bitnami/os-shell
-      tag: latest
+    tag: "7.2-alpine"
+    pullPolicy: IfNotPresent
+  storage:
+    size: "1Gi"
+    class: "" # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32001
 
 nginx:
   controller:
     service:
       loadBalancerIP: "192.168.49.2"
       externalIPs:
-      - 127.0.0.1
-      - 192.168.49.2
+        - 127.0.0.1
+        - 192.168.49.2
 
 mysql:
+  # Using official MySQL image (aligned with docker-compose)
   image:
-    registry: docker.io
     repository: mysql
-    tag: "9"
-  initdbScriptsConfigMap: mysql-initdb
-  #diagnosticMode:
-  #  enabled: true
-  volumePermissions:
-    enabled: true
-    image:
-      registry: docker.io
-      repository: bitnami/os-shell
-      tag: latest
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  storage:
+    size: "1Gi"
+    class: "" # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32000
   auth:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
-    rootPassword: "YnVja2V0ZWVy"
-  primary:
-    service:
-      type: NodePort
-      nodePorts:
-        mysql: 32000
+    rootPassword: "bucketeer"
 
 bq:
-  project: bucketeer-test
+  project: bucketeer-dev
   service:
     type: NodePort
     httpNodePort: 31000
   image:
+    # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)
     repository: ghcr.io/bucketeer-io/bigquery-emulator
-    
-pubsub: 
-  image: 
-    tag: "449.0.0"
+    tag: "0.6.6"
+
+pubsub:
+  image:
+    repository: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    # Use non-slim version - pubsub emulator requires Java which is not in slim variant
+    tag: "545.0.0"
+  service:
+    type: NodePort
+    nodePort: 30089
+
+vault:
+  server:
+    dev:
+      enabled: true
+      devRootToken: "root"

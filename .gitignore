@@ -16,3 +16,6 @@ tools/redis/bin
 .vscode
 # Docker Compose logs
 docker-compose/logs/
+# Hack script binaries
+hack/delete-mysql-data-warehouse/delete-mysql-data-warehouse
+hack/delete-redis-retry-keys/delete-redis-retry-keys

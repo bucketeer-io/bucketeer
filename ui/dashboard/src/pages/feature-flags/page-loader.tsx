@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
+import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURE_CLONE, PAGE_PATH_FEATURES } from 'constants/routing';
@@ -12,6 +12,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
+import { getDependentFlags } from 'utils/feature-dependencies';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from 'pages/feature-flag-details/elements/confirm-required-modal';
@@ -55,6 +56,24 @@ const PageLoader = () => {
     onCloseConfirmRequiredModal
   ] = useToggleOpen(false);
 
+  const { data: collection } = useQueryFeatures({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      archived: false
+    },
+    enabled: !!currentEnvironment
+  });
+
+  const features = useMemo(() => collection?.features || [], [collection]);
+  const activeFeatures = useMemo(
+    () => features.filter(item => !item.archived),
+    [features]
+  );
+  const dependentFlags = getDependentFlags(
+    selectedFlag ? [selectedFlag] : [],
+    activeFeatures
+  );
   const onHandleActions = useCallback(
     (flag: Feature, type: FlagActionType) => {
       if (type === 'CLONE') {
@@ -159,6 +178,7 @@ const PageLoader = () => {
           isArchiving={isArchiving}
           isOpen={openConfirmModal}
           isLoading={mutation.isPending}
+          dependentFlags={dependentFlags}
           isShowWarning={
             isArchiving &&
             getFlagStatus(selectedFlag) ===

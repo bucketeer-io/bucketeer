@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@ import (
 
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -41,34 +39,19 @@ import (
 var goalIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")
 
 func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalRequest) (*proto.GetGoalResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusGoalIDRequired.Err()
 	}
 	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusGoalNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -102,10 +85,9 @@ func (s *experimentService) ListGoals(
 	ctx context.Context,
 	req *proto.ListGoalsRequest,
 ) (*proto.ListGoalsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +104,7 @@ func (s *experimentService) ListGoals(
 	if req.ConnectionType != proto.Goal_UNKNOWN {
 		whereParts = append(whereParts, mysql.NewFilter("connection_type", "=", req.ConnectionType))
 	}
-	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -137,14 +119,7 @@ func (s *experimentService) ListGoals(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
@@ -185,7 +160,6 @@ func (s *experimentService) ListGoals(
 func (s *experimentService) newGoalListOrders(
 	orderBy proto.ListGoalsRequest_OrderBy,
 	orderDirection proto.ListGoalsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -199,14 +173,7 @@ func (s *experimentService) newGoalListOrders(
 	case proto.ListGoalsRequest_CONNECTION_TYPE:
 		column = "connection_type"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListGoalsRequest_DESC {
@@ -260,17 +227,16 @@ func (s *experimentService) CreateGoal(
 	ctx context.Context,
 	req *proto.CreateGoalRequest,
 ) (*proto.CreateGoalResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.createGoalNoCommand(ctx, req, editor, localizer)
+		return s.createGoalNoCommand(ctx, req, editor)
 	}
-	if err := validateCreateGoalRequest(req, localizer); err != nil {
+	if err := validateCreateGoalRequest(req); err != nil {
 		return nil, err
 	}
 	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description, req.Command.ConnectionType)
@@ -296,14 +262,7 @@ func (s *experimentService) CreateGoal(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create goal",
@@ -323,9 +282,8 @@ func (s *experimentService) createGoalNoCommand(
 	ctx context.Context,
 	req *proto.CreateGoalRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*proto.CreateGoalResponse, error) {
-	if err := validateCreateGoalNoCommandRequest(req, localizer); err != nil {
+	if err := validateCreateGoalNoCommandRequest(req); err != nil {
 		return nil, err
 	}
 	goal, err := domain.NewGoal(req.Id, req.Name, req.Description, req.ConnectionType)
@@ -368,14 +326,7 @@ func (s *experimentService) createGoalNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create goal",
@@ -391,70 +342,28 @@ func (s *experimentService) createGoalNoCommand(
 	}, nil
 }
 
-func validateCreateGoalRequest(req *proto.CreateGoalRequest, localizer locale.Localizer) error {
+func validateCreateGoalRequest(req *proto.CreateGoalRequest) error {
 	if req.Command.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	if !goalIDRegex.MatchString(req.Command.Id) {
-		dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidGoalID.Err()
 	}
 	if req.Command.Name == "" {
-		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalNameRequired.Err()
 	}
 	return nil
 }
 
-func validateCreateGoalNoCommandRequest(req *proto.CreateGoalRequest, localizer locale.Localizer) error {
+func validateCreateGoalNoCommandRequest(req *proto.CreateGoalRequest) error {
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	if !goalIDRegex.MatchString(req.Id) {
-		dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidGoalID.Err()
 	}
 	if req.Name == "" {
-		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalNameRequired.Err()
 	}
 	return nil
 }
@@ -463,25 +372,17 @@ func (s *experimentService) UpdateGoal(
 	ctx context.Context,
 	req *proto.UpdateGoalRequest,
 ) (*proto.UpdateGoalResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.ChangeDescriptionCommand == nil && req.RenameCommand == nil {
-		return s.updateGoalNoCommand(ctx, req, editor, localizer)
+		return s.updateGoalNoCommand(ctx, req, editor)
 	}
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusGoalIDRequired.Err()
 	}
 	commands := make([]command.Command, 0)
 	if req.RenameCommand != nil {
@@ -491,14 +392,7 @@ func (s *experimentService) UpdateGoal(
 		commands = append(commands, req.ChangeDescriptionCommand)
 	}
 	if len(commands) == 0 {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusNoCommand.Err()
 	}
 	err = s.updateGoal(
 		ctx,
@@ -506,7 +400,6 @@ func (s *experimentService) UpdateGoal(
 		req.EnvironmentId,
 		req.Id,
 		commands,
-		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -525,9 +418,8 @@ func (s *experimentService) updateGoalNoCommand(
 	ctx context.Context,
 	req *proto.UpdateGoalRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*proto.UpdateGoalResponse, error) {
-	err := s.validateUpdateGoalNoCommandRequest(req, localizer)
+	err := s.validateUpdateGoalNoCommandRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -577,14 +469,7 @@ func (s *experimentService) updateGoalNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusGoalNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -595,27 +480,12 @@ func (s *experimentService) updateGoalNoCommand(
 
 func (s *experimentService) validateUpdateGoalNoCommandRequest(
 	req *proto.UpdateGoalRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	if req.Name != nil && req.Name.Value == "" {
-		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalNameRequired.Err()
 	}
 	return nil
 }
@@ -624,32 +494,17 @@ func (s *experimentService) ArchiveGoal(
 	ctx context.Context,
 	req *proto.ArchiveGoalRequest,
 ) (*proto.ArchiveGoalResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusGoalIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusNoCommand.Err()
 	}
 	err = s.updateGoal(
 		ctx,
@@ -657,7 +512,6 @@ func (s *experimentService) ArchiveGoal(
 		req.EnvironmentId,
 		req.Id,
 		[]command.Command{req.Command},
-		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -676,22 +530,14 @@ func (s *experimentService) DeleteGoal(
 	ctx context.Context,
 	req *proto.DeleteGoalRequest,
 ) (*proto.DeleteGoalResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusGoalIDRequired.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
@@ -720,14 +566,7 @@ func (s *experimentService) DeleteGoal(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusGoalNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -739,7 +578,6 @@ func (s *experimentService) updateGoal(
 	editor *eventproto.Editor,
 	environmentId, goalID string,
 	commands []command.Command,
-	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, goalID, environmentId)
@@ -759,14 +597,7 @@ func (s *experimentService) updateGoal(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusGoalNotFound.Err()
 		}
 		return api.NewGRPCStatus(err).Err()
 	}

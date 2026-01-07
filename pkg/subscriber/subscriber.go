@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ type Configuration struct {
 	RedisMinIdle        int    `json:"redisMinIdle,omitempty"`
 	RedisDB             int    `json:"redisDB,omitempty"`
 	RedisPartitionCount int    `json:"redisPartitionCount,omitempty"`
+	RedisIdleTime       int    `json:"redisIdleTime,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -198,6 +199,11 @@ func (s pubSubSubscriber) createPuller(
 		// Add partition count if configured
 		if s.configuration.RedisPartitionCount > 0 {
 			factoryOpts = append(factoryOpts, factory.WithPartitionCount(s.configuration.RedisPartitionCount))
+		}
+
+		// Add idle time if configured
+		if s.configuration.RedisIdleTime > 0 {
+			factoryOpts = append(factoryOpts, factory.WithIdleTime(s.configuration.RedisIdleTime))
 		}
 	}
 

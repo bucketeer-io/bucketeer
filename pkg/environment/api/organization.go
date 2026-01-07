@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -31,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -49,15 +47,14 @@ func (s *EnvironmentService) GetOrganization(
 	ctx context.Context,
 	req *environmentproto.GetOrganizationRequest,
 ) (*environmentproto.GetOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER, localizer)
+	_, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateGetOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateGetOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	org, err := s.getOrganization(ctx, req.Id, localizer)
+	org, err := s.getOrganization(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,17 +65,9 @@ func (s *EnvironmentService) GetOrganization(
 
 func (s *EnvironmentService) validateGetOrganizationRequest(
 	req *environmentproto.GetOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -86,7 +75,6 @@ func (s *EnvironmentService) validateGetOrganizationRequest(
 func (s *EnvironmentService) getOrganization(
 	ctx context.Context,
 	id string,
-	localizer locale.Localizer,
 ) (*domain.Organization, error) {
 	org, err := s.orgStorage.GetOrganization(ctx, id)
 	if err != nil {
@@ -96,14 +84,7 @@ func (s *EnvironmentService) getOrganization(
 				zap.Error(err),
 			)...)
 		if errors.Is(err, v2es.ErrOrganizationNotFound) {
-			dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusOrganizationNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -114,8 +95,7 @@ func (s *EnvironmentService) ListOrganizations(
 	ctx context.Context,
 	req *environmentproto.ListOrganizationsRequest,
 ) (*environmentproto.ListOrganizationsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +121,7 @@ func (s *EnvironmentService) ListOrganizations(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newOrganizationListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newOrganizationListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"failed to create OrganizationListOrders",
@@ -158,14 +138,7 @@ func (s *EnvironmentService) ListOrganizations(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -198,39 +171,21 @@ func (s *EnvironmentService) CreateDemoOrganization(
 	ctx context.Context,
 	req *environmentproto.CreateDemoOrganizationRequest,
 ) (*environmentproto.CreateDemoOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	if !s.opts.isDemoSiteEnabled {
-		dt, err := statusDemoSiteDisabled.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.Organization),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusDemoSiteDisabled.Err()
 	}
 	demoToken, ok := rpc.GetDemoCreationToken(ctx)
 	if !ok {
 		s.logger.Error("failed to get access demoToken",
 			log.FieldsFromIncomingContext(ctx)...,
 		)
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.UnauthenticatedError,
-				"demo creation token",
-			),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 	editor := &eventproto.Editor{
 		Email:   demoToken.Email,
 		IsAdmin: false,
 	}
-	if err := validateCreateDemoOrganizationRequest(req, demoToken.Email, localizer); err != nil {
+	if err := validateCreateDemoOrganizationRequest(req, demoToken.Email); err != nil {
 		s.logger.Error("failed to validate CreateDemoOrganizationRequest",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
@@ -245,7 +200,6 @@ func (s *EnvironmentService) CreateDemoOrganization(
 		req.Description,
 		false,
 		false,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -287,40 +241,18 @@ func (s *EnvironmentService) CreateDemoOrganization(
 func validateCreateDemoOrganizationRequest(
 	req *environmentproto.CreateDemoOrganizationRequest,
 	ownerEmail string,
-	localizer locale.Localizer,
 ) error {
 	req.Name = strings.TrimSpace(req.Name)
 	if req.Name == "" {
-		dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationNameRequired.Err()
 	}
 	if len(req.Name) > maxOrganizationNameLength {
-		dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationName.Err()
 	}
 
 	req.UrlCode = strings.TrimSpace(req.UrlCode)
 	if !organizationUrlCodeRegex.MatchString(req.UrlCode) {
-		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationUrlCode.Err()
 	}
 	return nil
 }
@@ -328,7 +260,6 @@ func validateCreateDemoOrganizationRequest(
 func (s *EnvironmentService) newOrganizationListOrders(
 	orderBy environmentproto.ListOrganizationsRequest_OrderBy,
 	orderDirection environmentproto.ListOrganizationsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -351,14 +282,7 @@ func (s *EnvironmentService) newOrganizationListOrders(
 		column = "users"
 
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == environmentproto.ListOrganizationsRequest_DESC {
@@ -371,8 +295,7 @@ func (s *EnvironmentService) CreateOrganization(
 	ctx context.Context,
 	req *environmentproto.CreateOrganizationRequest,
 ) (*environmentproto.CreateOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -381,10 +304,9 @@ func (s *EnvironmentService) CreateOrganization(
 			ctx,
 			req,
 			editor,
-			localizer,
 		)
 	}
-	if err := s.validateCreateOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateCreateOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 	name := strings.TrimSpace(req.Command.Name)
@@ -406,7 +328,7 @@ func (s *EnvironmentService) CreateOrganization(
 		)
 		return nil, statusInternal.Err()
 	}
-	if err := s.createOrganization(ctx, req.Command, organization, editor, localizer); err != nil {
+	if err := s.createOrganization(ctx, req.Command, organization, editor); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateOrganizationResponse{
@@ -416,59 +338,23 @@ func (s *EnvironmentService) CreateOrganization(
 
 func (s *EnvironmentService) validateCreateOrganizationRequest(
 	req *environmentproto.CreateOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	name := strings.TrimSpace(req.Command.Name)
 	if name == "" {
-		dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationNameRequired.Err()
 	}
 	if len(name) > maxOrganizationNameLength {
-		dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationName.Err()
 	}
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	if !organizationUrlCodeRegex.MatchString(urlCode) {
-		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationUrlCode.Err()
 	}
 	if !emailRegex.MatchString(req.Command.OwnerEmail) {
-		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationCreatorEmail.Err()
 	}
 	return nil
 }
@@ -477,9 +363,8 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 	ctx context.Context,
 	req *environmentproto.CreateOrganizationRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*environmentproto.CreateOrganizationResponse, error) {
-	if err := s.validateCreateOrganizationRequestNoCommand(req, localizer); err != nil {
+	if err := s.validateCreateOrganizationRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	// Create the organization
@@ -493,7 +378,6 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		req.Description,
 		req.IsTrial,
 		req.IsSystemAdmin,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -538,7 +422,6 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	description string,
 	isTrial bool,
 	isSystemAdmin bool,
-	localizer locale.Localizer,
 ) (*domain.Organization, error) {
 	organization, err := domain.NewOrganization(
 		name,
@@ -631,14 +514,7 @@ func (s *EnvironmentService) createOrganizationMySQL(
 			)...,
 		)
 		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
-			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusOrganizationAlreadyExists.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -664,49 +540,20 @@ func (s *EnvironmentService) createOrganizationMySQL(
 
 func (s *EnvironmentService) validateCreateOrganizationRequestNoCommand(
 	req *environmentproto.CreateOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
-		dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationNameRequired.Err()
 	}
 	if len(name) > maxOrganizationNameLength {
-		dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationName.Err()
 	}
 	urlCode := strings.TrimSpace(req.UrlCode)
 	if !organizationUrlCodeRegex.MatchString(urlCode) {
-		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationUrlCode.Err()
 	}
 	if !emailRegex.MatchString(req.OwnerEmail) {
-		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidOrganizationCreatorEmail.Err()
 	}
 	return nil
 }
@@ -717,7 +564,6 @@ func (s *EnvironmentService) createOrganization(
 	cmd command.Command,
 	organization *domain.Organization,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) error {
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if organization.SystemAdmin {
@@ -740,14 +586,7 @@ func (s *EnvironmentService) createOrganization(
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
-			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusOrganizationAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create organization",
@@ -851,27 +690,26 @@ func (s *EnvironmentService) UpdateOrganization(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
+	editor, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER)
 	if err != nil {
 		return nil, err
 	}
 	// Additional security validations for ownership transfer
 	if req.OwnerEmail != nil || (req.ChangeOwnerEmailCommand != nil && req.ChangeOwnerEmailCommand.OwnerEmail != "") {
-		if err := s.validateOwnershipTransfer(ctx, req, editor, localizer); err != nil {
+		if err := s.validateOwnershipTransfer(ctx, req, editor); err != nil {
 			return nil, err
 		}
 	}
 
 	commands := s.getUpdateOrganizationCommands(req)
 	if len(commands) == 0 {
-		return s.updateOrganizationNoCommand(ctx, req, editor, localizer)
+		return s.updateOrganizationNoCommand(ctx, req, editor)
 	}
 
-	if err := s.validateUpdateOrganizationRequest(req.Id, commands, localizer); err != nil {
+	if err := s.validateUpdateOrganizationRequest(req.Id, commands); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, commands...); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, commands...); err != nil {
 		return nil, err
 	}
 	return &environmentproto.UpdateOrganizationResponse{}, nil
@@ -881,9 +719,8 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
-	if err := s.validateUpdateOrganizationRequestNoCommand(req, localizer); err != nil {
+	if err := s.validateUpdateOrganizationRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	var prevOwnerEmail string
@@ -928,7 +765,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 		return orgStorage.UpdateOrganization(ctxWithTx, updated)
 	})
 	if err != nil {
-		return nil, s.reportUpdateOrganizationError(ctx, err, localizer)
+		return nil, s.reportUpdateOrganizationError(ctx, err)
 	}
 
 	if err = s.publisher.Publish(ctx, event); err != nil {
@@ -960,7 +797,6 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 func (s *EnvironmentService) reportUpdateOrganizationError(
 	ctx context.Context,
 	err error,
-	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Failed to update organization",
@@ -969,24 +805,10 @@ func (s *EnvironmentService) reportUpdateOrganizationError(
 		)...,
 	)
 	if errors.Is(err, domain.ErrCannotArchiveSystemAdmin) || errors.Is(err, domain.ErrCannotDisableSystemAdmin) {
-		dt, err := statusCannotUpdateSystemAdmin.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusCannotUpdateSystemAdmin.Err()
 	}
 	if errors.Is(err, v2es.ErrOrganizationNotFound) || errors.Is(err, v2es.ErrOrganizationUnexpectedAffectedRows) {
-		dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationNotFound.Err()
 	}
 	return api.NewGRPCStatus(err).Err()
 }
@@ -1010,40 +832,18 @@ func (s *EnvironmentService) getUpdateOrganizationCommands(
 func (s *EnvironmentService) validateUpdateOrganizationRequest(
 	id string,
 	commands []command.Command,
-	localizer locale.Localizer,
 ) error {
 	if id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	for _, cmd := range commands {
 		if c, ok := cmd.(*environmentproto.ChangeNameOrganizationCommand); ok {
 			name := strings.TrimSpace(c.Name)
 			if name == "" {
-				dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
+				return statusOrganizationNameRequired.Err()
 			}
 			if len(name) > maxOrganizationNameLength {
-				dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
+				return statusInvalidOrganizationName.Err()
 			}
 		}
 	}
@@ -1052,39 +852,17 @@ func (s *EnvironmentService) validateUpdateOrganizationRequest(
 
 func (s *EnvironmentService) validateUpdateOrganizationRequestNoCommand(
 	req *environmentproto.UpdateOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	if req.Name != nil {
 		name := strings.TrimSpace(req.Name.Value)
 		if name == "" {
-			dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusOrganizationNameRequired.Err()
 		}
 		if len(name) > maxOrganizationNameLength {
-			dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusInvalidOrganizationName.Err()
 		}
 	}
 	return nil
@@ -1094,7 +872,6 @@ func (s *EnvironmentService) updateOrganization(
 	ctx context.Context,
 	id string,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
 	var prevOwnerEmail string
@@ -1121,7 +898,7 @@ func (s *EnvironmentService) updateOrganization(
 		return s.orgStorage.UpdateOrganization(contextWithTx, organization)
 	})
 	if err != nil {
-		return s.reportUpdateOrganizationError(ctx, err, localizer)
+		return s.reportUpdateOrganizationError(ctx, err)
 	}
 	// Update the organization role when the owner email changes
 	if prevOwnerEmail != "" && newOwnerEmail != "" {
@@ -1143,7 +920,6 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) error {
 	// Get current organization to validate against
 	organization, err := s.orgStorage.GetOrganization(ctx, req.Id)
@@ -1161,57 +937,26 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 
 	// Don't allow no-op updates (setting same owner)
 	if newOwnerEmail == organization.OwnerEmail {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.InvalidArgumentError,
-				"new owner email is the same as the current owner",
-			),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 
 	// If not system admin, ensure current user is actually the current owner
 	if !editor.IsAdmin && editor.Email != organization.OwnerEmail {
-		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusPermissionDenied.Err()
 	}
 
 	// New owner must exist and be a member of the organization
 	newOwnerAccount, err := s.accountStorage.GetAccountV2(ctx, newOwnerEmail, req.Id)
 	if err != nil {
 		if errors.Is(err, v2acc.ErrAccountNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "new owner account not found in organization"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusAccountNotFound.Err()
 		}
 		return err
 	}
 
 	// New owner account must be enabled
 	if newOwnerAccount.Disabled {
-		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "new owner account is disabled"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusPermissionDenied.Err()
 	}
 
 	return nil
@@ -1250,15 +995,14 @@ func (s *EnvironmentService) EnableOrganization(
 	ctx context.Context,
 	req *environmentproto.EnableOrganizationRequest,
 ) (*environmentproto.EnableOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnableOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateEnableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.EnableOrganizationResponse{}, nil
@@ -1266,27 +1010,12 @@ func (s *EnvironmentService) EnableOrganization(
 
 func (s *EnvironmentService) validateEnableOrganizationRequest(
 	req *environmentproto.EnableOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -1295,15 +1024,14 @@ func (s *EnvironmentService) DisableOrganization(
 	ctx context.Context,
 	req *environmentproto.DisableOrganizationRequest,
 ) (*environmentproto.DisableOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateDisableOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateDisableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.DisableOrganizationResponse{}, nil
@@ -1311,27 +1039,12 @@ func (s *EnvironmentService) DisableOrganization(
 
 func (s *EnvironmentService) validateDisableOrganizationRequest(
 	req *environmentproto.DisableOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -1340,15 +1053,14 @@ func (s *EnvironmentService) ArchiveOrganization(
 	ctx context.Context,
 	req *environmentproto.ArchiveOrganizationRequest,
 ) (*environmentproto.ArchiveOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateArchiveOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateArchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.ArchiveOrganizationResponse{}, nil
@@ -1356,27 +1068,12 @@ func (s *EnvironmentService) ArchiveOrganization(
 
 func (s *EnvironmentService) validateArchiveOrganizationRequest(
 	req *environmentproto.ArchiveOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -1385,15 +1082,14 @@ func (s *EnvironmentService) UnarchiveOrganization(
 	ctx context.Context,
 	req *environmentproto.UnarchiveOrganizationRequest,
 ) (*environmentproto.UnarchiveOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUnarchiveOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateUnarchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.UnarchiveOrganizationResponse{}, nil
@@ -1401,27 +1097,12 @@ func (s *EnvironmentService) UnarchiveOrganization(
 
 func (s *EnvironmentService) validateUnarchiveOrganizationRequest(
 	req *environmentproto.UnarchiveOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
@@ -1430,15 +1111,14 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 	ctx context.Context,
 	req *environmentproto.ConvertTrialOrganizationRequest,
 ) (*environmentproto.ConvertTrialOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateConvertTrialOrganizationRequest(req, localizer); err != nil {
+	if err := s.validateConvertTrialOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, localizer, req.Command); err != nil {
+	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.ConvertTrialOrganizationResponse{}, nil
@@ -1446,27 +1126,12 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 
 func (s *EnvironmentService) validateConvertTrialOrganizationRequest(
 	req *environmentproto.ConvertTrialOrganizationRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Id == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusOrganizationIDRequired.Err()
 	}
 	return nil
 }
