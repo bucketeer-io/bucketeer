@@ -28,7 +28,21 @@ const TemplateSchedule = ({
   const { control, watch, setValue } = useFormContext<RolloutSchemaType>();
 
   const scheduleList = watch('progressiveRollout.template.schedulesList');
-
+  const controlVariationId = watch(
+    'progressiveRollout.template.controlVariationId'
+  );
+  const targetVariationId = watch(
+    'progressiveRollout.template.targetVariationId'
+  );
+  const controlVariationOption = useMemo(
+    () => variationOptions.filter(option => option.value !== targetVariationId),
+    [variationOptions, targetVariationId]
+  );
+  const targetVariationOption = useMemo(
+    () =>
+      variationOptions.filter(option => option.value !== controlVariationId),
+    [variationOptions, controlVariationId]
+  );
   const isDisabled = useMemo(
     () => isDisableCreateRollout || disabled,
     [isDisableCreateRollout, disabled]
@@ -135,7 +149,7 @@ const TemplateSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={variationOptions}
+                options={targetVariationOption}
                 disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
@@ -173,7 +187,7 @@ const TemplateSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={variationOptions}
+                options={controlVariationOption}
                 disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
