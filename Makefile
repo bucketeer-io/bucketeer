@@ -124,6 +124,15 @@ update-repos-check: update-repos diff-check
 diff-check:
 	test -z "$$(git diff --name-only)"
 
+.PHONY: migration-validate
+migration-validate:
+	atlas migrate validate --dir file://migration/mysql
+
+.PHONY: migration-hash-check
+migration-hash-check:
+	atlas migrate hash --dir file://migration/mysql
+	make diff-check
+
 .PHONY: tidy-deps
 tidy-deps:
 	go mod tidy

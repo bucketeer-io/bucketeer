@@ -1,0 +1,42 @@
+name: pr-migration
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "migration/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ATLAS_VERSION: v1.0.0
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@1ffa6444093025c9791791f0de623560359acd02 # v0
+        with:
+          version: ${{ env.ATLAS_VERSION }}
+
+      - name: Validate migration files
+        run: make migration-validate
+
+  hash-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@1ffa6444093025c9791791f0de623560359acd02 # v0
+        with:
+          version: ${{ env.ATLAS_VERSION }}
+
+      - name: Check atlas.sum is up to date
+        run: make migration-hash-check
