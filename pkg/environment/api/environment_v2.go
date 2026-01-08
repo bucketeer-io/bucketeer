@@ -22,12 +22,14 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -440,6 +442,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	req *environmentproto.UpdateEnvironmentV2Request,
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateUpdateEnvironmentV2RequestNoCommand(req); err != nil {
 		return nil, err
 	}
@@ -449,7 +452,15 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		if err != nil {
 			return err
 		}
-		updated, err := environment.Update(req.Name, req.Description, req.RequireComment, req.Archived)
+		updated, err := environment.Update(
+			req.Name,
+			req.Description,
+			req.RequireComment,
+			req.Archived,
+			req.AutoArchiveEnabled,
+			req.AutoArchiveUnusedDays,
+			req.AutoArchiveCheckCodeRefs,
+		)
 		if err != nil {
 			return err
 		}
@@ -478,6 +489,26 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
 			return nil, statusEnvironmentNotFound.Err()
+		}
+		if errors.Is(err, domain.ErrAutoArchiveUnusedDaysRequired) {
+			dt, err := statusInvalidAutoArchiveUnusedDays.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_unused_days"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if errors.Is(err, domain.ErrAutoArchiveNotEnabled) {
+			dt, err := statusAutoArchiveNotEnabled.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_settings"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update environment",
