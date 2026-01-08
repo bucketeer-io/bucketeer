@@ -16,7 +16,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -30,82 +29,6 @@ import (
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
-
-func TestChangePeriod(t *testing.T) {
-	now := time.Now()
-	startAt := now.Unix()
-	stopAt := now.Local().Add(time.Hour * 1).Unix()
-
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	m := publishermock.NewMockPublisher(mockController)
-	e := newExperiment(startAt, stopAt)
-	h := newExperimentCommandHandler(t, m, e)
-	patterns := []*struct {
-		startAt     int64
-		stopAt      int64
-		expectedErr error
-	}{
-		{
-			startAt:     startAt + 10,
-			stopAt:      stopAt + 10,
-			expectedErr: nil,
-		},
-		{
-			startAt:     stopAt + 10,
-			stopAt:      startAt + 10,
-			expectedErr: experimentdomain.ErrExperimentStartIsAfterStop,
-		},
-		{
-			startAt:     startAt - 100,
-			stopAt:      startAt - 10,
-			expectedErr: experimentdomain.ErrExperimentStopIsBeforeNow,
-		},
-	}
-	for i, p := range patterns {
-		if p.expectedErr == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &experimentproto.ChangeExperimentPeriodCommand{StartAt: p.startAt, StopAt: p.stopAt}
-		err := h.Handle(context.Background(), cmd)
-		des := fmt.Sprintf("index: %d", i)
-		assert.Equal(t, p.expectedErr, err, des)
-		if err == nil {
-			assert.Equal(t, p.startAt, e.Experiment.StartAt, des)
-			assert.Equal(t, p.stopAt, e.Experiment.StopAt, des)
-		}
-	}
-}
-
-func TestHandleRenameChangeCommand(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	publisher := publishermock.NewMockPublisher(mockController)
-	e := newExperiment(0, 0)
-	h := newExperimentCommandHandler(t, publisher, e)
-	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-	newName := "newGName"
-	cmd := &experimentproto.ChangeExperimentNameCommand{Name: newName}
-	err := h.Handle(context.Background(), cmd)
-	assert.NoError(t, err)
-	assert.Equal(t, newName, e.Name)
-}
-
-func TestHandleChangeDescriptionExperimentCommand(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	publisher := publishermock.NewMockPublisher(mockController)
-	e := newExperiment(0, 0)
-	h := newExperimentCommandHandler(t, publisher, e)
-	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-	newDesc := "newGDesc"
-	cmd := &experimentproto.ChangeExperimentDescriptionCommand{Description: newDesc}
-	err := h.Handle(context.Background(), cmd)
-	assert.NoError(t, err)
-	assert.Equal(t, newDesc, e.Description)
-}
 
 func TestHandleArchiveExperimentCommand(t *testing.T) {
 	t.Parallel()

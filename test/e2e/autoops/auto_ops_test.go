@@ -959,9 +959,9 @@ func createGoal(ctx context.Context, t *testing.T, client experimentclient.Clien
 	t.Helper()
 	goalID := createGoalID(t)
 	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		Id:          goalID,
-		Name:        goalID,
-		Description: goalID,
+		Id:            goalID,
+		Name:          goalID,
+		Description:   goalID,
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {

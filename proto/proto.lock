@@ -28264,134 +28264,7 @@
       "def": {
         "messages": [
           {
-            "name": "CreateGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "connection_type",
-                "type": "Goal.ConnectionType"
-              }
-            ]
-          },
-          {
-            "name": "RenameGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
             "name": "ArchiveGoalCommand"
-          },
-          {
-            "name": "DeleteGoalCommand"
-          },
-          {
-            "name": "CreateExperimentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "stop_at",
-                "type": "int64"
-              },
-              {
-                "id": 5,
-                "name": "goal_ids",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 6,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "base_variation_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          },
-          {
-            "name": "ChangeExperimentPeriodCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "stop_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ChangeExperimentNameCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeExperimentDescriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
           },
           {
             "name": "StopExperimentCommand"
@@ -28407,11 +28280,6 @@
           },
           {
             "name": "FinishExperimentCommand"
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/experiment/goal.proto"
           }
         ],
         "package": {

@@ -56,14 +56,6 @@ func NewExperimentCommandHandler(
 
 func (h *experimentCommandHandler) Handle(ctx context.Context, cmd Command) error {
 	switch c := cmd.(type) {
-	case *proto.CreateExperimentCommand:
-		return h.create(ctx, c)
-	case *proto.ChangeExperimentPeriodCommand:
-		return h.changePeriod(ctx, c)
-	case *proto.ChangeExperimentNameCommand:
-		return h.changeName(ctx, c)
-	case *proto.ChangeExperimentDescriptionCommand:
-		return h.changeDescription(ctx, c)
 	case *proto.StopExperimentCommand:
 		return h.stop(ctx, c)
 	case *proto.StartExperimentCommand:
@@ -77,60 +69,6 @@ func (h *experimentCommandHandler) Handle(ctx context.Context, cmd Command) erro
 	default:
 		return ErrUnknownCommand
 	}
-}
-
-func (h *experimentCommandHandler) create(ctx context.Context, cmd *proto.CreateExperimentCommand) error {
-	return h.send(ctx, eventproto.Event_EXPERIMENT_CREATED, &eventproto.ExperimentCreatedEvent{
-		Id:              h.experiment.Id,
-		FeatureId:       h.experiment.FeatureId,
-		FeatureVersion:  h.experiment.FeatureVersion,
-		Variations:      h.experiment.Variations,
-		GoalId:          h.experiment.GoalId,
-		GoalIds:         h.experiment.GoalIds,
-		StartAt:         h.experiment.StartAt,
-		StopAt:          h.experiment.StopAt,
-		Stopped:         h.experiment.Stopped,
-		StoppedAt:       h.experiment.StoppedAt,
-		CreatedAt:       h.experiment.CreatedAt,
-		UpdatedAt:       h.experiment.UpdatedAt,
-		Name:            h.experiment.Name,
-		Description:     h.experiment.Description,
-		BaseVariationId: h.experiment.BaseVariationId,
-	})
-}
-
-func (h *experimentCommandHandler) changePeriod(ctx context.Context, cmd *proto.ChangeExperimentPeriodCommand) error {
-	if err := h.experiment.ChangePeriod(cmd.StartAt, cmd.StopAt); err != nil {
-		return err
-	}
-	return h.send(ctx, eventproto.Event_EXPERIMENT_PERIOD_CHANGED, &eventproto.ExperimentPeriodChangedEvent{
-		Id:      h.experiment.Id,
-		StartAt: cmd.StartAt,
-		StopAt:  cmd.StopAt,
-	})
-}
-
-func (h *experimentCommandHandler) changeName(ctx context.Context, cmd *proto.ChangeExperimentNameCommand) error {
-	if err := h.experiment.ChangeName(cmd.Name); err != nil {
-		return err
-	}
-	return h.send(ctx, eventproto.Event_EXPERIMENT_NAME_CHANGED, &eventproto.ExperimentNameChangedEvent{
-		Id:   h.experiment.Id,
-		Name: h.experiment.Name,
-	})
-}
-
-func (h *experimentCommandHandler) changeDescription(
-	ctx context.Context,
-	cmd *proto.ChangeExperimentDescriptionCommand,
-) error {
-	if err := h.experiment.ChangeDescription(cmd.Description); err != nil {
-		return err
-	}
-	return h.send(ctx, eventproto.Event_EXPERIMENT_DESCRIPTION_CHANGED, &eventproto.ExperimentDescriptionChangedEvent{
-		Id:          h.experiment.Id,
-		Description: h.experiment.Description,
-	})
 }
 
 func (h *experimentCommandHandler) stop(ctx context.Context, cmd *proto.StopExperimentCommand) error {

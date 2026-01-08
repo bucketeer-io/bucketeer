@@ -28,40 +28,6 @@ import (
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
-func TestHandleRenameGoalCommand(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
-	assert.NoError(t, err)
-
-	h := newGoalCommandHandler(t, publisher, g)
-	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-	newName := "newGName"
-	cmd := &experimentproto.RenameGoalCommand{Name: newName}
-	err = h.Handle(context.Background(), cmd)
-	assert.NoError(t, err)
-	assert.Equal(t, newName, g.Name)
-}
-
-func TestHandleChangeDescriptionGoalCommand(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
-	assert.NoError(t, err)
-
-	h := newGoalCommandHandler(t, publisher, g)
-	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-	newDesc := "newGDesc"
-	cmd := &experimentproto.ChangeDescriptionGoalCommand{Description: newDesc}
-	err = h.Handle(context.Background(), cmd)
-	assert.NoError(t, err)
-	assert.Equal(t, newDesc, g.Description)
-}
-
 func TestHandleArchiveGoalCommand(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -76,22 +42,6 @@ func TestHandleArchiveGoalCommand(t *testing.T) {
 	err = h.Handle(context.Background(), cmd)
 	assert.NoError(t, err)
 	assert.True(t, g.Archived)
-}
-
-func TestHandleDeleteGoalCommand(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
-	assert.NoError(t, err)
-
-	h := newGoalCommandHandler(t, publisher, g)
-	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-	cmd := &experimentproto.DeleteGoalCommand{}
-	err = h.Handle(context.Background(), cmd)
-	assert.NoError(t, err)
-	assert.True(t, g.Deleted)
 }
 
 func newGoalCommandHandler(t *testing.T, publisher publisher.Publisher, goal *domain.Goal) Handler {
