@@ -27,16 +27,6 @@ jobs:
 
       - name: Validate migration files
         run: make migration-validate
-
-  hash-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-
-      - name: Setup Atlas
-        uses: ariga/setup-atlas@1ffa6444093025c9791791f0de623560359acd02 # v0
-        with:
-          version: ${{ env.ATLAS_VERSION }}
-
+        
       - name: Check atlas.sum is up to date
         run: make migration-hash-check
