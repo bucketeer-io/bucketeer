@@ -43,7 +43,6 @@ var (
 )
 
 func TestListAndGetAuditLog(t *testing.T) {
-	t.Parallel()
 	featureClient := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
 
@@ -51,58 +50,79 @@ func TestListAndGetAuditLog(t *testing.T) {
 	startTime := time.Now().Unix()
 
 	createFeatureNoCmd(t, featureClient, req)
-	// Wait for the audit log to be saved
-	time.Sleep(20 * time.Second)
+	t.Logf("Created feature with ID: %s", req.Id)
 
 	auditlogClient := newAuditLogClient(t)
 
 	// Use time filtering to avoid scanning the entire table
 	// This dramatically improves query performance
-	fromTime := startTime - 10       // 10 seconds before feature creation
-	toTime := time.Now().Unix() + 10 // 10 seconds into the future for clock skew
+	fromTime := startTime - 60 // 60 seconds before feature creation to handle any clock skew
 
 	var auditLogID string
-	cursor := "0"
 	maxLogs := 500
-	totalLogs := 0
 	pageSize := int64(50)
 
-	for {
-		listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
-			EnvironmentId:  *environmentID,
-			EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-			PageSize:       pageSize,
-			Cursor:         cursor,
-			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
-			OrderDirection: auditlog.ListAuditLogsRequest_DESC,
-			From:           fromTime,
-			To:             toTime,
-		})
-		if err != nil {
-			t.Fatal("Failed to list audit logs:", err)
-		}
+	// Poll for the audit log with retries instead of fixed wait
+	// This is more efficient as we exit as soon as the log is found
+	searchRetries := 40
+	var lastTotalLogs int
+	for retry := 0; retry < searchRetries; retry++ {
+		// Wait before each attempt (including the first one to give pubsub time to process)
+		time.Sleep(2 * time.Second)
 
-		totalLogs += len(listResp.AuditLogs)
-		// Search for the target audit log in the current batch
-		for _, log := range listResp.AuditLogs {
-			if log.EntityId == req.Id {
-				auditLogID = log.Id
+		// Update toTime on each retry to account for time passing
+		toTime := time.Now().Unix() + 60 // 60 seconds into the future for clock skew
+
+		cursor := "0"
+		totalLogs := 0
+		auditLogID = "" // Reset for each retry
+
+		for {
+			listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
+				EnvironmentId:  *environmentID,
+				EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
+				PageSize:       pageSize,
+				Cursor:         cursor,
+				OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
+				OrderDirection: auditlog.ListAuditLogsRequest_DESC,
+				From:           fromTime,
+				To:             toTime,
+			})
+			if err != nil {
+				t.Fatal("Failed to list audit logs:", err)
+			}
+
+			totalLogs += len(listResp.AuditLogs)
+			// Search for the target audit log in the current batch
+			for _, log := range listResp.AuditLogs {
+				if log.EntityId == req.Id {
+					auditLogID = log.Id
+					break
+				}
+			}
+
+			// Break if we found the target log, reached max logs, or reached the end
+			if auditLogID != "" ||
+				listResp.Cursor == "" ||
+				len(listResp.AuditLogs) == 0 ||
+				totalLogs >= maxLogs {
 				break
 			}
+			cursor = listResp.Cursor
 		}
 
-		// Break if we found the target log, reached max logs, or reached the end
-		if auditLogID != "" ||
-			listResp.Cursor == "" ||
-			len(listResp.AuditLogs) == 0 ||
-			totalLogs >= maxLogs {
+		lastTotalLogs = totalLogs
+
+		// If found, break out of retry loop
+		if auditLogID != "" {
+			t.Logf("Found audit log after %d retries (%d seconds)", retry+1, (retry+1)*2)
 			break
 		}
-		cursor = listResp.Cursor
 	}
 
 	if auditLogID == "" {
-		t.Fatal("Failed to find audit log for the created feature")
+		t.Fatalf("Failed to find audit log for feature ID %s after %d retries. Last search found %d logs in time window.",
+			req.Id, searchRetries, lastTotalLogs)
 	}
 
 	getResp, err := getAuditLogWithRetry(t, auditlogClient, &auditlog.GetAuditLogRequest{

@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -25,9 +26,19 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
+var (
+	ErrAutoArchiveUnusedDaysRequired = errors.New("auto_archive_unused_days is required when enabling auto-archive")
+	ErrAutoArchiveNotEnabled         = errors.New("cannot update auto-archive settings when auto_archive_enabled is false")
+)
+
 type EnvironmentV2 struct {
 	*proto.EnvironmentV2
 }
+
+const (
+	defaultAutoArchiveUnusedDays    int32 = 90
+	defaultAutoArchiveCheckCodeRefs       = true
+)
 
 func NewEnvironmentV2(
 	name,
@@ -45,16 +56,19 @@ func NewEnvironmentV2(
 	}
 	now := time.Now().Unix()
 	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:             uid.String(),
-		Name:           name,
-		UrlCode:        urlCode,
-		Description:    description,
-		ProjectId:      projectID,
-		OrganizationId: organizationID,
-		Archived:       false,
-		RequireComment: requireComment,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		Id:                       uid.String(),
+		Name:                     name,
+		UrlCode:                  urlCode,
+		Description:              description,
+		ProjectId:                projectID,
+		OrganizationId:           organizationID,
+		Archived:                 false,
+		RequireComment:           requireComment,
+		CreatedAt:                now,
+		UpdatedAt:                now,
+		AutoArchiveEnabled:       false,
+		AutoArchiveUnusedDays:    defaultAutoArchiveUnusedDays,
+		AutoArchiveCheckCodeRefs: defaultAutoArchiveCheckCodeRefs,
 	}}, nil
 }
 
@@ -63,7 +77,27 @@ func (e *EnvironmentV2) Update(
 	description *wrapperspb.StringValue,
 	requireComment *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
+	autoArchiveEnabled *wrapperspb.BoolValue,
+	autoArchiveUnusedDays *wrapperspb.Int32Value,
+	autoArchiveCheckCodeRefs *wrapperspb.BoolValue,
 ) (*EnvironmentV2, error) {
+	// Auto-archive validation
+	// Case 1: When enabling auto-archive, unused_days is required
+	if autoArchiveEnabled != nil && autoArchiveEnabled.Value {
+		if autoArchiveUnusedDays == nil || autoArchiveUnusedDays.Value <= 0 {
+			return nil, ErrAutoArchiveUnusedDaysRequired
+		}
+	}
+
+	// Case 2: When auto-archive is not enabled, cannot update other auto-archive fields
+	willBeEnabled := e.AutoArchiveEnabled
+	if autoArchiveEnabled != nil {
+		willBeEnabled = autoArchiveEnabled.Value
+	}
+	if !willBeEnabled && (autoArchiveUnusedDays != nil || autoArchiveCheckCodeRefs != nil) {
+		return nil, ErrAutoArchiveNotEnabled
+	}
+
 	updated := &EnvironmentV2{}
 	if err := copier.Copy(updated, e); err != nil {
 		return nil, err
@@ -80,6 +114,15 @@ func (e *EnvironmentV2) Update(
 	}
 	if archived != nil {
 		updated.Archived = archived.Value
+	}
+	if autoArchiveEnabled != nil {
+		updated.AutoArchiveEnabled = autoArchiveEnabled.Value
+	}
+	if autoArchiveUnusedDays != nil {
+		updated.AutoArchiveUnusedDays = autoArchiveUnusedDays.Value
+	}
+	if autoArchiveCheckCodeRefs != nil {
+		updated.AutoArchiveCheckCodeRefs = autoArchiveCheckCodeRefs.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()

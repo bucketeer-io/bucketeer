@@ -40,6 +40,10 @@ func TestNewEnvironmentV2(t *testing.T) {
 	assert.Equal(t, "desc", env.Description)
 	assert.Equal(t, "project-id", env.ProjectId)
 	assert.Equal(t, false, env.Archived)
+	// Auto-archive default values
+	assert.Equal(t, false, env.AutoArchiveEnabled)
+	assert.Equal(t, defaultAutoArchiveUnusedDays, env.AutoArchiveUnusedDays)
+	assert.Equal(t, defaultAutoArchiveCheckCodeRefs, env.AutoArchiveCheckCodeRefs)
 }
 
 func TestUpdateEnvironmentV2(t *testing.T) {
@@ -60,12 +64,19 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		wrapperspb.String("new-desc"),
 		wrapperspb.Bool(false),
 		wrapperspb.Bool(true),
+		wrapperspb.Bool(true),
+		wrapperspb.Int32(30),
+		wrapperspb.Bool(false),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "new-name", updated.Name)
 	assert.Equal(t, "new-desc", updated.Description)
 	assert.Equal(t, false, updated.RequireComment)
 	assert.Equal(t, true, updated.Archived)
+	// Auto-archive settings
+	assert.Equal(t, true, updated.AutoArchiveEnabled)
+	assert.Equal(t, int32(30), updated.AutoArchiveUnusedDays)
+	assert.Equal(t, false, updated.AutoArchiveCheckCodeRefs)
 }
 
 func TestRenameEnvironmentV2(t *testing.T) {
@@ -132,4 +143,137 @@ func TestSetArchivedEnvironmentV2(t *testing.T) {
 	assert.NoError(t, err)
 	env.SetArchived()
 	assert.Equal(t, true, env.Archived)
+}
+
+func TestUpdateEnvironmentV2_AutoArchiveValidation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                       string
+		existingAutoArchiveEnabled bool
+		autoArchiveEnabled         *wrapperspb.BoolValue
+		autoArchiveUnusedDays      *wrapperspb.Int32Value
+		autoArchiveCheckCodeRefs   *wrapperspb.BoolValue
+		expectedError              error
+	}{
+		{
+			name:                       "err: enable auto-archive without unused_days",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         wrapperspb.Bool(true),
+			autoArchiveUnusedDays:      nil,
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              ErrAutoArchiveUnusedDaysRequired,
+		},
+		{
+			name:                       "err: enable auto-archive with unused_days=0",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         wrapperspb.Bool(true),
+			autoArchiveUnusedDays:      wrapperspb.Int32(0),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              ErrAutoArchiveUnusedDaysRequired,
+		},
+		{
+			name:                       "err: enable auto-archive with unused_days negative",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         wrapperspb.Bool(true),
+			autoArchiveUnusedDays:      wrapperspb.Int32(-1),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              ErrAutoArchiveUnusedDaysRequired,
+		},
+		{
+			name:                       "err: update unused_days when auto-archive is disabled",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         nil,
+			autoArchiveUnusedDays:      wrapperspb.Int32(30),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              ErrAutoArchiveNotEnabled,
+		},
+		{
+			name:                       "err: update check_code_refs when auto-archive is disabled",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         nil,
+			autoArchiveUnusedDays:      nil,
+			autoArchiveCheckCodeRefs:   wrapperspb.Bool(false),
+			expectedError:              ErrAutoArchiveNotEnabled,
+		},
+		{
+			name:                       "err: disable auto-archive and update other fields simultaneously",
+			existingAutoArchiveEnabled: true,
+			autoArchiveEnabled:         wrapperspb.Bool(false),
+			autoArchiveUnusedDays:      wrapperspb.Int32(60),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              ErrAutoArchiveNotEnabled,
+		},
+		{
+			name:                       "success: enable auto-archive with valid unused_days",
+			existingAutoArchiveEnabled: false,
+			autoArchiveEnabled:         wrapperspb.Bool(true),
+			autoArchiveUnusedDays:      wrapperspb.Int32(30),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              nil,
+		},
+		{
+			name:                       "success: update unused_days when auto-archive is already enabled",
+			existingAutoArchiveEnabled: true,
+			autoArchiveEnabled:         nil,
+			autoArchiveUnusedDays:      wrapperspb.Int32(60),
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              nil,
+		},
+		{
+			name:                       "success: update check_code_refs when auto-archive is already enabled",
+			existingAutoArchiveEnabled: true,
+			autoArchiveEnabled:         nil,
+			autoArchiveUnusedDays:      nil,
+			autoArchiveCheckCodeRefs:   wrapperspb.Bool(false),
+			expectedError:              nil,
+		},
+		{
+			name:                       "success: disable auto-archive only",
+			existingAutoArchiveEnabled: true,
+			autoArchiveEnabled:         wrapperspb.Bool(false),
+			autoArchiveUnusedDays:      nil,
+			autoArchiveCheckCodeRefs:   nil,
+			expectedError:              nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			env, err := NewEnvironmentV2(
+				"name",
+				"code",
+				"desc",
+				"project-id",
+				"organization-id",
+				false,
+				zap.NewNop(),
+			)
+			assert.NoError(t, err)
+
+			// Set existing auto-archive state
+			env.AutoArchiveEnabled = tt.existingAutoArchiveEnabled
+			if tt.existingAutoArchiveEnabled {
+				env.AutoArchiveUnusedDays = 90
+				env.AutoArchiveCheckCodeRefs = true
+			}
+
+			_, err = env.Update(
+				nil, // name
+				nil, // description
+				nil, // requireComment
+				nil, // archived
+				tt.autoArchiveEnabled,
+				tt.autoArchiveUnusedDays,
+				tt.autoArchiveCheckCodeRefs,
+			)
+
+			if tt.expectedError != nil {
+				assert.ErrorIs(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

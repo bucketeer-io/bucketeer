@@ -29,4 +29,8 @@ message EnvironmentV2 {
   string organization_id = 9;
   bool require_comment = 10;
   int32 feature_flag_count = 11;
+  // Auto-archive configuration
+  bool auto_archive_enabled = 12;
+  int32 auto_archive_unused_days = 13;
+  bool auto_archive_check_code_refs = 14;
 }

@@ -34,10 +34,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/bigquery-emulator"]
-          args: ["--project", {{ .Values.project }}]
+          args: ["--project", "{{ .Values.project }}"]
           env:
             - name: project
-              value: {{ .Values.project }}
+              value: "{{ .Values.project }}"
           ports:
             - containerPort: {{ .Values.service.port }}
               protocol: TCP

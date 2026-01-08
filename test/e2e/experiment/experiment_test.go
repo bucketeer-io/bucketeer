@@ -594,7 +594,9 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 	if _, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            expected.Id,
 		EnvironmentId: *environmentID,
-		StartAt:       wrapperspb.Int64(time.Now().Unix()),
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}
