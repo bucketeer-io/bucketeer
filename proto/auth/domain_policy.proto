@@ -25,6 +25,7 @@ message PasswordAuthOption {
 message GoogleOidcOption {
   bool enabled = 1;
   bool required = 2;
+  string display_name = 3;  // e.g., "Sign in with Google"
 }
 
 message CompanyOidcOption {
@@ -56,9 +57,11 @@ message DomainAuthPolicy {
 message DomainAuthOptions {
   string domain = 1;
   bool password_enabled = 2;
-  bool google_enabled = 3;
-  bool company_oidc_enabled = 4;
-  string company_oidc_display_name = 5;
-  string company_oidc_auth_url = 6;  // Pre-built auth URL
-  bool oidc_required = 7;            // If true, only company OIDC allowed
+  bool google_oidc_enabled = 3;
+  string google_oidc_display_name = 4;  // e.g., "Sign in with Google"
+  bool company_oidc_enabled = 5;
+  string company_oidc_display_name = 6;
+  string company_oidc_auth_url =
+      7;  // Pre-built auth URL (deprecated, use GetCompanyOidcAuthURL)
+  bool oidc_required = 8;  // If true, only OIDC allowed (no password)
 }

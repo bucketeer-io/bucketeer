@@ -331,10 +331,11 @@ func buildAuthOptions(
 	// If no policy exists, return global defaults
 	if policy == nil || !policy.Enabled {
 		return &authproto.DomainAuthOptions{
-			Domain:          domain,
-			PasswordEnabled: false, // Password not enabled by default
-			GoogleEnabled:   true,  // Google OIDC is global default
-			OidcRequired:    false,
+			Domain:                domain,
+			PasswordEnabled:       false,                 // Password not enabled by default
+			GoogleOidcEnabled:     true,                  // Google OIDC is global default
+			GoogleOidcDisplayName: "Sign in with Google", // Default display name
+			OidcRequired:          false,
 		}
 	}
 
@@ -343,7 +344,7 @@ func buildAuthOptions(
 		return &authproto.DomainAuthOptions{
 			Domain:                 domain,
 			PasswordEnabled:        false,
-			GoogleEnabled:          false,
+			GoogleOidcEnabled:      false,
 			CompanyOidcEnabled:     true,
 			CompanyOidcDisplayName: policy.AuthPolicy.CompanyOidc.DisplayName,
 			OidcRequired:           true,
@@ -354,10 +355,20 @@ func buildAuthOptions(
 	options := &authproto.DomainAuthOptions{
 		Domain:          domain,
 		PasswordEnabled: policy.IsPasswordEnabled(),
-		GoogleEnabled:   policy.IsGoogleOidcEnabled(),
 		OidcRequired:    false,
 	}
 
+	// Add Google OIDC if enabled
+	if policy.IsGoogleOidcEnabled() {
+		options.GoogleOidcEnabled = true
+		if policy.AuthPolicy.GoogleOidc != nil && policy.AuthPolicy.GoogleOidc.DisplayName != "" {
+			options.GoogleOidcDisplayName = policy.AuthPolicy.GoogleOidc.DisplayName
+		} else {
+			options.GoogleOidcDisplayName = "Sign in with Google" // Default display name
+		}
+	}
+
+	// Add Company OIDC if enabled
 	if policy.IsCompanyOidcEnabled() {
 		options.CompanyOidcEnabled = true
 		options.CompanyOidcDisplayName = policy.AuthPolicy.CompanyOidc.DisplayName

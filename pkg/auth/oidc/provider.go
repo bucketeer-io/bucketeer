@@ -133,7 +133,7 @@ func (p *Provider) ExchangeToken(
 	ctx = oidc.ClientContext(ctx, p.httpClient)
 
 	// Exchange code for tokens
-	opts := []oauth2.AuthCodeOption{}
+	var opts []oauth2.AuthCodeOption
 	if codeVerifier != "" {
 		opts = append(opts, oauth2.SetAuthURLParam("code_verifier", codeVerifier))
 	}

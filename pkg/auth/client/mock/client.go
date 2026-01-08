@@ -114,6 +114,26 @@ func (mr *MockClientMockRecorder) ExchangeCompanyOidcToken(ctx, in any, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeCompanyOidcToken", reflect.TypeOf((*MockClient)(nil).ExchangeCompanyOidcToken), varargs...)
 }
 
+// ExchangeGoogleOidcToken mocks base method.
+func (m *MockClient) ExchangeGoogleOidcToken(ctx context.Context, in *auth.ExchangeGoogleOidcTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeGoogleOidcTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExchangeGoogleOidcToken", varargs...)
+	ret0, _ := ret[0].(*auth.ExchangeGoogleOidcTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExchangeGoogleOidcToken indicates an expected call of ExchangeGoogleOidcToken.
+func (mr *MockClientMockRecorder) ExchangeGoogleOidcToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeGoogleOidcToken", reflect.TypeOf((*MockClient)(nil).ExchangeGoogleOidcToken), varargs...)
+}
+
 // ExchangeToken mocks base method.
 func (m *MockClient) ExchangeToken(ctx context.Context, in *auth.ExchangeTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeTokenResponse, error) {
 	m.ctrl.T.Helper()
@@ -232,6 +252,26 @@ func (mr *MockClientMockRecorder) GetDomainAuthPolicy(ctx, in any, opts ...any) 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDomainAuthPolicy", reflect.TypeOf((*MockClient)(nil).GetDomainAuthPolicy), varargs...)
+}
+
+// GetGoogleOidcAuthURL mocks base method.
+func (m *MockClient) GetGoogleOidcAuthURL(ctx context.Context, in *auth.GetGoogleOidcAuthURLRequest, opts ...grpc.CallOption) (*auth.GetGoogleOidcAuthURLResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetGoogleOidcAuthURL", varargs...)
+	ret0, _ := ret[0].(*auth.GetGoogleOidcAuthURLResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGoogleOidcAuthURL indicates an expected call of GetGoogleOidcAuthURL.
+func (mr *MockClientMockRecorder) GetGoogleOidcAuthURL(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoogleOidcAuthURL", reflect.TypeOf((*MockClient)(nil).GetGoogleOidcAuthURL), varargs...)
 }
 
 // InitiatePasswordReset mocks base method.
@@ -372,6 +412,26 @@ func (mr *MockClientMockRecorder) SignIn(ctx, in any, opts ...any) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignIn", reflect.TypeOf((*MockClient)(nil).SignIn), varargs...)
+}
+
+// SignInPassword mocks base method.
+func (m *MockClient) SignInPassword(ctx context.Context, in *auth.SignInPasswordRequest, opts ...grpc.CallOption) (*auth.SignInPasswordResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SignInPassword", varargs...)
+	ret0, _ := ret[0].(*auth.SignInPasswordResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignInPassword indicates an expected call of SignInPassword.
+func (mr *MockClientMockRecorder) SignInPassword(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignInPassword", reflect.TypeOf((*MockClient)(nil).SignInPassword), varargs...)
 }
 
 // SwitchOrganization mocks base method.

@@ -5560,6 +5560,11 @@
                 "id": 2,
                 "name": "required",
                 "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "display_name",
+                "type": "string"
               }
             ]
           },
@@ -5674,26 +5679,31 @@
               },
               {
                 "id": 3,
-                "name": "google_enabled",
+                "name": "google_oidc_enabled",
                 "type": "bool"
               },
               {
                 "id": 4,
+                "name": "google_oidc_display_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
                 "name": "company_oidc_enabled",
                 "type": "bool"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "company_oidc_display_name",
                 "type": "string"
               },
               {
-                "id": 6,
+                "id": 7,
                 "name": "company_oidc_auth_url",
                 "type": "string"
               },
               {
-                "id": 7,
+                "id": 8,
                 "name": "oidc_required",
                 "type": "bool"
               }
@@ -5840,6 +5850,31 @@
           },
           {
             "name": "SignInResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
+            "name": "SignInPasswordRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SignInPasswordResponse",
             "fields": [
               {
                 "id": 1,
@@ -6047,6 +6082,61 @@
                 "id": 1,
                 "name": "options",
                 "type": "DomainAuthOptions"
+              }
+            ]
+          },
+          {
+            "name": "GetGoogleOidcAuthURLRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetGoogleOidcAuthURLResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeGoogleOidcTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "redirect_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeGoogleOidcTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
               }
             ]
           },
@@ -6722,6 +6812,137 @@
                               {
                                 "name": "description",
                                 "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "SignInPassword",
+                "in_type": "SignInPasswordRequest",
+                "out_type": "SignInPasswordResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/signin_password"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Sign In with Password"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Sign in using email and password, returns a temporary token (5 minutes) without organization scope. User must call GetMyOrganizations and then SwitchOrganization to get an org-scoped token."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.signin_password"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (invalid credentials)."
                               },
                               {
                                 "name": "schema",
@@ -7693,6 +7914,223 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetGoogleOidcAuthURL",
+                "in_type": "GetGoogleOidcAuthURLRequest",
+                "out_type": "GetGoogleOidcAuthURLResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/google_oidc/url"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Google OIDC Auth URL"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Generate authorization URL for Google OIDC login (public, no auth required). Returns temporary token after exchange."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.get_google_oidc_auth_url"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExchangeGoogleOidcToken",
+                "in_type": "ExchangeGoogleOidcTokenRequest",
+                "out_type": "ExchangeGoogleOidcTokenResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auth/google_oidc/token"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Exchange Google OIDC Token"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Exchange Google authorization code for Bucketeer temporary token (public, no auth required). Returns 5-minute token without org scope."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Authentication"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auth.exchange_google_oidc_token"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
                                   }
                                 ]
                               }

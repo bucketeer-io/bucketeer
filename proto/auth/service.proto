@@ -67,6 +67,15 @@ message SignInResponse {
   Token token = 1;
 }
 
+message SignInPasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SignInPasswordResponse {
+  Token token = 1;
+}
+
 message SwitchOrganizationRequest {
   string access_token = 1;
   string organization_id = 2;
@@ -148,6 +157,27 @@ message GetAuthOptionsByEmailRequest {
 
 message GetAuthOptionsByEmailResponse {
   DomainAuthOptions options = 1;
+}
+
+// Google OIDC Messages
+
+message GetGoogleOidcAuthURLRequest {
+  string state = 1;
+  string redirect_url = 2;
+}
+
+message GetGoogleOidcAuthURLResponse {
+  string url = 1;
+}
+
+message ExchangeGoogleOidcTokenRequest {
+  string code = 1;
+  string state = 2;
+  string redirect_url = 3;
+}
+
+message ExchangeGoogleOidcTokenResponse {
+  Token token = 1;  // Temporary token, not org-scoped yet
 }
 
 // Company OIDC Messages
@@ -345,6 +375,41 @@ service AuthService {
         key: "401"
         value: {
           description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc SignInPassword(SignInPasswordRequest) returns (SignInPasswordResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/signin_password"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Sign In with Password",
+      description: "Sign in using email and password, returns a temporary token (5 minutes) without organization scope. User must call GetMyOrganizations and then SwitchOrganization to get an org-scoped token.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.signin_password",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (invalid credentials)."
           schema: { json_schema: { ref: ".google.rpc.Status" } }
           examples: {
             key: "application/json"
@@ -622,6 +687,69 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  // Google OIDC APIs
+
+  rpc GetGoogleOidcAuthURL(GetGoogleOidcAuthURLRequest)
+      returns (GetGoogleOidcAuthURLResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/google_oidc/url"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Google OIDC Auth URL",
+      description: "Generate authorization URL for Google OIDC login (public, no auth required). Returns temporary token after exchange.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.get_google_oidc_auth_url",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ExchangeGoogleOidcToken(ExchangeGoogleOidcTokenRequest)
+      returns (ExchangeGoogleOidcTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/google_oidc/token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Google OIDC Token",
+      description: "Exchange Google authorization code for Bucketeer temporary token (public, no auth required). Returns 5-minute token without org scope.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.exchange_google_oidc_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
           }
         }
       }

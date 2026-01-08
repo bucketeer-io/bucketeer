@@ -106,3 +106,55 @@ func (s *authService) handlePasswordSignIn(
 	s.logger.Info("Successful password authentication", zap.String("email", email))
 	return &authproto.SignInResponse{Token: token}, nil
 }
+
+func (s *authService) SignInPassword(
+	ctx context.Context,
+	request *authproto.SignInPasswordRequest,
+) (*authproto.SignInPasswordResponse, error) {
+	err := validateSignInPasswordRequest(request)
+	if err != nil {
+		s.logger.Error("SignInPassword request validation failed", zap.Error(err))
+		return nil, err
+	}
+
+	// Get credentials
+	credentials, err := s.credentialsStorage.GetCredentials(ctx, request.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrCredentialsNotFound) {
+			s.logger.Error("SignInPassword failed - no credentials found",
+				zap.String("email", request.Email),
+			)
+		} else {
+			s.logger.Error("SignInPassword failed - credentials lookup error",
+				zap.Error(err),
+				zap.String("email", request.Email),
+			)
+		}
+		return nil, statusAccessDenied.Err()
+	}
+
+	// Verify password
+	if !auth.ValidatePassword(request.Password, credentials.PasswordHash) {
+		s.logger.Error("SignInPassword failed - invalid password",
+			zap.String("email", request.Email),
+		)
+		return nil, statusAccessDenied.Err()
+	}
+
+	// Create temporary token using existing helper
+	userInfo := &auth.UserInfo{
+		Email: request.Email,
+		Name:  request.Email, // Use email as fallback name
+	}
+
+	token, err := s.createTemporaryToken(ctx, userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("SignInPassword successful - temporary token issued",
+		zap.String("email", request.Email),
+	)
+
+	return &authproto.SignInPasswordResponse{Token: token}, nil
+}
