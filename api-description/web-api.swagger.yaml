@@ -10282,8 +10282,6 @@ definitions:
         format: int32
       ownerEmail:
         type: string
-      authenticationSettings:
-        $ref: '#/definitions/environmentAuthenticationSettings'
   bucketeereventcounterSummary:
     type: object
     properties:
@@ -10811,7 +10809,6 @@ definitions:
       - ORGANIZATION_OWNER_EMAIL_CHANGED
       - ORGANIZATION_UPDATED
       - DEMO_ORGANIZATION_CREATED
-      - ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED
       - FLAG_TRIGGER_CREATED
       - FLAG_TRIGGER_RESET
       - FLAG_TRIGGER_DESCRIPTION_CHANGED
@@ -10871,23 +10868,6 @@ definitions:
         $ref: '#/definitions/environmentArchiveOrganizationCommand'
   environmentArchiveOrganizationResponse:
     type: object
-  environmentAuthenticationSettings:
-    type: object
-    properties:
-      enabledTypes:
-        type: array
-        items:
-          $ref: '#/definitions/environmentAuthenticationType'
-        description: |-
-          Future authentication-specific settings can be added here
-           For example: password_policy, google_domain_restrictions, etc.
-  environmentAuthenticationType:
-    type: string
-    enum:
-      - AUTHENTICATION_TYPE_UNSPECIFIED
-      - AUTHENTICATION_TYPE_GOOGLE
-      - AUTHENTICATION_TYPE_PASSWORD
-    default: AUTHENTICATION_TYPE_UNSPECIFIED
   environmentChangeDescriptionEnvironmentV2Command:
     type: object
     properties:
@@ -11031,8 +11011,6 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
-      authenticationSettings:
-        $ref: '#/definitions/environmentAuthenticationSettings'
     required:
       - name
       - urlCode
@@ -11460,8 +11438,6 @@ definitions:
         type: string
       ownerEmail:
         type: string
-      authenticationSettings:
-        $ref: '#/definitions/environmentAuthenticationSettings'
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:

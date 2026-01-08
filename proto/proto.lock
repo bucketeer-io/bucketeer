@@ -14838,16 +14838,6 @@
             ]
           },
           {
-            "name": "UpdateAuthenticationSettingsOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
-              }
-            ]
-          },
-          {
             "name": "ChangeRequireCommentCommand",
             "fields": [
               {
@@ -14983,36 +14973,7 @@
     {
       "protopath": "environment:/:organization.proto",
       "def": {
-        "enums": [
-          {
-            "name": "AuthenticationType",
-            "enum_fields": [
-              {
-                "name": "AUTHENTICATION_TYPE_UNSPECIFIED"
-              },
-              {
-                "name": "AUTHENTICATION_TYPE_GOOGLE",
-                "integer": 1
-              },
-              {
-                "name": "AUTHENTICATION_TYPE_PASSWORD",
-                "integer": 2
-              }
-            ]
-          }
-        ],
         "messages": [
-          {
-            "name": "AuthenticationSettings",
-            "fields": [
-              {
-                "id": 1,
-                "name": "enabled_types",
-                "type": "AuthenticationType",
-                "is_repeated": true
-              }
-            ]
-          },
           {
             "name": "Organization",
             "fields": [
@@ -15085,11 +15046,6 @@
                 "id": 14,
                 "name": "owner_email",
                 "type": "string"
-              },
-              {
-                "id": 15,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           }
@@ -16158,11 +16114,6 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -16258,11 +16209,6 @@
                 "id": 7,
                 "name": "owner_email",
                 "type": "google.protobuf.StringValue"
-              },
-              {
-                "id": 8,
-                "name": "authentication_settings",
-                "type": "AuthenticationSettings"
               }
             ]
           },
@@ -22732,10 +22678,6 @@
                 "integer": 1510
               },
               {
-                "name": "ORGANIZATION_AUTHENTICATION_SETTINGS_UPDATED",
-                "integer": 1511
-              },
-              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -25863,21 +25805,6 @@
                 "id": 2,
                 "name": "owner_email",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "OrganizationAuthenticationSettingsUpdatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "authentication_settings",
-                "type": "bucketeer.environment.AuthenticationSettings"
               }
             ]
           },
