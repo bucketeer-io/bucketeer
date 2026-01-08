@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,36 +20,40 @@ import (
 )
 
 var (
-	statusInternal      = api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.CoderefPackageName, "internal"))
 	statusInvalidCursor = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "invalid cursor", "cursor"),
+		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.CoderefPackageName, "invalid cursor", "Cursor"),
 	)
 	statusMissingID = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing id", "id"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "id is required", "ID"),
 	)
 	statusMissingFeatureID = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing feature_id", "feature_id"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "feature_id is required", "FeatureFlagID"),
 	)
 	statusMissingFilePath = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing file_path", "file_path"),
+		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "file_path is required", "CodeReferenceFilePath"),
 	)
 	statusMissingLineNumber = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.CoderefPackageName, "missing line_number", "line_number"),
+		bkterr.NewErrorInvalidArgNotMatchFormat(
+			bkterr.CoderefPackageName, "line_number must be greater than 0", "CodeReferenceLineNumber"),
 	)
 	statusMissingCodeSnippet = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing code_snippet", "code_snippet"),
+		bkterr.NewErrorInvalidArgEmpty(
+			bkterr.CoderefPackageName, "code_snippet is required", "CodeReferenceCodeSnippet"),
 	)
 	statusMissingContentHash = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing content_hash", "content_hash"),
+		bkterr.NewErrorInvalidArgEmpty(
+			bkterr.CoderefPackageName, "content_hash is required", "CodeReferenceContentHash"),
 	)
 	statusMissingRepositoryInfo = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgEmpty(bkterr.CoderefPackageName, "missing repository info", "repository_info"),
+		bkterr.NewErrorInvalidArgEmpty(
+			bkterr.CoderefPackageName, "repository info is required", "CodeReferenceRepositoryInfo"),
 	)
 	statusInvalidRepositoryType = api.NewGRPCStatus(
-		bkterr.NewErrorInvalidArgUnknown(bkterr.CoderefPackageName, "invalid repository type", "repository_type"),
+		bkterr.NewErrorInvalidArgUnknown(
+			bkterr.CoderefPackageName, "invalid repository type", "CodeReferenceRepositoryType"),
 	)
 	statusNotFound = api.NewGRPCStatus(
-		bkterr.NewErrorNotFound(bkterr.CoderefPackageName, "not found", "coderef"),
+		bkterr.NewErrorNotFound(bkterr.CoderefPackageName, "code reference not found", "CodeReference"),
 	)
 	statusUnauthenticated = api.NewGRPCStatus(
 		bkterr.NewErrorUnauthenticated(bkterr.CoderefPackageName, "unauthenticated"),

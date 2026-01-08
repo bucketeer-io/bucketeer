@@ -13,7 +13,7 @@ global:
 
     # BigQuery configuration (used when type: bigquery)
     bigquery:
-      project: "bucketeer"
+      project: "bucketeer-dev"
       dataset: "bucketeer"
       location: "US"
 
@@ -36,7 +36,7 @@ global:
       database: ""
 
   pubsub:
-    type: google # Options: redis-stream, google
+    type: redis-stream # Options: redis-stream, google
     # Redis configuration (used when type is redis-stream)
     redis:
       serverName: non-persistent-redis
@@ -44,9 +44,10 @@ global:
       poolSize: 25
       minIdle: 25
       partitionCount: 16 # Must match between publisher (API) and subscriber
+      idleTime: 60
     emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     # Google Cloud project ID when type is google
-    project: bucketeer-test
+    project: bucketeer-dev
 
   email:
     enabled: false
@@ -123,7 +124,7 @@ web:
       poolMaxIdle: 25
       poolMaxActive: 25
     bigQueryDataSet: bucketeer
-    bigQueryDataLocation: bucketeer
+    bigQueryDataLocation: US
     domainTopic: domain
     bulkSegmentUsersReceivedTopic: bulk-segment-users-received
     timezone: UTC
@@ -214,7 +215,7 @@ api:
 
 batch-server:
   env:
-    project: bucketeer-test
+    project: bucketeer-dev
     profile: false
     gcpEnabled: false
     enablePprof: false
@@ -336,7 +337,7 @@ batch-server:
 
 subscriber:
   env:
-    project: bucketeer-test
+    project: bucketeer-dev
     profile: false
     demoSiteEnabled: false
     gcpEnabled: false
@@ -511,6 +512,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-dwh-sub
@@ -525,6 +527,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-ops-sub
@@ -539,6 +542,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: goal
       subscription: goal-dwh-sub
@@ -553,6 +557,7 @@ subscriber:
       redisAddr: ${global.pubsub.redis.addr}
       redisPoolSize: ${global.pubsub.redis.poolSize}
       redisMinIdle: ${global.pubsub.redis.minIdle}
+      redisIdleTime: ${global.pubsub.redis.idleTime}
       project: ${global.pubsub.project}
       topic: goal
       subscription: goal-ops-sub
@@ -568,16 +573,16 @@ subscriber:
     # This is the processor's name. It must match the same name defined in the
     # pkg/subscriber/processor/processors.go
     auditLogPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       flushTimeout: 30
     evaluationCountEventPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       writeCacheInterval: 10
       userAttributeKeyTtl: 3600 # 1 hour
     segmentUserPersister:
-      domainEventProject: bucketeer-test
+      domainEventProject: bucketeer-dev
       domainEventTopic: domain
       flushSize: 10
       flushInterval: 5
@@ -600,8 +605,8 @@ subscriber:
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       flushTimeout: 30
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
@@ -627,15 +632,15 @@ subscriber:
           dataset: ""
           location: ""
     evaluationCountEventOPSPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       flushTimeout: 30
     goalCountEventDWHPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       flushTimeout: 30
-      maxRetryGoalEventPeriod: 86400 # 1 day
-      retryGoalEventInterval: 5 # 5 seconds (reduced for faster retries in dev/test with Redis Stream)
+      maxRetryGoalEventPeriod: 43200 # 12 hours
+      retryGoalEventInterval: 1 # Reduced for faster retries in dev/test with Redis Stream
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
         type: ""
@@ -660,6 +665,6 @@ subscriber:
           dataset: ""
           location: ""
     goalCountEventOPSPersister:
-      flushSize: 10
-      flushInterval: 5
+      flushSize: 1
+      flushInterval: 1
       flushTimeout: 30

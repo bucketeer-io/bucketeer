@@ -7,6 +7,9 @@ redis:
   storage:
     size: "1Gi"
     class: "" # Use default storage class
+  service:
+    type: NodePort
+    nodePort: 32001
 
 nginx:
   controller:
@@ -52,7 +55,7 @@ postgresql:
     password: "bucketeer"
 
 bq:
-  project: bucketeer-test
+  project: bucketeer-dev
   service:
     type: NodePort
     httpNodePort: 31000

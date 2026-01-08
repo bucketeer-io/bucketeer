@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +33,6 @@ import (
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
@@ -105,14 +103,13 @@ func (s *PushService) CreatePush(
 	ctx context.Context,
 	req *pushproto.CreatePushRequest,
 ) (*pushproto.CreatePushResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreatePushRequest(req, localizer); err != nil {
+	if err := s.validateCreatePushRequest(req); err != nil {
 		return nil, err
 	}
 	push, err := domain.NewPush(
@@ -132,24 +129,17 @@ func (s *PushService) CreatePush(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentId)
 	if err != nil {
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	if err := s.checkFCMServiceAccount(ctx, pushes, req.FcmServiceAccount, localizer); err != nil {
+	if err := s.checkFCMServiceAccount(ctx, pushes, req.FcmServiceAccount); err != nil {
 		return nil, err
 	}
-	err = s.containsTags(pushes, req.Tags, localizer)
+	err = s.containsTags(pushes, req.Tags)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
-			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTagAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
@@ -193,14 +183,7 @@ func (s *PushService) CreatePush(
 	})
 	if err != nil {
 		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create push",
@@ -221,26 +204,12 @@ func (s *PushService) CreatePush(
 	}, nil
 }
 
-func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
+func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest) error {
 	if string(req.FcmServiceAccount) == "" {
-		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFCMServiceAccountRequired.Err()
 	}
 	if req.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	return nil
 }
@@ -249,15 +218,14 @@ func (s *PushService) UpdatePush(
 	ctx context.Context,
 	req *pushproto.UpdatePushRequest,
 ) (*pushproto.UpdatePushResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.validateUpdatePushRequest(req, localizer); err != nil {
+	if err := s.validateUpdatePushRequest(req); err != nil {
 		return nil, err
 	}
 	var updatedPushPb *pushproto.Push
@@ -298,14 +266,7 @@ func (s *PushService) UpdatePush(
 	if err != nil {
 		switch {
 		case errors.Is(err, v2ps.ErrPushNotFound):
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
 			if updatedPushPb != nil {
 				// For security reasons we remove the service account from the API response
@@ -338,17 +299,9 @@ func (s *PushService) UpdatePush(
 
 func (s *PushService) validateUpdatePushRequest(
 	req *pushproto.UpdatePushRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 
 	return nil
@@ -358,14 +311,13 @@ func (s *PushService) DeletePush(
 	ctx context.Context,
 	req *pushproto.DeletePushRequest,
 ) (*pushproto.DeletePushResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeletePushRequest(req, localizer); err != nil {
+	if err := validateDeletePushRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -400,14 +352,7 @@ func (s *PushService) DeletePush(
 	if err != nil {
 		switch {
 		case errors.Is(err, v2ps.ErrPushNotFound):
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
 			return &pushproto.DeletePushResponse{}, nil
 		}
@@ -428,21 +373,13 @@ func (s *PushService) GetPush(
 	ctx context.Context,
 	req *pushproto.GetPushRequest,
 ) (*pushproto.GetPushResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := s.validateGetPushRequest(req, localizer); err != nil {
+	if err := s.validateGetPushRequest(req); err != nil {
 		return nil, err
 	}
 
 	push, err := s.pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ps.ErrPushNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
 			s.logger.Error(
 				"Failed to get push",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -451,7 +388,7 @@ func (s *PushService) GetPush(
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 	}
 
@@ -467,31 +404,16 @@ func (s *PushService) GetPush(
 
 func (s *PushService) validateGetPushRequest(
 	req *pushproto.GetPushRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	return nil
 }
 
-func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer locale.Localizer) error {
+func validateDeletePushRequest(req *pushproto.DeletePushRequest) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	return nil
 }
@@ -499,7 +421,6 @@ func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer local
 func (s *PushService) containsTags(
 	pushes []*pushproto.Push,
 	tags []string,
-	localizer locale.Localizer,
 ) error {
 	m, err := s.tagMap(pushes)
 	if err != nil {
@@ -507,14 +428,7 @@ func (s *PushService) containsTags(
 	}
 	for _, t := range tags {
 		if _, ok := m[t]; ok {
-			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "tag"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusTagAlreadyExists.Err()
 		}
 	}
 	return nil
@@ -524,7 +438,6 @@ func (s *PushService) checkFCMServiceAccount(
 	ctx context.Context,
 	pushes []*pushproto.Push,
 	fcmServiceAccount []byte,
-	localizer locale.Localizer,
 ) error {
 	// Check if the JSON is a service account file
 	_, err := google.CredentialsFromJSON(
@@ -534,39 +447,18 @@ func (s *PushService) checkFCMServiceAccount(
 	)
 	if err != nil {
 		s.logger.Error("failed to get credentials from JSON", zap.Error(err))
-		dt, err := statusFCMServiceAccountInvalid.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "FCM service account"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFCMServiceAccountInvalid.Err()
 	}
 	// Check if the service account already exists in the database
 	for _, push := range pushes {
 		equal, err := s.compareJSON(push.FcmServiceAccount, string(fcmServiceAccount))
 		if err != nil {
 			s.logger.Error("failed to compare the JSON", zap.Error(err))
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusInternal.Err()
 		}
 		if equal {
 			s.logger.Error("fcm service account already exists in the database")
-			dt, err := statusFCMServiceAccountAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.AlreadyExistsError, "FCM service account"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusFCMServiceAccountAlreadyExists.Err()
 		}
 	}
 	return nil
@@ -611,7 +503,6 @@ func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, err
 func (s *PushService) listAllPushes(
 	ctx context.Context,
 	environmentId string,
-	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
 	pushes, _, _, err := s.listPushes(
 		ctx,
@@ -622,7 +513,6 @@ func (s *PushService) listAllPushes(
 		"",
 		wrapperspb.Bool(false),
 		nil,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -634,13 +524,12 @@ func (s *PushService) ListPushes(
 	ctx context.Context,
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	var filterEnvironmentIDs []string
 	if req.OrganizationId != "" {
 		// console v3
 		editor, err := s.checkOrganizationRole(
 			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId, localizer,
+			req.OrganizationId,
 		)
 		if err != nil {
 			return nil, err
@@ -650,14 +539,14 @@ func (s *PushService) ListPushes(
 		// console v2
 		_, err := s.checkEnvironmentRole(
 			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId, localizer)
+			req.EnvironmentId)
 		if err != nil {
 			return nil, err
 		}
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
-	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -674,7 +563,6 @@ func (s *PushService) ListPushes(
 		req.SearchKeyword,
 		req.Disabled,
 		orders,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -721,7 +609,6 @@ func (s *PushService) getAllowedEnvironments(
 func (s *PushService) newListOrders(
 	orderBy pushproto.ListPushesRequest_OrderBy,
 	orderDirection pushproto.ListPushesRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -737,14 +624,7 @@ func (s *PushService) newListOrders(
 	case pushproto.ListPushesRequest_STATE:
 		column = "push.disabled"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == pushproto.ListPushesRequest_DESC {
@@ -762,7 +642,6 @@ func (s *PushService) listPushes(
 	searchKeyword string,
 	disabled *wrapperspb.BoolValue,
 	orders []*mysql.Order,
-	localizer locale.Localizer,
 ) ([]*pushproto.Push, string, int64, error) {
 	var filters []*mysql.FilterV2
 	var inFilters []*mysql.InFilter
@@ -813,14 +692,7 @@ func (s *PushService) listPushes(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInvalidCursor.Err()
 	}
 
 	options := &mysql.ListOptions{
@@ -845,14 +717,7 @@ func (s *PushService) listPushes(
 				zap.Strings("environmentId", environmentIDs),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInternal.Err()
 	}
 	return pushes, strconv.Itoa(nextCursor), totalCount, nil
 }
@@ -861,7 +726,6 @@ func (s *PushService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentId string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
@@ -887,14 +751,7 @@ func (s *PushService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -903,14 +760,7 @@ func (s *PushService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -929,7 +779,6 @@ func (s *PushService) checkOrganizationRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Organization,
 	organizationID string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckOrganizationRole(
 		ctx,
@@ -954,14 +803,7 @@ func (s *PushService) checkOrganizationRole(
 					zap.String("organizationID", organizationID),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -970,14 +812,7 @@ func (s *PushService) checkOrganizationRole(
 					zap.String("organizationID", organizationID),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",

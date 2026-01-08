@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import (
 const (
 	retryGoalEventKeyKind = "goal_event_retry"
 	scanBatchSize         = 100
-	lockTimeout           = 30 * time.Second
+	// Lock acquisition timeout - how long to wait to acquire the lock
+	// Increased to handle server load and contention
+	lockTimeout = 10 * time.Second
 )
 
 type retryMessage struct {
@@ -211,7 +213,11 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 	}
 	if len(evals) == 0 {
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
-		w.deleteKey(ctx, key)
+		msg.RetryCount++
+		if err := w.storeRetryMessage(msg); err != nil {
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+			lg.Error("Failed to store retry message", zap.Error(err))
+		}
 		return
 	}
 

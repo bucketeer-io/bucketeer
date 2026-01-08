@@ -11,7 +11,7 @@ env:
   demoSiteEnabled: false
   bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-  project: bucketeer-test
+  project: bucketeer-dev
   mysqlUser: bucketeer
   mysqlPass: bucketeer
   mysqlHost: localenv-mysql-headless.default.svc.cluster.local
@@ -33,7 +33,7 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
   bigQueryDataSet: bucketeer
-  bigQueryDataLocation: bucketeer
+  bigQueryDataLocation: US
   domainTopic: domain
   bulkSegmentUsersReceivedTopic: bulk-segment-users-received
   timezone: UTC

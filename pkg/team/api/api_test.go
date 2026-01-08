@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,15 +20,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -67,15 +63,6 @@ func TestTeamService_CreateTeam(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -91,7 +78,7 @@ func TestTeamService_CreateTeam(t *testing.T) {
 				OrganizationId: "ns0",
 				Name:           "test-team",
 			},
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalizeWithTemplate(locale.UnauthenticatedError, "create team")),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "err: ErrNameRequired",
@@ -99,7 +86,7 @@ func TestTeamService_CreateTeam(t *testing.T) {
 			req: &proto.CreateTeamRequest{
 				OrganizationId: "ns0",
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusNameRequired.Err(),
 		},
 		{
 			desc: "success: insert team",
@@ -186,15 +173,6 @@ func TestTeamService_ListTeams(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -211,7 +189,7 @@ func TestTeamService_ListTeams(t *testing.T) {
 				OrganizationId: "ns0",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "err: invalid cursor",
@@ -221,7 +199,7 @@ func TestTeamService_ListTeams(t *testing.T) {
 				Cursor:         "invalid",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			expectedErr: statusInvalidCursor.Err(),
 		},
 		{
 			desc: "err: invalid order_by",
@@ -231,7 +209,7 @@ func TestTeamService_ListTeams(t *testing.T) {
 				OrderBy:        proto.ListTeamsRequest_OrderBy(999),
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
+			expectedErr: statusInvalidOrderBy.Err(),
 		},
 		{
 			desc: "success: no teams",
@@ -302,15 +280,6 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -328,7 +297,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				Id:             "team1",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "err: team id required",
@@ -338,7 +307,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				Id:             "",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "team_id")),
+			expectedErr: statusTeamIDRequired.Err(),
 		},
 		{
 			desc: "err: team not found",
@@ -355,7 +324,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				Id:             "team1",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusTeamNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusTeamNotFound.Err(),
 		},
 		{
 			desc: "err: team is in use",
@@ -391,7 +360,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				Id:             "team1",
 			},
 			expectedRes: nil,
-			expectedErr: createError(statusTeamInUsed, localizer.MustLocalize(locale.Team)),
+			expectedErr: statusTeamInUsed.Err(),
 		},
 		{
 			desc: "success",

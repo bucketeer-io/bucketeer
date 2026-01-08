@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,7 +36,6 @@ import (
 	v2ecstorage "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -266,14 +264,13 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentEvaluationCountRequest,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetExperimentEvaluationCountRequest(req, localizer); err != nil {
+	if err = validateGetExperimentEvaluationCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -311,47 +308,18 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 
 func validateGetExperimentEvaluationCountRequest(
 	req *ecproto.GetExperimentEvaluationCountRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.StartAt == 0 {
-		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusStartAtRequired.Err()
 	}
 	if req.EndAt == 0 {
-		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusEndAtRequired.Err()
 	}
 	if req.StartAt > req.EndAt {
-		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusStartAtIsAfterEndAt.Err()
 	}
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	return nil
 }
@@ -385,14 +353,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	ctx context.Context,
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateGetEvaluationTimeseriesCount(req, localizer); err != nil {
+	if err := s.validateGetEvaluationTimeseriesCount(req); err != nil {
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
@@ -413,14 +380,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	// This timestamp will be used as `Timestamps` field in ecproto.Timeseries.
 	timestamps, timestampUnit, err := s.getTimestamps(req.TimeRange)
 	if err != nil {
-		dt, err := statusUnknownTimeRange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnknownTimeRange.Err()
 	}
 	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
 	vIDs := getVariationIDs(resp.Feature.Variations)
@@ -509,14 +469,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}
 
 	if err := eg.Wait(); err != nil {
-		dt, errDt := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if errDt != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInternal.Err()
 	}
 
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
@@ -552,27 +505,12 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 
 func (s *eventCounterService) validateGetEvaluationTimeseriesCount(
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if req.TimeRange == ecproto.GetEvaluationTimeseriesCountRequest_UNKNOWN {
-		dt, err := statusUnknownTimeRange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusUnknownTimeRange.Err()
 	}
 	return nil
 }
@@ -884,34 +822,19 @@ func (s *eventCounterService) GetExperimentResult(
 	ctx context.Context,
 	req *ecproto.GetExperimentResultRequest,
 ) (*ecproto.GetExperimentResultResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.ExperimentId == "" {
-		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusExperimentIDRequired.Err()
 	}
 	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusExperimentResultNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get experiment result",
@@ -932,35 +855,20 @@ func (s *eventCounterService) ListExperimentResults(
 	ctx context.Context,
 	req *ecproto.ListExperimentResultsRequest,
 ) (*ecproto.ListExperimentResultsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusFeatureIDRequired.Err()
 	}
 	experiments, err := s.listExperiments(ctx, req.FeatureId, req.FeatureVersion, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, storage.ErrKeyNotFound) {
 			listExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusExperimentResultNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get Experiment list",
@@ -1032,14 +940,13 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentGoalCountRequest,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetExperimentGoalCountRequest(req, localizer); err != nil {
+	if err = validateGetExperimentGoalCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -1077,57 +984,21 @@ func (s *eventCounterService) GetExperimentGoalCount(
 
 func validateGetExperimentGoalCountRequest(
 	req *ecproto.GetExperimentGoalCountRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.StartAt == 0 {
-		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusStartAtRequired.Err()
 	}
 	if req.EndAt == 0 {
-		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusEndAtRequired.Err()
 	}
 	if req.StartAt > req.EndAt {
-		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusStartAtIsAfterEndAt.Err()
 	}
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if req.GoalId == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusGoalIDRequired.Err()
 	}
 	return nil
 }
@@ -1164,22 +1035,14 @@ func (s *eventCounterService) GetMAUCount(
 	ctx context.Context,
 	req *ecproto.GetMAUCountRequest,
 ) (*ecproto.GetMAUCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 	if req.YearMonth == "" {
-		dt, err := statusMAUYearMonthRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMAUYearMonthRequired.Err()
 	}
 	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentId, req.YearMonth)
 	if err != nil {
@@ -1203,20 +1066,12 @@ func (s *eventCounterService) SummarizeMAUCounts(
 	ctx context.Context,
 	req *ecproto.SummarizeMAUCountsRequest,
 ) (*ecproto.SummarizeMAUCountsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if req.YearMonth == "" {
-		dt, err := statusMAUYearMonthRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusMAUYearMonthRequired.Err()
 	}
 	summaries := make([]*ecproto.MAUSummary, 0)
 	// Get the mau counts grouped by sourceID and environmentID.
@@ -1290,14 +1145,13 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsEvaluationUserCountRequest,
 ) (*ecproto.GetOpsEvaluationUserCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetOpsEvaluationUserCountRequest(req, localizer); err != nil {
+	if err := validateGetOpsEvaluationUserCountRequest(req); err != nil {
 		return nil, err
 	}
 	cacheKey := newOpsEvaluationUserCountKey(
@@ -1334,57 +1188,21 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 
 func validateGetOpsEvaluationUserCountRequest(
 	req *ecproto.GetOpsEvaluationUserCountRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.OpsRuleId == "" {
-		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusAutoOpsRuleIDRequired.Err()
 	}
 	if req.ClauseId == "" {
-		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusClauseIDRequired.Err()
 	}
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if req.FeatureVersion == 0 {
-		dt, err := statusFeatureVersionRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureVersionRequired.Err()
 	}
 	if req.VariationId == "" {
-		dt, err := statusVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusVariationIDRequired.Err()
 	}
 	return nil
 }
@@ -1405,14 +1223,13 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsGoalUserCountRequest,
 ) (*ecproto.GetOpsGoalUserCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetOpsGoalUserCountRequest(req, localizer); err != nil {
+	if err := validateGetOpsGoalUserCountRequest(req); err != nil {
 		return nil, err
 	}
 	cacheKey := newOpsGoalUserCountKey(
@@ -1449,57 +1266,21 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 
 func validateGetOpsGoalUserCountRequest(
 	req *ecproto.GetOpsGoalUserCountRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.OpsRuleId == "" {
-		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusAutoOpsRuleIDRequired.Err()
 	}
 	if req.ClauseId == "" {
-		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusClauseIDRequired.Err()
 	}
 	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureIDRequired.Err()
 	}
 	if req.FeatureVersion == 0 {
-		dt, err := statusFeatureVersionRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusFeatureVersionRequired.Err()
 	}
 	if req.VariationId == "" {
-		dt, err := statusVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusVariationIDRequired.Err()
 	}
 	return nil
 }
@@ -1520,7 +1301,6 @@ func (s *eventCounterService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentId string,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
@@ -1546,14 +1326,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
@@ -1562,14 +1335,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 					zap.String("environmentId", environmentId),
 				)...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -1586,7 +1352,6 @@ func (s *eventCounterService) checkEnvironmentRole(
 
 func (s *eventCounterService) checkSystemAdminRole(
 	ctx context.Context,
-	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
@@ -1596,27 +1361,13 @@ func (s *eventCounterService) checkSystemAdminRole(
 				"Unauthenticated",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusUnauthenticated.Err()
 		case codes.PermissionDenied:
 			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.PermissionDenied),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusPermissionDenied.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",

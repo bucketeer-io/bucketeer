@@ -335,6 +335,8 @@ onDemandProcessors:
     flushSize: 100
     flushInterval: 10
     flushTimeout: 10
+    maxRetryGoalEventPeriod: 86400 # 24 hours
+    retryGoalEventInterval: 300 # 5 minutes
     # Data warehouse configuration will be injected from global settings by Helm template
     dataWarehouse:
       type: ""

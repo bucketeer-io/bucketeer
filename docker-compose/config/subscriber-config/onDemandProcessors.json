@@ -1,7 +1,7 @@
 {
   "evaluationCountEventDWHPersister": {
-    "flushSize": 20,
-    "flushInterval": 5,
+    "flushSize": 1,
+    "flushInterval": 1,
     "flushTimeout": 30,
     "dataWarehouse": {
       "type": "mysql",
@@ -31,16 +31,16 @@
     }
   },
   "evaluationCountEventOPSPersister": {
-    "flushSize": 20,
-    "flushInterval": 5,
+    "flushSize": 1,
+    "flushInterval": 1,
     "flushTimeout": 30
   },
   "goalCountEventDWHPersister": {
-    "flushSize": 20,
-    "flushInterval": 5,
+    "flushSize": 1,
+    "flushInterval": 1,
     "flushTimeout": 30,
-    "maxRetryGoalEventPeriod": 86400,
-    "retryGoalEventInterval": 300,
+    "maxRetryGoalEventPeriod": 43200,
+    "retryGoalEventInterval": 1,
     "dataWarehouse": {
       "type": "mysql",
       "batchSize": 1000,
@@ -69,8 +69,8 @@
     }
   },
   "goalCountEventOPSPersister": {
-    "flushSize": 20,
-    "flushInterval": 5,
+    "flushSize": 1,
+    "flushInterval": 1,
     "flushTimeout": 30
   }
 } 
