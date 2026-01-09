@@ -11283,6 +11283,14 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+      autoArchiveEnabled:
+        type: boolean
+        title: Auto-archive configuration
+      autoArchiveUnusedDays:
+        type: integer
+        format: int32
+      autoArchiveCheckCodeRefs:
+        type: boolean
   environmentExchangeDemoTokenRequest:
     type: object
     properties:
@@ -11573,6 +11581,14 @@ definitions:
       requireComment:
         type: boolean
       archived:
+        type: boolean
+      autoArchiveEnabled:
+        type: boolean
+        title: Auto-archive configuration
+      autoArchiveUnusedDays:
+        type: integer
+        format: int32
+      autoArchiveCheckCodeRefs:
         type: boolean
     required:
       - id

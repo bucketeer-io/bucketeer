@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -286,7 +285,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 	patterns := []struct {
 		desc         string
 		setupFunc    func() []Option
-		inputFunc    func() (context.Context, string, domain.AccountV2, bool, locale.Localizer)
+		inputFunc    func() (context.Context, string, domain.AccountV2, bool)
 		expectedFunc func(*testing.T, *authproto.Token, time.Duration, time.Duration)
 		expectedErr  error
 	}{
@@ -295,7 +294,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			setupFunc: func() []Option {
 				return []Option{}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool, locale.Localizer) {
+			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
 				account := domain.AccountV2{
@@ -306,7 +305,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 						LastName:       "User",
 					},
 				}
-				return ctx, email, account, false, locale.NewLocalizer(ctx)
+				return ctx, email, account, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -329,7 +328,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithAccessTokenTTL(30 * time.Minute),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool, locale.Localizer) {
+			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
 				account := domain.AccountV2{
@@ -340,7 +339,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 						LastName:       "User",
 					},
 				}
-				return ctx, email, account, false, locale.NewLocalizer(ctx)
+				return ctx, email, account, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -362,7 +361,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithRefreshTokenTTL(14 * 24 * time.Hour),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool, locale.Localizer) {
+			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
 				account := domain.AccountV2{
@@ -373,7 +372,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 						LastName:       "User",
 					},
 				}
-				return ctx, email, account, false, locale.NewLocalizer(ctx)
+				return ctx, email, account, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -396,7 +395,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithRefreshTokenTTL(30 * 24 * time.Hour),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool, locale.Localizer) {
+			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
 				account := domain.AccountV2{
@@ -407,7 +406,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 						LastName:       "User",
 					},
 				}
-				return ctx, email, account, false, locale.NewLocalizer(ctx)
+				return ctx, email, account, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -453,8 +452,8 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			accessTokenTTL := service.opts.accessTokenTTL
 			refreshTokenTTL := service.opts.refreshTokenTTL
 
-			ctx, email, account, isSystemAdmin, localizer := p.inputFunc()
-			token, err := service.generateToken(ctx, email, account, isSystemAdmin, localizer)
+			ctx, email, account, isSystemAdmin := p.inputFunc()
+			token, err := service.generateToken(ctx, email, account, isSystemAdmin)
 
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)

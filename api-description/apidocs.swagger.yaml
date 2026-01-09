@@ -7087,6 +7087,14 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+      autoArchiveEnabled:
+        type: boolean
+        title: Auto-archive configuration
+      autoArchiveUnusedDays:
+        type: integer
+        format: int32
+      autoArchiveCheckCodeRefs:
+        type: boolean
   environmentListEnvironmentsV2RequestOrderBy:
     type: string
     enum:

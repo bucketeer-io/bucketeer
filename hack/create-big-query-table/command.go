@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	command := &command{
 		CmdClause:        cmd,
 		bigQueryEmulator: cmd.Flag("bigquery-emulator", "Big Query Emulator Host").Default("http://localhost:9050").String(),
-		project:          cmd.Flag("project", "Project ID").Default("bucketeer-test").String(),
+		project:          cmd.Flag("project", "Project ID").Default("bucketeer-dev").String(),
 		dataset:          cmd.Flag("dataset", "Dataset ID").Default("bucketeer").String(),
 	}
 	r.RegisterCommand(command)

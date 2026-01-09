@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,178 +15,70 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 )
 
-func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, localizer locale.Localizer) error {
+func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest) error {
 	if req.FeatureId == "" {
-		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingFeatureID.Err()
 	}
 	if req.FilePath == "" {
-		dt, err := statusMissingFilePath.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "file_path"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingFilePath.Err()
 	}
 	if req.LineNumber <= 0 {
-		dt, err := statusMissingLineNumber.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "line_number"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingLineNumber.Err()
 	}
 	if req.CodeSnippet == "" {
-		dt, err := statusMissingCodeSnippet.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code_snippet"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingCodeSnippet.Err()
 	}
 	if req.ContentHash == "" {
-		dt, err := statusMissingContentHash.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "content_hash"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingContentHash.Err()
 	}
 	if req.RepositoryName == "" || req.RepositoryOwner == "" {
-		dt, err := statusMissingRepositoryInfo.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "repository_info"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingRepositoryInfo.Err()
 	}
 	if req.RepositoryType == proto.CodeReference_REPOSITORY_TYPE_UNSPECIFIED {
-		dt, err := statusInvalidRepositoryType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "repository_type"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusInvalidRepositoryType.Err()
 	}
 	return nil
 }
 
-func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, localizer locale.Localizer) error {
+func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest) error {
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingID.Err()
 	}
 	if req.FilePath == "" {
-		dt, err := statusMissingFilePath.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "file_path"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingFilePath.Err()
 	}
 	if req.LineNumber <= 0 {
-		dt, err := statusMissingLineNumber.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "line_number"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingLineNumber.Err()
 	}
 	if req.CodeSnippet == "" {
-		dt, err := statusMissingCodeSnippet.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code_snippet"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingCodeSnippet.Err()
 	}
 	if req.ContentHash == "" {
-		dt, err := statusMissingContentHash.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "content_hash"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingContentHash.Err()
 	}
 	return nil
 }
 
-func validateDeleteCodeReferenceRequest(req *proto.DeleteCodeReferenceRequest, localizer locale.Localizer) error {
+func validateDeleteCodeReferenceRequest(req *proto.DeleteCodeReferenceRequest) error {
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingID.Err()
 	}
 	return nil
 }
 
-func validateGetCodeReferenceRequest(req *proto.GetCodeReferenceRequest, localizer locale.Localizer) error {
+func validateGetCodeReferenceRequest(req *proto.GetCodeReferenceRequest) error {
 	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingID.Err()
 	}
 	return nil
 }
 
-func validateListCodeReferencesRequest(req *proto.ListCodeReferencesRequest, localizer locale.Localizer) error {
+func validateListCodeReferencesRequest(req *proto.ListCodeReferencesRequest) error {
 	if req.FeatureId == "" {
-		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusMissingFeatureID.Err()
 	}
 	return nil
 }

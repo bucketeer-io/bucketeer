@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -110,6 +110,10 @@ message UpdateEnvironmentV2Request {
   google.protobuf.StringValue description = 6;
   google.protobuf.BoolValue require_comment = 7;
   google.protobuf.BoolValue archived = 8;
+  // Auto-archive configuration
+  google.protobuf.BoolValue auto_archive_enabled = 9;
+  google.protobuf.Int32Value auto_archive_unused_days = 10;
+  google.protobuf.BoolValue auto_archive_check_code_refs = 11;
 }
 
 message UpdateEnvironmentV2Response {}

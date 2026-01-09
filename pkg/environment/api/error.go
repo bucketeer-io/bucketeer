@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,4 +128,16 @@ var (
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled"))
 	statusUserAlreadyInOrganization = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization"))
+	statusInvalidAutoArchiveUnusedDays = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"auto_archive_unused_days must be greater than 0 when auto_archive is enabled",
+			"auto_archive_unused_days",
+		))
+	statusAutoArchiveNotEnabled = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"cannot update auto-archive settings when auto_archive_enabled is false",
+			"auto_archive_settings",
+		))
 )

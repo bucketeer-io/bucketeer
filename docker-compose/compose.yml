@@ -94,7 +94,7 @@ services:
       - BUCKETEER_WEB_PUBSUB_REDIS_POOL_SIZE=25
       - BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE=25
       - BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT=16
-      - BUCKETEER_WEB_PROJECT=bucketeer-test
+      - BUCKETEER_WEB_PROJECT=bucketeer-dev
       - BUCKETEER_WEB_BIGQUERY_DATA_SET=bucketeer
       - BUCKETEER_WEB_BIGQUERY_DATA_LOCATION=bucketeer
       - BUCKETEER_WEB_DOMAIN_TOPIC=domain
@@ -171,7 +171,7 @@ services:
         condition: service_started
     command: ["server"]
     environment:
-      - BUCKETEER_API_PROJECT=bucketeer-test
+      - BUCKETEER_API_PROJECT=bucketeer-dev
       - BUCKETEER_API_MYSQL_USER=bucketeer
       - BUCKETEER_API_MYSQL_PASS=bucketeer
       - BUCKETEER_API_MYSQL_HOST=mysql
@@ -238,7 +238,7 @@ services:
         condition: service_healthy
     command: ["server"]
     environment:
-      - BUCKETEER_BATCH_PROJECT=bucketeer-test
+      - BUCKETEER_BATCH_PROJECT=bucketeer-dev
       - BUCKETEER_BATCH_MYSQL_USER=bucketeer
       - BUCKETEER_BATCH_MYSQL_PASS=bucketeer
       - BUCKETEER_BATCH_MYSQL_HOST=mysql
@@ -311,7 +311,7 @@ services:
         condition: service_started
     command: ["server"]
     environment:
-      - BUCKETEER_SUBSCRIBER_PROJECT=bucketeer-test
+      - BUCKETEER_SUBSCRIBER_PROJECT=bucketeer-dev
       - BUCKETEER_SUBSCRIBER_MYSQL_USER=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_PASS=bucketeer
       - BUCKETEER_SUBSCRIBER_MYSQL_HOST=mysql

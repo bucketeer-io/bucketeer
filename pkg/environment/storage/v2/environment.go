@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ var (
 	selectEnvironmentsSQL string
 	//go:embed sql/environment/count_environments.sql
 	countEnvironmentsSQL string
+	//go:embed sql/environment/list_auto_archive_enabled_environments.sql
+	listAutoArchiveEnabledEnvironmentsSQL string
 	//go:embed sql/environment/delete_target_from_environment.sql
 	deleteTargetFromEnvironmentSQL string
 	//go:embed sql/environment/delete_environment.sql
@@ -74,6 +76,7 @@ type EnvironmentStorage interface {
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.EnvironmentV2, int, int64, error)
+	ListAutoArchiveEnabledEnvironments(ctx context.Context) ([]*domain.EnvironmentV2, error)
 	DeleteTargetFromEnvironmentV2(
 		ctx context.Context,
 		environmentID string,
@@ -109,6 +112,9 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 		e.RequireComment,
 		e.CreatedAt,
 		e.UpdatedAt,
+		e.AutoArchiveEnabled,
+		e.AutoArchiveUnusedDays,
+		e.AutoArchiveCheckCodeRefs,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -129,6 +135,9 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 		e.RequireComment,
 		e.CreatedAt,
 		e.UpdatedAt,
+		e.AutoArchiveEnabled,
+		e.AutoArchiveUnusedDays,
+		e.AutoArchiveCheckCodeRefs,
 		e.Id,
 	)
 	if err != nil {
@@ -161,6 +170,9 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 		&environment.RequireComment,
 		&environment.CreatedAt,
 		&environment.UpdatedAt,
+		&environment.AutoArchiveEnabled,
+		&environment.AutoArchiveUnusedDays,
+		&environment.AutoArchiveCheckCodeRefs,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -215,6 +227,9 @@ func (s *environmentStorage) ListEnvironmentsV2(
 			&environment.RequireComment,
 			&environment.CreatedAt,
 			&environment.UpdatedAt,
+			&environment.AutoArchiveEnabled,
+			&environment.AutoArchiveUnusedDays,
+			&environment.AutoArchiveCheckCodeRefs,
 			&environment.FeatureFlagCount,
 		)
 		if err != nil {
@@ -233,6 +248,42 @@ func (s *environmentStorage) ListEnvironmentsV2(
 		return nil, 0, 0, err
 	}
 	return environments, nextOffset, totalCount, nil
+}
+
+func (s *environmentStorage) ListAutoArchiveEnabledEnvironments(ctx context.Context) ([]*domain.EnvironmentV2, error) {
+	rows, err := s.qe.QueryContext(ctx, listAutoArchiveEnabledEnvironmentsSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	environments := make([]*domain.EnvironmentV2, 0)
+	for rows.Next() {
+		environment := proto.EnvironmentV2{}
+		err := rows.Scan(
+			&environment.Id,
+			&environment.Name,
+			&environment.UrlCode,
+			&environment.Description,
+			&environment.ProjectId,
+			&environment.OrganizationId,
+			&environment.Archived,
+			&environment.RequireComment,
+			&environment.CreatedAt,
+			&environment.UpdatedAt,
+			&environment.AutoArchiveEnabled,
+			&environment.AutoArchiveUnusedDays,
+			&environment.AutoArchiveCheckCodeRefs,
+		)
+		if err != nil {
+			return nil, err
+		}
+		environments = append(environments, &domain.EnvironmentV2{EnvironmentV2: &environment})
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return environments, nil
 }
 
 func (s *environmentStorage) DeleteTargetFromEnvironmentV2(

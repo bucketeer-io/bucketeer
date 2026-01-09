@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,25 +22,25 @@ import (
 var (
 	statusInternal   = api.NewGRPCStatus(err.NewErrorInternal(err.PushPackageName, "internal"))
 	statusIDRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.PushPackageName, "id must be specified", "id"),
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "id must be specified", "ID"),
 	)
 	statusNameRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.PushPackageName, "name must be specified", "name"),
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "name must be specified", "Name"),
 	)
 	statusFCMServiceAccountRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.PushPackageName, "fcm service account must be specified", "fcm_service_account"),
+		err.NewErrorInvalidArgEmpty(err.PushPackageName, "fcm service account must be specified", "FCMServiceAccount"),
 	)
 	statusFCMServiceAccountInvalid = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "fcm service account is invalid", "fcm_service_account"),
+		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "fcm service account is invalid", "FCMServiceAccount"),
 	)
 	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "cursor is invalid", "cursor"),
+		err.NewErrorInvalidArgNotMatchFormat(err.PushPackageName, "cursor is invalid", "Cursor"),
 	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgUnknown(err.PushPackageName, "order_by is invalid", "order_by"),
+		err.NewErrorInvalidArgUnknown(err.PushPackageName, "order_by is invalid", "OrderBy"),
 	)
 	statusNotFound = api.NewGRPCStatus(
-		err.NewErrorNotFound(err.PushPackageName, "not found", "push"),
+		err.NewErrorNotFound(err.PushPackageName, "not found", "Push"),
 	)
 	statusAlreadyExists = api.NewGRPCStatus(
 		err.NewErrorAlreadyExists(err.PushPackageName, "already exists"),
