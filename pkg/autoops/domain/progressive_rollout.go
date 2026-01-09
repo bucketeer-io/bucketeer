@@ -234,10 +234,7 @@ func (p *ProgressiveRollout) GetTargetVariationID() (string, error) {
 		if c.TargetVariationId != "" {
 			return c.TargetVariationId, nil
 		}
-		if c.VariationId != "" {
-			return c.VariationId, nil
-		}
-		return "", nil
+		return c.VariationId, nil
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
 		c, err := unmarshalProgressiveRolloutTemplateClause(p.Clause)
 		if err != nil {
@@ -246,10 +243,7 @@ func (p *ProgressiveRollout) GetTargetVariationID() (string, error) {
 		if c.TargetVariationId != "" {
 			return c.TargetVariationId, nil
 		}
-		if c.VariationId != "" {
-			return c.VariationId, nil
-		}
-		return "", nil
+		return c.VariationId, nil
 	}
 	return "", ErrProgressiveRolloutInvalidType
 }
