@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -258,8 +258,8 @@ func TestErrorType_String(t *testing.T) {
 		{ErrorTypeNotFound, "NotFoundError"},
 		{ErrorTypeAlreadyExists, "AlreadyExistsError"},
 		{ErrorTypeUnauthenticated, "UnauthenticatedError"},
-		{ErrorTypePermissionDenied, "PermissionDenied"},
-		{ErrorTypeUnexpectedAffectedRows, "UnexpectedAffectedRows"},
+		{ErrorTypePermissionDenied, "PermissionDeniedError"},
+		{ErrorTypeUnexpectedAffectedRows, "UnexpectedAffectedRowsError"},
 		{ErrorTypeInternal, "InternalServerError"},
 		{ErrorTypeInvalidArgUnknown, "InvalidArgumentUnknownError"},
 		{ErrorTypeInvalidArgEmpty, "InvalidArgumentEmptyError"},

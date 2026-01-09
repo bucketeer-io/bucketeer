@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -499,7 +499,11 @@ func TestDeleteGoal(t *testing.T) {
 		Id:            goalID,
 		EnvironmentId: *environmentID,
 	})
-	assert.Equal(t, "rpc error: code = NotFound desc = experiment:not found, experiment", err.Error())
+	if err == nil {
+		t.Fatal("Expected error when getting deleted goal, got nil")
+	}
+	assert.Contains(t, err.Error(), "rpc error: code = NotFound")
+	assert.Contains(t, err.Error(), "goal not found")
 }
 
 func TestStatusUpdateFromWaitingToRunning(t *testing.T) {

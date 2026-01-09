@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -30,8 +27,7 @@ func (s *authService) SignIn(
 	ctx context.Context,
 	request *authproto.SignInRequest,
 ) (*authproto.SignInResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	err := validateSignInRequest(request, localizer)
+	err := validateSignInRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -44,22 +40,15 @@ func (s *authService) SignIn(
 			zap.Bool("enabled", config.Enabled),
 			zap.String("email", request.Email),
 		)
-		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusAccessDenied.Err()
 	}
-	organizations, err := s.getOrganizationsByEmail(ctx, config.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, config.Email)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, config.Email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, config.Email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -71,7 +60,7 @@ func (s *authService) SignIn(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin, localizer)
+	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin)
 	if err != nil {
 		return nil, err
 	}

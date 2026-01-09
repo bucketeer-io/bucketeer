@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
@@ -38,12 +36,11 @@ func (s *NotificationService) CreateAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.CreateAdminSubscriptionRequest,
 ) (*notificationproto.CreateAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateCreateAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	subscription, err := domain.NewSubscription(req.Command.Name, req.Command.SourceTypes, req.Command.Recipient, nil)
@@ -74,14 +71,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionAlreadyExists {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create admin subscription",
@@ -105,39 +95,17 @@ func (s *NotificationService) CreateAdminSubscription(
 
 func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 	req *notificationproto.CreateAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.Command.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	if len(req.Command.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSourceTypesRequired.Err()
 	}
-	if err := s.validateRecipient(req.Command.Recipient, localizer); err != nil {
+	if err := s.validateRecipient(req.Command.Recipient); err != nil {
 		return err
 	}
 	return nil
@@ -147,16 +115,15 @@ func (s *NotificationService) UpdateAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.UpdateAdminSubscriptionRequest,
 ) (*notificationproto.UpdateAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUpdateAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateUpdateAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	commands := s.createUpdateAdminSubscriptionCommands(req)
-	if err := s.updateAdminSubscription(ctx, commands, req.Id, editor, localizer); err != nil {
+	if err := s.updateAdminSubscription(ctx, commands, req.Id, editor); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to update feature",
@@ -173,57 +140,21 @@ func (s *NotificationService) UpdateAdminSubscription(
 
 func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
 	req *notificationproto.UpdateAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	if s.isNoUpdateAdminSubscriptionCommand(req) {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	if req.AddSourceTypesCommand != nil && len(req.AddSourceTypesCommand.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSourceTypesRequired.Err()
 	}
 	if req.DeleteSourceTypesCommand != nil && len(req.DeleteSourceTypesCommand.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusSourceTypesRequired.Err()
 	}
 	if req.RenameSubscriptionCommand != nil && req.RenameSubscriptionCommand.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNameRequired.Err()
 	}
 	return nil
 }
@@ -240,15 +171,14 @@ func (s *NotificationService) EnableAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.EnableAdminSubscriptionRequest,
 ) (*notificationproto.EnableAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnableAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateEnableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor, localizer); err != nil {
+	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
@@ -264,27 +194,12 @@ func (s *NotificationService) EnableAdminSubscription(
 
 func (s *NotificationService) validateEnableAdminSubscriptionRequest(
 	req *notificationproto.EnableAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -293,15 +208,14 @@ func (s *NotificationService) DisableAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.DisableAdminSubscriptionRequest,
 ) (*notificationproto.DisableAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateDisableAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateDisableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor, localizer); err != nil {
+	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
@@ -317,27 +231,12 @@ func (s *NotificationService) DisableAdminSubscription(
 
 func (s *NotificationService) validateDisableAdminSubscriptionRequest(
 	req *notificationproto.DisableAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -347,7 +246,6 @@ func (s *NotificationService) updateAdminSubscription(
 	commands []command.Command,
 	id string,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) error {
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -371,14 +269,7 @@ func (s *NotificationService) updateAdminSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound || err == v2ss.ErrAdminSubscriptionUnexpectedAffectedRows {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update admin subscription",
@@ -406,12 +297,11 @@ func (s *NotificationService) DeleteAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.DeleteAdminSubscriptionRequest,
 ) (*notificationproto.DeleteAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := validateDeleteAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
@@ -434,14 +324,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound || err == v2ss.ErrAdminSubscriptionUnexpectedAffectedRows {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to delete admin subscription",
@@ -467,27 +350,12 @@ func (s *NotificationService) DeleteAdminSubscription(
 
 func validateDeleteAdminSubscriptionRequest(
 	req *notificationproto.DeleteAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusNoCommand.Err()
 	}
 	return nil
 }
@@ -512,25 +380,17 @@ func (s *NotificationService) GetAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.GetAdminSubscriptionRequest,
 ) (*notificationproto.GetAdminSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetAdminSubscriptionRequest(req, localizer); err != nil {
+	if err := validateGetAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get admin subscription",
@@ -546,17 +406,9 @@ func (s *NotificationService) GetAdminSubscription(
 
 func validateGetAdminSubscriptionRequest(
 	req *notificationproto.GetAdminSubscriptionRequest,
-	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return statusIDRequired.Err()
 	}
 	return nil
 }
@@ -565,8 +417,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListAdminSubscriptionsRequest,
 ) (*notificationproto.ListAdminSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +425,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if req.Disabled != nil {
 		disabled = &req.Disabled.Value
 	}
-	orders, err := s.newAdminSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newAdminSubscriptionListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -591,7 +442,6 @@ func (s *NotificationService) ListAdminSubscriptions(
 		orders,
 		req.PageSize,
 		req.Cursor,
-		localizer,
 	)
 
 	if err != nil {
@@ -607,7 +457,6 @@ func (s *NotificationService) ListAdminSubscriptions(
 func (s *NotificationService) newAdminSubscriptionListOrders(
 	orderBy notificationproto.ListAdminSubscriptionsRequest_OrderBy,
 	orderDirection notificationproto.ListAdminSubscriptionsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -619,14 +468,7 @@ func (s *NotificationService) newAdminSubscriptionListOrders(
 	case notificationproto.ListAdminSubscriptionsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == notificationproto.ListAdminSubscriptionsRequest_DESC {
@@ -639,8 +481,7 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledAdminSubscriptionsRequest,
 ) (*notificationproto.ListEnabledAdminSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -653,7 +494,6 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 		nil,
 		req.PageSize,
 		req.Cursor,
-		localizer,
 	)
 
 	if err != nil {
@@ -673,7 +513,6 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
-	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	var filters []*mysql.FilterV2
 	if disabled != nil {
@@ -708,14 +547,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,

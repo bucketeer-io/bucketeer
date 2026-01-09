@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -23,6 +24,11 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+)
+
+var (
+	ErrAutoArchiveUnusedDaysRequired = errors.New("auto_archive_unused_days is required when enabling auto-archive")
+	ErrAutoArchiveNotEnabled         = errors.New("cannot update auto-archive settings when auto_archive_enabled is false")
 )
 
 type EnvironmentV2 struct {
@@ -75,6 +81,23 @@ func (e *EnvironmentV2) Update(
 	autoArchiveUnusedDays *wrapperspb.Int32Value,
 	autoArchiveCheckCodeRefs *wrapperspb.BoolValue,
 ) (*EnvironmentV2, error) {
+	// Auto-archive validation
+	// Case 1: When enabling auto-archive, unused_days is required
+	if autoArchiveEnabled != nil && autoArchiveEnabled.Value {
+		if autoArchiveUnusedDays == nil || autoArchiveUnusedDays.Value <= 0 {
+			return nil, ErrAutoArchiveUnusedDaysRequired
+		}
+	}
+
+	// Case 2: When auto-archive is not enabled, cannot update other auto-archive fields
+	willBeEnabled := e.AutoArchiveEnabled
+	if autoArchiveEnabled != nil {
+		willBeEnabled = autoArchiveEnabled.Value
+	}
+	if !willBeEnabled && (autoArchiveUnusedDays != nil || autoArchiveCheckCodeRefs != nil) {
+		return nil, ErrAutoArchiveNotEnabled
+	}
+
 	updated := &EnvironmentV2{}
 	if err := copier.Copy(updated, e); err != nil {
 		return nil, err

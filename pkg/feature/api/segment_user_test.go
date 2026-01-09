@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -45,15 +42,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc          string
@@ -69,7 +57,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "",
 			cmd:           &featureproto.BulkUploadSegmentUsersCommand{},
-			expectedErr:   createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+			expectedErr:   statusMissingSegmentID.Err(),
 		},
 		{
 			desc:          "ErrMissingSegmentUsersData",
@@ -77,7 +65,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "id",
 			cmd:           &featureproto.BulkUploadSegmentUsersCommand{},
-			expectedErr:   createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
+			expectedErr:   statusMissingSegmentUsersData.Err(),
 		},
 		{
 			desc:          "ErrExceededMaxSegmentUsersDataSize",
@@ -87,7 +75,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data: []byte(strings.Repeat("a", maxSegmentUsersDataSize+1)),
 			},
-			expectedErr: createError(statusExceededMaxSegmentUsersDataSize, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state")),
+			expectedErr: statusExceededMaxSegmentUsersDataSize.Err(),
 		},
 		{
 			desc:          "ErrUnknownSegmentUserState",
@@ -98,7 +86,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_State(99),
 			},
-			expectedErr: createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
+			expectedErr: statusUnknownSegmentUserState.Err(),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -113,14 +101,14 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
 			},
-			expectedErr: createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusSegmentNotFound.Err(),
 		},
 		{
 			desc: "ErrSegmentUsersAlreadyUploading",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
+				).Return(statusSegmentUsersAlreadyUploading.Err())
 			},
 			environmentId: "ns0",
 			segmentID:     "id",
@@ -128,7 +116,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
 			},
-			expectedErr: createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)),
+			expectedErr: statusSegmentUsersAlreadyUploading.Err(),
 		},
 		{
 			desc: "Success",
@@ -186,15 +174,6 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc          string
@@ -210,7 +189,7 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "",
 			},
-			expectedErr: createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+			expectedErr: statusMissingSegmentID.Err(),
 		},
 		{
 			desc:  "ErrMissingSegmentUsersData",
@@ -219,7 +198,7 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "id",
 			},
-			expectedErr: createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
+			expectedErr: statusMissingSegmentUsersData.Err(),
 		},
 		{
 			desc:  "ErrExceededMaxSegmentUsersDataSize",
@@ -229,7 +208,7 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "id",
 			},
-			expectedErr: createError(statusExceededMaxSegmentUsersDataSize, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state")),
+			expectedErr: statusExceededMaxSegmentUsersDataSize.Err(),
 		},
 		{
 			desc:  "ErrUnknownSegmentUserState",
@@ -240,7 +219,7 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "id",
 			},
-			expectedErr: createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
+			expectedErr: statusUnknownSegmentUserState.Err(),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -255,14 +234,14 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "not_found_id",
 			},
-			expectedErr: createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusSegmentNotFound.Err(),
 		},
 		{
 			desc: "ErrSegmentUsersAlreadyUploading",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
+				).Return(statusSegmentUsersAlreadyUploading.Err())
 			},
 			req: &featureproto.BulkUploadSegmentUsersRequest{
 				Data:          []byte("data"),
@@ -270,7 +249,7 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				SegmentId:     "id",
 			},
-			expectedErr: createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)),
+			expectedErr: statusSegmentUsersAlreadyUploading.Err(),
 		},
 		{
 			desc: "Success",
@@ -323,15 +302,6 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc          string
@@ -347,7 +317,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "",
 			state:         featureproto.SegmentUser_INCLUDED,
-			expectedErr:   createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+			expectedErr:   statusMissingSegmentID.Err(),
 		},
 		{
 			desc:          "ErrUnknownSegmentUserState",
@@ -355,7 +325,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "id",
 			state:         featureproto.SegmentUser_State(99),
-			expectedErr:   createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
+			expectedErr:   statusUnknownSegmentUserState.Err(),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -367,7 +337,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "id",
 			state:         featureproto.SegmentUser_INCLUDED,
-			expectedErr:   createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr:   statusSegmentNotFound.Err(),
 		},
 		{
 			desc: "ErrSegmentStatusNotSuceeded",
@@ -381,7 +351,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentId: "ns0",
 			segmentID:     "id",
 			state:         featureproto.SegmentUser_INCLUDED,
-			expectedErr:   createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSucceeded)),
+			expectedErr:   statusSegmentStatusNotSuceeded.Err(),
 		},
 	}
 	for _, tc := range testcases {

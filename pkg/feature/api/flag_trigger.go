@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -32,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -54,22 +52,20 @@ func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.CreateFlagTriggerRequest,
 ) (*featureproto.CreateFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	if request.CreateFlagTriggerCommand == nil {
-		return s.createFlagTriggerNoCommand(ctx, request, editor, localizer)
+		return s.createFlagTriggerNoCommand(ctx, request, editor)
 	}
 
-	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand, localizer); err != nil {
+	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -124,14 +120,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -147,9 +136,8 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 	ctx context.Context,
 	req *featureproto.CreateFlagTriggerRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.CreateFlagTriggerResponse, error) {
-	if err := validateCreateFlagTriggerNoCommand(req, localizer); err != nil {
+	if err := validateCreateFlagTriggerNoCommand(req); err != nil {
 		s.logger.Error(
 			"Error validating create flag trigger request",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -212,14 +200,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -240,18 +221,16 @@ func (s *FeatureService) UpdateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.UpdateFlagTriggerRequest,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if request.ChangeFlagTriggerDescriptionCommand == nil {
-		return s.updateFlagTriggerNoCommand(ctx, request, editor, localizer)
+		return s.updateFlagTriggerNoCommand(ctx, request, editor)
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
@@ -303,14 +282,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
 			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -321,7 +293,6 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 	ctx context.Context,
 	request *featureproto.UpdateFlagTriggerRequest,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
 	var event *eventproto.Event
 	var resetURL string
@@ -382,14 +353,7 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
 			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -406,17 +370,15 @@ func (s *FeatureService) EnableFlagTrigger(
 	ctx context.Context,
 	request *featureproto.EnableFlagTriggerRequest,
 ) (*featureproto.EnableFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableFlagTriggerCommand(request.EnableFlagTriggerCommand, localizer); err != nil {
+	if err := validateEnableFlagTriggerCommand(request.EnableFlagTriggerCommand); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -474,15 +436,9 @@ func (s *FeatureService) EnableFlagTrigger(
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
+			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -493,17 +449,15 @@ func (s *FeatureService) DisableFlagTrigger(
 	ctx context.Context,
 	request *featureproto.DisableFlagTriggerRequest,
 ) (*featureproto.DisableFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableFlagTriggerCommand(request.DisableFlagTriggerCommand, localizer); err != nil {
+	if err := validateDisableFlagTriggerCommand(request.DisableFlagTriggerCommand); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -558,15 +512,9 @@ func (s *FeatureService) DisableFlagTrigger(
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
+			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -577,17 +525,15 @@ func (s *FeatureService) ResetFlagTrigger(
 	ctx context.Context,
 	request *featureproto.ResetFlagTriggerRequest,
 ) (*featureproto.ResetFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateResetFlagTriggerCommand(request.ResetFlagTriggerCommand, localizer); err != nil {
+	if err := validateResetFlagTriggerCommand(request.ResetFlagTriggerCommand); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -600,14 +546,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	trigger, err := s.flagTriggerStorage.GetFlagTrigger(ctx, request.Id, request.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, err
 	}
@@ -640,14 +579,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -663,12 +595,10 @@ func (s *FeatureService) DeleteFlagTrigger(
 	ctx context.Context,
 	request *featureproto.DeleteFlagTriggerRequest,
 ) (*featureproto.DeleteFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentId,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -721,15 +651,9 @@ func (s *FeatureService) DeleteFlagTrigger(
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
+			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
 	}
@@ -744,15 +668,13 @@ func (s *FeatureService) GetFlagTrigger(
 	ctx context.Context,
 	request *featureproto.GetFlagTriggerRequest,
 ) (*featureproto.GetFlagTriggerResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentId,
-		localizer)
+		request.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetFlagTriggerRequest(request, localizer); err != nil {
+	if err := validateGetFlagTriggerRequest(request); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -769,14 +691,7 @@ func (s *FeatureService) GetFlagTrigger(
 	)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusTriggerNotFound.Err()
 		}
 		return nil, err
 	}
@@ -792,15 +707,13 @@ func (s *FeatureService) ListFlagTriggers(
 	ctx context.Context,
 	request *featureproto.ListFlagTriggersRequest,
 ) (*featureproto.ListFlagTriggersResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentId,
-		localizer)
+		request.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListFlagTriggersRequest(request, localizer); err != nil {
+	if err := validateListFlagTriggersRequest(request); err != nil {
 		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
@@ -819,7 +732,7 @@ func (s *FeatureService) ListFlagTriggers(
 			Value:    request.EnvironmentId,
 		},
 	}
-	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection, localizer)
+	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create order",
@@ -834,14 +747,7 @@ func (s *FeatureService) ListFlagTriggers(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,
@@ -873,7 +779,6 @@ func (s *FeatureService) ListFlagTriggers(
 func (s *FeatureService) newListFlagTriggerOrders(
 	orderBy featureproto.ListFlagTriggersRequest_OrderBy,
 	orderDirection featureproto.ListFlagTriggersRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -882,14 +787,7 @@ func (s *FeatureService) newListFlagTriggerOrders(
 	case featureproto.ListFlagTriggersRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListFlagTriggersRequest_DESC {
@@ -904,7 +802,6 @@ func (s *FeatureService) FlagTriggerWebhook(
 	ctx context.Context,
 	request *featureproto.FlagTriggerWebhookRequest,
 ) (*featureproto.FlagTriggerWebhookResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	token := request.GetToken()
 	resp := &featureproto.FlagTriggerWebhookResponse{}
 	if token == "" {
@@ -912,14 +809,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Failed to get secret from query",
 			log.FieldsFromIncomingContext(ctx)...,
 		)
-		dt, err := statusSecretRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "secret"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusSecretRequired.Err()
 	}
 	trigger, err := s.flagTriggerStorage.GetFlagTriggerByToken(ctx, token)
 	if err != nil {
@@ -927,40 +817,19 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Failed to get flag trigger",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusTriggerNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusTriggerNotFound.Err()
 	}
 	if trigger.GetDisabled() {
 		s.logger.Error(
 			"Flag trigger is disabled",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusTriggerAlreadyDisabled.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusTriggerAlreadyDisabled.Err()
 	}
 	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusFeatureNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -975,31 +844,17 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
 		// check if feature is already enabled
 		if !feature.GetEnabled() {
-			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), localizer)
+			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId())
 			if err != nil {
-				dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
+				return nil, statusTriggerEnableFailed.Err()
 			}
 		}
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
 		// check if feature is already disabled
 		if feature.GetEnabled() {
-			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), localizer)
+			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId())
 			if err != nil {
-				dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
+				return nil, statusTriggerDisableFailed.Err()
 			}
 		}
 	} else {
@@ -1007,25 +862,11 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Invalid action",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		dt, err := statusTriggerActionInvalid.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusTriggerActionInvalid.Err()
 	}
 	err = s.updateTriggerUsageInfo(ctx, webhookEditor, trigger)
 	if err != nil {
-		dt, err := statusTriggerUsageUpdateFailed.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusTriggerUsageUpdateFailed.Err()
 	}
 	return resp, nil
 }
@@ -1098,7 +939,6 @@ func (s *FeatureService) updateTriggerUsageInfo(
 func (s *FeatureService) enableFeature(
 	ctx context.Context,
 	featureId, environmentId string,
-	localizer locale.Localizer,
 ) error {
 	if err := s.updateFeature(
 		ctx,
@@ -1106,7 +946,6 @@ func (s *FeatureService) enableFeature(
 		featureId,
 		environmentId,
 		"",
-		localizer,
 		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
@@ -1126,7 +965,6 @@ func (s *FeatureService) enableFeature(
 func (s *FeatureService) disableFeature(
 	ctx context.Context,
 	featureId, environmentId string,
-	localizer locale.Localizer,
 ) error {
 	if err := s.updateFeature(
 		ctx,
@@ -1134,7 +972,6 @@ func (s *FeatureService) disableFeature(
 		featureId,
 		environmentId,
 		"",
-		localizer,
 		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {

@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -33,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -51,15 +48,6 @@ func TestCreateSegmentMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		setup         func(*FeatureService)
@@ -74,7 +62,7 @@ func TestCreateSegmentMySQL(t *testing.T) {
 				Description: "description",
 			},
 			environmentId: "ns0",
-			expected:      createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expected:      statusMissingName.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -118,15 +106,6 @@ func TestCreateSegmentNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc     string
@@ -142,7 +121,7 @@ func TestCreateSegmentNoCommandMySQL(t *testing.T) {
 				Description:   "description",
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expected: statusMissingName.Err(),
 		},
 		{
 			desc: "success",
@@ -186,15 +165,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		setup         func(*FeatureService)
@@ -208,7 +178,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			id:            "",
 			cmd:           &featureproto.DeleteSegmentCommand{},
 			environmentId: "ns0",
-			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected:      statusMissingID.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -231,7 +201,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			id:            "id",
 			cmd:           &featureproto.DeleteSegmentCommand{},
 			environmentId: "ns0",
-			expected:      createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expected:      statusSegmentNotFound.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -296,15 +266,6 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc     string
@@ -319,7 +280,7 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 				Id:            "",
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected: statusMissingID.Err(),
 		},
 		{
 			desc: "error: segment not found",
@@ -344,7 +305,7 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 				Id:            "id",
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expected: statusSegmentNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -406,15 +367,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	changeSegmentNameCmd, err := ptypes.MarshalAny(&featureproto.ChangeSegmentNameCommand{Name: "name"})
 	require.NoError(t, err)
@@ -430,7 +382,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			id:            "",
 			cmds:          nil,
 			environmentId: "ns0",
-			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected:      statusMissingID.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -485,15 +437,6 @@ func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	testcases := []struct {
 		desc     string
@@ -507,7 +450,7 @@ func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 			req: &featureproto.UpdateSegmentRequest{
 				EnvironmentId: "ns0",
 			},
-			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: update empty name",
@@ -517,7 +460,7 @@ func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Name:          wrapperspb.String(""),
 			},
-			expected: createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expected: statusMissingName.Err(),
 		},
 		{
 			desc: "success update name",
@@ -596,7 +539,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 		context        context.Context
 		id             string
 		environmentId  string
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "error: missing id",
@@ -608,8 +551,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 			setup:         nil,
 			id:            "",
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingID.Err()
 			},
 		},
 		{
@@ -626,8 +569,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:            "id",
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
+			getExpectedErr: func() error {
+				return statusSegmentNotFound.Err()
 			},
 		},
 		{
@@ -652,7 +595,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:            "id",
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -678,7 +621,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:            "id",
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -692,8 +635,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 			setup:         func(s *FeatureService) {},
 			id:            "id",
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -704,11 +647,10 @@ func TestGetSegmentMySQL(t *testing.T) {
 				tc.setup(service)
 			}
 			ctx := tc.context
-			localizer := locale.NewLocalizer(ctx)
 
 			req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentId: tc.environmentId}
 			_, err := service.GetSegment(ctx, req)
-			assert.Equal(t, tc.getExpectedErr(localizer), err)
+			assert.Equal(t, tc.getExpectedErr(), err)
 		})
 	}
 }
@@ -725,7 +667,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 		setup          func(*FeatureService)
 		pageSize       int64
 		environmentId  string
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "error: exceeded max page size per request",
@@ -737,8 +679,8 @@ func TestListSegmentsMySQL(t *testing.T) {
 			setup:         nil,
 			pageSize:      int64(maxPageSizePerRequest + 1),
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size"), localizer)
+			getExpectedErr: func() error {
+				return statusExceededMaxPageSizePerRequest.Err()
 			},
 		},
 		{
@@ -768,7 +710,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -799,7 +741,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -813,8 +755,8 @@ func TestListSegmentsMySQL(t *testing.T) {
 			setup:         func(s *FeatureService) {},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -825,11 +767,10 @@ func TestListSegmentsMySQL(t *testing.T) {
 				tc.setup(service)
 			}
 			ctx := tc.context
-			localizer := locale.NewLocalizer(ctx)
 
 			req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentId: tc.environmentId}
 			_, err := service.ListSegments(ctx, req)
-			assert.Equal(t, tc.getExpectedErr(localizer), err)
+			assert.Equal(t, tc.getExpectedErr(), err)
 		})
 	}
 }

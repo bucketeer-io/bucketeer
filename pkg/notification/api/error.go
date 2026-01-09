@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,50 +20,53 @@ import (
 )
 
 var (
-	statusInternal   = api.NewGRPCStatus(err.NewErrorInternal(err.NotificationPackageName, "internal"))
 	statusIDRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "id must be specified", "id"),
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "id must be specified", "ID"),
 	)
 	statusNameRequired = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "name must be specified", "name"),
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "name must be specified", "Name"),
 	)
 	statusSourceTypesRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
 		err.NotificationPackageName,
 		"notification types must be specified",
-		"notification_types",
+		"NotificationType",
 	))
 	statusUnknownRecipient = api.NewGRPCStatus(
-		err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown recipient", "recipient"),
+		err.NewErrorInvalidArgUnknown(err.NotificationPackageName, "unknown recipient", "NotificationRecipient"),
 	)
 	statusRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
 		err.NotificationPackageName,
 		"recipient must be specified",
-		"recipient",
+		"NotificationRecipient",
 	))
 	statusSlackRecipientRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
 		err.NotificationPackageName,
 		"slack recipient must be specified",
-		"slack_recipient",
+		"NotificationSlackRecipient",
 	))
 	statusSlackRecipientWebhookURLRequired = api.NewGRPCStatus(err.NewErrorInvalidArgEmpty(
 		err.NotificationPackageName,
 		"webhook URL must be specified",
-		"webhook_url",
+		"WebhookURL",
 	))
 	statusInvalidCursor = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "cursor is invalid", "cursor"),
+		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "cursor is invalid", "Cursor"),
 	)
 	statusNoCommand = api.NewGRPCStatus(
-		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "no command", "command"),
+		err.NewErrorInvalidArgEmpty(err.NotificationPackageName, "no command", "Command"),
 	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "order_by is invalid", "order_by"),
+		err.NewErrorInvalidArgNotMatchFormat(err.NotificationPackageName, "order_by is invalid", "OrderBy"),
 	)
-	statusNotFound      = api.NewGRPCStatus(err.NewErrorNotFound(err.NotificationPackageName, "not found", "id"))
+	statusNotFound = api.NewGRPCStatus(
+		err.NewErrorNotFound(err.NotificationPackageName, "not found", "Notification"),
+	)
 	statusAlreadyExists = api.NewGRPCStatus(
 		err.NewErrorAlreadyExists(err.NotificationPackageName, "already exists"),
 	)
-	statusUnauthenticated  = api.NewGRPCStatus(err.NewErrorUnauthenticated(err.NotificationPackageName, "unauthenticated"))
+	statusUnauthenticated = api.NewGRPCStatus(
+		err.NewErrorUnauthenticated(err.NotificationPackageName, "unauthenticated"),
+	)
 	statusPermissionDenied = api.NewGRPCStatus(
 		err.NewErrorPermissionDenied(err.NotificationPackageName, "permission denied"),
 	)

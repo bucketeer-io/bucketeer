@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
@@ -35,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -209,7 +206,7 @@ func TestGetFlagTrigger(t *testing.T) {
 		context        context.Context
 		setup          func(service *FeatureService)
 		input          *proto.GetFlagTriggerRequest
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc: "Error Validate",
@@ -220,8 +217,8 @@ func TestGetFlagTrigger(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			setup:   nil,
 			input:   &proto.GetFlagTriggerRequest{},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingTriggerID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate), localizer)
+			getExpectedErr: func() error {
+				return statusMissingTriggerID.Err()
 			},
 		},
 		{
@@ -237,8 +234,8 @@ func TestGetFlagTrigger(t *testing.T) {
 				).Return(nil, v2fs.ErrFlagTriggerNotFound)
 			},
 			input: &proto.GetFlagTriggerRequest{Id: "1", EnvironmentId: "namespace"},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
+			getExpectedErr: func() error {
+				return statusTriggerNotFound.Err()
 			},
 		},
 		{
@@ -269,7 +266,7 @@ func TestGetFlagTrigger(t *testing.T) {
 				}, nil)
 			},
 			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -301,7 +298,7 @@ func TestGetFlagTrigger(t *testing.T) {
 				}, nil)
 			},
 			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -314,8 +311,8 @@ func TestGetFlagTrigger(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:   func(s *FeatureService) {},
 			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -326,10 +323,9 @@ func TestGetFlagTrigger(t *testing.T) {
 				p.setup(s)
 			}
 			ctx := p.context
-			localizer := locale.NewLocalizer(ctx)
 
 			resp, err := s.GetFlagTrigger(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 			if err == nil {
 				assert.NotNil(t, resp)
 			}
@@ -533,15 +529,6 @@ func TestEnableFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -556,7 +543,7 @@ func TestEnableFlagTrigger(t *testing.T) {
 				Id:            "id",
 				EnvironmentId: "namespace",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
 			desc: "Error Internal",
@@ -627,15 +614,6 @@ func TestDisableFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -650,7 +628,7 @@ func TestDisableFlagTrigger(t *testing.T) {
 				Id:            "id",
 				EnvironmentId: "namespace",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
 			desc: "Error Internal",
@@ -719,15 +697,6 @@ func TestResetFlagTrigger(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -739,7 +708,7 @@ func TestResetFlagTrigger(t *testing.T) {
 			desc:        "Error Invalid Argument",
 			setup:       func(s *FeatureService) {},
 			input:       &proto.ResetFlagTriggerRequest{},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
 			desc: "Error GetFlagTrigger",
@@ -751,7 +720,7 @@ func TestResetFlagTrigger(t *testing.T) {
 			input: &proto.ResetFlagTriggerRequest{
 				ResetFlagTriggerCommand: &proto.ResetFlagTriggerCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusTriggerNotFound.Err(),
 		},
 		{
 			desc: "Error Internal",
@@ -888,15 +857,6 @@ func TestFlagTriggerWebhook(t *testing.T) {
 		createContextWithToken(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	baseFlagTrigger := &proto.FlagTrigger{
 		Id:              "1",
@@ -922,7 +882,7 @@ func TestFlagTriggerWebhook(t *testing.T) {
 		desc:        "Error Invalid Argument",
 		setup:       func(s *FeatureService) {},
 		input:       &proto.FlagTriggerWebhookRequest{},
-		expectedErr: createError(statusSecretRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "secret")),
+		expectedErr: statusSecretRequired.Err(),
 	},
 		{
 			desc: "Error Not Found",
@@ -932,7 +892,7 @@ func TestFlagTriggerWebhook(t *testing.T) {
 				).Return(nil, v2fs.ErrFlagTriggerNotFound)
 			},
 			input:       &proto.FlagTriggerWebhookRequest{Token: "token"},
-			expectedErr: createError(statusTriggerNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
+			expectedErr: statusTriggerNotFound.Err(),
 		},
 		{
 			desc: "Success",
@@ -999,7 +959,7 @@ func TestListFlagTriggers(t *testing.T) {
 		setup          func(service *FeatureService)
 		input          *proto.ListFlagTriggersRequest
 		expected       *proto.ListFlagTriggersResponse
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "Error Validate",
@@ -1011,8 +971,8 @@ func TestListFlagTriggers(t *testing.T) {
 			setup:    nil,
 			input:    &proto.ListFlagTriggersRequest{},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingTriggerFeatureID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate), localizer)
+			getExpectedErr: func() error {
+				return statusMissingTriggerFeatureID.Err()
 			},
 		},
 		{
@@ -1025,8 +985,8 @@ func TestListFlagTriggers(t *testing.T) {
 			setup:    nil,
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", Cursor: "XXX"},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"), localizer)
+			getExpectedErr: func() error {
+				return statusInvalidCursor.Err()
 			},
 		},
 		{
@@ -1043,7 +1003,7 @@ func TestListFlagTriggers(t *testing.T) {
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: ""},
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1061,7 +1021,7 @@ func TestListFlagTriggers(t *testing.T) {
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1074,8 +1034,8 @@ func TestListFlagTriggers(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:   func(s *FeatureService) {},
 			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -1086,10 +1046,9 @@ func TestListFlagTriggers(t *testing.T) {
 				p.setup(s)
 			}
 			ctx := p.context
-			localizer := locale.NewLocalizer(ctx)
 
 			actual, err := s.ListFlagTriggers(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 			assert.Equal(t, p.expected, actual)
 		})
 	}

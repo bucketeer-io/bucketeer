@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,25 +19,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/mock"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
@@ -56,16 +50,6 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	ti := time.Date(2020, 12, 15, 0, 0, 0, 0, time.UTC)
 	invalidSpanSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
 		{
@@ -119,21 +103,21 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusProgressiveRolloutFeatureIDRequired.Err(),
 		},
 		{
 			desc: "err: Internal",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "test"))
+				).Return(nil, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "test")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: InvalidVariationSize",
@@ -160,7 +144,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
+			expectedErr: statusProgressiveRolloutInvalidVariationSize.Err(),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -188,7 +172,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
+			expectedErr: statusProgressiveRolloutClauseRequired.Err(),
 		},
 		{
 			desc: "err: IncorrecctProgressiveRolloutClause",
@@ -218,7 +202,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 				},
 			},
-			expectedErr: createError(statusIncorrectProgressiveRolloutClause, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+			expectedErr: statusIncorrectProgressiveRolloutClause.Err(),
 		},
 		{
 			desc: "err: manual ErrVariationIdRequired",
@@ -247,7 +231,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrInvalidVariationId",
@@ -278,7 +262,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseInvalidVariationID.Err(),
 		},
 		{
 			desc: "err: template ErrVariationIdRequired",
@@ -307,7 +291,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrSchedulesRequired",
@@ -338,7 +322,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
 		},
 		{
 			desc: "err: template ErrSchedulesRequired",
@@ -369,7 +353,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
 		},
 		{
 			desc: "err: template ErrInvalidIncrements",
@@ -407,7 +391,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseInvalidIncrements, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "increments")),
+			expectedErr: statusProgressiveRolloutClauseInvalidIncrements.Err(),
 		},
 		{
 			desc: "err: template ErrUnknownInterval",
@@ -446,7 +430,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseUnknownInterval, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "interval")),
+			expectedErr: statusProgressiveRolloutClauseUnknownInterval.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -480,7 +464,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -512,7 +496,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -546,7 +530,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -578,7 +562,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
 		},
 		{
 			desc: "err: template ErrInvalidScheduleSpans",
@@ -612,7 +596,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
 		},
 		{
 			desc: "err: manual ErrInvalidScheduleSpans",
@@ -644,7 +628,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
 		},
 		{
 			desc: "err: transaction error",
@@ -668,7 +652,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error"))
+				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -681,7 +665,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutAlreadyExists",
@@ -718,7 +702,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusProgressiveRolloutAlreadyExists.Err(),
 		},
 		{
 			desc: "err: while listing experiments",
@@ -738,7 +722,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				}}, nil)
 				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					nil,
-					bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error listing experiments"),
+					bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"),
 				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -752,7 +736,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "error listing experiments")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
@@ -792,7 +776,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutWaitingOrRunningExperimentExists, localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists)),
+			expectedErr: statusProgressiveRolloutWaitingOrRunningExperimentExists.Err(),
 		},
 		{
 			desc: "success",
@@ -853,16 +837,6 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	ti := time.Date(2020, 12, 15, 0, 0, 0, 0, time.UTC)
 	invalidSpanSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
 		{
@@ -916,19 +890,19 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				EnvironmentId: "env-id",
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+			expectedErr: statusProgressiveRolloutFeatureIDRequired.Err(),
 		},
 		{
 			desc: "err: Internal",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error"))
+				).Return(nil, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: InvalidVariationSize",
@@ -953,7 +927,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
+			expectedErr: statusProgressiveRolloutInvalidVariationSize.Err(),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -979,7 +953,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
+			expectedErr: statusProgressiveRolloutClauseRequired.Err(),
 		},
 		{
 			desc: "err: IncorrecctProgressiveRolloutClause",
@@ -1007,7 +981,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				ProgressiveRolloutManualScheduleClause:   &autoopsproto.ProgressiveRolloutManualScheduleClause{},
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 			},
-			expectedErr: createError(statusIncorrectProgressiveRolloutClause, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+			expectedErr: statusIncorrectProgressiveRolloutClause.Err(),
 		},
 		{
 			desc: "err: manual ErrVariationIdRequired",
@@ -1034,7 +1008,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				FeatureId:                              "fid",
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrInvalidVariationId",
@@ -1063,7 +1037,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					VariationId: "invalid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseInvalidVariationID.Err(),
 		},
 		{
 			desc: "err: template ErrVariationIdRequired",
@@ -1090,7 +1064,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				FeatureId:                                "fid",
 				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expectedErr: statusProgressiveRolloutClauseVariationIDRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrSchedulesRequired",
@@ -1119,7 +1093,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					VariationId: "vid-1",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
 		},
 		{
 			desc: "err: template ErrSchedulesRequired",
@@ -1148,7 +1122,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					VariationId: "vid-1",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+			expectedErr: statusProgressiveRolloutClauseSchedulesRequired.Err(),
 		},
 		{
 			desc: "err: template ErrInvalidIncrements",
@@ -1184,7 +1158,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseInvalidIncrements, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "increments")),
+			expectedErr: statusProgressiveRolloutClauseInvalidIncrements.Err(),
 		},
 		{
 			desc: "err: template ErrUnknownInterval",
@@ -1221,7 +1195,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments: 30,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutClauseUnknownInterval, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "interval")),
+			expectedErr: statusProgressiveRolloutClauseUnknownInterval.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -1253,7 +1227,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -1283,7 +1257,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Schedules:   executedAtRequiredSchedules,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+			expectedErr: statusProgressiveRolloutScheduleExecutedAtRequired.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -1315,7 +1289,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -1347,7 +1321,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
 		},
 		{
 			desc: "err: template ErrInvalidScheduleSpans",
@@ -1379,7 +1353,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
 		},
 		{
 			desc: "err: manual ErrInvalidScheduleSpans",
@@ -1409,7 +1383,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Schedules:   invalidSpanSchedules,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+			expectedErr: statusProgressiveRolloutInvalidScheduleSpans.Err(),
 		},
 		{
 			desc: "err: transaction error",
@@ -1433,7 +1407,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "transaction error"))
+				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				FeatureId: "fid",
@@ -1444,7 +1418,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "transaction error")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutAlreadyExists",
@@ -1479,7 +1453,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusProgressiveRolloutAlreadyExists.Err(),
 		},
 		{
 			desc: "err: while listing experiments",
@@ -1499,7 +1473,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				}}, nil)
 				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					nil,
-					bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error listing experiments"),
+					bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"),
 				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -1511,7 +1485,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error listing experiments")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
@@ -1549,7 +1523,7 @@ func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
 					Increments:  2,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutWaitingOrRunningExperimentExists, localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists)),
+			expectedErr: statusProgressiveRolloutWaitingOrRunningExperimentExists.Err(),
 		},
 		{
 			desc: "success",
@@ -1609,16 +1583,6 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -1628,7 +1592,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.GetProgressiveRolloutRequest{EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -1638,7 +1602,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 				).Return(nil, v2as.ErrProgressiveRolloutNotFound)
 			},
 			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -1672,16 +1636,6 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -1691,14 +1645,14 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc:        "err: id is required",
 			req:         &autoopsproto.StopProgressiveRolloutRequest{},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "err: internal error during transaction",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error"))
+				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
 				Id:            "id",
@@ -1707,7 +1661,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: not found",
@@ -1723,7 +1677,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "err: unexpected affected rows",
@@ -1739,7 +1693,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -1779,16 +1733,6 @@ func TestStopProgressiveRolloutNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -1798,21 +1742,21 @@ func TestStopProgressiveRolloutNoCommandMySQL(t *testing.T) {
 		{
 			desc:        "err: id is required",
 			req:         &autoopsproto.StopProgressiveRolloutRequest{},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "err: internal error during transaction",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error"))
+				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
 				Id:            "id",
 				EnvironmentId: "ns",
 				StoppedBy:     autoopsproto.ProgressiveRollout_USER,
 			},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "transaction error")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: not found",
@@ -1826,7 +1770,7 @@ func TestStopProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns",
 				StoppedBy:     autoopsproto.ProgressiveRollout_USER,
 			},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "err: unexpected affected rows",
@@ -1840,7 +1784,7 @@ func TestStopProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns",
 				StoppedBy:     autoopsproto.ProgressiveRollout_USER,
 			},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -1881,16 +1825,6 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -1900,17 +1834,17 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "err: internal error during transaction",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "test"))
+				).Return(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "test")).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutNotFound",
@@ -1920,7 +1854,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutUnexpectedAffectedRows",
@@ -1930,7 +1864,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+			expectedErr: statusProgressiveRolloutNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -1967,16 +1901,6 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc          string
 		setup         func(*AutoOpsService)
@@ -1989,18 +1913,18 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 			setup:         nil,
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_OrderBy(999),
 			environmentId: "ns0",
-			expected:      createError(statusProgressiveRolloutInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
+			expected:      statusProgressiveRolloutInvalidOrderBy.Err(),
 		},
 		{
 			desc: "err: interal error",
 			setup: func(s *AutoOpsService) {
 				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, int64(0), 0, bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error"))
+				).Return(nil, int64(0), 0, bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "internal"))
 			},
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
 			environmentId: "ns0",
-			expected:      api.NewGRPCStatus(bkterr.NewErrorInternal(bkterr.AuditlogPackageName, "error")).Err(),
+			expected:      statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -2039,16 +1963,6 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -2058,7 +1972,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.ExecuteProgressiveRolloutRequest{},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "success: feature already has target strategy",
@@ -2181,16 +2095,6 @@ func TestExecuteProgressiveRolloutNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -2200,7 +2104,7 @@ func TestExecuteProgressiveRolloutNoCommandMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.ExecuteProgressiveRolloutRequest{},
-			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusProgressiveRolloutIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNoScheduleID",
@@ -2209,7 +2113,7 @@ func TestExecuteProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				ScheduleId:    "",
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule_id")),
+			expectedErr: statusProgressiveRolloutScheduleIDRequired.Err(),
 		},
 		{
 			desc: "success",

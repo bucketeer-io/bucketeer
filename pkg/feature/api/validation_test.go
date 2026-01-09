@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,12 +19,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -34,7 +30,6 @@ func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
 	patterns := []struct {
 		desc     string
 		request  *featureproto.UpdateFeatureTargetingRequest
@@ -45,23 +40,14 @@ func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {
 			request: &featureproto.UpdateFeatureTargetingRequest{
 				Id: "",
 			},
-			expected: createError(
-				t,
-				statusMissingID,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-				localizer,
-			),
+			expected: statusMissingID.Err(),
 		},
 		{
 			desc: "error: missing from",
 			request: &featureproto.UpdateFeatureTargetingRequest{
 				Id: "feature-id",
 			},
-			expected: createError(t,
-				statusMissingFrom,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "from"),
-				localizer,
-			),
+			expected: statusMissingFrom.Err(),
 		},
 		{
 			desc: "success: request from user",
@@ -83,7 +69,7 @@ func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateFeatureTargetingRequest(p.request, localizer)
+			err := validateUpdateFeatureTargetingRequest(p.request)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -95,7 +81,6 @@ func TestValidateVariationDeletion(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
 
 	variationID1 := "variation-1"
 	variationID2 := "variation-2"
@@ -177,8 +162,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected: createError(t, statusVariationInUseByOtherFeatures,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"), localizer),
+			expected:        statusVariationInUseByOtherFeatures.Err(),
 		},
 		{
 			desc: "error: other feature has FEATURE_FLAG rule using deleted variation ID",
@@ -217,8 +201,7 @@ func TestValidateVariationDeletion(t *testing.T) {
 				},
 			},
 			targetFeatureID: "feature-1",
-			expected: createError(t, statusVariationInUseByOtherFeatures,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"), localizer),
+			expected:        statusVariationInUseByOtherFeatures.Err(),
 		},
 		{
 			desc: "success: target feature uses deleted variation (should be excluded)",
@@ -279,23 +262,8 @@ func TestValidateVariationDeletion(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateVariationDeletion(p.variationChanges, p.features, p.targetFeatureID, localizer)
+			err := validateVariationDeletion(p.variationChanges, p.features, p.targetFeatureID)
 			assert.Equal(t, p.expected, err)
 		})
 	}
-}
-
-func createError(
-	t *testing.T,
-	status *gstatus.Status,
-	msg string,
-	localizer locale.Localizer,
-) error {
-	t.Helper()
-	st, err := status.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: msg,
-	})
-	require.NoError(t, err)
-	return st.Err()
 }

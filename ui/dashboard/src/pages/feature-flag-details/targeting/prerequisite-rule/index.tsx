@@ -9,6 +9,8 @@ import { PrerequisiteSchema } from '../types';
 import ConditionForm from './condition';
 import PrerequisiteBanner from './prerequisite-banner';
 
+export * from './dependent-flag-warning';
+
 interface Props {
   feature: Feature;
   features: Feature[];

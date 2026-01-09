@@ -1,14 +1,16 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
-import { invalidateFeatures } from '@queries/features';
+import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { invalidateHistories } from '@queries/histories';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
+import { getDependentFlags } from 'utils/feature-dependencies';
+import { DependentFlagWarning } from 'pages/feature-flag-details/targeting/prerequisite-rule';
 import { getFlagStatus } from 'pages/feature-flags/collection-layout/elements/utils';
 import ArchiveModal from 'pages/feature-flags/flags-modal/archive-modal';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
@@ -34,6 +36,23 @@ const ArchiveFlag = ({
     onOpenArchiveFlagModal,
     onCloseArchiveFlagModal
   ] = useToggleOpen(false);
+
+  const { data: collection } = useQueryFeatures({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      archived: false
+    },
+    enabled: !!currentEnvironment
+  });
+
+  const features = useMemo(() => collection?.features || [], [collection]);
+
+  const activeFeatures = useMemo(
+    () => features.filter(item => !item.archived),
+    [features]
+  );
+  const dependentFlags = getDependentFlags([feature], activeFeatures);
 
   const mutation = useMutation({
     mutationFn: async (params: Partial<FeatureUpdaterParams>) => {
@@ -79,12 +98,15 @@ const ArchiveFlag = ({
             : 'form:archive-flag-desc'
         )}
       </p>
+      {dependentFlags?.length > 0 && (
+        <DependentFlagWarning dependentFlags={dependentFlags} />
+      )}
       <DisabledButtonTooltip
         align="start"
         hidden={!disabled}
         trigger={
           <Button
-            disabled={disabled}
+            disabled={disabled || !!dependentFlags?.length}
             className="w-fit"
             variant="secondary"
             onClick={onOpenArchiveFlagModal}

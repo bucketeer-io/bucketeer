@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
@@ -35,10 +33,9 @@ func (s *FeatureService) ListTags(
 	ctx context.Context,
 	req *featureproto.ListTagsRequest,
 ) (*featureproto.ListTagsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +53,7 @@ func (s *FeatureService) ListTags(
 			Keyword: req.SearchKeyword,
 		}
 	}
-	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -74,14 +71,7 @@ func (s *FeatureService) ListTags(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Filters:     filters,
@@ -99,7 +89,7 @@ func (s *FeatureService) ListTags(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId)
 	}
 	convertedTags := make([]*featureproto.Tag, len(tags))
 	for i, tag := range tags {
@@ -118,7 +108,6 @@ func (s *FeatureService) ListTags(
 func (s *FeatureService) newListTagsOrdersMySQL(
 	orderBy featureproto.ListTagsRequest_OrderBy,
 	orderDirection featureproto.ListTagsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -130,14 +119,7 @@ func (s *FeatureService) newListTagsOrdersMySQL(
 	case featureproto.ListTagsRequest_UPDATED_AT:
 		column = "tag.updated_at"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListTagsRequest_DESC {

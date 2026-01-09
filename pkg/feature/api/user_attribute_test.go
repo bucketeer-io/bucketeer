@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -43,7 +42,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		setup          func(*FeatureService)
 		input          *featureproto.GetUserAttributeKeysRequest
 		expected       *featureproto.GetUserAttributeKeysResponse
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "error: permission denied",
@@ -53,8 +52,8 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			input: &featureproto.GetUserAttributeKeysRequest{
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 		{
@@ -69,7 +68,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			input: &featureproto.GetUserAttributeKeysRequest{
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "cache error")).Err()
 			},
 		},
@@ -94,7 +93,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 					"key2",
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -114,7 +113,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			expected: &featureproto.GetUserAttributeKeysResponse{
 				UserAttributeKeys: []string{"appVersion", "app_version", "country", "deviceType", "platform"},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -134,7 +133,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			expected: &featureproto.GetUserAttributeKeysResponse{
 				UserAttributeKeys: []string{"appVersion", "platform"},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -149,10 +148,9 @@ func TestGetUserAttributeKeys(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			resp, err := fs.GetUserAttributeKeys(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 			if err == nil {
 				assert.Equal(t, p.expected, resp)
 			}

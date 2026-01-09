@@ -21,7 +21,7 @@ The existing Bucketeer system provides:
 
 - Manual archive functionality via `ArchiveFeature` API
 - `Feature.archived` field (boolean) for marking archived flags
-- Dependency checking via `HasFeaturesDependsOnTargets`
+- Dependency checking via `HasFeaturesDependsOnTargets` (prevents archiving flags used as prerequisites or in targeting rules)
 - Last used tracking via `feature_last_used_info` table
 - Code reference tracking for flags
 
@@ -162,6 +162,33 @@ The storage layer will be extended to support environment auto-archive settings:
 - Update CREATE and UPDATE queries to handle auto-archive settings
 - Provide method to retrieve environments with auto-archiving enabled
 
+#### Shared Domain Layer
+
+**Design Principle**: To support both automated batch operations and manual bulk operations through the UI, we introduce a shared domain layer that centralizes archivability evaluation and archiving logic.
+
+**Architecture**:
+
+```text
+Domain Layer (pkg/feature/domain/archivability.go)
+    ├─ ArchivabilityEvaluator: Centralized evaluation logic
+    │   ├─ EvaluateArchivability(): Determine archivable features
+    │   └─ ArchiveFeaturesInBulk(): Execute bulk archiving
+    │
+Used by:
+    ├─ Batch Job (automated daily execution) - Phase 1
+    └─ Bulk Archive APIs (manual operations) - Future enhancement
+```
+
+**Benefits**:
+
+- **Code Reuse**: Single source of truth for archivability logic
+- **Consistency**: Identical behavior across automated and manual operations
+- **Maintainability**: Changes to archivability rules propagate automatically
+- **Testability**: Domain logic can be tested independently
+
+The shared domain layer pattern avoids the anti-pattern of batch jobs calling APIs over the network while achieving the benefits of code reuse.
+
+**Implementation Approach**: The shared domain layer is implemented in Phase 1 to ensure code reusability and avoid future refactoring when manual bulk archive features are added in a subsequent PR. This approach keeps the batch job implementation concise (~300 lines vs ~600 lines) and provides a clean foundation for future API development.
 
 #### Automated Batch Processing
 
@@ -195,24 +222,142 @@ A new batch job will run daily (configurable via Kubernetes CronJob) to identify
 
 The batch job integrates with the existing job infrastructure, metrics collection, and monitoring systems.
 
+#### Feature Dependency Handling
+
+**Critical Safety Requirement**: The auto-archive system must never archive feature flags that are dependencies of other active flags.
+
+**Dependency Types in Bucketeer**:
+
+1. **Prerequisite Dependencies**
+   - Defined in `Feature.prerequisites[]` field
+   - Structure: `{feature_id, variation_id}`
+   - Example: Flag B requires Flag A's "enabled" variation
+   - Use case: Graduated rollouts, feature gates
+
+2. **FEATURE_FLAG Clause Dependencies**
+   - Used in targeting rules with `Clause.Operator == FEATURE_FLAG`
+   - Structure: `Clause.Attribute = dependent_feature_id`, `Clause.Values = [variation_ids]`
+   - Example: Flag C's targeting rule evaluates based on Flag A's current variation
+   - Use case: Complex conditional logic, cross-feature targeting
+
+**Dependency Check Implementation**:
+
+The existing `HasFeaturesDependsOnTargets()` function (from `pkg/feature/domain`) checks both dependency types:
+- Scans all features in the environment for prerequisites referencing the target
+- Scans all targeting rules for `FEATURE_FLAG` clauses referencing the target
+- Returns `true` if any feature depends on the target, `false` otherwise
+
+**Archive Prevention Logic**:
+
+```text
+FOR each candidate flag:
+  1. Check if ANY other flag has this flag as a prerequisite → SKIP archiving
+  2. Check if ANY other flag's targeting rules reference this flag → SKIP archiving
+  3. If no dependencies found → Proceed with other checks (usage, code refs)
+```
+
+**Dependency Scenarios**:
+
+| Scenario | Example | Action |
+|----------|---------|--------|
+| Direct Prerequisite | Flag A is prerequisite of Flag B | Skip archiving Flag A |
+| Targeting Rule Dependency | Flag A used in Flag C's rule clause | Skip archiving Flag A |
+| Transitive Dependency | A→B→C (A depends on B, B depends on C) | Skip archiving B and C |
+| No Dependencies | Flag D has no dependents | Eligible for archiving |
+
+**Shared Domain Layer Integration**:
+
+The dependency checking logic is centralized in the domain layer's `ArchivabilityEvaluator`:
+
+- Evaluates each candidate feature by calling `HasFeaturesDependsOnTargets()`
+- Returns evaluation results with `IsArchivable` status and detailed `BlockingReasons`
+- Ensures consistent dependency detection across all archiving operations
+
+Each consumer layer handles dependency information appropriately:
+
+- **Domain Layer**: Returns `IsArchivable=false` with `"has_dependencies"` in blocking reasons
+- **Batch Job**: Logs dependency skips at DEBUG level, includes skip counts in metrics, continues processing other features
+- **ListArchivableFeatures API**: Returns full dependency information for UI preview and display
+- **BulkArchiveFeatures API**: Pre-validates before archiving, supports partial success if dependencies change mid-operation
+- **Manual Archive API**: Returns `statusInvalidArchive` error ("can't archive because this feature is used as a prerequisite") with `FailedPrecondition` status
+
+**Implementation Note**: All archiving operations use the existing `HasFeaturesDependsOnTargets()` function from `pkg/feature/domain`, which is already tested and proven reliable. This ensures consistent dependency detection whether archiving is performed manually, through bulk operations, or automatically via batch job.
+
+#### Bulk Archive APIs
+
+**Note**: This feature will be implemented in a future PR after Phase 1 is complete. The shared domain layer implemented in Phase 1 provides the foundation for these APIs, enabling straightforward implementation without refactoring existing code.
+
+To support manual bulk archiving operations through the admin UI, we provide two new gRPC APIs that leverage the shared domain layer:
+
+**1. ListArchivableFeatures API**
+
+Returns a list of features that meet the archivability criteria based on provided thresholds.
+
+- **Purpose**: Preview which features would be archived before executing the bulk operation
+- **Use Case**: Admin UI displays archivable features for user review and selection
+- **Implementation**: Calls `ArchivabilityEvaluator.EvaluateArchivability()` from domain layer
+- **Response**: List of features with archivability status and blocking reasons
+
+**2. BulkArchiveFeatures API**
+
+Archives multiple features in a single operation with partial success support.
+
+- **Purpose**: Execute bulk archiving for selected features
+- **Use Case**: Admin manually archives multiple unused features at once
+- **Implementation**: Calls `ArchivabilityEvaluator.ArchiveFeaturesInBulk()` from domain layer
+- **Response**: Per-feature success/failure status and summary statistics
+
+**Design Consistency**:
+
+Both APIs use the same domain layer logic as the automated batch job, ensuring:
+- Identical archivability criteria evaluation
+- Consistent dependency checking
+- Unified audit trail format
+- Same safety guarantees
+
+This approach follows the existing Bucketeer pattern for bulk operations (see `BulkUploadSegmentUsers` API).
+
 #### User Interface
 
-The web dashboard will provide auto-archive configuration in the environment settings page. Administrators will be able to:
+The web dashboard will provide auto-archive configuration and management interfaces:
+
+**1. Environment Settings Page** (`/environment/{id}/settings`) - Phase 1
+
+Administrators can configure the auto-archive policy for the entire environment:
 
 - Enable/disable auto-archiving for the entire environment
 - Set the unused days threshold (minimum days without usage before archiving)
 - Configure whether to require zero code references before archiving
 - View the current configuration and understand its impact
 
-**UI Location**: Environment Settings page (`/environment/{id}/settings`)
-
-**UI Section**: "Auto-Archive Configuration" section with:
-
+**UI Components**:
 - Toggle switch for enabling auto-archiving
 - Number input for unused days threshold (enabled when toggle is on)
 - Checkbox for code reference requirement
 - Help text explaining the policy applies to all flags in the environment
 - Warning about the impact of enabling auto-archiving
+
+**2. Bulk Archive Page** (`/environment/{id}/features/bulk-archive`) - Future enhancement
+
+**Note**: This interface will be implemented in a future PR once the Bulk Archive APIs are available.
+
+Administrators will be able to manually review and archive multiple unused features at once:
+
+- Preview archivable features based on configurable criteria
+- Review detailed information (unused days, code references, dependencies)
+- Select specific features to archive
+- Execute bulk archive operation with confirmation
+- View operation results with success/failure details
+
+**Planned UI Workflow** (for future implementation):
+
+1. **Preview Step**: Set criteria and view archivable features
+2. **Selection Step**: Review and select features to archive
+3. **Confirmation Step**: Review selections and provide comment
+4. **Execution Step**: Execute bulk archive operation
+5. **Results Step**: View per-feature results and summary
+
+**Implementation Strategy**: Phase 1 focuses on automated policy-based archiving through environment settings. The bulk archive page will be added in a future PR, providing manual administrative control for ad-hoc archiving needs.
 
 
 ## Configuration

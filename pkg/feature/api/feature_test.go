@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -40,7 +38,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -67,7 +64,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		context        context.Context
 		setup          func(*FeatureService)
 		input          *featureproto.GetFeatureRequest
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "error: id is empty",
@@ -77,8 +74,8 @@ func TestGetFeatureMySQL(t *testing.T) {
 				Id:            "",
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingID.Err()
 			},
 		},
 		{
@@ -99,7 +96,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 				Id:            "fid",
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -121,7 +118,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 				Id:            "fid",
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -144,7 +141,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 				EnvironmentId:  "ns0",
 				FeatureVersion: wrapperspb.Int32(1),
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -157,8 +154,8 @@ func TestGetFeatureMySQL(t *testing.T) {
 				Id:            "fid",
 				EnvironmentId: "ns0",
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -172,10 +169,9 @@ func TestGetFeatureMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			_, err := fs.GetFeature(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 		})
 	}
 }
@@ -191,15 +187,15 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		context        context.Context
 		setup          func(*FeatureService)
 		input          []string
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "error: id is nil",
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			input:   nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingIDs.Err()
 			},
 		},
 		{
@@ -207,8 +203,8 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
 			input:   []string{"id", ""},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingIDs.Err()
 			},
 		},
 		{
@@ -230,7 +226,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 				).Return(row)
 			},
 			input: []string{"fid"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -253,7 +249,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 				).Return(row)
 			},
 			input: []string{"fid"},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -263,8 +259,8 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			context: createContextWithTokenRoleUnassigned(),
 			setup:   func(s *FeatureService) {},
 			input:   []string{"fid"},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -282,10 +278,9 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			_, err := fs.GetFeatures(ctx, req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 		})
 	}
 }
@@ -303,7 +298,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 		orderBy        featureproto.ListFeaturesRequest_OrderBy
 		hasExperiment  bool
 		environmentId  string
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:          "error: invalid order by",
@@ -313,8 +308,8 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:       featureproto.ListFeaturesRequest_OrderBy(999),
 			hasExperiment: false,
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"), localizer)
+			getExpectedErr: func() error {
+				return statusInvalidOrderBy.Err()
 			},
 		},
 		{
@@ -341,7 +336,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
 			environmentId:  "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error { return nil },
+			getExpectedErr: func() error { return nil },
 		},
 		{
 			desc:    "success has Experiment",
@@ -367,7 +362,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment: true,
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -395,7 +390,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
 			environmentId:  "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error { return nil },
+			getExpectedErr: func() error { return nil },
 		},
 		{
 			desc:          "errPermissionDenied",
@@ -405,8 +400,8 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment: false,
 			environmentId: "ns0",
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -425,10 +420,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			_, err := service.ListFeatures(ctx, req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 		})
 	}
 }
@@ -442,15 +436,6 @@ func TestCreateFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	variations := createFeatureVariations()
 	tags := createFeatureTags()
@@ -473,7 +458,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected:                 statusMissingID.Err(),
 		},
 		{
 			setup:                    nil,
@@ -485,7 +470,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expected:                 statusInvalidID.Err(),
 		},
 		{
 			setup:                    nil,
@@ -497,7 +482,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expected:                 statusMissingName.Err(),
 		},
 		{
 			setup:                    nil,
@@ -509,7 +494,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
+			expected:                 statusMissingFeatureVariations.Err(),
 		},
 		{
 			setup:         nil,
@@ -519,7 +504,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			variations:    variations,
 			tags:          nil,
 			environmentId: "ns0",
-			expected:      createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
+			expected:      statusMissingFeatureTags.Err(),
 		},
 		{
 			setup:                    nil,
@@ -531,7 +516,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
+			expected:                 statusMissingDefaultOnVariation.Err(),
 		},
 		{
 			setup:                    nil,
@@ -543,7 +528,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
+			expected:                 statusMissingDefaultOffVariation.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -559,7 +544,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
-			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expected:                 statusAlreadyExists.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -624,15 +609,6 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	variations := createFeatureVariations()
 	tags := createFeatureTags()
@@ -655,7 +631,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expected:                 statusMissingID.Err(),
 		},
 		{
 			setup:                    nil,
@@ -667,7 +643,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expected:                 statusInvalidID.Err(),
 		},
 		{
 			setup:                    nil,
@@ -679,7 +655,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expected:                 statusMissingName.Err(),
 		},
 		{
 			setup:                    nil,
@@ -691,7 +667,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
+			expected:                 statusMissingFeatureVariations.Err(),
 		},
 		{
 			setup:         nil,
@@ -701,7 +677,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			variations:    variations,
 			tags:          nil,
 			environmentId: "ns0",
-			expected:      createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
+			expected:      statusMissingFeatureTags.Err(),
 		},
 		{
 			setup:                    nil,
@@ -713,7 +689,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
+			expected:                 statusMissingDefaultOnVariation.Err(),
 		},
 		{
 			setup:                    nil,
@@ -725,7 +701,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
 			environmentId:            "ns0",
-			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
+			expected:                 statusMissingDefaultOffVariation.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -741,7 +717,7 @@ func TestCreateFeatureNoCommandMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 			environmentId:            "ns0",
-			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expected:                 statusAlreadyExists.Err(),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -794,7 +770,6 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
 	patterns := []struct {
 		setup         func(*FeatureService)
 		input         []*featureproto.Feature
@@ -827,7 +802,7 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	for _, p := range patterns {
 		fs := createFeatureServiceNew(mockController)
 		p.setup(fs)
-		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentId, localizer)
+		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -838,30 +813,21 @@ func TestConvUpdateFeatureError(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		input       error
 		expectedErr error
 	}{
 		{
 			input:       v2fs.ErrFeatureNotFound,
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			input:       v2fs.ErrFeatureUnexpectedAffectedRows,
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			input:       storage.ErrKeyNotFound,
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			input:       pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "test"),
@@ -870,7 +836,7 @@ func TestConvUpdateFeatureError(t *testing.T) {
 	}
 	for _, p := range patterns {
 		fs := &FeatureService{}
-		err := fs.convUpdateFeatureError(p.input, localizer)
+		err := fs.convUpdateFeatureError(p.input)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -891,7 +857,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		setup          func(*FeatureService)
 		input          *featureproto.EvaluateFeaturesRequest
 		expected       *featureproto.EvaluateFeaturesResponse
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:     "fail: ErrMissingUser",
@@ -900,8 +866,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup:    nil,
 			input:    &featureproto.EvaluateFeaturesRequest{},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingUser.Err()
 			},
 		},
 		{
@@ -911,8 +877,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup:    nil,
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingUserID.Err()
 			},
 		},
 		{
@@ -928,7 +894,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
@@ -1057,7 +1023,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1177,7 +1143,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					Evaluations: []*featureproto.Evaluation{},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1198,7 +1164,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					Evaluations: []*featureproto.Evaluation{},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1259,7 +1225,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
 			},
 		},
@@ -1331,7 +1297,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1352,7 +1318,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					Evaluations: []*featureproto.Evaluation{},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1363,8 +1329,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup:    func(s *FeatureService) {},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -1374,7 +1340,6 @@ func TestEvaluateFeatures(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			service := p.service
 			if p.setup != nil {
@@ -1391,7 +1356,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			} else {
 				assert.Equal(t, p.expected, resp, p.desc)
 			}
-			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+			assert.Equal(t, p.getExpectedErr(), err, p.desc)
 		})
 	}
 }
@@ -1412,7 +1377,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		setup          func(*FeatureService)
 		input          *featureproto.DebugEvaluateFeaturesRequest
 		expected       *featureproto.DebugEvaluateFeaturesResponse
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:     "fail: ErrMissingUser",
@@ -1421,8 +1386,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			setup:    nil,
 			input:    &featureproto.DebugEvaluateFeaturesRequest{},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "users"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingUser.Err()
 			},
 		},
 		{
@@ -1436,8 +1401,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				},
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"), localizer)
+			getExpectedErr: func() error {
+				return statusMissingUserID.Err()
 			},
 		},
 		{
@@ -1457,7 +1422,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "error")).Err()
 			},
 		},
@@ -1599,7 +1564,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1665,7 +1630,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "random error")).Err()
 			},
 		},
@@ -1742,7 +1707,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1795,7 +1760,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1809,8 +1774,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expected: nil,
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 		{
@@ -1924,7 +1889,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -1935,7 +1900,6 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			localizer := locale.NewLocalizer(ctx)
 
 			service := p.service
 			if p.setup != nil {
@@ -1943,7 +1907,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			}
 			resp, err := service.DebugEvaluateFeatures(ctx, p.input)
 			if err != nil {
-				assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+				assert.Equal(t, p.getExpectedErr(), err, p.desc)
 				return
 			}
 
@@ -2200,7 +2164,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 		service        *FeatureService
 		context        context.Context
 		setup          func(*FeatureService)
-		getExpectedErr func(localizer locale.Localizer) error
+		getExpectedErr func() error
 	}{
 		{
 			desc:    "success",
@@ -2220,7 +2184,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -2242,7 +2206,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			getExpectedErr: func(localizer locale.Localizer) error {
+			getExpectedErr: func() error {
 				return nil
 			},
 		},
@@ -2251,8 +2215,8 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context: createContextWithTokenRoleUnassigned(),
 			setup:   func(s *FeatureService) {},
-			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			getExpectedErr: func() error {
+				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -2269,10 +2233,9 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			req := &featureproto.ListEnabledFeaturesRequest{
 				EnvironmentId: "ns0",
 			}
-			localizer := locale.NewLocalizer(ctx)
 
 			_, err := fs.ListEnabledFeatures(ctx, req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.getExpectedErr(), err)
 		})
 	}
 }
@@ -2286,15 +2249,6 @@ func TestUnauthenticated(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	service := createFeatureService(mockController)
 	patterns := []struct {
@@ -2308,7 +2262,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.GetFeature(ctx, &featureproto.GetFeatureRequest{})
 				return err
 			},
-			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expected: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "GetFeatures",
@@ -2316,7 +2270,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.GetFeatures(ctx, &featureproto.GetFeaturesRequest{})
 				return err
 			},
-			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expected: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "ListFeatures",
@@ -2324,7 +2278,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.ListFeatures(ctx, &featureproto.ListFeaturesRequest{})
 				return err
 			},
-			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expected: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "ListFeaturesEnabled",
@@ -2332,7 +2286,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.ListEnabledFeatures(ctx, &featureproto.ListEnabledFeaturesRequest{})
 				return err
 			},
-			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expected: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "EvaluateFeatures",
@@ -2340,7 +2294,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{})
 				return err
 			},
-			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+			expected: statusUnauthenticated.Err(),
 		},
 	}
 	for _, p := range patterns {
@@ -2357,15 +2311,6 @@ func TestPermissionDenied(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	// Use a service with unassigned roles instead of admin
 	service := createFeatureServiceWithGetAccountByEnvironmentMock(
@@ -2384,7 +2329,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.CreateFeature(ctx, &featureproto.CreateFeatureRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "EnableFeature",
@@ -2395,7 +2340,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "DisableFeature",
@@ -2406,7 +2351,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UnarchiveFeature",
@@ -2417,7 +2362,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "DeleteFeature",
@@ -2428,7 +2373,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateFeatureVariations",
@@ -2436,7 +2381,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.UpdateFeatureVariations(ctx, &featureproto.UpdateFeatureVariationsRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateFeatureTargeting",
@@ -2444,7 +2389,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.UpdateFeatureTargeting(ctx, &featureproto.UpdateFeatureTargetingRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "CloneFeature",
@@ -2458,7 +2403,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 	}
 	for _, p := range patterns {
@@ -2476,15 +2421,6 @@ func TestEnableFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -2498,7 +2434,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 			req: &featureproto.EnableFeatureRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusMissingCommand",
@@ -2507,10 +2443,10 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
-			desc: "error: statusNotFound",
+			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -2527,7 +2463,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				Command:       &featureproto.EnableFeatureCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -2580,15 +2516,6 @@ func TestDisableFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -2602,7 +2529,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 			req: &featureproto.DisableFeatureRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusMissingCommand",
@@ -2611,10 +2538,10 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
-			desc: "error: statusNotFound",
+			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -2631,7 +2558,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				Command:       &featureproto.DisableFeatureCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -2682,15 +2609,6 @@ func TestValidateArchiveFeature(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		req         *featureproto.ArchiveFeatureRequest
@@ -2700,14 +2618,14 @@ func TestValidateArchiveFeature(t *testing.T) {
 			req: &featureproto.ArchiveFeatureRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
@@ -2719,7 +2637,7 @@ func TestValidateArchiveFeature(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateArchiveFeatureRequest(p.req, localizer)
+		err := validateArchiveFeatureRequest(p.req)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -2733,15 +2651,6 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -2755,7 +2664,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 			req: &featureproto.UnarchiveFeatureRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusMissingCommand",
@@ -2764,10 +2673,10 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
-			desc: "error: statusNotFound",
+			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -2784,7 +2693,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				Command:       &featureproto.UnarchiveFeatureCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -2837,15 +2746,6 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -2859,7 +2759,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 			req: &featureproto.DeleteFeatureRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusMissingCommand",
@@ -2868,10 +2768,10 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			expectedErr: statusMissingCommand.Err(),
 		},
 		{
-			desc: "error: statusNotFound",
+			desc: "error: statusFeatureNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -2888,7 +2788,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				Command:       &featureproto.DeleteFeatureCommand{},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusFeatureNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -2941,15 +2841,6 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -2963,7 +2854,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusIncorrectDestinationEnvironment",
@@ -2975,7 +2866,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusIncorrectDestinationEnvironment, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment")),
+			expectedErr: statusIncorrectDestinationEnvironment.Err(),
 		},
 		{
 			desc: "error: statusAlreadyExists",
@@ -2996,7 +2887,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAlreadyExists.Err(),
 		},
 		{
 			desc: "success",
@@ -3050,15 +2941,6 @@ func TestCloneFeatureNoCommandMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -3072,7 +2954,7 @@ func TestCloneFeatureNoCommandMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "",
 			},
-			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc:  "error: statusIncorrectDestinationEnvironment",
@@ -3082,7 +2964,7 @@ func TestCloneFeatureNoCommandMySQL(t *testing.T) {
 				TargetEnvironmentId: "ns0",
 				EnvironmentId:       "ns0",
 			},
-			expectedErr: createError(statusIncorrectDestinationEnvironment, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment")),
+			expectedErr: statusIncorrectDestinationEnvironment.Err(),
 		},
 		{
 			desc: "error: statusAlreadyExists",
@@ -3106,7 +2988,7 @@ func TestCloneFeatureNoCommandMySQL(t *testing.T) {
 				TargetEnvironmentId: "ns1",
 				EnvironmentId:       "ns0",
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAlreadyExists.Err(),
 		},
 		{
 			desc: "success",
@@ -3163,15 +3045,6 @@ func TestAddFixedStrategyRule(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		fs       []*featureproto.Feature
 		rule     *featureproto.Rule
@@ -3186,7 +3059,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 				},
 			},
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			fs: []*featureproto.Feature{},
@@ -3197,7 +3070,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 				},
 			},
-			expected: createError(statusIncorrectUUIDFormat, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expected: statusIncorrectUUIDFormat.Err(),
 		},
 		{
 			fs: []*featureproto.Feature{},
@@ -3205,7 +3078,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 				Id:       rID,
 				Strategy: nil,
 			},
-			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
+			expected: statusMissingRuleStrategy.Err(),
 		},
 		{
 			fs: []*featureproto.Feature{},
@@ -3216,7 +3089,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{},
 				},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			fs: []*featureproto.Feature{
@@ -3236,7 +3109,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{},
 				},
 			},
-			expected: createError(statusCycleExists, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "rule")),
+			expected: statusCycleExists.Err(),
 		},
 		{
 			fs:       []*featureproto.Feature{},
@@ -3245,7 +3118,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule(p.fs, f.Feature, p.rule, localizer)
+		err := validateRule(p.fs, f.Feature, p.rule)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -3278,15 +3151,6 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []*struct {
 		rule     *featureproto.Rule
 		expected error
@@ -3310,7 +3174,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3331,14 +3195,14 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusIncorrectUUIDFormat, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expected: statusIncorrectUUIDFormat.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
 				Id:       rID,
 				Strategy: nil,
 			},
-			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
+			expected: statusMissingRuleStrategy.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3355,7 +3219,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
+			expected: statusDifferentVariationsSize.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3376,7 +3240,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3397,7 +3261,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3418,7 +3282,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3439,7 +3303,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -3460,7 +3324,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			rule:     expected,
@@ -3468,7 +3332,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule([]*featureproto.Feature{}, f.Feature, p.rule, localizer)
+		err := validateRule([]*featureproto.Feature{}, f.Feature, p.rule)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -3487,15 +3351,6 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.Strategy
@@ -3504,19 +3359,19 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: expected,
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
+			expected: statusMissingRuleStrategy.Err(),
 		},
 		{
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_FIXED,
 			},
-			expected: createError(statusMissingFixedStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fixed_strategy")),
+			expected: statusMissingFixedStrategy.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3524,12 +3379,12 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 				Type:          featureproto.Strategy_FIXED,
 				FixedStrategy: &featureproto.FixedStrategy{},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
@@ -3542,7 +3397,7 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeRuleStrategy(f.Variations, cmd, localizer)
+		err := validateChangeRuleStrategy(f.Variations, cmd)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -3558,15 +3413,6 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	expected := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3592,13 +3438,13 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			desc:     "fail: errMissingRuleID",
 			ruleID:   "",
 			strategy: expected,
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			desc:     "fail: errMissingRuleStrategy",
 			ruleID:   rID,
 			strategy: nil,
-			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
+			expected: statusMissingRuleStrategy.Err(),
 		},
 		{
 			desc:   "fail: errDifferentVariationsSizeJaJP",
@@ -3614,7 +3460,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
+			expected: statusDifferentVariationsSize.Err(),
 		},
 		{
 			desc:   "fail: errMissingVariationIDJaJP: idx-0",
@@ -3634,7 +3480,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			desc:   "fail: errMissingVariationIDJaJP: idx-1",
@@ -3654,7 +3500,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: idx-0",
@@ -3674,7 +3520,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: idx-1",
@@ -3694,7 +3540,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: more than total weight",
@@ -3714,7 +3560,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: less than total weight",
@@ -3734,7 +3580,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			desc:     "success",
@@ -3749,7 +3595,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 				RuleId:   p.ruleID,
 				Strategy: p.strategy,
 			}
-			err := validateChangeRuleStrategy(f.Variations, cmd, localizer)
+			err := validateChangeRuleStrategy(f.Variations, cmd)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -3765,15 +3611,6 @@ func TestChangeFixedStrategy(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.FixedStrategy
@@ -3782,22 +3619,22 @@ func TestChangeFixedStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: &featureproto.FixedStrategy{Variation: vID},
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: createError(statusMissingFixedStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fixed_strategy")),
+			expected: statusMissingFixedStrategy.Err(),
 		},
 		{
 			ruleID:   rID,
 			strategy: &featureproto.FixedStrategy{},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
@@ -3810,7 +3647,7 @@ func TestChangeFixedStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeFixedStrategy(cmd, localizer)
+		err := validateChangeFixedStrategy(cmd)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -3836,15 +3673,6 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.RolloutStrategy
@@ -3853,12 +3681,12 @@ func TestChangeRolloutStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: &featureproto.RolloutStrategy{},
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: createError(statusMissingRolloutStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rollout_strategy")),
+			expected: statusMissingRolloutStrategy.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3868,7 +3696,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    70000,
 				},
 			}},
-			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
+			expected: statusDifferentVariationsSize.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3882,7 +3710,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3896,7 +3724,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+			expected: statusMissingVariationID.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3910,7 +3738,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3924,7 +3752,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    -1,
 				},
 			}},
-			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusIncorrectVariationWeight.Err(),
 		},
 		{
 			ruleID: rID,
@@ -3938,12 +3766,12 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    59000,
 				},
 			}},
-			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expected: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
+			expected: statusMissingRuleID.Err(),
 		},
 		{
 			ruleID:   rID,
@@ -3956,7 +3784,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeRolloutStrategy(f.Variations, cmd, localizer)
+		err := validateChangeRolloutStrategy(f.Variations, cmd)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -3971,15 +3799,6 @@ func TestChangeDefaultStrategy(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc        string
 		setup       func(*FeatureService)
@@ -4023,12 +3842,9 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
-			from:     featureproto.UpdateFeatureTargetingRequest_USER,
-			strategy: nil,
-			expectedErr: createError(
-				statusProgressiveRolloutWaitingOrRunningState,
-				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
-			),
+			from:        featureproto.UpdateFeatureTargetingRequest_USER,
+			strategy:    nil,
+			expectedErr: statusProgressiveRolloutWaitingOrRunningState.Err(),
 		},
 		{
 			desc: "fail: errMissingRuleStrategy",
@@ -4051,7 +3867,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			},
 			from:        featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy:    nil,
-			expectedErr: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
+			expectedErr: statusMissingRuleStrategy.Err(),
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: more than total weight",
@@ -4088,7 +3904,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expectedErr: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: less than total weight",
@@ -4125,7 +3941,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
+			expectedErr: statusExceededMaxVariationWeight.Err(),
 		},
 		{
 			desc: "success: request from user",
@@ -4193,7 +4009,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			cmd := &featureproto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
 			}
-			err := service.validateChangeDefaultStrategy(ctx, p.from, "envID", f.Id, f.Variations, cmd, localizer)
+			err := service.validateChangeDefaultStrategy(ctx, p.from, "envID", f.Id, f.Variations, cmd)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -4214,15 +4030,6 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	pattens := []*struct {
 		desc        string
 		setup       func(*FeatureService)
@@ -4303,10 +4110,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID0,
 				},
 			},
-			expectedErr: createError(
-				statusProgressiveRolloutWaitingOrRunningState,
-				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
-			),
+			expectedErr: statusProgressiveRolloutWaitingOrRunningState.Err(),
 		},
 		{
 			desc: "err AddVariationCommand: there is a progressive in progressive",
@@ -4335,10 +4139,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID0,
 				},
 			},
-			expectedErr: createError(
-				statusProgressiveRolloutWaitingOrRunningState,
-				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
-			),
+			expectedErr: statusProgressiveRolloutWaitingOrRunningState.Err(),
 		},
 		{
 			desc: "success: do nothing",
@@ -4417,7 +4218,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: createError(statusInvalidChangingVariation, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation")),
+			expectedErr: statusInvalidChangingVariation.Err(),
 		},
 		{
 			desc: "success: RemoveVariationCommand",
@@ -4550,7 +4351,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", &featureproto.Feature{Id: fID0}, p.cmd, localizer)
+			err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", &featureproto.Feature{Id: fID0}, p.cmd)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
 	}
@@ -4568,15 +4369,6 @@ func TestValidateAddPrerequisite(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	pattens := []*struct {
 		prerequisite *featureproto.Prerequisite
 		fs           []*featureproto.Feature
@@ -4639,7 +4431,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Prerequisites: []*featureproto.Prerequisite{},
 				},
 			},
-			expectedErr: createError(statusCycleExists, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
+			expectedErr: statusCycleExists.Err(),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -4739,7 +4531,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: createError(statusInvalidPrerequisite, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
+			expectedErr: statusInvalidPrerequisite.Err(),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -4795,7 +4587,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: createError(statusInvalidPrerequisite, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
+			expectedErr: statusInvalidPrerequisite.Err(),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -4845,12 +4637,12 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: createError(statusInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+			expectedErr: statusInvalidVariationID.Err(),
 		},
 	}
 	for _, p := range pattens {
 		prevPre := p.fs[0].Prerequisites
-		err := validateAddPrerequisite(p.fs, p.fs[0], p.prerequisite, localizer)
+		err := validateAddPrerequisite(p.fs, p.fs[0], p.prerequisite)
 		if err == nil {
 			assert.Equal(t, p.fs[0].Prerequisites, prevPre)
 		}
@@ -4870,15 +4662,6 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	pattens := []*struct {
 		prerequisite *featureproto.Prerequisite
 		fs           []*featureproto.Feature
@@ -4982,11 +4765,11 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: createError(statusInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+			expectedErr: statusInvalidVariationID.Err(),
 		},
 	}
 	for _, p := range pattens {
-		err := validateChangePrerequisiteVariation(p.fs, p.prerequisite, localizer)
+		err := validateChangePrerequisiteVariation(p.fs, p.prerequisite)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -4999,15 +4782,6 @@ func TestGetTargetFeatures(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	multipleFs := []*featureproto.Feature{
 		{
 			Id: "fid3",
@@ -5058,7 +4832,7 @@ func TestGetTargetFeatures(t *testing.T) {
 			id:          "not_found",
 			fs:          multipleFs,
 			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc:        "success: feature id is empty",
@@ -5087,7 +4861,7 @@ func TestGetTargetFeatures(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			service := createFeatureService(mockController)
-			actual, err := service.getTargetFeatures(p.fs, p.id, localizer)
+			actual, err := service.getTargetFeatures(p.fs, p.id)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -5164,15 +4938,6 @@ func TestValidateEnvironmentSettings(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc     string
@@ -5200,7 +4965,7 @@ func TestValidateEnvironmentSettings(t *testing.T) {
 			},
 			env:      "env-id",
 			comment:  "",
-			expected: createError(statusCommentRequiredForUpdating, localizer.MustLocalizeWithTemplate(locale.CommentRequiredForUpdating, "command")),
+			expected: statusCommentRequiredForUpdating.Err(),
 		},
 		{
 			desc: "success",
@@ -5230,7 +4995,7 @@ func TestValidateEnvironmentSettings(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			err := service.validateEnvironmentSettings(ctx, p.env, p.comment, localizer)
+			err := service.validateEnvironmentSettings(ctx, p.env, p.comment)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -5250,21 +5015,6 @@ func TestUpdateFeature(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	localizer := locale.NewLocalizer(ctx)
-	unauthenticatedErr, _ := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.UnauthenticatedError),
-	})
-	missingIDErr, _ := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-	})
-	internalErr, _ := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalizeWithTemplate(locale.InternalServerError, "id"),
-	})
-
 	patterns := []*struct {
 		desc        string
 		ctx         context.Context
@@ -5276,7 +5026,7 @@ func TestUpdateFeature(t *testing.T) {
 			desc:        "fail: checkEnvironmentRole",
 			ctx:         context.Background(),
 			input:       &featureproto.UpdateFeatureRequest{},
-			expectedErr: unauthenticatedErr.Err(),
+			expectedErr: statusUnauthenticated.Err(),
 		},
 		{
 			desc: "fail: id is empty",
@@ -5287,7 +5037,7 @@ func TestUpdateFeature(t *testing.T) {
 				Name:          wrapperspb.String("name"),
 				Description:   wrapperspb.String("desc"),
 			},
-			expectedErr: missingIDErr.Err(),
+			expectedErr: statusMissingID.Err(),
 		},
 		{
 			desc: "fail: validateFeatureStatus",
@@ -5356,7 +5106,7 @@ func TestUpdateFeature(t *testing.T) {
 				Name:          wrapperspb.String("name"),
 				Description:   wrapperspb.String("desc"),
 			},
-			expectedErr: internalErr.Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "fail: archive feature with dependencies",
@@ -5382,13 +5132,7 @@ func TestUpdateFeature(t *testing.T) {
 					err := fn(ctx, nil)
 					// The error is expected because another feature depends on the target
 					assert.Error(t, err)
-				}).Return(func() error {
-					dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-						Locale:  localizer.GetLocale(),
-						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-					})
-					return dt.Err()
-				}())
+				}).Return(statusInvalidArchive.Err())
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
@@ -5456,13 +5200,7 @@ func TestUpdateFeature(t *testing.T) {
 				Id:            "target-feature",
 				Archived:      wrapperspb.Bool(true),
 			},
-			expectedErr: func() error {
-				dt, _ := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-				})
-				return dt.Err()
-			}(),
+			expectedErr: statusInvalidArchive.Err(),
 		},
 		{
 			desc: "success",

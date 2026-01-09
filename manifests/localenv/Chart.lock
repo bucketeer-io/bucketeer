@@ -1,18 +1,18 @@
 dependencies:
+- name: redis
+  repository: file://./dependencies/redis
+  version: 1.1.0
+- name: mysql
+  repository: file://./dependencies/mysql
+  version: 1.1.0
 - name: pubsub
   repository: file://./dependencies/pubsub
-  version: 0.1.0
+  version: 1.1.0
 - name: bq
   repository: file://./dependencies/bq
-  version: 0.1.0
-- name: redis
-  repository: https://charts.bitnami.com/bitnami
-  version: 17.7.5
-- name: mysql
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 9.11.0
+  version: 1.1.0
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:5e332f5ad6f1b29eac80d38bac95ac4e7a547badccfd60121c234976e0f25ea6
-generated: "2023-08-26T16:45:18.931910966Z"
+digest: sha256:22631cd6e9d8638e1e40fb43e0e01aa47beb7e92aaed657fc98550f54f1e7d81
+generated: "2025-12-17T11:19:54.471243345Z"

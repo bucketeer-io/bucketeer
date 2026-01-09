@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package error
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -45,8 +46,8 @@ const (
 	ErrorTypeNotFound                 ErrorType = "NotFoundError"
 	ErrorTypeAlreadyExists            ErrorType = "AlreadyExistsError"
 	ErrorTypeUnauthenticated          ErrorType = "UnauthenticatedError"
-	ErrorTypePermissionDenied         ErrorType = "PermissionDenied"
-	ErrorTypeUnexpectedAffectedRows   ErrorType = "UnexpectedAffectedRows"
+	ErrorTypePermissionDenied         ErrorType = "PermissionDeniedError"
+	ErrorTypeUnexpectedAffectedRows   ErrorType = "UnexpectedAffectedRowsError"
 	ErrorTypeInternal                 ErrorType = "InternalServerError"
 	ErrorTypeFailedPrecondition       ErrorType = "FailedPreconditionError"
 	ErrorTypeUnavailable              ErrorType = "UnavailableError"
@@ -56,6 +57,9 @@ const (
 	ErrorTypeInvalidArgNil            ErrorType = "InvalidArgumentNilError"
 	ErrorTypeInvalidArgNotMatchFormat ErrorType = "InvalidArgumentNotMatchFormatError"
 	ErrorTypeInvalidArgDuplicated     ErrorType = "InvalidArgumentDuplicatedError"
+	ErrorTypeExceededMax              ErrorType = "ExceededMaxError"
+	ErrorTypeOutOfRange               ErrorType = "OutOfRangeError"
+	ErrorTypeDifferentVariationsSize  ErrorType = "DifferentVariationsSizeError"
 )
 
 type BktError struct {
@@ -168,4 +172,35 @@ func NewErrorInvalidArgNotMatchFormat(pkg string, message string, field string) 
 
 func NewErrorInvalidArgDuplicated(pkg string, message string, field string) *BktError {
 	return newBktFieldError(pkg, ErrorTypeInvalidArgDuplicated, message, field)
+}
+
+func NewErrorExceededMax(pkg string, message string, field string, max int) *BktError {
+	return &BktError{
+		packageName: pkg,
+		errorType:   ErrorTypeExceededMax,
+		message:     message,
+		field:       field,
+		embeddedKeyValues: map[string]string{
+			"field": field,
+			"max":   strconv.Itoa(max),
+		},
+	}
+}
+
+func NewErrorOutOfRange(pkg string, message string, field string, min int, max int) *BktError {
+	return &BktError{
+		packageName: pkg,
+		errorType:   ErrorTypeOutOfRange,
+		message:     message,
+		field:       field,
+		embeddedKeyValues: map[string]string{
+			"field": field,
+			"min":   strconv.Itoa(min),
+			"max":   strconv.Itoa(max),
+		},
+	}
+}
+
+func NewErrorDifferentVariationsSize(pkg string, message string) *BktError {
+	return newBktError(pkg, ErrorTypeDifferentVariationsSize, message)
 }
