@@ -13,9 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "go.uber.org/mock/gomock"
+
 	domain "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	mysql "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-	gomock "go.uber.org/mock/gomock"
 )
 
 // MockCodeReferenceStorage is a mock of CodeReferenceStorage interface.
