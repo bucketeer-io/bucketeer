@@ -263,12 +263,41 @@ export const rolloutSchema = ({
     'message:validation.operation.later-than-current-time'
   );
 
+  const variationNotEqualMessage = translation(
+    'message:validation.operation.variation-not-equal'
+  );
+
+  const notEqualVariation = (key: string) =>
+    function (value: string, context: yup.TestContext) {
+      const valueKey = context.parent?.[key];
+      console.log(value, valueKey);
+      if (value && valueKey && value === valueKey) {
+        return context.createError({
+          message: variationNotEqualMessage,
+          path: context.path
+        });
+      }
+      return true;
+    };
+
   return yup.object().shape({
     progressiveRolloutType: yup.mixed<RolloutTypeMap>().required(),
     progressiveRollout: yup.object().shape({
       template: yup.object().shape({
-        targetVariationId: yup.string().required(),
-        controlVariationId: yup.string().required(),
+        targetVariationId: yup
+          .string()
+          .required()
+          .test(
+            'notEqualControlVariationId',
+            notEqualVariation('controlVariationId')
+          ),
+        controlVariationId: yup
+          .string()
+          .required()
+          .test(
+            'notEqualTargetVariationId',
+            notEqualVariation('targetVariationId')
+          ),
         increments: yup
           .number()
           .transform(value => (isNaN(value) ? undefined : value))
@@ -305,8 +334,20 @@ export const rolloutSchema = ({
           .required(requiredMessage)
       }),
       manual: yup.object().shape({
-        targetVariationId: yup.string().required(requiredMessage),
-        controlVariationId: yup.string().required(requiredMessage),
+        targetVariationId: yup
+          .string()
+          .required(requiredMessage)
+          .test(
+            'notEqualControlVariationId',
+            notEqualVariation('controlVariationId')
+          ),
+        controlVariationId: yup
+          .string()
+          .required(requiredMessage)
+          .test(
+            'notEqualTargetVariationId',
+            notEqualVariation('targetVariationId')
+          ),
         schedulesList: schedulesListSchema({ requiredMessage, translation })
       })
     })
