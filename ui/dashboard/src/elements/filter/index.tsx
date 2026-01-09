@@ -48,7 +48,7 @@ const Filter = ({
       )}
     >
       {onSearchChange && (
-        <div className="w-full max-w-[365px]">
+        <div className="w-full max-w-full lg:max-w-[365px]">
           <SearchInput
             name={name}
             placeholder={placeholder || `${t('form:placeholder-search-input')}`}
@@ -67,6 +67,7 @@ const Filter = ({
       >
         {isShowDocumentation && (
           <Link
+            className="hidden sm:block"
             target="_blank"
             to={link}
             onClick={e => {
@@ -83,7 +84,7 @@ const Filter = ({
           <Button
             variant="secondary"
             onClick={onOpenFilter}
-            className="text-gray-700 shadow-border-gray-400 flex-1 lg:flex-none"
+            className="text-gray-700 shadow-border-gray-400 flex-1 px-0 sm:px-4 lg:flex-none"
           >
             <Icon icon={IconFilterListOutlined} size="sm" />
             {t('filter')}

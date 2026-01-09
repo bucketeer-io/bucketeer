@@ -139,6 +139,8 @@ const CollectionLoader = memo(
           />
         ) : (
           <CardCollection
+            isLoading={isLoading}
+            emptyCollection={emptyState}
             filterTags={filters?.tags}
             autoOpsRules={autoOpsRules}
             rollouts={rollouts}

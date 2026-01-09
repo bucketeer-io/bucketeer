@@ -70,6 +70,14 @@ const PageContent = ({
     setFilters({ searchQuery: '', isInUseStatus: undefined });
   }, []);
 
+  const getUploadingStatus = useCallback(
+    (segment: UserSegment) => {
+      if (segment.status === 'UPLOADING') return true;
+      if (segmentUploading?.id === segment.id) return true;
+    },
+    [segmentUploading]
+  );
+
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -122,7 +130,7 @@ const PageContent = ({
       )}
       <TableListContainer>
         <CollectionLoader
-          segmentUploading={segmentUploading}
+          getUploadingStatus={getUploadingStatus}
           organizationIds={organizationIds}
           filters={filters}
           onAdd={onAdd}
