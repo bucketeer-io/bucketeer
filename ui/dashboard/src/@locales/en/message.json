@@ -11,6 +11,7 @@
     "experiment-running-warning": "Changing variations may affect the accuracy of the experiment.",
     "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, you cannot add, delete, or modify variation values while the experiment is running.",
     "operation": {
+      "variation-not-equal": "Target and control variations must be different.",
       "later-than-current-time": "This must be later than the current time.",
       "weight-increasing-order": "The weight must be in increasing order.",
       "date-increasing-order": "The date must be in increasing order.",
