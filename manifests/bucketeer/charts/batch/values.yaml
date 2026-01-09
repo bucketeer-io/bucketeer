@@ -203,4 +203,7 @@ cronjob:
     - name: tag-deleter
       jobId: TagDeleter
       schedule: "0 0 * * *"
+    - name: feature-auto-archiver
+      jobId: FeatureAutoArchiver
+      schedule: "0 2 * * *"
 terminationGracePeriodSeconds: 60
