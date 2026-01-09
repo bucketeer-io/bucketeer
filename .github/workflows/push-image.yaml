@@ -57,7 +57,10 @@ jobs:
         run: echo "value=$(git describe --tags --always --abbrev=7)" >> $GITHUB_OUTPUT
       - name: Store git ref value to output
         id: ref
-        run: echo "value=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+        run: |
+          REF=${GITHUB_REF#refs/heads/}
+          REF=${REF#refs/tags/}
+          echo "value=$REF" >> $GITHUB_OUTPUT
       - name: Store the first line of commit message
         id: commit_message
         env:
