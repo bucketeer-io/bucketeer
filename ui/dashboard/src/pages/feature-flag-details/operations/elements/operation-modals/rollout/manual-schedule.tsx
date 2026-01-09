@@ -38,16 +38,17 @@ const ManualSchedule = ({
   const { t } = useTranslation(['form']);
   const isLanguageJapanese = getLanguage() === 'ja';
 
-  const { control, watch, clearErrors } = useFormContext<RolloutSchemaType>();
+  const {
+    control,
+    formState: { errors },
+    trigger,
+    watch,
+    clearErrors
+  } = useFormContext<RolloutSchemaType>();
   const watchScheduleList = [
     ...watch('progressiveRollout.manual.schedulesList')
   ];
-  const controlVariationId = watch(
-    'progressiveRollout.manual.controlVariationId'
-  );
-  const targetVariationId = watch(
-    'progressiveRollout.manual.targetVariationId'
-  );
+
   const {
     fields: schedulesList,
     append,
@@ -80,16 +81,6 @@ const ManualSchedule = ({
   const isDisabled = useMemo(
     () => isDisableCreateRollout || disabled,
     [isDisableCreateRollout, disabled]
-  );
-
-  const controlVariationOption = useMemo(
-    () => variationOptions.filter(option => option.value !== targetVariationId),
-    [variationOptions, targetVariationId]
-  );
-  const targetVariationOption = useMemo(
-    () =>
-      variationOptions.filter(option => option.value !== controlVariationId),
-    [variationOptions, controlVariationId]
   );
 
   const handleAddIncrement = useCallback(() => {
@@ -130,6 +121,16 @@ const ManualSchedule = ({
     return null;
   };
 
+  const revalidateVariations = () => {
+    if (errors?.progressiveRollout?.manual?.controlVariationId) {
+      trigger('progressiveRollout.manual.controlVariationId');
+    }
+
+    if (errors?.progressiveRollout?.manual?.targetVariationId) {
+      trigger('progressiveRollout.manual.targetVariationId');
+    }
+  };
+
   return (
     <div className="flex flex-col w-full gap-y-4">
       <Form.Field
@@ -160,9 +161,12 @@ const ManualSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={targetVariationOption}
+                options={variationOptions}
                 disabled={isDisabled}
-                onSelectOption={field.onChange}
+                onSelectOption={value => {
+                  field.onChange(value);
+                  revalidateVariations();
+                }}
               />
             </Form.Control>
             <Form.Message />
@@ -198,9 +202,12 @@ const ManualSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={controlVariationOption}
+                options={variationOptions}
                 disabled={isDisabled}
-                onSelectOption={field.onChange}
+                onSelectOption={value => {
+                  field.onChange(value);
+                  revalidateVariations();
+                }}
               />
             </Form.Control>
             <Form.Message />
