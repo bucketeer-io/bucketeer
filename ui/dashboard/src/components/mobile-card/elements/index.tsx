@@ -92,7 +92,7 @@ export interface CardMetaProps {
 }
 
 const Meta: React.FC<CardMetaProps> = ({ children }) => (
-  <div className="rounded-xl py-3 mb-4">{children}</div>
+  <div className="rounded-xl py-3">{children}</div>
 );
 
 export interface CardFooterProps {

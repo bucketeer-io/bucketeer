@@ -38,56 +38,62 @@ const DialogModal = ({
   }, []);
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay
-          className={cn(
-            'fixed inset-0 grid h-full w-full animate-fade z-50',
-            'place-items-center overflow-y-auto bg-overlay',
-            overlayCls
-          )}
-        >
-          <Dialog.Content
+    <div className="w-full px-6">
+      <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay
             className={cn(
-              'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
-              className
+              'fixed inset-0 grid h-full w-full animate-fade z-50',
+              'place-items-center overflow-y-auto bg-overlay',
+              overlayCls
             )}
-            onEscapeKeyDown={
-              closeOnPressEscape ? undefined : event => event.preventDefault()
-            }
-            onPointerDownOutside={
-              closeOnClickOutside ? undefined : event => event.preventDefault()
-            }
           >
-            <div
-              className={cn('z-10 flex-initial shadow-header', {
-                hidden: !isShowHeader
-              })}
+            <Dialog.Content
+              className={cn(
+                'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
+                className
+              )}
+              onEscapeKeyDown={
+                closeOnPressEscape ? undefined : event => event.preventDefault()
+              }
+              onPointerDownOutside={
+                closeOnClickOutside
+                  ? undefined
+                  : event => event.preventDefault()
+              }
             >
               <div
-                className={cn('flex items-center justify-between px-4 py-3.5')}
+                className={cn('z-10 flex-initial shadow-header', {
+                  hidden: !isShowHeader
+                })}
               >
-                {title && (
-                  <Dialog.Title className="typo-head-bold-huge">
-                    {title}
-                  </Dialog.Title>
-                )}
-                <Dialog.Description className="hidden" />
-                <Dialog.Close asChild>
-                  {closeContent ?? (
-                    <Button size="icon-sm" variant="grey" onClick={onClose}>
-                      <Icon icon={IconCloseRound} />
-                    </Button>
+                <div
+                  className={cn(
+                    'flex items-center justify-between px-4 py-3.5'
                   )}
-                </Dialog.Close>
+                >
+                  {title && (
+                    <Dialog.Title className="typo-head-bold-huge">
+                      {title}
+                    </Dialog.Title>
+                  )}
+                  <Dialog.Description className="hidden" />
+                  <Dialog.Close asChild>
+                    {closeContent ?? (
+                      <Button size="icon-sm" variant="grey" onClick={onClose}>
+                        <Icon icon={IconCloseRound} />
+                      </Button>
+                    )}
+                  </Dialog.Close>
+                </div>
               </div>
-            </div>
-            <Divider />
-            {children}
-          </Dialog.Content>
-        </Dialog.Overlay>
-      </Dialog.Portal>
-    </Dialog.Root>
+              <Divider />
+              {children}
+            </Dialog.Content>
+          </Dialog.Overlay>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
   );
 };
 

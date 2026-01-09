@@ -3,7 +3,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { useLocation } from 'react-router-dom';
 import { hasEditable, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Feature, FeatureCountByStatus } from '@types';
@@ -18,6 +18,7 @@ import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
+import FilterFlagSlideModal from './flags-modal/filter-flag-modal/mobile-filter';
 import Overview from './overview';
 import SortBy from './sort-by';
 import { FlagActionType, FlagFilters, StatusFilterType } from './types';
@@ -32,7 +33,7 @@ const PageContent = ({
   const { t } = useTranslation(['common', 'form']);
   const location = useLocation();
   const { consoleAccount } = useAuth();
-
+  const { fromMobileScreen } = useScreen();
   const editable = hasEditable(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -168,8 +169,19 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      {openFilterModal && (
+      {openFilterModal && fromMobileScreen ? (
         <FilterFlagModal
+          filters={filters}
+          isOpen={openFilterModal}
+          onClearFilters={onClearFilters}
+          onClose={onCloseFilterModal}
+          onSubmit={v => {
+            onChangeFilters(v);
+            onCloseFilterModal();
+          }}
+        />
+      ) : (
+        <FilterFlagSlideModal
           filters={filters}
           isOpen={openFilterModal}
           onClearFilters={onClearFilters}

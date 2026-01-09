@@ -290,7 +290,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </button>
         </div>
       </div>
-      {fromMobileScreen && isOpenSetting ? (
+      {fromMobileScreen && isOpenSwitchOrg ? (
         <SwitchOrganization
           isExpanded={isExpanded}
           isOpen={isOpenSwitchOrg}
