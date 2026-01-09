@@ -25,24 +25,16 @@ const TemplateSchedule = ({
   isDisableCreateRollout: boolean;
 }) => {
   const { t } = useTranslation(['form', 'table', 'common']);
-  const { control, watch, setValue } = useFormContext<RolloutSchemaType>();
+  const {
+    control,
+    formState: { errors },
+    trigger,
+    watch,
+    setValue
+  } = useFormContext<RolloutSchemaType>();
 
   const scheduleList = watch('progressiveRollout.template.schedulesList');
-  const controlVariationId = watch(
-    'progressiveRollout.template.controlVariationId'
-  );
-  const targetVariationId = watch(
-    'progressiveRollout.template.targetVariationId'
-  );
-  const controlVariationOption = useMemo(
-    () => variationOptions.filter(option => option.value !== targetVariationId),
-    [variationOptions, targetVariationId]
-  );
-  const targetVariationOption = useMemo(
-    () =>
-      variationOptions.filter(option => option.value !== controlVariationId),
-    [variationOptions, controlVariationId]
-  );
+
   const isDisabled = useMemo(
     () => isDisableCreateRollout || disabled,
     [isDisableCreateRollout, disabled]
@@ -112,6 +104,15 @@ const TemplateSchedule = ({
     });
   };
 
+  const revalidateVariations = () => {
+    if (errors?.progressiveRollout?.template?.controlVariationId) {
+      trigger('progressiveRollout.template.controlVariationId');
+    }
+    if (errors?.progressiveRollout?.template?.targetVariationId) {
+      trigger('progressiveRollout.template.targetVariationId');
+    }
+  };
+
   useEffect(() => {
     handleChangeScheduleList({
       increments: 10,
@@ -149,9 +150,12 @@ const TemplateSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={targetVariationOption}
+                options={variationOptions}
                 disabled={isDisabled}
-                onSelectOption={field.onChange}
+                onSelectOption={value => {
+                  field.onChange(value);
+                  revalidateVariations();
+                }}
               />
             </Form.Control>
             <Form.Message />
@@ -187,9 +191,12 @@ const TemplateSchedule = ({
                 }
                 itemSelected={field.value}
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
-                options={controlVariationOption}
+                options={variationOptions}
                 disabled={isDisabled}
-                onSelectOption={field.onChange}
+                onSelectOption={value => {
+                  field.onChange(value);
+                  revalidateVariations();
+                }}
               />
             </Form.Control>
             <Form.Message />
