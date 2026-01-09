@@ -1,25 +1,8 @@
-import { ReactNode, useMemo } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { Trans } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQueryRollouts } from '@queries/rollouts';
-import { getCurrentEnvironment, useAuth } from 'auth';
-import {
-  PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_FEATURES
-} from 'constants/routing';
-import { useTranslation } from 'i18n';
-import { isNil } from 'lodash';
-import { Feature, FeatureRuleStrategy } from '@types';
 import { IconInfo, IconToastWarning, IconWatch } from '@icons';
-import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
-import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
-import {
-  checkDefaultRuleDiscardChanges,
-  handleCheckIndividualDiscardChanges,
-  handleCheckPrerequisiteDiscardChanges
-} from 'pages/feature-flag-details/targeting/utils';
+import { useQueryRollouts } from '@queries/rollouts';
+import { Feature, FeatureRuleStrategy } from '@types';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -30,6 +13,23 @@ import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
+import {
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
+import { useTranslation } from 'i18n';
+import { isNil } from 'lodash';
+import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
+import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
+import {
+  checkDefaultRuleDiscardChanges,
+  handleCheckIndividualDiscardChanges,
+  handleCheckPrerequisiteDiscardChanges
+} from 'pages/feature-flag-details/targeting/utils';
+import { ReactNode, useMemo } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import DiscardChangeItems from '../discard-change-items';
 import {
   CustomRuleDiscardItem,
@@ -300,7 +300,7 @@ const ConfirmationRequiredModal = ({
               {segmentRuleDeletedChanges.map((item, index) => (
                 <div key={index}>
                   {item.ruleIndex && (
-                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700 text-accent-red-500">
+                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-accent-red-500">
                       <Trans
                         i18nKey="common:delete-rule"
                         values={{ rule: item.ruleIndex }}
@@ -328,7 +328,7 @@ const ConfirmationRequiredModal = ({
 
   return (
     <DialogModal
-      className="w-full max-w-[640px]"
+      className="w-full max-w-[350px] sm:max-w-[640px]"
       title={t('table:feature-flags.confirm-required')}
       isOpen={isOpen}
       onClose={onClose}

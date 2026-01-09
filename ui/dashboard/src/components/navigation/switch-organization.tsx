@@ -149,13 +149,13 @@ const SwitchOrganization = ({
     >
       <div
         className={cn(
-          'flex flex-col size-full gap-y-5 overflow-y-auto relative small-scroll',
+          'flex flex-col size-full gap-y-2 sm:gap-y-5 overflow-y-auto relative small-scroll',
           {
             'overflow-hidden': isLoading
           }
         )}
       >
-        <div className="w-full p-4 pb-0 bg-white sm:bg-primary-100 sticky sm:static top-0">
+        <div className="w-full p-4 bg-white sm:bg-primary-100 sticky sm:static top-0">
           <SearchInput
             variant="secondary"
             placeholder={`${t('form:placeholder-search')}`}
