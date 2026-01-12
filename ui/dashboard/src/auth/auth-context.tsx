@@ -100,8 +100,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
       const response = await accountMeFetcher(params);
-      const environmentRoles = response.account.environmentRoles;
-      if (!environmentRoles?.length) {
+      const { environmentRoles, isSystemAdmin, organizationRole } =
+        response.account;
+      const isBypassEnvironment =
+        isSystemAdmin || organizationRole === 'Organization_ADMIN';
+
+      if (!isBypassEnvironment && !environmentRoles?.length) {
         clearOrgAndEnvStorage();
         errorNotify(null, t('message:env-are-empty'));
         return logout();
@@ -116,7 +120,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.account.language !== getLanguage()) {
         await setLanguage(response.account.language as Language);
       }
-      if (isNil(environmentId)) {
+      if (isNil(environmentId) && !!environmentRoles.length) {
         const environment = environmentRoles[0].environment;
         setCurrentEnvIdStorage(environment.id);
         setCurrentProjectEnvironmentStorage({
