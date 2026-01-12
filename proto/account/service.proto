@@ -52,7 +52,7 @@ message GetMyOrganizationsResponse {
 
 message CreateAccountV2Request {
   string organization_id = 1;
-  CreateAccountV2Command command = 2 [deprecated = true];
+  reserved 2;  // CreateAccountV2Command
   string email = 3;
   string name = 4;
   string avatar_image_url = 5;
@@ -72,7 +72,7 @@ message CreateAccountV2Response {
 message EnableAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  EnableAccountV2Command command = 3 [deprecated = true];
+  reserved 3;  // EnableAccountV2Command
 }
 
 message EnableAccountV2Response {
@@ -82,7 +82,7 @@ message EnableAccountV2Response {
 message DisableAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  DisableAccountV2Command command = 3 [deprecated = true];
+  reserved 3;  // DisableAccountV2Command
 }
 
 message DisableAccountV2Response {
@@ -92,7 +92,7 @@ message DisableAccountV2Response {
 message DeleteAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  DeleteAccountV2Command command = 3 [deprecated = true];
+  reserved 3;  // DeleteAccountV2Command
 }
 
 message DeleteAccountV2Response {}
@@ -119,22 +119,15 @@ message UpdateAccountV2Request {
   }
   string email = 1;
   string organization_id = 2;
-  ChangeAccountV2NameCommand change_name_command = 3 [deprecated = true];
-  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4
-      [deprecated = true];
-  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5
-      [deprecated = true];
-  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6
-      [deprecated = true];
-  ChangeAccountV2FirstNameCommand change_first_name_command = 7
-      [deprecated = true];
-  ChangeAccountV2LastNameCommand change_last_name_command = 8
-      [deprecated = true];
-  ChangeAccountV2LanguageCommand change_language_command = 9
-      [deprecated = true];
-  ChangeAccountV2LastSeenCommand change_last_seen_command = 10
-      [deprecated = true];
-  ChangeAccountV2AvatarCommand change_avatar_command = 11 [deprecated = true];
+  reserved 3; // ChangeAccountV2NameCommand change_name_command
+  reserved 4; // ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command
+  reserved 5; // ChangeAccountV2OrganizationRoleCommand change_organization_role_command
+  reserved 6; // ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command
+  reserved 7; // ChangeAccountV2FirstNameCommand change_first_name_command
+  reserved 8; // ChangeAccountV2LastNameCommand change_last_name_command
+  reserved 9; // ChangeAccountV2LanguageCommand change_language_command
+  reserved 10; // ChangeAccountV2LastSeenCommand change_last_seen_command
+  reserved 11; // ChangeAccountV2AvatarCommand change_avatar_command
   google.protobuf.StringValue name = 12;
   google.protobuf.StringValue avatar_image_url = 13;
   OrganizationRoleValue organization_role = 14;
@@ -146,7 +139,7 @@ message UpdateAccountV2Request {
   AccountV2Avatar avatar = 20;
   google.protobuf.BoolValue disabled = 21;
   common.StringListValue tags = 22 [deprecated = true];
-  ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
+  reserved 23; // ChangeAccountV2TagsCommand change_tags_command
   repeated TeamChange team_changes = 24;
 }
 
@@ -210,7 +203,7 @@ message ListAccountsV2Response {
 }
 
 message CreateAPIKeyRequest {
-  CreateAPIKeyCommand command = 1 [deprecated = true];
+  reserved 1;  // CreateAPIKeyCommand
   reserved 2;
   string environment_id = 3;
   string name = 4;
@@ -222,33 +215,6 @@ message CreateAPIKeyRequest {
 message CreateAPIKeyResponse {
   APIKey api_key = 1;
 }
-
-message ChangeAPIKeyNameRequest {
-  string id = 1;
-  ChangeAPIKeyNameCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message ChangeAPIKeyNameResponse {}
-
-message EnableAPIKeyRequest {
-  string id = 1;
-  EnableAPIKeyCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message EnableAPIKeyResponse {}
-
-message DisableAPIKeyRequest {
-  string id = 1;
-  DisableAPIKeyCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message DisableAPIKeyResponse {}
 
 message GetAPIKeyRequest {
   string id = 1;
@@ -764,142 +730,6 @@ service AccountService {
       description: "Create an API key to be used on the client SDK. To call this API, you need an `ADMIN` role.",
       tags: "API Key",
       operation_id: "web.v1.account.create_api_key",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "403"
-        value: {
-          description: "Request does not have permission to access the resource."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc ChangeAPIKeyName(ChangeAPIKeyNameRequest)
-      returns (ChangeAPIKeyNameResponse) {
-    option (google.api.http) = {
-      post: "/v1/account/change_api_key_name"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Change API Key Name",
-      description: "Change the API Key Name. To call this API, you need an `ADMIN` role.",
-      tags: "API Key",
-      operation_id: "web.v1.account.change_api_key_name",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "403"
-        value: {
-          description: "Request does not have permission to access the resource."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc EnableAPIKey(EnableAPIKeyRequest) returns (EnableAPIKeyResponse) {
-    option (google.api.http) = {
-      post: "/v1/account/enable_api_key"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Enable",
-      description: "Enable an API Key. To call this API, you need an `ADMIN` role.",
-      tags: "API Key",
-      operation_id: "web.v1.account.enable_api_key",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "403"
-        value: {
-          description: "Request does not have permission to access the resource."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc DisableAPIKey(DisableAPIKeyRequest) returns (DisableAPIKeyResponse) {
-    option (google.api.http) = {
-      post: "/v1/account/disable_api_key"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Disable",
-      description: "Disable an API Key. To call this API, you need an `ADMIN` role.",
-      tags: "API Key",
-      operation_id: "web.v1.account.disable_api_key",
       responses: {
         key: "400"
         value: {
