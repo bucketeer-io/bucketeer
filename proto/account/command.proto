@@ -17,8 +17,6 @@ syntax = "proto3";
 package bucketeer.account;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/account";
 
-import "proto/account/account.proto";
-import "proto/account/api_key.proto";
 import "proto/account/search_filter.proto";
 
 message CreateSearchFilterCommand {

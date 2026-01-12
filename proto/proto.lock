@@ -610,12 +610,6 @@
         ],
         "imports": [
           {
-            "path": "proto/account/account.proto"
-          },
-          {
-            "path": "proto/account/api_key.proto"
-          },
-          {
             "path": "proto/account/search_filter.proto"
           }
         ],

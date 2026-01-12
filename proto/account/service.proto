@@ -119,15 +119,17 @@ message UpdateAccountV2Request {
   }
   string email = 1;
   string organization_id = 2;
-  reserved 3; // ChangeAccountV2NameCommand change_name_command
-  reserved 4; // ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command
-  reserved 5; // ChangeAccountV2OrganizationRoleCommand change_organization_role_command
-  reserved 6; // ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command
-  reserved 7; // ChangeAccountV2FirstNameCommand change_first_name_command
-  reserved 8; // ChangeAccountV2LastNameCommand change_last_name_command
-  reserved 9; // ChangeAccountV2LanguageCommand change_language_command
-  reserved 10; // ChangeAccountV2LastSeenCommand change_last_seen_command
-  reserved 11; // ChangeAccountV2AvatarCommand change_avatar_command
+  reserved 3;  // ChangeAccountV2NameCommand change_name_command
+  reserved 4;  // ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command
+  reserved 5;  // ChangeAccountV2OrganizationRoleCommand
+               // change_organization_role_command
+  reserved 6;  // ChangeAccountV2EnvironmentRolesCommand
+               // change_environment_roles_command
+  reserved 7;  // ChangeAccountV2FirstNameCommand change_first_name_command
+  reserved 8;  // ChangeAccountV2LastNameCommand change_last_name_command
+  reserved 9;  // ChangeAccountV2LanguageCommand change_language_command
+  reserved 10;  // ChangeAccountV2LastSeenCommand change_last_seen_command
+  reserved 11;  // ChangeAccountV2AvatarCommand change_avatar_command
   google.protobuf.StringValue name = 12;
   google.protobuf.StringValue avatar_image_url = 13;
   OrganizationRoleValue organization_role = 14;
@@ -139,7 +141,7 @@ message UpdateAccountV2Request {
   AccountV2Avatar avatar = 20;
   google.protobuf.BoolValue disabled = 21;
   common.StringListValue tags = 22 [deprecated = true];
-  reserved 23; // ChangeAccountV2TagsCommand change_tags_command
+  reserved 23;  // ChangeAccountV2TagsCommand change_tags_command
   repeated TeamChange team_changes = 24;
 }
 
