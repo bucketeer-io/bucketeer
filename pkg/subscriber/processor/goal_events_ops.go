@@ -292,6 +292,26 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToUpdateUserCount).Inc()
 			return err
 		}
+
+		// Migration: Double-write to target environment if migration is enabled
+		if targetEnvID := GetMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+			keyTarget := u.newUserCountKey(
+				targetEnvID,
+				rule.ruleID,
+				id,
+				featureID,
+				clause.VariationId,
+				featureVersion,
+			)
+			if err := u.eventCounterCache.UpdateUserCount(keyTarget, userID); err != nil {
+				// Log but don't fail - migration writes are best-effort
+				u.logger.Warn("Migration: Failed to update goal user count for target environment",
+					zap.Error(err),
+					zap.String("targetEnvironmentId", targetEnvID),
+					zap.String("featureId", featureID),
+				)
+			}
+		}
 	}
 	return nil
 }
