@@ -40,19 +40,23 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				Enabled:           false,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "",
+				InvalidConfig:     false,
+				InvalidReason:     "",
 			},
 		},
 		{
-			desc: "migration disabled when enabled is false",
+			desc: "migration disabled when enabled is false (no UUID validation)",
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "false")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "not-validated-when-disabled")
 			},
 			expectedEnv: &EnvironmentIDMigration{
 				Enabled:           false,
 				FromEnvironmentID: "",
-				ToEnvironmentID:   "new-uuid-123",
+				ToEnvironmentID:   "not-validated-when-disabled",
+				InvalidConfig:     false,
+				InvalidReason:     "",
 			},
 		},
 		{
@@ -60,38 +64,90 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "TRUE") // uppercase
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "not-validated-when-disabled")
 			},
 			expectedEnv: &EnvironmentIDMigration{
 				Enabled:           false,
 				FromEnvironmentID: "",
-				ToEnvironmentID:   "new-uuid-123",
+				ToEnvironmentID:   "not-validated-when-disabled",
+				InvalidConfig:     false,
+				InvalidReason:     "",
 			},
 		},
 		{
-			desc: "migration enabled when enabled is true",
+			desc: "migration enabled with valid UUID v4",
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 			},
 			expectedEnv: &EnvironmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "",
-				ToEnvironmentID:   "new-uuid-123",
+				ToEnvironmentID:   "a1b2c3d4-e5f6-4890-abcd-ef1234567890",
+				InvalidConfig:     false,
+				InvalidReason:     "",
 			},
 		},
 		{
-			desc: "migration enabled with non-empty from environment ID",
+			desc: "migration enabled with non-empty from and valid UUID v4",
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "old-env-id")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-456")
+				os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 			},
 			expectedEnv: &EnvironmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "old-env-id",
-				ToEnvironmentID:   "new-uuid-456",
+				ToEnvironmentID:   "12345678-1234-4123-8123-123456789012",
+				InvalidConfig:     false,
+				InvalidReason:     "",
+			},
+		},
+		{
+			desc: "migration invalid when toEnvironmentID is not a valid UUID",
+			setupFunc: func() {
+				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
+				os.Setenv(envMigrationEnvironmentIDFrom, "")
+				os.Setenv(envMigrationEnvironmentIDTo, "not-a-valid-uuid")
+			},
+			expectedEnv: &EnvironmentIDMigration{
+				Enabled:           true,
+				FromEnvironmentID: "",
+				ToEnvironmentID:   "not-a-valid-uuid",
+				InvalidConfig:     true,
+				InvalidReason:     "toEnvironmentID must be a valid UUID v4",
+			},
+		},
+		{
+			desc: "migration invalid when toEnvironmentID is UUID v1 format",
+			setupFunc: func() {
+				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
+				os.Setenv(envMigrationEnvironmentIDFrom, "")
+				// UUID v1 has version 1 at position 13 (should be 4 for v4)
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-1890-abcd-ef1234567890")
+			},
+			expectedEnv: &EnvironmentIDMigration{
+				Enabled:           true,
+				FromEnvironmentID: "",
+				ToEnvironmentID:   "a1b2c3d4-e5f6-1890-abcd-ef1234567890",
+				InvalidConfig:     true,
+				InvalidReason:     "toEnvironmentID must be a valid UUID v4",
+			},
+		},
+		{
+			desc: "migration valid when toEnvironmentID is empty (no validation needed)",
+			setupFunc: func() {
+				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
+				os.Setenv(envMigrationEnvironmentIDFrom, "")
+				os.Setenv(envMigrationEnvironmentIDTo, "")
+			},
+			expectedEnv: &EnvironmentIDMigration{
+				Enabled:           true,
+				FromEnvironmentID: "",
+				ToEnvironmentID:   "",
+				InvalidConfig:     false,
+				InvalidReason:     "",
 			},
 		},
 	}
@@ -111,6 +167,8 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 			assert.Equal(t, p.expectedEnv.Enabled, config.Enabled)
 			assert.Equal(t, p.expectedEnv.FromEnvironmentID, config.FromEnvironmentID)
 			assert.Equal(t, p.expectedEnv.ToEnvironmentID, config.ToEnvironmentID)
+			assert.Equal(t, p.expectedEnv.InvalidConfig, config.InvalidConfig)
+			assert.Equal(t, p.expectedEnv.InvalidReason, config.InvalidReason)
 		})
 	}
 
@@ -134,7 +192,7 @@ func TestGetMigrationTargetEnvironmentID(t *testing.T) {
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "false")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 			},
 			inputEnvID:     "",
 			expectedTarget: "",
@@ -154,27 +212,27 @@ func TestGetMigrationTargetEnvironmentID(t *testing.T) {
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 			},
 			inputEnvID:     "",
-			expectedTarget: "new-uuid-123",
+			expectedTarget: "a1b2c3d4-e5f6-4890-abcd-ef1234567890",
 		},
 		{
 			desc: "returns target when migration is enabled and input matches from (non-empty)",
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "old-env-id")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-456")
+				os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 			},
 			inputEnvID:     "old-env-id",
-			expectedTarget: "new-uuid-456",
+			expectedTarget: "12345678-1234-4123-8123-123456789012",
 		},
 		{
 			desc: "returns empty when input does not match from",
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 			},
 			inputEnvID:     "different-env-id",
 			expectedTarget: "",
@@ -184,9 +242,19 @@ func TestGetMigrationTargetEnvironmentID(t *testing.T) {
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "old-env-id")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-456")
+				os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 			},
 			inputEnvID:     "another-env-id",
+			expectedTarget: "",
+		},
+		{
+			desc: "returns empty when config is invalid (invalid UUID)",
+			setupFunc: func() {
+				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
+				os.Setenv(envMigrationEnvironmentIDFrom, "")
+				os.Setenv(envMigrationEnvironmentIDTo, "not-a-valid-uuid")
+			},
+			inputEnvID:     "",
 			expectedTarget: "",
 		},
 	}
@@ -238,7 +306,15 @@ func TestLogMigrationConfig(t *testing.T) {
 			setupFunc: func() {
 				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
-				os.Setenv(envMigrationEnvironmentIDTo, "new-uuid-123")
+				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
+			},
+		},
+		{
+			desc: "logs error when migration config is invalid",
+			setupFunc: func() {
+				os.Setenv(envMigrationEnvironmentIDEnabled, "true")
+				os.Setenv(envMigrationEnvironmentIDFrom, "")
+				os.Setenv(envMigrationEnvironmentIDTo, "invalid-uuid")
 			},
 		},
 	}
@@ -271,27 +347,29 @@ func TestMigrationConfigSingleton(t *testing.T) {
 	// Reset before test
 	ResetMigrationConfig()
 
-	// Set initial values
+	// Set initial values with valid UUID
 	os.Setenv(envMigrationEnvironmentIDEnabled, "true")
 	os.Setenv(envMigrationEnvironmentIDFrom, "initial-from")
-	os.Setenv(envMigrationEnvironmentIDTo, "initial-to")
+	os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 
 	// Get config first time
 	config1 := GetEnvironmentIDMigration()
 	assert.Equal(t, true, config1.Enabled)
 	assert.Equal(t, "initial-from", config1.FromEnvironmentID)
-	assert.Equal(t, "initial-to", config1.ToEnvironmentID)
+	assert.Equal(t, "a1b2c3d4-e5f6-4890-abcd-ef1234567890", config1.ToEnvironmentID)
+	assert.Equal(t, false, config1.InvalidConfig)
 
 	// Change environment variables
 	os.Setenv(envMigrationEnvironmentIDEnabled, "false")
 	os.Setenv(envMigrationEnvironmentIDFrom, "changed-from")
-	os.Setenv(envMigrationEnvironmentIDTo, "changed-to")
+	os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 
 	// Get config second time - should return cached values (singleton behavior)
 	config2 := GetEnvironmentIDMigration()
 	assert.Equal(t, true, config2.Enabled, "Should return cached enabled value")
 	assert.Equal(t, "initial-from", config2.FromEnvironmentID, "Should return cached from value")
-	assert.Equal(t, "initial-to", config2.ToEnvironmentID, "Should return cached to value")
+	assert.Equal(t, "a1b2c3d4-e5f6-4890-abcd-ef1234567890", config2.ToEnvironmentID, "Should return cached to value")
+	assert.Equal(t, false, config2.InvalidConfig, "Should return cached invalid config value")
 
 	// Verify it's the same instance
 	assert.Same(t, config1, config2, "Should return the same instance")

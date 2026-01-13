@@ -19,6 +19,8 @@ import (
 	"sync"
 
 	"go.uber.org/zap"
+
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 )
 
 const (
@@ -38,8 +40,12 @@ type EnvironmentIDMigration struct {
 	Enabled bool
 	// FromEnvironmentID is the old environment ID (can be empty string "")
 	FromEnvironmentID string
-	// ToEnvironmentID is the new environment ID (UUID)
+	// ToEnvironmentID is the new environment ID (must be a valid UUID v4)
 	ToEnvironmentID string
+	// InvalidConfig indicates if the configuration is invalid (e.g., invalid UUID)
+	InvalidConfig bool
+	// InvalidReason contains the reason why the config is invalid
+	InvalidReason string
 }
 
 var (
@@ -49,6 +55,7 @@ var (
 
 // GetEnvironmentIDMigration returns the migration configuration.
 // It reads from environment variables on first call and caches the result.
+// If enabled, it validates that ToEnvironmentID is a valid UUID v4.
 func GetEnvironmentIDMigration() *EnvironmentIDMigration {
 	migrationConfigOnce.Do(func() {
 		// Migration must be explicitly enabled via the ENABLED flag
@@ -56,10 +63,23 @@ func GetEnvironmentIDMigration() *EnvironmentIDMigration {
 		fromEnvID := os.Getenv(envMigrationEnvironmentIDFrom)
 		toEnvID := os.Getenv(envMigrationEnvironmentIDTo)
 
+		var invalidConfig bool
+		var invalidReason string
+
+		// Validate ToEnvironmentID is a valid UUID v4 when migration is enabled
+		if enabled && toEnvID != "" {
+			if err := uuid.ValidateUUID(toEnvID); err != nil {
+				invalidConfig = true
+				invalidReason = "toEnvironmentID must be a valid UUID v4"
+			}
+		}
+
 		migrationConfig = &EnvironmentIDMigration{
 			Enabled:           enabled,
 			FromEnvironmentID: fromEnvID,
 			ToEnvironmentID:   toEnvID,
+			InvalidConfig:     invalidConfig,
+			InvalidReason:     invalidReason,
 		}
 	})
 	return migrationConfig
@@ -67,10 +87,14 @@ func GetEnvironmentIDMigration() *EnvironmentIDMigration {
 
 // GetMigrationTargetEnvironmentID returns the target environment ID
 // if the given environmentID should be migrated.
-// Returns empty string if no migration is needed.
+// Returns empty string if no migration is needed or config is invalid.
 func GetMigrationTargetEnvironmentID(environmentID string) string {
 	config := GetEnvironmentIDMigration()
 	if !config.Enabled {
+		return ""
+	}
+	// Don't run migration if config is invalid
+	if config.InvalidConfig {
 		return ""
 	}
 	// Validate that ToEnvironmentID is set when migration is enabled
@@ -88,7 +112,13 @@ func GetMigrationTargetEnvironmentID(environmentID string) string {
 func LogMigrationConfig(logger *zap.Logger) {
 	config := GetEnvironmentIDMigration()
 	if config.Enabled {
-		if config.ToEnvironmentID == "" {
+		if config.InvalidConfig {
+			logger.Error("Environment ID migration configuration is invalid - migration will not run",
+				zap.String("reason", config.InvalidReason),
+				zap.String("fromEnvironmentID", config.FromEnvironmentID),
+				zap.String("toEnvironmentID", config.ToEnvironmentID),
+			)
+		} else if config.ToEnvironmentID == "" {
 			logger.Warn("Environment ID migration is enabled but toEnvironmentID is not set - migration will not run",
 				zap.String("fromEnvironmentID", config.FromEnvironmentID),
 			)
