@@ -26,7 +26,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -436,7 +435,7 @@ func (s *experimentService) UpdateExperiment(
 	err = validateUpdateExperimentRequest(req)
 	if err != nil {
 		s.logger.Error(
-			"Failed validate update experiment no command req",
+			"Failed validate update experiment request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
@@ -447,8 +446,7 @@ func (s *experimentService) UpdateExperiment(
 
 	var experimentPb *proto.Experiment
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-		experiment, err := experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
+		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -499,7 +497,7 @@ func (s *experimentService) UpdateExperiment(
 			return err
 		}
 		experimentPb = updated.Experiment
-		return experimentStorage.UpdateExperiment(ctxWithTx, updated, req.EnvironmentId)
+		return s.experimentStorage.UpdateExperiment(ctxWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
@@ -543,129 +541,6 @@ func validateUpdateExperimentRequest(
 	return nil
 }
 
-func (s *experimentService) StartExperiment(
-	ctx context.Context,
-	req *proto.StartExperimentRequest,
-) (*proto.StartExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateStartExperimentRequest(req); err != nil {
-		return nil, err
-	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	return &proto.StartExperimentResponse{}, nil
-}
-
-func validateStartExperimentRequest(req *proto.StartExperimentRequest) error {
-	if req.Id == "" {
-		return statusExperimentIDRequired.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func (s *experimentService) FinishExperiment(
-	ctx context.Context,
-	req *proto.FinishExperimentRequest,
-) (*proto.FinishExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateFinishExperimentRequest(req); err != nil {
-		return nil, err
-	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	return &proto.FinishExperimentResponse{}, nil
-}
-
-func validateFinishExperimentRequest(req *proto.FinishExperimentRequest) error {
-	if req.Id == "" {
-		return statusExperimentIDRequired.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func (s *experimentService) StopExperiment(
-	ctx context.Context,
-	req *proto.StopExperimentRequest,
-) (*proto.StopExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateStopExperimentRequest(req); err != nil {
-		return nil, err
-	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	return &proto.StopExperimentResponse{}, nil
-}
-
-func validateStopExperimentRequest(req *proto.StopExperimentRequest) error {
-	if req.Id == "" {
-		return statusExperimentIDRequired.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func (s *experimentService) ArchiveExperiment(
-	ctx context.Context,
-	req *proto.ArchiveExperimentRequest,
-) (*proto.ArchiveExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if req.Id == "" {
-		return nil, statusExperimentIDRequired.Err()
-	}
-	if req.Command == nil {
-		return nil, statusNoCommand.Err()
-	}
-	err = s.updateExperiment(
-		ctx,
-		editor,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to archive experiment",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	return &proto.ArchiveExperimentResponse{}, nil
-}
-
 func (s *experimentService) DeleteExperiment(
 	ctx context.Context,
 	req *proto.DeleteExperimentRequest,
@@ -676,71 +551,98 @@ func (s *experimentService) DeleteExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteExperimentRequest(req); err != nil {
+	if err = validateDeleteExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
+
+	var experimentPb *domain.Experiment
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get experiment",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("experimentId", req.Id),
+				)...,
+			)
+			return err
+		}
+		experimentPb = experiment
+
+		err = experiment.SetDeleted()
+		if err != nil {
+			s.logger.Error(
+				"Failed to set deleted",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("experimentId", req.Id),
+				)...,
+			)
+			return err
+		}
+
+		return s.experimentStorage.UpdateExperiment(ctxWithTx, experiment, req.EnvironmentId)
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to delete experiment",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("experimentId", req.Id),
+			)...,
+		)
+		if errors.Is(err, v2es.ErrExperimentNotFound) ||
+			errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
+			return nil, statusExperimentNotFound.Err()
+		}
+		return nil, api.NewGRPCStatus(err).Err()
 	}
+
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_EXPERIMENT,
+		req.Id,
+		eventproto.Event_EXPERIMENT_DELETED,
+		&eventproto.ExperimentDeletedEvent{
+			Id: req.Id,
+		},
+		req.EnvironmentId,
+		nil,
+		experimentPb,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("experimentId", req.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("experimentId", req.Id),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+
 	return &proto.DeleteExperimentResponse{}, nil
 }
 
 func validateDeleteExperimentRequest(req *proto.DeleteExperimentRequest) error {
 	if req.Id == "" {
 		return statusExperimentIDRequired.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func (s *experimentService) updateExperiment(
-	ctx context.Context,
-	editor *eventproto.Editor,
-	cmd command.Command,
-	id, environmentId string,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		experiment, err := s.experimentStorage.GetExperiment(contextWithTx, id, environmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get experiment",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewExperimentCommandHandler(editor, experiment, s.publisher, environmentId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			s.logger.Error(
-				"Failed to handle command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return err
-		}
-		return s.experimentStorage.UpdateExperiment(contextWithTx, experiment, environmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
-			return statusExperimentNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to update experiment",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
 	}
 	return nil
 }

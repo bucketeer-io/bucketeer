@@ -22,7 +22,6 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
-import "proto/experiment/command.proto";
 import "proto/experiment/goal.proto";
 import "proto/experiment/experiment.proto";
 
@@ -79,15 +78,6 @@ message CreateGoalRequest {
 message CreateGoalResponse {
   Goal goal = 1;
 }
-
-message ArchiveGoalRequest {
-  string id = 1;
-  ArchiveGoalCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message ArchiveGoalResponse {}
 
 message DeleteGoalRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
@@ -217,45 +207,9 @@ message UpdateExperimentResponse {
   Experiment experiment = 1;
 }
 
-message StartExperimentRequest {
-  reserved 1;
-  string id = 2;
-  StartExperimentCommand command = 3;
-  string environment_id = 4;
-}
-
-message StartExperimentResponse {}
-
-message FinishExperimentRequest {
-  reserved 1;
-  string id = 2;
-  FinishExperimentCommand command = 3;
-  string environment_id = 4;
-}
-
-message FinishExperimentResponse {}
-
-message StopExperimentRequest {
-  string id = 1;
-  StopExperimentCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message StopExperimentResponse {}
-
-message ArchiveExperimentRequest {
-  string id = 1;
-  ArchiveExperimentCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message ArchiveExperimentResponse {}
-
 message DeleteExperimentRequest {
   string id = 1;
-  DeleteExperimentCommand command = 2;
+  reserved 2;  // DeleteExperimentCommand
   reserved 3;
   string environment_id = 4;
 }
@@ -397,7 +351,6 @@ service ExperimentService {
       }
     };
   }
-  rpc ArchiveGoal(ArchiveGoalRequest) returns (ArchiveGoalResponse) {}
   rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {
     option (google.api.http) = {
       delete: "/v1/goal"
@@ -569,13 +522,49 @@ service ExperimentService {
       }
     };
   }
-  rpc StartExperiment(StartExperimentRequest)
-      returns (StartExperimentResponse) {}
-  rpc FinishExperiment(FinishExperimentRequest)
-      returns (FinishExperimentResponse) {}
-  rpc StopExperiment(StopExperimentRequest) returns (StopExperimentResponse) {}
-  rpc ArchiveExperiment(ArchiveExperimentRequest)
-      returns (ArchiveExperimentResponse) {}
   rpc DeleteExperiment(DeleteExperimentRequest)
-      returns (DeleteExperimentResponse) {}
+      returns (DeleteExperimentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/experiment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete"
+      description: "Delete an experiment."
+      tags: "experiment"
+      operation_id: "web.v1.experiment.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the experiment is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

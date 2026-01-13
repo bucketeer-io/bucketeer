@@ -43,7 +43,7 @@ func TestUpdateStatus(t *testing.T) {
 		{
 			desc: "error: StartExperiment fails",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
-				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
+				u.experimentClient.(*ecmock.MockClient).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
 			},
 			input: &experimentproto.Experiment{
@@ -56,7 +56,7 @@ func TestUpdateStatus(t *testing.T) {
 		{
 			desc: "error: FinishExperiment fails",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
-				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
+				u.experimentClient.(*ecmock.MockClient).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
 			},
 			input: &experimentproto.Experiment{
@@ -78,8 +78,8 @@ func TestUpdateStatus(t *testing.T) {
 		{
 			desc: "success: update waiting to running",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
-				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
-					&experimentproto.StartExperimentResponse{}, nil)
+				u.experimentClient.(*ecmock.MockClient).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.UpdateExperimentResponse{}, nil)
 			},
 			input: &experimentproto.Experiment{
 				Id:      "eid",
@@ -100,8 +100,8 @@ func TestUpdateStatus(t *testing.T) {
 		{
 			desc: "success: update running to stopped",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
-				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
-					&experimentproto.FinishExperimentResponse{}, nil)
+				u.experimentClient.(*ecmock.MockClient).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.UpdateExperimentResponse{}, nil)
 			},
 			input: &experimentproto.Experiment{
 				Id:      "eid",

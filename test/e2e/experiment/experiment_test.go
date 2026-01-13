@@ -147,9 +147,11 @@ func TestStopExperiment(t *testing.T) {
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
 	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
-	if _, err := c.StopExperiment(ctx, &experimentproto.StopExperimentRequest{
-		Id:            e.Id,
-		Command:       &experimentproto.StopExperimentCommand{},
+	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		Id: e.Id,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_STOPPED,
+		},
 		EnvironmentId: *environmentID,
 	}); err != nil {
 		t.Fatal(err)
@@ -180,10 +182,10 @@ func TestArchiveExperiment(t *testing.T) {
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
 	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
-	if _, err := c.ArchiveExperiment(ctx, &experimentproto.ArchiveExperimentRequest{
+	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            e.Id,
-		Command:       &experimentproto.ArchiveExperimentCommand{},
 		EnvironmentId: *environmentID,
+		Archived:      wrapperspb.Bool(true),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +217,6 @@ func TestDeleteExperiment(t *testing.T) {
 	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
 	if _, err := c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
 		Id:            e.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
 		EnvironmentId: *environmentID,
 	}); err != nil {
 		t.Fatal(err)
@@ -413,9 +414,9 @@ func TestArchiveGoal(t *testing.T) {
 	c := newExperimentClient(t)
 	defer c.Close()
 	goalID := createGoal(ctx, t, c)
-	_, err := c.ArchiveGoal(ctx, &experimentproto.ArchiveGoalRequest{
+	_, err := c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
 		Id:            goalID,
-		Command:       &experimentproto.ArchiveGoalCommand{},
+		Archived:      wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {

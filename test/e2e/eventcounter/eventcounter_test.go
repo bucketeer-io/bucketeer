@@ -1710,10 +1710,12 @@ func createExperimentWithMultiGoals(
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
+	_, err = client.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		EnvironmentId: *environmentID,
 		Id:            resp.Experiment.Id,
-		Command:       &experimentproto.StartExperimentCommand{},
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)

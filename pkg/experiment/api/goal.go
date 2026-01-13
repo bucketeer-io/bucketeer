@@ -25,7 +25,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -386,42 +385,6 @@ func (s *experimentService) validateUpdateGoalRequest(
 	return nil
 }
 
-func (s *experimentService) ArchiveGoal(
-	ctx context.Context,
-	req *proto.ArchiveGoalRequest,
-) (*proto.ArchiveGoalResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if req.Id == "" {
-		return nil, statusGoalIDRequired.Err()
-	}
-	if req.Command == nil {
-		return nil, statusNoCommand.Err()
-	}
-	err = s.updateGoal(
-		ctx,
-		editor,
-		req.EnvironmentId,
-		req.Id,
-		[]command.Command{req.Command},
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to archive goal",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	return &proto.ArchiveGoalResponse{}, nil
-}
-
 func (s *experimentService) DeleteGoal(
 	ctx context.Context,
 	req *proto.DeleteGoalRequest,
@@ -467,35 +430,4 @@ func (s *experimentService) DeleteGoal(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &proto.DeleteGoalResponse{}, nil
-}
-
-func (s *experimentService) updateGoal(
-	ctx context.Context,
-	editor *eventproto.Editor,
-	environmentId, goalID string,
-	commands []command.Command,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		goal, err := s.goalStorage.GetGoal(ctxWithTx, goalID, environmentId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentId)
-		if err != nil {
-			return err
-		}
-		for _, command := range commands {
-			if err := handler.Handle(ctx, command); err != nil {
-				return err
-			}
-		}
-		return s.goalStorage.UpdateGoal(ctxWithTx, goal, environmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
-			return statusGoalNotFound.Err()
-		}
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
 }
