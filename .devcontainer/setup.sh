@@ -72,6 +72,25 @@ if ! grep -q "/home/codespace/go-tools/bin" ~/.bashrc; then
     print_status "Added Go tools to PATH in ~/.bashrc for persistence"
 fi
 
+# Add kubectl autocomplete if kubectl is available
+# Note: bash-completion package is pre-installed in the devcontainer image
+if command -v kubectl &> /dev/null; then
+    if ! grep -q "kubectl completion bash" ~/.bashrc; then
+        echo '' >> ~/.bashrc
+        echo '# kubectl autocomplete' >> ~/.bashrc
+        echo '# Ensure bash-completion is loaded first (required for kubectl completion)' >> ~/.bashrc
+        echo 'if [ -f /usr/share/bash-completion/bash_completion ]; then' >> ~/.bashrc
+        echo '    source /usr/share/bash-completion/bash_completion' >> ~/.bashrc
+        echo 'elif [ -f /etc/bash_completion ]; then' >> ~/.bashrc
+        echo '    source /etc/bash_completion' >> ~/.bashrc
+        echo 'fi' >> ~/.bashrc
+        echo 'source <(kubectl completion bash)' >> ~/.bashrc
+        echo 'alias k=kubectl' >> ~/.bashrc
+        echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
+        print_status "Added kubectl autocomplete to ~/.bashrc"
+    fi
+fi
+
 # Function to fix permissions on cache directories
 fix_cache_permissions() {
     print_status "Ensuring cache directories have correct permissions..."

@@ -32,6 +32,8 @@ RUN apt-get update \
         groff-base \
         less \
         locales \
+        # Shell completion support
+        bash-completion \
     && add-apt-repository universe \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
