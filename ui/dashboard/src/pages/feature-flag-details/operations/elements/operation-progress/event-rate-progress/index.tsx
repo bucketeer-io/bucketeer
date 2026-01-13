@@ -88,58 +88,60 @@ const EventRateProgress = ({
   );
 
   return (
-    <div className="flex flex-col w-full gap-y-5">
-      <div className="flex items-center w-full gap-x-2">
-        <OperationDescription
-          titleKey={'form:feature-flags.progress-goal-value'}
-          value={goalId}
-        />
-        <OperationDescription
-          titleKey={'form:feature-flags.progress-min-count'}
-          value={minCount}
-        />
-        <OperationDescription
-          titleKey={'form:feature-flags.progress-current-goal'}
-          value={opsCount?.opsEventCount || 0}
-        />
-        <OperationDescription
-          titleKey={'form:feature-flags.progress-current-event-rate'}
-          value={`${currentEventRate}/100 (${currentEventRate}%)`}
-          isLastItem
-        />
-        <Tooltip
-          content={t('table:current-event-rate-tooltip')}
-          trigger={
-            <div className="flex-center size-4">
-              <Icon icon={IconQuestion} size={'xxs'} />
-            </div>
-          }
-        />
-      </div>
-
-      <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
-        <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
-          {t('form:threshold')}
-        </p>
-        <div className="flex h-[4px] bg-gray-200 relative">
-          <div
-            className="bg-accent-pink-500 absolute h-1 "
-            style={{
-              width: `${barWidth}%`
-            }}
+    <div className="overflow-x-scroll">
+      <div className="flex flex-col w-full gap-y-5 min-w-[900px]">
+        <div className="flex items-center w-full gap-x-2">
+          <OperationDescription
+            titleKey={'form:feature-flags.progress-goal-value'}
+            value={goalId}
           />
-          <PercentItem isActive={currentEventRate > 0} percent={0} />
+          <OperationDescription
+            titleKey={'form:feature-flags.progress-min-count'}
+            value={minCount}
+          />
+          <OperationDescription
+            titleKey={'form:feature-flags.progress-current-goal'}
+            value={opsCount?.opsEventCount || 0}
+          />
+          <OperationDescription
+            titleKey={'form:feature-flags.progress-current-event-rate'}
+            value={`${currentEventRate}/100 (${currentEventRate}%)`}
+            isLastItem
+          />
+          <Tooltip
+            content={t('table:current-event-rate-tooltip')}
+            trigger={
+              <div className="flex-center size-4">
+                <Icon icon={IconQuestion} size={'xxs'} />
+              </div>
+            }
+          />
+        </div>
 
-          {stepArray.map(percentage => (
-            <PercentItem
-              key={percentage}
-              isActive={
-                percentage <= currentEventRate && currentEventRate !== 0
-              }
-              percent={percentage}
-              className={'flex justify-end flex-1 items-center h-[4px]'}
+        <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
+          <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
+            {t('form:threshold')}
+          </p>
+          <div className="flex h-[4px] bg-gray-200 relative">
+            <div
+              className="bg-accent-pink-500 absolute h-1 "
+              style={{
+                width: `${barWidth}%`
+              }}
             />
-          ))}
+            <PercentItem isActive={currentEventRate > 0} percent={0} />
+
+            {stepArray.map(percentage => (
+              <PercentItem
+                key={percentage}
+                isActive={
+                  percentage <= currentEventRate && currentEventRate !== 0
+                }
+                percent={percentage}
+                className={'flex justify-end flex-1 items-center h-[4px]'}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

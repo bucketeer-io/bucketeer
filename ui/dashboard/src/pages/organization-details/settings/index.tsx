@@ -84,7 +84,7 @@ const OrganizationSettings = ({
   };
 
   return (
-    <div className="w-full px-6">
+    <div className="w-full px-3 sm:px-6">
       <div className="p-5 shadow-card rounded-lg bg-white">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}

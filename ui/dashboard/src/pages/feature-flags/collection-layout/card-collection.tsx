@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
-import { Account, AutoOpsRule, Feature, Rollout } from '@types';
+import { MDIcon } from 'react-icons-material-design';
+import { AutoOpsRule, Environment, Feature, Rollout } from '@types';
 import { FeatureCard } from 'components/mobile-card/feature-card';
 import PageLayout from 'elements/page-layout';
 import { FlagActionType } from '../types';
@@ -7,10 +8,17 @@ import { FlagActionType } from '../types';
 interface CardCollectionProps {
   data: Feature[];
   onActions: (item: Feature, type: FlagActionType) => void;
-  accounts: Account[];
   filterTags?: string[];
   rollouts: Rollout[];
   autoOpsRules: AutoOpsRule[];
+  popoverOptions: {
+    label: string;
+    icon: MDIcon;
+    value: string;
+  }[];
+  currentEnvironment: Environment;
+  editable: boolean;
+  handleGetMaintainerInfo: (email: string) => string;
   handleTagFilters: (tag: string) => void;
   emptyCollection?: ReactElement;
   isLoading?: boolean;
@@ -20,10 +28,13 @@ export const CardCollection = ({
   isLoading,
   emptyCollection,
   data,
-  accounts,
   filterTags,
   rollouts,
   autoOpsRules,
+  currentEnvironment,
+  popoverOptions,
+  editable,
+  handleGetMaintainerInfo,
   handleTagFilters,
   onActions
 }: CardCollectionProps) => {
@@ -36,7 +47,10 @@ export const CardCollection = ({
             <FeatureCard
               key={feature.id}
               data={feature}
-              accounts={accounts}
+              currentEnvironment={currentEnvironment}
+              popoverOptions={popoverOptions}
+              editable={editable}
+              handleGetMaintainerInfo={handleGetMaintainerInfo}
               filterTags={filterTags}
               rollouts={rollouts}
               autoOpsRules={autoOpsRules}

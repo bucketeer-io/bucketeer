@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useScreen } from 'hooks';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isEmpty } from 'utils/data-type';
@@ -14,6 +15,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import FilterFlagSlideModal from './mobile-filter';
 
 export type FilterProps = {
   isOpen: boolean;
@@ -32,6 +34,7 @@ const FilterFlagModal = ({
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
+  const { fromMobileScreen } = useScreen();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { booleanOptions, flagFilterOptions, flagStatusOptions } = useOptions();
 
@@ -268,7 +271,7 @@ const FilterFlagModal = ({
     handleSetFilterOnInit();
   }, [filters]);
 
-  return (
+  return fromMobileScreen ? (
     <DialogModal
       className="w-full max-w-[750px]"
       title={t('filters')}
@@ -386,6 +389,30 @@ const FilterFlagModal = ({
         }
       />
     </DialogModal>
+  ) : (
+    // <FilterSlide
+    //   isOpen={isOpen}
+    //   isLoading={isLoading}
+    //   isLoadingTags={isLoadingTags}
+    //   isDisabledAddButton={isDisabledAddButton}
+    //   isDisabledSubmitButton={isDisabledSubmitButton}
+    //   selectedFilters={selectedFilters}
+    //   setSelectedFilters={setSelectedFilters}
+    //   handleChangeFilterValue={handleChangeFilterValue}
+    //   handleChangeOption={handleChangeFilterValue}
+    //   handleGetLabelFilterValue={handleGetLabelFilterValue}
+    //   onClose={onClose}
+    //   onClearFilters={onClearFilters}
+    //   onConfirmHandler={onConfirmHandler}
+    //   getValueOptions={getValueOptions}
+    //   remainingFilterOptions={remainingFilterOptions as DropdownOption[]}
+    // />
+    <FilterFlagSlideModal
+      isOpen={isOpen}
+      onClearFilters={onClearFilters}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
   );
 };
 

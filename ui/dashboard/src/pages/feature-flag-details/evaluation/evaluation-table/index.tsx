@@ -39,12 +39,12 @@ const EvaluationTable = ({
   );
 
   return (
-    <div className="flex flex-col gap-y-6 w-full min-w-[650px]">
+    <div className="flex flex-col gap-y-6 w-full">
       <div className="flex items-center w-full gap-x-6">
-        <div className="w-[40%] typo-para-medium text-gray-700">
+        <div className="w-[60%] sm:w-[40%] typo-para-medium text-gray-700">
           {t('evaluation.variation-counts')}
         </div>
-        <div className="w-[60%] typo-para-medium text-gray-700">
+        <div className="w-[40%] sm:w-[60%] typo-para-medium text-gray-700">
           <Trans
             i18nKey="table:evaluation.total-evaluations"
             components={{
@@ -65,7 +65,7 @@ const EvaluationTable = ({
             key={index}
             className="flex items-center w-full px-4 py-5 bg-white rounded-lg shadow-card gap-x-6"
           >
-            <div className="flex items-center w-[40%] gap-x-2">
+            <div className="flex items-center w-[60%] sm:w-[40%] gap-x-2">
               <Checkbox
                 checked={!isHidden}
                 onCheckedChange={() =>
@@ -100,7 +100,7 @@ const EvaluationTable = ({
                 </p>
               )}
             </div>
-            <div className="w-[60%] typo-para-medium text-gray-700">
+            <div className="w-[40%] sm:w-[60%] typo-para-medium text-gray-700">
               {Number(item.timeseries?.totalCounts || 0)?.toLocaleString()}
             </div>
           </div>

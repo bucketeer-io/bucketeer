@@ -300,5 +300,7 @@
   "note": "Note",
   "full-screen-mode": "Fullscreen Mode",
   "detail": "Detail",
-  "last-seen": "Last seen"
+  "last-seen": "Last seen",
+  "time-stop": "Time stop",
+  "time-start": "Time start"
 }

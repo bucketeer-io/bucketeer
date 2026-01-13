@@ -127,7 +127,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   }, [searchOptions]);
 
   return (
-    <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
+    <PageLayout.Content className="p-3 sm:p-6 pt-0 gap-y-6 min-w-full">
       <FilterBar
         isLoading={isLoading}
         currentFilter={timeRangeCurrent}
@@ -162,20 +162,22 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
             {isLoading ? (
               <PageLayout.LoadingState />
             ) : (
-              <>
-                <EvaluationChart
-                  ref={evaluationChartRef}
-                  data={chartData}
-                  variationValues={variationValues}
-                  timeseries={timeseries}
-                  unit={
-                    filters.period === EvaluationTimeRange.TWENTY_FOUR_HOURS
-                      ? 'hour'
-                      : 'day'
-                  }
-                  setDataSets={setDataSets}
-                />
-              </>
+              <div className="overflow-scroll">
+                <div className="min-w-fit">
+                  <EvaluationChart
+                    ref={evaluationChartRef}
+                    data={chartData}
+                    variationValues={variationValues}
+                    timeseries={timeseries}
+                    unit={
+                      filters.period === EvaluationTimeRange.TWENTY_FOUR_HOURS
+                        ? 'hour'
+                        : 'day'
+                    }
+                    setDataSets={setDataSets}
+                  />
+                </div>
+              </div>
             )}
           </TabsContent>
         </Tabs>

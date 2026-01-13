@@ -92,7 +92,7 @@ const PageContent = ({
           });
         }}
       >
-        <TabsList className="px-6">
+        <TabsList className="px-3 sm:px-6">
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>

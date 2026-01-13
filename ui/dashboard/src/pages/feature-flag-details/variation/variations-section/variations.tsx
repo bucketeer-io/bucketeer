@@ -86,7 +86,7 @@ const Variations = ({
   const isJSON = useMemo(() => feature.variationType === 'JSON', [feature]);
   const isYAML = useMemo(() => feature.variationType === 'YAML', [feature]);
   const formItemClassName = useMemo(
-    () => 'flex flex-col flex-1 py-0 h-full self-stretch',
+    () => 'flex flex-col flex-1 py-0 my-3 sm:my-0 h-fit sm:h-full self-stretch',
     []
   );
 
@@ -277,11 +277,36 @@ const Variations = ({
   return (
     <div className="flex flex-col w-full gap-y-6">
       {fields.map((variation, variationIndex) => (
-        <div key={variation.variationField} className="flex w-full gap-x-2">
+        <div
+          key={variation.variationField}
+          className="flex items-center w-full gap-x-2"
+        >
           <div className="flex flex-col w-full gap-y-3">
-            <VariationLabel index={variationIndex} />
+            <div className="flex items-center justify-between">
+              <VariationLabel index={variationIndex} />
+              <div className="sm:hidden">
+                <Tooltip
+                  align="end"
+                  alignOffset={-20}
+                  content={getTooltipContent(variation.id)}
+                  trigger={
+                    <Button
+                      variant="grey"
+                      size="icon"
+                      type="button"
+                      className="p-0 size-5 self-end sm:mb-4"
+                      disabled={isDisableRemoveBtn(variation.id)}
+                      onClick={() => remove(variationIndex)}
+                    >
+                      <Icon icon={IconTrash} size="sm" />
+                    </Button>
+                  }
+                  className="max-w-[350px]"
+                />
+              </div>
+            </div>
             <div className="flex flex-col w-full gap-y-5">
-              <div className="flex items-end w-full gap-x-2">
+              <div className="flex items-end w-full gap-2 flex-wrap">
                 {!isJSON && !isYAML && (
                   <Form.Field
                     control={control}
@@ -303,7 +328,7 @@ const Variations = ({
                                 isBoolean || isRunningExperiment || !editable
                               }
                               placeholder={t('form:feature-flags.value')}
-                              className="px-3"
+                              className="px-3 min-w-[300px]"
                             />
                           </Form.Control>
                           <Form.Message />
@@ -324,6 +349,7 @@ const Variations = ({
                           {...field}
                           placeholder={t('name')}
                           disabled={isRunningExperiment || !editable}
+                          className="min-w-[300px]"
                         />
                       </Form.Control>
                       <Form.Message />
@@ -341,6 +367,7 @@ const Variations = ({
                           {...field}
                           placeholder={t('form:description')}
                           disabled={isRunningExperiment || !editable}
+                          className="min-w-[300px]"
                         />
                       </Form.Control>
                       <Form.Message />
@@ -412,24 +439,26 @@ const Variations = ({
               )}
             </div>
           </div>
-          <Tooltip
-            align="end"
-            alignOffset={-20}
-            content={getTooltipContent(variation.id)}
-            trigger={
-              <Button
-                variant="grey"
-                size="icon"
-                type="button"
-                className="p-0 size-5 self-end mb-4"
-                disabled={isDisableRemoveBtn(variation.id)}
-                onClick={() => remove(variationIndex)}
-              >
-                <Icon icon={IconTrash} size="sm" />
-              </Button>
-            }
-            className="max-w-[350px]"
-          />
+          <div className="hidden sm:block">
+            <Tooltip
+              align="end"
+              alignOffset={-20}
+              content={getTooltipContent(variation.id)}
+              trigger={
+                <Button
+                  variant="grey"
+                  size="icon"
+                  type="button"
+                  className="p-0 size-5 self-end sm:mb-4"
+                  disabled={isDisableRemoveBtn(variation.id)}
+                  onClick={() => remove(variationIndex)}
+                >
+                  <Icon icon={IconTrash} size="sm" />
+                </Button>
+              }
+              className="max-w-[350px]"
+            />
+          </div>
         </div>
       ))}
       <Button

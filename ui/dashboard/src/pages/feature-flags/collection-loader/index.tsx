@@ -1,11 +1,18 @@
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  IconArchiveOutlined,
+  IconSaveAsFilled
+} from 'react-icons-material-design';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useScreen } from 'hooks';
+import { compact } from 'lodash';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { useSearchParams } from 'utils/search-params';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
@@ -35,7 +42,7 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const { fromMobileScreen } = useScreen();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
+    const { t } = useTranslation(['common', 'table']);
     const {
       data: collection,
       isLoading,
@@ -72,6 +79,48 @@ const CollectionLoader = memo(
     const accounts = accountCollection?.accounts || [];
     const features = collection?.features || [];
     const totalCount = Number(collection?.totalCount) || 0;
+
+    const { searchOptions } = useSearchParams();
+    const editable = hasEditable(consoleAccount!);
+
+    const popoverOptions = useMemo(
+      () =>
+        compact([
+          searchOptions.tab === 'ARCHIVED'
+            ? {
+                label: `${t('unarchive-flag')}`,
+                icon: IconArchiveOutlined,
+                value: 'UNARCHIVE'
+              }
+            : {
+                label: `${t('archive-flag')}`,
+                icon: IconArchiveOutlined,
+                value: 'ARCHIVE'
+              },
+          {
+            label: `${t('clone-flag')}`,
+            icon: IconSaveAsFilled,
+            value: 'CLONE'
+          }
+        ]),
+      [searchOptions]
+    );
+
+    const handleGetMaintainerInfo = useCallback(
+      (email: string) => {
+        const existedAccount = accounts?.find(
+          account => account.email === email
+        );
+        if (
+          !existedAccount ||
+          !existedAccount?.firstName ||
+          !existedAccount?.lastName
+        )
+          return email;
+        return `${existedAccount.firstName} ${existedAccount.lastName}`;
+      },
+      [accounts]
+    );
 
     const handleTagFilters = useCallback(
       (tag: string) => {
@@ -130,8 +179,11 @@ const CollectionLoader = memo(
           <GridViewCollection
             filterTags={filters?.tags}
             autoOpsRules={autoOpsRules}
+            popoverOptions={popoverOptions}
+            currentEnvironment={currentEnvironment}
+            handleGetMaintainerInfo={handleGetMaintainerInfo}
+            editable={editable}
             rollouts={rollouts}
-            accounts={accounts}
             data={features}
             onActions={onHandleActions}
             emptyState={emptyState}
@@ -144,7 +196,10 @@ const CollectionLoader = memo(
             filterTags={filters?.tags}
             autoOpsRules={autoOpsRules}
             rollouts={rollouts}
-            accounts={accounts}
+            currentEnvironment={currentEnvironment}
+            popoverOptions={popoverOptions}
+            handleGetMaintainerInfo={handleGetMaintainerInfo}
+            editable={editable}
             data={features}
             onActions={onHandleActions}
             handleTagFilters={handleTagFilters}

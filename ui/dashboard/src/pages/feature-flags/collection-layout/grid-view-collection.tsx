@@ -1,17 +1,11 @@
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode } from 'react';
 import { Trans } from 'react-i18next';
-import {
-  IconArchiveOutlined,
-  IconSaveAsFilled
-} from 'react-icons-material-design';
-import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { MDIcon } from 'react-icons-material-design';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
-import compact from 'lodash/compact';
-import { Account, AutoOpsRule, Feature, Rollout } from '@types';
+import { AutoOpsRule, Environment, Feature, Rollout } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
@@ -32,68 +26,37 @@ import {
 import { getDataTypeIcon, getFlagStatus } from './elements/utils';
 
 const GridViewCollection = ({
+  handleGetMaintainerInfo,
+  popoverOptions,
+  currentEnvironment,
+  editable,
   filterTags,
   autoOpsRules,
   rollouts,
-  accounts,
   data,
   emptyState,
   onActions,
   handleTagFilters
 }: {
+  currentEnvironment: Environment;
+  popoverOptions: {
+    label: string;
+    icon: MDIcon;
+    value: string;
+  }[];
+  handleGetMaintainerInfo: (email: string) => string;
   filterTags?: string[];
   autoOpsRules: AutoOpsRule[];
   rollouts: Rollout[];
-  accounts: Account[];
   data: Feature[];
+  editable: boolean;
   emptyState: ReactNode;
   onActions: (item: Feature, type: FlagActionType) => void;
   handleTagFilters: (tag: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const { searchOptions } = useSearchParams();
   const { fromXLScreen } = useScreen();
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const editable = hasEditable(consoleAccount!);
-
-  const popoverOptions = useMemo(
-    () =>
-      compact([
-        searchOptions.tab === 'ARCHIVED'
-          ? {
-              label: `${t('unarchive-flag')}`,
-              icon: IconArchiveOutlined,
-              value: 'UNARCHIVE'
-            }
-          : {
-              label: `${t('archive-flag')}`,
-              icon: IconArchiveOutlined,
-              value: 'ARCHIVE'
-            },
-        {
-          label: `${t('clone-flag')}`,
-          icon: IconSaveAsFilled,
-          value: 'CLONE'
-        }
-      ]),
-    [searchOptions]
-  );
-
-  const handleGetMaintainerInfo = useCallback(
-    (email: string) => {
-      const existedAccount = accounts?.find(account => account.email === email);
-      if (
-        !existedAccount ||
-        !existedAccount?.firstName ||
-        !existedAccount?.lastName
-      )
-        return email;
-      return `${existedAccount.firstName} ${existedAccount.lastName}`;
-    },
-    [accounts]
-  );
 
   if (!data?.length) return <div className="pt-32">{emptyState}</div>;
 

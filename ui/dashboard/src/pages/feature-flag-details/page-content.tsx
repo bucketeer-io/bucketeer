@@ -80,7 +80,7 @@ const PageContent = ({
   return (
     <PageLayout.Content className="pt-4">
       <Tabs>
-        <TabsList className="px-6 w-fit min-w-full">
+        <TabsList className="px-3 sm:px-6 w-full overflow-x-scroll hidden-scroll sm:w-fit min-w-full">
           {featureFlagTabs.map((item, index) => (
             <TabsLink key={index} to={`${url}${item.to}`}>
               {item.title}

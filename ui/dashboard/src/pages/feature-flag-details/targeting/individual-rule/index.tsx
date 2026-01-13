@@ -97,7 +97,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                             field.onChange(options.map(o => o.value));
                           }
                         }}
-                        className="w-full"
+                        className="w-full max-w-[300px] sm:max-w-full"
                         formatCreateLabel={v => {
                           const isAlreadyExisted = getAlreadyTargetedVariation(
                             individualRulesWatch,

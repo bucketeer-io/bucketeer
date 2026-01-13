@@ -186,14 +186,14 @@ const GeneralInfoForm = ({
     <FormProvider {...form}>
       <Form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
-          <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+          <div className="flex items-start gap-2 lg:items-center justify-between flex-col lg:flex-row">
             <p className="typo-head-bold-small text-gray-800">
               {t('general-info')}
             </p>
             <Button
               type="button"
               variant="text"
-              className="flex-1 lg:flex-none"
+              className="flex-1 lg:flex-none px-0 sm:px-2"
               onClick={() =>
                 window.open(DOCUMENTATION_LINKS.FLAG_SETTINGS, '_blank')
               }

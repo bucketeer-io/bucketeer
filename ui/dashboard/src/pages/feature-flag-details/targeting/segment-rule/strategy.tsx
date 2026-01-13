@@ -187,7 +187,7 @@ const Strategy = ({
         </Form.Label>
       )}
       <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase min-w-fit">
+        <p className="typo-para-small text-gray-600 mt-3 uppercase">
           {t('feature-flags.serve')}
         </p>
         <Form.Field
@@ -203,7 +203,8 @@ const Strategy = ({
                     onChange={val => handleChangeStrategy(val, field.onChange)}
                     disabled={isDisabled}
                     wrapTriggerStyle="flex flex-col grap-y-2 w-full"
-                    className="w-full"
+                    contentClassName="w-[300px]"
+                    className="w-full max-w-[300px] sm:max-w-full"
                   />
                 </Form.Control>
                 <Form.Message />
@@ -241,7 +242,7 @@ const Strategy = ({
                 <Form.Item className="flex flex-col flex-1 py-0 w-full">
                   <Form.Control>
                     <div>
-                      <div className="flex items-center w-full gap-x-2">
+                      <div className="flex flex-wrap items-center w-full gap-2">
                         {audienceTrafficOptions.map((item, index) => (
                           <AudienceSelect
                             disabled={isDisabled}
@@ -309,7 +310,7 @@ const Strategy = ({
           </div>
 
           {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
-            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+            <div className="flex flex-wrap items-center w-full gap-2 mt-0 sm:mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
               <Trans
                 i18nKey={
                   'form:experiments.define-audience.not-included-allocation'
@@ -369,7 +370,7 @@ const Strategy = ({
             disabled={isDisabled}
             value={splitOptionType ?? ''}
             onValueChange={onChangeSplitType}
-            className="flex gap-x-6 mt-5 px-1"
+            className="flex flex-wrap gap-x-6 mt-5 px-1"
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">

@@ -172,7 +172,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
   }, [feature]);
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
-    <div className="p-6 pt-0 w-full min-w-[900px]">
+    <div className="p-3 sm:p-6 pt-0 w-full">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(() => onSubmit())}>
           <div className="flex flex-col w-full gap-y-6">
@@ -189,7 +189,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
             {waitingRunningRollouts.length > 0 && (
               <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
                 <Icon icon={IconInfoFilled} color="accent-blue-500" size="sm" />
-                <div className="flex items-center [&>a]:ml-1">
+                <div className="inline items-center [&>a]:ml-1">
                   <Trans
                     i18nKey={'form:variation.rollout-running-message'}
                     components={{

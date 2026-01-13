@@ -55,7 +55,7 @@ const Overview = ({
   const { t } = useTranslation(['table']);
 
   return (
-    <div className="w-full px-6">
+    <div className="w-full px-3 sm:px-6">
       <div className="flex flex-nowrap sm:flex-wrap overflow-x-scroll sm:overflow-visible px-2 sm:px-0 hidden-scroll items-center w-full gap-6 pb-8">
         {overviewOptions.map((item, index) => (
           <Tooltip
