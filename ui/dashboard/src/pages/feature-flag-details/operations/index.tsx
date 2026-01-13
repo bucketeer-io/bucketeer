@@ -279,7 +279,7 @@ const Operations = ({
   }, [searchOptions]);
 
   return (
-    <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
+    <div className="flex flex-col w-full gap-y-4">
       <div className="flex flex-wrap items-center justify-between w-full gap-6 px-6">
         <p className="flex flex-1 typo-head-bold-big text-gray-800 xl:whitespace-nowrap">
           {t('table:feature-flags:operations-desc')}

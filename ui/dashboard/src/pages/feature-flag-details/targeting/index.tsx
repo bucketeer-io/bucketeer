@@ -301,7 +301,7 @@ const TargetingPage = ({
   );
 
   return (
-    <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
+    <PageLayout.Content className="p-3 sm:p-6 pt-0 gap-y-6 min-w-full">
       <FormProvider {...form}>
         <Form
           onSubmit={form.handleSubmit(values => onSubmit(values))}

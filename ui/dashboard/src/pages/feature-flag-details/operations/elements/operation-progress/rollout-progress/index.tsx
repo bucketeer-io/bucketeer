@@ -82,32 +82,34 @@ const RolloutProgress = ({
           />
         )}
       </div>
-      <div className="p-12 pb-16 bg-gray-100 rounded-lg">
-        <div className="flex relative h-1">
-          <ProgressDateTimePoint
-            displayLabel={`${firstSchedule.weight || 0}%`}
-            displayTime={firstSchedule?.executeAt}
-          />
-          {paginatedScheduleList.map((item, index) => {
-            const isCurrentActive =
-              item.triggeredAt !== '0' &&
-              (paginatedScheduleList[index + 1]?.triggeredAt === '0' ||
-                !paginatedScheduleList[index + 1]);
-            return (
-              <ProgressDateTimePoint
-                key={item.scheduleId}
-                className="flex flex-1 justify-end items-center relative"
-                displayLabel={`${item.weight / 1000}%`}
-                displayTime={item.executeAt}
-                conditionDate={
-                  lastItemWithTriggeredAt
-                    ? new Date(+lastItemWithTriggeredAt.executeAt * 1000)
-                    : undefined
-                }
-                isCurrentActive={isCurrentActive}
-              />
-            );
-          })}
+      <div className="overflow-x-scroll">
+        <div className="p-12 pb-16 bg-gray-100 rounded-lg min-w-[900px]">
+          <div className="flex relative h-1">
+            <ProgressDateTimePoint
+              displayLabel={`${firstSchedule.weight || 0}%`}
+              displayTime={firstSchedule?.executeAt}
+            />
+            {paginatedScheduleList.map((item, index) => {
+              const isCurrentActive =
+                item.triggeredAt !== '0' &&
+                (paginatedScheduleList[index + 1]?.triggeredAt === '0' ||
+                  !paginatedScheduleList[index + 1]);
+              return (
+                <ProgressDateTimePoint
+                  key={item.scheduleId}
+                  className="flex flex-1 justify-end items-center relative"
+                  displayLabel={`${item.weight / 1000}%`}
+                  displayTime={item.executeAt}
+                  conditionDate={
+                    lastItemWithTriggeredAt
+                      ? new Date(+lastItemWithTriggeredAt.executeAt * 1000)
+                      : undefined
+                  }
+                  isCurrentActive={isCurrentActive}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
       <OperationPagination

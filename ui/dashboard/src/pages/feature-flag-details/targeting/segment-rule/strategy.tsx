@@ -187,7 +187,7 @@ const Strategy = ({
         </Form.Label>
       )}
       <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase min-w-fit">
+        <p className="typo-para-small text-gray-600 mt-3 uppercase">
           {t('feature-flags.serve')}
         </p>
         <Form.Field
@@ -241,7 +241,7 @@ const Strategy = ({
                 <Form.Item className="flex flex-col flex-1 py-0 w-full">
                   <Form.Control>
                     <div>
-                      <div className="flex items-center w-full gap-x-2">
+                      <div className="flex flex-wrap items-center w-full gap-2">
                         {audienceTrafficOptions.map((item, index) => (
                           <AudienceSelect
                             key={index}
@@ -308,7 +308,7 @@ const Strategy = ({
           </div>
 
           {experimentPercentage > 0 && Number(experimentPercentage) !== 100 && (
-            <div className="flex items-center w-full gap-x-2 mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
+            <div className="flex flex-wrap items-center w-full gap-2 mt-0 sm:mt-4 typo-para-medium leading-5 text-gray-600 whitespace-nowrap">
               <Trans
                 i18nKey={
                   'form:experiments.define-audience.not-included-allocation'
@@ -367,7 +367,7 @@ const Strategy = ({
           <RadioGroup
             value={splitOptionType}
             onValueChange={onChangeSplitType}
-            className="flex gap-x-6 mt-5 px-1"
+            className="flex flex-wrap gap-x-6 mt-5 px-1"
           >
             {splitExperimentOptions.map(({ label, value }) => (
               <div key={value} className="flex items-center gap-x-2">

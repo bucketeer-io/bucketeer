@@ -73,7 +73,7 @@ const DialogModal = ({
                   )}
                 >
                   {title && (
-                    <Dialog.Title className="typo-head-bold-huge">
+                    <Dialog.Title className="typo-head-bold-small sm:typo-head-bold-huge">
                       {title}
                     </Dialog.Title>
                   )}
