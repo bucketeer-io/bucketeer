@@ -23,47 +23,43 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
-)
-
-const (
-	DataTypeEvaluationEventMySQL = "evaluation_event"
-	DataTypeGoalEventMySQL       = "goal_event"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 )
 
 var (
-	//go:embed sql/evaluation_event_mysql.sql
-	evaluationEventMySQLQuery string
+	//go:embed sql/evaluation_event_postgres.sql
+	evaluationEventPostgresQuery string
 
-	//go:embed sql/goal_event_mysql.sql
-	goalEventMySQLQuery string
+	//go:embed sql/goal_event_postgres.sql
+	goalEventPostgresQuery string
 
-	//go:embed sql/user_evaluation_mysql.sql
-	userEvaluationMySQLQuery string
+	//go:embed sql/user_evaluation_postgres.sql
+	userEvaluationPostgresQuery string
 )
 
-type mysqlEventStorage struct {
-	qe     mysql.QueryExecer
+type PostgresEventStorage struct {
+	qe     postgres.QueryExecer
 	logger *zap.Logger
 }
 
-func NewMySQLEventStorage(qe mysql.QueryExecer, logger *zap.Logger) EventStorage {
-	return &mysqlEventStorage{
+func NewPostgresEventStorage(qe postgres.QueryExecer, logger *zap.Logger) EventStorage {
+	return &PostgresEventStorage{
 		qe:     qe,
-		logger: logger.Named("mysql-event-storage"),
+		logger: logger.Named("postgres-event-storage"),
 	}
 }
 
-func (es *mysqlEventStorage) QueryEvaluationCount(
+func (es *PostgresEventStorage) QueryEvaluationCount(
 	ctx context.Context,
 	environmentId string,
-	startAt, endAt time.Time,
+	startAt,
+	endAt time.Time,
 	featureID string,
 	featureVersion int32,
 ) ([]*EvaluationEventCount, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		evaluationEventMySQLQuery,
+		evaluationEventPostgresQuery,
 		startAt,
 		endAt,
 		environmentId,
@@ -114,16 +110,18 @@ func (es *mysqlEventStorage) QueryEvaluationCount(
 	return results, nil
 }
 
-func (es *mysqlEventStorage) QueryGoalCount(
+func (es *PostgresEventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentId string,
-	startAt, endAt time.Time,
-	goalID, featureID string,
+	startAt,
+	endAt time.Time,
+	goalID,
+	featureID string,
 	featureVersion int32,
 ) ([]*GoalEventCount, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		goalEventMySQLQuery,
+		goalEventPostgresQuery,
 		startAt,
 		endAt,
 		environmentId,
@@ -183,15 +181,18 @@ func (es *mysqlEventStorage) QueryGoalCount(
 	return results, nil
 }
 
-func (es *mysqlEventStorage) QueryUserEvaluation(
+func (es *PostgresEventStorage) QueryUserEvaluation(
 	ctx context.Context,
-	environmentID, userID, featureID string,
+	environmentID,
+	userID,
+	featureID string,
 	featureVersion int32,
-	experimentStartAt, experimentEndAt time.Time,
+	experimentStartAt,
+	experimentEndAt time.Time,
 ) (*UserEvaluation, error) {
 	rows, err := es.qe.QueryContext(
 		ctx,
-		userEvaluationMySQLQuery,
+		userEvaluationPostgresQuery,
 		environmentID,
 		featureID,
 		featureVersion,
@@ -217,7 +218,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, ErrMySQLNoResultsFound
+		return nil, ErrPostgresNoResultsFound
 	}
 
 	var ue UserEvaluation
@@ -239,7 +240,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	}
 
 	if rows.Next() {
-		return nil, ErrMySQLUnexpectedMultipleResults
+		return nil, ErrPostgresUnexpectedMultipleResults
 	}
 
 	if err := rows.Err(); err != nil {
