@@ -42,26 +42,6 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// ChangeAPIKeyName mocks base method.
-func (m *MockClient) ChangeAPIKeyName(ctx context.Context, in *account.ChangeAPIKeyNameRequest, opts ...grpc.CallOption) (*account.ChangeAPIKeyNameResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ChangeAPIKeyName", varargs...)
-	ret0, _ := ret[0].(*account.ChangeAPIKeyNameResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ChangeAPIKeyName indicates an expected call of ChangeAPIKeyName.
-func (mr *MockClientMockRecorder) ChangeAPIKeyName(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAPIKeyName", reflect.TypeOf((*MockClient)(nil).ChangeAPIKeyName), varargs...)
-}
-
 // Close mocks base method.
 func (m *MockClient) Close() {
 	m.ctrl.T.Helper()
@@ -174,26 +154,6 @@ func (mr *MockClientMockRecorder) DeleteSearchFilter(ctx, in any, opts ...any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSearchFilter", reflect.TypeOf((*MockClient)(nil).DeleteSearchFilter), varargs...)
 }
 
-// DisableAPIKey mocks base method.
-func (m *MockClient) DisableAPIKey(ctx context.Context, in *account.DisableAPIKeyRequest, opts ...grpc.CallOption) (*account.DisableAPIKeyResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DisableAPIKey", varargs...)
-	ret0, _ := ret[0].(*account.DisableAPIKeyResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DisableAPIKey indicates an expected call of DisableAPIKey.
-func (mr *MockClientMockRecorder) DisableAPIKey(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableAPIKey", reflect.TypeOf((*MockClient)(nil).DisableAPIKey), varargs...)
-}
-
 // DisableAccountV2 mocks base method.
 func (m *MockClient) DisableAccountV2(ctx context.Context, in *account.DisableAccountV2Request, opts ...grpc.CallOption) (*account.DisableAccountV2Response, error) {
 	m.ctrl.T.Helper()
@@ -212,26 +172,6 @@ func (mr *MockClientMockRecorder) DisableAccountV2(ctx, in any, opts ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableAccountV2", reflect.TypeOf((*MockClient)(nil).DisableAccountV2), varargs...)
-}
-
-// EnableAPIKey mocks base method.
-func (m *MockClient) EnableAPIKey(ctx context.Context, in *account.EnableAPIKeyRequest, opts ...grpc.CallOption) (*account.EnableAPIKeyResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "EnableAPIKey", varargs...)
-	ret0, _ := ret[0].(*account.EnableAPIKeyResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EnableAPIKey indicates an expected call of EnableAPIKey.
-func (mr *MockClientMockRecorder) EnableAPIKey(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAPIKey", reflect.TypeOf((*MockClient)(nil).EnableAPIKey), varargs...)
 }
 
 // EnableAccountV2 mocks base method.

@@ -33,13 +33,6 @@ func verifyEmailFormat(email string) bool {
 }
 
 func validateCreateAPIKeyRequest(req *accountproto.CreateAPIKeyRequest) error {
-	if req.Command.Name == "" {
-		return statusMissingAPIKeyName.Err()
-	}
-	return nil
-}
-
-func validateCreateAPIKeyRequestNoCommand(req *accountproto.CreateAPIKeyRequest) error {
 	if req.Name == "" {
 		return statusMissingAPIKeyName.Err()
 	}
@@ -49,58 +42,7 @@ func validateCreateAPIKeyRequestNoCommand(req *accountproto.CreateAPIKeyRequest)
 	return nil
 }
 
-func validateChangeAPIKeyNameRequest(req *accountproto.ChangeAPIKeyNameRequest) error {
-	if req.Id == "" {
-		return statusMissingAPIKeyID.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func validateEnableAPIKeyRequest(req *accountproto.EnableAPIKeyRequest) error {
-	if req.Id == "" {
-		return statusMissingAPIKeyID.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func validateDisableAPIKeyRequest(req *accountproto.DisableAPIKeyRequest) error {
-	if req.Id == "" {
-		return statusMissingAPIKeyID.Err()
-	}
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	return nil
-}
-
-func validateCreateAccountV2Request(req *accountproto.CreateAccountV2Request) error {
-	if req.OrganizationId == "" {
-		return statusMissingOrganizationID.Err()
-	}
-	if req.Command.Email == "" {
-		return statusEmailIsEmpty.Err()
-	}
-	if !verifyEmailFormat(req.Command.Email) {
-		return statusInvalidEmail.Err()
-	}
-	if req.Command.OrganizationRole == accountproto.AccountV2_Role_Organization_UNASSIGNED {
-		return statusInvalidOrganizationRole.Err()
-	}
-	if req.Command.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
-		if len(req.Command.EnvironmentRoles) == 0 {
-			return statusInvalidEnvironmentRole.Err()
-		}
-	}
-	return nil
-}
-
-func validateCreateAccountV2NoCommandRequest(
+func validateCreateAccountV2Request(
 	req *accountproto.CreateAccountV2Request,
 ) error {
 	if req.OrganizationId == "" {
@@ -124,63 +66,6 @@ func validateCreateAccountV2NoCommandRequest(
 }
 
 func validateUpdateAccountV2Request(
-	req *accountproto.UpdateAccountV2Request,
-	commands []command.Command,
-) error {
-	if req.Email == "" {
-		return statusEmailIsEmpty.Err()
-	}
-	if !verifyEmailFormat(req.Email) {
-		return statusInvalidEmail.Err()
-	}
-	if req.OrganizationId == "" {
-		return statusMissingOrganizationID.Err()
-	}
-	if len(commands) == 0 {
-		return statusNoCommand.Err()
-	}
-	for _, cmd := range commands {
-		if c, ok := cmd.(*accountproto.ChangeAccountV2FirstNameCommand); ok {
-			newFirstName := strings.TrimSpace(c.FirstName)
-			if newFirstName == "" {
-				return statusFirstNameIsEmpty.Err()
-			}
-			if len(newFirstName) > maxAccountNameLength {
-				return statusInvalidFirstName.Err()
-			}
-		}
-		if c, ok := cmd.(*accountproto.ChangeAccountV2LastNameCommand); ok {
-			newLastName := strings.TrimSpace(c.LastName)
-			if newLastName == "" {
-				return statusLastNameIsEmpty.Err()
-			}
-			if len(newLastName) > maxAccountNameLength {
-				return statusInvalidLastName.Err()
-			}
-		}
-		if c, ok := cmd.(*accountproto.ChangeAccountV2LanguageCommand); ok {
-			if c.Language == "" {
-				return statusLanguageIsEmpty.Err()
-			}
-		}
-		if c, ok := cmd.(*accountproto.ChangeAccountV2OrganizationRoleCommand); ok {
-			if c.Role == accountproto.AccountV2_Role_Organization_UNASSIGNED {
-				return statusInvalidOrganizationRole.Err()
-			}
-		}
-		if c, ok := cmd.(*accountproto.ChangeAccountV2EnvironmentRolesCommand); ok {
-			if c.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_UNSPECIFIED {
-				return statusInvalidUpdateEnvironmentRolesWriteType.Err()
-			}
-			if len(c.Roles) == 0 {
-				return statusInvalidEnvironmentRole.Err()
-			}
-		}
-	}
-	return nil
-}
-
-func validateUpdateAccountV2NoCommandRequest(
 	req *accountproto.UpdateAccountV2Request,
 ) error {
 	if req.Email == "" {
@@ -379,7 +264,7 @@ func validateDeleteSearchFilterRequest(
 	return nil
 }
 
-func validateUpdateAPIKeyRequestNoCommand(req *accountproto.UpdateAPIKeyRequest) error {
+func validateUpdateAPIKeyRequest(req *accountproto.UpdateAPIKeyRequest) error {
 	if req.Id == "" {
 		return statusMissingAPIKeyID.Err()
 	}
