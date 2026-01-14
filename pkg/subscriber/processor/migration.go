@@ -31,11 +31,11 @@ const (
 	envMigrationEnvironmentIDTo      = "BUCKETEER_SUBSCRIBER_MIGRATION_ENVIRONMENT_ID_TO"
 )
 
-// EnvironmentIDMigration holds the configuration for migrating
+// environmentIDMigration holds the configuration for migrating
 // Redis keys from an old environment ID to a new one.
 // This is used during the migration phase where we need to
 // double-write to both old and new key formats.
-type EnvironmentIDMigration struct {
+type environmentIDMigration struct {
 	// Enabled indicates if migration is active (must be explicitly set to true)
 	Enabled bool
 	// FromEnvironmentID is the old environment ID (can be empty string "")
@@ -49,14 +49,14 @@ type EnvironmentIDMigration struct {
 }
 
 var (
-	migrationConfig     *EnvironmentIDMigration
+	migrationConfig     *environmentIDMigration
 	migrationConfigOnce sync.Once
 )
 
-// GetEnvironmentIDMigration returns the migration configuration.
+// getEnvironmentIDMigration returns the migration configuration.
 // It reads from environment variables on first call and caches the result.
 // If enabled, it validates that ToEnvironmentID is a valid UUID v4.
-func GetEnvironmentIDMigration() *EnvironmentIDMigration {
+func getEnvironmentIDMigration() *environmentIDMigration {
 	migrationConfigOnce.Do(func() {
 		// Migration must be explicitly enabled via the ENABLED flag
 		enabled := os.Getenv(envMigrationEnvironmentIDEnabled) == "true"
@@ -74,7 +74,7 @@ func GetEnvironmentIDMigration() *EnvironmentIDMigration {
 			}
 		}
 
-		migrationConfig = &EnvironmentIDMigration{
+		migrationConfig = &environmentIDMigration{
 			Enabled:           enabled,
 			FromEnvironmentID: fromEnvID,
 			ToEnvironmentID:   toEnvID,
@@ -85,11 +85,11 @@ func GetEnvironmentIDMigration() *EnvironmentIDMigration {
 	return migrationConfig
 }
 
-// GetMigrationTargetEnvironmentID returns the target environment ID
+// getMigrationTargetEnvironmentID returns the target environment ID
 // if the given environmentID should be migrated.
 // Returns empty string if no migration is needed or config is invalid.
-func GetMigrationTargetEnvironmentID(environmentID string) string {
-	config := GetEnvironmentIDMigration()
+func getMigrationTargetEnvironmentID(environmentID string) string {
+	config := getEnvironmentIDMigration()
 	if !config.Enabled {
 		return ""
 	}
@@ -110,7 +110,7 @@ func GetMigrationTargetEnvironmentID(environmentID string) string {
 
 // LogMigrationConfig logs the current migration configuration
 func LogMigrationConfig(logger *zap.Logger) {
-	config := GetEnvironmentIDMigration()
+	config := getEnvironmentIDMigration()
 	if config.Enabled {
 		if config.InvalidConfig {
 			logger.Error("Environment ID migration configuration is invalid - migration will not run",
@@ -133,9 +133,9 @@ func LogMigrationConfig(logger *zap.Logger) {
 	}
 }
 
-// ResetMigrationConfig resets the migration configuration.
+// resetMigrationConfig resets the migration configuration.
 // This is only used for testing purposes.
-func ResetMigrationConfig() {
+func resetMigrationConfig() {
 	migrationConfigOnce = sync.Once{}
 	migrationConfig = nil
 }

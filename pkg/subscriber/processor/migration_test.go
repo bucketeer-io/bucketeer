@@ -27,7 +27,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setupFunc   func()
-		expectedEnv *EnvironmentIDMigration
+		expectedEnv *environmentIDMigration
 	}{
 		{
 			desc: "migration disabled by default when no env vars set",
@@ -36,7 +36,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Unsetenv(envMigrationEnvironmentIDFrom)
 				os.Unsetenv(envMigrationEnvironmentIDTo)
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           false,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "",
@@ -51,7 +51,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
 				os.Setenv(envMigrationEnvironmentIDTo, "not-validated-when-disabled")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           false,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "not-validated-when-disabled",
@@ -66,7 +66,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
 				os.Setenv(envMigrationEnvironmentIDTo, "not-validated-when-disabled")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           false,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "not-validated-when-disabled",
@@ -81,7 +81,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
 				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "a1b2c3d4-e5f6-4890-abcd-ef1234567890",
@@ -96,7 +96,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "old-env-id")
 				os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "old-env-id",
 				ToEnvironmentID:   "12345678-1234-4123-8123-123456789012",
@@ -111,7 +111,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
 				os.Setenv(envMigrationEnvironmentIDTo, "not-a-valid-uuid")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "not-a-valid-uuid",
@@ -127,7 +127,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				// UUID v1 has version 1 at position 13 (should be 4 for v4)
 				os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-1890-abcd-ef1234567890")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "a1b2c3d4-e5f6-1890-abcd-ef1234567890",
@@ -142,7 +142,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 				os.Setenv(envMigrationEnvironmentIDFrom, "")
 				os.Setenv(envMigrationEnvironmentIDTo, "")
 			},
-			expectedEnv: &EnvironmentIDMigration{
+			expectedEnv: &environmentIDMigration{
 				Enabled:           true,
 				FromEnvironmentID: "",
 				ToEnvironmentID:   "",
@@ -155,13 +155,13 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			// Reset the singleton before each test
-			ResetMigrationConfig()
+			resetMigrationConfig()
 
 			// Setup environment variables
 			p.setupFunc()
 
 			// Get the migration config
-			config := GetEnvironmentIDMigration()
+			config := getEnvironmentIDMigration()
 
 			// Assert
 			assert.Equal(t, p.expectedEnv.Enabled, config.Enabled)
@@ -176,7 +176,7 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 	os.Unsetenv(envMigrationEnvironmentIDEnabled)
 	os.Unsetenv(envMigrationEnvironmentIDFrom)
 	os.Unsetenv(envMigrationEnvironmentIDTo)
-	ResetMigrationConfig()
+	resetMigrationConfig()
 }
 
 func TestGetMigrationTargetEnvironmentID(t *testing.T) {
@@ -262,13 +262,13 @@ func TestGetMigrationTargetEnvironmentID(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			// Reset the singleton before each test
-			ResetMigrationConfig()
+			resetMigrationConfig()
 
 			// Setup environment variables
 			p.setupFunc()
 
 			// Get the migration target
-			target := GetMigrationTargetEnvironmentID(p.inputEnvID)
+			target := getMigrationTargetEnvironmentID(p.inputEnvID)
 
 			// Assert
 			assert.Equal(t, p.expectedTarget, target)
@@ -279,7 +279,7 @@ func TestGetMigrationTargetEnvironmentID(t *testing.T) {
 	os.Unsetenv(envMigrationEnvironmentIDEnabled)
 	os.Unsetenv(envMigrationEnvironmentIDFrom)
 	os.Unsetenv(envMigrationEnvironmentIDTo)
-	ResetMigrationConfig()
+	resetMigrationConfig()
 }
 
 func TestLogMigrationConfig(t *testing.T) {
@@ -324,7 +324,7 @@ func TestLogMigrationConfig(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			// Reset the singleton before each test
-			ResetMigrationConfig()
+			resetMigrationConfig()
 
 			// Setup environment variables
 			p.setupFunc()
@@ -340,12 +340,12 @@ func TestLogMigrationConfig(t *testing.T) {
 	os.Unsetenv(envMigrationEnvironmentIDEnabled)
 	os.Unsetenv(envMigrationEnvironmentIDFrom)
 	os.Unsetenv(envMigrationEnvironmentIDTo)
-	ResetMigrationConfig()
+	resetMigrationConfig()
 }
 
 func TestMigrationConfigSingleton(t *testing.T) {
 	// Reset before test
-	ResetMigrationConfig()
+	resetMigrationConfig()
 
 	// Set initial values with valid UUID
 	os.Setenv(envMigrationEnvironmentIDEnabled, "true")
@@ -353,7 +353,7 @@ func TestMigrationConfigSingleton(t *testing.T) {
 	os.Setenv(envMigrationEnvironmentIDTo, "a1b2c3d4-e5f6-4890-abcd-ef1234567890")
 
 	// Get config first time
-	config1 := GetEnvironmentIDMigration()
+	config1 := getEnvironmentIDMigration()
 	assert.Equal(t, true, config1.Enabled)
 	assert.Equal(t, "initial-from", config1.FromEnvironmentID)
 	assert.Equal(t, "a1b2c3d4-e5f6-4890-abcd-ef1234567890", config1.ToEnvironmentID)
@@ -365,7 +365,7 @@ func TestMigrationConfigSingleton(t *testing.T) {
 	os.Setenv(envMigrationEnvironmentIDTo, "12345678-1234-4123-8123-123456789012")
 
 	// Get config second time - should return cached values (singleton behavior)
-	config2 := GetEnvironmentIDMigration()
+	config2 := getEnvironmentIDMigration()
 	assert.Equal(t, true, config2.Enabled, "Should return cached enabled value")
 	assert.Equal(t, "initial-from", config2.FromEnvironmentID, "Should return cached from value")
 	assert.Equal(t, "a1b2c3d4-e5f6-4890-abcd-ef1234567890", config2.ToEnvironmentID, "Should return cached to value")
@@ -378,5 +378,5 @@ func TestMigrationConfigSingleton(t *testing.T) {
 	os.Unsetenv(envMigrationEnvironmentIDEnabled)
 	os.Unsetenv(envMigrationEnvironmentIDFrom)
 	os.Unsetenv(envMigrationEnvironmentIDTo)
-	ResetMigrationConfig()
+	resetMigrationConfig()
 }

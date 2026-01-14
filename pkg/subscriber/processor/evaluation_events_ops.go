@@ -244,7 +244,7 @@ func (u *evalEvtUpdater) updateUserCountPerClause(
 		}
 
 		// Migration: Double-write to target environment if migration is enabled
-		if targetEnvID := GetMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
 			keyTarget := u.newUserCountKey(
 				targetEnvID,
 				ruleID,

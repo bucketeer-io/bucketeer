@@ -311,7 +311,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 
 		// Migration: Double-write to the target environment ID if migration is enabled
 		// This ensures data exists in both old and new key formats during the migration period
-		if targetEnvID := GetMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
 			p.incrementEvaluationCountMigration(e, vID, userID, targetEnvID)
 		}
 	}
