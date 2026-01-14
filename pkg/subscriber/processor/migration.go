@@ -135,6 +135,8 @@ func LogMigrationConfig(logger *zap.Logger) {
 
 // resetMigrationConfig resets the migration configuration.
 // This is only used for testing purposes.
+//
+//nolint:unused
 func resetMigrationConfig() {
 	migrationConfigOnce = sync.Once{}
 	migrationConfig = nil
