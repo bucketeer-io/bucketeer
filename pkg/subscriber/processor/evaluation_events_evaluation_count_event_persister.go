@@ -642,10 +642,8 @@ func (p *evaluationCountEventPersister) writeUserAttributes() {
 func (p *evaluationCountEventPersister) upsertUserAttributes(
 	userAttributes *userproto.UserAttributes,
 ) error {
-	if err := p.userAttributesCacher.Put(
-		userAttributes,
-		time.Duration(p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL)*time.Second,
-	); err != nil {
+	ttl := time.Duration(p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL) * time.Second
+	if err := p.userAttributesCacher.Put(userAttributes, ttl); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),
 			zap.String("environmentId", userAttributes.EnvironmentId),
@@ -653,11 +651,21 @@ func (p *evaluationCountEventPersister) upsertUserAttributes(
 			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
 		)
 		return err
-	} else {
-		p.logger.Debug("Successfully saved user attributes to cache",
-			zap.String("environmentId", userAttributes.EnvironmentId),
-			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
-		)
-		return nil
 	}
+
+	// MIGRATION: Double-write to the target environment ID if configured
+	if targetEnvID := getMigrationTargetEnvironmentID(userAttributes.EnvironmentId); targetEnvID != "" {
+		migrationAttrs := &userproto.UserAttributes{
+			EnvironmentId:  targetEnvID,
+			UserAttributes: userAttributes.UserAttributes,
+		}
+		if err := p.userAttributesCacher.Put(migrationAttrs, ttl); err != nil {
+			p.logger.Error("Migration: Failed to save user attributes for target environment",
+				zap.Error(err),
+				zap.String("fromEnvironmentId", userAttributes.EnvironmentId),
+				zap.String("toEnvironmentId", targetEnvID),
+			)
+		}
+	}
+	return nil
 }
