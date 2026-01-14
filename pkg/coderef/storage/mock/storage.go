@@ -85,6 +85,21 @@ func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReference(ctx, id any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReference), ctx, id)
 }
 
+// GetCodeReferenceCountsByFeatureIDs mocks base method.
+func (m *MockCodeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(ctx context.Context, environmentID string, featureIDs []string) (map[string]int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCodeReferenceCountsByFeatureIDs", ctx, environmentID, featureIDs)
+	ret0, _ := ret[0].(map[string]int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCodeReferenceCountsByFeatureIDs indicates an expected call of GetCodeReferenceCountsByFeatureIDs.
+func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReferenceCountsByFeatureIDs(ctx, environmentID, featureIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReferenceCountsByFeatureIDs", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReferenceCountsByFeatureIDs), ctx, environmentID, featureIDs)
+}
+
 // ListCodeReferences mocks base method.
 func (m *MockCodeReferenceStorage) ListCodeReferences(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*domain.CodeReference, int, int64, error) {
 	m.ctrl.T.Helper()
