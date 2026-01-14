@@ -7,7 +7,7 @@ global:
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql
-    type: bigquery # Options: bigquery, mysql
+    type: mysql # Options: bigquery, mysql
     batchSize: 1000
     timezone: "UTC"
 
