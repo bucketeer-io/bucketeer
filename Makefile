@@ -9,6 +9,7 @@ GO_APP_DIRS := $(wildcard cmd/*)
 GO_APP_BUILD_TARGETS := $(addprefix build-,$(notdir $(GO_APP_DIRS)))
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+GOTESTSUM_VERSION := v1.13.0
 
 ifeq ($(GOARCH), arm64)
 	PLATFORM = linux/arm64
@@ -124,6 +125,15 @@ update-repos-check: update-repos diff-check
 diff-check:
 	test -z "$$(git diff --name-only)"
 
+.PHONY: migration-validate
+migration-validate:
+	atlas migrate validate --dir file://migration/mysql
+
+.PHONY: migration-hash-check
+migration-hash-check:
+	atlas migrate hash --dir file://migration/mysql
+	make diff-check
+
 .PHONY: tidy-deps
 tidy-deps:
 	go mod tidy
@@ -156,7 +166,9 @@ build-go-embed: build-web-console $(GO_APP_BUILD_TARGETS) clean-web-console
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
 test-go:
-	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/go/...
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v ./pkg/... ./evaluation/go/...
 
 .PHONY: start-httpstan
 start-httpstan:

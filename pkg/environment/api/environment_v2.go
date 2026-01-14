@@ -443,7 +443,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	editor *eventproto.Editor,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if err := validateUpdateEnvironmentV2RequestNoCommand(req); err != nil {
+	if err := validateUpdateEnvironmentV2RequestNoCommand(ctx, req); err != nil {
 		return nil, err
 	}
 
@@ -585,8 +585,10 @@ func validateUpdateEnvironmentV2Request(id string, commands []command.Command) e
 }
 
 func validateUpdateEnvironmentV2RequestNoCommand(
+	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentV2Request,
 ) error {
+	localizer := locale.NewLocalizer(ctx)
 	if req.Name != nil {
 		newName := strings.TrimSpace(req.Name.Value)
 		if newName == "" {
@@ -594,6 +596,19 @@ func validateUpdateEnvironmentV2RequestNoCommand(
 		}
 		if len(newName) > maxEnvironmentNameLength {
 			return statusInvalidEnvironmentName.Err()
+		}
+	}
+	// Auto-archive validation
+	if req.AutoArchiveEnabled != nil && req.AutoArchiveEnabled.Value {
+		if req.AutoArchiveUnusedDays == nil || req.AutoArchiveUnusedDays.Value <= 0 {
+			dt, err := statusInvalidAutoArchiveUnusedDays.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auto_archive_unused_days"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil

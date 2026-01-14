@@ -32,6 +32,8 @@ RUN apt-get update \
         groff-base \
         less \
         locales \
+        # Shell completion support
+        bash-completion \
     && add-apt-repository universe \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -114,21 +116,22 @@ RUN ARCH=$(dpkg --print-architecture) \
     && npm install -g yarn
 
 # Install kubectl, helm, and minikube
+# Using fixed versions to avoid network issues fetching "stable.txt" during build
 RUN ARCH=$(dpkg --print-architecture) \
     && case $ARCH in \
         amd64) K8S_ARCH="amd64" ;; \
         arm64) K8S_ARCH="arm64" ;; \
         *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
     esac \
-    # Install kubectl
-    && curl -fsSL "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${K8S_ARCH}/kubectl" -o /usr/local/bin/kubectl \
+    # Install kubectl (using fixed version for reliable builds)
+    && curl -fsSL --retry 3 --retry-delay 5 "https://dl.k8s.io/release/v1.35.0/bin/linux/${K8S_ARCH}/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
     # Install helm
-    && curl -fsSL "https://get.helm.sh/helm-v3.16.4-linux-${K8S_ARCH}.tar.gz" | tar -C /tmp -xzf - \
+    && curl -fsSL --retry 3 --retry-delay 5 "https://get.helm.sh/helm-v3.16.4-linux-${K8S_ARCH}.tar.gz" | tar -C /tmp -xzf - \
     && mv "/tmp/linux-${K8S_ARCH}/helm" /usr/local/bin/helm \
     && rm -rf "/tmp/linux-${K8S_ARCH}" \
-    # Install minikube
-    && curl -fsSL "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${K8S_ARCH}" -o /usr/local/bin/minikube \
+    # Install minikube (using fixed version for reliable builds)
+    && curl -fsSL --retry 3 --retry-delay 5 "https://storage.googleapis.com/minikube/releases/v1.37.0/minikube-linux-${K8S_ARCH}" -o /usr/local/bin/minikube \
     && chmod +x /usr/local/bin/minikube
 
 # Set up Go environment
@@ -145,7 +148,7 @@ RUN groupadd --gid 1000 codespace \
     && echo "codespace ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/codespace \
     && chmod 0440 /etc/sudoers.d/codespace
 
-# Install additional development tools
+# Install additional development tools and Docker
 RUN ARCH=$(dpkg --print-architecture) \
     # Install GitHub CLI
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -162,12 +165,11 @@ RUN ARCH=$(dpkg --print-architecture) \
     && curl -fsSL "https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-${PROTOC_ARCH}.zip" -o /tmp/protoc.zip \
     && unzip /tmp/protoc.zip -d /usr/local \
     && rm /tmp/protoc.zip \
+    # Install Docker for minikube
+    && curl -fsSL https://get.docker.com | sh \
+    && usermod -aG docker codespace \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Docker for minikube
-RUN curl -fsSL https://get.docker.com | sh \
-    && usermod -aG docker codespace
 
 # Create docker startup script
 RUN echo '#!/bin/bash\n\
