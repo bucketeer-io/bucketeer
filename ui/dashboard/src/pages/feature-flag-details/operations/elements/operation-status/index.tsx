@@ -241,6 +241,7 @@ const OperationStatus = ({
         <p className="flex items-center typo-head-bold-medium text-gray-700 h-9">
           {t('feature-flags.progress-information')}
         </p>
+
         {isStopped && (
           <div className="flex items-center gap-x-1.5">
             <DateTooltip
