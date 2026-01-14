@@ -150,7 +150,7 @@ func TestStopExperiment(t *testing.T) {
 	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id: e.Id,
 		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
-			Status: experimentproto.Experiment_STOPPED,
+			Status: experimentproto.Experiment_FORCE_STOPPED,
 		},
 		EnvironmentId: *environmentID,
 	}); err != nil {
@@ -163,7 +163,7 @@ func TestStopExperiment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !getResp.Experiment.Stopped {
+	if getResp.Experiment.StoppedAt == 0 {
 		t.Fatal("Experiment was not stopped")
 	}
 	stopExperiment(ctx, t, c, e.Id)
