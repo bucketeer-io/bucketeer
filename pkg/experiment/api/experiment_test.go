@@ -145,50 +145,6 @@ func TestCreateExperimentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := []struct {
-		setup       func(s *experimentService)
-		input       *experimentproto.CreateExperimentRequest
-		expectedErr error
-	}{
-		{
-			setup: func(s *experimentService) {
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			input: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId:       "fid",
-					GoalIds:         []string{"goalId"},
-					StartAt:         1,
-					StopAt:          10,
-					BaseVariationId: "variation-b-id",
-				},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	ctx := createContextWithToken()
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.CreateExperiment(ctx, p.input)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestCreateExperimentNoCommandMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
 	ctx := createContextWithToken()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -282,179 +238,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 	}
 }
 
-func TestValidateCreateExperimentRequest(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		in       *experimentproto.CreateExperimentRequest
-		expected error
-	}{
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   []string{"gid"},
-					StartAt:   1,
-					StopAt:    10,
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: nil,
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "",
-					GoalIds:   []string{"gid"},
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: statusFeatureIDRequired.Err(),
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   nil,
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: statusGoalIDRequired.Err(),
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   []string{""},
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: statusGoalIDRequired.Err(),
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   []string{"gid", ""},
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: statusGoalIDRequired.Err(),
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   []string{"gid0", "gid1"},
-					StartAt:   1,
-					StopAt:    30*24*60*60 + 2,
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: statusExperimentPeriodOutOfRange.Err(),
-		},
-		{
-			in: &experimentproto.CreateExperimentRequest{
-				Command: &experimentproto.CreateExperimentCommand{
-					FeatureId: "fid",
-					GoalIds:   []string{"gid0", "gid1"},
-					StartAt:   1,
-					StopAt:    10,
-				},
-				EnvironmentId: "ns0",
-			},
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		err := validateCreateExperimentRequest(p.in)
-		assert.Equal(t, p.expected, err)
-	}
-}
-
 func TestUpdateExperimentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		setup       func(*experimentService)
-		req         *experimentproto.UpdateExperimentRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.UpdateExperimentRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentIDRequired.Err(),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.UpdateExperimentRequest{
-				Id: "id-1",
-				ChangeExperimentPeriodCommand: &experimentproto.ChangeExperimentPeriodCommand{
-					StartAt: time.Now().Unix(),
-					StopAt:  time.Now().AddDate(0, 0, 31).Unix(),
-				},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentPeriodOutOfRange.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(v2es.ErrExperimentNotFound)
-			},
-			req: &experimentproto.UpdateExperimentRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{
-					Name: "new-name",
-				},
-			},
-			expectedErr: statusExperimentNotFound.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{Id: "id-1"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			req: &experimentproto.UpdateExperimentRequest{
-				Id:                "id-1",
-				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{Name: "test-name"},
-				EnvironmentId:     "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.UpdateExperiment(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -540,320 +324,6 @@ func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
 	}
 }
 
-func TestStartExperimentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc        string
-		setup       func(*experimentService)
-		req         *experimentproto.StartExperimentRequest
-		expectedErr error
-	}{
-		{
-			desc:  "error id required",
-			setup: nil,
-			req: &experimentproto.StartExperimentRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentIDRequired.Err(),
-		},
-		{
-			desc:  "error no command",
-			setup: nil,
-			req: &experimentproto.StartExperimentRequest{
-				Id:            "eid",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
-			desc: "error not found",
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(v2es.ErrExperimentNotFound)
-			},
-			req: &experimentproto.StartExperimentRequest{
-				Id:            "noop",
-				Command:       &experimentproto.StartExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentNotFound.Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{Id: "id-1"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			req: &experimentproto.StartExperimentRequest{
-				Id:            "eid",
-				Command:       &experimentproto.StartExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, nil, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			_, err := service.StartExperiment(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestFinishExperimentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc        string
-		setup       func(*experimentService)
-		req         *experimentproto.FinishExperimentRequest
-		expectedErr error
-	}{
-		{
-			desc:  "error id required",
-			setup: nil,
-			req: &experimentproto.FinishExperimentRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentIDRequired.Err(),
-		},
-		{
-			desc:  "error no command",
-			setup: nil,
-			req: &experimentproto.FinishExperimentRequest{
-				Id:            "eid",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
-			desc: "error not found",
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(v2es.ErrExperimentNotFound)
-			},
-			req: &experimentproto.FinishExperimentRequest{
-				Id:            "noop",
-				Command:       &experimentproto.FinishExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentNotFound.Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{Id: "id-1"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			req: &experimentproto.FinishExperimentRequest{
-				Id:            "eid",
-				Command:       &experimentproto.FinishExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, nil, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			_, err := service.FinishExperiment(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestStopExperimentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		setup       func(*experimentService)
-		req         *experimentproto.StopExperimentRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.StopExperimentRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentIDRequired.Err(),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.StopExperimentRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(v2es.ErrExperimentNotFound)
-			},
-			req: &experimentproto.StopExperimentRequest{
-				Id:            "id-0",
-				Command:       &experimentproto.StopExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentNotFound.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{Id: "id-1"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			req: &experimentproto.StopExperimentRequest{
-				Id:            "id-1",
-				Command:       &experimentproto.StopExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.StopExperiment(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestArchiveExperimentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		setup       func(*experimentService)
-		req         *experimentproto.ArchiveExperimentRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.ArchiveExperimentRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentIDRequired.Err(),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.ArchiveExperimentRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(v2es.ErrExperimentNotFound)
-			},
-			req: &experimentproto.ArchiveExperimentRequest{
-				Id:            "id-0",
-				Command:       &experimentproto.ArchiveExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusExperimentNotFound.Err(),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{Id: "id-1"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-			},
-			req: &experimentproto.ArchiveExperimentRequest{
-				Id:            "id-1",
-				Command:       &experimentproto.ArchiveExperimentCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.ArchiveExperiment(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
 func TestDeleteExperimentMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -864,11 +334,13 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
+		name        string
 		setup       func(*experimentService)
 		req         *experimentproto.DeleteExperimentRequest
 		expectedErr error
 	}{
 		{
+			name:  "error id required",
 			setup: nil,
 			req: &experimentproto.DeleteExperimentRequest{
 				EnvironmentId: "ns0",
@@ -876,14 +348,7 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 			expectedErr: statusExperimentIDRequired.Err(),
 		},
 		{
-			setup: nil,
-			req: &experimentproto.DeleteExperimentRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
+			name: "experiment not found",
 			setup: func(s *experimentService) {
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
@@ -894,12 +359,12 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 			},
 			req: &experimentproto.DeleteExperimentRequest{
 				Id:            "id-0",
-				Command:       &experimentproto.DeleteExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
 			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
+			name: "success",
 			setup: func(s *experimentService) {
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
 					Experiment: &experimentproto.Experiment{Id: "id-1"},
@@ -913,19 +378,20 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 			},
 			req: &experimentproto.DeleteExperimentRequest{
 				Id:            "id-1",
-				Command:       &experimentproto.DeleteExperimentCommand{},
 				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.DeleteExperiment(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.name, func(t *testing.T) {
+			service := createExperimentService(mockController, nil, nil, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.DeleteExperiment(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
@@ -961,14 +427,6 @@ func TestExperimentPermissionDenied(t *testing.T) {
 			desc: "UpdateExperiment",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "StopExperiment",
-			action: func(ctx context.Context, es *experimentService) error {
-				_, err := es.StopExperiment(ctx, &experimentproto.StopExperimentRequest{})
 				return err
 			},
 			expected: statusPermissionDenied.Err(),

@@ -28260,172 +28260,6 @@
       }
     },
     {
-      "protopath": "experiment:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreateGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "connection_type",
-                "type": "Goal.ConnectionType"
-              }
-            ]
-          },
-          {
-            "name": "RenameGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionGoalCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ArchiveGoalCommand"
-          },
-          {
-            "name": "DeleteGoalCommand"
-          },
-          {
-            "name": "CreateExperimentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "stop_at",
-                "type": "int64"
-              },
-              {
-                "id": 5,
-                "name": "goal_ids",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 6,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "base_variation_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          },
-          {
-            "name": "ChangeExperimentPeriodCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "stop_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ChangeExperimentNameCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeExperimentDescriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "StopExperimentCommand"
-          },
-          {
-            "name": "ArchiveExperimentCommand"
-          },
-          {
-            "name": "DeleteExperimentCommand"
-          },
-          {
-            "name": "StartExperimentCommand"
-          },
-          {
-            "name": "FinishExperimentCommand"
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/experiment/goal.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.experiment"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "experiment:/:experiment.proto",
       "def": {
         "enums": [
@@ -29000,26 +28834,6 @@
             "name": "CreateGoalRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -29064,6 +28878,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
@@ -29076,32 +28891,6 @@
                 "type": "Goal"
               }
             ]
-          },
-          {
-            "name": "ArchiveGoalRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ArchiveGoalCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              3
-            ]
-          },
-          {
-            "name": "ArchiveGoalResponse"
           },
           {
             "name": "DeleteGoalRequest",
@@ -29118,26 +28907,6 @@
                 ]
               },
               {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string",
@@ -29150,6 +28919,7 @@
               }
             ],
             "reserved_ids": [
+              2,
               3
             ]
           },
@@ -29167,46 +28937,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "rename_command",
-                "type": "RenameGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionGoalCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -29249,6 +28979,8 @@
               }
             ],
             "reserved_ids": [
+              2,
+              3,
               4
             ]
           },
@@ -29423,26 +29155,6 @@
             "name": "CreateExperimentRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateExperimentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -29527,6 +29239,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
@@ -29551,66 +29264,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "change_experiment_period_command",
-                "type": "ChangeExperimentPeriodCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "change_name_command",
-                "type": "ChangeExperimentNameCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 7,
-                "name": "change_description_command",
-                "type": "ChangeExperimentDescriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -29670,7 +29323,10 @@
             "reserved_ids": [
               2,
               3,
-              4
+              4,
+              5,
+              6,
+              7
             ],
             "messages": [
               {
@@ -29696,110 +29352,6 @@
             ]
           },
           {
-            "name": "StartExperimentRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "StartExperimentCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "StartExperimentResponse"
-          },
-          {
-            "name": "FinishExperimentRequest",
-            "fields": [
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "FinishExperimentCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              1
-            ]
-          },
-          {
-            "name": "FinishExperimentResponse"
-          },
-          {
-            "name": "StopExperimentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "StopExperimentCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              3
-            ]
-          },
-          {
-            "name": "StopExperimentResponse"
-          },
-          {
-            "name": "ArchiveExperimentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ArchiveExperimentCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              3
-            ]
-          },
-          {
-            "name": "ArchiveExperimentResponse"
-          },
-          {
             "name": "DeleteExperimentRequest",
             "fields": [
               {
@@ -29808,17 +29360,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteExperimentCommand"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
             ],
             "reserved_ids": [
+              2,
               3
             ]
           },
@@ -30345,11 +29893,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "name": "ArchiveGoal",
-                "in_type": "ArchiveGoalRequest",
-                "out_type": "ArchiveGoalResponse"
               },
               {
                 "name": "DeleteGoal",
@@ -30995,29 +30538,176 @@
                 ]
               },
               {
-                "name": "StartExperiment",
-                "in_type": "StartExperimentRequest",
-                "out_type": "StartExperimentResponse"
-              },
-              {
-                "name": "FinishExperiment",
-                "in_type": "FinishExperimentRequest",
-                "out_type": "FinishExperimentResponse"
-              },
-              {
-                "name": "StopExperiment",
-                "in_type": "StopExperimentRequest",
-                "out_type": "StopExperimentResponse"
-              },
-              {
-                "name": "ArchiveExperiment",
-                "in_type": "ArchiveExperimentRequest",
-                "out_type": "ArchiveExperimentResponse"
-              },
-              {
                 "name": "DeleteExperiment",
                 "in_type": "DeleteExperimentRequest",
-                "out_type": "DeleteExperimentResponse"
+                "out_type": "DeleteExperimentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/experiment"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete an experiment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "experiment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.experiment.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the experiment is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -31034,9 +30724,6 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
-          },
-          {
-            "path": "proto/experiment/command.proto"
           },
           {
             "path": "proto/experiment/goal.proto"

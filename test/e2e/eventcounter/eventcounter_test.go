@@ -1670,19 +1670,20 @@ func createGoals(ctx context.Context, t *testing.T, client experimentclient.Clie
 	goalIDs := make([]string, 0)
 	for i := 0; i < total; i++ {
 		uuid := newUUID(t)
-		cmd := &experimentproto.CreateGoalCommand{
-			Id:          createGoalID(t, uuid),
-			Name:        createGoalID(t, uuid),
-			Description: fmt.Sprintf("%s-goal-description", prefixTestName),
-		}
-		_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-			Command:       cmd,
-			EnvironmentId: *environmentID,
+		resp, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
+			Id:             createGoalID(t, uuid),
+			Name:           createGoalID(t, uuid),
+			Description:    fmt.Sprintf("%s-goal-description", prefixTestName),
+			ConnectionType: experimentproto.Goal_EXPERIMENT,
+			EnvironmentId:  *environmentID,
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
-		goalIDs = append(goalIDs, cmd.Id)
+		if resp.Goal == nil {
+			t.Fatal("Goal is nil")
+		}
+		goalIDs = append(goalIDs, resp.Goal.Id)
 	}
 	return goalIDs
 }
@@ -1697,25 +1698,24 @@ func createExperimentWithMultiGoals(
 	baseVariationID string,
 	startAt, stopAt time.Time,
 ) *experimentproto.Experiment {
-	cmd := &experimentproto.CreateExperimentCommand{
+	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
 		Name:            fmt.Sprintf("%s - %v", name, strings.Join(goalIDs, ",")),
 		FeatureId:       featureID,
 		GoalIds:         goalIDs,
 		StartAt:         startAt.Unix(),
 		StopAt:          stopAt.Unix(),
 		BaseVariationId: baseVariationID,
-	}
-	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
+		EnvironmentId:   *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
+	_, err = client.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		EnvironmentId: *environmentID,
 		Id:            resp.Experiment.Id,
-		Command:       &experimentproto.StartExperimentCommand{},
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -22,8 +22,6 @@ import (
 var (
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "cursor is invalid", "Cursor"))
-	statusNoCommand = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.ExperimentPackageName, "must contain at least one command", "Command"))
 	statusFeatureIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.ExperimentPackageName, "feature id must be specified", "FeatureFlagID"))
 	statusExperimentIDRequired = api.NewGRPCStatus(

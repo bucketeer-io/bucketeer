@@ -112,17 +112,10 @@ func TestExperimentStatusUpdater(t *testing.T) {
 				nil,
 			)
 		experimentMockClient.EXPECT().
-			StartExperiment(gomock.Any(), gomock.Any()).
-			MinTimes(1).
+			UpdateExperiment(gomock.Any(), gomock.Any()).
+			MinTimes(2).
 			Return(
-				&experimentproto.StartExperimentResponse{},
-				nil,
-			)
-		experimentMockClient.EXPECT().
-			FinishExperiment(gomock.Any(), gomock.Any()).
-			MinTimes(1).
-			Return(
-				&experimentproto.FinishExperimentResponse{},
+				&experimentproto.UpdateExperimentResponse{},
 				nil,
 			)
 	}
