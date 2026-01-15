@@ -53,7 +53,8 @@ const (
 // TestFeatureAutoArchiver_BasicAutoArchive tests that a feature flag with LastUsedInfo
 // older than the threshold is automatically archived.
 func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
-	t.Parallel()
+	// Note: These tests cannot run in parallel because they modify environment-level
+	// auto-archive settings that affect all features in the environment.
 
 	// Setup clients
 	featureClient := newFeatureClient(t)
@@ -107,7 +108,8 @@ func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 // referenced by other flags (as a prerequisite) is NOT archived, even if it meets
 // the archival criteria.
 func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
-	t.Parallel()
+	// Note: These tests cannot run in parallel because they modify environment-level
+	// auto-archive settings that affect all features in the environment.
 
 	// Setup clients
 	featureClient := newFeatureClient(t)
@@ -177,7 +179,8 @@ func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
 // TestFeatureAutoArchiver_BulkArchive tests that multiple feature flags that meet
 // the archival criteria are all archived in a single batch job execution.
 func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
-	t.Parallel()
+	// Note: These tests cannot run in parallel because they modify environment-level
+	// auto-archive settings that affect all features in the environment.
 
 	// Setup clients
 	featureClient := newFeatureClient(t)
@@ -239,7 +242,8 @@ func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
 // TestFeatureAutoArchiver_DisabledEnvironment tests that when auto-archive is disabled
 // for an environment, no features are archived even if they would otherwise be archivable.
 func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
-	t.Parallel()
+	// Note: These tests cannot run in parallel because they modify environment-level
+	// auto-archive settings that affect all features in the environment.
 
 	// Setup clients
 	featureClient := newFeatureClient(t)
@@ -285,7 +289,8 @@ func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
 // TestFeatureAutoArchiver_RecentlyUsedNotArchived tests that a feature flag that has been
 // recently used (within the threshold) is NOT archived.
 func TestFeatureAutoArchiver_RecentlyUsedNotArchived(t *testing.T) {
-	t.Parallel()
+	// Note: These tests cannot run in parallel because they modify environment-level
+	// auto-archive settings that affect all features in the environment.
 
 	// Setup clients
 	featureClient := newFeatureClient(t)
