@@ -42,16 +42,16 @@ const (
 	autoArchiveTimeout       = 3 * time.Minute
 	autoArchiveRetryTimes    = 30
 	autoArchiveRetryInterval = 5 * time.Second
-	// thresholdForArchiving is set to 0 to immediately archive features with LastUsedInfo.
-	// This allows E2E tests to verify archiving behavior without waiting for days to pass.
-	thresholdForArchiving = 0
+	// thresholdForArchiving is set to 1 (minimum allowed value) to archive features
+	// with LastUsedInfo older than 1 day. Tests use timestamps from yesterday.
+	thresholdForArchiving = 1
 	// thresholdToPreventArchiving is set very high to ensure features are NOT archived.
 	// Used to test that recently used features are not archived.
 	thresholdToPreventArchiving = 365
 )
 
 // TestFeatureAutoArchiver_BasicAutoArchive tests that a feature flag with LastUsedInfo
-// is automatically archived when the threshold is set to 0 days.
+// older than the threshold is automatically archived.
 func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 	t.Parallel()
 
@@ -72,9 +72,10 @@ func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureID, featureClient)
 
-	// Register an evaluation event with current timestamp
-	// The threshold is set to 0, so any feature with LastUsedInfo is archivable
-	registerEvaluationEventWithTimestamp(t, f, time.Now())
+	// Register an evaluation event with timestamp from 2 days ago
+	// The threshold is 1 day, so this feature should be archivable
+	twoDaysAgo := time.Now().Add(-48 * time.Hour)
+	registerEvaluationEventWithTimestamp(t, f, twoDaysAgo)
 
 	// Wait for last used info to be recorded
 	waitForLastUsedInfo(t, featureClient, featureID)
@@ -82,7 +83,7 @@ func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
 
-	// Enable auto-archive with threshold=0 (any feature with LastUsedInfo is archivable)
+	// Enable auto-archive with threshold=1 day (feature last used 2 days ago is archivable)
 	enableAutoArchive(t, envClient, thresholdForArchiving, false)
 	defer restoreAutoArchiveSettings(t, envClient, originalSettings)
 
@@ -132,11 +133,12 @@ func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
 	// Add prerequisite: child depends on parent
 	addPrerequisite(t, featureClient, childFeatureID, parentFeatureID, parentFeature.Variations[0].Id)
 
-	// Register evaluation events with current timestamp for both features
-	now := time.Now()
-	registerEvaluationEventWithTimestamp(t, parentFeature, now)
+	// Register evaluation events with timestamp from 2 days ago for both features
+	// The threshold is 1 day, so these features should be archivable
+	twoDaysAgo := time.Now().Add(-48 * time.Hour)
+	registerEvaluationEventWithTimestamp(t, parentFeature, twoDaysAgo)
 	childFeature := getFeature(t, childFeatureID, featureClient)
-	registerEvaluationEventWithTimestamp(t, childFeature, now)
+	registerEvaluationEventWithTimestamp(t, childFeature, twoDaysAgo)
 
 	// Wait for last used info to be recorded
 	waitForLastUsedInfo(t, featureClient, parentFeatureID)
@@ -145,7 +147,7 @@ func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
 
-	// Enable auto-archive with threshold=0 (any feature with LastUsedInfo is archivable)
+	// Enable auto-archive with threshold=1 day (features last used 2 days ago are archivable)
 	enableAutoArchive(t, envClient, thresholdForArchiving, false)
 	defer restoreAutoArchiveSettings(t, envClient, originalSettings)
 
@@ -196,11 +198,12 @@ func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
 		enableFeature(t, featureID, featureClient)
 	}
 
-	// Register evaluation events with current timestamp for all features
-	now := time.Now()
+	// Register evaluation events with timestamp from 2 days ago for all features
+	// The threshold is 1 day, so these features should be archivable
+	twoDaysAgo := time.Now().Add(-48 * time.Hour)
 	for _, featureID := range featureIDs {
 		f := getFeature(t, featureID, featureClient)
-		registerEvaluationEventWithTimestamp(t, f, now)
+		registerEvaluationEventWithTimestamp(t, f, twoDaysAgo)
 	}
 
 	// Wait for last used info to be recorded for all features
@@ -211,7 +214,7 @@ func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
 	// Get original auto-archive settings
 	originalSettings := getAutoArchiveSettings(t, envClient)
 
-	// Enable auto-archive with threshold=0 (any feature with LastUsedInfo is archivable)
+	// Enable auto-archive with threshold=1 day (features last used 2 days ago are archivable)
 	enableAutoArchive(t, envClient, thresholdForArchiving, false)
 	defer restoreAutoArchiveSettings(t, envClient, originalSettings)
 
@@ -253,8 +256,10 @@ func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureID, featureClient)
 
-	// Register an evaluation event with current timestamp
-	registerEvaluationEventWithTimestamp(t, f, time.Now())
+	// Register an evaluation event with timestamp from 2 days ago
+	// The feature would be archivable if auto-archive was enabled
+	twoDaysAgo := time.Now().Add(-48 * time.Hour)
+	registerEvaluationEventWithTimestamp(t, f, twoDaysAgo)
 
 	// Wait for last used info to be recorded
 	waitForLastUsedInfo(t, featureClient, featureID)
@@ -272,7 +277,7 @@ func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
 	// Wait a bit for processing
 	time.Sleep(autoArchiveRetryInterval * 2)
 
-	// Verify the feature is NOT archived
+	// Verify the feature is NOT archived (because auto-archive is disabled)
 	feature := getFeature(t, featureID, featureClient)
 	assert.False(t, feature.Archived, "Feature should NOT be archived when auto-archive is disabled")
 }
