@@ -415,7 +415,9 @@ const EnvironmentCreateUpdateModal = ({
                           <Form.Control>
                             <Checkbox
                               disabled={disabled}
-                              onCheckedChange={checked => field.onChange(checked)}
+                              onCheckedChange={checked =>
+                                field.onChange(checked)
+                              }
                               checked={field.value}
                             />
                           </Form.Control>
