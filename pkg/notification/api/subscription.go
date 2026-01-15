@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
@@ -39,16 +37,14 @@ func (s *NotificationService) CreateSubscription(
 	ctx context.Context,
 	req *notificationproto.CreateSubscriptionRequest,
 ) (*notificationproto.CreateSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.validateCreateSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateCreateSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	subscription, err := domain.NewSubscription(
@@ -74,14 +70,7 @@ func (s *NotificationService) CreateSubscription(
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusAlreadyExists.Err()
 		}
 		s.logger.Error(
 			"Failed to create subscription",
@@ -139,15 +128,13 @@ func (s *NotificationService) UpdateSubscription(
 	ctx context.Context,
 	req *notificationproto.UpdateSubscriptionRequest,
 ) (*notificationproto.UpdateSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUpdateSubscriptionRequest(req, localizer); err != nil {
+	if err := s.validateUpdateSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +147,6 @@ func (s *NotificationService) UpdateSubscription(
 		req.Disabled,
 		req.FeatureFlagTags,
 		editor,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -179,7 +165,6 @@ func (s *NotificationService) updateSubscriptionMySQL(
 	disabled *wrapperspb.BoolValue,
 	featureFlagTags []string,
 	editor *eventproto.Editor,
-	localizer locale.Localizer,
 ) (*notificationproto.Subscription, error) {
 	var updatedSubscription *notificationproto.Subscription
 	var event *eventproto.Event
@@ -216,14 +201,7 @@ func (s *NotificationService) updateSubscriptionMySQL(
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to update subscription",
@@ -255,15 +233,13 @@ func (s *NotificationService) DeleteSubscription(
 	ctx context.Context,
 	req *notificationproto.DeleteSubscriptionRequest,
 ) (*notificationproto.DeleteSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteSubscriptionRequest(req, localizer); err != nil {
+	if err := validateDeleteSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 
@@ -291,14 +267,7 @@ func (s *NotificationService) DeleteSubscription(
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to delete subscription",
@@ -329,28 +298,19 @@ func (s *NotificationService) GetSubscription(
 	ctx context.Context,
 	req *notificationproto.GetSubscriptionRequest,
 ) (*notificationproto.GetSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSubscriptionRequest(req, localizer); err != nil {
+	if err := validateGetSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	subscription, err := s.subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusNotFound.Err()
 		}
 		s.logger.Error(
 			"Failed to get subscription",
@@ -368,13 +328,12 @@ func (s *NotificationService) ListSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListSubscriptionsRequest,
 ) (*notificationproto.ListSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	var filterEnvironmentIDs []string
 	if req.OrganizationId != "" {
 		// console v3
 		editor, err := s.checkOrganizationRole(
 			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId, localizer)
+			req.OrganizationId)
 		if err != nil {
 			return nil, err
 		}
@@ -383,15 +342,14 @@ func (s *NotificationService) ListSubscriptions(
 		// console v2
 		_, err := s.checkEnvironmentRole(
 			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId,
-			localizer)
+			req.EnvironmentId)
 		if err != nil {
 			return nil, err
 		}
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
-	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
+	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -414,7 +372,6 @@ func (s *NotificationService) ListSubscriptions(
 		orders,
 		req.PageSize,
 		req.Cursor,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -457,7 +414,6 @@ func (s *NotificationService) getAllowedEnvironments(
 func (s *NotificationService) newSubscriptionListOrders(
 	orderBy notificationproto.ListSubscriptionsRequest_OrderBy,
 	orderDirection notificationproto.ListSubscriptionsRequest_OrderDirection,
-	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -473,14 +429,7 @@ func (s *NotificationService) newSubscriptionListOrders(
 	case notificationproto.ListSubscriptionsRequest_STATE:
 		column = "sub.disabled"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusInvalidOrderBy.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == notificationproto.ListSubscriptionsRequest_DESC {
@@ -493,11 +442,9 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledSubscriptionsRequest,
 ) (*notificationproto.ListEnabledSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-		localizer)
+		req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +459,6 @@ func (s *NotificationService) ListEnabledSubscriptions(
 		nil,
 		req.PageSize,
 		req.Cursor,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -533,7 +479,6 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
-	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	var filters []*mysql.FilterV2
 	var inFilters []*mysql.InFilter
@@ -596,14 +541,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, "", 0, statusInternal.Err()
-		}
-		return nil, "", 0, dt.Err()
+		return nil, "", 0, statusInvalidCursor.Err()
 	}
 	options := &mysql.ListOptions{
 		Limit:       limit,

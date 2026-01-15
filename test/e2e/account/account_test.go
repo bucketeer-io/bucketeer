@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ var (
 )
 
 func TestGetAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -66,20 +65,18 @@ func TestGetAccount(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
@@ -102,7 +99,6 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestCreateAccountV2(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -118,18 +114,16 @@ func TestCreateAccountV2(t *testing.T) {
 		EnvironmentId: "test",
 	}
 	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        firstName,
-			LastName:         lastName,
-			Language:         language,
-			AvatarImageUrl:   avatarURL,
-			Tags:             tags,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
-		},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        firstName,
+		LastName:         lastName,
+		Language:         language,
+		AvatarImageUrl:   avatarURL,
+		Tags:             tags,
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -179,7 +173,6 @@ func TestCreateAccountV2(t *testing.T) {
 }
 
 func TestCreateAccountV2Admin(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -195,18 +188,16 @@ func TestCreateAccountV2Admin(t *testing.T) {
 		EnvironmentId: "test",
 	}
 	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        firstName,
-			LastName:         lastName,
-			Language:         language,
-			AvatarImageUrl:   avatarURL,
-			Tags:             tags,
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
-		},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        firstName,
+		LastName:         lastName,
+		Language:         language,
+		AvatarImageUrl:   avatarURL,
+		Tags:             tags,
+		OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -226,7 +217,6 @@ func TestCreateAccountV2Admin(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -234,20 +224,18 @@ func TestListAccounts(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
@@ -268,93 +256,7 @@ func TestListAccounts(t *testing.T) {
 	}
 }
 
-func TestUpdateAccount(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newAccountClient(t)
-	defer c.Close()
-	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
-	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
-	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	newName := fmt.Sprintf("name-%v", time.Now().Unix())
-	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
-	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
-	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	newTags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
-	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-		ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-			Name: newName,
-		},
-		ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
-			FirstName: newFirstName,
-		},
-		ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
-			LastName: newLastName,
-		},
-		ChangeAvatarUrlCommand: &accountproto.ChangeAccountV2AvatarImageUrlCommand{
-			AvatarImageUrl: newAvatarURL,
-		},
-		ChangeTagsCommand: &accountproto.ChangeAccountV2TagsCommand{
-			Tags: newTags,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          email,
-		OrganizationId: defaultOrganizationID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Account.Email != email {
-		t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
-	}
-	if getResp.Account.OrganizationId != defaultOrganizationID {
-		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
-	}
-	if getResp.Account.Name != newName {
-		t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
-	}
-	if getResp.Account.FirstName != newFirstName {
-		t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
-	}
-	if getResp.Account.LastName != newLastName {
-		t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
-	}
-	if getResp.Account.AvatarImageUrl != newAvatarURL {
-		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
-	}
-	if !reflect.DeepEqual(getResp.Account.Tags, newTags) {
-		t.Fatalf("different tags, expected: %v, actual: %v", newTags, getResp.Account.Tags)
-	}
-}
-
-func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
+func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -468,7 +370,6 @@ func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
 	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DeleteAccountV2Command{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -558,7 +459,6 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 }
 
 func TestEnableAndDisableAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -566,30 +466,28 @@ func TestEnableAndDisableAccount(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
+	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DisableAccountV2Command{},
+		Disabled:       wrapperspb.Bool(true),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -605,10 +503,10 @@ func TestEnableAndDisableAccount(t *testing.T) {
 		t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
 	}
 
-	_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
+	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.EnableAccountV2Command{},
+		Disabled:       wrapperspb.Bool(false),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -626,7 +524,6 @@ func TestEnableAndDisableAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -634,20 +531,18 @@ func TestDeleteAccount(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
@@ -664,7 +559,6 @@ func TestDeleteAccount(t *testing.T) {
 	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
-		Command:        &accountproto.DeleteAccountV2Command{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -679,7 +573,6 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestCreateSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -687,20 +580,18 @@ func TestCreateSearchFilter(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
@@ -765,7 +656,6 @@ func TestCreateSearchFilter(t *testing.T) {
 }
 
 func TestUpdateSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -773,20 +663,18 @@ func TestUpdateSearchFilter(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})
@@ -902,7 +790,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 }
 
 func TestDeleteSearchFilter(t *testing.T) {
-	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -910,20 +797,18 @@ func TestDeleteSearchFilter(t *testing.T) {
 	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
 	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
-		OrganizationId: defaultOrganizationID,
-		Command: &accountproto.CreateAccountV2Command{
-			Name:             name,
-			Email:            email,
-			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
-			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
-			Language:         language,
-			Tags:             []string{"tag"},
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-					EnvironmentId: "test",
-				},
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		Tags:             []string{"tag"},
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				EnvironmentId: "test",
 			},
 		},
 	})

@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -50,67 +49,7 @@ func (s *AccountService) CreateAPIKey(
 		return nil, err
 	}
 
-	if req.Command == nil {
-		return s.createAPIKeyNoCommand(ctx, req, editor)
-	}
-
 	if err := validateCreateAPIKeyRequest(req); err != nil {
-		return nil, err
-	}
-	if req.Maintainer == "" {
-		req.Maintainer = editor.Email
-	}
-
-	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role, req.Maintainer, req.Description)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create a new api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewAPIKeyCommandHandler(
-			editor,
-			key,
-			s.publisher,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.CreateAPIKey(contextWithTx, key, req.EnvironmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
-			return nil, statusAPIKeyAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.CreateAPIKeyResponse{
-		ApiKey: key.APIKey,
-	}, nil
-}
-
-func (s *AccountService) createAPIKeyNoCommand(
-	ctx context.Context,
-	req *proto.CreateAPIKeyRequest,
-	editor *eventproto.Editor,
-) (*proto.CreateAPIKeyResponse, error) {
-	if err := validateCreateAPIKeyRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	if req.Maintainer == "" {
@@ -191,164 +130,6 @@ func (s *AccountService) createAPIKeyNoCommand(
 	return &proto.CreateAPIKeyResponse{
 		ApiKey: key.APIKey,
 	}, nil
-}
-
-func (s *AccountService) ChangeAPIKeyName(
-	ctx context.Context,
-	req *proto.ChangeAPIKeyNameRequest,
-) (*proto.ChangeAPIKeyNameResponse, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateChangeAPIKeyNameRequest(req); err != nil {
-		s.logger.Error(
-			"Failed to change api key name",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	if err := s.updateAPIKeyMySQL(
-		ctx,
-		editor,
-		req.Id,
-		req.EnvironmentId,
-		req.Command,
-	); err != nil {
-		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			return nil, statusAPIKeyNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to change api key name",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
-				zap.String("name", req.Command.Name),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.ChangeAPIKeyNameResponse{}, nil
-}
-
-func (s *AccountService) EnableAPIKey(
-	ctx context.Context,
-	req *proto.EnableAPIKeyRequest,
-) (*proto.EnableAPIKeyResponse, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateEnableAPIKeyRequest(req); err != nil {
-		s.logger.Error(
-			"Failed to enable api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	if err := s.updateAPIKeyMySQL(
-		ctx,
-		editor,
-		req.Id,
-		req.EnvironmentId,
-		req.Command,
-	); err != nil {
-		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			return nil, statusAPIKeyNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to enable api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.EnableAPIKeyResponse{}, nil
-}
-
-func (s *AccountService) DisableAPIKey(
-	ctx context.Context,
-	req *proto.DisableAPIKeyRequest,
-) (*proto.DisableAPIKeyResponse, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateDisableAPIKeyRequest(req); err != nil {
-		s.logger.Error(
-			"Failed to disable api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	if err := s.updateAPIKeyMySQL(
-		ctx,
-		editor,
-		req.Id,
-		req.EnvironmentId,
-		req.Command,
-	); err != nil {
-		if errors.Is(err, v2as.ErrAPIKeyNotFound) || errors.Is(err, v2as.ErrAPIKeyUnexpectedAffectedRows) {
-			return nil, statusAPIKeyNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to disable api key",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &proto.DisableAPIKeyResponse{}, nil
-}
-
-func (s *AccountService) updateAPIKeyMySQL(
-	ctx context.Context,
-	editor *eventproto.Editor,
-	id, environmentID string,
-	cmd command.Command,
-) error {
-	return s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, id, environmentID)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentID)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			return err
-		}
-		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, environmentID)
-	})
 }
 
 func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequest) (*proto.GetAPIKeyResponse, error) {
@@ -605,7 +386,7 @@ func (s *AccountService) UpdateAPIKey(
 		return nil, err
 	}
 
-	if err := validateUpdateAPIKeyRequestNoCommand(req); err != nil {
+	if err := validateUpdateAPIKeyRequest(req); err != nil {
 		return nil, err
 	}
 

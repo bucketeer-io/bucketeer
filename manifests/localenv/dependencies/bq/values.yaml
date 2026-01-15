@@ -4,13 +4,14 @@
 
 replicaCount: 1
 
-project: "default"
+project: "bucketeer-dev"
 
 image:
-  repository: ghcr.io/goccy/bigquery-emulator
+  # Using forked version for ARM64 support (upstream goccy/bigquery-emulator only supports amd64)
+  repository: ghcr.io/bucketeer-io/bigquery-emulator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "0.6.6"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -31,12 +32,6 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 service:
   type: ClusterIP

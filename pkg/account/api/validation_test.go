@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,101 +19,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
-
-func TestValidateCreateAccountV2Request(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc        string
-		req         *accountproto.CreateAccountV2Request
-		expectedErr error
-	}{
-		{
-			desc: "err: missing organization id",
-			req: &accountproto.CreateAccountV2Request{
-				Command: &accountproto.CreateAccountV2Command{},
-			},
-			expectedErr: statusMissingOrganizationID.Err(),
-		},
-		{
-			desc: "err: missing email",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command:        &accountproto.CreateAccountV2Command{},
-			},
-			expectedErr: statusEmailIsEmpty.Err(),
-		},
-		{
-			desc: "err: invalid email",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command: &accountproto.CreateAccountV2Command{
-					Email: "invalid-email",
-				},
-			},
-			expectedErr: statusInvalidEmail.Err(),
-		},
-		{
-			desc: "err: invalid organization role",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command: &accountproto.CreateAccountV2Command{
-					Email:            "test@example.com",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-				},
-			},
-			expectedErr: statusInvalidOrganizationRole.Err(),
-		},
-		{
-			desc: "err: missing environment roles for member",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command: &accountproto.CreateAccountV2Command{
-					Email:            "test@example.com",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-				},
-			},
-			expectedErr: statusInvalidEnvironmentRole.Err(),
-		},
-		{
-			desc: "success: admin role without environment roles",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command: &accountproto.CreateAccountV2Command{
-					Email:            "test@example.com",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-				},
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "success: member role with environment roles",
-			req: &accountproto.CreateAccountV2Request{
-				OrganizationId: "org-id",
-				Command: &accountproto.CreateAccountV2Command{
-					Email:            "test@example.com",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{EnvironmentId: "env-id", Role: accountproto.AccountV2_Role_Environment_VIEWER},
-					},
-				},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			err := validateCreateAccountV2Request(p.req)
-			if p.expectedErr != nil {
-				assert.Equal(t, p.expectedErr.Error(), err.Error())
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestVerifyEmailFormat(t *testing.T) {
 	t.Parallel()
@@ -133,7 +40,7 @@ func TestVerifyEmailFormat(t *testing.T) {
 	}
 }
 
-func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
+func TestValidateCreateAccountV2Request(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc        string
@@ -141,10 +48,8 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: missing organization id",
-			req: &accountproto.CreateAccountV2Request{
-				Command: &accountproto.CreateAccountV2Command{},
-			},
+			desc:        "err: missing organization id",
+			req:         &accountproto.CreateAccountV2Request{},
 			expectedErr: statusMissingOrganizationID.Err(),
 		},
 		{
@@ -204,7 +109,7 @@ func TestValidateCreateAccountV2NoCommandRequest(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateCreateAccountV2NoCommandRequest(p.req)
+			err := validateCreateAccountV2Request(p.req)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr.Error(), err.Error())
 			} else {
@@ -259,41 +164,6 @@ func TestValidateUpdateAccountV2Request(t *testing.T) {
 	patterns := []struct {
 		desc     string
 		req      *accountproto.UpdateAccountV2Request
-		commands []command.Command
-		expected error
-	}{
-		{
-			desc:     "err: no command",
-			req:      &accountproto.UpdateAccountV2Request{Email: "email@example.com", OrganizationId: "org-id"},
-			commands: []command.Command{},
-			expected: statusNoCommand.Err(),
-		},
-		{
-			desc: "success",
-			req:  &accountproto.UpdateAccountV2Request{Email: "email@example.com", OrganizationId: "org-id"},
-			commands: []command.Command{
-				&accountproto.ChangeAccountV2NameCommand{Name: "test"},
-			},
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateAccountV2Request(p.req, p.commands)
-			if p.expected != nil {
-				assert.Equal(t, p.expected.Error(), err.Error())
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc     string
-		req      *accountproto.UpdateAccountV2Request
 		expected error
 	}{
 		{
@@ -309,7 +179,7 @@ func TestValidateUpdateAccountV2NoCommandRequest(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateAccountV2NoCommandRequest(p.req)
+			err := validateUpdateAccountV2Request(p.req)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.Error(), err.Error())
 			} else {

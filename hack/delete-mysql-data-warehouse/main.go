@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package command
+package main
 
 import (
-	"context"
+	"log"
 
-	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 )
 
 var (
-	ErrUnknownCommand = pkgErr.NewErrorInvalidArgUnknown(pkgErr.ExperimentPackageName, "unknown command", "command")
+	name    = "delete-mysql-data-warehouse"
+	version = ""
+	build   = ""
 )
 
-type Command interface{}
-
-type Handler interface {
-	Handle(ctx context.Context, cmd Command) error
+func main() {
+	app := cli.NewApp(name, "Delete MySQL data warehouse data", version, build)
+	registerCommand(app, app)
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }

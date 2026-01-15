@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -241,6 +241,26 @@ func (u *evalEvtUpdater) updateUserCountPerClause(
 		if err := u.eventCounterCache.UpdateUserCount(key, userID); err != nil {
 			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeFailedToUpdateUserCount).Inc()
 			return err
+		}
+
+		// Migration: Double-write to target environment if migration is enabled
+		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+			keyTarget := u.newUserCountKey(
+				targetEnvID,
+				ruleID,
+				clauseID,
+				featureID,
+				variationID,
+				featureVersion,
+			)
+			if err := u.eventCounterCache.UpdateUserCount(keyTarget, userID); err != nil {
+				// Log but don't fail - migration writes are best-effort
+				u.logger.Warn("Migration: Failed to update user count for target environment",
+					zap.Error(err),
+					zap.String("targetEnvironmentId", targetEnvID),
+					zap.String("featureId", featureID),
+				)
+			}
 		}
 	}
 	return nil

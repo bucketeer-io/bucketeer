@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -126,10 +126,12 @@ func (u *experimentStatusUpdater) updateToRunning(
 		}
 		return nil
 	}
-	_, err := u.experimentClient.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
+	_, err := u.experimentClient.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		EnvironmentId: environmentId,
 		Id:            experiment.Id,
-		Command:       &experimentproto.StartExperimentCommand{},
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
 	})
 	if err != nil {
 		u.logger.Error("Failed to update status to running", zap.Error(err),
@@ -155,10 +157,12 @@ func (u *experimentStatusUpdater) updateToStopped(
 		}
 		return nil
 	}
-	_, err := u.experimentClient.FinishExperiment(ctx, &experimentproto.FinishExperimentRequest{
+	_, err := u.experimentClient.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		EnvironmentId: environmentId,
 		Id:            experiment.Id,
-		Command:       &experimentproto.FinishExperimentCommand{},
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_STOPPED,
+		},
 	})
 	if err != nil {
 		u.logger.Error("Failed to update status to stopped", zap.Error(err),

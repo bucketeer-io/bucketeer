@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,83 +53,7 @@ func (s *AccountService) CreateAccountV2(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createAccountV2NoCommand(ctx, req, editor)
-	}
-	if err := validateCreateAccountV2Request(req); err != nil {
-		s.logger.Error(
-			"Failed to create account",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-			)...,
-		)
-		return nil, err
-	}
-	account := domain.NewAccountV2(
-		req.Command.Email,
-		req.Command.Name,
-		req.Command.FirstName,
-		req.Command.LastName,
-		req.Command.Language,
-		req.Command.AvatarImageUrl,
-		req.Command.Tags,
-		nil,
-		req.OrganizationId,
-		req.Command.OrganizationRole,
-		req.Command.EnvironmentRoles,
-	)
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.CreateAccountV2(ctx, account)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
-			return nil, statusAccountAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create account",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.Any("environmentRoles", req.Command.EnvironmentRoles),
-				zap.String("email", req.Command.Email),
-				zap.Strings("tags", req.Command.Tags),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	// Upsert tags
-	for _, envRole := range req.Command.EnvironmentRoles {
-		if err := s.upsertTags(ctx, req.Command.Tags, envRole.EnvironmentId); err != nil {
-			s.logger.Error(
-				"Failed to upsert account tags",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationId", req.OrganizationId),
-					zap.String("environmentId", envRole.EnvironmentId),
-					zap.String("email", req.Command.Email),
-					zap.Strings("tags", req.Command.Tags),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
-}
-
-func (s *AccountService) createAccountV2NoCommand(
-	ctx context.Context,
-	req *accountproto.CreateAccountV2Request,
-	editor *eventproto.Editor,
-) (*accountproto.CreateAccountV2Response, error) {
-	err := validateCreateAccountV2NoCommandRequest(req)
+	err = validateCreateAccountV2Request(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create account",
@@ -308,7 +232,6 @@ func (s *AccountService) UpdateAccountV2(
 	ctx context.Context,
 	req *accountproto.UpdateAccountV2Request,
 ) (*accountproto.UpdateAccountV2Response, error) {
-	isAdmin := false
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
@@ -327,95 +250,9 @@ func (s *AccountService) UpdateAccountV2(
 		if editor.Email != req.Email {
 			return nil, statusPermissionDenied.Err()
 		}
-	} else {
-		isAdmin = true
 	}
 
-	if !isAdmin {
-		if err := s.checkRestrictedCommands(req); err != nil {
-			s.logger.Error(
-				"Member user is not allowed to update organization role or environment roles",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", req.OrganizationId),
-					zap.String("email", req.Email),
-				)...,
-			)
-			return nil, err
-		}
-	}
-
-	if isNoUpdateAccountV2Command(req) {
-		return s.updateAccountV2NoCommand(ctx, req, editor)
-	}
-	commands := s.getUpdateAccountV2Commands(req)
-	if err := validateUpdateAccountV2Request(req, commands); err != nil {
-		s.logger.Error(
-			"Failed to update account",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.String("email", req.Email),
-			)...,
-		)
-		return nil, err
-	}
-	updatedAccountPb, err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId)
-	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			return nil, statusAccountNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to update account",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.String("email", req.Email),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	// Upsert tags
-	if req.ChangeTagsCommand != nil {
-		for _, envRole := range updatedAccountPb.EnvironmentRoles {
-			if err := s.upsertTags(ctx, req.ChangeTagsCommand.Tags, envRole.EnvironmentId); err != nil {
-				s.logger.Error(
-					"Failed to upsert account tags",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("organizationId", req.OrganizationId),
-						zap.String("environmentId", envRole.EnvironmentId),
-						zap.String("email", updatedAccountPb.Email),
-						zap.Strings("tags", req.ChangeTagsCommand.Tags),
-					)...,
-				)
-				return nil, api.NewGRPCStatus(err).Err()
-			}
-		}
-	}
-	return &accountproto.UpdateAccountV2Response{
-		Account: updatedAccountPb,
-	}, nil
-}
-
-// checkRestrictedCommands checks if the request contains any restricted values changed
-// and returns a permission denied error if it does
-func (s *AccountService) checkRestrictedCommands(
-	req *accountproto.UpdateAccountV2Request,
-) error {
-	if req.ChangeOrganizationRoleCommand != nil ||
-		req.OrganizationRole != nil {
-		return statusPermissionDenied.Err()
-	}
-	return nil
-}
-
-func (s *AccountService) updateAccountV2NoCommand(
-	ctx context.Context,
-	req *accountproto.UpdateAccountV2Request,
-	editor *eventproto.Editor,
-) (*accountproto.UpdateAccountV2Response, error) {
-	err := validateUpdateAccountV2NoCommandRequest(req)
+	err = validateUpdateAccountV2Request(req)
 	if err != nil {
 		return nil, err
 	}
@@ -488,54 +325,6 @@ func (s *AccountService) updateAccountV2NoCommand(
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
-}
-
-func isNoUpdateAccountV2Command(req *accountproto.UpdateAccountV2Request) bool {
-	return req.ChangeNameCommand == nil &&
-		req.ChangeFirstNameCommand == nil &&
-		req.ChangeLastNameCommand == nil &&
-		req.ChangeLanguageCommand == nil &&
-		req.ChangeAvatarUrlCommand == nil &&
-		req.ChangeAvatarCommand == nil &&
-		req.ChangeTagsCommand == nil &&
-		req.ChangeOrganizationRoleCommand == nil &&
-		req.ChangeEnvironmentRolesCommand == nil &&
-		req.ChangeLastSeenCommand == nil
-}
-
-func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAccountV2Request) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.ChangeNameCommand != nil {
-		commands = append(commands, req.ChangeNameCommand)
-	}
-	if req.ChangeFirstNameCommand != nil {
-		commands = append(commands, req.ChangeFirstNameCommand)
-	}
-	if req.ChangeLastNameCommand != nil {
-		commands = append(commands, req.ChangeLastNameCommand)
-	}
-	if req.ChangeLanguageCommand != nil {
-		commands = append(commands, req.ChangeLanguageCommand)
-	}
-	if req.ChangeAvatarUrlCommand != nil {
-		commands = append(commands, req.ChangeAvatarUrlCommand)
-	}
-	if req.ChangeAvatarCommand != nil {
-		commands = append(commands, req.ChangeAvatarCommand)
-	}
-	if req.ChangeTagsCommand != nil {
-		commands = append(commands, req.ChangeTagsCommand)
-	}
-	if req.ChangeOrganizationRoleCommand != nil {
-		commands = append(commands, req.ChangeOrganizationRoleCommand)
-	}
-	if req.ChangeEnvironmentRolesCommand != nil {
-		commands = append(commands, req.ChangeEnvironmentRolesCommand)
-	}
-	if req.ChangeLastSeenCommand != nil {
-		commands = append(commands, req.ChangeLastSeenCommand)
-	}
-	return commands
 }
 
 func (s *AccountService) EnableAccountV2(

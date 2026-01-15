@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -308,8 +308,50 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			e.Metadata[appVersion],
 			e.VariationId,
 		).Inc()
+
+		// Migration: Double-write to the target environment ID if migration is enabled
+		// This ensures data exists in both old and new key formats during the migration period
+		if targetEnvID := getMigrationTargetEnvironmentID(environmentId); targetEnvID != "" {
+			p.incrementEvaluationCountMigration(e, vID, userID, targetEnvID)
+		}
 	}
 	return nil
+}
+
+// incrementEvaluationCountMigration writes evaluation counts to the migration target environment.
+// This is a best-effort operation - errors are logged but not returned to avoid
+// blocking the main write path during migration.
+func (p *evaluationCountEventPersister) incrementEvaluationCountMigration(
+	e *eventproto.EvaluationEvent,
+	variationID string,
+	userID string,
+	targetEnvID string,
+) {
+	// Write user count to target environment
+	ucKeyTarget := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
+	if err := p.countUser(ucKeyTarget, userID); err != nil {
+		if !strings.Contains(err.Error(), "client is closed") {
+			p.logger.Warn("Migration: Failed to increment evaluation user count for target environment",
+				zap.Error(err),
+				zap.String("targetEnvironmentId", targetEnvID),
+				zap.String("featureId", e.FeatureId),
+				zap.String("userCountKey", ucKeyTarget),
+			)
+		}
+	}
+
+	// Write event count to target environment
+	ecKeyTarget := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, variationID, targetEnvID, e.Timestamp)
+	if err := p.countEvent(ecKeyTarget); err != nil {
+		if !strings.Contains(err.Error(), "client is closed") {
+			p.logger.Warn("Migration: Failed to increment evaluation event count for target environment",
+				zap.Error(err),
+				zap.String("targetEnvironmentId", targetEnvID),
+				zap.String("featureId", e.FeatureId),
+				zap.String("eventCountKey", ecKeyTarget),
+			)
+		}
+	}
 }
 
 func (p *evaluationCountEventPersister) countEvent(key string) error {
@@ -600,10 +642,8 @@ func (p *evaluationCountEventPersister) writeUserAttributes() {
 func (p *evaluationCountEventPersister) upsertUserAttributes(
 	userAttributes *userproto.UserAttributes,
 ) error {
-	if err := p.userAttributesCacher.Put(
-		userAttributes,
-		time.Duration(p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL)*time.Second,
-	); err != nil {
+	ttl := time.Duration(p.evaluationCountEventPersisterConfig.UserAttributeKeyTTL) * time.Second
+	if err := p.userAttributesCacher.Put(userAttributes, ttl); err != nil {
 		p.logger.Error("Failed to save user attributes to cache",
 			zap.Error(err),
 			zap.String("environmentId", userAttributes.EnvironmentId),
@@ -611,11 +651,21 @@ func (p *evaluationCountEventPersister) upsertUserAttributes(
 			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
 		)
 		return err
-	} else {
-		p.logger.Debug("Successfully saved user attributes to cache",
-			zap.String("environmentId", userAttributes.EnvironmentId),
-			zap.Int("attributeCount", len(userAttributes.UserAttributes)),
-		)
-		return nil
 	}
+
+	// MIGRATION: Double-write to the target environment ID if configured
+	if targetEnvID := getMigrationTargetEnvironmentID(userAttributes.EnvironmentId); targetEnvID != "" {
+		migrationAttrs := &userproto.UserAttributes{
+			EnvironmentId:  targetEnvID,
+			UserAttributes: userAttributes.UserAttributes,
+		}
+		if err := p.userAttributesCacher.Put(migrationAttrs, ttl); err != nil {
+			p.logger.Error("Migration: Failed to save user attributes for target environment",
+				zap.Error(err),
+				zap.String("fromEnvironmentId", userAttributes.EnvironmentId),
+				zap.String("toEnvironmentId", targetEnvID),
+			)
+		}
+	}
+	return nil
 }

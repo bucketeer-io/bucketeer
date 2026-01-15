@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -958,19 +958,16 @@ func unmarshalDatetimeClause(t *testing.T, clause *autoopsproto.Clause) *autoops
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {
 	t.Helper()
 	goalID := createGoalID(t)
-	cmd := &experimentproto.CreateGoalCommand{
-		Id:          goalID,
-		Name:        goalID,
-		Description: goalID,
-	}
 	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		Command:       cmd,
+		Id:            goalID,
+		Name:          goalID,
+		Description:   goalID,
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return cmd.Id
+	return goalID
 }
 
 func createOpsEventRateClause(t *testing.T, variationID, goalID string) *autoopsproto.OpsEventRateClause {

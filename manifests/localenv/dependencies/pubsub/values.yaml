@@ -5,7 +5,7 @@
 replicaCount: 1
 
 gcp:
-  project: bucketeer-test
+  project: bucketeer-dev
 
 image:
   repository: gcr.io/google.com/cloudsdktool/google-cloud-cli
@@ -33,12 +33,6 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 service:
   type: ClusterIP

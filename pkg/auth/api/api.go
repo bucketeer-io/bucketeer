@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,7 +39,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	envdomain "github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -166,14 +164,13 @@ func (s *authService) GetAuthenticationURL(
 	ctx context.Context,
 	req *authproto.GetAuthenticationURLRequest,
 ) (*authproto.GetAuthenticationURLResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	// The state parameter is used to help mitigate CSRF attacks.
 	// Before sending a request to get authCodeURL, the client has to generate a random string,
 	// store it in local and set to the state parameter in GetAuthenticationURLRequest.
 	// When the client is redirected back, the state value will be included in that redirect.
 	// Client compares the returned state to the one generated before,
 	// if the values match then send a new request to ExchangeToken, else deny it.
-	if err := validateGetAuthenticationURLRequest(req, localizer); err != nil {
+	if err := validateGetAuthenticationURLRequest(req); err != nil {
 		s.logger.Error("Failed to validate the get authentication url request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
@@ -182,7 +179,7 @@ func (s *authService) GetAuthenticationURL(
 		)
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(req.Type, localizer)
+	authenticator, err := s.getAuthenticator(req.Type)
 	if err != nil {
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
@@ -209,8 +206,7 @@ func (s *authService) ExchangeToken(
 	ctx context.Context,
 	req *authproto.ExchangeTokenRequest,
 ) (*authproto.ExchangeTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateExchangeTokenRequest(req, localizer); err != nil {
+	if err := validateExchangeTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate the exchange token request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
@@ -219,7 +215,7 @@ func (s *authService) ExchangeToken(
 		)
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(req.Type, localizer)
+	authenticator, err := s.getAuthenticator(req.Type)
 	if err != nil {
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
@@ -240,7 +236,7 @@ func (s *authService) ExchangeToken(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email)
 	if err != nil {
 		s.logger.Error("Failed to get organizations by email",
 			zap.Error(err),
@@ -254,7 +250,7 @@ func (s *authService) ExchangeToken(
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -266,7 +262,7 @@ func (s *authService) ExchangeToken(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin, localizer)
+	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
@@ -284,8 +280,7 @@ func (s *authService) RefreshToken(
 	ctx context.Context,
 	req *authproto.RefreshTokenRequest,
 ) (*authproto.RefreshTokenResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	if err := validateRefreshTokenRequest(req, localizer); err != nil {
+	if err := validateRefreshTokenRequest(req); err != nil {
 		s.logger.Error("Failed to validate refresh token request",
 			zap.Error(err),
 			zap.String("refresh_token", req.RefreshToken),
@@ -295,16 +290,9 @@ func (s *authService) RefreshToken(
 	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		s.logger.Error("Refresh token is invalid", zap.Any("refresh_token", refreshToken))
-		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
-	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)
 	if err != nil {
 		s.logger.Error("Failed to get organizations by email",
 			zap.Error(err),
@@ -315,7 +303,7 @@ func (s *authService) RefreshToken(
 	}
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, refreshToken.Email, organizations, localizer)
+	account, err := s.checkAccountStatus(ctx, refreshToken.Email, organizations)
 	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
@@ -327,7 +315,7 @@ func (s *authService) RefreshToken(
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	newToken, err := s.generateToken(ctx, refreshToken.Email, accountDomain, isSystemAdmin, localizer)
+	newToken, err := s.generateToken(ctx, refreshToken.Email, accountDomain, isSystemAdmin)
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate token",
@@ -345,7 +333,6 @@ func (s *authService) SwitchOrganization(
 	ctx context.Context,
 	req *authproto.SwitchOrganizationRequest,
 ) (*authproto.SwitchOrganizationResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
 	newOrganizationID := req.OrganizationId
 
 	// Verify the access token
@@ -356,18 +343,11 @@ func (s *authService) SwitchOrganization(
 			"Failed to verify access token",
 			append(fields, zap.Error(err))...,
 		)
-		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 
 	// Get the organizations that the user belongs to
-	organizations, err := s.getOrganizationsByEmail(ctx, accessToken.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, accessToken.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +355,7 @@ func (s *authService) SwitchOrganization(
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
 	if isSystemAdmin {
-		account, err := s.checkAccountStatus(ctx, accessToken.Email, organizations, localizer)
+		account, err := s.checkAccountStatus(ctx, accessToken.Email, organizations)
 		if err != nil {
 			return nil, err
 		}
@@ -393,7 +373,6 @@ func (s *authService) SwitchOrganization(
 			accessToken.Email,
 			accountDomain,
 			isSystemAdmin,
-			localizer,
 		)
 		if err != nil {
 			return nil, err
@@ -422,14 +401,7 @@ func (s *authService) SwitchOrganization(
 			zap.String("email", accessToken.Email),
 			zap.String("organizationID", newOrganizationID),
 		)
-		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnauthenticated.Err()
 	}
 
 	// Generate new tokens with the new organization ID
@@ -438,7 +410,6 @@ func (s *authService) SwitchOrganization(
 		accessToken.Email,
 		accountDomain,
 		isSystemAdmin,
-		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -451,7 +422,6 @@ func (s *authService) SwitchOrganization(
 
 func (s *authService) getAuthenticator(
 	authType authproto.AuthType,
-	localizer locale.Localizer,
 ) (auth.Authenticator, error) {
 	var authenticator auth.Authenticator
 	switch authType {
@@ -461,14 +431,7 @@ func (s *authService) getAuthenticator(
 
 	default:
 		s.logger.Error("Unknown auth type", zap.String("authType", authType.String()))
-		dt, err := auth.StatusUnknownAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "auth_type"),
-		})
-		if err != nil {
-			return nil, err
-		}
-		return nil, dt.Err()
+		return nil, statusUnknownAuthType.Err()
 	}
 	return authenticator, nil
 }
@@ -476,7 +439,6 @@ func (s *authService) getAuthenticator(
 func (s *authService) getOrganizationsByEmail(
 	ctx context.Context,
 	email string,
-	localizer locale.Localizer,
 ) ([]*envproto.Organization, error) {
 	orgResp, err := s.accountClient.GetMyOrganizationsByEmail(
 		ctx,
@@ -497,14 +459,7 @@ func (s *authService) getOrganizationsByEmail(
 			"The account is not registered in any organization",
 			zap.String("email", email),
 		)
-		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, statusUnapprovedAccount.Err()
 	}
 	return orgResp.Organizations, nil
 }
@@ -649,9 +604,8 @@ func (s *authService) generateToken(
 	userEmail string,
 	accountDomain domain.AccountV2,
 	isSystemAdmin bool,
-	localizer locale.Localizer,
 ) (*authproto.Token, error) {
-	if err := s.checkEmail(userEmail, localizer); err != nil {
+	if err := s.checkEmail(userEmail); err != nil {
 		s.logger.Error(
 			"Access denied email",
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", userEmail))...,
@@ -709,24 +663,14 @@ func (s *authService) generateToken(
 	}, nil
 }
 
-func (s *authService) checkEmail(
-	email string,
-	localizer locale.Localizer,
-) error {
+func (s *authService) checkEmail(email string) error {
 	if s.opts.emailFilter == nil {
 		return nil
 	}
 	if s.opts.emailFilter.MatchString(email) {
 		return nil
 	}
-	dt, err := auth.StatusAccessDeniedEmail.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.PermissionDenied),
-	})
-	if err != nil {
-		return auth.StatusInternal.Err()
-	}
-	return dt.Err()
+	return statusAccessDeniedEmail.Err()
 }
 
 // Check if the user has at least one account enabled in any Organization
@@ -734,7 +678,6 @@ func (s *authService) checkAccountStatus(
 	ctx context.Context,
 	email string,
 	organizations []*envproto.Organization,
-	localizer locale.Localizer,
 ) (*acproto.GetAccountV2Response, error) {
 	for _, org := range organizations {
 		resp, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
@@ -756,14 +699,7 @@ func (s *authService) checkAccountStatus(
 		}
 	}
 	// The account wasn't found or doesn't belong to any organization
-	dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.UnauthenticatedError),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return nil, dt.Err()
+	return nil, statusUnauthenticated.Err()
 }
 
 func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) bool {

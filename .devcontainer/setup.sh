@@ -72,6 +72,25 @@ if ! grep -q "/home/codespace/go-tools/bin" ~/.bashrc; then
     print_status "Added Go tools to PATH in ~/.bashrc for persistence"
 fi
 
+# Add kubectl autocomplete if kubectl is available
+# Note: bash-completion package is pre-installed in the devcontainer image
+if command -v kubectl &> /dev/null; then
+    if ! grep -q "kubectl completion bash" ~/.bashrc; then
+        echo '' >> ~/.bashrc
+        echo '# kubectl autocomplete' >> ~/.bashrc
+        echo '# Ensure bash-completion is loaded first (required for kubectl completion)' >> ~/.bashrc
+        echo 'if [ -f /usr/share/bash-completion/bash_completion ]; then' >> ~/.bashrc
+        echo '    source /usr/share/bash-completion/bash_completion' >> ~/.bashrc
+        echo 'elif [ -f /etc/bash_completion ]; then' >> ~/.bashrc
+        echo '    source /etc/bash_completion' >> ~/.bashrc
+        echo 'fi' >> ~/.bashrc
+        echo 'source <(kubectl completion bash)' >> ~/.bashrc
+        echo 'alias k=kubectl' >> ~/.bashrc
+        echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
+        print_status "Added kubectl autocomplete to ~/.bashrc"
+    fi
+fi
+
 # Function to fix permissions on cache directories
 fix_cache_permissions() {
     print_status "Ensuring cache directories have correct permissions..."
@@ -184,13 +203,13 @@ install_go_tools() {
 
     # Install tools with better error handling
     print_status "Installing goimports..."
-    go install golang.org/x/tools/cmd/goimports@latest || {
+    go install golang.org/x/tools/cmd/goimports@v0.40.0 || {
         print_warning "goimports installation failed, retrying with proxy settings..."
         GOPROXY=direct go install golang.org/x/tools/cmd/goimports@latest
     }
 
     print_status "Installing golangci-lint..."
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2
 
     print_status "Installing mockgen..."
     go install go.uber.org/mock/mockgen@v0.4.0
@@ -280,12 +299,34 @@ install_node_deps() {
 
     cd "$dir"
 
+    # Handle .npmrc file if it requires NPM_TOKEN but token is not set
+    local npmrc_backup=""
+    if [ -f ".npmrc" ] && grep -q "\${NPM_TOKEN}" .npmrc 2>/dev/null; then
+        if [ -z "${NPM_TOKEN:-}" ]; then
+            print_status "$name: NPM_TOKEN not set, temporarily disabling .npmrc for installation"
+            npmrc_backup=".npmrc.backup"
+            mv .npmrc "$npmrc_backup" || true
+        fi
+    fi
+
     # Use optimized yarn flags for faster, deterministic installs
     yarn install --frozen-lockfile --silent || {
         print_error "yarn install failed for $name, continuing..."
+        # Restore .npmrc if it was backed up
+        if [ -n "$npmrc_backup" ] && [ -f "$npmrc_backup" ]; then
+            mv "$npmrc_backup" .npmrc || true
+        fi
         cd /workspaces/bucketeer
         return 1
     }
+
+    # Update node_modules timestamp to prevent false warnings with Docker volumes
+    touch node_modules
+
+    # Restore .npmrc if it was backed up
+    if [ -n "$npmrc_backup" ] && [ -f "$npmrc_backup" ]; then
+        mv "$npmrc_backup" .npmrc || true
+    fi
 
     cd /workspaces/bucketeer
     print_success "$name dependencies installed"

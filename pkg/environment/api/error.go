@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,88 +20,89 @@ import (
 )
 
 var (
-	statusInternal  = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
+	statusInternal = api.NewGRPCStatus(
+		pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error"))
 	statusNoCommand = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.EnvironmentPackageName, "no command", "command"))
+		pkgErr.NewErrorInvalidArgNil(pkgErr.EnvironmentPackageName, "no command", "Command"))
 	statusInvalidCursor = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "cursor is invalid", "cursor"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "cursor is invalid", "Cursor"))
 	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	//statusEnvironmentIDRequired = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
 	statusEnvironmentNameRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.EnvironmentPackageName,
 			"environment name must be specified",
-			"environment_name",
+			"EnvironmentName",
 		))
 	statusInvalidEnvironmentName = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid environment name",
-			"environment_name",
+			"EnvironmentName",
 		))
 	statusInvalidEnvironmentUrlCode = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName,
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
 			"invalid environment url code",
-			"environment_url_code",
+			"EnvironmentUrlCode",
 		))
 	statusProjectIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project id must be specified", "project_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project id must be specified", "ProjectId"))
 	statusProjectNameRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project name must be specified", "project_name"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project name must be specified", "ProjectName"))
 	statusInvalidProjectName = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "invalid project name", "project_name"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "invalid project name", "ProjectName"))
 	statusInvalidProjectUrlCode = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid project url code",
-			"project_url_code",
+			"ProjectUrlCode",
 		))
 	statusInvalidProjectCreatorEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid project creator email",
-			"project_creator_email",
+			"Email",
 		))
 	statusInvalidOrganizationCreatorEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid organization creator email",
-			"organization_creator_email",
+			"Email",
 		))
 	statusInvalidOrderBy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "order_by is invalid", "order_by"))
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "order_by is invalid", "OrderBy"))
 	statusOrganizationIDRequired = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "organization id must be specified", "organization_id"))
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "organization id must be specified", "OrganizationId"))
 	statusOrganizationNameRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.EnvironmentPackageName,
 			"organization name must be specified",
-			"organization_name",
+			"OrganizationName",
 		))
 	statusInvalidOrganizationName = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid organization name",
-			"organization_name",
+			"OrganizationName",
 		))
 	statusInvalidOrganizationUrlCode = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,
 			"invalid organization url code",
-			"organization_url_code",
+			"OrganizationUrlCode",
 		))
 	statusCannotUpdateSystemAdmin = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(
+		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.EnvironmentPackageName,
 			"cannot update system admin organization",
-			"system_admin_organization",
 		))
 	statusEnvironmentNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "environment"))
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "Environment"))
 	statusProjectNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "project not found", "project"))
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "project not found", "Project"))
 	statusOrganizationNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "organization not found", "organization"))
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "organization not found", "Organization"))
 	statusEnvironmentAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.EnvironmentPackageName, "environment already exists"))
 	statusProjectAlreadyExists = api.NewGRPCStatus(
@@ -114,10 +115,22 @@ var (
 		pkgErr.NewErrorUnauthenticated(pkgErr.EnvironmentPackageName, "unauthenticated"))
 	statusPermissionDenied = api.NewGRPCStatus(
 		pkgErr.NewErrorPermissionDenied(pkgErr.EnvironmentPackageName, "permission denied"))
-	statusNotFound = api.NewGRPCStatus(
-		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "not found", "account"))
+	statusAccountNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "account not found", "Account"))
 	statusDemoSiteDisabled = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "demo site is not enabled"))
 	statusUserAlreadyInOrganization = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.EnvironmentPackageName, "user already in organization"))
+	statusInvalidAutoArchiveUnusedDays = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"auto_archive_unused_days must be greater than 0 when auto_archive is enabled",
+			"auto_archive_unused_days",
+		))
+	statusAutoArchiveNotEnabled = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.EnvironmentPackageName,
+			"cannot update auto-archive settings when auto_archive_enabled is false",
+			"auto_archive_settings",
+		))
 )

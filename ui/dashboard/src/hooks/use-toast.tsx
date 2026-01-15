@@ -1,12 +1,19 @@
 import { ReactNode } from 'react';
 import toast, { Toast } from 'react-hot-toast';
+import { Trans } from 'react-i18next';
 import { AxiosError } from 'axios';
 import { useTranslation } from 'i18n';
 import ToastMessage from 'components/toast';
 
 type ToastType = 'toast' | 'info-message' | 'prerequisite-message';
 type MessageType = 'success' | 'info' | 'warning' | 'error';
-export type ServerErrorType = AxiosError<{ message?: string }>;
+type BackendErrorMetadata = {
+  metadata: Record<string, string | undefined>;
+};
+export type ServerErrorType = AxiosError<{
+  message?: string;
+  details?: BackendErrorMetadata[];
+}>;
 
 export type NotifyProps = {
   toastType?: ToastType;
@@ -19,7 +26,7 @@ export type NotifyProps = {
 };
 
 export const useToast = () => {
-  const { t } = useTranslation(['message']);
+  const { t } = useTranslation(['message', 'backend']);
   const notify = ({
     toastType = 'toast',
     messageType = 'success',
@@ -45,11 +52,38 @@ export const useToast = () => {
     );
 
   const errorNotify = (error?: unknown, message?: string) => {
-    const { response } = (error as ServerErrorType) || {};
-    const _message = response?.data.message;
-    return notify({
-      messageType: 'error',
-      message: message || _message || t('something-went-wrong')
+    const response = (error as ServerErrorType | undefined)?.response;
+    const details = response?.data?.details;
+    if (!details?.length) {
+      return notify({
+        messageType: 'error',
+        message: message || t('something-went-wrong')
+      });
+    }
+    details.forEach(({ metadata }) => {
+      const errorMessage = (
+        <Trans
+          i18nKey={
+            metadata?.messageKey
+              ? `backend:errors.${metadata.messageKey}`
+              : 'message:something-went-wrong'
+          }
+          values={Object.fromEntries(
+            Object.entries(metadata || {})
+              .filter(([key]) => key !== 'messageKey')
+              .map(([key, value]) => [
+                key,
+                value
+                  ? t(`backend:nouns.${value}`, { defaultValue: value })
+                  : value
+              ])
+          )}
+        />
+      );
+      return notify({
+        messageType: 'error',
+        message: errorMessage
+      });
     });
   };
   return {

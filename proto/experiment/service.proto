@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
-import "proto/experiment/command.proto";
 import "proto/experiment/goal.proto";
 import "proto/experiment/experiment.proto";
 
@@ -67,12 +66,7 @@ message ListGoalsResponse {
 }
 
 message CreateGoalRequest {
-  CreateGoalCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateGoalCommand
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -85,23 +79,9 @@ message CreateGoalResponse {
   Goal goal = 1;
 }
 
-message ArchiveGoalRequest {
-  string id = 1;
-  ArchiveGoalCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message ArchiveGoalResponse {}
-
 message DeleteGoalRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  DeleteGoalCommand command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // DeleteGoalCommand
   reserved 3;
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
@@ -110,18 +90,8 @@ message DeleteGoalResponse {}
 
 message UpdateGoalRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  RenameGoalCommand rename_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeDescriptionGoalCommand change_description_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // RenameGoalCommand rename_command
+  reserved 3;  // ChangeDescriptionGoalCommand change_description_command
   reserved 4;
   string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 6;
@@ -192,12 +162,7 @@ message ListExperimentsResponse {
 }
 
 message CreateExperimentRequest {
-  CreateExperimentCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateExperimentCommand
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -223,24 +188,9 @@ message UpdateExperimentRequest {
   reserved 3;  // ChangeStopAtExperimentCommand change_stop_at_command = 3
                // [deprecated = true];
   reserved 4;
-  ChangeExperimentPeriodCommand change_experiment_period_command = 5 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeExperimentNameCommand change_name_command = 6 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeExperimentDescriptionCommand change_description_command = 7 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 5;  // ChangeExperimentPeriodCommand change_experiment_period_command
+  reserved 6;  // ChangeExperimentNameCommand change_name_command
+  reserved 7;  // ChangeExperimentDescriptionCommand change_description_command
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 9;
   google.protobuf.StringValue description = 10;
@@ -257,45 +207,9 @@ message UpdateExperimentResponse {
   Experiment experiment = 1;
 }
 
-message StartExperimentRequest {
-  reserved 1;
-  string id = 2;
-  StartExperimentCommand command = 3;
-  string environment_id = 4;
-}
-
-message StartExperimentResponse {}
-
-message FinishExperimentRequest {
-  reserved 1;
-  string id = 2;
-  FinishExperimentCommand command = 3;
-  string environment_id = 4;
-}
-
-message FinishExperimentResponse {}
-
-message StopExperimentRequest {
-  string id = 1;
-  StopExperimentCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message StopExperimentResponse {}
-
-message ArchiveExperimentRequest {
-  string id = 1;
-  ArchiveExperimentCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message ArchiveExperimentResponse {}
-
 message DeleteExperimentRequest {
   string id = 1;
-  DeleteExperimentCommand command = 2;
+  reserved 2;  // DeleteExperimentCommand
   reserved 3;
   string environment_id = 4;
 }
@@ -437,7 +351,6 @@ service ExperimentService {
       }
     };
   }
-  rpc ArchiveGoal(ArchiveGoalRequest) returns (ArchiveGoalResponse) {}
   rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {
     option (google.api.http) = {
       delete: "/v1/goal"
@@ -609,13 +522,49 @@ service ExperimentService {
       }
     };
   }
-  rpc StartExperiment(StartExperimentRequest)
-      returns (StartExperimentResponse) {}
-  rpc FinishExperiment(FinishExperimentRequest)
-      returns (FinishExperimentResponse) {}
-  rpc StopExperiment(StopExperimentRequest) returns (StopExperimentResponse) {}
-  rpc ArchiveExperiment(ArchiveExperimentRequest)
-      returns (ArchiveExperimentResponse) {}
   rpc DeleteExperiment(DeleteExperimentRequest)
-      returns (DeleteExperimentResponse) {}
+      returns (DeleteExperimentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/experiment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete"
+      description: "Delete an experiment."
+      tags: "experiment"
+      operation_id: "web.v1.experiment.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the experiment is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

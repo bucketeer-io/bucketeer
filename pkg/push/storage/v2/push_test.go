@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -276,7 +276,7 @@ func TestListPushes(t *testing.T) {
 				Limit:  10,
 				Offset: 5,
 				Filters: []*mysql.FilterV2{
-					&mysql.FilterV2{
+					{
 						Column:   "num",
 						Operator: mysql.OperatorGreaterThanOrEqual,
 						Value:    5,
@@ -287,7 +287,7 @@ func TestListPushes(t *testing.T) {
 				JSONFilters: nil,
 				SearchQuery: nil,
 				Orders: []*mysql.Order{
-					&mysql.Order{
+					{
 						Column:    "id",
 						Direction: mysql.OrderDirectionAsc,
 					},

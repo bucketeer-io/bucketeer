@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,14 +93,12 @@ func (c *command) createAccount(
 		},
 	}
 	req := &accountproto.CreateAccountV2Request{
-		Command: &accountproto.CreateAccountV2Command{
-			Email:            *c.email,
-			Name:             strings.Split(*c.email, "@")[0],
-			AvatarImageUrl:   "",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: envRoles,
-		},
-		OrganizationId: *c.organizationID,
+		Email:            *c.email,
+		Name:             strings.Split(*c.email, "@")[0],
+		AvatarImageUrl:   "",
+		OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		EnvironmentRoles: envRoles,
+		OrganizationId:   *c.organizationID,
 	}
 	if _, err := client.CreateAccountV2(ctx, req); err != nil {
 		return err

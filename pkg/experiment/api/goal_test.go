@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,18 +19,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -47,15 +43,6 @@ func TestGetGoalMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -71,7 +58,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			setup:         nil,
 			id:            "",
 			environmentId: "ns0",
-			expectedErr:   createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr:   statusGoalIDRequired.Err(),
 		},
 		{
 			desc: "error: ErrNotFound",
@@ -82,7 +69,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			},
 			id:            "id-0",
 			environmentId: "ns0",
-			expectedErr:   createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr:   statusGoalNotFound.Err(),
 		},
 		{
 			desc:          "error: ErrPermissionDenied",
@@ -90,7 +77,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			id:            "id-1",
 			environmentId: "ns0",
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -137,15 +124,6 @@ func TestListGoalMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -160,7 +138,7 @@ func TestListGoalMySQL(t *testing.T) {
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			req:         &experimentproto.ListGoalsRequest{EnvironmentId: "ns0"},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "success",
@@ -201,102 +179,6 @@ func TestCreateGoalMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
-	patterns := []struct {
-		setup       func(s *experimentService)
-		req         *experimentproto.CreateGoalRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.CreateGoalRequest{
-				Command:       &experimentproto.CreateGoalCommand{Id: ""},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.CreateGoalRequest{
-				Command:       &experimentproto.CreateGoalCommand{Id: "bucketeer_goal_id?"},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusInvalidGoalID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id")),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.CreateGoalRequest{
-				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: ""},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrGoalAlreadyExists)
-			},
-			req: &experimentproto.CreateGoalRequest{
-				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: "name-0"},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &experimentproto.CreateGoalRequest{
-				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2020", Name: "name-1"},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.CreateGoal(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestCreateGoalNoCommandMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -312,7 +194,7 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 				Name:          "name-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc:  "error: invalid Id",
@@ -322,7 +204,7 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 				Name:          "name-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusInvalidGoalID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id")),
+			expectedErr: statusInvalidGoalID.Err(),
 		},
 		{
 			desc:  "error: missing Name",
@@ -332,7 +214,7 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 				Id:            "Bucketeer-id-2019",
 				Name:          "",
 			},
-			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusGoalNameRequired.Err(),
 		},
 		{
 			desc: "error: ErrGoalAlreadyExists",
@@ -346,7 +228,7 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 				Name:          "name-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+			expectedErr: statusAlreadyExists.Err(),
 		},
 		{
 			desc: "success",
@@ -386,94 +268,6 @@ func TestUpdateGoalMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
-	patterns := []struct {
-		setup       func(*experimentService)
-		req         *experimentproto.UpdateGoalRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.UpdateGoalRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrGoalNotFound)
-			},
-			req: &experimentproto.UpdateGoalRequest{
-				Id:            "id-0",
-				RenameCommand: &experimentproto.RenameGoalCommand{Name: "name-0"},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Goal{
-					Goal: &experimentproto.Goal{
-						Id: "id-1",
-					},
-				}, nil)
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &experimentproto.UpdateGoalRequest{
-				Id:            "id-1",
-				RenameCommand: &experimentproto.RenameGoalCommand{Name: "name-1"},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.UpdateGoal(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestUpdateGoalNoCommandMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -487,7 +281,7 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 			req: &experimentproto.UpdateGoalRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			desc:  "error: name empty",
@@ -497,7 +291,7 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 				Name:          wrapperspb.String(""),
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusGoalNameRequired.Err(),
 		},
 		{
 			desc: "error: not found",
@@ -511,7 +305,7 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 				Name:          wrapperspb.String("name-0"),
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusGoalNotFound.Err(),
 		},
 		{
 			desc: "success",
@@ -577,93 +371,6 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 	}
 }
 
-func TestArchiveGoalMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
-	patterns := []struct {
-		setup       func(*experimentService)
-		req         *experimentproto.ArchiveGoalRequest
-		expectedErr error
-	}{
-		{
-			setup: nil,
-			req: &experimentproto.ArchiveGoalRequest{
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.ArchiveGoalRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrGoalNotFound)
-			},
-			req: &experimentproto.ArchiveGoalRequest{
-				Id:            "id-0",
-				Command:       &experimentproto.ArchiveGoalCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
-		},
-		{
-			setup: func(s *experimentService) {
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Goal{
-					Goal: &experimentproto.Goal{
-						Id: "id-1",
-					},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &experimentproto.ArchiveGoalRequest{
-				Id:            "id-1",
-				Command:       &experimentproto.ArchiveGoalCommand{},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.ArchiveGoal(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
 func TestDeleteGoalMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -672,15 +379,6 @@ func TestDeleteGoalMySQL(t *testing.T) {
 	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		setup       func(*experimentService)
@@ -692,7 +390,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 			req: &experimentproto.DeleteGoalRequest{
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -704,7 +402,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 				Id:            "id-0",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusGoalNotFound.Err(),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -756,15 +454,6 @@ func TestGoalPermissionDenied(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc     string
 		action   func(context.Context, *experimentService) error
@@ -776,7 +465,7 @@ func TestGoalPermissionDenied(t *testing.T) {
 				_, err := es.CreateGoal(ctx, &experimentproto.CreateGoalRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "UpdateGoal",
@@ -784,7 +473,7 @@ func TestGoalPermissionDenied(t *testing.T) {
 				_, err := es.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 		{
 			desc: "DeleteGoal",
@@ -792,7 +481,7 @@ func TestGoalPermissionDenied(t *testing.T) {
 				_, err := es.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{})
 				return err
 			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: statusPermissionDenied.Err(),
 		},
 	}
 	for _, p := range patterns {

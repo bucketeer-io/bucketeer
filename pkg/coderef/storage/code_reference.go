@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -38,6 +39,8 @@ var (
 	countCodeReferencesSQL string
 	//go:embed sql/code_reference/delete_code_reference.sql
 	deleteCodeReferenceSQL string
+	//go:embed sql/code_reference/count_code_references_by_feature_ids.sql
+	countCodeReferencesByFeatureIDsSQL string
 )
 
 type contextKey string
@@ -243,4 +246,47 @@ func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id strin
 		return ErrCodeReferenceNotFound
 	}
 	return nil
+}
+
+// GetCodeReferenceCountsByFeatureIDs returns a map of feature ID to code reference count
+// for the given environment. This is used for bulk archivability evaluation to avoid N+1 queries.
+func (s *codeReferenceStorage) GetCodeReferenceCountsByFeatureIDs(
+	ctx context.Context,
+	environmentID string,
+	featureIDs []string,
+) (map[string]int64, error) {
+	result := make(map[string]int64, len(featureIDs))
+	if len(featureIDs) == 0 {
+		return result, nil
+	}
+
+	// Build placeholders for IN clause
+	placeholders := make([]string, len(featureIDs))
+	args := make([]interface{}, len(featureIDs)+1)
+	args[0] = environmentID
+	for i, id := range featureIDs {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	query := fmt.Sprintf(countCodeReferencesByFeatureIDsSQL, strings.Join(placeholders, ", "))
+	rows, err := s.qe(ctx).QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var featureID string
+		var count int64
+		if err := rows.Scan(&featureID, &count); err != nil {
+			return nil, err
+		}
+		result[featureID] = count
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

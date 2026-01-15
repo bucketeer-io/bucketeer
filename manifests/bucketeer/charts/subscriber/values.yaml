@@ -18,6 +18,17 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
+  # Migration settings for environment ID migration
+  # Set these when migrating an environment from an old ID (e.g., empty string) to a new UUID
+  # After 31 days of double-write, set enabled to false and run the MySQL migration
+  migration:
+    environmentId:
+      # Enable the migration double-write (must be explicitly set to "true")
+      enabled: "false"
+      # The old environment ID to migrate FROM (can be empty string "")
+      from: ""
+      # The new environment ID (UUID) to migrate TO
+      to: ""
   bigqueryQuerierEmulatorHost:
   bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
@@ -323,6 +334,8 @@ onDemandProcessors:
     flushSize: 100
     flushInterval: 10
     flushTimeout: 10
+    maxRetryGoalEventPeriod: 86400 # 24 hours
+    retryGoalEventInterval: 300 # 5 minutes
     # Data warehouse configuration will be injected from global settings by Helm template
     dataWarehouse:
       type: ""

@@ -9,6 +9,7 @@ GO_APP_DIRS := $(wildcard cmd/*)
 GO_APP_BUILD_TARGETS := $(addprefix build-,$(notdir $(GO_APP_DIRS)))
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+GOTESTSUM_VERSION := v1.13.0
 
 ifeq ($(GOARCH), arm64)
 	PLATFORM = linux/arm64
@@ -36,8 +37,8 @@ local-deps:
 	mkdir -p ~/go-tools; \
 	cd ~/go-tools; \
 	if [ ! -e go.mod ]; then go mod init go-tools; fi; \
-	go install golang.org/x/tools/cmd/goimports@latest; \
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	go install golang.org/x/tools/cmd/goimports@v0.40.0; \
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.7.2; \
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
@@ -124,6 +125,15 @@ update-repos-check: update-repos diff-check
 diff-check:
 	test -z "$$(git diff --name-only)"
 
+.PHONY: migration-validate
+migration-validate:
+	atlas migrate validate --dir file://migration/mysql
+
+.PHONY: migration-hash-check
+migration-hash-check:
+	atlas migrate hash --dir file://migration/mysql
+	make diff-check
+
 .PHONY: tidy-deps
 tidy-deps:
 	go mod tidy
@@ -156,7 +166,9 @@ build-go-embed: build-web-console $(GO_APP_BUILD_TARGETS) clean-web-console
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
 test-go:
-	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/go/...
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v ./pkg/... ./evaluation/go/...
 
 .PHONY: start-httpstan
 start-httpstan:
@@ -330,8 +342,9 @@ start-minikube:
 		make -C tools/dev start-minikube; \
 	fi
 	sleep 5
+	helm uninstall bucketeer --ignore-not-found
 	make -C ./ modify-hosts
-	make -C ./ setup-bigquery-vault
+	make -C ./ setup-localenv
 
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
@@ -344,20 +357,86 @@ enable-vault-transit:
 	kubectl config use-context minikube
 	kubectl exec localenv-vault-0 -- vault secrets enable transit
 
-# create bigquery-emulator tables
+# create bigquery-emulator tables (idempotent - safe to run multiple times)
+.PHONY: create-pubsub-topics
+create-pubsub-topics:
+	@echo "Creating PubSub topics..."
+	kubectl config use-context minikube
+	go run ./hack/create-pubsub-topics create \
+		--pubsub-emulator-host=$$(minikube ip):30089 \
+		--project=bucketeer-dev \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: create-bigquery-emulator-tables
 create-bigquery-emulator-tables:
 	go run ./hack/create-big-query-table create \
+		--project=bucketeer-dev \
 		--bigquery-emulator=http://$$(minikube ip):31000 \
 		--no-gcp-trace-enabled \
 		--no-profile
 
-setup-bigquery-vault:
+# create mysql event tables for minikube
+create-mysql-event-tables-minikube:
+	@echo "Creating MySQL event tables for minikube data warehouse..."
 	kubectl config use-context minikube
-	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \
-	do \
-		sleep 5; \
-	done; \
+	@echo "Waiting for MySQL pod to be ready..."
+	kubectl wait --for=condition=ready pod localenv-mysql-0 --timeout=300s
+	@echo "MySQL pod is ready"
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=$$(minikube ip) \
+	MYSQL_PORT=32000 \
+	MYSQL_DB_NAME=bucketeer \
+	make create-mysql-event-tables
+
+.PHONY: delete-mysql-data-warehouse-data
+delete-mysql-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-mysql-data-warehouse clean build-darwin
+else
+	make -C hack/delete-mysql-data-warehouse clean build
+endif
+	./hack/delete-mysql-data-warehouse/delete-mysql-data-warehouse truncate \
+		--mysql-user=bucketeer \
+		--mysql-pass=bucketeer \
+		--mysql-host=$$(minikube ip) \
+		--mysql-port=32000 \
+		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+.PHONY: delete-redis-retry-keys
+delete-redis-retry-keys:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-redis-retry-keys clean build-darwin
+else
+	make -C hack/delete-redis-retry-keys clean build
+endif
+	./hack/delete-redis-retry-keys/delete-redis-retry-keys delete \
+		--redis-addr=$(if $(REDIS_ADDR),$(REDIS_ADDR),$$(minikube ip):32001) \
+		--environment-id=e2e \
+		--no-profile \
+		--no-gcp-trace-enabled
+
+setup-localenv:
+	kubectl config use-context minikube
+	@echo "Ensuring localenv chart is up to date..."
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv || helm install localenv manifests/localenv
+	@echo "Force restarting infrastructure pods to start fresh..."
+	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=pubsub --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
+	@echo "Waiting for infrastructure pods to be ready..."
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	@echo "Pods are ready"
+	@echo "Setting up data warehouse tables..."
 	make create-bigquery-emulator-tables
+	make create-mysql-event-tables-minikube
 	make enable-vault-transit
 
 DEV_IMAGES := gcr.io/distroless/base docker.io/arigaio/atlas:latest
@@ -414,7 +493,10 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C ./ pull-dev-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
-	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pYnVja2V0ZWVy -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
+	kubectl exec localenv-mysql-0 -- bash -c "mysql -u root -pbucketeer -e 'SET GLOBAL log_bin_trust_function_creators = 1;'"
+	@echo "Ensuring BigQuery tables exist (in-memory, may be lost on pod restart)..."
+	make -C ./ create-bigquery-emulator-tables
+	@echo "Installing Bucketeer services..."
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 
 #############################
@@ -458,21 +540,21 @@ docker-compose-setup:
 		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
 		chmod 600 docker-compose/secrets/*.txt; \
-		echo "✅ MySQL secrets created"; \
+		echo "MySQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
 	fi
-	@echo "✅ Docker Compose setup complete"
+	@echo "Docker Compose setup complete"
 
 .PHONY: docker-compose-init-env
 docker-compose-init-env:
 	@if [ -f docker-compose/.env ]; then \
-		echo "⚠️  docker-compose/.env already exists. Skipping..."; \
+		echo "docker-compose/.env already exists. Skipping..."; \
 		echo "To recreate it, run: rm docker-compose/.env && make docker-compose-init-env"; \
 	else \
-		echo "📝 Creating docker-compose/.env from template..."; \
+		echo "Creating docker-compose/.env from template..."; \
 		cp docker-compose/env.default docker-compose/.env; \
-		echo "✅ Created docker-compose/.env"; \
+		echo "Created docker-compose/.env"; \
 		echo ""; \
 		echo "You can now customize the environment variables in docker-compose/.env"; \
 		echo "Then run 'make docker-compose-up' to start the services."; \
@@ -485,7 +567,7 @@ docker-compose-build:
 	GOOS=linux make -C ./ build-go-embed
 	@echo "Building Docker images with TAG=localenv..."
 	TAG=localenv make -C ./ build-docker-images
-	@echo "✅ Docker images built successfully"
+	@echo "Docker images built successfully"
 
 # To skip the build step when starting services, run:
 # make docker-compose-up SKIP_BUILD=true
@@ -533,7 +615,7 @@ docker-compose-regenerate-secrets:
 	@echo "root" > docker-compose/secrets/mysql_root_password.txt
 	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
 	@chmod 600 docker-compose/secrets/*.txt
-	@echo "✅ MySQL secrets regenerated"
+	@echo "MySQL secrets regenerated"
 
 .PHONY: docker-compose-delete-data
 docker-compose-delete-data:
@@ -554,3 +636,19 @@ docker-compose-create-mysql-event-tables:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ create-mysql-event-tables
+
+.PHONY: docker-compose-delete-mysql-data-warehouse-data
+docker-compose-delete-mysql-data-warehouse-data:
+ifeq ($(GOOS), darwin)
+	make -C hack/delete-mysql-data-warehouse clean build-darwin
+else
+	make -C hack/delete-mysql-data-warehouse clean build
+endif
+	./hack/delete-mysql-data-warehouse/delete-mysql-data-warehouse truncate \
+		--mysql-user=bucketeer \
+		--mysql-pass=bucketeer \
+		--mysql-host=localhost \
+		--mysql-port=3306 \
+		--mysql-db-name=bucketeer \
+		--no-profile \
+		--no-gcp-trace-enabled

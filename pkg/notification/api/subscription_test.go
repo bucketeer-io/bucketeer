@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,15 +19,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
-	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/v2/mock"
@@ -48,15 +44,6 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -73,7 +60,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 				},
 			},
-			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
+			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
 			desc: "err: ErrRecipientRequired",
@@ -84,7 +71,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_FEATURE,
 				},
 			},
-			expectedErr: createError(statusRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant")),
+			expectedErr: statusRecipientRequired.Err(),
 		},
 		{
 			desc: "err: ErrSlackRecipientRequired",
@@ -98,7 +85,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					Type: proto.Recipient_SlackChannel,
 				},
 			},
-			expectedErr: createError(statusSlackRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant")),
+			expectedErr: statusSlackRecipientRequired.Err(),
 		},
 		{
 			desc: "err: ErrSlackRecipientWebhookURLRequired",
@@ -113,7 +100,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: ""},
 				},
 			},
-			expectedErr: createError(statusSlackRecipientWebhookURLRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url")),
+			expectedErr: statusSlackRecipientWebhookURLRequired.Err(),
 		},
 		{
 			desc: "err: ErrNameRequired",
@@ -127,7 +114,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 				},
 			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			expectedErr: statusNameRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -181,15 +168,6 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -200,7 +178,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.UpdateSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -221,7 +199,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_FEATURE,
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: statusNotFound.Err(),
 		},
 		{
 			desc: "success: update SourceTypes",
@@ -348,15 +326,6 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc        string
@@ -367,7 +336,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.DeleteSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -419,15 +388,6 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -442,7 +402,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			desc:          "err: ErrIDRequired",
 			isSystemAdmin: true,
 			input:         &proto.GetSubscriptionRequest{},
-			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			expectedErr:   statusIDRequired.Err(),
 		},
 		{
 			desc:          "err: ErrPermissionDenied",
@@ -450,7 +410,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input:         &proto.GetSubscriptionRequest{},
-			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr:   statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "success",
@@ -497,15 +457,6 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -531,7 +482,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "success: filter by environmentIDs",
@@ -644,15 +595,6 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
 		desc          string
@@ -678,7 +620,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 				},
 				EnvironmentId: "ns0",
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:          "success",

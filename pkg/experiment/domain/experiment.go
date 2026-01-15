@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -192,9 +192,7 @@ func (e *Experiment) updateStatus(status experimentproto.Experiment_Status, now 
 		if e.Status != experimentproto.Experiment_WAITING {
 			return ErrExperimentStatusInvalid
 		}
-		if e.StartAt > now {
-			return ErrExperimentBeforeStart
-		}
+		e.StartAt = now
 		e.Status = experimentproto.Experiment_RUNNING
 	case experimentproto.Experiment_STOPPED:
 		if e.Status != experimentproto.Experiment_WAITING && e.Status != experimentproto.Experiment_RUNNING {
@@ -204,10 +202,13 @@ func (e *Experiment) updateStatus(status experimentproto.Experiment_Status, now 
 			return ErrExperimentBeforeStop
 		}
 		e.Status = experimentproto.Experiment_STOPPED
+		e.StoppedAt = now
 	case experimentproto.Experiment_FORCE_STOPPED:
+		if e.Status != experimentproto.Experiment_WAITING && e.Status != experimentproto.Experiment_RUNNING {
+			return ErrExperimentStatusInvalid
+		}
 		e.Status = experimentproto.Experiment_FORCE_STOPPED
 		e.StoppedAt = now
-		e.UpdatedAt = now
 	default:
 		return ErrExperimentStatusInvalid
 	}

@@ -42,46 +42,6 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// ArchiveExperiment mocks base method.
-func (m *MockClient) ArchiveExperiment(ctx context.Context, in *experiment.ArchiveExperimentRequest, opts ...grpc.CallOption) (*experiment.ArchiveExperimentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ArchiveExperiment", varargs...)
-	ret0, _ := ret[0].(*experiment.ArchiveExperimentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ArchiveExperiment indicates an expected call of ArchiveExperiment.
-func (mr *MockClientMockRecorder) ArchiveExperiment(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveExperiment", reflect.TypeOf((*MockClient)(nil).ArchiveExperiment), varargs...)
-}
-
-// ArchiveGoal mocks base method.
-func (m *MockClient) ArchiveGoal(ctx context.Context, in *experiment.ArchiveGoalRequest, opts ...grpc.CallOption) (*experiment.ArchiveGoalResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ArchiveGoal", varargs...)
-	ret0, _ := ret[0].(*experiment.ArchiveGoalResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ArchiveGoal indicates an expected call of ArchiveGoal.
-func (mr *MockClientMockRecorder) ArchiveGoal(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveGoal", reflect.TypeOf((*MockClient)(nil).ArchiveGoal), varargs...)
-}
-
 // Close mocks base method.
 func (m *MockClient) Close() {
 	m.ctrl.T.Helper()
@@ -174,26 +134,6 @@ func (mr *MockClientMockRecorder) DeleteGoal(ctx, in any, opts ...any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGoal", reflect.TypeOf((*MockClient)(nil).DeleteGoal), varargs...)
 }
 
-// FinishExperiment mocks base method.
-func (m *MockClient) FinishExperiment(ctx context.Context, in *experiment.FinishExperimentRequest, opts ...grpc.CallOption) (*experiment.FinishExperimentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "FinishExperiment", varargs...)
-	ret0, _ := ret[0].(*experiment.FinishExperimentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FinishExperiment indicates an expected call of FinishExperiment.
-func (mr *MockClientMockRecorder) FinishExperiment(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinishExperiment", reflect.TypeOf((*MockClient)(nil).FinishExperiment), varargs...)
-}
-
 // GetExperiment mocks base method.
 func (m *MockClient) GetExperiment(ctx context.Context, in *experiment.GetExperimentRequest, opts ...grpc.CallOption) (*experiment.GetExperimentResponse, error) {
 	m.ctrl.T.Helper()
@@ -272,46 +212,6 @@ func (mr *MockClientMockRecorder) ListGoals(ctx, in any, opts ...any) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGoals", reflect.TypeOf((*MockClient)(nil).ListGoals), varargs...)
-}
-
-// StartExperiment mocks base method.
-func (m *MockClient) StartExperiment(ctx context.Context, in *experiment.StartExperimentRequest, opts ...grpc.CallOption) (*experiment.StartExperimentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "StartExperiment", varargs...)
-	ret0, _ := ret[0].(*experiment.StartExperimentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// StartExperiment indicates an expected call of StartExperiment.
-func (mr *MockClientMockRecorder) StartExperiment(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartExperiment", reflect.TypeOf((*MockClient)(nil).StartExperiment), varargs...)
-}
-
-// StopExperiment mocks base method.
-func (m *MockClient) StopExperiment(ctx context.Context, in *experiment.StopExperimentRequest, opts ...grpc.CallOption) (*experiment.StopExperimentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "StopExperiment", varargs...)
-	ret0, _ := ret[0].(*experiment.StopExperimentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// StopExperiment indicates an expected call of StopExperiment.
-func (mr *MockClientMockRecorder) StopExperiment(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopExperiment", reflect.TypeOf((*MockClient)(nil).StopExperiment), varargs...)
 }
 
 // UpdateExperiment mocks base method.

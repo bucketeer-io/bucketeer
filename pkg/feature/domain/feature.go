@@ -1,4 +1,4 @@
-// Copyright 2025 The Bucketeer Authors.
+// Copyright 2026 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1220,6 +1220,10 @@ func (f *Feature) Clone(
 	maintainer string,
 ) (*Feature, error) {
 	now := time.Now().Unix()
+	// Filter out rules that contain clauses referencing environment-specific
+	// entities (feature flags or segments) since they may not exist in the
+	// destination environment.
+	filteredRules := f.filterRulesWithEnvironmentReferences(f.Rules)
 	newFeature := &Feature{Feature: &feature.Feature{
 		Id:              f.Id,
 		Name:            f.Name,
@@ -1232,7 +1236,7 @@ func (f *Feature) Clone(
 		Variations:      f.Variations,
 		Prerequisites:   []*feature.Prerequisite{},
 		Targets:         f.Targets,
-		Rules:           f.Rules,
+		Rules:           filteredRules,
 		DefaultStrategy: f.DefaultStrategy,
 		OffVariation:    f.OffVariation,
 		Tags:            f.Tags,
@@ -1266,6 +1270,28 @@ func (f *Feature) Clone(
 		newFeature.Variations[i].Id = id.String()
 	}
 	return newFeature, nil
+}
+
+// filterRulesWithEnvironmentReferences returns rules that don't contain clauses
+// referencing environment-specific entities (feature flags or segments).
+// These rules are excluded because the referenced entities may not exist
+// in the destination environment when cloning.
+func (f *Feature) filterRulesWithEnvironmentReferences(rules []*feature.Rule) []*feature.Rule {
+	filtered := make([]*feature.Rule, 0, len(rules))
+	for _, rule := range rules {
+		hasEnvironmentReference := false
+		for _, clause := range rule.Clauses {
+			if clause.Operator == feature.Clause_FEATURE_FLAG ||
+				clause.Operator == feature.Clause_SEGMENT {
+				hasEnvironmentReference = true
+				break
+			}
+		}
+		if !hasEnvironmentReference {
+			filtered = append(filtered, rule)
+		}
+	}
+	return filtered
 }
 
 func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
