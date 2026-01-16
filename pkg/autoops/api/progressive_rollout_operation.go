@@ -91,7 +91,7 @@ func newRolloutStrategy(
 	weight int32,
 	feature *ftdomain.Feature,
 ) (*featureproto.Strategy, error) {
-	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight, feature)
+	variations := getRolloutStrategyVariations(controlVariationID, targetVariationID, weight, feature.Variations)
 	strategy := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -105,13 +105,13 @@ func getRolloutStrategyVariations(
 	controlVariationID string,
 	targetVariationID string,
 	weight int32,
-	feature *ftdomain.Feature,
+	variations []*featureproto.Variation,
 ) []*featureproto.RolloutStrategy_Variation {
 	// Create variations for all feature variations
 	// Control and target get their calculated weights, all others get 0
-	variations := make([]*featureproto.RolloutStrategy_Variation, 0, len(feature.Variations))
+	strategyVariations := make([]*featureproto.RolloutStrategy_Variation, 0, len(variations))
 
-	for _, v := range feature.Variations {
+	for _, v := range variations {
 		var varWeight int32
 		switch v.Id {
 		case targetVariationID:
@@ -123,11 +123,11 @@ func getRolloutStrategyVariations(
 			varWeight = 0
 		}
 
-		variations = append(variations, &featureproto.RolloutStrategy_Variation{
+		strategyVariations = append(strategyVariations, &featureproto.RolloutStrategy_Variation{
 			Variation: v.Id,
 			Weight:    varWeight,
 		})
 	}
 
-	return variations
+	return strategyVariations
 }

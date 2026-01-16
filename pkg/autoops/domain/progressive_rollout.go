@@ -23,14 +23,24 @@ import (
 
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
-
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 var (
-	ErrProgressiveRolloutScheduleNotFound  = err.NewErrorNotFound(err.AutoopsPackageName, "schedule not found", "schedule")
-	ErrProgressiveRolloutInvalidType       = err.NewErrorInvalidArgUnknown(err.AutoopsPackageName, "invalid type", "type")
+	ErrProgressiveRolloutScheduleNotFound         = err.NewErrorNotFound(err.AutoopsPackageName, "schedule not found", "schedule")
+	ErrProgressiveRolloutInvalidType              = err.NewErrorInvalidArgUnknown(err.AutoopsPackageName, "invalid type", "type")
+	ErrProgressiveRolloutControlVariationNotFound = err.NewErrorNotFound(
+		err.AutoopsPackageName,
+		"control variation not found",
+		"control_variation",
+	)
+	ErrProgressiveRolloutInvalidVariationCount = err.NewErrorInvalidArgUnknown(
+		err.AutoopsPackageName,
+		"feature must have exactly 2 variations",
+		"variations",
+	)
 	ErrProgressiveRolloutStoopedByRequired = err.NewErrorInvalidArgEmpty(
 		err.AutoopsPackageName,
 		"stopped by is required",
@@ -176,17 +186,20 @@ func (p *ProgressiveRollout) ExtractSchedules() ([]*autoopsproto.ProgressiveRoll
 // For old progressive rollouts with only variation_id (target), we need to find
 // the other variation (control) from the feature's variations.
 // Old rollouts only supported features with exactly 2 variations.
-func inferControlVariationID(feature *ftdomain.Feature, targetVariationID string) (string, error) {
-	if feature == nil || len(feature.Variations) != 2 {
+func inferControlVariationID(variations []*featureproto.Variation, targetVariationID string) (string, error) {
+	if targetVariationID == "" {
 		return "", nil
 	}
+	if len(variations) != 2 {
+		return "", ErrProgressiveRolloutInvalidVariationCount
+	}
 	// Find the variation that is NOT the target
-	for _, v := range feature.Variations {
+	for _, v := range variations {
 		if v.Id != targetVariationID {
 			return v.Id, nil
 		}
 	}
-	return "", nil
+	return "", ErrProgressiveRolloutControlVariationNotFound
 }
 
 func (p *ProgressiveRollout) GetControlVariationID(feature *ftdomain.Feature) (string, error) {
@@ -202,10 +215,7 @@ func (p *ProgressiveRollout) GetControlVariationID(feature *ftdomain.Feature) (s
 		}
 		// Backward compatibility: infer control from feature variations
 		// For old rollouts with only variation_id (target), the control is the other variation
-		if c.VariationId != "" {
-			return inferControlVariationID(feature, c.VariationId)
-		}
-		return "", nil
+		return inferControlVariationID(feature.Variations, c.VariationId)
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
 		c, err := unmarshalProgressiveRolloutTemplateClause(p.Clause)
 		if err != nil {
@@ -215,10 +225,7 @@ func (p *ProgressiveRollout) GetControlVariationID(feature *ftdomain.Feature) (s
 			return c.ControlVariationId, nil
 		}
 		// Backward compatibility: infer control from feature variations
-		if c.VariationId != "" {
-			return inferControlVariationID(feature, c.VariationId)
-		}
-		return "", nil
+		return inferControlVariationID(feature.Variations, c.VariationId)
 	}
 	return "", ErrProgressiveRolloutInvalidType
 }
