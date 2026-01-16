@@ -29,8 +29,16 @@ import (
 )
 
 var (
-	ErrProgressiveRolloutScheduleNotFound         = err.NewErrorNotFound(err.AutoopsPackageName, "schedule not found", "schedule")
-	ErrProgressiveRolloutInvalidType              = err.NewErrorInvalidArgUnknown(err.AutoopsPackageName, "invalid type", "type")
+	ErrProgressiveRolloutScheduleNotFound = err.NewErrorNotFound(
+		err.AutoopsPackageName,
+		"schedule not found",
+		"schedule",
+	)
+	ErrProgressiveRolloutInvalidType = err.NewErrorInvalidArgUnknown(
+		err.AutoopsPackageName,
+		"invalid type",
+		"type",
+	)
 	ErrProgressiveRolloutControlVariationNotFound = err.NewErrorNotFound(
 		err.AutoopsPackageName,
 		"control variation not found",
