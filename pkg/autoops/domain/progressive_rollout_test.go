@@ -494,18 +494,9 @@ func TestGetControlVariationID(t *testing.T) {
 				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
 				VariationId: "target-var-id",
 			},
-			feature:  createFeature("var-1", "var-2", "var-3"),
-			expected: "", // Cannot infer with != 2 variations
-		},
-		{
-			desc:                   "manual: old format with variation_id but nil feature - cannot infer",
-			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
-			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
-				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
-				VariationId: "target-var-id",
-			},
-			feature:  nil,
-			expected: "",
+			feature:     createFeature("var-1", "var-2", "var-3"),
+			expected:    "",
+			expectedErr: ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
 			desc:                   "manual: no variation IDs set",
@@ -544,8 +535,9 @@ func TestGetControlVariationID(t *testing.T) {
 				Schedules:   []*autoopsproto.ProgressiveRolloutSchedule{},
 				VariationId: "target-var-id",
 			},
-			feature:  createFeature("var-1", "var-2", "var-3"),
-			expected: "",
+			feature:     createFeature("var-1", "var-2", "var-3"),
+			expected:    "",
+			expectedErr: ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
 			desc:                   "invalid type",
@@ -589,52 +581,79 @@ func TestInferControlVariationID(t *testing.T) {
 
 	patterns := []struct {
 		desc              string
-		feature           *ftdomain.Feature
+		variations        []*featureproto.Variation
 		targetVariationID string
 		expectedControlID string
 		expectedErr       error
 	}{
 		{
-			desc:              "feature with 2 variations - returns the other variation",
-			feature:           createFeature("variation-a", "variation-b"),
+			desc:              "2 variations - returns the other variation",
+			variations:        createFeature("variation-a", "variation-b").Variations,
 			targetVariationID: "variation-b",
 			expectedControlID: "variation-a",
 		},
 		{
-			desc:              "feature with 2 variations - returns the other variation (reversed)",
-			feature:           createFeature("variation-a", "variation-b"),
+			desc:              "2 variations - returns the other variation (reversed)",
+			variations:        createFeature("variation-a", "variation-b").Variations,
 			targetVariationID: "variation-a",
 			expectedControlID: "variation-b",
 		},
 		{
-			desc:              "feature with 3 variations - returns empty",
-			feature:           createFeature("var-1", "var-2", "var-3"),
+			desc:              "3 variations - returns error",
+			variations:        createFeature("var-1", "var-2", "var-3").Variations,
 			targetVariationID: "var-2",
 			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
-			desc:              "feature with 1 variation - returns empty",
-			feature:           createFeature("var-1"),
+			desc:              "1 variation - returns error",
+			variations:        createFeature("var-1").Variations,
 			targetVariationID: "var-1",
 			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
-			desc:              "nil feature - returns empty",
-			feature:           nil,
+			desc:              "0 variations - returns error",
+			variations:        createFeature().Variations,
 			targetVariationID: "var-1",
 			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
 		},
 		{
-			desc:              "feature with 0 variations - returns empty",
-			feature:           createFeature(),
+			desc:              "4 variations - returns error",
+			variations:        createFeature("var-1", "var-2", "var-3", "var-4").Variations,
+			targetVariationID: "var-2",
+			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
+		},
+		{
+			desc: "2 identical variations (pathological) - returns error",
+			variations: []*featureproto.Variation{
+				{Id: "same-id"},
+				{Id: "same-id"},
+			},
+			targetVariationID: "same-id",
+			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutControlVariationNotFound,
+		},
+		{
+			desc:              "nil variations - returns error",
+			variations:        nil,
 			targetVariationID: "var-1",
+			expectedControlID: "",
+			expectedErr:       ErrProgressiveRolloutInvalidVariationCount,
+		},
+		{
+			desc:              "empty targetVariationID - returns empty",
+			variations:        createFeature("var-1", "var-2").Variations,
+			targetVariationID: "",
 			expectedControlID: "",
 		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := inferControlVariationID(p.feature, p.targetVariationID)
+			actual, err := inferControlVariationID(p.variations, p.targetVariationID)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedControlID, actual)
 		})

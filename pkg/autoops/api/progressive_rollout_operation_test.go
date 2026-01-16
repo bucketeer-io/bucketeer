@@ -408,7 +408,7 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 				p.controlVariationID,
 				p.targetVariationID,
 				p.targetWeight,
-				p.feature,
+				p.feature.Variations,
 			)
 			assert.Equal(t, p.expected, actual)
 		})
