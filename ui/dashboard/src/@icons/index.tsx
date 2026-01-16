@@ -3,6 +3,7 @@ import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconArrowLeft from './customized-icons/arrow-left.svg?react';
 import IconArrowRight from './customized-icons/arrow-right.svg?react';
+import IconArrowUpDown from './customized-icons/arrow-up-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconBitbucket from './customized-icons/bitbucket.svg?react';
 import IconBucketWhite from './customized-icons/bucket-white.svg?react';
@@ -50,6 +51,7 @@ import IconStartExperiment from './customized-icons/start-experiment.svg?react';
 import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
 import IconStoppedByUser from './customized-icons/stopped-by-user.svg?react';
 import IconFlagString from './customized-icons/string.svg?react';
+import IconSwitchUpdate from './customized-icons/switch-icon.svg?react';
 import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconTargetSegments from './customized-icons/target-segments.svg?react';
 import IconThreeLines from './customized-icons/three-lines.svg?react';
@@ -153,6 +155,7 @@ export {
   IconFlagSwitch,
   IconFlagNumber,
   IconFlagString,
+  IconSwitchUpdate,
   IconFlagJSON,
   IconWatch,
   IconPlus,
@@ -185,6 +188,7 @@ export {
   IconEnglishFlag,
   IconFlagNoTraffic,
   IconBucketWhite,
+  IconArrowUpDown,
   // Special icons
   IconGoal,
   IconGoogle,
