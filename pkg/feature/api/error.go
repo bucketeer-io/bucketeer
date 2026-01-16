@@ -173,7 +173,7 @@ var (
 	statusInvalidArchive = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
-			"cant't archive because this feature is used as a prerequsite"))
+			"can't archive because this feature is used as a prerequsite"))
 	statusInvalidChangingVariation = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
