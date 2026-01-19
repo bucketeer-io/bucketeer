@@ -124,7 +124,7 @@ const EventRateOperationModal = ({
         label: (
           <div className="flex items-center gap-x-2 pl-0.5">
             <FlagVariationPolygon index={index} />
-            <p className="-mt-0.5">{item.name || item.value}</p>
+            <p className="-mt-0.5 truncate">{item.name || item.value}</p>
           </div>
         ),
         labelText: item.name || item.value,
@@ -233,7 +233,7 @@ const EventRateOperationModal = ({
                   {t('common:if')}
                 </p>
               </div>
-              <div className="flex flex-col flex-1 pl-4 gap-y-4 border-l border-primary-500">
+              <div className="flex flex-col flex-1 max-w-[430px] pl-4 gap-y-4 border-l border-primary-500">
                 <Form.Field
                   control={form.control}
                   name={`variationId`}

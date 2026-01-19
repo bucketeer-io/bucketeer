@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
 import { rolloutDelete, rolloutStopped } from '@api/rollouts';
@@ -20,35 +19,39 @@ import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { AutoOpsRule, Feature, Rollout } from '@types';
+import { AutoOpsRule, Feature, Rollout, RuleStrategyVariation } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
-import ConfirmModal from 'elements/confirm-modal';
 import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
+import {
+  DeleteOperationModal,
+  StopOperationModal
+} from './elements/operation-modals/action-operation';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ProgressiveRolloutModal from './elements/operation-modals/rollout';
 import RolloutCloneModal from './elements/operation-modals/rollout-clone';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
-import StopOperationModal from './elements/operation-modals/stop-operation';
 import Overview from './elements/overview';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
 
 export interface OperationModalState {
   operationType: OpsTypeMap | undefined;
   actionType: OperationActionType;
-  selectedData?: AutoOpsRule | Rollout;
+  selectedData?: AutoOpsRule & Rollout;
 }
 
 const Operations = ({
   feature,
-  editable
+  editable,
+  refetchFeature
 }: {
   feature: Feature;
   editable: boolean;
+  refetchFeature: () => void;
 }) => {
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
@@ -83,9 +86,26 @@ const Operations = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const rolloutStrategyCount = useMemo(() => {
+    return (
+      feature.defaultStrategy?.rolloutStrategy?.variations.map(item => ({
+        ...item,
+        weight: item.weight / 1000,
+        variation: feature.variations.find(
+          variation => variation.id === item.variation
+        )?.name
+      })) || []
+    );
+  }, [feature]);
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
   const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
   const isRolloutAction = useMemo(() => action === 'rollout', [action]);
+  const isRolloutActive = useMemo(
+    () =>
+      operationModalState.selectedData?.status === 'RUNNING' ||
+      operationModalState.selectedData?.status === 'WAITING',
+    [operationModalState]
+  );
 
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
@@ -276,6 +296,7 @@ const Operations = ({
       tab
     });
     setCurrentTab(tab);
+    refetchFeature();
   }, [searchOptions]);
 
   return (
@@ -325,6 +346,9 @@ const Operations = ({
 
           <TabsContent value={currentTab} className="px-6">
             <CollectionLayout
+              rolloutStrategyCount={
+                rolloutStrategyCount as RuleStrategyVariation[]
+              }
               currentTab={currentTab}
               operations={operations}
               opsCounts={opsCounts}
@@ -393,34 +417,29 @@ const Operations = ({
 
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
+          environment={currentEnvironment}
+          isRunning={isRolloutActive}
+          feature={feature}
           editable={editable}
           loading={isLoading}
           operationType={operationModalState.operationType!}
           isOpen={isStop && !!operationModalState?.selectedData}
+          refetchFeatures={refetchFeature}
           onClose={onResetModalState}
           onSubmit={onStopOperation}
         />
       )}
       {isDelete && !!operationModalState?.selectedData && (
-        <ConfirmModal
+        <DeleteOperationModal
+          isRunning={isRolloutActive}
           loading={isLoading}
+          isRolloutType={isRolloutType}
+          isScheduleType={isScheduleType}
+          editable={editable}
+          feature={feature}
+          environment={currentEnvironment}
           isOpen={isDelete && !!operationModalState?.selectedData}
-          title={t(
-            `table:popover.delete-${isRolloutType ? 'rollout' : isScheduleType ? 'operation' : 'kill-switch'}`
-          )}
-          description={
-            <Trans
-              i18nKey={'table:operations.confirm-delete-operation'}
-              values={{
-                type: t(
-                  `form:feature-flags.${isRolloutType ? 'rollout' : isScheduleType ? 'schedule' : 'kill-switch'}`
-                )
-              }}
-              components={{
-                bold: <strong />
-              }}
-            />
-          }
+          refetchFeature={refetchFeature}
           onClose={onResetModalState}
           onSubmit={onDeleteOperation}
         />

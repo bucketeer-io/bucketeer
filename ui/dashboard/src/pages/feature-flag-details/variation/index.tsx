@@ -1,21 +1,29 @@
 import { useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
+import { useQueryRollouts } from '@queries/rollouts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
+import {
+  PAGE_PATH_EXPERIMENTS,
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
 import { Feature, FeatureVariation, VariationChange } from '@types';
+import { IconInfoFilled } from '@icons';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import InfoMessage from 'components/info-message';
 import { CardNote } from 'elements/overview-card';
 import ConfirmationRequiredModal, {
@@ -42,6 +50,14 @@ const Variation = ({ feature, editable }: VariationProps) => {
 
   const { notify, errorNotify } = useToast();
 
+  const { data: rolloutCollection } = useQueryRollouts({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      featureIds: [feature.id]
+    }
+  });
+
   const { data: experimentCollection } = useQueryExperiments({
     params: {
       cursor: String(0),
@@ -53,6 +69,11 @@ const Variation = ({ feature, editable }: VariationProps) => {
 
   const isRunningExperiment =
     !!experimentCollection && experimentCollection?.experiments?.length > 0;
+
+  const waitingRunningRollouts =
+    rolloutCollection?.progressiveRollouts?.filter(item =>
+      ['WAITING', 'RUNNING'].includes(item.status)
+    ) || [];
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(variationsFormSchema)),
@@ -165,6 +186,24 @@ const Variation = ({ feature, editable }: VariationProps) => {
                 <CardNote content={t('form:yaml-note')} className="w-fit" />
               )}
             </div>
+            {waitingRunningRollouts.length > 0 && (
+              <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
+                <Icon icon={IconInfoFilled} color="accent-blue-500" size="sm" />
+                <div className="flex items-center [&>a]:ml-1">
+                  <Trans
+                    i18nKey={'form:variation.rollout-running-message'}
+                    components={{
+                      comp: (
+                        <Link
+                          className="text-primary-500 underline"
+                          to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${feature.id}${PAGE_PATH_FEATURE_AUTOOPS}`}
+                        />
+                      )
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             {isRunningExperiment && (
               <InfoMessage
                 title={t('message:validation.experiment-running-warning')}
@@ -188,7 +227,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
               />
             )}
             <VariationsSection
-              editable={editable}
+              editable={editable && !waitingRunningRollouts.length}
               feature={feature}
               isRunningExperiment={isRunningExperiment}
             />

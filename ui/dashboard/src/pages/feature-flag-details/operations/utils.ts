@@ -1,6 +1,10 @@
 import dayjs from 'dayjs';
 import { v4 as uuid } from 'uuid';
-import { Feature, OpsEventRateClauseOperator } from '@types';
+import {
+  Feature,
+  OpsEventRateClauseOperator,
+  RuleStrategyVariation
+} from '@types';
 import { ActionTypeMap, ScheduleItem } from './types';
 
 export const createInitialDatetimeClause = (lastTime?: number) => ({
@@ -191,4 +195,11 @@ export const getDateTimeDisplay = (value: string) => {
     date,
     time
   };
+};
+
+export const getVariationIndex = (
+  variations: RuleStrategyVariation[],
+  variationId: string
+) => {
+  return variations.findIndex(v => v.variation === variationId);
 };

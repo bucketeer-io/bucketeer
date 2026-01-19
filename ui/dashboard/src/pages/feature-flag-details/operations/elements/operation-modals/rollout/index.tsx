@@ -138,7 +138,7 @@ const ProgressiveRolloutModal = ({
         label: (
           <div className="flex items-center gap-x-2 pl-0.5">
             <FlagVariationPolygon index={index} />
-            <p className="-mt-0.5">{item.name || item.value}</p>
+            <p className="-mt-0.5 truncate">{item.name || item.value}</p>
           </div>
         ),
         labelText: item.name || item.value,

@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { AutoOpsCount, AutoOpsRule, Rollout } from '@types';
+import {
+  AutoOpsCount,
+  AutoOpsRule,
+  Rollout,
+  RuleStrategyVariation
+} from '@types';
 import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
 import { EmptyCollection } from '../collection-layout/empty-collection';
@@ -9,11 +14,13 @@ const ActiveContent = ({
   operations,
   opsCounts,
   rollouts,
+  currentAllocationPercentage,
   onOperationActions
 }: {
   operations: AutoOpsRule[];
   opsCounts: AutoOpsCount[];
   rollouts: Rollout[];
+  currentAllocationPercentage: RuleStrategyVariation[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   const activeStatuses = useMemo(() => ['WAITING', 'RUNNING'], []);
@@ -59,12 +66,12 @@ const ActiveContent = ({
   );
 
   if (!operationData.length) return <EmptyCollection />;
-
   return (
     <div className="flex flex-col w-full gap-y-6 pb-6">
       {operationData?.map((item, index) => (
         <Operation
           key={index}
+          currentAllocationPercentage={currentAllocationPercentage}
           isFinished={false}
           operation={item}
           opsCounts={opsCounts}

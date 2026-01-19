@@ -26,7 +26,13 @@ import TriggerPage from './trigger';
 import { TabItem } from './types';
 import Variation from './variation';
 
-const PageContent = ({ feature }: { feature: Feature }) => {
+const PageContent = ({
+  feature,
+  refetchFeature
+}: {
+  feature: Feature;
+  refetchFeature: () => void;
+}) => {
   const { t } = useTranslation(['table', 'common']);
   const { flagId } = useParams();
 
@@ -116,7 +122,13 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             />
             <Route
               path={`${PAGE_PATH_FEATURE_AUTOOPS}/*`}
-              element={<Operations feature={feature} editable={editable} />}
+              element={
+                <Operations
+                  feature={feature}
+                  refetchFeature={refetchFeature}
+                  editable={editable}
+                />
+              }
             />
             <Route
               path={PAGE_PATH_FEATURE_TARGETING}

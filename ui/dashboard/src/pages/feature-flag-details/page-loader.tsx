@@ -64,7 +64,7 @@ const PageLoader = () => {
       >
         <HeaderDetailsID id={feature.id} />
       </PageDetailsHeader>
-      <PageContent feature={feature} />
+      <PageContent feature={feature} refetchFeature={refetch} />
     </>
   );
 };

@@ -1,4 +1,9 @@
-import { AutoOpsCount, AutoOpsRule, Rollout } from '@types';
+import {
+  AutoOpsCount,
+  AutoOpsRule,
+  Rollout,
+  RuleStrategyVariation
+} from '@types';
 import { OperationModalState } from '../..';
 import { OperationTab } from '../../types';
 import ActiveContent from '../active';
@@ -9,8 +14,10 @@ const CollectionLayout = ({
   operations,
   opsCounts,
   rollouts,
+  rolloutStrategyCount,
   onOperationActions
 }: {
+  rolloutStrategyCount: RuleStrategyVariation[];
   currentTab: OperationTab;
   operations: AutoOpsRule[];
   opsCounts: AutoOpsCount[];
@@ -21,6 +28,7 @@ const CollectionLayout = ({
     <div>
       {currentTab === OperationTab.ACTIVE && (
         <ActiveContent
+          currentAllocationPercentage={rolloutStrategyCount}
           opsCounts={opsCounts}
           rollouts={rollouts}
           operations={operations}
