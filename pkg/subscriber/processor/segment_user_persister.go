@@ -22,11 +22,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
@@ -437,19 +438,57 @@ func (p *segmentUserPersister) updateSegmentStatus(
 		if err != nil {
 			return err
 		}
-		changeCmd := &featureproto.ChangeBulkUploadSegmentUsersStatusCommand{
-			Status: status,
-			State:  state,
-			Count:  cnt,
+		prev := &domain.Segment{}
+		if err := copier.Copy(prev, segment); err != nil {
+			return err
 		}
-		handler, err := command.NewSegmentCommandHandler(editor, segment, p.domainPublisher, environmentId)
+		segment.SetStatus(status)
+		if state == featureproto.SegmentUser_INCLUDED {
+			segment.SetIncludedUserCount(cnt)
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			domainproto.Event_SEGMENT,
+			segment.Id,
+			domainproto.Event_SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED,
+			&domainproto.SegmentBulkUploadUsersStatusChangedEvent{
+				SegmentId: segment.Id,
+				Status:    status,
+				State:     state,
+				Count:     cnt,
+			},
+			environmentId,
+			segment.Segment,
+			prev.Segment,
+		)
 		if err != nil {
+			p.logger.Error(
+				"failed to create event",
+				zap.Error(err),
+				zap.String("segmentId", segment.Id),
+				zap.String("environmentId", environmentId),
+			)
 			return err
 		}
-		if err := handler.Handle(ctx, changeCmd); err != nil {
+		if err := p.domainPublisher.Publish(ctx, e); err != nil {
+			p.logger.Error(
+				"failed to publish event",
+				zap.Error(err),
+				zap.String("segmentId", segment.Id),
+				zap.String("environmentId", environmentId),
+			)
 			return err
 		}
-		return p.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
+		err = p.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
+		if err != nil {
+			p.logger.Error(
+				"failed to update segment",
+				zap.Error(err),
+				zap.String("segmentId", segment.Id),
+				zap.String("environmentId", environmentId),
+			)
+		}
+		return err
 	})
 }
 
