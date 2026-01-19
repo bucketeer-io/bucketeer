@@ -1618,3 +1618,127 @@ func TestSemverVPrefixNormalization(t *testing.T) {
 		})
 	}
 }
+
+func TestEqualsAndInSemverVPrefixNormalization(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		desc        string
+		operator    featureproto.Clause_Operator
+		targetValue string
+		values      []string
+		expected    bool
+	}{
+		// EQUALS with v-prefix normalization
+		{
+			desc:        "equals: v26.115.0 = 26.115.0 (target has v, value doesn't)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "v26.115.0",
+			values:      []string{"26.115.0"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: 26.115.0 = v26.115.0 (target no v, value has v)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "26.115.0",
+			values:      []string{"v26.115.0"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: v26.115.0 = v26.115.0 (both have v)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "v26.115.0",
+			values:      []string{"v26.115.0"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: 26.115.0 = 26.115.0 (neither has v)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "26.115.0",
+			values:      []string{"26.115.0"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: v26.115.0 != 26.115.1 (different versions)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "v26.115.0",
+			values:      []string{"26.115.1"},
+			expected:    false,
+		},
+		{
+			desc:        "equals: v10.154.2 = 10.154.2 (android case)",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "v10.154.2",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: plain string exact match still works",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "hello",
+			values:      []string{"hello"},
+			expected:    true,
+		},
+		{
+			desc:        "equals: plain string no match",
+			operator:    featureproto.Clause_EQUALS,
+			targetValue: "hello",
+			values:      []string{"world"},
+			expected:    false,
+		},
+		// IN with v-prefix normalization
+		{
+			desc:        "in: v26.115.0 in [26.115.0, 26.116.0]",
+			operator:    featureproto.Clause_IN,
+			targetValue: "v26.115.0",
+			values:      []string{"26.115.0", "26.116.0"},
+			expected:    true,
+		},
+		{
+			desc:        "in: 26.115.0 in [v26.115.0, v26.116.0]",
+			operator:    featureproto.Clause_IN,
+			targetValue: "26.115.0",
+			values:      []string{"v26.115.0", "v26.116.0"},
+			expected:    true,
+		},
+		{
+			desc:        "in: v26.115.0 not in [26.117.0, 26.116.0]",
+			operator:    featureproto.Clause_IN,
+			targetValue: "v26.115.0",
+			values:      []string{"26.117.0", "26.116.0"},
+			expected:    false,
+		},
+		{
+			desc:        "in: plain string in list still works",
+			operator:    featureproto.Clause_IN,
+			targetValue: "hello",
+			values:      []string{"hello", "world"},
+			expected:    true,
+		},
+		// NOT_EQUALS (uses equals internally)
+		{
+			desc:        "not_equals: v26.115.0 != 26.115.0 should be false (they are equal)",
+			operator:    featureproto.Clause_NOT_EQUALS,
+			targetValue: "v26.115.0",
+			values:      []string{"26.115.0"},
+			expected:    false,
+		},
+		{
+			desc:        "not_equals: v26.115.0 != 26.115.1 should be true (different)",
+			operator:    featureproto.Clause_NOT_EQUALS,
+			targetValue: "v26.115.0",
+			values:      []string{"26.115.1"},
+			expected:    true,
+		},
+	}
+	clauseEvaluator := &clauseEvaluator{}
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			clause := &featureproto.Clause{
+				Operator: tc.operator,
+				Values:   tc.values,
+			}
+			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+			assert.Equal(t, tc.expected, res)
+		})
+	}
+}

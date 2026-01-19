@@ -70,6 +70,17 @@ func (c *clauseEvaluator) Evaluate(
 }
 
 func (c *clauseEvaluator) equals(targetValue string, values []string) bool {
+	// First try semver comparison (with v-prefix normalization)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
+	if err == nil && len(semverValues) > 0 {
+		for _, value := range semverValues {
+			if semverTarget.EQ(value) {
+				return true
+			}
+		}
+		return false
+	}
+	// Fall back to exact string comparison
 	for i := range values {
 		if targetValue == values[i] {
 			return true
@@ -88,6 +99,17 @@ func (c *clauseEvaluator) partiallyMatches(targetValue string, values []string) 
 }
 
 func (c *clauseEvaluator) in(targetValue string, values []string) bool {
+	// First try semver comparison (with v-prefix normalization)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
+	if err == nil && len(semverValues) > 0 {
+		for _, value := range semverValues {
+			if semverTarget.EQ(value) {
+				return true
+			}
+		}
+		return false
+	}
+	// Fall back to exact string comparison
 	for i := range values {
 		if targetValue == values[i] {
 			return true
