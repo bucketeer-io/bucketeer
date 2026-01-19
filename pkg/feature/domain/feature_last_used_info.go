@@ -16,6 +16,7 @@ package domain
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/blang/semver"
 
@@ -105,7 +106,10 @@ func (f *FeatureLastUsedInfo) setLatestClientVersion(version string) error {
 }
 
 func (f *FeatureLastUsedInfo) parseSemver(value string) (semver.Version, error) {
-	version, err := semver.Parse(value)
+	// Normalize by stripping "v" prefix if present
+	// This matches the behavior of the npm semver package used in TypeScript
+	normalizedValue, _ := strings.CutPrefix(value, "v")
+	version, err := semver.Parse(normalizedValue)
 	if err != nil {
 		return semver.Version{}, err
 	}

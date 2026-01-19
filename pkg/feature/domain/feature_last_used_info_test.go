@@ -252,3 +252,102 @@ func TestSetLatestClientVersion(t *testing.T) {
 		assert.Equal(t, p.expect, info.ClientLatestVersion, p.desc)
 	}
 }
+
+func TestClientVersionVPrefixNormalization(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc                  string
+		clientVersion         string
+		expectedOldestVersion string
+		expectedLatestVersion string
+	}{
+		{
+			desc:                  "v_prefix_is_stripped",
+			clientVersion:         "v10.154.2",
+			expectedOldestVersion: "10.154.2",
+			expectedLatestVersion: "10.154.2",
+		},
+		{
+			desc:                  "no_v_prefix_works",
+			clientVersion:         "10.154.2",
+			expectedOldestVersion: "10.154.2",
+			expectedLatestVersion: "10.154.2",
+		},
+		{
+			desc:                  "v_prefix_with_prerelease",
+			clientVersion:         "v1.0.0-alpha",
+			expectedOldestVersion: "1.0.0-alpha",
+			expectedLatestVersion: "1.0.0-alpha",
+		},
+		{
+			desc:                  "v_prefix_with_build_metadata",
+			clientVersion:         "v1.0.0+build123",
+			expectedOldestVersion: "1.0.0+build123",
+			expectedLatestVersion: "1.0.0+build123",
+		},
+	}
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			info := NewFeatureLastUsedInfo("feature-id", 1, 123456789, p.clientVersion)
+			assert.Equal(t, p.expectedOldestVersion, info.ClientOldestVersion)
+			assert.Equal(t, p.expectedLatestVersion, info.ClientLatestVersion)
+		})
+	}
+}
+
+func TestClientVersionVPrefixComparison(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc                  string
+		currentOldest         string
+		currentLatest         string
+		newVersion            string
+		expectedOldestVersion string
+		expectedLatestVersion string
+	}{
+		{
+			desc:                  "v_prefix_new_version_updates_oldest",
+			currentOldest:         "2.0.0",
+			currentLatest:         "2.0.0",
+			newVersion:            "v1.0.0",
+			expectedOldestVersion: "1.0.0",
+			expectedLatestVersion: "2.0.0",
+		},
+		{
+			desc:                  "v_prefix_new_version_updates_latest",
+			currentOldest:         "1.0.0",
+			currentLatest:         "1.0.0",
+			newVersion:            "v2.0.0",
+			expectedOldestVersion: "1.0.0",
+			expectedLatestVersion: "2.0.0",
+		},
+		{
+			desc:                  "mixed_v_prefix_comparison",
+			currentOldest:         "1.5.0",
+			currentLatest:         "1.5.0",
+			newVersion:            "v1.5.0",
+			expectedOldestVersion: "1.5.0",
+			expectedLatestVersion: "1.5.0",
+		},
+	}
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			info := &FeatureLastUsedInfo{FeatureLastUsedInfo: &proto.FeatureLastUsedInfo{
+				FeatureId:           "id",
+				Version:             10,
+				LastUsedAt:          1,
+				CreatedAt:           1,
+				ClientOldestVersion: p.currentOldest,
+				ClientLatestVersion: p.currentLatest,
+			}}
+			err := info.SetClientVersion(p.newVersion)
+			assert.NoError(t, err)
+			assert.Equal(t, p.expectedOldestVersion, info.ClientOldestVersion)
+			assert.Equal(t, p.expectedLatestVersion, info.ClientLatestVersion)
+		})
+	}
+}
