@@ -264,7 +264,7 @@
   "ops-count-tooltip": "Goal Count / Evaluation Count * 100",
   "increments-value": "Increments <b>{{value}}</b>",
   "frequency-value": "Frequency <b>{{value}}</b>",
-  "start-date-value": "Start Date <b>{{value}}</b>",
+  "start-date-value": "Start Date: <b>{{value}}</b>",
   "rollout-warning-title": "The progressive rollout cannot be created. Please check the following conditions.",
   "rollout-warning-desc": "Cannot execute more than one progressive rollout at the same time.",
   "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>",
@@ -371,6 +371,6 @@
     "confirm-stop-desc": "Stopping or deleting this rollout at its current stage will change how traffic is routed between variations. Traffic will be redistributed using the default rule percentage rollout settings.",
     "confirm-stop-title": "Audience traffic allocation will be updated",
     "current-variation-title": "Current Variation Allocation",
-    "percent-variation": "<p>{{percent}}%</p> <comp/>"
+    "percent-variation": "<comp/> <p>{{percent}}%</p>"
   }
 }

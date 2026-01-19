@@ -141,7 +141,7 @@ const RolloutProgress = ({
                   (item: RuleStrategyVariation, index: number) => (
                     <div
                       key={index}
-                      className="flex items-center mt-[2px] gap-x-2"
+                      className="flex items-center justify-between mt-[2px] gap-x-2"
                     >
                       <Trans
                         i18nKey={'form:operation.percent-variation'}
@@ -153,7 +153,8 @@ const RolloutProgress = ({
                           p: (
                             <p
                               style={{
-                                width: alignLeft
+                                width: alignLeft,
+                                textAlign: 'right'
                               }}
                             />
                           ),

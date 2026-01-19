@@ -264,7 +264,7 @@
   "ops-count-tooltip": "ゴール数 / 評価数 * 100",
   "increments-value": "増分 <b>{{value}}</b>",
   "frequency-value": "頻度 <b>{{value}}</b>",
-  "start-date-value": "開始日 <b>{{value}}</b>",
+  "start-date-value": "開始日：<b>{{value}}</b>",
   "rollout-warning-title": "段階的ロールアウトを作成できません。以下の条件を確認してください。",
   "rollout-warning-desc": "同時に複数の段階的ロールアウトを実行することはできません。",
   "more-info-see-document": "詳細については、<comp>ドキュメント</comp>をご覧ください。",
@@ -371,6 +371,6 @@
     "confirm-stop-desc": "このロールアウトを現在の段階で停止または削除すると、バリエーション間でのトラフィックの振り分け方法が変更されます。トラフィックは、デフォルトルールのパーセンテージロールアウト設定に基づいて再配分されます。",
     "confirm-stop-title": "オーディエンスのトラフィック配分が更新されます",
     "current-variation-title": "現在のバリエーション配分",
-    "percent-variation": "<p>{{percent}}%</p> <comp/>"
+    "percent-variation": "<comp/> <p>{{percent}}%</p>"
   }
 }
