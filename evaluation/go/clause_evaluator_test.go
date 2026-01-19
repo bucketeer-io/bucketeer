@@ -155,7 +155,7 @@ func TestGreaterSemver(t *testing.T) {
 		{
 			targetValue: "1.0.0",
 			values:      []string{"1.0.0", "1.0.1", "v0.0.7"},
-			expected:    false,
+			expected:    true, // 1.0.0 > v0.0.7 (normalized to 0.0.7) = true
 		},
 		{
 			targetValue: "0.0.8",
@@ -165,12 +165,12 @@ func TestGreaterSemver(t *testing.T) {
 		{
 			targetValue: "1.1.0",
 			values:      []string{"1.1.0", "v1.0.9", "1.1.1"},
-			expected:    false,
+			expected:    true, // 1.1.0 > v1.0.9 (normalized to 1.0.9) = true
 		},
 		{
 			targetValue: "2.1.0",
 			values:      []string{"2.1.0", "v2.0.9", "2.1.1"},
-			expected:    false,
+			expected:    true, // 2.1.0 > v2.0.9 (normalized to 2.0.9) = true
 		},
 		{
 			targetValue: "1.0.1",
@@ -196,7 +196,7 @@ func TestGreaterSemver(t *testing.T) {
 		{
 			targetValue: "v1.0.0",
 			values:      []string{"v1.0.0", "v1.0.1", "0.0.7"},
-			expected:    false,
+			expected:    true, // v1.0.0 > 0.0.7 = true
 		},
 		{
 			targetValue: "v0.0.8",
@@ -206,12 +206,12 @@ func TestGreaterSemver(t *testing.T) {
 		{
 			targetValue: "v1.1.0",
 			values:      []string{"v1.1.0", "1.0.9", "v1.1.1"},
-			expected:    false,
+			expected:    true, // v1.1.0 > 1.0.9 = true
 		},
 		{
 			targetValue: "v2.1.0",
 			values:      []string{"v2.1.0", "2.0.9", "v2.1.1"},
-			expected:    false,
+			expected:    true, // v2.1.0 > 2.0.9 = true
 		},
 		{
 			targetValue: "v1.0.1",
@@ -448,7 +448,7 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "1.0.0",
 			values:      []string{"1.0.1", "1.0.2", "v0.0.7"},
-			expected:    false,
+			expected:    true, // 1.0.0 >= v0.0.7 (normalized to 0.0.7) = true
 		},
 		{
 			targetValue: "0.0.8",
@@ -458,12 +458,12 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "1.1.0",
 			values:      []string{"1.1.1", "v1.0.9", "1.1.2"},
-			expected:    false,
+			expected:    true, // 1.1.0 >= v1.0.9 (normalized to 1.0.9) = true
 		},
 		{
 			targetValue: "2.1.0",
 			values:      []string{"2.1.1", "v2.0.9", "2.1.2"},
-			expected:    false,
+			expected:    true, // 2.1.0 >= v2.0.9 (normalized to 2.0.9) = true
 		},
 		{
 			targetValue: "1.0.0",
@@ -503,7 +503,7 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "v1.0.0",
 			values:      []string{"v1.0.1", "v1.0.2", "0.0.7"},
-			expected:    false,
+			expected:    true, // v1.0.0 >= 0.0.7 = true
 		},
 		{
 			targetValue: "v0.0.8",
@@ -513,12 +513,12 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "v1.1.0",
 			values:      []string{"v1.1.1", "1.0.9", "v1.1.2"},
-			expected:    false,
+			expected:    true, // v1.1.0 >= 1.0.9 = true
 		},
 		{
 			targetValue: "v2.1.0",
 			values:      []string{"v2.1.1", "2.0.9", "v2.1.2"},
-			expected:    false,
+			expected:    true, // v2.1.0 >= 2.0.9 = true
 		},
 		{
 			targetValue: "v1.0.0",
@@ -643,7 +643,7 @@ func TestLessThanSemver(t *testing.T) {
 		{
 			targetValue: "0.0.8",
 			values:      []string{"0.0.8", "0.0.7", "v0.0.9"},
-			expected:    false,
+			expected:    true, // 0.0.8 < v0.0.9 (normalized to 0.0.9) = true
 		},
 		{
 			targetValue: "1.1.0",
@@ -683,7 +683,7 @@ func TestLessThanSemver(t *testing.T) {
 		{
 			targetValue: "v0.0.8",
 			values:      []string{"v0.0.8", "v0.0.7", "0.0.9"},
-			expected:    false,
+			expected:    true, // v0.0.8 < 0.0.9 = true
 		},
 		{
 			targetValue: "v1.1.0",
@@ -1052,7 +1052,7 @@ func TestLessThanOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "0.0.9",
 			values:      []string{"0.0.8", "0.0.7", "v0.0.9"},
-			expected:    false,
+			expected:    true, // 0.0.9 <= v0.0.9 (normalized to 0.0.9) = true
 		},
 		{
 			targetValue: "1.1.1",
@@ -1107,7 +1107,7 @@ func TestLessThanOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "v0.0.9",
 			values:      []string{"v0.0.8", "v0.0.7", "0.0.9"},
-			expected:    false,
+			expected:    true, // v0.0.9 <= 0.0.9 = true
 		},
 		{
 			targetValue: "v1.1.1",
@@ -1427,5 +1427,194 @@ func TestNotEquals(t *testing.T) {
 		des := fmt.Sprintf("index: %d", i)
 		res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
 		assert.Equal(t, tc.expected, res, des)
+	}
+}
+
+// TestSemverVPrefixNormalization tests that semver comparisons work correctly
+// regardless of whether target or values have "v" prefix.
+// This matches the behavior of the npm semver package used in TypeScript.
+func TestSemverVPrefixNormalization(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		desc        string
+		operator    featureproto.Clause_Operator
+		targetValue string
+		values      []string
+		expected    bool
+	}{
+		// GREATER_OR_EQUAL: target with v, value without v
+		{
+			desc:        "gte: target v10.154.2 >= value 10.154.2 (equal)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "v10.154.2",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gte: target v10.154.3 >= value 10.154.2 (greater)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "v10.154.3",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gte: target v10.154.1 >= value 10.154.2 (less)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "v10.154.1",
+			values:      []string{"10.154.2"},
+			expected:    false,
+		},
+		// GREATER_OR_EQUAL: target without v, value with v
+		{
+			desc:        "gte: target 10.154.2 >= value v10.154.2 (equal)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "10.154.2",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gte: target 10.154.3 >= value v10.154.2 (greater)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "10.154.3",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gte: target 10.154.1 >= value v10.154.2 (less)",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "10.154.1",
+			values:      []string{"v10.154.2"},
+			expected:    false,
+		},
+		// GREATER: target with v, value without v
+		{
+			desc:        "gt: target v10.154.3 > value 10.154.2",
+			operator:    featureproto.Clause_GREATER,
+			targetValue: "v10.154.3",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gt: target v10.154.2 > value 10.154.2 (equal, should be false)",
+			operator:    featureproto.Clause_GREATER,
+			targetValue: "v10.154.2",
+			values:      []string{"10.154.2"},
+			expected:    false,
+		},
+		// GREATER: target without v, value with v
+		{
+			desc:        "gt: target 10.154.3 > value v10.154.2",
+			operator:    featureproto.Clause_GREATER,
+			targetValue: "10.154.3",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "gt: target 10.154.2 > value v10.154.2 (equal, should be false)",
+			operator:    featureproto.Clause_GREATER,
+			targetValue: "10.154.2",
+			values:      []string{"v10.154.2"},
+			expected:    false,
+		},
+		// LESS: target with v, value without v
+		{
+			desc:        "lt: target v10.154.1 < value 10.154.2",
+			operator:    featureproto.Clause_LESS,
+			targetValue: "v10.154.1",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lt: target v10.154.2 < value 10.154.2 (equal, should be false)",
+			operator:    featureproto.Clause_LESS,
+			targetValue: "v10.154.2",
+			values:      []string{"10.154.2"},
+			expected:    false,
+		},
+		// LESS: target without v, value with v
+		{
+			desc:        "lt: target 10.154.1 < value v10.154.2",
+			operator:    featureproto.Clause_LESS,
+			targetValue: "10.154.1",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lt: target 10.154.2 < value v10.154.2 (equal, should be false)",
+			operator:    featureproto.Clause_LESS,
+			targetValue: "10.154.2",
+			values:      []string{"v10.154.2"},
+			expected:    false,
+		},
+		// LESS_OR_EQUAL: target with v, value without v
+		{
+			desc:        "lte: target v10.154.2 <= value 10.154.2 (equal)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "v10.154.2",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lte: target v10.154.1 <= value 10.154.2 (less)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "v10.154.1",
+			values:      []string{"10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lte: target v10.154.3 <= value 10.154.2 (greater)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "v10.154.3",
+			values:      []string{"10.154.2"},
+			expected:    false,
+		},
+		// LESS_OR_EQUAL: target without v, value with v
+		{
+			desc:        "lte: target 10.154.2 <= value v10.154.2 (equal)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "10.154.2",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lte: target 10.154.1 <= value v10.154.2 (less)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "10.154.1",
+			values:      []string{"v10.154.2"},
+			expected:    true,
+		},
+		{
+			desc:        "lte: target 10.154.3 <= value v10.154.2 (greater)",
+			operator:    featureproto.Clause_LESS_OR_EQUAL,
+			targetValue: "10.154.3",
+			values:      []string{"v10.154.2"},
+			expected:    false,
+		},
+		// Mixed values array (some with v, some without)
+		{
+			desc:        "gte: target v10.154.2 with mixed values array",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "v10.154.2",
+			values:      []string{"v10.154.3", "10.154.2", "v10.154.1"},
+			expected:    true, // matches 10.154.2 and v10.154.1
+		},
+		{
+			desc:        "gte: target 10.154.2 with mixed values array",
+			operator:    featureproto.Clause_GREATER_OR_EQUAL,
+			targetValue: "10.154.2",
+			values:      []string{"v10.154.3", "10.154.2", "v10.154.1"},
+			expected:    true, // matches 10.154.2 and v10.154.1
+		},
+	}
+	clauseEvaluator := &clauseEvaluator{}
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			clause := &featureproto.Clause{
+				Operator: tc.operator,
+				Values:   tc.values,
+			}
+			res, _ := clauseEvaluator.Evaluate(tc.targetValue, clause, "userId", nil, nil)
+			assert.Equal(t, tc.expected, res)
+		})
 	}
 }
