@@ -24,7 +24,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -49,86 +48,7 @@ func (s *FeatureService) CreateSegment(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createSegmentNoCommand(ctx, req, editor)
-	}
-	if err = validateCreateSegmentRequest(req.Command); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	segment, err := domain.NewSegment(req.Command.Name, req.Command.Description)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create segment",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
-			s.logger.Error(
-				"Failed to store segment",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewSegmentCommandHandler(
-			editor,
-			segment,
-			s.domainPublisher,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			s.logger.Error(
-				"Failed to handle command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create segment",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &featureproto.CreateSegmentResponse{
-		Segment: segment.Segment,
-	}, nil
-}
-
-func (s *FeatureService) createSegmentNoCommand(
-	ctx context.Context,
-	req *featureproto.CreateSegmentRequest,
-	editor *eventproto.Editor,
-) (*featureproto.CreateSegmentResponse, error) {
-	if err := validateCreateSegmentNoCommandRequest(req); err != nil {
+	if err := validateCreateSegmentRequest(req); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -207,9 +127,6 @@ func (s *FeatureService) DeleteSegment(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.deleteSegmentNoCommand(ctx, req, editor)
-	}
 	if err := validateDeleteSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -223,37 +140,7 @@ func (s *FeatureService) DeleteSegment(
 	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
 		return nil, err
 	}
-	if _, err := s.updateSegment(
-		ctx,
-		editor,
-		[]command.Command{req.Command},
-		req.Id,
-		req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
-	return &featureproto.DeleteSegmentResponse{}, nil
-}
-
-func (s *FeatureService) deleteSegmentNoCommand(
-	ctx context.Context,
-	req *featureproto.DeleteSegmentRequest,
-	editor *eventproto.Editor,
-) (*featureproto.DeleteSegmentResponse, error) {
-	if err := validateDeleteSegmentRequest(req); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -384,55 +271,7 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, err
 	}
-	if req.Commands == nil {
-		return s.updateSegmentNoCommand(ctx, req, editor)
-	}
-	commands := make([]command.Command, 0, len(req.Commands))
-	for _, c := range req.Commands {
-		cmd, err := command.UnmarshalCommand(c)
-		if err != nil {
-			s.logger.Error(
-				"Failed to unmarshal command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-		commands = append(commands, cmd)
-	}
-	if err := validateUpdateSegment(req.Id, commands); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	segment, err := s.updateSegment(
-		ctx,
-		editor,
-		commands,
-		req.Id,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &featureproto.UpdateSegmentResponse{
-		Segment: segment,
-	}, nil
-}
-
-func (s *FeatureService) updateSegmentNoCommand(
-	ctx context.Context,
-	req *featureproto.UpdateSegmentRequest,
-	editor *eventproto.Editor,
-) (*featureproto.UpdateSegmentResponse, error) {
-	err := validateUpdateSegmentNoCommand(req)
+	err = validateUpdateSegmentRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -506,65 +345,6 @@ func (s *FeatureService) updateSegmentNoCommand(
 	return &featureproto.UpdateSegmentResponse{
 		Segment: updatedSegment,
 	}, nil
-}
-
-func (s *FeatureService) updateSegment(
-	ctx context.Context,
-	editor *eventproto.Editor,
-	commands []command.Command,
-	segmentID, environmentId string,
-) (*featureproto.Segment, error) {
-	var updatedSegment *featureproto.Segment
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get segment",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewSegmentCommandHandler(
-			editor,
-			segment,
-			s.domainPublisher,
-			environmentId,
-		)
-		if err != nil {
-			return err
-		}
-		for _, cmd := range commands {
-			if err := handler.Handle(ctx, cmd); err != nil {
-				s.logger.Error(
-					"Failed to handle command",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", environmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		updatedSegment = segment.Segment
-		return s.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
-			return nil, statusSegmentNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to update segment",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return updatedSegment, nil
 }
 
 func (s *FeatureService) GetSegment(

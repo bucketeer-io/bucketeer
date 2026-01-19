@@ -42,26 +42,6 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// AddSegmentUser mocks base method.
-func (m *MockClient) AddSegmentUser(ctx context.Context, in *feature.AddSegmentUserRequest, opts ...grpc.CallOption) (*feature.AddSegmentUserResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "AddSegmentUser", varargs...)
-	ret0, _ := ret[0].(*feature.AddSegmentUserResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AddSegmentUser indicates an expected call of AddSegmentUser.
-func (mr *MockClientMockRecorder) AddSegmentUser(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSegmentUser", reflect.TypeOf((*MockClient)(nil).AddSegmentUser), varargs...)
-}
-
 // ArchiveFeature mocks base method.
 func (m *MockClient) ArchiveFeature(ctx context.Context, in *feature.ArchiveFeatureRequest, opts ...grpc.CallOption) (*feature.ArchiveFeatureResponse, error) {
 	m.ctrl.T.Helper()
@@ -314,26 +294,6 @@ func (mr *MockClientMockRecorder) DeleteSegment(ctx, in any, opts ...any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSegment", reflect.TypeOf((*MockClient)(nil).DeleteSegment), varargs...)
 }
 
-// DeleteSegmentUser mocks base method.
-func (m *MockClient) DeleteSegmentUser(ctx context.Context, in *feature.DeleteSegmentUserRequest, opts ...grpc.CallOption) (*feature.DeleteSegmentUserResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DeleteSegmentUser", varargs...)
-	ret0, _ := ret[0].(*feature.DeleteSegmentUserResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DeleteSegmentUser indicates an expected call of DeleteSegmentUser.
-func (mr *MockClientMockRecorder) DeleteSegmentUser(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSegmentUser", reflect.TypeOf((*MockClient)(nil).DeleteSegmentUser), varargs...)
-}
-
 // DisableFeature mocks base method.
 func (m *MockClient) DisableFeature(ctx context.Context, in *feature.DisableFeatureRequest, opts ...grpc.CallOption) (*feature.DisableFeatureResponse, error) {
 	m.ctrl.T.Helper()
@@ -532,26 +492,6 @@ func (mr *MockClientMockRecorder) GetSegment(ctx, in any, opts ...any) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegment", reflect.TypeOf((*MockClient)(nil).GetSegment), varargs...)
-}
-
-// GetSegmentUser mocks base method.
-func (m *MockClient) GetSegmentUser(ctx context.Context, in *feature.GetSegmentUserRequest, opts ...grpc.CallOption) (*feature.GetSegmentUserResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetSegmentUser", varargs...)
-	ret0, _ := ret[0].(*feature.GetSegmentUserResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSegmentUser indicates an expected call of GetSegmentUser.
-func (mr *MockClientMockRecorder) GetSegmentUser(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUser", reflect.TypeOf((*MockClient)(nil).GetSegmentUser), varargs...)
 }
 
 // GetUserAttributeKeys mocks base method.

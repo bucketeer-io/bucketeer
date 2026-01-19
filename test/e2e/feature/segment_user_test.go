@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,71 +27,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 const (
 	segmentUserRetryTimes = 20
 )
-
-func TestAddSegmentUserCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userID := newUserID(t)
-	testcases := []struct {
-		userID string
-		state  featureproto.SegmentUser_State
-	}{
-		{
-			userID: userID,
-			state:  featureproto.SegmentUser_INCLUDED,
-		},
-	}
-	for _, tc := range testcases {
-		addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		user := getSegmentUser(ctx, t, client, segmentID, tc.userID, tc.state)
-		id := domain.SegmentUserID(segmentID, tc.userID, tc.state)
-		assert.Equal(t, id, user.Id)
-		assert.Equal(t, segmentID, user.SegmentId)
-		assert.Equal(t, tc.userID, user.UserId)
-		assert.Equal(t, tc.state, user.State)
-		assert.Equal(t, false, user.Deleted)
-	}
-}
-
-func TestDeleteSegmentUserCommand(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	segmentID := createSegment(ctx, t, client).Id
-	userID := newUserID(t)
-	testcases := []struct {
-		userID string
-		state  featureproto.SegmentUser_State
-	}{
-		{
-			userID: userID,
-			state:  featureproto.SegmentUser_INCLUDED,
-		},
-	}
-	for _, tc := range testcases {
-		addSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		deleteSegmentUser(ctx, t, client, segmentID, []string{tc.userID}, tc.state)
-		listRes := listSegmentUsers(
-			ctx,
-			t,
-			client,
-			segmentID,
-			&wrappersproto.Int32Value{Value: int32(tc.state)},
-		)
-		assert.Empty(t, len(listRes.Users))
-	}
-}
 
 func TestListSegmentUsersPageSize(t *testing.T) {
 	t.Parallel()
@@ -99,7 +41,8 @@ func TestListSegmentUsersPageSize(t *testing.T) {
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
 	userIDs := []string{newUserID(t), newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	uploadSegmentUsers(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
 	pageSize := int64(1)
 	res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
 		PageSize:      pageSize,
@@ -118,10 +61,11 @@ func TestListSegmentUsersCursor(t *testing.T) {
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
 	userIDs := []string{newUserID(t), newUserID(t), newUserID(t), newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	uploadSegmentUsers(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	state := &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
+	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), state)
 	var lastUsers []*featureproto.SegmentUser
 	pageSize := int64(2)
-	state := &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)}
 	cursor := ""
 	for i := 0; i < 3; i++ {
 		res, err := client.ListSegmentUsers(ctx, &featureproto.ListSegmentUsersRequest{
@@ -159,7 +103,8 @@ func TestListSegmentUsersWithoutState(t *testing.T) {
 	client := newFeatureClient(t)
 	segmentID := createSegment(ctx, t, client).Id
 	userIDs := []string{newUserID(t)}
-	addSegmentUser(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	uploadSegmentUsers(ctx, t, client, segmentID, userIDs, featureproto.SegmentUser_INCLUDED)
+	waitForSegmentUsers(ctx, t, client, segmentID, len(userIDs), nil)
 	res := listSegmentUsers(ctx, t, client, segmentID, nil)
 	assert.Equal(t, 1, len(res.Users))
 	assert.Equal(t, segmentID, res.Users[0].SegmentId)
@@ -179,10 +124,8 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	uploadRes, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
 		EnvironmentId: *environmentID,
 		SegmentId:     segmentID,
-		Command: &featureproto.BulkUploadSegmentUsersCommand{
-			Data:  userIDs,
-			State: featureproto.SegmentUser_INCLUDED,
-		},
+		Data:          userIDs,
+		State:         featureproto.SegmentUser_INCLUDED,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, uploadRes)
@@ -200,48 +143,6 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 		}
 		time.Sleep(5 * time.Second)
 	}
-}
-
-func addSegmentUser(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, userIDs []string, state featureproto.SegmentUser_State) {
-	t.Helper()
-	req := &featureproto.AddSegmentUserRequest{
-		Id: segmentID,
-		Command: &featureproto.AddSegmentUserCommand{
-			UserIds: userIDs,
-			State:   state,
-		},
-		EnvironmentId: *environmentID,
-	}
-	res, err := client.AddSegmentUser(ctx, req)
-	assert.NotNil(t, res)
-	assert.NoError(t, err)
-}
-
-func deleteSegmentUser(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, userIDs []string, state featureproto.SegmentUser_State) {
-	req := &featureproto.DeleteSegmentUserRequest{
-		Id: segmentID,
-		Command: &featureproto.DeleteSegmentUserCommand{
-			UserIds: userIDs,
-			State:   state,
-		},
-		EnvironmentId: *environmentID,
-	}
-	res, err := client.DeleteSegmentUser(ctx, req)
-	assert.NotNil(t, res)
-	assert.NoError(t, err)
-}
-
-func getSegmentUser(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, userID string, state featureproto.SegmentUser_State) *featureproto.SegmentUser {
-	t.Helper()
-	req := &featureproto.GetSegmentUserRequest{
-		SegmentId:     segmentID,
-		UserId:        userID,
-		State:         state,
-		EnvironmentId: *environmentID,
-	}
-	res, err := client.GetSegmentUser(ctx, req)
-	assert.NoError(t, err)
-	return res.User
 }
 
 func listSegmentUsers(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, state *wrappersproto.Int32Value) *featureproto.ListSegmentUsersResponse {
@@ -289,6 +190,44 @@ func bulkDownloadSegmentUsers(t *testing.T, client featureclient.Client, segment
 		SegmentId:     segmentID,
 		State:         featureproto.SegmentUser_INCLUDED,
 	})
+}
+
+func uploadSegmentUsers(
+	ctx context.Context,
+	t *testing.T,
+	client featureclient.Client,
+	segmentID string,
+	userIDs []string,
+	state featureproto.SegmentUser_State,
+) {
+	t.Helper()
+	data := []byte(strings.Join(userIDs, "\n") + "\n")
+	_, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
+		EnvironmentId: *environmentID,
+		SegmentId:     segmentID,
+		Data:          data,
+		State:         state,
+	})
+	assert.NoError(t, err)
+}
+
+func waitForSegmentUsers(
+	ctx context.Context,
+	t *testing.T,
+	client featureclient.Client,
+	segmentID string,
+	expectedSize int,
+	state *wrappersproto.Int32Value,
+) {
+	t.Helper()
+	for i := 0; i < segmentUserRetryTimes; i++ {
+		res := listSegmentUsers(ctx, t, client, segmentID, state)
+		if len(res.Users) >= expectedSize {
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	t.Fatalf("segment users not ready")
 }
 
 func newUserID(t *testing.T) string {
