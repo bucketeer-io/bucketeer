@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -26,6 +26,9 @@ const DebuggerFlags = ({
   const { control, watch, setValue } = useFormContext<AddDebuggerFormType>();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFlagsCache, setSelectedFlagsCache] = useState<
+    Map<string, Feature>
+  >(new Map());
 
   const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
@@ -39,21 +42,66 @@ const DebuggerFlags = ({
 
   const flags = flagCollection?.features || [];
 
+  // Update cache with newly fetched flags
+  useEffect(() => {
+    if (flags.length > 0) {
+      setSelectedFlagsCache(prev => {
+        const newCache = new Map(prev);
+        flags.forEach(flag => {
+          newCache.set(flag.id, flag);
+        });
+        return newCache;
+      });
+    }
+  }, [flags]);
+
   const flagsSelected: string[] = [...watch('flags')];
+
+  // Merge cached selected flags with current search results
+  const allAvailableFlags = useMemo(() => {
+    const flagsMap = new Map(flags.map(flag => [flag.id, flag]));
+
+    // Always add selected flags from cache for label display purposes
+    flagsSelected.forEach(selectedId => {
+      if (selectedId && !flagsMap.has(selectedId)) {
+        const cachedFlag = selectedFlagsCache.get(selectedId);
+        if (cachedFlag) {
+          flagsMap.set(selectedId, cachedFlag);
+        }
+      }
+    });
+
+    return Array.from(flagsMap.values());
+  }, [flags, flagsSelected, selectedFlagsCache]);
+
   const flagOptions = useMemo(
     () =>
-      flags.map(item => ({
+      allAvailableFlags.map(item => ({
         label: item.name,
         value: item.id,
         enabled: item.enabled,
         disabled: flagsSelected.includes(item.id)
       })),
-    [flags, flagsSelected]
+    [allAvailableFlags, flagsSelected]
   );
 
   const flagsRemaining = useMemo(() => {
-    return flagOptions.filter(item => item.value !== feature?.id);
-  }, [flagOptions, flags, feature]);
+    // Get IDs of flags actually returned by the API (not from cache)
+    const apiReturnedFlagIds = new Set(flags.map(flag => flag.id));
+
+    return flagOptions.filter(item => {
+      // Filter out the current feature if in targeting mode
+      if (item.value === feature?.id) return false;
+
+      // If actively searching and flag is selected but NOT in API results,
+      // hide it from dropdown to show accurate search results
+      if (searchQuery && item.disabled && !apiReturnedFlagIds.has(item.value)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [flagOptions, flags, feature, searchQuery]);
 
   const debouncedSearch = useMemo(
     () => debounce((value: string) => setSearchQuery(value), 300),
@@ -73,6 +121,13 @@ const DebuggerFlags = ({
     },
     [debouncedSearch]
   );
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const isDisabledAddBtn = useMemo(
     () => !flagsRemaining.length || flagsSelected?.length === flags.length,
