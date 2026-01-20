@@ -133,9 +133,8 @@ const DebuggerFlags = ({
   }, [debouncedSearch]);
 
   const isDisabledAddBtn = useMemo(() => {
-    const totalFlagCount = flagCollection?.totalCount
-      ? parseInt(flagCollection.totalCount)
-      : 0;
+    // API returns totalCount as string; convert to number for comparison
+    const totalFlagCount = Number(flagCollection?.totalCount ?? 0);
 
     // Disable if no remaining flags in current view OR all flags are selected
     return !flagsRemaining.length || flagsSelected?.length >= totalFlagCount;
