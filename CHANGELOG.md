@@ -1,5 +1,126 @@
 # Changelog
 
+## [2.2.0](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.2.0) (2026-01-20)
+
+
+### Features
+
+* add auto-archive configuration in environment v2 ([#2298](https://github.com/bucketeer-io/bucketeer/issues/2298)) ([277e3cd](https://github.com/bucketeer-io/bucketeer/commit/277e3cdc5c3f048cd7a75ae181692644e86f235f))
+* add backend support for yaml flag type ([#2217](https://github.com/bucketeer-io/bucketeer/issues/2217)) ([046820a](https://github.com/bucketeer-io/bucketeer/commit/046820a040b2749479a8675e0c72efc864290161))
+* add bash completion to dev container ([#2340](https://github.com/bucketeer-io/bucketeer/issues/2340)) ([91ad72a](https://github.com/bucketeer-io/bucketeer/commit/91ad72a4dfa3c2e4ddc0f6debb86795004b4c14e))
+* add proactive token refresh and configurable access/refresh token TTLs ([#2221](https://github.com/bucketeer-io/bucketeer/issues/2221)) ([68d1951](https://github.com/bucketeer-io/bucketeer/commit/68d19511fe271ced16a18eaaeea7c09eab4c77f4))
+* allow filter api key by maintainer ([#2132](https://github.com/bucketeer-io/bucketeer/issues/2132)) ([6525cd1](https://github.com/bucketeer-io/bucketeer/commit/6525cd10c02af1693e9d8d0f6d016618997b0d50))
+* implement api key last used at ([#2175](https://github.com/bucketeer-io/bucketeer/issues/2175)) ([1078b28](https://github.com/bucketeer-io/bucketeer/commit/1078b288287b4784fbff165568cbec0e07eac2bb))
+* implement the feature domain layer for evaluating flag archivability and executing bulk archive operations ([#2310](https://github.com/bucketeer-io/bucketeer/issues/2310)) ([ac69d88](https://github.com/bucketeer-io/bucketeer/commit/ac69d88f77250082e036efe7e28d0fb93f146d86))
+* introduce gotestsum for improved test output formatting ([#2336](https://github.com/bucketeer-io/bucketeer/issues/2336)) ([d52e632](https://github.com/bucketeer-io/bucketeer/commit/d52e63243c861b9b9486390499ab52c62af34522))
+* show popup unsaved changes leaves page ([#2141](https://github.com/bucketeer-io/bucketeer/issues/2141)) ([c3d7cd7](https://github.com/bucketeer-io/bucketeer/commit/c3d7cd733fefbe5a41420fb3464cb58c11e0229b))
+* support for email service ([#2220](https://github.com/bucketeer-io/bucketeer/issues/2220)) ([44a3cd5](https://github.com/bucketeer-io/bucketeer/commit/44a3cd55c59a92e225eae54aafa3d5bae3747c25))
+* support last used at order direction ([#2243](https://github.com/bucketeer-io/bucketeer/issues/2243)) ([fca771c](https://github.com/bucketeer-io/bucketeer/commit/fca771c16812bc583f2f010bf8bf49ac953d53fa))
+* **ui/dashboard:** cache experiment reload ([#2190](https://github.com/bucketeer-io/bucketeer/issues/2190)) ([3587c72](https://github.com/bucketeer-io/bucketeer/commit/3587c72c054bfea702dc82c09dd5cd542545833f))
+* **ui/dashboard:** implement flag type yaml ([#2208](https://github.com/bucketeer-io/bucketeer/issues/2208)) ([10fe0db](https://github.com/bucketeer-io/bucketeer/commit/10fe0db79f00c90ec3f372954baa6f0768344f8b))
+
+
+### Bug Fixes
+
+* allow archiving flags that have prerequisites but no dependents ([#2288](https://github.com/bucketeer-io/bucketeer/issues/2288)) ([08fe72f](https://github.com/bucketeer-io/bucketeer/commit/08fe72f1c2d47a3e76d0ca549f4c3296ae06b29a))
+* api key last seen writer is not executing correctly after graceful shutdown ([#2249](https://github.com/bucketeer-io/bucketeer/issues/2249)) ([55abdb0](https://github.com/bucketeer-io/bucketeer/commit/55abdb0a46fd9b000ee018a2aa9ee0c5fb2a2441))
+* app and envoy container not shutting down gracefully ([#2155](https://github.com/bucketeer-io/bucketeer/issues/2155)) ([c78bb7e](https://github.com/bucketeer-io/bucketeer/commit/c78bb7ea605e21b4910875262a2d4c845a22f7c7))
+* batch-server redis-counter-deleter fails because of the temporary keys ([#2165](https://github.com/bucketeer-io/bucketeer/issues/2165)) ([8b138de](https://github.com/bucketeer-io/bucketeer/commit/8b138dee32853d771438076d113e8bc7e36c8a5f))
+* cannot start experiment ([#2328](https://github.com/bucketeer-io/bucketeer/issues/2328)) ([bc55fa8](https://github.com/bucketeer-io/bucketeer/commit/bc55fa826bac5d0360bf34e9e017fed085b813ff))
+* cannot update flag maintainer ([#2356](https://github.com/bucketeer-io/bucketeer/issues/2356)) ([a305cc5](https://github.com/bucketeer-io/bucketeer/commit/a305cc598e4553ec4129219cd5f32e5b09589db0))
+* correct branch name extraction for nested branch names ([#2335](https://github.com/bucketeer-io/bucketeer/issues/2335)) ([e36baac](https://github.com/bucketeer-io/bucketeer/commit/e36baacccc61d1555d0576e70a7d4fa5ef444d46))
+* e2e tests with redis stream pubsub and dev container improvements ([#2319](https://github.com/bucketeer-io/bucketeer/issues/2319)) ([80d4fb3](https://github.com/bucketeer-io/bucketeer/commit/80d4fb3be26028c466bb2c02a3445a5609563af8))
+* **evaluation:** normalize semver v-prefix to match typescript behavior ([#2355](https://github.com/bucketeer-io/bucketeer/issues/2355)) ([74cd12c](https://github.com/bucketeer-io/bucketeer/commit/74cd12cf9cfe730c4af145781c53057f2271e208))
+* exclude flag and segment-based rules when cloning feature flags ([#2309](https://github.com/bucketeer-io/bucketeer/issues/2309)) ([4c42223](https://github.com/bucketeer-io/bucketeer/commit/4c4222304f70625d6313b517c585ad69643932f9))
+* failed to create puller log for none-demo deployment ([#2158](https://github.com/bucketeer-io/bucketeer/issues/2158)) ([6927c51](https://github.com/bucketeer-io/bucketeer/commit/6927c515b363a6e0cfd8be0bfa5ef8188050a4fe))
+* http stan readiness not using default settings ([#2194](https://github.com/bucketeer-io/bucketeer/issues/2194)) ([635dc67](https://github.com/bucketeer-io/bucketeer/commit/635dc67ed415f9f42556224d6e282ecdd5f94768))
+* implement server-side search for flag selection in the debugger ([#2357](https://github.com/bucketeer-io/bucketeer/issues/2357)) ([a8565b9](https://github.com/bucketeer-io/bucketeer/commit/a8565b9675345cc0a6b4aae62b42d78bdee440c5))
+* improve timeout handling and health check resilience during traffic spikes ([#2131](https://github.com/bucketeer-io/bucketeer/issues/2131)) ([b2a5065](https://github.com/bucketeer-io/bucketeer/commit/b2a50655be320a803444df4cdfe136e9520b6aa3))
+* nil pointer exception in feature stale watcher ([#2167](https://github.com/bucketeer-io/bucketeer/issues/2167)) ([c327839](https://github.com/bucketeer-io/bucketeer/commit/c327839235655a5295f4cce6ff5b3e77df1333df))
+* prevent experiment calculator goroutine stacking ([#2196](https://github.com/bucketeer-io/bucketeer/issues/2196)) ([58318fc](https://github.com/bucketeer-io/bucketeer/commit/58318fc7eef1b2ee38c0384fd4783ff8e199fc8b))
+* prevent goal event retry collisions ([#2219](https://github.com/bucketeer-io/bucketeer/issues/2219)) ([4bf70c2](https://github.com/bucketeer-io/bucketeer/commit/4bf70c2c9ea3eacb38434d898b8cdc2976e8f438))
+* prevent login page flash during token refresh on app load ([#2287](https://github.com/bucketeer-io/bucketeer/issues/2287)) ([927fad3](https://github.com/bucketeer-io/bucketeer/commit/927fad37963aa8ac52c1b15db506b1162296fd59))
+* race condition when stopping health check during shutdown ([#2177](https://github.com/bucketeer-io/bucketeer/issues/2177)) ([d289118](https://github.com/bucketeer-io/bucketeer/commit/d289118b0a88d6d865f674a5508bf37a579c0f1b))
+* remove demoOrganizationCreationNotifier from ConfigMap when demoSiteEnabled is false ([#2174](https://github.com/bucketeer-io/bucketeer/issues/2174)) ([7ca7f44](https://github.com/bucketeer-io/bucketeer/commit/7ca7f44c26c1ae27718a43912fdc38e057d17ae8))
+* setting wrong role when creating an organization ([#2252](https://github.com/bucketeer-io/bucketeer/issues/2252)) ([3076d82](https://github.com/bucketeer-io/bucketeer/commit/3076d82c7d2481217bcff1cfd550e1c8801c56bf))
+* **ui/dashabord:** experiment results loading forever ([#2206](https://github.com/bucketeer-io/bucketeer/issues/2206)) ([17ca167](https://github.com/bucketeer-io/bucketeer/commit/17ca167e09a6a96e637807c749e253a0efc5c50f))
+* **ui/dashboard:** add documentation link to code refs enable state ([#2275](https://github.com/bucketeer-io/bucketeer/issues/2275)) ([128a00c](https://github.com/bucketeer-io/bucketeer/commit/128a00cd0d9574476d560185804b8df8bad1c981))
+* **ui/dashboard:** axios interceptor not waiting for token refresh on 401 ([#2278](https://github.com/bucketeer-io/bucketeer/issues/2278)) ([97c5d09](https://github.com/bucketeer-io/bucketeer/commit/97c5d09036e2b6fd0504f3694b5b491e1d18ba04))
+* **ui/dashboard:** clone flag destination env should not list the origin env ([#2201](https://github.com/bucketeer-io/bucketeer/issues/2201)) ([c60de09](https://github.com/bucketeer-io/bucketeer/commit/c60de09e9874924f74d7e7dbf59d2fdf62abc830))
+* **ui/dashboard:** default rule not disabled when using progressive rollout ([#2329](https://github.com/bucketeer-io/bucketeer/issues/2329)) ([0cfabfe](https://github.com/bucketeer-io/bucketeer/commit/0cfabfe11bbf1ceff38fce54d7e698a6ee6e835f))
+* **ui/dashboard:** dom nesting caused by nested button ([#2248](https://github.com/bucketeer-io/bucketeer/issues/2248)) ([f9536d5](https://github.com/bucketeer-io/bucketeer/commit/f9536d5861e64d8f996bcc0510d2cd1c0d1d8571))
+* **ui/dashboard:** evaluation event count not showing correctly ([#2195](https://github.com/bucketeer-io/bucketeer/issues/2195)) ([9ac9231](https://github.com/bucketeer-io/bucketeer/commit/9ac92310ef2fc4d221986d917d7416b6561f760c))
+* **ui/dashboard:** experiment filter opens drawer add new ([#2140](https://github.com/bucketeer-io/bucketeer/issues/2140)) ([d764014](https://github.com/bucketeer-io/bucketeer/commit/d7640146f295cea53b338ec2767b2138ba6bc501))
+* **ui/dashboard:** operation is manually canceled at code editor component ([#2261](https://github.com/bucketeer-io/bucketeer/issues/2261)) ([b10b5b6](https://github.com/bucketeer-io/bucketeer/commit/b10b5b6ec4fa69f15c9f584c837a0eb604bc7ef8))
+* **ui/dashboard:** remove extra slash causing 404 errors in navigation paths ([#2273](https://github.com/bucketeer-io/bucketeer/issues/2273)) ([38c1000](https://github.com/bucketeer-io/bucketeer/commit/38c1000d000998f12d53acebe50cabba5d7688da))
+* **ui/dashboard:** show clone feature and unsave changes issues ([#2182](https://github.com/bucketeer-io/bucketeer/issues/2182)) ([a48eebf](https://github.com/bucketeer-io/bucketeer/commit/a48eebfb42080bb56ae49e6de7e4864cff4952eb))
+* **ui/dashboard:** show name environment with empty Id ([#2238](https://github.com/bucketeer-io/bucketeer/issues/2238)) ([e6217a1](https://github.com/bucketeer-io/bucketeer/commit/e6217a1f1264e52d274361ddf4fdf32c7e6946ef))
+* **ui/dashboard:** switch org menu not being updated after org creation ([#2191](https://github.com/bucketeer-io/bucketeer/issues/2191)) ([7a6ec1e](https://github.com/bucketeer-io/bucketeer/commit/7a6ec1e34ae76c7ce4e24b3e8fae05c66eff1487))
+* **ui/dashboard:** switch organization not updating after creation ([#2204](https://github.com/bucketeer-io/bucketeer/issues/2204)) ([ccf24b6](https://github.com/bucketeer-io/bucketeer/commit/ccf24b605ddc47d39b428fad6ffdde345f6f9890))
+* **ui/dashboard:** top cards are not responsive ([#2257](https://github.com/bucketeer-io/bucketeer/issues/2257)) ([fb1e3ed](https://github.com/bucketeer-io/bucketeer/commit/fb1e3edbec37ed4ce9f9744609e113dadb850c70))
+* **ui/dashboard:** yaml/json validation when creating flags on modal page ([#2276](https://github.com/bucketeer-io/bucketeer/issues/2276)) ([2ed0a6a](https://github.com/bucketeer-io/bucketeer/commit/2ed0a6a719068a87aa3e34693c00d854a3c29b02))
+* **ui:** last_use_at sort not working ([#2245](https://github.com/bucketeer-io/bucketeer/issues/2245)) ([d50583a](https://github.com/bucketeer-io/bucketeer/commit/d50583a28aab8508e0706c3ff5f49286a5500465))
+* update last seen when using system admin ([#2185](https://github.com/bucketeer-io/bucketeer/issues/2185)) ([68627f1](https://github.com/bucketeer-io/bucketeer/commit/68627f1c8decd3b161d03b83ddc9a8bc2d744d33))
+* use global imagePullSecrets for migration job ([#2203](https://github.com/bucketeer-io/bucketeer/issues/2203)) ([424fd91](https://github.com/bucketeer-io/bucketeer/commit/424fd91553bcfbea41b892b231726c1f4f159f4a))
+* use the correct APIKey field to create api key hack ([#2269](https://github.com/bucketeer-io/bucketeer/issues/2269)) ([ca018a2](https://github.com/bucketeer-io/bucketeer/commit/ca018a20b06a3d84c6d3361a9e459ebaeabff675))
+* validation when archiving not working correctly ([#2285](https://github.com/bucketeer-io/bucketeer/issues/2285)) ([6cd469f](https://github.com/bucketeer-io/bucketeer/commit/6cd469f69172ab6a15ed942417dff66f72e6f86c))
+* write last used at firing error request to database ([#2239](https://github.com/bucketeer-io/bucketeer/issues/2239)) ([355031d](https://github.com/bucketeer-io/bucketeer/commit/355031dacf9bf77e93bdcb7fd087b4a2449f9089))
+
+
+### Miscellaneous
+
+* add feature auto archiver config in dev ([#2348](https://github.com/bucketeer-io/bucketeer/issues/2348)) ([27579c7](https://github.com/bucketeer-io/bucketeer/commit/27579c756c94d2029e3a331c03b88575386d0958))
+* add language field to member create page ([#2226](https://github.com/bucketeer-io/bucketeer/issues/2226)) ([127ae19](https://github.com/bucketeer-io/bucketeer/commit/127ae19d3081e2c73db876b60309ac201c2c1f96))
+* add new source ID for OpenFeature React providers ([#2267](https://github.com/bucketeer-io/bucketeer/issues/2267)) ([41e3285](https://github.com/bucketeer-io/bucketeer/commit/41e328590db2e035031d0254997fecc3e926f2bf))
+* change to use mysql as data warehouse in dev container ([#2345](https://github.com/bucketeer-io/bucketeer/issues/2345)) ([395cbed](https://github.com/bucketeer-io/bucketeer/commit/395cbed91603df33167610d36030dc32e07729b9))
+* change to use uuid for the api key id ([#2250](https://github.com/bucketeer-io/bucketeer/issues/2250)) ([e7a3594](https://github.com/bucketeer-io/bucketeer/commit/e7a35947f1362b8a3c249014bf890df666c7e6e0))
+* **evaluation:** update typescript evaluation version to 0.0.5 ([#2161](https://github.com/bucketeer-io/bucketeer/issues/2161)) ([34837f9](https://github.com/bucketeer-io/bucketeer/commit/34837f9c5f65b925de7579b43e9702163569f2b8))
+* **evaluation:** update typescript evaluation version to 0.0.6 ([#2232](https://github.com/bucketeer-io/bucketeer/issues/2232)) ([d242f50](https://github.com/bucketeer-io/bucketeer/commit/d242f500c5927b9f8d7117c9fe6383ef04aea645))
+* fix typo ([#2350](https://github.com/bucketeer-io/bucketeer/issues/2350)) ([68d4b39](https://github.com/bucketeer-io/bucketeer/commit/68d4b394896a06a9c821a11844d0b7f26244c20c))
+* implement double-write for empty environment id migration ([#2341](https://github.com/bucketeer-io/bucketeer/issues/2341)) ([e27d904](https://github.com/bucketeer-io/bucketeer/commit/e27d9046ccf4301c291d920da3149f61e31d026a))
+* log request info when create organization failed ([#2253](https://github.com/bucketeer-io/bucketeer/issues/2253)) ([3ea602d](https://github.com/bucketeer-io/bucketeer/commit/3ea602d79bc5a58a427ef2eb733d3d55fdbcf922))
+* migration for api key id to use uuid ([#2260](https://github.com/bucketeer-io/bucketeer/issues/2260)) ([613d732](https://github.com/bucketeer-io/bucketeer/commit/613d73249cf137c076a9d1c8af9f09422fc213af))
+* reduce info log verbosity in all services ([#2170](https://github.com/bucketeer-io/bucketeer/issues/2170)) ([7500951](https://github.com/bucketeer-io/bucketeer/commit/750095149507d7a5a02dd6ab455d3f0c2754e752))
+* reduce info log verbosity with structured logging ([#2168](https://github.com/bucketeer-io/bucketeer/issues/2168)) ([41d5a0f](https://github.com/bucketeer-io/bucketeer/commit/41d5a0f9f5cc5314464da2ab2ced6ca64727f8a3))
+* refactor error message ([#2332](https://github.com/bucketeer-io/bucketeer/issues/2332)) ([96b1726](https://github.com/bucketeer-io/bucketeer/commit/96b1726b9398ecf5d04d44f08fde8114128ff962))
+* remove make command of old console ([#2139](https://github.com/bucketeer-io/bucketeer/issues/2139)) ([70baf53](https://github.com/bucketeer-io/bucketeer/commit/70baf53cf0272e589d4a983b10376716c4ce956a))
+* remove mau option temporarily ([#2266](https://github.com/bucketeer-io/bucketeer/issues/2266)) ([0c4f2a6](https://github.com/bucketeer-io/bucketeer/commit/0c4f2a6e381ba2ef56b3a7dad89222c03f1aed66))
+* remove old console workarounds from account service ([#2255](https://github.com/bucketeer-io/bucketeer/issues/2255)) ([2f83ce9](https://github.com/bucketeer-io/bucketeer/commit/2f83ce955f4ac56594ead0386ba5c28339a50777))
+* remove project name from environment url code ([#2224](https://github.com/bucketeer-io/bucketeer/issues/2224)) ([52892a7](https://github.com/bucketeer-io/bucketeer/commit/52892a72d29bf67947849021a0afab58733e231d))
+* replace deleted image for local minikube development ([#2291](https://github.com/bucketeer-io/bucketeer/issues/2291)) ([2dafa74](https://github.com/bucketeer-io/bucketeer/commit/2dafa7402bea50b93dfbd61c7e56d9c1405f87aa))
+* set log_bin_trust_function_creators for local development ([#2303](https://github.com/bucketeer-io/bucketeer/issues/2303)) ([41ea81c](https://github.com/bucketeer-io/bucketeer/commit/41ea81c0ac38244e852672042bc923943145f848))
+* suppress context.DeadlineExceeded errors in the api event publishing ([#2171](https://github.com/bucketeer-io/bucketeer/issues/2171)) ([ca41162](https://github.com/bucketeer-io/bucketeer/commit/ca41162f340f032894fdf0909ce3f780b0e3790c))
+* **ui/dashbaord:** add reset random sampling tooltip ([#2280](https://github.com/bucketeer-io/bucketeer/issues/2280)) ([41bf20c](https://github.com/bucketeer-io/bucketeer/commit/41bf20c3f31845167929d353fd132d2140286668))
+* **ui/dashbaord:** update documentation link for the console ([#2258](https://github.com/bucketeer-io/bucketeer/issues/2258)) ([2489736](https://github.com/bucketeer-io/bucketeer/commit/24897362d4364403d760542a529879ebb85ca2d2))
+* **ui/dashboard:** add last_used_at field in the api key list page ([#2240](https://github.com/bucketeer-io/bucketeer/issues/2240)) ([58b925f](https://github.com/bucketeer-io/bucketeer/commit/58b925fae491208b0b53adab01c27fdf7eaf8e3e))
+* **ui/dashboard:** format Y values in the chart js ([#2186](https://github.com/bucketeer-io/bucketeer/issues/2186)) ([861cfc5](https://github.com/bucketeer-io/bucketeer/commit/861cfc59437c2097e0b3e8032c0f25062b607cc0))
+* **ui/dashboard:** implement to show a warning card when archiving flags ([#2289](https://github.com/bucketeer-io/bucketeer/issues/2289)) ([d70660a](https://github.com/bucketeer-io/bucketeer/commit/d70660a5a3f10ec4de9f222c08cfba78cfb5979b))
+* **ui/dashboard:** improve dropdown component ([#2156](https://github.com/bucketeer-io/bucketeer/issues/2156)) ([23e142f](https://github.com/bucketeer-io/bucketeer/commit/23e142f5d6599d4dcc54ebc772c6f1178b9ba52f))
+* update copyright 2026 ([#2325](https://github.com/bucketeer-io/bucketeer/issues/2325)) ([ce292bd](https://github.com/bucketeer-io/bucketeer/commit/ce292bd30275ea4a4b52e5c19fd5ad34b20e720c))
+
+
+### Reverts
+
+* go-redis dependency to 9.14.1 to avoid healthy connection issues ([#2228](https://github.com/bucketeer-io/bucketeer/issues/2228)) ([e02731b](https://github.com/bucketeer-io/bucketeer/commit/e02731bbe383e1190d99343c9fe1d5e8a9f968c4))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 7.0.7 to 7.0.8 in /ui/dashboard ([#2159](https://github.com/bucketeer-io/bucketeer/issues/2159)) ([e71e995](https://github.com/bucketeer-io/bucketeer/commit/e71e99586e448b5b81088c17c5be449f24a008e3))
+* **deps:** bump glob from 10.4.5 to 10.5.0 in /ui/dashboard ([#2230](https://github.com/bucketeer-io/bucketeer/issues/2230)) ([76f6480](https://github.com/bucketeer-io/bucketeer/commit/76f6480af5071bf868df37f21411545a3feea37a))
+* **deps:** bump golang.org/x/crypto from 0.43.0 to 0.45.0 ([#2237](https://github.com/bucketeer-io/bucketeer/issues/2237)) ([5ce489f](https://github.com/bucketeer-io/bucketeer/commit/5ce489f4bc1df717da12fe540b3944192061b411))
+* **deps:** bump golang.org/x/crypto in /hack/delete-e2e-data-mysql ([#2236](https://github.com/bucketeer-io/bucketeer/issues/2236)) ([053ad9c](https://github.com/bucketeer-io/bucketeer/commit/053ad9c1ff737dd6d7502db85541c26da7c1fdcb))
+* **deps:** bump js-yaml from 4.1.0 to 4.1.1 in /evaluation/typescript ([#2315](https://github.com/bucketeer-io/bucketeer/issues/2315)) ([9a532ec](https://github.com/bucketeer-io/bucketeer/commit/9a532ecc43f46b64dcb3ce909a5d48caeea57e82))
+* **deps:** bump js-yaml from 4.1.0 to 4.1.1 in /ui/dashboard ([#2210](https://github.com/bucketeer-io/bucketeer/issues/2210)) ([0ca65fe](https://github.com/bucketeer-io/bucketeer/commit/0ca65fedfba703eb2ab032bee0a14127cabcb9ff))
+* **deps:** bump the dependencies group across 1 directory with 19 updates ([#2334](https://github.com/bucketeer-io/bucketeer/issues/2334)) ([df83238](https://github.com/bucketeer-io/bucketeer/commit/df83238a447028e659ad71740b6c006527202136))
+* **deps:** bump the dependencies group across 1 directory with 5 updates ([#2143](https://github.com/bucketeer-io/bucketeer/issues/2143)) ([d9c0560](https://github.com/bucketeer-io/bucketeer/commit/d9c05601fdc6b36514d2af7ac78100ec9b702da5))
+* **deps:** bump the dependencies group with 12 updates ([#2262](https://github.com/bucketeer-io/bucketeer/issues/2262)) ([a606429](https://github.com/bucketeer-io/bucketeer/commit/a6064291907fc78c93011a57b34c9c9b8fa20558))
+* **deps:** bump the dependencies group with 16 updates ([#2188](https://github.com/bucketeer-io/bucketeer/issues/2188)) ([c7842bf](https://github.com/bucketeer-io/bucketeer/commit/c7842bf6f66d01a055cad51ac79c5d36adf5da63))
+* **deps:** bump the dependencies group with 3 updates ([#2187](https://github.com/bucketeer-io/bucketeer/issues/2187)) ([dc33b1e](https://github.com/bucketeer-io/bucketeer/commit/dc33b1e777dd7306bcef4cf45ecea2ab93354acf))
+* **deps:** bump the dependencies group with 3 updates ([#2263](https://github.com/bucketeer-io/bucketeer/issues/2263)) ([612c9e8](https://github.com/bucketeer-io/bucketeer/commit/612c9e83d589eed90868665700d9effc5279badd))
+* **deps:** bump the dependencies group with 6 updates ([#2144](https://github.com/bucketeer-io/bucketeer/issues/2144)) ([c9c9ad6](https://github.com/bucketeer-io/bucketeer/commit/c9c9ad6db01433999c4a26b540086c6263a2eba5))
+* replace bitnami legacy charts with custom subcharts using official images ([#2312](https://github.com/bucketeer-io/bucketeer/issues/2312)) ([41141f9](https://github.com/bucketeer-io/bucketeer/commit/41141f931b06f22885862166ba46a54a13e6758b))
+
 ## [2.1.1](https://github.com/bucketeer-io/bucketeer/compare/v2.1.0...v2.1.1) (2025-09-26)
 
 
