@@ -41,6 +41,7 @@ func (f *Feature) Update(
 	ruleChanges []*feature.RuleChange,
 	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
+	maintainer *wrapperspb.StringValue,
 ) (*Feature, error) {
 	// Use copier.CopyWithOption with DeepCopy: true to standardize empty slices as []
 	// This ensures consistent JSON serialization in both API responses and audit logs
@@ -106,6 +107,7 @@ func (f *Feature) Update(
 		defaultStrategy,
 		offVariation,
 		resetSamplingSeed,
+		maintainer,
 	); err != nil {
 		return nil, err
 	}
@@ -196,6 +198,7 @@ func (f *Feature) applyGeneralUpdates(
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
 	resetSamplingSeed bool,
+	maintainer *wrapperspb.StringValue,
 ) error {
 	if name != nil {
 		f.Name = name.Value
@@ -232,6 +235,12 @@ func (f *Feature) applyGeneralUpdates(
 		if err := f.ResetSamplingSeed(); err != nil {
 			return err
 		}
+	}
+	if maintainer != nil {
+		if maintainer.Value == "" {
+			return errMaintainerCannotBeEmpty
+		}
+		f.Maintainer = maintainer.Value
 	}
 	return nil
 }

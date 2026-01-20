@@ -122,6 +122,45 @@ func TestGetFeatureByVersion(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestUpdateFeatureMaintainer(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	featureID := newFeatureID(t)
+	req := newCreateFeatureReq(featureID)
+	createFeatureNoCmd(t, client, req)
+
+	// Get the created feature
+	f := getFeature(t, featureID, client)
+	originalMaintainer := f.Maintainer
+	newMaintainer := "new-maintainer@example.com"
+
+	// Update the maintainer
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Maintainer:    wrapperspb.String(newMaintainer),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify the maintainer was updated
+	updatedFeature := getFeature(t, featureID, client)
+	if updatedFeature.Maintainer != newMaintainer {
+		t.Fatalf("Maintainer not updated. Expected: %s, actual: %s", newMaintainer, updatedFeature.Maintainer)
+	}
+	if updatedFeature.Maintainer == originalMaintainer && originalMaintainer != newMaintainer {
+		t.Fatalf("Maintainer should have changed from %s to %s", originalMaintainer, newMaintainer)
+	}
+
+	// Verify version was incremented
+	if updatedFeature.Version <= f.Version {
+		t.Fatalf("Version should have been incremented. Original: %d, Updated: %d", f.Version, updatedFeature.Version)
+	}
+}
+
 func TestCreateFeature(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)

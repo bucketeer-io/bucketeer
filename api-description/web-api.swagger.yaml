@@ -12649,6 +12649,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureTagChange'
+      maintainer:
+        type: string
     required:
       - environmentId
       - id
