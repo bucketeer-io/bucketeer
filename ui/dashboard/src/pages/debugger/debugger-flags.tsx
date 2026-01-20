@@ -33,7 +33,10 @@ const DebuggerFlags = ({
   const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
       cursor: String(0),
-      pageSize: 50,
+      // Always use pageSize: 0 to fetch all flags
+      // This ensures users can browse all flags and see all search results
+      // Virtual scrolling (maxOptions: 15) handles rendering performance
+      pageSize: 0,
       searchKeyword: searchQuery,
       environmentId: currentEnvironment.id,
       archived: false
@@ -129,10 +132,14 @@ const DebuggerFlags = ({
     };
   }, [debouncedSearch]);
 
-  const isDisabledAddBtn = useMemo(
-    () => !flagsRemaining.length || flagsSelected?.length === flags.length,
-    [flagsRemaining, flagsSelected, flags]
-  );
+  const isDisabledAddBtn = useMemo(() => {
+    const totalFlagCount = flagCollection?.totalCount
+      ? parseInt(flagCollection.totalCount)
+      : 0;
+
+    // Disable if no remaining flags in current view OR all flags are selected
+    return !flagsRemaining.length || flagsSelected?.length >= totalFlagCount;
+  }, [flagsRemaining, flagsSelected, flagCollection]);
 
   return (
     <>
