@@ -24,39 +24,29 @@ const DebuggerFlags = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
   const { control, watch, setValue } = useFormContext<AddDebuggerFormType>();
+  const [allFlags, setAllFlags] = useState<Feature[]>([]);
 
+  const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlagsCache, setSelectedFlagsCache] = useState<
     Map<string, Feature>
   >(new Map());
-
+  const PAGE_SIZE = 15;
   const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
-      cursor: String(0),
+      cursor: String(cursor),
       // Always use pageSize: 0 to fetch all flags
       // This ensures users can browse all flags and see all search results
       // Virtual scrolling (maxOptions: 15) handles rendering performance
-      pageSize: 0,
+      pageSize: PAGE_SIZE,
       searchKeyword: searchQuery,
       environmentId: currentEnvironment.id,
       archived: false
     }
   });
 
-  const flags = flagCollection?.features || [];
-
-  // Update cache with newly fetched flags
-  useEffect(() => {
-    if (flags.length > 0) {
-      setSelectedFlagsCache(prev => {
-        const newCache = new Map(prev);
-        flags.forEach(flag => {
-          newCache.set(flag.id, flag);
-        });
-        return newCache;
-      });
-    }
-  }, [flags]);
+  const flags = allFlags;
 
   const flagsSelected: string[] = [...watch('flags')];
 
@@ -111,8 +101,19 @@ const DebuggerFlags = ({
     []
   );
 
+  const isDisabledAddBtn = useMemo(() => {
+    // API returns totalCount as string; convert to number for comparison
+    const totalFlagCount = Number(flagCollection?.totalCount ?? 0);
+
+    // Disable if no remaining flags in current view OR all flags are selected
+    return !flagsRemaining.length || flagsSelected?.length >= totalFlagCount;
+  }, [flagsRemaining, flagsSelected, flagCollection]);
+
+  const isLoadingMore = isLoading && cursor > 0;
+
   const handleSearchChange = useCallback(
     (value: string) => {
+      setCursor(0);
       if (value === '') {
         // Clear search immediately without debounce
         debouncedSearch.cancel();
@@ -125,20 +126,46 @@ const DebuggerFlags = ({
     [debouncedSearch]
   );
 
-  // Cleanup debounced function on unmount
+  // Update cache with newly fetched flags
+  useEffect(() => {
+    if (flags.length > 0) {
+      setSelectedFlagsCache(prev => {
+        const newCache = new Map(prev);
+        flags.forEach(flag => {
+          newCache.set(flag.id, flag);
+        });
+        return newCache;
+      });
+    }
+  }, [flags]);
+
+  useEffect(() => {
+    if (!flagCollection?.features) return;
+    if (isLoading) return;
+    setAllFlags(prev => {
+      if (cursor === 0) {
+        return flagCollection.features;
+      }
+
+      const existingIds = new Set(prev.map(f => f.id));
+      const newOnes = flagCollection.features.filter(
+        f => !existingIds.has(f.id)
+      );
+
+      return [...prev, ...newOnes];
+    });
+  }, [flagCollection, cursor, isLoading]);
+
+  useEffect(() => {
+    const totalFlagCount = Number(flagCollection?.totalCount ?? 0);
+    setHasMore(flags.length < totalFlagCount);
+  }, [flagCollection, flags.length]);
+
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
-
-  const isDisabledAddBtn = useMemo(() => {
-    // API returns totalCount as string; convert to number for comparison
-    const totalFlagCount = Number(flagCollection?.totalCount ?? 0);
-
-    // Disable if no remaining flags in current view OR all flags are selected
-    return !flagsRemaining.length || flagsSelected?.length >= totalFlagCount;
-  }, [flagsRemaining, flagsSelected, flagCollection]);
 
   return (
     <>
@@ -159,8 +186,13 @@ const DebuggerFlags = ({
                           ?.label || ''
                       }
                       isExpand
+                      isHasMore={hasMore || isLoading}
+                      onHasMoreOptions={() =>
+                        setCursor(prev => prev + PAGE_SIZE)
+                      }
                       disabled={isOnTargeting}
-                      isLoading={isLoading}
+                      isLoadingMore={isLoadingMore}
+                      isLoading={isLoading && flagsRemaining.length === 0}
                       placeholder={t('form:experiments.select-flag')}
                       options={flagsRemaining}
                       triggerClassName={

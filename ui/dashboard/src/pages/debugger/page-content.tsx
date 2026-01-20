@@ -182,8 +182,8 @@ const PageContent = () => {
     },
     [evaluations, groupBy, features, expandOrCollapseAllState]
   );
-  const { isDirty, isSubmitting } = form.formState;
-  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
+  const { isDirty, isSubmitting, isSubmitted } = form.formState;
+  useUnsavedLeavePage({ isShow: isDirty && !isSubmitting && !isSubmitted });
   return (
     <PageLayout.Content className={!isShowResults ? 'pt-0' : ''}>
       {!isShowResults ? (

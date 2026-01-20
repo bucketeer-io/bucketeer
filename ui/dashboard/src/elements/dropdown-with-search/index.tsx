@@ -43,6 +43,9 @@ export interface DropdownMenuWithSearchProps {
   selectedFieldValue?: string;
   itemSize?: number;
   maxOptions?: number;
+  isHasMore?: boolean;
+  isLoadingMore?: boolean;
+  onHasMoreOptions?: () => void;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -88,6 +91,9 @@ const DropdownMenuWithSearch = ({
   itemSelected,
   itemSize = 44,
   maxOptions = 15,
+  isHasMore,
+  isLoadingMore,
+  onHasMoreOptions,
   notFoundOption,
   additionalElement,
   onSelectOption,
@@ -210,6 +216,9 @@ const DropdownMenuWithSearch = ({
             additionalElement={additionalElement}
             onSelectOption={onSelectOption}
             className={itemClassName}
+            isHasMore={isHasMore}
+            isLoadingMore={isLoadingMore}
+            onHasMoreOptions={onHasMoreOptions}
           />
         ) : notFoundOption ? (
           notFoundOption(searchValue, value => {
