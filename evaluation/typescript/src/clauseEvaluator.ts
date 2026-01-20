@@ -70,11 +70,11 @@ class ClauseEvaluator {
       const semverValues = values
         .map((v) => semver.valid(v))
         .filter((v): v is string => v !== null);
-      if (semverValues.length > 0) {
-        return semverValues.some((value) => semver.eq(semverTarget, value));
-      }
+      // Target parsed as semver; if no values parsed or none matched, return false
+      // (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+      return semverValues.some((value) => semver.eq(semverTarget, value));
     }
-    // Fall back to exact string comparison
+    // Fall back to exact string comparison only when target fails to parse as semver
     return values.includes(targetValue);
   }
 
@@ -89,11 +89,11 @@ class ClauseEvaluator {
       const semverValues = values
         .map((v) => semver.valid(v))
         .filter((v): v is string => v !== null);
-      if (semverValues.length > 0) {
-        return semverValues.some((value) => semver.eq(semverTarget, value));
-      }
+      // Target parsed as semver; if no values parsed or none matched, return false
+      // (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+      return semverValues.some((value) => semver.eq(semverTarget, value));
     }
-    // Fall back to exact string comparison
+    // Fall back to exact string comparison only when target fails to parse as semver
     return values.includes(targetValue);
   }
 
