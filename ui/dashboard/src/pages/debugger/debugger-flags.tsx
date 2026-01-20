@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { debounce } from 'lodash';
 import { Feature } from '@types';
 import { IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
@@ -24,9 +25,13 @@ const DebuggerFlags = ({
   const { t } = useTranslation(['common', 'form']);
   const { control, watch, setValue } = useFormContext<AddDebuggerFormType>();
 
-  const { data: flagCollection } = useQueryFeatures({
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
       cursor: String(0),
+      pageSize: 50,
+      searchKeyword: searchQuery,
       environmentId: currentEnvironment.id,
       archived: false
     }
@@ -49,6 +54,25 @@ const DebuggerFlags = ({
   const flagsRemaining = useMemo(() => {
     return flagOptions.filter(item => item.value !== feature?.id);
   }, [flagOptions, flags, feature]);
+
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setSearchQuery(value), 300),
+    []
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      if (value === '') {
+        // Clear search immediately without debounce
+        debouncedSearch.cancel();
+        setSearchQuery('');
+      } else {
+        // Debounce for actual searches
+        debouncedSearch(value);
+      }
+    },
+    [debouncedSearch]
+  );
 
   const isDisabledAddBtn = useMemo(
     () => !flagsRemaining.length || flagsSelected?.length === flags.length,
@@ -75,6 +99,7 @@ const DebuggerFlags = ({
                       }
                       isExpand
                       disabled={isOnTargeting}
+                      isLoading={isLoading}
                       placeholder={t('form:experiments.select-flag')}
                       options={flagsRemaining}
                       triggerClassName={
@@ -93,6 +118,7 @@ const DebuggerFlags = ({
                         />
                       )}
                       onSelectOption={value => field.onChange(value)}
+                      onSearchChange={handleSearchChange}
                     />
                     {flagsSelected.length > 1 && (
                       <Button
