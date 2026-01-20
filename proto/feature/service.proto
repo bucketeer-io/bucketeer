@@ -191,6 +191,7 @@ message UpdateFeatureRequest {
   repeated PrerequisiteChange prerequisite_changes = 15;
   repeated TargetChange target_changes = 16;
   repeated TagChange tag_changes = 17;
+  google.protobuf.StringValue maintainer = 18;
 }
 
 message UpdateFeatureResponse {

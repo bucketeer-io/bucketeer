@@ -131,6 +131,8 @@ var (
 	)
 	ErrInvalidVariationWeightTotal = pkgErr.NewErrorInvalidArgNotMatchFormat(
 		pkgErr.FeaturePackageName, "feature: variation weights must sum to 100%", "variation")
+	errMaintainerCannotBeEmpty = pkgErr.NewErrorInvalidArgEmpty(
+		pkgErr.FeaturePackageName, "feature: maintainer cannot be empty", "maintainer")
 )
 
 const (

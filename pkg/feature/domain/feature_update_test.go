@@ -140,6 +140,7 @@ func TestUpdateNoTimestampChangeWithSameValues(t *testing.T) {
 				nil,         // ruleChanges
 				nil,         // variationChanges
 				nil,         // tagChanges
+				nil,         // maintainer
 			)
 
 			require.NoError(t, err)
@@ -239,6 +240,7 @@ func TestUpdateWithIdenticalDefaultStrategy(t *testing.T) {
 		nil,                            // ruleChanges
 		nil,                            // variationChanges
 		nil,                            // tagChanges
+		nil,                            // maintainer
 	)
 
 	require.NoError(t, err)
@@ -429,6 +431,104 @@ func TestUpdateUnarchive(t *testing.T) {
 			require.NoError(t, err)
 			expected := p.expectedFunc()
 			assert.Equal(t, expected.Archived, actual.Archived)
+		})
+	}
+}
+
+func TestUpdateMaintainer(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc         string
+		inputFunc    func() *Feature
+		maintainer   *wrapperspb.StringValue
+		expectedFunc func() *Feature
+		expectedErr  error
+	}{
+		{
+			desc: "update maintainer - success",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "old-maintainer@example.com"
+				return f
+			},
+			maintainer: wrapperspb.String("new-maintainer@example.com"),
+			expectedFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "new-maintainer@example.com"
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "update maintainer from empty - success",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = ""
+				return f
+			},
+			maintainer: wrapperspb.String("new-maintainer@example.com"),
+			expectedFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "new-maintainer@example.com"
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "empty maintainer - error",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "old-maintainer@example.com"
+				return f
+			},
+			maintainer:   wrapperspb.String(""),
+			expectedFunc: nil,
+			expectedErr:  errMaintainerCannotBeEmpty,
+		},
+		{
+			desc: "nil maintainer - no change",
+			inputFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "existing-maintainer@example.com"
+				return f
+			},
+			maintainer: nil,
+			expectedFunc: func() *Feature {
+				f := makeFeature("test-feature")
+				f.Maintainer = "existing-maintainer@example.com"
+				return f
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := p.inputFunc()
+			updated, err := actual.Update(
+				nil,          // name
+				nil,          // description
+				nil,          // tags
+				nil,          // enabled
+				nil,          // archived
+				nil,          // defaultStrategy
+				nil,          // offVariation
+				false,        // resetSamplingSeed
+				nil,          // prerequisiteChanges
+				nil,          // targetChanges
+				nil,          // ruleChanges
+				nil,          // variationChanges
+				nil,          // tagChanges
+				p.maintainer, // maintainer
+			)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+				return
+			}
+			require.NoError(t, err)
+			expected := p.expectedFunc()
+			assert.Equal(t, expected.Maintainer, updated.Maintainer)
 		})
 	}
 }
@@ -1734,6 +1834,7 @@ func TestUpdateCompleteNoChangesScenario(t *testing.T) {
 		nil, // ruleChanges - no changes
 		nil, // variationChanges - no changes
 		nil, // tagChanges - no changes
+		nil, // maintainer - no changes
 	)
 
 	require.NoError(t, err)
@@ -1798,7 +1899,7 @@ func TestUpdateWithActualChangesIncrementsVersionAndTimestamp(t *testing.T) {
 	// Make an actual change (different name)
 	updated, err := originalFeature.Update(
 		wrapperspb.String("Updated Name"), // CHANGED - different from original
-		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, false, nil, nil, nil, nil, nil, nil,
 	)
 
 	require.NoError(t, err)
