@@ -32976,26 +32976,6 @@
             "name": "CreateSegmentRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateSegmentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "name",
                 "type": "string",
@@ -33024,6 +33004,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               2
             ]
           },
@@ -33161,32 +33142,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteSegmentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
             ],
             "reserved_ids": [
+              2,
               3
             ]
           },
@@ -33200,27 +33162,6 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "commands",
-                "type": "Command",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
               },
               {
                 "id": 4,
@@ -33245,6 +33186,7 @@
               }
             ],
             "reserved_ids": [
+              2,
               3
             ]
           },
@@ -33255,96 +33197,6 @@
                 "id": 1,
                 "name": "segment",
                 "type": "Segment"
-              }
-            ]
-          },
-          {
-            "name": "AddSegmentUserRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "AddSegmentUserCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              3
-            ]
-          },
-          {
-            "name": "AddSegmentUserResponse"
-          },
-          {
-            "name": "DeleteSegmentUserRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteSegmentUserCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              3
-            ]
-          },
-          {
-            "name": "DeleteSegmentUserResponse"
-          },
-          {
-            "name": "GetSegmentUserRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "segment_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "user_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "state",
-                "type": "SegmentUser.State"
-              },
-              {
-                "id": 5,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              4
-            ]
-          },
-          {
-            "name": "GetSegmentUserResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "user",
-                "type": "SegmentUser"
               }
             ]
           },
@@ -33411,26 +33263,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "BulkUploadSegmentUsersCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
@@ -33458,7 +33290,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -36454,39 +36287,6 @@
                         ]
                       }
                     ]
-                  }
-                ]
-              },
-              {
-                "name": "AddSegmentUser",
-                "in_type": "AddSegmentUserRequest",
-                "out_type": "AddSegmentUserResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "DeleteSegmentUser",
-                "in_type": "DeleteSegmentUserRequest",
-                "out_type": "DeleteSegmentUserResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "GetSegmentUser",
-                "in_type": "GetSegmentUserRequest",
-                "out_type": "GetSegmentUserResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
                   }
                 ]
               },

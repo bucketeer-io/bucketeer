@@ -34,8 +34,6 @@ var (
 		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing user", "User"))
 	statusMissingUserID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing user id", "UserId"))
-	statusMissingUserIDs = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing user ids", "UserId"))
 	statusMissingFeatureIDs = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing feature ids", "FeatureFlagID"))
 	statusMissingCommand = api.NewGRPCStatus(
@@ -94,24 +92,10 @@ var (
 		))
 	statusMissingFeatureTags = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "feature must contain one or more tags", "Tag"))
-	statusUnknownCommand = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "unknown command", "Command"))
 	statusCommentRequiredForUpdating = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "a comment is required for updating"))
-	statusMissingRule = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing rule", "Rule"))
 	statusMissingRuleID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing rule id", "RuleId"))
-	statusMissingRuleClause = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing rule clause", "RuleClause"))
-	statusMissingClauseID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing clause id", "ClauseId"))
-	statusMissingClauseAttribute = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing clause attribute", "RuleAttribute"))
-	statusMissingClauseValues = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing clause values", "ClauseValue"))
-	statusMissingClauseValue = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing clause value", "ClauseValue"))
 	statusMissingSegmentID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing segment id", "Segment"))
 	statusMissingSegmentUsersData = api.NewGRPCStatus(
@@ -135,8 +119,6 @@ var (
 		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "unknown segment user state", "SegmentUserState"))
 	statusIncorrectUUIDFormat = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "uuid format must be an uuid version 4", "UUID"))
-	statusExceededMaxUserIDsLength = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "max user ids length allowed is %d", "UserId"))
 	statusIncorrectDestinationEnvironment = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
