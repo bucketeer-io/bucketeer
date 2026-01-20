@@ -1109,6 +1109,7 @@ func (s *FeatureService) UpdateFeature(
 			req.RuleChanges,
 			req.VariationChanges,
 			req.TagChanges,
+			req.Maintainer,
 		)
 		if err != nil {
 			return err

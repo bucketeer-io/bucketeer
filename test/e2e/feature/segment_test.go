@@ -70,7 +70,7 @@ func TestCreateListSegment(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCreateUpdateNoCommand(t *testing.T) {
+func TestCreateUpdate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)

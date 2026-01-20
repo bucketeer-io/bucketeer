@@ -32462,6 +32462,11 @@
                 "name": "tag_changes",
                 "type": "TagChange",
                 "is_repeated": true
+              },
+              {
+                "id": 18,
+                "name": "maintainer",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
