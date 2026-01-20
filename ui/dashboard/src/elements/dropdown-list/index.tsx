@@ -1,10 +1,12 @@
 import { ReactNode, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FixedSizeList,
   ListChildComponentProps,
   FixedSizeListProps
 } from 'react-window';
 import { cn } from 'utils/style';
+import Button from 'components/button';
 import {
   DropdownMenuItem,
   DropdownOption,
@@ -28,7 +30,13 @@ const RowWithData = ({
   index,
   style,
   data
-}: ListChildComponentProps<RowWithDataProps>) => {
+}: ListChildComponentProps<
+  RowWithDataProps & {
+    isHasMore?: boolean;
+    isLoadingMore?: boolean;
+    onHasMoreOptions?: () => void;
+  }
+>) => {
   const {
     options,
     isMultiselect,
@@ -37,8 +45,30 @@ const RowWithData = ({
     className,
     itemSelected,
     additionalElement,
-    onSelectOption
+    onSelectOption,
+    isHasMore,
+    isLoadingMore,
+    onHasMoreOptions
   } = data;
+  const { t } = useTranslation(['common']);
+  if (isHasMore && index === options.length) {
+    return (
+      <div
+        style={style}
+        className="flex items-center justify-center p-2 border-t"
+      >
+        <Button
+          loading={isLoadingMore}
+          variant="text"
+          onClick={onHasMoreOptions}
+          className="w-full"
+        >
+          {!isLoadingMore && t('load-more')}
+        </Button>
+      </div>
+    );
+  }
+
   const currentItem = options[index];
 
   return (
@@ -71,6 +101,9 @@ interface DropdownListProps extends RowWithDataProps {
   width?: string | number;
   itemSize?: number;
   maxOptions?: number;
+  isHasMore?: boolean;
+  isLoadingMore?: boolean;
+  onHasMoreOptions?: () => void;
 }
 
 const DropdownList = ({
@@ -85,9 +118,17 @@ const DropdownList = ({
   selectedOptions,
   selectedFieldValue = 'value',
   className,
+  onHasMoreOptions,
+  isHasMore,
+  isLoadingMore,
   additionalElement,
   onSelectOption
 }: DropdownListProps) => {
+  const itemCount = useMemo(
+    () => options.length + (isHasMore ? 1 : 0),
+    [options.length, isHasMore]
+  );
+
   const maxHeightList = useMemo(
     () =>
       height || options.length > maxOptions
@@ -98,10 +139,10 @@ const DropdownList = ({
 
   return (
     <List
-      height={maxHeightList}
+      height={maxHeightList + (isHasMore ? 50 : 0)}
       width={width}
       itemSize={itemSize}
-      itemCount={options.length}
+      itemCount={itemCount}
       itemData={{
         options,
         className: cn(
@@ -112,12 +153,15 @@ const DropdownList = ({
         isMultiselect,
         selectedOptions,
         selectedFieldValue,
+        isLoadingMore,
         additionalElement,
-        onSelectOption
+        onSelectOption,
+        isHasMore,
+        onHasMoreOptions
       }}
-      className={
+      className={cn(
         options?.length < maxOptions ? 'hidden-scroll' : 'small-scroll'
-      }
+      )}
     >
       {RowWithData}
     </List>
