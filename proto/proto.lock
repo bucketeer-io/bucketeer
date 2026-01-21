@@ -6806,209 +6806,6 @@
       }
     },
     {
-      "protopath": "autoops:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreateAutoOpsRuleCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "ops_type",
-                "type": "OpsType"
-              },
-              {
-                "id": 3,
-                "name": "ops_event_rate_clauses",
-                "type": "OpsEventRateClause",
-                "is_repeated": true
-              },
-              {
-                "id": 4,
-                "name": "datetime_clauses",
-                "type": "DatetimeClause",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "DeleteAutoOpsRuleCommand"
-          },
-          {
-            "name": "StopAutoOpsRuleCommand"
-          },
-          {
-            "name": "ChangeAutoOpsStatusCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "status",
-                "type": "AutoOpsStatus"
-              }
-            ]
-          },
-          {
-            "name": "ExecuteAutoOpsRuleCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "clause_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AddOpsEventRateClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "ops_event_rate_clause",
-                "type": "OpsEventRateClause"
-              }
-            ]
-          },
-          {
-            "name": "ChangeOpsEventRateClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "ops_event_rate_clause",
-                "type": "OpsEventRateClause"
-              }
-            ]
-          },
-          {
-            "name": "DeleteClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AddDatetimeClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "datetime_clause",
-                "type": "DatetimeClause"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDatetimeClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "datetime_clause",
-                "type": "DatetimeClause"
-              }
-            ]
-          },
-          {
-            "name": "CreateProgressiveRolloutCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
-              },
-              {
-                "id": 3,
-                "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
-              }
-            ]
-          },
-          {
-            "name": "StopProgressiveRolloutCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "stopped_by",
-                "type": "ProgressiveRollout.StoppedBy"
-              }
-            ]
-          },
-          {
-            "name": "DeleteProgressiveRolloutCommand"
-          },
-          {
-            "name": "AddProgressiveRolloutManualScheduleClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
-              }
-            ]
-          },
-          {
-            "name": "AddProgressiveRolloutTemplateScheduleClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
-              }
-            ]
-          },
-          {
-            "name": "ChangeProgressiveRolloutScheduleTriggeredAtCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "schedule_id",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/autoops/auto_ops_rule.proto"
-          },
-          {
-            "path": "proto/autoops/clause.proto"
-          },
-          {
-            "path": "proto/autoops/progressive_rollout.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.autoops"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "autoops:/:ops_count.proto",
       "def": {
         "messages": [
@@ -7287,26 +7084,6 @@
             "name": "CreateAutoOpsRuleRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "command",
-                "type": "CreateAutoOpsRuleCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -7353,7 +7130,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -7432,26 +7210,6 @@
                 ]
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "StopAutoOpsRuleCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string",
@@ -7464,7 +7222,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -7485,26 +7244,6 @@
                 ]
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "DeleteAutoOpsRuleCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string",
@@ -7517,7 +7256,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -7606,111 +7346,6 @@
                 "type": "string"
               },
               {
-                "id": 4,
-                "name": "add_ops_event_rate_clause_commands",
-                "type": "AddOpsEventRateClauseCommand",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "change_ops_event_rate_clause_commands",
-                "type": "ChangeOpsEventRateClauseCommand",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "delete_clause_commands",
-                "type": "DeleteClauseCommand",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 7,
-                "name": "add_datetime_clause_commands",
-                "type": "AddDatetimeClauseCommand",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 8,
-                "name": "change_datetime_clause_commands",
-                "type": "ChangeDatetimeClauseCommand",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 9,
                 "name": "environment_id",
                 "type": "string",
@@ -7736,7 +7371,12 @@
             ],
             "reserved_ids": [
               1,
-              3
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
             ]
           },
           {
@@ -7753,17 +7393,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "execute_auto_ops_rule_command",
-                "type": "ExecuteAutoOpsRuleCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
                   }
                 ]
               },
@@ -7792,7 +7421,8 @@
             ],
             "reserved_ids": [
               1,
-              3
+              3,
+              4
             ]
           },
           {
@@ -7860,26 +7490,6 @@
             "name": "CreateProgressiveRolloutRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "command",
-                "type": "CreateProgressiveRolloutCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -7913,7 +7523,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -7963,26 +7574,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "StopProgressiveRolloutCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
@@ -7994,7 +7585,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -8009,33 +7601,14 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "command",
-                "type": "DeleteProgressiveRolloutCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -8120,26 +7693,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "change_progressive_rollout_triggered_at_command",
-                "type": "ChangeProgressiveRolloutScheduleTriggeredAtCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
@@ -8151,7 +7704,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
@@ -10346,9 +9900,6 @@
           },
           {
             "path": "proto/autoops/clause.proto"
-          },
-          {
-            "path": "proto/autoops/command.proto"
           },
           {
             "path": "proto/autoops/ops_count.proto"
