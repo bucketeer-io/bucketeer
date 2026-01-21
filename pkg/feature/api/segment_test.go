@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -39,64 +38,6 @@ import (
 )
 
 func TestCreateSegmentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	testcases := []struct {
-		setup         func(*FeatureService)
-		cmd           *featureproto.CreateSegmentCommand
-		environmentId string
-		expected      error
-	}{
-		{
-			setup: nil,
-			cmd: &featureproto.CreateSegmentCommand{
-				Name:        "",
-				Description: "description",
-			},
-			environmentId: "ns0",
-			expected:      statusMissingName.Err(),
-		},
-		{
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
-					require.NoError(t, err)
-				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().CreateSegment(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			cmd: &featureproto.CreateSegmentCommand{
-				Name:        "name",
-				Description: "description",
-			},
-			environmentId: "ns0",
-			expected:      nil,
-		},
-	}
-	for _, tc := range testcases {
-		service := createFeatureService(mockController)
-		if tc.setup != nil {
-			tc.setup(service)
-		}
-		ctx = setToken(ctx)
-		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentId: tc.environmentId}
-		_, err := service.CreateSegment(ctx, req)
-		assert.Equal(t, tc.expected, err)
-	}
-}
-
-func TestCreateSegmentNoCommandMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -156,107 +97,6 @@ func TestCreateSegmentNoCommandMySQL(t *testing.T) {
 }
 
 func TestDeleteSegmentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	testcases := []struct {
-		setup         func(*FeatureService)
-		id            string
-		cmd           *featureproto.DeleteSegmentCommand
-		environmentId string
-		expected      error
-	}{
-		{
-			setup:         nil,
-			id:            "",
-			cmd:           &featureproto.DeleteSegmentCommand{},
-			environmentId: "ns0",
-			expected:      statusMissingID.Err(),
-		},
-		{
-			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2fs.ErrSegmentNotFound)
-			},
-			id:            "id",
-			cmd:           &featureproto.DeleteSegmentCommand{},
-			environmentId: "ns0",
-			expected:      statusSegmentNotFound.Err(),
-		},
-		{
-			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
-					require.NoError(t, err)
-				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Segment{
-					Segment: &featureproto.Segment{
-						Id: "id",
-					},
-				}, nil, nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			id:            "id",
-			cmd:           &featureproto.DeleteSegmentCommand{},
-			environmentId: "ns0",
-			expected:      nil,
-		},
-	}
-	for _, tc := range testcases {
-		service := createFeatureService(mockController)
-		if tc.setup != nil {
-			tc.setup(service)
-		}
-		ctx = setToken(ctx)
-		req := &featureproto.DeleteSegmentRequest{
-			Id:            tc.id,
-			Command:       tc.cmd,
-			EnvironmentId: tc.environmentId,
-		}
-		_, err := service.DeleteSegment(ctx, req)
-		assert.Equal(t, tc.expected, err)
-	}
-}
-
-func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -358,76 +198,6 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 }
 
 func TestUpdateSegmentMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	changeSegmentNameCmd, err := ptypes.MarshalAny(&featureproto.ChangeSegmentNameCommand{Name: "name"})
-	require.NoError(t, err)
-	testcases := []struct {
-		setup         func(*FeatureService)
-		id            string
-		cmds          []*featureproto.Command
-		environmentId string
-		expected      error
-	}{
-		{
-			setup:         nil,
-			id:            "",
-			cmds:          nil,
-			environmentId: "ns0",
-			expected:      statusMissingID.Err(),
-		},
-		{
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					err := fn(ctx, nil)
-					require.NoError(t, err)
-				}).Return(nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
-					gomock.All(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Segment{
-					Segment: &featureproto.Segment{
-						Id: "id",
-					},
-				}, nil, nil)
-				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			id: "id",
-			cmds: []*featureproto.Command{
-				{Command: changeSegmentNameCmd},
-			},
-			environmentId: "ns0",
-			expected:      nil,
-		},
-	}
-	for _, tc := range testcases {
-		service := createFeatureService(mockController)
-		if tc.setup != nil {
-			tc.setup(service)
-		}
-		ctx = setToken(ctx)
-		req := &featureproto.UpdateSegmentRequest{
-			Id:            tc.id,
-			Commands:      tc.cmds,
-			EnvironmentId: tc.environmentId,
-		}
-		_, err := service.UpdateSegment(ctx, req)
-		assert.Equal(t, tc.expected, err)
-	}
-}
-
-func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()

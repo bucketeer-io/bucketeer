@@ -11540,17 +11540,6 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  featureAddSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureAddSegmentUserResponse:
-    type: object
   featureAddTagCommand:
     type: object
     properties:
@@ -11589,23 +11578,11 @@ definitions:
         type: string
         format: byte
         title: segment user ids separated by new line
-  featureBulkUploadSegmentUsersCommand:
-    type: object
-    properties:
-      data:
-        type: string
-        format: byte
-        title: segment user ids separated by comma or new line
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersRequest:
     type: object
     properties:
       segmentId:
         type: string
-      command:
-        $ref: '#/definitions/featureBulkUploadSegmentUsersCommand'
-        description: deprecated
       environmentId:
         type: string
       data:
@@ -11777,19 +11754,9 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
-  featureCreateSegmentCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      description:
-        type: string
   featureCreateSegmentRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/featureCreateSegmentCommand'
-        description: deprecated
       name:
         type: string
       environmentId:
@@ -11844,20 +11811,7 @@ definitions:
     type: object
   featureDeleteScheduledFlagChangeResponse:
     type: object
-  featureDeleteSegmentCommand:
-    type: object
   featureDeleteSegmentResponse:
-    type: object
-  featureDeleteSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureDeleteSegmentUserResponse:
     type: object
   featureDisableFeatureCommand:
     type: object
@@ -12076,11 +12030,6 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
-  featureGetSegmentUserResponse:
-    type: object
-    properties:
-      user:
-        $ref: '#/definitions/featureSegmentUser'
   featureGetUserAttributeKeysResponse:
     type: object
     properties:
@@ -12596,12 +12545,6 @@ definitions:
     properties:
       id:
         type: string
-      commands:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureCommand'
-        description: deprecated
       environmentId:
         type: string
       name:
