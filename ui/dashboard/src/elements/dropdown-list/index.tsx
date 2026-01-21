@@ -24,6 +24,8 @@ interface RowWithDataProps {
   onSelectOption: (value: DropdownValue) => void;
 }
 
+const LOAD_MORE_BUTTON_HEIGHT = 50;
+
 const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
 
 const RowWithData = ({
@@ -139,7 +141,7 @@ const DropdownList = ({
 
   return (
     <List
-      height={maxHeightList + (isHasMore ? 50 : 0)}
+      height={maxHeightList + (isHasMore ? LOAD_MORE_BUTTON_HEIGHT : 0)}
       width={width}
       itemSize={itemSize}
       itemCount={itemCount}
