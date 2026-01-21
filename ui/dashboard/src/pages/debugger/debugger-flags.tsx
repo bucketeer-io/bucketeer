@@ -32,12 +32,10 @@ const DebuggerFlags = ({
   const [selectedFlagsCache, setSelectedFlagsCache] = useState<
     Map<string, Feature>
   >(new Map());
-  const PAGE_SIZE = 15;
+  const PAGE_SIZE = 50;
   const { data: flagCollection, isLoading } = useQueryFeatures({
     params: {
       cursor: String(cursor),
-      // Always use pageSize: 0 to fetch all flags
-      // This ensures users can browse all flags and see all search results
       // Virtual scrolling (maxOptions: 15) handles rendering performance
       pageSize: PAGE_SIZE,
       searchKeyword: searchQuery,
@@ -109,8 +107,6 @@ const DebuggerFlags = ({
     return !flagsRemaining.length || flagsSelected?.length >= totalFlagCount;
   }, [flagsRemaining, flagsSelected, flagCollection]);
 
-  const isLoadingMore = isLoading && cursor > 0;
-
   const handleSearchChange = useCallback(
     (value: string) => {
       setCursor(0);
@@ -141,20 +137,23 @@ const DebuggerFlags = ({
 
   useEffect(() => {
     if (!flagCollection?.features) return;
-    if (isLoading) return;
+
     setAllFlags(prev => {
       if (cursor === 0) {
+        // Reset flags on new search or initial load
         return flagCollection.features;
       }
 
+      // Only accumulate if we actually have new data
       const existingIds = new Set(prev.map(f => f.id));
-      const newOnes = flagCollection.features.filter(
+      const newFlags = flagCollection.features.filter(
         f => !existingIds.has(f.id)
       );
 
-      return [...prev, ...newOnes];
+      // Prevent duplicate additions
+      return newFlags.length > 0 ? [...prev, ...newFlags] : prev;
     });
-  }, [flagCollection, cursor, isLoading]);
+  }, [flagCollection]);
 
   useEffect(() => {
     const totalFlagCount = Number(flagCollection?.totalCount ?? 0);
@@ -166,6 +165,8 @@ const DebuggerFlags = ({
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
+
+  const isLoadingMore = isLoading && cursor > 0;
 
   return (
     <>
@@ -186,7 +187,7 @@ const DebuggerFlags = ({
                           ?.label || ''
                       }
                       isExpand
-                      isHasMore={hasMore || isLoading}
+                      isHasMore={hasMore || isLoadingMore}
                       onHasMoreOptions={() =>
                         setCursor(prev => prev + PAGE_SIZE)
                       }
