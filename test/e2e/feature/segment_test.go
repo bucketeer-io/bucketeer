@@ -222,8 +222,13 @@ func TestDeleteSegment(t *testing.T) {
 	)
 	assert.NotNil(t, res)
 	assert.NoError(t, err)
-	segment := getSegment(ctx, t, client, id)
-	assert.Equal(t, true, segment.Deleted)
+	// Verify that the segment is actually deleted
+	req := &featureproto.GetSegmentRequest{
+		Id:            id,
+		EnvironmentId: *environmentID,
+	}
+	_, err = client.GetSegment(ctx, req)
+	assert.NotNil(t, err)
 }
 
 func TestListSegmentsPageSize(t *testing.T) {
