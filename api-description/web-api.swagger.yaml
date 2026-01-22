@@ -12,64 +12,6 @@ consumes:
 produces:
   - application/json
 paths:
-  /v1/account/change_api_key_name:
-    post:
-      summary: Change API Key Name
-      description: Change the API Key Name. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.change_api_key_name
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountChangeAPIKeyNameResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountChangeAPIKeyNameRequest'
-      tags:
-        - API Key
   /v1/account/create_account:
     post:
       summary: Create
@@ -418,64 +360,6 @@ paths:
             $ref: '#/definitions/accountDisableAccountV2Request'
       tags:
         - Account
-  /v1/account/disable_api_key:
-    post:
-      summary: Disable
-      description: Disable an API Key. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.disable_api_key
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountDisableAPIKeyResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountDisableAPIKeyRequest'
-      tags:
-        - API Key
   /v1/account/enable_account:
     post:
       summary: Enable
@@ -516,64 +400,6 @@ paths:
             $ref: '#/definitions/accountEnableAccountV2Request'
       tags:
         - Account
-  /v1/account/enable_api_key:
-    post:
-      summary: Enable
-      description: Enable an API Key. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.enable_api_key
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountEnableAPIKeyResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountEnableAPIKeyRequest'
-      tags:
-        - API Key
   /v1/account/get_account:
     get:
       summary: Get
@@ -8565,13 +8391,6 @@ definitions:
       - Organization_ADMIN
       - Organization_OWNER
     default: Organization_UNASSIGNED
-  ChangeAccountV2EnvironmentRolesCommandWriteType:
-    type: string
-    enum:
-      - WriteType_UNSPECIFIED
-      - WriteType_OVERRIDE
-      - WriteType_PATCH
-    default: WriteType_UNSPECIFIED
   CodeReferenceRepositoryType:
     type: string
     enum:
@@ -8911,83 +8730,6 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/RoleEnvironment'
-  accountChangeAPIKeyNameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  accountChangeAPIKeyNameRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountChangeAPIKeyNameCommand'
-      environmentId:
-        type: string
-  accountChangeAPIKeyNameResponse:
-    type: object
-  accountChangeAccountV2AvatarCommand:
-    type: object
-    properties:
-      avatarImage:
-        type: string
-        format: byte
-      avatarFileType:
-        type: string
-  accountChangeAccountV2AvatarImageUrlCommand:
-    type: object
-    properties:
-      avatarImageUrl:
-        type: string
-  accountChangeAccountV2EnvironmentRolesCommand:
-    type: object
-    properties:
-      roles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      writeType:
-        $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
-  accountChangeAccountV2FirstNameCommand:
-    type: object
-    properties:
-      firstName:
-        type: string
-  accountChangeAccountV2LanguageCommand:
-    type: object
-    properties:
-      language:
-        type: string
-  accountChangeAccountV2LastNameCommand:
-    type: object
-    properties:
-      lastName:
-        type: string
-  accountChangeAccountV2LastSeenCommand:
-    type: object
-    properties:
-      lastSeen:
-        type: string
-        format: int64
-  accountChangeAccountV2NameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  accountChangeAccountV2OrganizationRoleCommand:
-    type: object
-    properties:
-      role:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-  accountChangeAccountV2TagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
   accountChangeDefaultSearchFilterCommand:
     type: object
     properties:
@@ -9057,18 +8799,9 @@ definitions:
         $ref: '#/definitions/environmentProject'
       role:
         $ref: '#/definitions/RoleEnvironment'
-  accountCreateAPIKeyCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      role:
-        $ref: '#/definitions/accountAPIKeyRole'
   accountCreateAPIKeyRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/accountCreateAPIKeyCommand'
       environmentId:
         type: string
       name:
@@ -9084,39 +8817,11 @@ definitions:
     properties:
       apiKey:
         $ref: '#/definitions/accountAPIKey'
-  accountCreateAccountV2Command:
-    type: object
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      avatarImageUrl:
-        type: string
-      organizationRole:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-      environmentRoles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      firstName:
-        type: string
-      lastName:
-        type: string
-      language:
-        type: string
-      tags:
-        type: array
-        items:
-          type: string
   accountCreateAccountV2Request:
     type: object
     properties:
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountCreateAccountV2Command'
       email:
         type: string
       name:
@@ -9175,8 +8880,6 @@ definitions:
         $ref: '#/definitions/accountCreateSearchFilterCommand'
   accountCreateSearchFilterResponse:
     type: object
-  accountDeleteAccountV2Command:
-    type: object
   accountDeleteAccountV2Request:
     type: object
     properties:
@@ -9184,8 +8887,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountDeleteAccountV2Command'
   accountDeleteAccountV2Response:
     type: object
   accountDeleteSearchFilterCommand:
@@ -9206,21 +8907,6 @@ definitions:
         $ref: '#/definitions/accountDeleteSearchFilterCommand'
   accountDeleteSearchFilterResponse:
     type: object
-  accountDisableAPIKeyCommand:
-    type: object
-  accountDisableAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountDisableAPIKeyCommand'
-      environmentId:
-        type: string
-  accountDisableAPIKeyResponse:
-    type: object
-  accountDisableAccountV2Command:
-    type: object
   accountDisableAccountV2Request:
     type: object
     properties:
@@ -9228,28 +8914,11 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountDisableAccountV2Command'
   accountDisableAccountV2Response:
     type: object
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
-  accountEnableAPIKeyCommand:
-    type: object
-  accountEnableAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountEnableAPIKeyCommand'
-      environmentId:
-        type: string
-  accountEnableAPIKeyResponse:
-    type: object
-  accountEnableAccountV2Command:
-    type: object
   accountEnableAccountV2Request:
     type: object
     properties:
@@ -9257,8 +8926,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountEnableAccountV2Command'
   accountEnableAccountV2Response:
     type: object
     properties:
@@ -9431,24 +9098,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      changeNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2NameCommand'
-      changeAvatarUrlCommand:
-        $ref: '#/definitions/accountChangeAccountV2AvatarImageUrlCommand'
-      changeOrganizationRoleCommand:
-        $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
-      changeEnvironmentRolesCommand:
-        $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
-      changeFirstNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2FirstNameCommand'
-      changeLastNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
-      changeLanguageCommand:
-        $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
-      changeLastSeenCommand:
-        $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
-      changeAvatarCommand:
-        $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
       name:
         type: string
       avatarImageUrl:
@@ -9475,8 +9124,6 @@ definitions:
         type: boolean
       tags:
         $ref: '#/definitions/commonStringListValue'
-      changeTagsCommand:
-        $ref: '#/definitions/accountChangeAccountV2TagsCommand'
       teamChanges:
         type: array
         items:
@@ -12014,17 +11661,6 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  featureAddSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureAddSegmentUserResponse:
-    type: object
   featureAddTagCommand:
     type: object
     properties:
@@ -12063,23 +11699,11 @@ definitions:
         type: string
         format: byte
         title: segment user ids separated by new line
-  featureBulkUploadSegmentUsersCommand:
-    type: object
-    properties:
-      data:
-        type: string
-        format: byte
-        title: segment user ids separated by comma or new line
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersRequest:
     type: object
     properties:
       segmentId:
         type: string
-      command:
-        $ref: '#/definitions/featureBulkUploadSegmentUsersCommand'
-        description: deprecated
       environmentId:
         type: string
       data:
@@ -12251,19 +11875,9 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
-  featureCreateSegmentCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      description:
-        type: string
   featureCreateSegmentRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/featureCreateSegmentCommand'
-        description: deprecated
       name:
         type: string
       environmentId:
@@ -12318,20 +11932,7 @@ definitions:
     type: object
   featureDeleteScheduledFlagChangeResponse:
     type: object
-  featureDeleteSegmentCommand:
-    type: object
   featureDeleteSegmentResponse:
-    type: object
-  featureDeleteSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureDeleteSegmentUserResponse:
     type: object
   featureDisableFeatureCommand:
     type: object
@@ -12550,11 +12151,6 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
-  featureGetSegmentUserResponse:
-    type: object
-    properties:
-      user:
-        $ref: '#/definitions/featureSegmentUser'
   featureGetUserAttributeKeysResponse:
     type: object
     properties:
@@ -13002,6 +12598,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureTagChange'
+      maintainer:
+        type: string
     required:
       - environmentId
       - id
@@ -13068,12 +12666,6 @@ definitions:
     properties:
       id:
         type: string
-      commands:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureCommand'
-        description: deprecated
       environmentId:
         type: string
       name:

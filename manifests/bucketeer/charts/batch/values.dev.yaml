@@ -106,6 +106,9 @@ cronjob:
     - name: tag-deleter
       jobId: TagDeleter
       schedule: "* * * * *"
+    - name: feature-auto-archiver
+      jobId: FeatureAutoArchiver
+      schedule: "0 2 * * *"
 
 subscribers:
   # This is the processor's name. It must match the same name defined in the

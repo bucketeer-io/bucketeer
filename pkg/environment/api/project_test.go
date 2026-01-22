@@ -689,11 +689,11 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 				).Do(func(_ context.Context, req *accountproto.CreateAccountV2Request, _ ...interface{}) {
-					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, req.Command.OrganizationRole,
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, req.OrganizationRole,
 						"Organization creator must have OWNER role, not ADMIN")
-					assert.Equal(t, "test@example.com", req.Command.Email)
-					assert.NotNil(t, req.Command.EnvironmentRoles)
-					assert.Len(t, req.Command.EnvironmentRoles, 2, "Should create environment roles for Development and Production")
+					assert.Equal(t, "test@example.com", req.Email)
+					assert.NotNil(t, req.EnvironmentRoles)
+					assert.Len(t, req.EnvironmentRoles, 2, "Should create environment roles for Development and Production")
 				}).Return(&accountproto.CreateAccountV2Response{}, nil)
 			},
 			req: &proto.CreateTrialProjectRequest{

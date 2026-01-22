@@ -538,6 +538,9 @@ func (s *server) registerPubSubProcessorMap(
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*processor.PubSubProcessors, error) {
+	// Log migration configuration at startup
+	processor.LogMigrationConfig(logger)
+
 	processors := processor.NewPubSubProcessors(registerer)
 
 	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)

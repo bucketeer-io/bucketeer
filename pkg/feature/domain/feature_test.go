@@ -3023,6 +3023,7 @@ func TestUpdate(t *testing.T) {
 		ruleChanges         []*ftproto.RuleChange
 		variationChanges    []*ftproto.VariationChange
 		tagChanges          []*ftproto.TagChange
+		maintainer          *wrapperspb.StringValue
 		expected            *Feature
 		expectedErr         error
 	}{
@@ -3254,6 +3255,36 @@ func TestUpdate(t *testing.T) {
 				},
 			}},
 		},
+		{
+			desc: "success: update maintainer",
+			feature: &Feature{Feature: &ftproto.Feature{
+				Name:        "test-feature",
+				Description: "test description",
+				Tags:        []string{"tag1"},
+				Maintainer:  "old-maintainer@example.com",
+				Variations: []*ftproto.Variation{
+					{Id: id1.String(), Name: "v1", Value: "true"},
+					{Id: id2.String(), Name: "v2", Value: "false"},
+				},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{},
+				Rules:         []*ftproto.Rule{},
+			}},
+			maintainer: wrapperspb.String("new-maintainer@example.com"),
+			expected: &Feature{Feature: &ftproto.Feature{
+				Name:        "test-feature",
+				Description: "test description",
+				Tags:        []string{"tag1"},
+				Maintainer:  "new-maintainer@example.com",
+				Variations: []*ftproto.Variation{
+					{Id: id1.String(), Name: "v1", Value: "true"},
+					{Id: id2.String(), Name: "v2", Value: "false"},
+				},
+				Prerequisites: []*ftproto.Prerequisite{},
+				Targets:       []*ftproto.Target{},
+				Rules:         []*ftproto.Rule{},
+			}},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -3272,6 +3303,7 @@ func TestUpdate(t *testing.T) {
 				p.ruleChanges,
 				p.variationChanges,
 				p.tagChanges,
+				p.maintainer,
 			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -3284,6 +3316,7 @@ func TestUpdate(t *testing.T) {
 			assert.Equal(t, p.expected.Enabled, updated.Enabled)
 			assert.Equal(t, p.expected.Archived, updated.Archived)
 			assert.Equal(t, p.expected.OffVariation, updated.OffVariation)
+			assert.Equal(t, p.expected.Maintainer, updated.Maintainer)
 
 			// Check variations
 			var createdVariationID string
@@ -3463,7 +3496,7 @@ func TestUpdatePrerequisitesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				p.prerequisiteChanges, nil, nil, nil, nil,
+				p.prerequisiteChanges, nil, nil, nil, nil, nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3564,7 +3597,7 @@ func TestUpdateTargetsGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, p.targetChanges, nil, nil, nil,
+				nil, p.targetChanges, nil, nil, nil, nil,
 			)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if err == nil {
@@ -3860,7 +3893,7 @@ func TestUpdateRulesGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, p.ruleChanges, nil, nil, // granular change lists
+				nil, nil, p.ruleChanges, nil, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4075,7 +4108,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			t.Parallel()
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
-				nil, nil, nil, p.variationChanges, nil, // granular change lists
+				nil, nil, nil, p.variationChanges, nil, nil, // granular change lists
 			)
 			if p.expectedErr != nil {
 				require.Error(t, err, p.desc)
@@ -4174,7 +4207,7 @@ func TestUpdateTagsGranular(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false,
-				nil, nil, nil, nil, p.tagChanges,
+				nil, nil, nil, nil, p.tagChanges, nil,
 			)
 			if p.expectedErr != nil {
 				assert.Error(t, err, p.desc)

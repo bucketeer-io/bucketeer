@@ -64,6 +64,17 @@ class ClauseEvaluator {
   }
 
   private equals(targetValue: string, values: string[]): boolean {
+    // First try semver comparison (with v-prefix normalization via semver.valid)
+    const semverTarget = semver.valid(targetValue);
+    if (semverTarget) {
+      const semverValues = values
+        .map((v) => semver.valid(v))
+        .filter((v): v is string => v !== null);
+      // Target parsed as semver; if no values parsed or none matched, return false
+      // (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+      return semverValues.some((value) => semver.eq(semverTarget, value));
+    }
+    // Fall back to exact string comparison only when target fails to parse as semver
     return values.includes(targetValue);
   }
 
@@ -72,6 +83,17 @@ class ClauseEvaluator {
   }
 
   private in(targetValue: string, values: string[]): boolean {
+    // First try semver comparison (with v-prefix normalization via semver.valid)
+    const semverTarget = semver.valid(targetValue);
+    if (semverTarget) {
+      const semverValues = values
+        .map((v) => semver.valid(v))
+        .filter((v): v is string => v !== null);
+      // Target parsed as semver; if no values parsed or none matched, return false
+      // (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+      return semverValues.some((value) => semver.eq(semverTarget, value));
+    }
+    // Fall back to exact string comparison only when target fails to parse as semver
     return values.includes(targetValue);
   }
 

@@ -191,6 +191,7 @@ message UpdateFeatureRequest {
   repeated PrerequisiteChange prerequisite_changes = 15;
   repeated TargetChange target_changes = 16;
   repeated TagChange tag_changes = 17;
+  google.protobuf.StringValue maintainer = 18;
 }
 
 message UpdateFeatureResponse {
@@ -339,12 +340,7 @@ message CloneFeatureRequest {
 message CloneFeatureResponse {}
 
 message CreateSegmentRequest {
-  CreateSegmentCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateSegmentCommand
   reserved 2;
   string name = 3 [(google.api.field_behavior) = REQUIRED];
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -397,12 +393,7 @@ message ListSegmentsResponse {
 
 message DeleteSegmentRequest {
   string id = 1;
-  DeleteSegmentCommand command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // DeleteSegmentCommand
   reserved 3;
   string environment_id = 4;
 }
@@ -411,12 +402,7 @@ message DeleteSegmentResponse {}
 
 message UpdateSegmentRequest {
   string id = 1;
-  repeated Command commands = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // repeated Command commands
   reserved 3;
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 5;
@@ -425,36 +411,6 @@ message UpdateSegmentRequest {
 
 message UpdateSegmentResponse {
   Segment segment = 1;
-}
-
-message AddSegmentUserRequest {
-  string id = 1;
-  AddSegmentUserCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message AddSegmentUserResponse {}
-
-message DeleteSegmentUserRequest {
-  string id = 1;
-  DeleteSegmentUserCommand command = 2;
-  reserved 3;
-  string environment_id = 4;
-}
-
-message DeleteSegmentUserResponse {}
-
-message GetSegmentUserRequest {
-  string segment_id = 1;
-  string user_id = 2;
-  SegmentUser.State state = 3;
-  reserved 4;
-  string environment_id = 5;
-}
-
-message GetSegmentUserResponse {
-  SegmentUser user = 1;
 }
 
 message ListSegmentUsersRequest {
@@ -475,12 +431,7 @@ message ListSegmentUsersResponse {
 message BulkUploadSegmentUsersRequest {
   reserved 1;
   string segment_id = 2;
-  BulkUploadSegmentUsersCommand command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 3;  // BulkUploadSegmentUsersCommand
   string environment_id = 4;
   bytes data = 5
       [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -1296,17 +1247,6 @@ service FeatureService {
         }
       }
     };
-  }
-
-  rpc AddSegmentUser(AddSegmentUserRequest) returns (AddSegmentUserResponse) {
-    option deprecated = true;
-  }
-  rpc DeleteSegmentUser(DeleteSegmentUserRequest)
-      returns (DeleteSegmentUserResponse) {
-    option deprecated = true;
-  }
-  rpc GetSegmentUser(GetSegmentUserRequest) returns (GetSegmentUserResponse) {
-    option deprecated = true;
   }
   rpc ListSegmentUsers(ListSegmentUsersRequest)
       returns (ListSegmentUsersResponse) {}
