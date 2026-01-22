@@ -294,6 +294,10 @@
   "stop-kill-switch": "Stop Kill Switch",
   "stop-rollout": "Stop Progressive Rollout",
   "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?",
+  "stop-operation-rollout": {
+    "title": "The rollout will be stopped at its current percentage.",
+    "desc": "To change the traffic distribution, update it manually in the Targeting tab after stopping the rollout."
+  },
   "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100",
   "from-last-month": "from last month",
   "created-at-time": "Created {{time}}",

@@ -96,11 +96,7 @@ const ProgressiveRolloutModal = ({
   }, [rollouts]);
 
   const isDisableCreateRollout = useMemo(() => {
-    return (
-      experiments.length > 0 ||
-      hasRolloutRunning ||
-      feature.variations.length !== 2
-    );
+    return experiments.length > 0 || hasRolloutRunning;
   }, [experiments, hasRolloutRunning, feature]);
 
   const form = useForm({
@@ -165,7 +161,9 @@ const ProgressiveRolloutModal = ({
           ) {
             const progressiveRolloutManualScheduleClause: RolloutManualScheduleClause =
               {
-                variationId: manual.variationId,
+                variationId: manual.targetVariationId,
+                targetVariationId: manual.targetVariationId,
+                controlVariationId: manual.controlVariationId,
                 schedules: manual.schedulesList.map(item => ({
                   ...item,
                   weight: item.weight * 1000,
@@ -176,7 +174,13 @@ const ProgressiveRolloutModal = ({
               };
             Object.assign(payload, { progressiveRolloutManualScheduleClause });
           } else {
-            const { increments, interval, startDate, variationId } = template;
+            const {
+              increments,
+              interval,
+              startDate,
+              targetVariationId,
+              controlVariationId
+            } = template;
             const lastSchedule: ScheduleItem = {
               scheduleId: uuid(),
               weight: increments,
@@ -206,7 +210,9 @@ const ProgressiveRolloutModal = ({
 
             const progressiveRolloutTemplateScheduleClause: RolloutTemplateScheduleClause =
               {
-                variationId,
+                variationId: targetVariationId,
+                controlVariationId,
+                targetVariationId,
                 increments: increments.toString(),
                 schedules: scheduleList.map(schedule => ({
                   ...schedule,
@@ -224,6 +230,7 @@ const ProgressiveRolloutModal = ({
           }
 
           const resp = await rolloutCreator(payload);
+
           if (resp) {
             notify({
               message: t(`message:collection-action-success`, {
@@ -268,7 +275,6 @@ const ProgressiveRolloutModal = ({
                 urlCode={urlCode}
                 experiments={experiments}
                 hasRolloutRunning={hasRolloutRunning}
-                variations={feature.variations}
               />
             )}
             <div className="flex flex-col w-full gap-y-3">
