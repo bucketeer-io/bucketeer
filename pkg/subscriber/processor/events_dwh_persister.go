@@ -104,7 +104,6 @@ func NewEventsDWHPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
-	postgresClient postgres.Client,
 	redisClient redisv3.Client,
 	persistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -162,24 +161,15 @@ func NewEventsDWHPersister(
 	// Determine the Postgres client to use for data warehouse operations
 	var dwhPostgresClient postgres.Client
 	if persisterConfig.DataWarehouse.Type == "postgres" {
-		if persisterConfig.DataWarehouse.Postgres.UseMainConnection {
-			// Use the existing Postgres client from main application
-			dwhPostgresClient = postgresClient
-			logger.Info("Using main Postgres connection for data warehouse")
-		} else {
-			// Create a new Postgres client with separate connection
-			dwhPostgresClient, err = createDedicatedPostgresClient(ctx, &persisterConfig.DataWarehouse.Postgres, logger)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create dedicated Postgres client: %w", err)
-			}
-			logger.Info("Using dedicated Postgres connection for data warehouse",
-				zap.String("host", persisterConfig.DataWarehouse.Postgres.Host),
-				zap.String("database", persisterConfig.DataWarehouse.Postgres.Database),
-			)
+		// Create a new Postgres client with separate connection
+		dwhPostgresClient, err = createDedicatedPostgresClient(ctx, &persisterConfig.DataWarehouse.Postgres, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create dedicated Postgres client: %w", err)
 		}
-	} else {
-		// Default to main connection for non-Postgres types
-		dwhPostgresClient = postgresClient
+		logger.Info("Using dedicated Postgres connection for data warehouse",
+			zap.String("host", persisterConfig.DataWarehouse.Postgres.Host),
+			zap.String("database", persisterConfig.DataWarehouse.Postgres.Database),
+		)
 	}
 
 	e := &eventsDWHPersister{

@@ -146,7 +146,6 @@ type eventCounterService struct {
 
 func NewEventCounterService(
 	mc mysql.Client,
-	pc postgres.Client,
 	e experimentclient.Client,
 	f featureclient.Client,
 	a accountclient.Client,
@@ -204,36 +203,31 @@ func NewEventCounterService(
 			eventStorage = v2ecstorage.NewMySQLEventStorage(customMySQLClient, dopts.logger)
 		}
 	case "postgres":
-		// Use the main Postgres client if useMainConnection is true or no custom connection specified
-		if dopts.dataWarehouseConfig.Postgres.UseMainConnection || dopts.dataWarehouseConfig.Postgres.Host == "" {
-			eventStorage = v2ecstorage.NewPostgresEventStorage(pc, dopts.logger)
-		} else {
-			// Create custom Postgres client with the specified connection details
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
+		// Create custom Postgres client with the specified connection details
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-			customPostgresClient, err := createCustomPostgresClient(
-				ctx,
-				dopts.dataWarehouseConfig.Postgres,
-				dopts.logger,
-			)
-			if err != nil {
-				dopts.logger.Error("Failed to create custom Postgres client for data warehouse",
-					zap.Error(err),
-					zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
-					zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
-				)
-				// Return nil to cause service initialization to fail
-				// This prevents data inconsistency by ensuring we don't silently fall back
-				return nil
-			}
-
-			dopts.logger.Info("Using custom Postgres connection for data warehouse",
+		customPostgresClient, err := createCustomPostgresClient(
+			ctx,
+			dopts.dataWarehouseConfig.Postgres,
+			dopts.logger,
+		)
+		if err != nil {
+			dopts.logger.Error("Failed to create custom Postgres client for data warehouse",
+				zap.Error(err),
 				zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
 				zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
 			)
-			eventStorage = v2ecstorage.NewPostgresEventStorage(customPostgresClient, dopts.logger)
+			// Return nil to cause service initialization to fail
+			// This prevents data inconsistency by ensuring we don't silently fall back
+			return nil
 		}
+
+		dopts.logger.Info("Using custom Postgres connection for data warehouse",
+			zap.String("host", dopts.dataWarehouseConfig.Postgres.Host),
+			zap.String("database", dopts.dataWarehouseConfig.Postgres.Database),
+		)
+		eventStorage = v2ecstorage.NewPostgresEventStorage(customPostgresClient, dopts.logger)
 	case "bigquery":
 		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
 	default:

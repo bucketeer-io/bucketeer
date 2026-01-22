@@ -18,11 +18,6 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
-  postgresUser:
-  postgresPass:
-  postgresHost:
-  postgresPort: 5432
-  postgresDbName:
   # Migration settings for environment ID migration
   # Set these when migrating an environment from an old ID (e.g., empty string) to a new UUID
   # After 31 days of double-write, set enabled to false and run the MySQL migration
@@ -324,7 +319,6 @@ onDemandProcessors:
         password: ""
         database: ""
       postgres:
-        useMainConnection: false
         host: ""
         port: 0
         user: ""

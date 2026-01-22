@@ -165,7 +165,6 @@ func (c *command) executeSQLStatements(
 		}
 
 		logger.Info("Executing SQL statement", zap.Int("statement_number", i+1))
-		logger.Debug("SQL statement", zap.String("sql", statement))
 
 		_, err := client.ExecContext(ctx, statement)
 		if err != nil {

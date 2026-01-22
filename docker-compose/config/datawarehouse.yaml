@@ -9,12 +9,11 @@ mysql:
   password: ""
   database: ""
 postgres:
-  useMainConnection: true
-  host: ""
+  host: "postgres"
   port: 5432
-  user: ""
-  password: ""
-  database: ""
+  user: "bucketeer"
+  password: "bucketeer"
+  database: "bucketeer"
 bigquery:
   project: ""
   dataset: ""

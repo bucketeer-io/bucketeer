@@ -28,12 +28,11 @@ global:
 
     # Postgres configuration (used when type: postgres)
     postgres:
-      useMainConnection: true
-      host: ""
+      host: "localenv-postgresql-headless.default.svc.cluster.local"
       port: 5432
-      user: ""
-      password: ""
-      database: ""
+      user: "bucketeer"
+      password: "bucketeer"
+      database: "bucketeer"
 
   pubsub:
     type: redis-stream # Options: redis-stream, google
@@ -108,11 +107,6 @@ web:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
-    postgresUser: bucketeer
-    postgresPass: bucketeer
-    postgresHost: localenv-postgresql-hl.default.svc.cluster.local
-    postgresPort: 5432
-    postgresDbName: bucketeer
     persistentRedis:
       serverName: backend
       addr: localenv-redis-headless.default.svc.cluster.local:6379
@@ -348,11 +342,6 @@ subscriber:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
-    postgresUser: bucketeer
-    postgresPass: bucketeer
-    postgresHost: localenv-postgresql-hl.default.svc.cluster.local
-    postgresPort: 5432
-    postgresDbName: bucketeer
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
@@ -621,7 +610,6 @@ subscriber:
           password: ""
           database: ""
         postgres:
-          useMainConnection: false
           host: ""
           port: 0
           user: ""
@@ -654,7 +642,6 @@ subscriber:
           password: ""
           database: ""
         postgres:
-          useMainConnection: true
           host: ""
           port: 0
           user: ""

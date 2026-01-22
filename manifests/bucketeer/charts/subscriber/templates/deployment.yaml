@@ -107,16 +107,6 @@ spec:
               value: "{{ .Values.env.mysqlDbName }}"
             - name: BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS
               value: "{{ .Values.env.mysqlDbOpenConns }}"
-            - name: BUCKETEER_SUBSCRIBER_POSTGRES_USER
-              value: "{{ .Values.env.postgresUser }}"
-            - name: BUCKETEER_SUBSCRIBER_POSTGRES_PASS
-              value: "{{ .Values.env.postgresPass }}"
-            - name: BUCKETEER_SUBSCRIBER_POSTGRES_HOST
-              value: "{{ .Values.env.postgresHost }}"
-            - name: BUCKETEER_SUBSCRIBER_POSTGRES_PORT
-              value: "{{ .Values.env.postgresPort }}"
-            - name: BUCKETEER_SUBSCRIBER_POSTGRES_DB_NAME
-              value: "{{ .Values.env.postgresDbName }}"
             - name: BUCKETEER_SUBSCRIBER_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL

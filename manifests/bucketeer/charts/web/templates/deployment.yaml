@@ -85,16 +85,6 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_WEB_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_WEB_POSTGRES_USER
-              value: "{{ .Values.env.postgresUser }}"
-            - name: BUCKETEER_WEB_POSTGRES_PASS
-              value: "{{ .Values.env.postgresPass }}"
-            - name: BUCKETEER_WEB_POSTGRES_HOST
-              value: "{{ .Values.env.postgresHost }}"
-            - name: BUCKETEER_WEB_POSTGRES_PORT
-              value: "{{ .Values.env.postgresPort }}"
-            - name: BUCKETEER_WEB_POSTGRES_DB_NAME
-              value: "{{ .Values.env.postgresDbName }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_ADDR

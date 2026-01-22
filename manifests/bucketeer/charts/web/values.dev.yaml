@@ -17,11 +17,6 @@ env:
   mysqlHost: localenv-mysql-headless.default.svc.cluster.local
   mysqlPort: 3306
   mysqlDbName: bucketeer
-  postgresUser: bucketeer
-  postgresPass: bucketeer
-  postgresHost: localenv-postgresql-hl.default.svc.cluster.local
-  postgresPort: 5432
-  postgresDbName: bucketeer
   persistentRedis:
     serverName: backend
     addr: localenv-redis-headless.default.svc.cluster.local:6379

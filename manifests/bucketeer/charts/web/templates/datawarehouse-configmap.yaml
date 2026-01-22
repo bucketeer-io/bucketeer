@@ -42,8 +42,6 @@ data:
     {{- end }}
     {{- if eq .Values.global.dataWarehouse.type "postgres" }}
     postgres:
-      useMainConnection: {{ .Values.global.dataWarehouse.postgres.useMainConnection }}
-      {{- if not .Values.global.dataWarehouse.postgres.useMainConnection }}
       {{- if .Values.global.dataWarehouse.postgres.host }}
       host: {{ .Values.global.dataWarehouse.postgres.host | quote }}
       {{- end }}
@@ -58,6 +56,5 @@ data:
       {{- end }}
       {{- if .Values.global.dataWarehouse.postgres.password }}
       password: {{ .Values.global.dataWarehouse.postgres.password | quote }}
-      {{- end }}
       {{- end }}
     {{- end }}

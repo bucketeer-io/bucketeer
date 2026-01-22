@@ -62,7 +62,7 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, nil, "", reg, nil, jpLocation, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, nil, "", reg, nil, jpLocation, logger)
 	assert.IsType(t, &eventCounterService{}, g)
 }
 

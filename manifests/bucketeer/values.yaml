@@ -24,7 +24,6 @@ global:
       database: ""
     # PostgreSQL configuration (used when type: postgres)
     postgres:
-      useMainConnection: true
       host: ""
       port: 5432
       user: ""
