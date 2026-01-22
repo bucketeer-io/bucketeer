@@ -111,24 +111,42 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 func (c *command) checkTablesExist(ctx context.Context, client postgres.Client, logger *zap.Logger) ([]string, error) {
 	tables := []string{"evaluation_event", "goal_event"}
-	var existingTables []string
+	schema := "public" // table_schema is schema name, not DB name
 
-	for _, table := range tables {
-		query := `SELECT COUNT(*) FROM information_schema.tables 
-				 WHERE table_schema = $1 AND table_name = $2`
-
-		var count int
-		err := client.QueryRowContext(ctx, query, *c.postgresDBName, table).Scan(&count)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check table %s existence: %w", table, err)
-		}
-
-		if count > 0 {
-			existingTables = append(existingTables, table)
-		}
+	placeholders := make([]string, 0, len(tables))
+	args := make([]interface{}, 0, len(tables)+1)
+	args = append(args, schema)
+	for i, t := range tables {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+2))
+		args = append(args, t)
 	}
 
-	return existingTables, nil
+	q := fmt.Sprintf(`SELECT table_name FROM information_schema.tables
+                      WHERE table_schema = $1 AND table_name IN (%s)`,
+		strings.Join(placeholders, ","))
+
+	rows, err := client.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	set := map[string]struct{}{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		set[name] = struct{}{}
+	}
+
+	existing := make([]string, 0, len(tables))
+	for _, t := range tables {
+		if _, ok := set[t]; ok {
+			existing = append(existing, t)
+		}
+	}
+	return existing, rows.Err()
 }
 
 func (c *command) createPostgresClient(ctx context.Context, logger *zap.Logger) (postgres.Client, error) {
