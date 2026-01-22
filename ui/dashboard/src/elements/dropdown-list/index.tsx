@@ -1,17 +1,16 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  FixedSizeList,
-  ListChildComponentProps,
-  FixedSizeListProps
-} from 'react-window';
-import { cn } from 'utils/style';
-import Button from 'components/button';
 import {
   DropdownMenuItem,
   DropdownOption,
   DropdownValue
 } from 'components/dropdown';
+import Spinner from 'components/spinner';
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  FixedSizeList,
+  FixedSizeListProps,
+  ListChildComponentProps
+} from 'react-window';
+import { cn } from 'utils/style';
 
 interface RowWithDataProps {
   options: DropdownOption[];
@@ -24,7 +23,7 @@ interface RowWithDataProps {
   onSelectOption: (value: DropdownValue) => void;
 }
 
-const LOAD_MORE_BUTTON_HEIGHT = 50;
+const LOADING_ROW_HEIGHT = 50;
 
 const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
 
@@ -34,9 +33,7 @@ const RowWithData = ({
   data
 }: ListChildComponentProps<
   RowWithDataProps & {
-    isHasMore?: boolean;
     isLoadingMore?: boolean;
-    onHasMoreOptions?: () => void;
   }
 >) => {
   const {
@@ -48,25 +45,17 @@ const RowWithData = ({
     itemSelected,
     additionalElement,
     onSelectOption,
-    isHasMore,
-    isLoadingMore,
-    onHasMoreOptions
+    isLoadingMore
   } = data;
-  const { t } = useTranslation(['common']);
-  if (isHasMore && index === options.length) {
+
+  // Show loading indicator as the last row when loading more
+  if (isLoadingMore && index === options.length) {
     return (
       <div
         style={style}
         className="flex items-center justify-center p-2 border-t"
       >
-        <Button
-          loading={isLoadingMore}
-          variant="text"
-          onClick={onHasMoreOptions}
-          className="w-full"
-        >
-          {!isLoadingMore && t('load-more')}
-        </Button>
+        <Spinner />
       </div>
     );
   }
@@ -168,7 +157,7 @@ const DropdownList = ({
 
   return (
     <List
-      height={maxHeightList + (isHasMore ? LOAD_MORE_BUTTON_HEIGHT : 0)}
+      height={maxHeightList + (isLoadingMore ? LOADING_ROW_HEIGHT : 0)}
       width={width}
       itemSize={itemSize}
       itemCount={itemCount}
@@ -182,11 +171,9 @@ const DropdownList = ({
         isMultiselect,
         selectedOptions,
         selectedFieldValue,
-        isLoadingMore,
         additionalElement,
         onSelectOption,
-        isHasMore,
-        onHasMoreOptions
+        isLoadingMore
       }}
       className={
         options?.length <= maxOptions ? 'hidden-scroll' : 'small-scroll'

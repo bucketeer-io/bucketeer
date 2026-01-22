@@ -129,10 +129,9 @@ const DropdownMenuWithSearch = ({
     [options, searchValue, onSearchChange]
   );
 
-  let timerId: NodeJS.Timeout | null = null;
-  if (timerId) clearTimeout(timerId);
-  timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
-  const handleFocusSearchInput = useCallback(() => {}, []);
+  const handleFocusSearchInput = useCallback(() => {
+    setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
 
   const onClearSearchValue = useCallback(() => {
     setSearchValue('');
@@ -144,7 +143,7 @@ const DropdownMenuWithSearch = ({
       setIsOpen(false);
       onClearSearchValue();
     }
-  }, [hidden]);
+  }, [hidden, onClearSearchValue]);
 
   return (
     <DropdownMenu
