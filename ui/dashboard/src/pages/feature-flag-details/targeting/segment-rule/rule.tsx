@@ -4,6 +4,7 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
+import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
 import useOptions from 'hooks/use-options';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -16,6 +17,7 @@ import { truncateBySide } from 'utils/converts';
 import { isNotEmptyObject } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -26,7 +28,6 @@ import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
-import VariationLabel from 'elements/variation-label';
 import { TargetingSchema } from '../form-schema';
 import { UserMessage } from '../individual-rule';
 import { RuleClauseType } from '../types';
@@ -79,7 +80,11 @@ const RuleForm = ({
   } = methods;
 
   const clausesWatch = watch(`segmentRules.${segmentIndex}.clauses`);
-
+  const flagsSelected = new Set(
+    clausesWatch
+      .filter(item => item.type === RuleClauseType.FEATURE_FLAG)
+      .map(item => item.attribute ?? '')
+  );
   const {
     fields: clauses,
     append,
@@ -90,24 +95,24 @@ const RuleForm = ({
     keyName: 'clauseId'
   });
 
+  const {
+    isLoadingMore,
+    remainingFlagOptions,
+    hasMore,
+    loadMore,
+    onSearchChange,
+    isInitialLoading: isLoadingFeature
+  } = useFeatureFlagsLoader({
+    environmentId: currentEnvironment.id,
+    selectedFlagIds: Array.from(flagsSelected),
+    currentFeatureId: feature.id,
+    filterSelected: true
+  });
+
   const formatClauses = clausesWatch.map(item => ({
     ...item,
     clauseId: clauses.find(clause => clause.id === item.id)?.clauseId
   }));
-
-  const flagOptions = useMemo(() => {
-    const flagsSelected = clausesWatch
-      .filter(item => item.type === RuleClauseType.FEATURE_FLAG)
-      ?.map(item => item.attribute);
-
-    return features
-      ?.filter(item => ![...flagsSelected, feature.id]?.includes(item.id))
-      .map(item => ({
-        label: item.name,
-        value: item.id,
-        enabled: item.enabled
-      }));
-  }, [features, [...clausesWatch], feature]);
 
   const segmentOptions = userSegments?.map(item => ({
     label: `${item.name} (${item.includedUserCount} ${t(`common:${item.includedUserCount === '1' ? 'user' : 'users'}`).toLowerCase()})`,
@@ -171,7 +176,12 @@ const RuleForm = ({
           const variationOptions = features
             ?.find(item => item.id === featureId)
             ?.variations?.map((v, index) => ({
-              label: <VariationLabel label={v.name || v.value} index={index} />,
+              label: (
+                <div className="flex items-center gap-x-2 pl-0.5">
+                  <FlagVariationPolygon index={index} />
+                  <p className="-mt-0.5 truncate">{v.name}</p>
+                </div>
+              ),
               value: v.id
             }));
           const isEmptySegment = isUserSegment && segmentOptions?.length === 0;
@@ -283,9 +293,14 @@ const RuleForm = ({
                                       )?.name || '',
                                       50
                                     )}
+                                    isLoading={isLoadingFeature}
+                                    isLoadingMore={isLoadingMore}
+                                    onHasMoreOptions={loadMore}
+                                    onSearchChange={onSearchChange}
+                                    isHasMore={hasMore || isLoadingMore}
                                     placeholder={t('experiments.select-flag')}
                                     isExpand
-                                    options={flagOptions}
+                                    options={remainingFlagOptions}
                                     selectedOptions={field.value}
                                     additionalElement={item => (
                                       <FeatureFlagStatus
