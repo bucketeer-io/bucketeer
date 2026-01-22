@@ -53,7 +53,7 @@
     "js-cookie": "^3.0.5",
     "js-yaml": "^4.1.0",
     "jwt-decode": "^4.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.460.0",
     "luxon": "^3.6.1",
     "option-t": "^49.1.0",
