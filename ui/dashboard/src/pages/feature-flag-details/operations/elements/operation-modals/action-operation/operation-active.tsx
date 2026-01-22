@@ -68,7 +68,7 @@ const OperationActiveModal = ({
         variationName: t('form:current-percentage')
       }
     ];
-  }, [feature.variations, defaultRule.currentOption]);
+  }, [feature.variations]);
 
   const handleSelectStrategy = (value: string) => {
     setDefaultRule(prev => {

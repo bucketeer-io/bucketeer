@@ -189,7 +189,7 @@
     "operator": "Operator",
     "values": "Values",
     "attribute-key-select-title": "Attributes from the client SDK",
-    "update-default-strategy": "update default rule strategy after stopping operation"
+    "update-default-strategy": "Update default rule strategy after stopping operation"
   },
   "variation": {
     "rollout-running-message": "To update Variations, you must stop or delete the current <comp>Progressive Rollout</comp>."

@@ -146,7 +146,7 @@ const RolloutProgress = ({
                       <Trans
                         i18nKey={'form:operation.percent-variation'}
                         values={{
-                          percent: item.weight.toString().slice(0, 4),
+                          percent: parseFloat(item.weight.toFixed(3)),
                           variation: item.variation
                         }}
                         components={{

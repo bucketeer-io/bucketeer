@@ -41,7 +41,7 @@ import { OperationActionType, OperationTab, OpsTypeMap } from './types';
 export interface OperationModalState {
   operationType: OpsTypeMap | undefined;
   actionType: OperationActionType;
-  selectedData?: AutoOpsRule & Rollout;
+  selectedData?: Rollout | AutoOpsRule;
 }
 
 const Operations = ({
@@ -100,12 +100,14 @@ const Operations = ({
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
   const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
   const isRolloutAction = useMemo(() => action === 'rollout', [action]);
-  const isRolloutActive = useMemo(
-    () =>
-      operationModalState.selectedData?.status === 'RUNNING' ||
-      operationModalState.selectedData?.status === 'WAITING',
-    [operationModalState]
-  );
+
+  const isRolloutActive = useMemo(() => {
+    const data = operationModalState.selectedData;
+    if (!data) return false;
+    // Rollout has 'status', AutoOpsRule has 'autoOpsStatus'
+    const status = 'status' in data ? data.status : data.autoOpsStatus;
+    return status === 'RUNNING' || status === 'WAITING';
+  }, [operationModalState]);
 
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
@@ -178,10 +180,33 @@ const Operations = ({
   );
 
   const onSubmitOperationSuccess = useCallback(() => {
-    onCloseActionModal();
     invalidateAutoOpsRules(queryClient);
     invalidateRollouts(queryClient);
-  }, [searchParams]);
+    // Auto navigate to ACTIVE tab when creating operation from FINISHED tab
+    if (currentTab === OperationTab.FINISHED) {
+      setCurrentTab(OperationTab.ACTIVE);
+      // Update search params to ACTIVE tab before closing modal
+      const updatedSearchOptions = {
+        ...searchOptions,
+        tab: OperationTab.ACTIVE
+      };
+      const updatedSearchParams = stringifyParams(
+        pickBy(updatedSearchOptions, v => isNotEmpty(v as string))
+      );
+      navigate(
+        getPathName(updatedSearchParams ? `?${updatedSearchParams}` : '')
+      );
+    } else {
+      onCloseActionModal();
+    }
+  }, [
+    searchParams,
+    currentTab,
+    searchOptions,
+    navigate,
+    getPathName,
+    queryClient
+  ]);
 
   const onOperationActions = useCallback(
     ({
