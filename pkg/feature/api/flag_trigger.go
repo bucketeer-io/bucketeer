@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strconv"
 
+	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
@@ -33,7 +34,6 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	pb "github.com/golang/protobuf/proto"
 )
 
 const (
