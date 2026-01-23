@@ -21,11 +21,19 @@ import (
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-func (s *FeatureService) ScheduleFlagChange(
+func (s *FeatureService) CreateScheduledFlagChange(
 	ctx context.Context,
-	req *ftproto.ScheduleFlagChangeRequest,
-) (*ftproto.ScheduleFlagChangeResponse, error) {
-	// TODO
+	req *ftproto.CreateScheduledFlagChangeRequest,
+) (*ftproto.CreateScheduledFlagChangeResponse, error) {
+	// TODO: Implement in Phase 3
+	return nil, errors.New("api not yet implemented")
+}
+
+func (s *FeatureService) GetScheduledFlagChange(
+	ctx context.Context,
+	req *ftproto.GetScheduledFlagChangeRequest,
+) (*ftproto.GetScheduledFlagChangeResponse, error) {
+	// TODO: Implement in Phase 3
 	return nil, errors.New("api not yet implemented")
 }
 
@@ -33,7 +41,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.UpdateScheduledFlagChangeRequest,
 ) (*ftproto.UpdateScheduledFlagChangeResponse, error) {
-	// TODO
+	// TODO: Implement in Phase 3
 	return nil, errors.New("api not yet implemented")
 }
 
@@ -41,7 +49,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.DeleteScheduledFlagChangeRequest,
 ) (*ftproto.DeleteScheduledFlagChangeResponse, error) {
-	// TODO
+	// TODO: Implement in Phase 3
 	return nil, errors.New("api not yet implemented")
 }
 
@@ -49,6 +57,22 @@ func (s *FeatureService) ListScheduledFlagChanges(
 	ctx context.Context,
 	req *ftproto.ListScheduledFlagChangesRequest,
 ) (*ftproto.ListScheduledFlagChangesResponse, error) {
-	// TODO
+	// TODO: Implement in Phase 3
+	return nil, errors.New("api not yet implemented")
+}
+
+func (s *FeatureService) ExecuteScheduledFlagChange(
+	ctx context.Context,
+	req *ftproto.ExecuteScheduledFlagChangeRequest,
+) (*ftproto.ExecuteScheduledFlagChangeResponse, error) {
+	// TODO: Implement in Phase 3
+	return nil, errors.New("api not yet implemented")
+}
+
+func (s *FeatureService) GetScheduledFlagChangeSummary(
+	ctx context.Context,
+	req *ftproto.GetScheduledFlagChangeSummaryRequest,
+) (*ftproto.GetScheduledFlagChangeSummaryResponse, error) {
+	// TODO: Implement in Phase 3
 	return nil, errors.New("api not yet implemented")
 }

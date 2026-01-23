@@ -6942,11 +6942,71 @@ paths:
           collectionFormat: multi
       tags:
         - push
-  /v1/schedule_flag:
+  /v1/scheduled_flag_change:
+    get:
+      summary: Get Scheduled Flag Change
+      description: Get a scheduled flag change. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetScheduledFlagChangeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Scheduled Flag Change
     delete:
-      summary: Delete Scheduled Feature Change
-      description: Delete a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.delete
+      summary: Delete Scheduled Flag Change
+      description: Delete (cancel) a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.delete
       responses:
         "200":
           description: A successful response.
@@ -7002,16 +7062,16 @@ paths:
           required: true
           type: string
       tags:
-        - Feature
+        - Scheduled Flag Change
     post:
-      summary: Schedule Feature Change
-      description: Schedule a feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.create
+      summary: Create Scheduled Flag Change
+      description: Create a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.create
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/featureScheduleFlagChangeResponse'
+            $ref: '#/definitions/featureCreateScheduledFlagChangeResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -7057,13 +7117,13 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/featureScheduleFlagChangeRequest'
+            $ref: '#/definitions/featureCreateScheduledFlagChangeRequest'
       tags:
-        - Feature
+        - Scheduled Flag Change
     patch:
-      summary: Update Scheduled Feature Change
-      description: Update a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.update
+      summary: Update Scheduled Flag Change
+      description: Update a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.update
       responses:
         "200":
           description: A successful response.
@@ -7116,17 +7176,17 @@ paths:
           schema:
             $ref: '#/definitions/featureUpdateScheduledFlagChangeRequest'
       tags:
-        - Feature
-  /v1/schedule_flags:
-    get:
-      summary: List Scheduled Feature Changes
-      description: List scheduled feature flag changes. To call this API, you need at least a MEMBER role in the specified organizations.
-      operationId: web.v1.schedule_flag.update
+        - Scheduled Flag Change
+  /v1/scheduled_flag_change/execute:
+    post:
+      summary: Execute Scheduled Flag Change
+      description: Execute a scheduled flag change immediately (manual trigger). To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.execute
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/featureListScheduledFlagChangesResponse'
+            $ref: '#/definitions/featureExecuteScheduledFlagChangeResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -7168,6 +7228,55 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureExecuteScheduledFlagChangeRequest'
+      tags:
+        - Scheduled Flag Change
+  /v1/scheduled_flag_change/summary:
+    get:
+      summary: Get Scheduled Flag Change Summary
+      description: Get summary of scheduled changes for a flag. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.summary
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetScheduledFlagChangeSummaryResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
         - name: environmentId
           in: query
           required: true
@@ -7177,7 +7286,119 @@ paths:
           required: true
           type: string
       tags:
-        - Feature
+        - Scheduled Flag Change
+  /v1/scheduled_flag_changes:
+    get:
+      summary: List Scheduled Flag Changes
+      description: List scheduled flag changes. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListScheduledFlagChangesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          description: 'Optional: filter by feature'
+          in: query
+          required: false
+          type: string
+        - name: statuses
+          description: |-
+            Optional: filter by status
+
+             - SCHEDULED_FLAG_CHANGE_STATUS_PENDING: Waiting for execution time
+             - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED: Successfully executed
+             - SCHEDULED_FLAG_CHANGE_STATUS_FAILED: Execution failed
+             - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED: Cancelled by user or flag archived
+             - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT: Has conflicts that need resolution
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+              - SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+              - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED
+              - SCHEDULED_FLAG_CHANGE_STATUS_FAILED
+              - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED
+              - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+          collectionFormat: multi
+        - name: fromScheduledAt
+          description: 'Optional: filter by scheduled time range'
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: toScheduledAt
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - SCHEDULED_AT
+            - CREATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+      tags:
+        - Scheduled Flag Change
   /v1/segment:
     get:
       summary: Get
@@ -7863,6 +8084,7 @@ paths:
               - DOMAIN_EVENT_CODEREF
               - DOMAIN_EVENT_TEAM
               - DOMAIN_EVENT_DEMO_ORGANIZATION
+              - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -8551,17 +8773,20 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
-  ScheduledChangeFieldType:
+  ScheduledChangeConflictConflictType:
     type: string
     enum:
-      - UNSPECIFIED
-      - PREREQUISITES
-      - TARGETS
-      - RULES
-      - DEFAULT_STRATEGY
-      - OFF_VARIATION
-      - VARIATIONS
-    default: UNSPECIFIED
+      - CONFLICT_TYPE_UNSPECIFIED
+      - CONFLICT_TYPE_VERSION_MISMATCH
+      - CONFLICT_TYPE_OVERLAPPING_SCHEDULE
+      - CONFLICT_TYPE_DEPENDENCY_MISSING
+      - CONFLICT_TYPE_INVALID_REFERENCE
+    default: CONFLICT_TYPE_UNSPECIFIED
+    title: |-
+      - CONFLICT_TYPE_VERSION_MISMATCH: Flag was modified after schedule was created
+       - CONFLICT_TYPE_OVERLAPPING_SCHEDULE: Another schedule modifies same field
+       - CONFLICT_TYPE_DEPENDENCY_MISSING: Referenced variation/rule will be deleted
+       - CONFLICT_TYPE_INVALID_REFERENCE: Referenced variation/rule doesn't exist
   SubscriptionSourceType:
     type: string
     enum:
@@ -8586,6 +8811,7 @@ definitions:
       - DOMAIN_EVENT_CODEREF
       - DOMAIN_EVENT_TEAM
       - DOMAIN_EVENT_DEMO_ORGANIZATION
+      - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -9997,9 +10223,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       tag:
         type: string
-    required:
-      - changeType
-      - tag
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -10267,6 +10490,7 @@ definitions:
       - TAG
       - CODEREF
       - TEAM
+      - SCHEDULED_FLAG_CHANGE
     default: FEATURE
   domainEventType:
     type: string
@@ -10461,7 +10685,15 @@ definitions:
       - TEAM_CREATED
       - TEAM_DELETED
       - TEAM_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CREATED
+      - SCHEDULED_FLAG_CHANGE_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CANCELLED
+      - SCHEDULED_FLAG_CHANGE_EXECUTED
+      - SCHEDULED_FLAG_CHANGE_FAILED
+      - SCHEDULED_FLAG_CHANGE_SKIPPED
+      - SCHEDULED_FLAG_CHANGE_APPLIED_NOW
     default: UNKNOWN
+    title: '- SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)'
   domainLocalizedMessage:
     type: object
     properties:
@@ -11875,6 +12107,42 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  featureCreateScheduledFlagChangeRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      featureId:
+        type: string
+      scheduledAt:
+        type: string
+        format: int64
+      timezone:
+        type: string
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+      comment:
+        type: string
+      ignoreConflicts:
+        type: boolean
+        title: If true, create even if conflicts detected
+    title: Create a new scheduled flag change
+    required:
+      - environmentId
+      - featureId
+      - scheduledAt
+      - payload
+  featureCreateScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+      detectedConflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
+        title: Conflicts found during creation
   featureCreateSegmentRequest:
     type: object
     properties:
@@ -11977,6 +12245,22 @@ definitions:
         type: string
       variationName:
         type: string
+  featureExecuteScheduledFlagChangeRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      id:
+        type: string
+    title: Execute a scheduled flag change immediately (manual trigger)
+    required:
+      - environmentId
+      - id
+  featureExecuteScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
   featureFeature:
     type: object
     properties:
@@ -12146,6 +12430,16 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  featureGetScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+  featureGetScheduledFlagChangeSummaryResponse:
+    type: object
+    properties:
+      summary:
+        $ref: '#/definitions/featureScheduledFlagChangeSummary'
   featureGetSegmentResponse:
     type: object
     properties:
@@ -12226,14 +12520,32 @@ definitions:
       totalCount:
         type: string
         format: int64
+  featureListScheduledFlagChangesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - SCHEDULED_AT
+      - CREATED_AT
+    default: DEFAULT
+  featureListScheduledFlagChangesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   featureListScheduledFlagChangesResponse:
     type: object
     properties:
-      scheduledFlagUpdates:
+      scheduledFlagChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureScheduledFlagUpdate'
+          $ref: '#/definitions/featureScheduledFlagChange'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   featureListSegmentUsersResponse:
     type: object
     properties:
@@ -12287,9 +12599,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       prerequisite:
         $ref: '#/definitions/featurePrerequisite'
-    required:
-      - changeType
-      - prerequisite
   featureReason:
     type: object
     properties:
@@ -12371,55 +12680,93 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
-    required:
-      - changeType
-      - rule
-  featureScheduleFlagChangeRequest:
+  featureScheduledChangeCategory:
+    type: string
+    enum:
+      - SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED
+      - SCHEDULED_CHANGE_CATEGORY_TARGETING
+      - SCHEDULED_CHANGE_CATEGORY_VARIATIONS
+      - SCHEDULED_CHANGE_CATEGORY_SETTINGS
+      - SCHEDULED_CHANGE_CATEGORY_MIXED
+    default: SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED
+    description: |-
+      - SCHEDULED_CHANGE_CATEGORY_TARGETING: Rules, Targets, Prerequisites, Default Strategy
+       - SCHEDULED_CHANGE_CATEGORY_VARIATIONS: Variation add/update/delete
+       - SCHEDULED_CHANGE_CATEGORY_SETTINGS: Flag state, metadata, off variation
+       - SCHEDULED_CHANGE_CATEGORY_MIXED: Contains changes from multiple categories
+    title: Type of scheduled change (for categorization in UI)
+  featureScheduledChangeConflict:
     type: object
     properties:
-      environmentId:
+      type:
+        $ref: '#/definitions/ScheduledChangeConflictConflictType'
+      description:
         type: string
-      featureId:
+        title: Human-readable conflict description
+      conflictingScheduleId:
         type: string
-      scheduledAt:
+        title: ID of conflicting schedule (if applicable)
+      conflictingField:
+        type: string
+        title: Field path that conflicts
+      detectedAt:
         type: string
         format: int64
-      scheduledChanges:
+    title: Represents a conflict with another scheduled change or current state
+  featureScheduledChangePayload:
+    type: object
+    properties:
+      ruleChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureScheduledChange'
-    required:
-      - environmentId
-      - featureId
-      - scheduledAt
-      - scheduledChanges
-  featureScheduleFlagChangeResponse:
-    type: object
-  featureScheduledChange:
+          $ref: '#/definitions/featureRuleChange'
+        title: Targeting Tab Changes
+      targetChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTargetChange'
+      prerequisiteChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisiteChange'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      variationChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureVariationChange'
+        title: Variations Tab Changes
+      offVariation:
+        type: string
+      enabled:
+        type: boolean
+        title: Settings Tab Changes
+      name:
+        type: string
+      description:
+        type: string
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureTagChange'
+      archived:
+        type: boolean
+      resetSamplingSeed:
+        type: boolean
+      maintainer:
+        type: string
+    title: The payload of scheduled changes - structured to use existing change types
+  featureScheduledFlagChange:
     type: object
     properties:
       id:
         type: string
-      changeType:
-        $ref: '#/definitions/featureScheduledChangeChangeType'
-      fieldType:
-        $ref: '#/definitions/ScheduledChangeFieldType'
-      fieldValue:
-        type: string
-  featureScheduledChangeChangeType:
-    type: string
-    enum:
-      - CHANGE_UNSPECIFIED
-      - CHANGE_CREATE
-      - CHANGE_UPDATE
-      - CHANGE_DELETE
-    default: CHANGE_UNSPECIFIED
-  featureScheduledFlagUpdate:
-    type: object
-    properties:
-      id:
-        type: string
+        title: Identity
       featureId:
         type: string
       environmentId:
@@ -12427,17 +12774,93 @@ definitions:
       scheduledAt:
         type: string
         format: int64
+        description: Unix timestamp in UTC
+        title: Scheduling
+      timezone:
+        type: string
+        title: Display timezone e.g., "Asia/Tokyo"
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+        title: Content
+      comment:
+        type: string
+      status:
+        $ref: '#/definitions/featureScheduledFlagChangeStatus'
+        title: Status tracking
+      failureReason:
+        type: string
+      flagVersionAtCreation:
+        type: integer
+        format: int32
+        description: Flag version when schedule was created
+        title: Conflict detection
+      conflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
+      createdBy:
+        type: string
+        title: Audit
       createdAt:
         type: string
         format: int64
+      updatedBy:
+        type: string
       updatedAt:
         type: string
         format: int64
-      changes:
+      executedAt:
+        type: string
+        format: int64
+      category:
+        $ref: '#/definitions/featureScheduledChangeCategory'
+        description: Computed from payload content
+        title: Derived fields for display
+      changeSummaries:
         type: array
         items:
-          type: object
-          $ref: '#/definitions/featureScheduledChange'
+          type: string
+        title: Human-readable summaries
+    title: ScheduledFlagChange represents a scheduled change to a feature flag
+  featureScheduledFlagChangeStatus:
+    type: string
+    enum:
+      - SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+      - SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+      - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED
+      - SCHEDULED_FLAG_CHANGE_STATUS_FAILED
+      - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED
+      - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+    default: SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+    description: |-
+      - SCHEDULED_FLAG_CHANGE_STATUS_PENDING: Waiting for execution time
+       - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED: Successfully executed
+       - SCHEDULED_FLAG_CHANGE_STATUS_FAILED: Execution failed
+       - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED: Cancelled by user or flag archived
+       - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT: Has conflicts that need resolution
+    title: Status of a scheduled flag change
+  featureScheduledFlagChangeSummary:
+    type: object
+    properties:
+      featureId:
+        type: string
+      pendingCount:
+        type: integer
+        format: int32
+        title: Number of pending schedules
+      conflictCount:
+        type: integer
+        format: int32
+        title: Number of schedules with conflicts
+      nextScheduledAt:
+        type: string
+        format: int64
+        title: Timestamp of next scheduled change
+      nextCategory:
+        $ref: '#/definitions/featureScheduledChangeCategory'
+        title: Category of next change
+    title: Summary of scheduled changes for a flag (for display in UI)
   featureSegment:
     type: object
     properties:
@@ -12537,9 +12960,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
-    required:
-      - changeType
-      - target
   featureUnarchiveFeatureCommand:
     type: object
   featureUnarchiveFeatureResponse:
@@ -12649,18 +13069,28 @@ definitions:
       scheduledAt:
         type: string
         format: int64
-      scheduledChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduledChange'
+      timezone:
+        type: string
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+      comment:
+        type: string
+      ignoreConflicts:
+        type: boolean
+    title: Update an existing scheduled flag change
     required:
       - environmentId
       - id
-      - scheduledAt
-      - scheduledChanges
   featureUpdateScheduledFlagChangeResponse:
     type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+      detectedConflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
   featureUpdateSegmentRequest:
     type: object
     properties:
@@ -12705,9 +13135,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
-    required:
-      - changeType
-      - variation
   googlerpcStatus:
     type: object
     properties:
