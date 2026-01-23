@@ -135,7 +135,7 @@ export const IndividualDiscardItem = ({
               conjection: labelType === 'REMOVE' ? t('form:from') : t('form:to')
             }}
             components={{
-              labeElemet: (
+              labelElement: (
                 <div className="inline-flex flex-wrap items-center gap-1">
                   {formatLabel}
                 </div>
