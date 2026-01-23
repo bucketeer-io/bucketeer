@@ -465,7 +465,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       <div className={cn('w-full', { truncate: isTruncate }, wrapTriggerStyle)}>
         <DropdownMenuTrigger
           ref={triggerRef}
-          placeholder={placeholder ?? `${capitalize(t('common:selected'))}...`}
+          placeholder={placeholder ?? `${capitalize(t('common:select-placeholder'))}...`}
           label={labelCustom ? labelCustom : triggerLabel}
           trigger={trigger}
           disabled={disabled}

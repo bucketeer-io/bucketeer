@@ -105,7 +105,7 @@ const RolloutProgress = ({
         {isActive && (
           <>
             <OperationDescription
-              titleKey={t('form:target-variation-value')}
+              titleKey={'form:target-variation-value'}
               value={
                 <VariationLabel
                   label={targetVariationHash.variation}
@@ -116,7 +116,7 @@ const RolloutProgress = ({
               isLastItem={false}
             />
             <OperationDescription
-              titleKey={t('form:control-variation-value')}
+              titleKey={'form:control-variation-value'}
               value={
                 <VariationLabel
                   label={controlVariationHash.variation}

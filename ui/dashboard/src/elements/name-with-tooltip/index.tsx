@@ -87,7 +87,7 @@ const NameWithTooltip = ({
   content,
   trigger,
   align,
-  asChild = false
+  asChild = true
 }: Props) => {
   const [isTruncate, setIsTruncate] = useState(false);
   const childrenId = `children-${id}`;
