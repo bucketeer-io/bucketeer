@@ -141,7 +141,7 @@ message CreateFeatureResponse {
 // ChangeType and *Change messages are now defined in
 // scheduled_feature_change.proto and imported here to avoid duplication. The
 // following types are available:
-// - ChangeType (CHANGE_TYPE_CREATE, CHANGE_TYPE_UPDATE, CHANGE_TYPE_DELETE)
+// - ChangeType (UNSPECIFIED, CREATE, UPDATE, DELETE)
 // - PrerequisiteChange
 // - TargetChange
 // - VariationChange

@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS scheduled_feature_change (
     flag_version_at_creation INT NOT NULL,
     conflicts JSON,                           -- Array of ScheduledChangeConflict as JSON
     
-    -- Concurrency control (for executor)
-    locked_at BIGINT,                         -- When executor locked the row
-    locked_by VARCHAR(255),                   -- Which executor instance locked it
+    -- Concurrency control (for executor); DB-only, not exposed via ScheduledFlagChange proto
+    locked_at BIGINT,                         -- When executor locked the row (executor coordination only)
+    locked_by VARCHAR(255),                   -- Which executor instance locked it (executor coordination only)
     
     -- Audit
     created_by VARCHAR(255) NOT NULL,
