@@ -172,11 +172,19 @@ test-go:
 
 .PHONY: start-httpstan
 start-httpstan:
-	docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+	@if docker ps -q -f name=bucketeer-httpstan | grep -q .; then \
+		echo "httpstan container is already running"; \
+	elif docker ps -aq -f name=bucketeer-httpstan | grep -q .; then \
+		echo "Starting existing httpstan container..."; \
+		docker start bucketeer-httpstan; \
+	else \
+		echo "Creating and starting httpstan container..."; \
+		docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1; \
+	fi
 
 .PHONY: stop-httpstan
 stop-httpstan:
-	docker stop bucketeer-httpstan
+	@docker stop bucketeer-httpstan 2>/dev/null || echo "httpstan container is not running"
 
 #############################
 # Charts
