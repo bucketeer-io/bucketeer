@@ -6037,6 +6037,385 @@ paths:
           default: UNKNOWN
       tags:
         - goal
+  /v1/insights/evaluations:
+    get:
+      summary: Get Insights Evaluations
+      description: Get evaluation count time series data by type
+      operationId: web.v1.insights.evaluations.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/insightsGetInsightsTimeSeriesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: sourceIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN
+              - ANDROID
+              - IOS
+              - WEB
+              - GO_SERVER
+              - NODE_SERVER
+              - JAVASCRIPT
+              - FLUTTER
+              - REACT
+              - REACT_NATIVE
+              - OPEN_FEATURE_KOTLIN
+              - OPEN_FEATURE_SWIFT
+              - OPEN_FEATURE_JAVASCRIPT
+              - OPEN_FEATURE_GO
+              - OPEN_FEATURE_NODE
+              - OPEN_FEATURE_REACT
+              - OPEN_FEATURE_REACT_NATIVE
+          collectionFormat: multi
+        - name: apiIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN_API
+              - GET_EVALUATION
+              - GET_EVALUATIONS
+              - REGISTER_EVENTS
+              - GET_FEATURE_FLAGS
+              - GET_SEGMENT_USERS
+              - SDK_GET_VARIATION
+          collectionFormat: multi
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+      tags:
+        - insights
+  /v1/insights/latency:
+    get:
+      summary: Get Insights Latency
+      description: Get latency time series data
+      operationId: web.v1.insights.latency.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/insightsGetInsightsTimeSeriesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: sourceIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN
+              - ANDROID
+              - IOS
+              - WEB
+              - GO_SERVER
+              - NODE_SERVER
+              - JAVASCRIPT
+              - FLUTTER
+              - REACT
+              - REACT_NATIVE
+              - OPEN_FEATURE_KOTLIN
+              - OPEN_FEATURE_SWIFT
+              - OPEN_FEATURE_JAVASCRIPT
+              - OPEN_FEATURE_GO
+              - OPEN_FEATURE_NODE
+              - OPEN_FEATURE_REACT
+              - OPEN_FEATURE_REACT_NATIVE
+          collectionFormat: multi
+        - name: apiIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN_API
+              - GET_EVALUATION
+              - GET_EVALUATIONS
+              - REGISTER_EVENTS
+              - GET_FEATURE_FLAGS
+              - GET_SEGMENT_USERS
+              - SDK_GET_VARIATION
+          collectionFormat: multi
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+      tags:
+        - insights
+  /v1/insights/monthly_summary:
+    get:
+      summary: Get Insights Monthly Summary
+      description: Get MAU and monthly request counts
+      operationId: web.v1.insights.monthly_summary.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/insightsGetInsightsMonthlySummaryResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: sourceIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN
+              - ANDROID
+              - IOS
+              - WEB
+              - GO_SERVER
+              - NODE_SERVER
+              - JAVASCRIPT
+              - FLUTTER
+              - REACT
+              - REACT_NATIVE
+              - OPEN_FEATURE_KOTLIN
+              - OPEN_FEATURE_SWIFT
+              - OPEN_FEATURE_JAVASCRIPT
+              - OPEN_FEATURE_GO
+              - OPEN_FEATURE_NODE
+              - OPEN_FEATURE_REACT
+              - OPEN_FEATURE_REACT_NATIVE
+          collectionFormat: multi
+      tags:
+        - insights
+  /v1/insights/requests:
+    get:
+      summary: Get Insights Request Counts
+      description: Get request count time series data
+      operationId: web.v1.insights.requests.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/insightsGetInsightsTimeSeriesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: sourceIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN
+              - ANDROID
+              - IOS
+              - WEB
+              - GO_SERVER
+              - NODE_SERVER
+              - JAVASCRIPT
+              - FLUTTER
+              - REACT
+              - REACT_NATIVE
+              - OPEN_FEATURE_KOTLIN
+              - OPEN_FEATURE_SWIFT
+              - OPEN_FEATURE_JAVASCRIPT
+              - OPEN_FEATURE_GO
+              - OPEN_FEATURE_NODE
+              - OPEN_FEATURE_REACT
+              - OPEN_FEATURE_REACT_NATIVE
+          collectionFormat: multi
+        - name: apiIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN_API
+              - GET_EVALUATION
+              - GET_EVALUATIONS
+              - REGISTER_EVENTS
+              - GET_FEATURE_FLAGS
+              - GET_SEGMENT_USERS
+              - SDK_GET_VARIATION
+          collectionFormat: multi
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+      tags:
+        - insights
   /v1/mau_count:
     get:
       summary: Get MAU Count
@@ -10181,6 +10560,38 @@ definitions:
         type: string
       environmentName:
         type: string
+  clientApiId:
+    type: string
+    enum:
+      - UNKNOWN_API
+      - GET_EVALUATION
+      - GET_EVALUATIONS
+      - REGISTER_EVENTS
+      - GET_FEATURE_FLAGS
+      - GET_SEGMENT_USERS
+      - SDK_GET_VARIATION
+    default: UNKNOWN_API
+  clientSourceId:
+    type: string
+    enum:
+      - UNKNOWN
+      - ANDROID
+      - IOS
+      - WEB
+      - GO_SERVER
+      - NODE_SERVER
+      - JAVASCRIPT
+      - FLUTTER
+      - REACT
+      - REACT_NATIVE
+      - OPEN_FEATURE_KOTLIN
+      - OPEN_FEATURE_SWIFT
+      - OPEN_FEATURE_JAVASCRIPT
+      - OPEN_FEATURE_GO
+      - OPEN_FEATURE_NODE
+      - OPEN_FEATURE_REACT
+      - OPEN_FEATURE_REACT_NATIVE
+    default: UNKNOWN
   coderefCodeReference:
     type: object
     properties:
@@ -12987,6 +13398,73 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/protobufAny'
+  insightsGetInsightsMonthlySummaryResponse:
+    type: object
+    properties:
+      mauSeries:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/insightsMonthlySummarySeries'
+      requestsSeries:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/insightsMonthlySummarySeries'
+  insightsGetInsightsTimeSeriesResponse:
+    type: object
+    properties:
+      timeseries:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/insightsInsightsTimeSeries'
+  insightsInsightsDataPoint:
+    type: object
+    properties:
+      timestamp:
+        type: string
+        format: int64
+      value:
+        type: number
+        format: double
+  insightsInsightsTimeSeries:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      sourceId:
+        $ref: '#/definitions/clientSourceId'
+      apiId:
+        $ref: '#/definitions/clientApiId'
+      data:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/insightsInsightsDataPoint'
+        title: Sorted by timestamp ascending
+  insightsMonthlySummaryDataPoint:
+    type: object
+    properties:
+      yearmonth:
+        type: string
+        title: '"202601"'
+      value:
+        type: number
+        format: double
+  insightsMonthlySummarySeries:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      sourceId:
+        $ref: '#/definitions/clientSourceId'
+      data:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/insightsMonthlySummaryDataPoint'
+        title: Sorted by yearmonth ascending
   notificationAddAdminSubscriptionSourceTypesCommand:
     type: object
     properties:

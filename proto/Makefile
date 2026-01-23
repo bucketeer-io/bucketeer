@@ -1,5 +1,5 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -not -path "./openapi/web_default_settings.proto" -print0 | xargs -0 -n1 dirname | sort --unique))
-PROTO_WITH_GRPC_GATEWAY := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef ./team
+PROTO_WITH_GRPC_GATEWAY := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./insights ./notification ./push ./batch ./tag ./coderef ./team
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4
@@ -55,7 +55,7 @@ openapi-api-gen:
 		--openapiv2_opt=disable_service_tags=true \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
 
-PROTO_OPENAPI_WEB_TARGETS := ${GIT_TOP_DIR}/proto/openapi/web_default_settings.proto ${GIT_TOP_DIR}/proto/auth/service.proto ${GIT_TOP_DIR}/proto/environment/service.proto ${GIT_TOP_DIR}/proto/account/service.proto ${GIT_TOP_DIR}/proto/notification/service.proto ${GIT_TOP_DIR}/proto/push/service.proto ${GIT_TOP_DIR}/proto/feature/service.proto ${GIT_TOP_DIR}/proto/experiment/service.proto ${GIT_TOP_DIR}/proto/tag/service.proto ${GIT_TOP_DIR}/proto/coderef/service.proto ${GIT_TOP_DIR}/proto/autoops/service.proto ${GIT_TOP_DIR}/proto/eventcounter/service.proto ${GIT_TOP_DIR}/proto/auditlog/service.proto ${GIT_TOP_DIR}/proto/team/service.proto
+PROTO_OPENAPI_WEB_TARGETS := ${GIT_TOP_DIR}/proto/openapi/web_default_settings.proto ${GIT_TOP_DIR}/proto/auth/service.proto ${GIT_TOP_DIR}/proto/environment/service.proto ${GIT_TOP_DIR}/proto/account/service.proto ${GIT_TOP_DIR}/proto/notification/service.proto ${GIT_TOP_DIR}/proto/push/service.proto ${GIT_TOP_DIR}/proto/feature/service.proto ${GIT_TOP_DIR}/proto/experiment/service.proto ${GIT_TOP_DIR}/proto/tag/service.proto ${GIT_TOP_DIR}/proto/coderef/service.proto ${GIT_TOP_DIR}/proto/autoops/service.proto ${GIT_TOP_DIR}/proto/eventcounter/service.proto ${GIT_TOP_DIR}/proto/auditlog/service.proto ${GIT_TOP_DIR}/proto/insights/service.proto ${GIT_TOP_DIR}/proto/team/service.proto
 .PHONY: openapi-web-gen
 openapi-web-gen:
 	protoc \
