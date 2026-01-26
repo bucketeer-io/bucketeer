@@ -25,23 +25,23 @@ import * as yup from 'yup';
 import { Environment } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import { IconInfo } from '@icons';
+import AudienceSelect from 'pages/feature-flag-details/targeting/segment-rule/audience-select';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import InfoMessage from 'components/info-message';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
 import Switch from 'components/switch';
 import TextArea from 'components/textarea';
-import InfoMessage from 'components/info-message';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
-import AudienceSelect from 'pages/feature-flag-details/targeting/segment-rule/audience-select';
 
 interface EnvironmentCreateUpdateModalProps {
   organizationId: string;
