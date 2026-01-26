@@ -208,16 +208,13 @@ CREATE TABLE `monthly_summary` (
 
 ### Prometheus Metrics
 
-Add the following 3 metrics:
-- Latency: `bucketeer_grpc_detail_server_handling_seconds`
-- Request count: `bucketeer_grpc_detail_server_handled_total`
-- Evaluation types: `bucketeer_grpc_detail_evaluations_total`
+We're going to use 1 existing metrics and add 2 new metrics.
 
-Background: The following metrics currently exist but cannot be filtered by Project/Environment/SDK:
-
-- Latency: `bucketeer_grpc_server_handling_seconds`
-- Request count: `bucketeer_grpc_server_handled_total`
-- Evaluation types: `bucketeer_api_gateway_evaluations_total`
+| Metric        | Name                                         | Status   | Note                                                                                            |
+| ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| Request count | `bucketeer_gateway_api_request_total`        | Existing | Has all required labels                                                                         |
+| Latency       | `bucketeer_gateway_api_handling_seconds`     | New      | Existing `bucketeer_grpc_server_handling_seconds` lacks `environment_id` and `source_id` labels |
+| Evaluations   | `bucketeer_gateway_api_evaluations_v2_total` | New      | Existing `bucketeer_gateway_api_evaluations_total` lacks `source_id` label                      |
 
 ## Tasks
 
