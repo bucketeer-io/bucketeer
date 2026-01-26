@@ -188,7 +188,11 @@
     "attribute-key": "Attribute Key",
     "operator": "Operator",
     "values": "Values",
-    "attribute-key-select-title": "Attributes from the client SDK"
+    "attribute-key-select-title": "Attributes from the client SDK",
+    "update-default-strategy": "Update default rule strategy after stopping operation"
+  },
+  "variation": {
+    "rollout-running-message": "To update Variations, you must stop or delete the current <comp>Progressive Rollout</comp>."
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",
@@ -225,6 +229,7 @@
   "ends-with": "Ends with",
   "is-included-in": "Is included in",
   "manual-percentage": "Manual Percentage",
+  "current-percentage": "Current Percentage",
   "rollout": "Rollout",
   "off-variation": "Off Variation",
   "reset-sampling": "Reset random sampling",
@@ -241,6 +246,8 @@
     "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
   },
   "flag-variation": "Flag Variation",
+  "target-variation-value": "Target Variation: <comp/>",
+  "control-variation-value": "Control Variation: <comp/>",
   "template": "Template",
   "manual": "Manual",
   "increments": "Increments",
@@ -257,7 +264,7 @@
   "ops-count-tooltip": "Goal Count / Evaluation Count * 100",
   "increments-value": "Increments <b>{{value}}</b>",
   "frequency-value": "Frequency <b>{{value}}</b>",
-  "start-date-value": "Start Date <b>{{value}}</b>",
+  "start-date-value": "Start Date: <b>{{value}}</b>",
   "rollout-warning-title": "The progressive rollout cannot be created. Please check the following conditions.",
   "rollout-warning-desc": "Cannot execute more than one progressive rollout at the same time.",
   "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>",
@@ -366,5 +373,11 @@
   "auto-archive-unused-days": "Unused days threshold",
   "auto-archive-unused-days-placeholder": "e.g., 90",
   "auto-archive-check-code-refs": "Check code references",
-  "auto-archive-check-code-refs-tooltip": "Skip archiving if code references exist"
+  "auto-archive-check-code-refs-tooltip": "Skip archiving if code references exist",
+  "operation": {
+    "confirm-stop-desc": "Stopping or deleting this rollout at its current stage will change how traffic is routed between variations. Traffic will be redistributed using the default rule percentage rollout settings.",
+    "confirm-stop-title": "Audience traffic allocation will be updated",
+    "current-variation-title": "Current Variation Allocation",
+    "percent-variation": "<comp/> <p>{{percent}}%</p>"
+  }
 }

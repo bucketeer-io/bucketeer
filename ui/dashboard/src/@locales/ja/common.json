@@ -219,6 +219,7 @@
   "sort-asc": "昇順",
   "sort-desc": "降順",
   "no-options-found": "オプションが見つかりません",
+  "select-placeholder": "選択",
   "create-goal": "ゴールを作成",
   "create-a-new-goal": "新しいゴールを作成",
   "create-a-new-flag": "新しいフラグを作成",

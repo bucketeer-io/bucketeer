@@ -172,11 +172,19 @@ test-go:
 
 .PHONY: start-httpstan
 start-httpstan:
-	docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+	@if docker ps -q -f name=bucketeer-httpstan | grep -q .; then \
+		echo "httpstan container is already running"; \
+	elif docker ps -aq -f name=bucketeer-httpstan | grep -q .; then \
+		echo "Starting existing httpstan container..."; \
+		docker start bucketeer-httpstan; \
+	else \
+		echo "Creating and starting httpstan container..."; \
+		docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1; \
+	fi
 
 .PHONY: stop-httpstan
 stop-httpstan:
-	docker stop bucketeer-httpstan
+	@docker stop bucketeer-httpstan 2>/dev/null || echo "httpstan container is not running"
 
 #############################
 # Charts
@@ -254,7 +262,9 @@ create-api-key:
 
 .PHONY: e2e-l4
 e2e-l4:
-	go test -v ./test/e2e/... -args \
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
@@ -268,7 +278,9 @@ e2e-l4:
 
 .PHONY: e2e
 e2e:
-	go test -v ./test/e2e/... -args \
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \

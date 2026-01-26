@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.7] (2026-01-20)
+
+### Fix
+
+- fix(evaluation): align equals/in semver fallback behavior with comparison operators [#2355](https://github.com/bucketeer-io/bucketeer/pull/2355)
+
 ## [0.0.6] (2025-11-19)
 
 ### Features

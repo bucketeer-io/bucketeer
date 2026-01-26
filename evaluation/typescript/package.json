@@ -1,6 +1,6 @@
 {
   "name": "@bucketeer/evaluation",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -46,5 +46,8 @@
     "tsx": "^4.19.1",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.7.0"
+  },
+  "resolutions": {
+    "tar": "^7.5.4"
   }
 }
