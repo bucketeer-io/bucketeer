@@ -2427,14 +2427,11 @@ func createProgressiveRollout(
 	template *aoproto.ProgressiveRolloutTemplateScheduleClause,
 ) {
 	t.Helper()
-	cmd := &aoproto.CreateProgressiveRolloutCommand{
+	_, err := client.CreateProgressiveRollout(ctx, &aoproto.CreateProgressiveRolloutRequest{
+		EnvironmentId:                            *environmentID,
 		FeatureId:                                featureID,
 		ProgressiveRolloutManualScheduleClause:   manual,
 		ProgressiveRolloutTemplateScheduleClause: template,
-	}
-	_, err := client.CreateProgressiveRollout(ctx, &aoproto.CreateProgressiveRolloutRequest{
-		EnvironmentId: *environmentID,
-		Command:       cmd,
 	})
 	if err != nil {
 		t.Fatal(err)
