@@ -32,6 +32,8 @@ import (
 var (
 	//go:embed create_events_table.sql
 	eventTablesMigrationSQL string
+	//go:embed check_tables_exist.sql
+	checkTablesExistSQL string
 )
 
 type command struct {
@@ -121,9 +123,7 @@ func (c *command) checkTablesExist(ctx context.Context, client postgres.Client, 
 		args = append(args, t)
 	}
 
-	q := fmt.Sprintf(`SELECT table_name FROM information_schema.tables
-                      WHERE table_schema = $1 AND table_name IN (%s)`,
-		strings.Join(placeholders, ","))
+	q := fmt.Sprintf(checkTablesExistSQL, strings.Join(placeholders, ","))
 
 	rows, err := client.QueryContext(ctx, q, args...)
 	if err != nil {
