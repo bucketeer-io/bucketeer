@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import {
@@ -37,9 +37,11 @@ import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
 import Switch from 'components/switch';
 import TextArea from 'components/textarea';
+import InfoMessage from 'components/info-message';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
+import AudienceSelect from 'pages/feature-flag-details/targeting/segment-rule/audience-select';
 
 interface EnvironmentCreateUpdateModalProps {
   organizationId: string;
@@ -83,6 +85,14 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
     autoArchiveCheckCodeRefs: yup.boolean().required()
   });
 
+// Auto-archive days preset options
+const PRESET_DAYS = [7, 14, 30] as const;
+
+interface DaysOption {
+  label: string;
+  value: number | 'custom';
+}
+
 const EnvironmentCreateUpdateModal = ({
   organizationId,
   isOpen,
@@ -100,9 +110,19 @@ const EnvironmentCreateUpdateModal = ({
     consoleAccount!
   );
 
-  const disabled = useMemo(
-    () => !envEditable || !isOrganizationAdmin,
-    [envEditable, isOrganizationAdmin]
+  const disabled = !envEditable || !isOrganizationAdmin;
+
+  const [isCustomDays, setIsCustomDays] = useState(false);
+  const inputDaysRef = useRef<HTMLInputElement>(null);
+
+  const daysOptions: DaysOption[] = useMemo(
+    () => [
+      { label: t('form:auto-archive-days-7'), value: 7 },
+      { label: t('form:auto-archive-days-14'), value: 14 },
+      { label: t('form:auto-archive-days-30'), value: 30 },
+      { label: t('form:custom'), value: 'custom' }
+    ],
+    [t]
   );
 
   const { data: collection, isLoading: isLoadingProject } =
@@ -122,11 +142,7 @@ const EnvironmentCreateUpdateModal = ({
       enabled: !!environmentId
     });
 
-  const environmentDetail = useMemo(
-    () => envCollections?.environment,
-    [envCollections]
-  );
-
+  const environmentDetail = envCollections?.environment;
   const project = collection?.project;
 
   const form = useForm({
@@ -138,7 +154,13 @@ const EnvironmentCreateUpdateModal = ({
       projectId: projectId || '',
       urlCode: environmentDetail?.urlCode || '',
       autoArchiveEnabled: environmentDetail?.autoArchiveEnabled || false,
-      autoArchiveUnusedDays: environmentDetail?.autoArchiveUnusedDays || 90,
+      autoArchiveUnusedDays:
+        environmentDetail?.autoArchiveUnusedDays &&
+        PRESET_DAYS.includes(
+          environmentDetail.autoArchiveUnusedDays as (typeof PRESET_DAYS)[number]
+        )
+          ? environmentDetail.autoArchiveUnusedDays
+          : 7,
       autoArchiveCheckCodeRefs:
         environmentDetail?.autoArchiveCheckCodeRefs || false
     },
@@ -189,6 +211,23 @@ const EnvironmentCreateUpdateModal = ({
     },
     [environmentDetail, currentEnvironment]
   );
+
+  const handleSelectDays = useCallback(
+    (value: string | number) => {
+      if (value === 'custom') {
+        setIsCustomDays(true);
+        setTimeout(() => inputDaysRef.current?.focus(), 100);
+        return;
+      }
+      setIsCustomDays(false);
+      form.setValue('autoArchiveUnusedDays', value as number, {
+        shouldDirty: true,
+        shouldValidate: true
+      });
+    },
+    [form]
+  );
+
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal
@@ -335,7 +374,7 @@ const EnvironmentCreateUpdateModal = ({
 
               <Divider className="my-5" />
               <h3 className="typo-head-bold-small text-gray-900 mb-4">
-                {t('form:auto-archive-settings')}
+                {t('form:flag-lifecycle')}
               </h3>
 
               <Form.Field
@@ -377,29 +416,65 @@ const EnvironmentCreateUpdateModal = ({
 
               {form.watch('autoArchiveEnabled') && (
                 <>
+                  <InfoMessage
+                    title={t('form:auto-archive-policy-info')}
+                    typeOfIcon="info"
+                    isToggleable={false}
+                    className="mb-4"
+                  />
+
                   <Form.Field
                     control={form.control}
                     name="autoArchiveUnusedDays"
                     render={({ field }) => (
                       <Form.Item className="mb-4">
                         <Form.Label required>
-                          {t('form:auto-archive-unused-days')}
+                          {t('form:auto-archive-no-evaluations')}
                         </Form.Label>
                         <Form.Control>
-                          <Input
-                            type="number"
-                            min={1}
-                            disabled={disabled}
-                            placeholder={t(
-                              'form:auto-archive-unused-days-placeholder'
+                          <div className="flex flex-wrap items-center gap-2">
+                            {daysOptions.map(item => (
+                              <AudienceSelect
+                                key={item.value}
+                                label={item.label}
+                                value={item.value}
+                                disabled={disabled}
+                                isActive={
+                                  item.value === 'custom'
+                                    ? isCustomDays
+                                    : !isCustomDays &&
+                                      field.value === item.value
+                                }
+                                onSelect={handleSelectDays}
+                              />
+                            ))}
+                            {isCustomDays && (
+                              <InputGroup
+                                addon={t('common:days')}
+                                addonSlot="right"
+                                className="w-32"
+                              >
+                                <Input
+                                  ref={inputDaysRef}
+                                  type="number"
+                                  min={1}
+                                  disabled={disabled}
+                                  placeholder={t(
+                                    'form:auto-archive-unused-days-placeholder'
+                                  )}
+                                  value={field.value ?? ''}
+                                  onChange={value => {
+                                    const numValue = parseInt(value, 10);
+                                    field.onChange(
+                                      value && !Number.isNaN(numValue)
+                                        ? numValue
+                                        : undefined
+                                    );
+                                  }}
+                                />
+                              </InputGroup>
                             )}
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={value => {
-                              const numValue = value ? parseInt(value, 10) : '';
-                              field.onChange(numValue);
-                            }}
-                          />
+                          </div>
                         </Form.Control>
                         <Form.Message />
                       </Form.Item>
