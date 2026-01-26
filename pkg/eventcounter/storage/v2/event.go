@@ -90,7 +90,7 @@ type EventStorage interface {
 	) (*UserEvaluation, error)
 }
 
-type eventStorage struct {
+type bigQueryEventStorage struct {
 	querier bqquerier.Client
 	dataset string
 	logger  *zap.Logger
@@ -120,15 +120,15 @@ type UserEvaluation struct {
 	Timestamp      int64
 }
 
-func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
-	return &eventStorage{
+func NewBigQueryEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
+	return &bigQueryEventStorage{
 		querier: querier,
 		dataset: dataset,
 		logger:  logger.Named("storage"),
 	}
 }
 
-func (es *eventStorage) QueryEvaluationCount(
+func (es *bigQueryEventStorage) QueryEvaluationCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
@@ -198,7 +198,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	return rows, nil
 }
 
-func (es *eventStorage) QueryGoalCount(
+func (es *bigQueryEventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentId string,
 	startAt, endAt time.Time,
@@ -272,7 +272,7 @@ func (es *eventStorage) QueryGoalCount(
 	return rows, nil
 }
 
-func (es *eventStorage) QueryUserEvaluation(
+func (es *bigQueryEventStorage) QueryUserEvaluation(
 	ctx context.Context,
 	environmentID, userID, featureID string,
 	featureVersion int32,

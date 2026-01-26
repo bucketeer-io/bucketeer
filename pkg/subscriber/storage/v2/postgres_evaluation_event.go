@@ -55,20 +55,20 @@ func (s *postgresEvaluationEventStorage) createEvaluationEventsBatch(
 	var query strings.Builder
 	query.WriteString(evaluationEventSql)
 
-	args := make([]interface{}, 0, len(events)*11) // 11 fields per event
+	fieldsPerEvent := 11
+	args := make([]interface{}, 0, len(events)*fieldsPerEvent) // 11 fields per event
 
 	argCounter := 0
 	for i, event := range events {
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString(fmt.Sprintf(
+		query.WriteString(postgres.WritePlaceHolder(
 			"($%d, $%d, TO_TIMESTAMP($%d), $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			argCounter+1, argCounter+2, argCounter+3, argCounter+4, argCounter+5,
-			argCounter+6, argCounter+7, argCounter+8, argCounter+9, argCounter+10,
-			argCounter+11,
+			argCounter+1,
+			fieldsPerEvent,
 		))
-		argCounter += 11
+		argCounter += fieldsPerEvent
 
 		// Validate required fields
 		if event.ID == "" || event.EnvironmentID == "" || event.FeatureID == "" || event.UserID == "" {

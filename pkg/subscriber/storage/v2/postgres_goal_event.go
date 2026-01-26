@@ -55,20 +55,20 @@ func (s *postgresGoalEventStorage) createGoalEventsBatch(
 	var query strings.Builder
 	query.WriteString(goalEventSql)
 
-	args := make([]interface{}, 0, len(events)*13) // 13 fields per event
+	fieldsPerEvent := 13
+	args := make([]interface{}, 0, len(events)*fieldsPerEvent) // 13 fields per event
 
 	argCounter := 0
 	for i, event := range events {
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString(fmt.Sprintf(
+		query.WriteString(postgres.WritePlaceHolder(
 			"($%d, $%d, TO_TIMESTAMP($%d), $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			argCounter+1, argCounter+2, argCounter+3, argCounter+4, argCounter+5,
-			argCounter+6, argCounter+7, argCounter+8, argCounter+9, argCounter+10,
-			argCounter+11, argCounter+12, argCounter+13,
+			argCounter+1,
+			fieldsPerEvent,
 		))
-		argCounter += 13
+		argCounter += fieldsPerEvent
 
 		// Validate required fields
 		if event.ID == "" || event.EnvironmentID == "" || event.GoalID == "" || event.UserID == "" {

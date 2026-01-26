@@ -436,20 +436,25 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+POSTGRES_ENABLED ?= false
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
-	helm list | grep -q localenv && helm upgrade localenv manifests/localenv || helm install localenv manifests/localenv
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) || helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED)
 	@echo "Force restarting infrastructure pods to start fresh..."
 	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=pubsub --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=postgresql --ignore-not-found=true
 	@echo "Waiting for infrastructure pods to be ready..."
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	if [ "$(POSTGRES_ENABLED)" = "true" ]; then
+		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s
+	fi
 	@echo "Pods are ready"
 	@echo "Setting up data warehouse tables..."
 	make create-bigquery-emulator-tables

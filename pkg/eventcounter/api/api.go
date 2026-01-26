@@ -229,10 +229,10 @@ func NewEventCounterService(
 		)
 		eventStorage = v2ecstorage.NewPostgresEventStorage(customPostgresClient, dopts.logger)
 	case "bigquery":
-		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
+		eventStorage = v2ecstorage.NewBigQueryEventStorage(b, bigQueryDataSet, dopts.logger)
 	default:
 		// Default to BigQuery for backward compatibility
-		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
+		eventStorage = v2ecstorage.NewBigQueryEventStorage(b, bigQueryDataSet, dopts.logger)
 	}
 
 	return &eventCounterService{
