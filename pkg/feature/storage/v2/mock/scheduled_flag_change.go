@@ -134,17 +134,17 @@ func (mr *MockScheduledFlagChangeStorageMockRecorder) TryLock(ctx, id, lockedBy 
 }
 
 // Unlock mocks base method.
-func (m *MockScheduledFlagChangeStorage) Unlock(ctx context.Context, id string) error {
+func (m *MockScheduledFlagChangeStorage) Unlock(ctx context.Context, id, lockedBy string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Unlock", ctx, id)
+	ret := m.ctrl.Call(m, "Unlock", ctx, id, lockedBy)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Unlock indicates an expected call of Unlock.
-func (mr *MockScheduledFlagChangeStorageMockRecorder) Unlock(ctx, id any) *gomock.Call {
+func (mr *MockScheduledFlagChangeStorageMockRecorder) Unlock(ctx, id, lockedBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unlock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).Unlock), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unlock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).Unlock), ctx, id, lockedBy)
 }
 
 // UpdateScheduledFlagChange mocks base method.

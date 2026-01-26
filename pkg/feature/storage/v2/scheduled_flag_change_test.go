@@ -494,6 +494,7 @@ func TestScheduledFlagChangeStorageUnlock(t *testing.T) {
 		desc        string
 		setup       func(storage *scheduledFlagChangeStorage)
 		id          string
+		lockedBy    string
 		expectedErr error
 	}{
 		{
@@ -504,6 +505,7 @@ func TestScheduledFlagChangeStorageUnlock(t *testing.T) {
 				).Return(nil, errors.New("error"))
 			},
 			id:          "sfc-1",
+			lockedBy:    "executor-1",
 			expectedErr: errors.New("error"),
 		},
 		{
@@ -514,6 +516,7 @@ func TestScheduledFlagChangeStorageUnlock(t *testing.T) {
 				).Return(nil, nil)
 			},
 			id:          "sfc-1",
+			lockedBy:    "executor-1",
 			expectedErr: nil,
 		},
 	}
@@ -521,7 +524,7 @@ func TestScheduledFlagChangeStorageUnlock(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &scheduledFlagChangeStorage{qe: mock.NewMockQueryExecer(mockController)}
 			p.setup(storage)
-			err := storage.Unlock(context.Background(), p.id)
+			err := storage.Unlock(context.Background(), p.id, p.lockedBy)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

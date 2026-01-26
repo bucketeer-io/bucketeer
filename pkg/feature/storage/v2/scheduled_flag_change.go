@@ -78,13 +78,16 @@ type ScheduledFlagChangeStorage interface {
 	// GetScheduledFlagChange retrieves a scheduled flag change by ID
 	GetScheduledFlagChange(ctx context.Context, id, environmentID string) (*domain.ScheduledFlagChange, error)
 	// ListScheduledFlagChanges lists scheduled flag changes with filtering and pagination
-	ListScheduledFlagChanges(ctx context.Context, options *mysql.ListOptions) ([]*proto.ScheduledFlagChange, int, int64, error)
+	ListScheduledFlagChanges(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*proto.ScheduledFlagChange, int, int64, error)
 	// ListDueScheduledFlagChanges lists scheduled flag changes that are due for execution
 	ListDueScheduledFlagChanges(ctx context.Context, now int64, limit int) ([]*proto.ScheduledFlagChange, error)
 	// TryLock attempts to acquire a lock on a scheduled flag change for execution
 	TryLock(ctx context.Context, id, lockedBy string) (bool, error)
-	// Unlock releases the lock on a scheduled flag change
-	Unlock(ctx context.Context, id string) error
+	// Unlock releases the lock on a scheduled flag change (only if locked by the same executor)
+	Unlock(ctx context.Context, id, lockedBy string) error
 }
 
 type scheduledFlagChangeStorage struct {
@@ -363,12 +366,13 @@ func (s *scheduledFlagChangeStorage) TryLock(
 
 func (s *scheduledFlagChangeStorage) Unlock(
 	ctx context.Context,
-	id string,
+	id, lockedBy string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
 		unlockScheduledFlagChangeSQL,
 		id,
+		lockedBy,
 	)
 	return err
 }
