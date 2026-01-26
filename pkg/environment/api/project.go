@@ -568,14 +568,12 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		})
 	}
 	createAccountReq := &accountproto.CreateAccountV2Request{
-		OrganizationId: project.OrganizationId,
-		Command: &accountproto.CreateAccountV2Command{
-			Email:            editor.Email,
-			Name:             strings.Split(editor.Email, "@")[0],
-			AvatarImageUrl:   "",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
-			EnvironmentRoles: envRoles,
-		},
+		OrganizationId:   project.OrganizationId,
+		Email:            editor.Email,
+		Name:             strings.Split(editor.Email, "@")[0],
+		AvatarImageUrl:   "",
+		OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+		EnvironmentRoles: envRoles,
 	}
 	if _, err := s.accountClient.CreateAccountV2(ctx, createAccountReq); err != nil {
 		return api.NewGRPCStatus(err).Err()

@@ -66,6 +66,7 @@ message Event {
     TAG = 17;
     CODEREF = 18;
     TEAM = 19;
+    SCHEDULED_FLAG_CHANGE = 20;
   }
   enum Type {
     UNKNOWN = 0;
@@ -266,6 +267,14 @@ message Event {
     TEAM_CREATED = 1900;
     TEAM_DELETED = 1901;
     TEAM_UPDATED = 1902;
+    // Scheduled Flag Changes (2000-2010)
+    SCHEDULED_FLAG_CHANGE_CREATED = 2000;
+    SCHEDULED_FLAG_CHANGE_UPDATED = 2001;
+    SCHEDULED_FLAG_CHANGE_CANCELLED = 2002;
+    SCHEDULED_FLAG_CHANGE_EXECUTED = 2003;
+    SCHEDULED_FLAG_CHANGE_FAILED = 2004;
+    SCHEDULED_FLAG_CHANGE_SKIPPED = 2005;
+    SCHEDULED_FLAG_CHANGE_APPLIED_NOW = 2006;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -1387,4 +1396,103 @@ message TeamUpdatedEvent {
 message TeamDeletedEvent {
   string id = 1;
   string organization_id = 2;
+}
+
+// ============================================
+// Scheduled Flag Change Events
+// ============================================
+
+// When user creates a scheduled flag change
+message ScheduledFlagChangeCreatedEvent {
+  string id = 1;  // Schedule ID
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 scheduled_at = 4;  // When it will execute
+  string timezone = 5;
+  string category = 6;  // "targeting", "variations", "settings", "mixed"
+  repeated string change_summaries =
+      7;  // Human-readable: ["Enable flag", "Add rule: Beta Users"]
+  string payload_json = 8;  // Full payload as JSON for "View as JSON"
+  string scheduled_by = 9;  // Email of user who scheduled
+}
+
+// When user updates a scheduled flag change
+message ScheduledFlagChangeUpdatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 previous_scheduled_at = 4;  // Old schedule time
+  int64 new_scheduled_at = 5;       // New schedule time
+  string timezone = 6;
+  repeated string change_summaries = 7;  // What was changed
+  string payload_json = 8;
+}
+
+// When user cancels a scheduled flag change
+message ScheduledFlagChangeCancelledEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 scheduled_at = 4;  // When it was supposed to execute
+  string timezone = 5;
+  repeated string change_summaries = 6;  // What was cancelled
+  string originally_scheduled_by = 7;    // Who originally scheduled it
+  int64 originally_created_at = 8;       // When it was originally created
+}
+
+// When CronJob successfully executes a scheduled flag change
+message ScheduledFlagChangeExecutedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 scheduled_at = 4;  // When it was scheduled for
+  int64 executed_at = 5;   // When it actually executed
+  string timezone = 6;
+  repeated string change_summaries = 7;  // What was applied
+  string payload_json = 8;               // Full payload for detail view
+  string originally_scheduled_by = 9;    // Who originally scheduled it
+  int64 originally_created_at = 10;      // When the schedule was created
+}
+
+// When CronJob fails to execute a scheduled flag change
+message ScheduledFlagChangeFailedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 scheduled_at = 4;
+  int64 failed_at = 5;
+  string timezone = 6;
+  string failure_reason = 7;  // e.g., "Variation 'beta' no longer exists"
+  repeated string change_summaries = 8;  // What was attempted
+  string originally_scheduled_by = 9;
+  int64 originally_created_at = 10;
+}
+
+// When CronJob skips a conflicting scheduled flag change
+message ScheduledFlagChangeSkippedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 scheduled_at = 4;
+  int64 skipped_at = 5;
+  string timezone = 6;
+  string skip_reason = 7;                     // "Unresolved conflict"
+  repeated string conflict_descriptions = 8;  // Details of conflicts
+  repeated string change_summaries = 9;
+  string originally_scheduled_by = 10;
+  int64 originally_created_at = 11;
+}
+
+// When user clicks "Apply Now" to execute immediately
+message ScheduledFlagChangeAppliedNowEvent {
+  string id = 1;
+  string feature_id = 2;
+  string feature_name = 3;
+  int64 original_scheduled_at = 4;  // When it was originally scheduled for
+  int64 applied_at = 5;             // When user applied it
+  string timezone = 6;
+  repeated string change_summaries = 7;
+  string payload_json = 8;
+  string originally_scheduled_by = 9;
+  int64 originally_created_at = 10;
 }

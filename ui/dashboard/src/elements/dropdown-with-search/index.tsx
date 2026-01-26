@@ -61,6 +61,7 @@ export interface DropdownMenuWithSearchProps {
     onClearSearchValue: () => void;
   }) => void;
   onClear?: () => void;
+  onSearchChange?: (value: string) => void;
 }
 
 const DropdownMenuWithSearch = ({
@@ -91,7 +92,8 @@ const DropdownMenuWithSearch = ({
   additionalElement,
   onSelectOption,
   onKeyDown,
-  onClear
+  onClear,
+  onSearchChange
 }: DropdownMenuWithSearchProps) => {
   const { t } = useTranslation(['common']);
   const inputSearchRef = useRef<HTMLInputElement>(null);
@@ -103,17 +105,19 @@ const DropdownMenuWithSearch = ({
 
   const dropdownOptions = useMemo(
     () =>
-      options?.filter(item => {
-        return !searchValue
-          ? item
-          : (typeof item?.label === 'object'
-              ? item?.labelText
-              : (item?.label as string)
-            )
-              ?.toLowerCase()
-              ?.includes(searchValue?.toLowerCase());
-      }),
-    [options, searchValue]
+      onSearchChange
+        ? options
+        : options?.filter(item => {
+            return !searchValue
+              ? item
+              : (typeof item?.label === 'object'
+                  ? item?.labelText
+                  : (item?.label as string)
+                )
+                  ?.toLowerCase()
+                  ?.includes(searchValue?.toLowerCase());
+          }),
+    [options, searchValue, onSearchChange]
   );
 
   let timerId: NodeJS.Timeout | null = null;
@@ -123,7 +127,8 @@ const DropdownMenuWithSearch = ({
 
   const onClearSearchValue = useCallback(() => {
     setSearchValue('');
-  }, []);
+    onSearchChange?.('');
+  }, [onSearchChange]);
 
   useEffect(() => {
     if (hidden) {
@@ -181,6 +186,7 @@ const DropdownMenuWithSearch = ({
               behavior: 'smooth'
             });
             setSearchValue(value);
+            onSearchChange?.(value);
             handleFocusSearchInput();
           }}
           onKeyDown={event =>

@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -34,7 +33,7 @@ const (
 	prefixSegment = "e2e-test"
 )
 
-func TestCreateListSegmentNoCommand(t *testing.T) {
+func TestCreateListSegment(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -71,7 +70,7 @@ func TestCreateListSegmentNoCommand(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCreateUpdateNoCommand(t *testing.T) {
+func TestCreateUpdate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
@@ -107,19 +106,16 @@ func TestCreateSegment(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
-	cmd := &featureproto.CreateSegmentCommand{
-		Name:        newSegmentName(t),
-		Description: fmt.Sprintf("%s-description", prefixSegment),
-	}
 	req := &featureproto.CreateSegmentRequest{
-		Command:       cmd,
 		EnvironmentId: *environmentID,
+		Name:          newSegmentName(t),
+		Description:   fmt.Sprintf("%s-description", prefixSegment),
 	}
 	res, err := client.CreateSegment(ctx, req)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res.Segment.Id)
-	assert.Equal(t, cmd.Name, res.Segment.Name)
-	assert.Equal(t, cmd.Description, res.Segment.Description)
+	assert.Equal(t, req.Name, res.Segment.Name)
+	assert.Equal(t, req.Description, res.Segment.Description)
 	assert.Zero(t, res.Segment.Rules)
 	assert.NotZero(t, res.Segment.CreatedAt)
 	assert.Zero(t, res.Segment.UpdatedAt)
@@ -165,41 +161,27 @@ func TestChangeSegmentName(t *testing.T) {
 	seg := createSegment(ctx, t, client)
 	id := seg.Id
 	name := seg.Name
-	cmd := &featureproto.ChangeSegmentNameCommand{
-		Name: fmt.Sprintf("%s-change-name", prefixSegment),
-	}
-	cmdChange, err := ptypes.MarshalAny(cmd)
-	assert.NoError(t, err)
 	res, err := client.UpdateSegment(
 		ctx,
 		&featureproto.UpdateSegmentRequest{
-			Id: id,
-			Commands: []*featureproto.Command{
-				{Command: cmdChange},
-			},
+			Id:            id,
+			Name:          wrapperspb.String(fmt.Sprintf("%s-change-name", prefixSegment)),
 			EnvironmentId: *environmentID,
 		},
 	)
 	assert.NotNil(t, res)
 	assert.NoError(t, err)
 	segment := getSegment(ctx, t, client, id)
-	assert.Equal(t, cmd.Name, segment.Name)
+	assert.Equal(t, res.Segment.Name, segment.Name)
 
 	// After confirming that the name has changed correctly,
 	// We must change back the original name, so this e2e test
 	// can be deleted correctly when running the delete e2e data workflow
-	cmd = &featureproto.ChangeSegmentNameCommand{
-		Name: name,
-	}
-	cmdChange, err = ptypes.MarshalAny(cmd)
-	assert.NoError(t, err)
 	res, err = client.UpdateSegment(
 		ctx,
 		&featureproto.UpdateSegmentRequest{
-			Id: id,
-			Commands: []*featureproto.Command{
-				{Command: cmdChange},
-			},
+			Id:            id,
+			Name:          wrapperspb.String(name),
 			EnvironmentId: *environmentID,
 		},
 	)
@@ -212,25 +194,18 @@ func TestChangeSegmentDescription(t *testing.T) {
 	defer cancel()
 	client := newFeatureClient(t)
 	id := createSegment(ctx, t, client).Id
-	cmd := &featureproto.ChangeSegmentDescriptionCommand{
-		Description: fmt.Sprintf("%s-change-description", prefixSegment),
-	}
-	cmdChange, err := ptypes.MarshalAny(cmd)
-	assert.NoError(t, err)
 	res, err := client.UpdateSegment(
 		ctx,
 		&featureproto.UpdateSegmentRequest{
-			Id: id,
-			Commands: []*featureproto.Command{
-				{Command: cmdChange},
-			},
+			Id:            id,
+			Description:   wrapperspb.String(fmt.Sprintf("%s-change-description", prefixSegment)),
 			EnvironmentId: *environmentID,
 		},
 	)
 	assert.NotNil(t, res)
 	assert.NoError(t, err)
 	segment := getSegment(ctx, t, client, id)
-	assert.Equal(t, cmd.Description, segment.Description)
+	assert.Equal(t, res.Segment.Description, segment.Description)
 }
 
 func TestDeleteSegment(t *testing.T) {
@@ -242,14 +217,18 @@ func TestDeleteSegment(t *testing.T) {
 		ctx,
 		&featureproto.DeleteSegmentRequest{
 			Id:            id,
-			Command:       &featureproto.DeleteSegmentCommand{},
 			EnvironmentId: *environmentID,
 		},
 	)
 	assert.NotNil(t, res)
 	assert.NoError(t, err)
-	segment := getSegment(ctx, t, client, id)
-	assert.Equal(t, true, segment.Deleted)
+	// Verify that the segment is actually deleted
+	req := &featureproto.GetSegmentRequest{
+		Id:            id,
+		EnvironmentId: *environmentID,
+	}
+	_, err = client.GetSegment(ctx, req)
+	assert.NotNil(t, err)
 }
 
 func TestListSegmentsPageSize(t *testing.T) {
@@ -313,12 +292,9 @@ func getSegment(ctx context.Context, t *testing.T, client featureclient.Client, 
 
 func createSegment(ctx context.Context, t *testing.T, client featureclient.Client) *featureproto.Segment {
 	t.Helper()
-	cmd := &featureproto.CreateSegmentCommand{
-		Name:        newSegmentName(t),
-		Description: fmt.Sprintf("%s-%s", "description", prefixSegment),
-	}
 	req := &featureproto.CreateSegmentRequest{
-		Command:       cmd,
+		Name:          newSegmentName(t),
+		Description:   fmt.Sprintf("%s-%s", "description", prefixSegment),
 		EnvironmentId: *environmentID,
 	}
 	res, err := client.CreateSegment(ctx, req)

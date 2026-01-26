@@ -367,7 +367,7 @@ const Strategy = ({
           </div>
           <RadioGroup
             disabled={isDisabled}
-            value={splitOptionType}
+            value={splitOptionType ?? ''}
             onValueChange={onChangeSplitType}
             className="flex gap-x-6 mt-5 px-1"
           >

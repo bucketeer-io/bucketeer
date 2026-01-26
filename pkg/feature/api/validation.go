@@ -29,7 +29,6 @@ import (
 
 const (
 	maxPageSizePerRequest   = 100
-	maxUserIDsLength        = 100000
 	maxSegmentUsersDataSize = 2000000 // 2MB
 	totalVariationWeight    = int32(100000)
 )
@@ -102,14 +101,7 @@ func validateCreateFeatureRequestNoCommand(
 	return nil
 }
 
-func validateCreateSegmentRequest(cmd *featureproto.CreateSegmentCommand) error {
-	if cmd.Name == "" {
-		return statusMissingName.Err()
-	}
-	return nil
-}
-
-func validateCreateSegmentNoCommandRequest(
+func validateCreateSegmentRequest(
 	req *featureproto.CreateSegmentRequest,
 ) error {
 	if req.Name == "" {
@@ -139,14 +131,7 @@ func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest) error 
 	return nil
 }
 
-func validateUpdateSegment(segmentID string, commands []command.Command) error {
-	if segmentID == "" {
-		return statusMissingID.Err()
-	}
-	return validateUpdateSegmentCommands(commands)
-}
-
-func validateUpdateSegmentNoCommand(
+func validateUpdateSegmentRequest(
 	req *featureproto.UpdateSegmentRequest,
 ) error {
 	if req.Id == "" {
@@ -158,175 +143,6 @@ func validateUpdateSegmentNoCommand(
 	return nil
 }
 
-func validateUpdateSegmentCommands(commands []command.Command) error {
-	for _, cmd := range commands {
-		switch c := cmd.(type) {
-		case *featureproto.ChangeSegmentNameCommand:
-			return validateChangeSegmentName(c)
-		case *featureproto.ChangeSegmentDescriptionCommand:
-			return nil
-		case *featureproto.AddRuleCommand:
-			return validateAddSegmentRule(c)
-		case *featureproto.DeleteRuleCommand:
-			return validateDeleteSegmentRule(c)
-		case *featureproto.AddClauseCommand:
-			return validateAddSegmentClauseCommand(c)
-		case *featureproto.DeleteClauseCommand:
-			return validateDeleteSegmentClauseCommand(c)
-		case *featureproto.ChangeClauseAttributeCommand:
-			return validateChangeClauseAttributeCommand(c)
-		case *featureproto.ChangeClauseOperatorCommand:
-			return validateChangeClauseOperatorCommand(c)
-		case *featureproto.AddClauseValueCommand:
-			return validateAddClauseValueCommand(c)
-		case *featureproto.RemoveClauseValueCommand:
-			return validateRemoveClauseValueCommand(c)
-		default:
-			return statusUnknownCommand.Err()
-		}
-	}
-	return statusMissingCommand.Err()
-}
-
-func validateChangeSegmentName(cmd *featureproto.ChangeSegmentNameCommand) error {
-	if cmd.Name == "" {
-		return statusMissingName.Err()
-	}
-	return nil
-}
-
-func validateAddSegmentRule(cmd *featureproto.AddRuleCommand) error {
-	if cmd.Rule == nil {
-		return statusMissingRule.Err()
-	}
-	if cmd.Rule.Id == "" {
-		return statusMissingRuleID.Err()
-	}
-	if err := uuid.ValidateUUID(cmd.Rule.Id); err != nil {
-		return statusIncorrectUUIDFormat.Err()
-	}
-	if len(cmd.Rule.Clauses) == 0 {
-		return statusMissingRuleClause.Err()
-	}
-	return validateClauses(cmd.Rule.Clauses)
-}
-
-func validateClauses(clauses []*featureproto.Clause) error {
-	for _, clause := range clauses {
-		if clause.Attribute == "" {
-			return statusMissingRuleClause.Err()
-		}
-		if len(clause.Values) == 0 {
-			return statusMissingClauseValues.Err()
-		}
-	}
-	return nil
-}
-
-func validateDeleteSegmentRule(cmd *featureproto.DeleteRuleCommand) error {
-	if cmd == nil {
-		return statusMissingCommand.Err()
-	}
-	if cmd.Id == "" {
-		return statusMissingRuleID.Err()
-	}
-	return nil
-}
-
-func validateAddSegmentClauseCommand(cmd *featureproto.AddClauseCommand) error {
-	if cmd.RuleId == "" {
-		return statusMissingRuleID.Err()
-	}
-	if cmd.Clause == nil {
-		return statusMissingRuleClause.Err()
-	}
-	return validateClauses([]*featureproto.Clause{cmd.Clause})
-}
-
-func validateDeleteSegmentClauseCommand(cmd *featureproto.DeleteClauseCommand) error {
-	if cmd.Id == "" {
-		return statusMissingClauseID.Err()
-	}
-	if cmd.RuleId == "" {
-		return statusMissingRuleID.Err()
-
-	}
-	return nil
-}
-
-func validateChangeClauseAttributeCommand(
-	cmd *featureproto.ChangeClauseAttributeCommand,
-) error {
-	if cmd.Id == "" {
-		return statusMissingClauseID.Err()
-	}
-	if cmd.RuleId == "" {
-		return statusMissingRuleID.Err()
-	}
-	if cmd.Attribute == "" {
-		return statusMissingClauseAttribute.Err()
-
-	}
-	return nil
-}
-
-func validateChangeClauseOperatorCommand(
-	cmd *featureproto.ChangeClauseOperatorCommand,
-) error {
-	if cmd.Id == "" {
-		return statusMissingClauseID.Err()
-	}
-	if cmd.RuleId == "" {
-		return statusMissingRuleID.Err()
-	}
-	return nil
-}
-
-func validateAddClauseValueCommand(cmd *featureproto.AddClauseValueCommand) error {
-	return validateClauseValueCommand(cmd.Id, cmd.RuleId, cmd.Value)
-}
-
-func validateRemoveClauseValueCommand(cmd *featureproto.RemoveClauseValueCommand) error {
-	return validateClauseValueCommand(cmd.Id, cmd.RuleId, cmd.Value)
-}
-
-func validateClauseValueCommand(clauseID string, ruleID string, value string) error {
-	if clauseID == "" {
-		return statusMissingClauseID.Err()
-	}
-	if ruleID == "" {
-		return statusMissingRuleID.Err()
-	}
-	if value == "" {
-		return statusMissingClauseValue.Err()
-	}
-	return nil
-}
-
-func validateAddSegmentUserRequest(req *featureproto.AddSegmentUserRequest) error {
-	if req.Id == "" {
-		return statusMissingID.Err()
-	}
-	if req.Command == nil {
-		return statusMissingCommand.Err()
-	}
-	return validateSegmentUserState(req.Command.State)
-}
-
-func validateAddSegmentUserCommand(cmd *featureproto.AddSegmentUserCommand) error {
-	return validateUserIDs(cmd.UserIds)
-}
-
-func validateDeleteSegmentUserRequest(req *featureproto.DeleteSegmentUserRequest) error {
-	if req.Id == "" {
-		return statusMissingID.Err()
-	}
-	if req.Command == nil {
-		return statusMissingCommand.Err()
-	}
-	return validateSegmentUserState(req.Command.State)
-}
-
 func validateSegmentUserState(state featureproto.SegmentUser_State) error {
 	switch state {
 	case featureproto.SegmentUser_INCLUDED:
@@ -334,36 +150,6 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) error {
 	default:
 		return statusUnknownSegmentUserState.Err()
 	}
-}
-
-func validateDeleteSegmentUserCommand(cmd *featureproto.DeleteSegmentUserCommand) error {
-	return validateUserIDs(cmd.UserIds)
-}
-
-func validateUserIDs(userIDs []string) error {
-	size := len(userIDs)
-	if size == 0 {
-		return statusMissingUserIDs.Err()
-	}
-	if size > maxUserIDsLength {
-		return statusExceededMaxUserIDsLength.Err()
-	}
-	for _, id := range userIDs {
-		if id == "" {
-			return statusMissingUserID.Err()
-		}
-	}
-	return nil
-}
-
-func validateGetSegmentUserRequest(req *featureproto.GetSegmentUserRequest) error {
-	if req.SegmentId == "" {
-		return statusMissingSegmentID.Err()
-	}
-	if req.UserId == "" {
-		return statusMissingUserID.Err()
-	}
-	return nil
 }
 
 func validateListSegmentUsersRequest(req *featureproto.ListSegmentUsersRequest) error {
@@ -382,15 +168,6 @@ func validateBulkUploadSegmentUsersRequest(
 	if req.SegmentId == "" {
 		return statusMissingSegmentID.Err()
 	}
-	return nil
-}
-
-func validateBulkUploadSegmentUsersNoCommandRequest(
-	req *featureproto.BulkUploadSegmentUsersRequest,
-) error {
-	if req.SegmentId == "" {
-		return statusMissingSegmentID.Err()
-	}
 	if len(req.Data) == 0 {
 		return statusMissingSegmentUsersData.Err()
 	}
@@ -398,18 +175,6 @@ func validateBulkUploadSegmentUsersNoCommandRequest(
 		return statusExceededMaxSegmentUsersDataSize.Err()
 	}
 	return validateSegmentUserState(req.State)
-}
-
-func validateBulkUploadSegmentUsersCommand(
-	cmd *featureproto.BulkUploadSegmentUsersCommand,
-) error {
-	if len(cmd.Data) == 0 {
-		return statusMissingSegmentUsersData.Err()
-	}
-	if len(cmd.Data) > maxSegmentUsersDataSize {
-		return statusExceededMaxSegmentUsersDataSize.Err()
-	}
-	return validateSegmentUserState(cmd.State)
 }
 
 func validateBulkDownloadSegmentUsersRequest(

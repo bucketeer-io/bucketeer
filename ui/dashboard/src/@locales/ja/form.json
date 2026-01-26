@@ -188,7 +188,11 @@
     "attribute-key": "属性キー",
     "operator": "オペレータ",
     "values": "値",
-    "attribute-key-select-title": "クライアントSDKユーザー属性"
+    "attribute-key-select-title": "クライアントSDKユーザー属性",
+    "update-default-strategy": "デフォルト戦略を更新"
+  },
+  "variation": {
+    "rollout-running-message": "バリエーションを更新するには、現在の<comp>段階的ロールアウト</comp>を停止または削除する必要があります。"
   },
   "origin-env": "元の環境",
   "destination-env": "複製先環境",
@@ -225,6 +229,7 @@
   "ends-with": "で終わる",
   "is-included-in": "に含まれる",
   "manual-percentage": "割合で選択",
+  "current-percentage": "現在の割合",
   "rollout": "ロールアウト",
   "off-variation": "オフバリエーション",
   "reset-sampling": "ランダムサンプリングをリセット",
@@ -241,6 +246,8 @@
     "min-count": "条件が評価される前に必要な最小イベント数。小さなサンプルサイズからの誤ったトリガーを回避するのに役立ちます。"
   },
   "flag-variation": "フラグバリエーション",
+  "target-variation-value": "ターゲットバリエーション：<comp/>",
+  "control-variation-value": "コントロールバリエーション：<comp/>",
   "template": "テンプレート",
   "manual": "手動",
   "increments": "増分",
@@ -257,7 +264,7 @@
   "ops-count-tooltip": "ゴール数 / 評価数 * 100",
   "increments-value": "増分 <b>{{value}}</b>",
   "frequency-value": "頻度 <b>{{value}}</b>",
-  "start-date-value": "開始日 <b>{{value}}</b>",
+  "start-date-value": "開始日：<b>{{value}}</b>",
   "rollout-warning-title": "段階的ロールアウトを作成できません。以下の条件を確認してください。",
   "rollout-warning-desc": "同時に複数の段階的ロールアウトを実行することはできません。",
   "more-info-see-document": "詳細については、<comp>ドキュメント</comp>をご覧ください。",
@@ -359,5 +366,11 @@
   "name-desc-search-placeholder": "名前、説明を検索...",
   "email-search-placeholder": "メールアドレスを検索...",
   "name-search-placeholder": "名前を検索...",
-  "yaml-note": "YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。"
+  "yaml-note": "YAMLの値は、ユーザーの評価前にJSON構造へ変換され、実行時にはJSONフラグと同様にクライアントSDKに返されます。SDKではJSONオブジェクトとして受け取ります。",
+  "operation": {
+    "confirm-stop-desc": "このロールアウトを現在の段階で停止または削除すると、バリエーション間でのトラフィックの振り分け方法が変更されます。トラフィックは、デフォルトルールのパーセンテージロールアウト設定に基づいて再配分されます。",
+    "confirm-stop-title": "オーディエンスのトラフィック配分が更新されます",
+    "current-variation-title": "現在のバリエーション配分",
+    "percent-variation": "<comp/> <p>{{percent}}%</p>"
+  }
 }

@@ -12,64 +12,6 @@ consumes:
 produces:
   - application/json
 paths:
-  /v1/account/change_api_key_name:
-    post:
-      summary: Change API Key Name
-      description: Change the API Key Name. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.change_api_key_name
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountChangeAPIKeyNameResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountChangeAPIKeyNameRequest'
-      tags:
-        - API Key
   /v1/account/create_account:
     post:
       summary: Create
@@ -418,64 +360,6 @@ paths:
             $ref: '#/definitions/accountDisableAccountV2Request'
       tags:
         - Account
-  /v1/account/disable_api_key:
-    post:
-      summary: Disable
-      description: Disable an API Key. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.disable_api_key
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountDisableAPIKeyResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountDisableAPIKeyRequest'
-      tags:
-        - API Key
   /v1/account/enable_account:
     post:
       summary: Enable
@@ -516,64 +400,6 @@ paths:
             $ref: '#/definitions/accountEnableAccountV2Request'
       tags:
         - Account
-  /v1/account/enable_api_key:
-    post:
-      summary: Enable
-      description: Enable an API Key. To call this API, you need an `ADMIN` role.
-      operationId: web.v1.account.enable_api_key
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountEnableAPIKeyResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountEnableAPIKeyRequest'
-      tags:
-        - API Key
   /v1/account/get_account:
     get:
       summary: Get
@@ -4612,6 +4438,66 @@ paths:
           type: string
       tags:
         - experiment
+    delete:
+      summary: Delete
+      description: Delete an experiment.
+      operationId: web.v1.experiment.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentDeleteExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the experiment is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - experiment
     post:
       summary: Create
       description: Create an experiment.
@@ -7172,11 +7058,71 @@ paths:
           collectionFormat: multi
       tags:
         - push
-  /v1/schedule_flag:
+  /v1/scheduled_flag_change:
+    get:
+      summary: Get Scheduled Flag Change
+      description: Get a scheduled flag change. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetScheduledFlagChangeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Scheduled Flag Change
     delete:
-      summary: Delete Scheduled Feature Change
-      description: Delete a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.delete
+      summary: Delete Scheduled Flag Change
+      description: Delete (cancel) a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.delete
       responses:
         "200":
           description: A successful response.
@@ -7232,16 +7178,16 @@ paths:
           required: true
           type: string
       tags:
-        - Feature
+        - Scheduled Flag Change
     post:
-      summary: Schedule Feature Change
-      description: Schedule a feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.create
+      summary: Create Scheduled Flag Change
+      description: Create a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.create
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/featureScheduleFlagChangeResponse'
+            $ref: '#/definitions/featureCreateScheduledFlagChangeResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -7287,13 +7233,13 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/featureScheduleFlagChangeRequest'
+            $ref: '#/definitions/featureCreateScheduledFlagChangeRequest'
       tags:
-        - Feature
+        - Scheduled Flag Change
     patch:
-      summary: Update Scheduled Feature Change
-      description: Update a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
-      operationId: web.v1.schedule_flag.update
+      summary: Update Scheduled Flag Change
+      description: Update a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.update
       responses:
         "200":
           description: A successful response.
@@ -7346,17 +7292,17 @@ paths:
           schema:
             $ref: '#/definitions/featureUpdateScheduledFlagChangeRequest'
       tags:
-        - Feature
-  /v1/schedule_flags:
-    get:
-      summary: List Scheduled Feature Changes
-      description: List scheduled feature flag changes. To call this API, you need at least a MEMBER role in the specified organizations.
-      operationId: web.v1.schedule_flag.update
+        - Scheduled Flag Change
+  /v1/scheduled_flag_change/execute:
+    post:
+      summary: Execute Scheduled Flag Change
+      description: Execute a scheduled flag change immediately (manual trigger). To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.execute
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/featureListScheduledFlagChangesResponse'
+            $ref: '#/definitions/featureExecuteScheduledFlagChangeResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -7398,6 +7344,55 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureExecuteScheduledFlagChangeRequest'
+      tags:
+        - Scheduled Flag Change
+  /v1/scheduled_flag_change/summary:
+    get:
+      summary: Get Scheduled Flag Change Summary
+      description: Get summary of scheduled changes for a flag. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.summary
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetScheduledFlagChangeSummaryResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
         - name: environmentId
           in: query
           required: true
@@ -7407,7 +7402,119 @@ paths:
           required: true
           type: string
       tags:
-        - Feature
+        - Scheduled Flag Change
+  /v1/scheduled_flag_changes:
+    get:
+      summary: List Scheduled Flag Changes
+      description: List scheduled flag changes. To call this API, you need at least a MEMBER role in the specified environment.
+      operationId: web.v1.scheduled_flag_change.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListScheduledFlagChangesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          description: 'Optional: filter by feature'
+          in: query
+          required: false
+          type: string
+        - name: statuses
+          description: |-
+            Optional: filter by status
+
+             - SCHEDULED_FLAG_CHANGE_STATUS_PENDING: Waiting for execution time
+             - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED: Successfully executed
+             - SCHEDULED_FLAG_CHANGE_STATUS_FAILED: Execution failed
+             - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED: Cancelled by user or flag archived
+             - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT: Has conflicts that need resolution
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+              - SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+              - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED
+              - SCHEDULED_FLAG_CHANGE_STATUS_FAILED
+              - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED
+              - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+          collectionFormat: multi
+        - name: fromScheduledAt
+          description: 'Optional: filter by scheduled time range'
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: toScheduledAt
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - SCHEDULED_AT
+            - CREATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+      tags:
+        - Scheduled Flag Change
   /v1/segment:
     get:
       summary: Get
@@ -8093,6 +8200,7 @@ paths:
               - DOMAIN_EVENT_CODEREF
               - DOMAIN_EVENT_TEAM
               - DOMAIN_EVENT_DEMO_ORGANIZATION
+              - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -8621,13 +8729,6 @@ definitions:
       - Organization_ADMIN
       - Organization_OWNER
     default: Organization_UNASSIGNED
-  ChangeAccountV2EnvironmentRolesCommandWriteType:
-    type: string
-    enum:
-      - WriteType_UNSPECIFIED
-      - WriteType_OVERRIDE
-      - WriteType_PATCH
-    default: WriteType_UNSPECIFIED
   CodeReferenceRepositoryType:
     type: string
     enum:
@@ -8788,17 +8889,20 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
-  ScheduledChangeFieldType:
+  ScheduledChangeConflictConflictType:
     type: string
     enum:
-      - UNSPECIFIED
-      - PREREQUISITES
-      - TARGETS
-      - RULES
-      - DEFAULT_STRATEGY
-      - OFF_VARIATION
-      - VARIATIONS
-    default: UNSPECIFIED
+      - CONFLICT_TYPE_UNSPECIFIED
+      - CONFLICT_TYPE_VERSION_MISMATCH
+      - CONFLICT_TYPE_OVERLAPPING_SCHEDULE
+      - CONFLICT_TYPE_DEPENDENCY_MISSING
+      - CONFLICT_TYPE_INVALID_REFERENCE
+    default: CONFLICT_TYPE_UNSPECIFIED
+    title: |-
+      - CONFLICT_TYPE_VERSION_MISMATCH: Flag was modified after schedule was created
+       - CONFLICT_TYPE_OVERLAPPING_SCHEDULE: Another schedule modifies same field
+       - CONFLICT_TYPE_DEPENDENCY_MISSING: Referenced variation/rule will be deleted
+       - CONFLICT_TYPE_INVALID_REFERENCE: Referenced variation/rule doesn't exist
   SubscriptionSourceType:
     type: string
     enum:
@@ -8823,6 +8927,7 @@ definitions:
       - DOMAIN_EVENT_CODEREF
       - DOMAIN_EVENT_TEAM
       - DOMAIN_EVENT_DEMO_ORGANIZATION
+      - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -8967,83 +9072,6 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/RoleEnvironment'
-  accountChangeAPIKeyNameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  accountChangeAPIKeyNameRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountChangeAPIKeyNameCommand'
-      environmentId:
-        type: string
-  accountChangeAPIKeyNameResponse:
-    type: object
-  accountChangeAccountV2AvatarCommand:
-    type: object
-    properties:
-      avatarImage:
-        type: string
-        format: byte
-      avatarFileType:
-        type: string
-  accountChangeAccountV2AvatarImageUrlCommand:
-    type: object
-    properties:
-      avatarImageUrl:
-        type: string
-  accountChangeAccountV2EnvironmentRolesCommand:
-    type: object
-    properties:
-      roles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      writeType:
-        $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
-  accountChangeAccountV2FirstNameCommand:
-    type: object
-    properties:
-      firstName:
-        type: string
-  accountChangeAccountV2LanguageCommand:
-    type: object
-    properties:
-      language:
-        type: string
-  accountChangeAccountV2LastNameCommand:
-    type: object
-    properties:
-      lastName:
-        type: string
-  accountChangeAccountV2LastSeenCommand:
-    type: object
-    properties:
-      lastSeen:
-        type: string
-        format: int64
-  accountChangeAccountV2NameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  accountChangeAccountV2OrganizationRoleCommand:
-    type: object
-    properties:
-      role:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-  accountChangeAccountV2TagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
   accountChangeDefaultSearchFilterCommand:
     type: object
     properties:
@@ -9113,18 +9141,9 @@ definitions:
         $ref: '#/definitions/environmentProject'
       role:
         $ref: '#/definitions/RoleEnvironment'
-  accountCreateAPIKeyCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      role:
-        $ref: '#/definitions/accountAPIKeyRole'
   accountCreateAPIKeyRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/accountCreateAPIKeyCommand'
       environmentId:
         type: string
       name:
@@ -9140,39 +9159,11 @@ definitions:
     properties:
       apiKey:
         $ref: '#/definitions/accountAPIKey'
-  accountCreateAccountV2Command:
-    type: object
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      avatarImageUrl:
-        type: string
-      organizationRole:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-      environmentRoles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      firstName:
-        type: string
-      lastName:
-        type: string
-      language:
-        type: string
-      tags:
-        type: array
-        items:
-          type: string
   accountCreateAccountV2Request:
     type: object
     properties:
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountCreateAccountV2Command'
       email:
         type: string
       name:
@@ -9231,8 +9222,6 @@ definitions:
         $ref: '#/definitions/accountCreateSearchFilterCommand'
   accountCreateSearchFilterResponse:
     type: object
-  accountDeleteAccountV2Command:
-    type: object
   accountDeleteAccountV2Request:
     type: object
     properties:
@@ -9240,8 +9229,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountDeleteAccountV2Command'
   accountDeleteAccountV2Response:
     type: object
   accountDeleteSearchFilterCommand:
@@ -9262,21 +9249,6 @@ definitions:
         $ref: '#/definitions/accountDeleteSearchFilterCommand'
   accountDeleteSearchFilterResponse:
     type: object
-  accountDisableAPIKeyCommand:
-    type: object
-  accountDisableAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountDisableAPIKeyCommand'
-      environmentId:
-        type: string
-  accountDisableAPIKeyResponse:
-    type: object
-  accountDisableAccountV2Command:
-    type: object
   accountDisableAccountV2Request:
     type: object
     properties:
@@ -9284,28 +9256,11 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountDisableAccountV2Command'
   accountDisableAccountV2Response:
     type: object
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
-  accountEnableAPIKeyCommand:
-    type: object
-  accountEnableAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      command:
-        $ref: '#/definitions/accountEnableAPIKeyCommand'
-      environmentId:
-        type: string
-  accountEnableAPIKeyResponse:
-    type: object
-  accountEnableAccountV2Command:
-    type: object
   accountEnableAccountV2Request:
     type: object
     properties:
@@ -9313,8 +9268,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      command:
-        $ref: '#/definitions/accountEnableAccountV2Command'
   accountEnableAccountV2Response:
     type: object
     properties:
@@ -9487,24 +9440,6 @@ definitions:
         type: string
       organizationId:
         type: string
-      changeNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2NameCommand'
-      changeAvatarUrlCommand:
-        $ref: '#/definitions/accountChangeAccountV2AvatarImageUrlCommand'
-      changeOrganizationRoleCommand:
-        $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
-      changeEnvironmentRolesCommand:
-        $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
-      changeFirstNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2FirstNameCommand'
-      changeLastNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
-      changeLanguageCommand:
-        $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
-      changeLastSeenCommand:
-        $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
-      changeAvatarCommand:
-        $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
       name:
         type: string
       avatarImageUrl:
@@ -9531,8 +9466,6 @@ definitions:
         type: boolean
       tags:
         $ref: '#/definitions/commonStringListValue'
-      changeTagsCommand:
-        $ref: '#/definitions/accountChangeAccountV2TagsCommand'
       teamChanges:
         type: array
         items:
@@ -10406,9 +10339,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       tag:
         type: string
-    required:
-      - changeType
-      - tag
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -10676,6 +10606,7 @@ definitions:
       - TAG
       - CODEREF
       - TEAM
+      - SCHEDULED_FLAG_CHANGE
     default: FEATURE
   domainEventType:
     type: string
@@ -10872,7 +10803,15 @@ definitions:
       - TEAM_CREATED
       - TEAM_DELETED
       - TEAM_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CREATED
+      - SCHEDULED_FLAG_CHANGE_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CANCELLED
+      - SCHEDULED_FLAG_CHANGE_EXECUTED
+      - SCHEDULED_FLAG_CHANGE_FAILED
+      - SCHEDULED_FLAG_CHANGE_SKIPPED
+      - SCHEDULED_FLAG_CHANGE_APPLIED_NOW
     default: UNKNOWN
+    title: '- SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)'
   domainLocalizedMessage:
     type: object
     properties:
@@ -11906,65 +11845,9 @@ definitions:
         type: string
       timeseries:
         $ref: '#/definitions/eventcounterTimeseries'
-  experimentArchiveExperimentCommand:
-    type: object
-  experimentArchiveExperimentResponse:
-    type: object
-  experimentArchiveGoalCommand:
-    type: object
-  experimentArchiveGoalResponse:
-    type: object
-  experimentChangeDescriptionGoalCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  experimentChangeExperimentDescriptionCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  experimentChangeExperimentNameCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  experimentChangeExperimentPeriodCommand:
-    type: object
-    properties:
-      startAt:
-        type: string
-        format: int64
-      stopAt:
-        type: string
-        format: int64
-  experimentCreateExperimentCommand:
-    type: object
-    properties:
-      featureId:
-        type: string
-      startAt:
-        type: string
-        format: int64
-      stopAt:
-        type: string
-        format: int64
-      goalIds:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
-      description:
-        type: string
-      baseVariationId:
-        type: string
   experimentCreateExperimentRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/experimentCreateExperimentCommand'
-        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -11998,23 +11881,9 @@ definitions:
     properties:
       experiment:
         $ref: '#/definitions/experimentExperiment'
-  experimentCreateGoalCommand:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-      connectionType:
-        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/experimentCreateGoalCommand'
-        description: deprecated
       environmentId:
         type: string
       id:
@@ -12034,11 +11903,7 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  experimentDeleteExperimentCommand:
-    type: object
   experimentDeleteExperimentResponse:
-    type: object
-  experimentDeleteGoalCommand:
     type: object
   experimentDeleteGoalResponse:
     type: object
@@ -12107,10 +11972,6 @@ definitions:
       - STOPPED
       - FORCE_STOPPED
     default: WAITING
-  experimentFinishExperimentCommand:
-    type: object
-  experimentFinishExperimentResponse:
-    type: object
   experimentGetExperimentResponse:
     type: object
     properties:
@@ -12228,33 +12089,11 @@ definitions:
       totalCount:
         type: string
         format: int64
-  experimentRenameGoalCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  experimentStartExperimentCommand:
-    type: object
-  experimentStartExperimentResponse:
-    type: object
-  experimentStopExperimentCommand:
-    type: object
-  experimentStopExperimentResponse:
-    type: object
   experimentUpdateExperimentRequest:
     type: object
     properties:
       id:
         type: string
-      changeExperimentPeriodCommand:
-        $ref: '#/definitions/experimentChangeExperimentPeriodCommand'
-        description: deprecated
-      changeNameCommand:
-        $ref: '#/definitions/experimentChangeExperimentNameCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/experimentChangeExperimentDescriptionCommand'
-        description: deprecated
       environmentId:
         type: string
       name:
@@ -12285,12 +12124,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/experimentRenameGoalCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/experimentChangeDescriptionGoalCommand'
-        description: deprecated
       environmentId:
         type: string
       name:
@@ -12308,17 +12141,6 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  featureAddSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureAddSegmentUserResponse:
-    type: object
   featureAddTagCommand:
     type: object
     properties:
@@ -12357,23 +12179,11 @@ definitions:
         type: string
         format: byte
         title: segment user ids separated by new line
-  featureBulkUploadSegmentUsersCommand:
-    type: object
-    properties:
-      data:
-        type: string
-        format: byte
-        title: segment user ids separated by comma or new line
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersRequest:
     type: object
     properties:
       segmentId:
         type: string
-      command:
-        $ref: '#/definitions/featureBulkUploadSegmentUsersCommand'
-        description: deprecated
       environmentId:
         type: string
       data:
@@ -12545,19 +12355,45 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
-  featureCreateSegmentCommand:
+  featureCreateScheduledFlagChangeRequest:
     type: object
     properties:
-      name:
+      environmentId:
         type: string
-      description:
+      featureId:
         type: string
+      scheduledAt:
+        type: string
+        format: int64
+      timezone:
+        type: string
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+      comment:
+        type: string
+      ignoreConflicts:
+        type: boolean
+        title: If true, create even if conflicts detected
+    title: Create a new scheduled flag change
+    required:
+      - environmentId
+      - featureId
+      - scheduledAt
+      - payload
+  featureCreateScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+      detectedConflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
+        title: Conflicts found during creation
   featureCreateSegmentRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/featureCreateSegmentCommand'
-        description: deprecated
       name:
         type: string
       environmentId:
@@ -12612,20 +12448,7 @@ definitions:
     type: object
   featureDeleteScheduledFlagChangeResponse:
     type: object
-  featureDeleteSegmentCommand:
-    type: object
   featureDeleteSegmentResponse:
-    type: object
-  featureDeleteSegmentUserCommand:
-    type: object
-    properties:
-      userIds:
-        type: array
-        items:
-          type: string
-      state:
-        $ref: '#/definitions/featureSegmentUserState'
-  featureDeleteSegmentUserResponse:
     type: object
   featureDisableFeatureCommand:
     type: object
@@ -12670,6 +12493,22 @@ definitions:
         type: string
       variationName:
         type: string
+  featureExecuteScheduledFlagChangeRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      id:
+        type: string
+    title: Execute a scheduled flag change immediately (manual trigger)
+    required:
+      - environmentId
+      - id
+  featureExecuteScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
   featureFeature:
     type: object
     properties:
@@ -12839,16 +12678,21 @@ definitions:
         $ref: '#/definitions/featureFlagTrigger'
       url:
         type: string
+  featureGetScheduledFlagChangeResponse:
+    type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+  featureGetScheduledFlagChangeSummaryResponse:
+    type: object
+    properties:
+      summary:
+        $ref: '#/definitions/featureScheduledFlagChangeSummary'
   featureGetSegmentResponse:
     type: object
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
-  featureGetSegmentUserResponse:
-    type: object
-    properties:
-      user:
-        $ref: '#/definitions/featureSegmentUser'
   featureGetUserAttributeKeysResponse:
     type: object
     properties:
@@ -12924,14 +12768,32 @@ definitions:
       totalCount:
         type: string
         format: int64
+  featureListScheduledFlagChangesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - SCHEDULED_AT
+      - CREATED_AT
+    default: DEFAULT
+  featureListScheduledFlagChangesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   featureListScheduledFlagChangesResponse:
     type: object
     properties:
-      scheduledFlagUpdates:
+      scheduledFlagChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureScheduledFlagUpdate'
+          $ref: '#/definitions/featureScheduledFlagChange'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   featureListSegmentUsersResponse:
     type: object
     properties:
@@ -12985,9 +12847,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       prerequisite:
         $ref: '#/definitions/featurePrerequisite'
-    required:
-      - changeType
-      - prerequisite
   featureReason:
     type: object
     properties:
@@ -13069,55 +12928,93 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
-    required:
-      - changeType
-      - rule
-  featureScheduleFlagChangeRequest:
+  featureScheduledChangeCategory:
+    type: string
+    enum:
+      - SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED
+      - SCHEDULED_CHANGE_CATEGORY_TARGETING
+      - SCHEDULED_CHANGE_CATEGORY_VARIATIONS
+      - SCHEDULED_CHANGE_CATEGORY_SETTINGS
+      - SCHEDULED_CHANGE_CATEGORY_MIXED
+    default: SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED
+    description: |-
+      - SCHEDULED_CHANGE_CATEGORY_TARGETING: Rules, Targets, Prerequisites, Default Strategy
+       - SCHEDULED_CHANGE_CATEGORY_VARIATIONS: Variation add/update/delete
+       - SCHEDULED_CHANGE_CATEGORY_SETTINGS: Flag state, metadata, off variation
+       - SCHEDULED_CHANGE_CATEGORY_MIXED: Contains changes from multiple categories
+    title: Type of scheduled change (for categorization in UI)
+  featureScheduledChangeConflict:
     type: object
     properties:
-      environmentId:
+      type:
+        $ref: '#/definitions/ScheduledChangeConflictConflictType'
+      description:
         type: string
-      featureId:
+        title: Human-readable conflict description
+      conflictingScheduleId:
         type: string
-      scheduledAt:
+        title: ID of conflicting schedule (if applicable)
+      conflictingField:
+        type: string
+        title: Field path that conflicts
+      detectedAt:
         type: string
         format: int64
-      scheduledChanges:
+    title: Represents a conflict with another scheduled change or current state
+  featureScheduledChangePayload:
+    type: object
+    properties:
+      ruleChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureScheduledChange'
-    required:
-      - environmentId
-      - featureId
-      - scheduledAt
-      - scheduledChanges
-  featureScheduleFlagChangeResponse:
-    type: object
-  featureScheduledChange:
+          $ref: '#/definitions/featureRuleChange'
+        title: Targeting Tab Changes
+      targetChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTargetChange'
+      prerequisiteChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisiteChange'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      variationChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureVariationChange'
+        title: Variations Tab Changes
+      offVariation:
+        type: string
+      enabled:
+        type: boolean
+        title: Settings Tab Changes
+      name:
+        type: string
+      description:
+        type: string
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureTagChange'
+      archived:
+        type: boolean
+      resetSamplingSeed:
+        type: boolean
+      maintainer:
+        type: string
+    title: The payload of scheduled changes - structured to use existing change types
+  featureScheduledFlagChange:
     type: object
     properties:
       id:
         type: string
-      changeType:
-        $ref: '#/definitions/featureScheduledChangeChangeType'
-      fieldType:
-        $ref: '#/definitions/ScheduledChangeFieldType'
-      fieldValue:
-        type: string
-  featureScheduledChangeChangeType:
-    type: string
-    enum:
-      - CHANGE_UNSPECIFIED
-      - CHANGE_CREATE
-      - CHANGE_UPDATE
-      - CHANGE_DELETE
-    default: CHANGE_UNSPECIFIED
-  featureScheduledFlagUpdate:
-    type: object
-    properties:
-      id:
-        type: string
+        title: Identity
       featureId:
         type: string
       environmentId:
@@ -13125,17 +13022,93 @@ definitions:
       scheduledAt:
         type: string
         format: int64
+        description: Unix timestamp in UTC
+        title: Scheduling
+      timezone:
+        type: string
+        title: Display timezone e.g., "Asia/Tokyo"
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+        title: Content
+      comment:
+        type: string
+      status:
+        $ref: '#/definitions/featureScheduledFlagChangeStatus'
+        title: Status tracking
+      failureReason:
+        type: string
+      flagVersionAtCreation:
+        type: integer
+        format: int32
+        description: Flag version when schedule was created
+        title: Conflict detection
+      conflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
+      createdBy:
+        type: string
+        title: Audit
       createdAt:
         type: string
         format: int64
+      updatedBy:
+        type: string
       updatedAt:
         type: string
         format: int64
-      changes:
+      executedAt:
+        type: string
+        format: int64
+      category:
+        $ref: '#/definitions/featureScheduledChangeCategory'
+        description: Computed from payload content
+        title: Derived fields for display
+      changeSummaries:
         type: array
         items:
-          type: object
-          $ref: '#/definitions/featureScheduledChange'
+          type: string
+        title: Human-readable summaries
+    title: ScheduledFlagChange represents a scheduled change to a feature flag
+  featureScheduledFlagChangeStatus:
+    type: string
+    enum:
+      - SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+      - SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+      - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED
+      - SCHEDULED_FLAG_CHANGE_STATUS_FAILED
+      - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED
+      - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+    default: SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED
+    description: |-
+      - SCHEDULED_FLAG_CHANGE_STATUS_PENDING: Waiting for execution time
+       - SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED: Successfully executed
+       - SCHEDULED_FLAG_CHANGE_STATUS_FAILED: Execution failed
+       - SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED: Cancelled by user or flag archived
+       - SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT: Has conflicts that need resolution
+    title: Status of a scheduled flag change
+  featureScheduledFlagChangeSummary:
+    type: object
+    properties:
+      featureId:
+        type: string
+      pendingCount:
+        type: integer
+        format: int32
+        title: Number of pending schedules
+      conflictCount:
+        type: integer
+        format: int32
+        title: Number of schedules with conflicts
+      nextScheduledAt:
+        type: string
+        format: int64
+        title: Timestamp of next scheduled change
+      nextCategory:
+        $ref: '#/definitions/featureScheduledChangeCategory'
+        title: Category of next change
+    title: Summary of scheduled changes for a flag (for display in UI)
   featureSegment:
     type: object
     properties:
@@ -13235,9 +13208,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
-    required:
-      - changeType
-      - target
   featureUnarchiveFeatureCommand:
     type: object
   featureUnarchiveFeatureResponse:
@@ -13296,6 +13266,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureTagChange'
+      maintainer:
+        type: string
     required:
       - environmentId
       - id
@@ -13345,29 +13317,33 @@ definitions:
       scheduledAt:
         type: string
         format: int64
-      scheduledChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduledChange'
+      timezone:
+        type: string
+      payload:
+        $ref: '#/definitions/featureScheduledChangePayload'
+      comment:
+        type: string
+      ignoreConflicts:
+        type: boolean
+    title: Update an existing scheduled flag change
     required:
       - environmentId
       - id
-      - scheduledAt
-      - scheduledChanges
   featureUpdateScheduledFlagChangeResponse:
     type: object
+    properties:
+      scheduledFlagChange:
+        $ref: '#/definitions/featureScheduledFlagChange'
+      detectedConflicts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChangeConflict'
   featureUpdateSegmentRequest:
     type: object
     properties:
       id:
         type: string
-      commands:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureCommand'
-        description: deprecated
       environmentId:
         type: string
       name:
@@ -13407,9 +13383,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
-    required:
-      - changeType
-      - variation
   googlerpcStatus:
     type: object
     properties:

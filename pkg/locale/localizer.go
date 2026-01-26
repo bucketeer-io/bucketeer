@@ -105,6 +105,7 @@ const (
 	FlagTrigger                  = "FlagTrigger"
 	CodeReference                = "CodeReference"
 	Team                         = "Team"
+	ScheduledFlagChange          = "ScheduledFlagChange"
 	// error sentence
 	RequiredFieldTemplate = "RequiredField"
 	InternalServerError   = "InternalServerError"
@@ -165,6 +166,10 @@ const (
 	ValueAddedTemplate             = "ValueAdded"
 	ValueUpdatedTemplate           = "ValueUpdated"
 	ValueDeletedTemplate           = "ValueDeleted"
+	CancelledTemplate              = "Cancelled"
+	FailedTemplate                 = "Failed"
+	SkippedTemplate                = "Skipped"
+	AppliedNowTemplate             = "AppliedNow"
 )
 
 func init() {

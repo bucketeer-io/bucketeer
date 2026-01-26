@@ -29,6 +29,7 @@ import (
 	aoclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/autoarchive"
 	cacher "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/experiment"
@@ -112,17 +113,10 @@ func TestExperimentStatusUpdater(t *testing.T) {
 				nil,
 			)
 		experimentMockClient.EXPECT().
-			StartExperiment(gomock.Any(), gomock.Any()).
-			MinTimes(1).
+			UpdateExperiment(gomock.Any(), gomock.Any()).
+			MinTimes(2).
 			Return(
-				&experimentproto.StartExperimentResponse{},
-				nil,
-			)
-		experimentMockClient.EXPECT().
-			FinishExperiment(gomock.Any(), gomock.Any()).
-			MinTimes(1).
-			Return(
-				&experimentproto.FinishExperimentResponse{},
+				&experimentproto.UpdateExperimentResponse{},
 				nil,
 			)
 	}
@@ -868,6 +862,12 @@ func newBatchService(t *testing.T,
 			redisMockClient,
 		),
 		deleter.NewTagDeleter(mysqlMockClient),
+		autoarchive.NewFeatureAutoArchiver(
+			mysqlMockClient,
+			featureMockClient,
+			jobs.WithTimeout(10*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 	return service

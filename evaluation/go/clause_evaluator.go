@@ -70,6 +70,19 @@ func (c *clauseEvaluator) Evaluate(
 }
 
 func (c *clauseEvaluator) equals(targetValue string, values []string) bool {
+	// First try semver comparison (with v-prefix normalization)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
+	if err == nil {
+		for _, value := range semverValues {
+			if semverTarget.EQ(value) {
+				return true
+			}
+		}
+		// Target parsed as semver; if no values parsed or none matched, return false
+		// (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+		return false
+	}
+	// Fall back to exact string comparison only when target fails to parse as semver
 	for i := range values {
 		if targetValue == values[i] {
 			return true
@@ -88,6 +101,19 @@ func (c *clauseEvaluator) partiallyMatches(targetValue string, values []string) 
 }
 
 func (c *clauseEvaluator) in(targetValue string, values []string) bool {
+	// First try semver comparison (with v-prefix normalization)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
+	if err == nil {
+		for _, value := range semverValues {
+			if semverTarget.EQ(value) {
+				return true
+			}
+		}
+		// Target parsed as semver; if no values parsed or none matched, return false
+		// (consistent with greaterOrEqual, greater, less, lessOrEqual behavior)
+		return false
+	}
+	// Fall back to exact string comparison only when target fails to parse as semver
 	for i := range values {
 		if targetValue == values[i] {
 			return true
@@ -278,28 +304,18 @@ func (c *clauseEvaluator) parseFloat(targetValue string, values []string) (float
 }
 
 func (c *clauseEvaluator) parseSemver(targetValue string, values []string) (semver.Version, []semver.Version, error) {
-	targetValueWithoutV, targetHasV := strings.CutPrefix(targetValue, "v")
-	versionTarget, err := semver.Parse(targetValueWithoutV)
+	// Normalize target value by stripping "v" prefix if present
+	// This matches the behavior of the npm semver package used in TypeScript
+	targetValueNormalized, _ := strings.CutPrefix(targetValue, "v")
+	versionTarget, err := semver.Parse(targetValueNormalized)
 	if err != nil {
 		return semver.Version{}, nil, err
 	}
 	versionValues := make([]semver.Version, 0, len(values))
-	if targetHasV {
-		for _, value := range values {
-			// if target value has v prefix, compare only values with v prefix
-			valueWithoutV, valueHasV := strings.CutPrefix(value, "v")
-			if valueHasV {
-				v, err := semver.Parse(valueWithoutV)
-				if err == nil {
-					versionValues = append(versionValues, v)
-				}
-			}
-		}
-		return versionTarget, versionValues, nil
-	}
 	for _, value := range values {
-		// if target value has no v prefix, compare only values without v prefix
-		v, err := semver.Parse(value)
+		// Normalize each value by stripping "v" prefix if present
+		valueNormalized, _ := strings.CutPrefix(value, "v")
+		v, err := semver.Parse(valueNormalized)
 		if err == nil {
 			versionValues = append(versionValues, v)
 		}

@@ -1,0 +1,193 @@
+// Copyright 2026 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/feature";
+
+import "google/protobuf/wrappers.proto";
+import "proto/feature/variation.proto";
+import "proto/feature/rule.proto";
+import "proto/feature/target.proto";
+import "proto/feature/prerequisite.proto";
+import "proto/feature/strategy.proto";
+
+// ============================================
+// Enums
+// ============================================
+
+// Status of a scheduled flag change
+enum ScheduledFlagChangeStatus {
+  SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED = 0;
+  SCHEDULED_FLAG_CHANGE_STATUS_PENDING = 1;   // Waiting for execution time
+  SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED = 2;  // Successfully executed
+  SCHEDULED_FLAG_CHANGE_STATUS_FAILED = 3;    // Execution failed
+  SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED =
+      4;  // Cancelled by user or flag archived
+  SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT =
+      5;  // Has conflicts that need resolution
+}
+
+// Type of scheduled change (for categorization in UI)
+enum ScheduledChangeCategory {
+  SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED = 0;
+  SCHEDULED_CHANGE_CATEGORY_TARGETING =
+      1;  // Rules, Targets, Prerequisites, Default Strategy
+  SCHEDULED_CHANGE_CATEGORY_VARIATIONS = 2;  // Variation add/update/delete
+  SCHEDULED_CHANGE_CATEGORY_SETTINGS =
+      3;  // Flag state, metadata, off variation
+  SCHEDULED_CHANGE_CATEGORY_MIXED =
+      4;  // Contains changes from multiple categories
+}
+
+// ============================================
+// Change Types
+// ============================================
+
+// Change types are now defined here and imported by service.proto
+// to avoid circular dependencies
+
+enum ChangeType {
+  UNSPECIFIED = 0;
+  CREATE = 1;
+  UPDATE = 2;
+  DELETE = 3;
+}
+
+message PrerequisiteChange {
+  ChangeType change_type = 1;
+  Prerequisite prerequisite = 2;
+}
+
+message TargetChange {
+  ChangeType change_type = 1;
+  Target target = 2;
+}
+
+message VariationChange {
+  ChangeType change_type = 1;
+  Variation variation = 2;
+}
+
+message RuleChange {
+  ChangeType change_type = 1;
+  Rule rule = 2;
+}
+
+message TagChange {
+  ChangeType change_type = 1;
+  string tag = 2;
+}
+
+// ============================================
+// Change Payload (what will be applied)
+// ============================================
+
+// The payload of scheduled changes - structured to use existing change types
+message ScheduledChangePayload {
+  // Targeting Tab Changes
+  repeated RuleChange rule_changes = 1;
+  repeated TargetChange target_changes = 2;
+  repeated PrerequisiteChange prerequisite_changes = 3;
+  Strategy default_strategy = 4;
+
+  // Variations Tab Changes
+  repeated VariationChange variation_changes = 5;
+  google.protobuf.StringValue off_variation = 6;
+
+  // Settings Tab Changes
+  google.protobuf.BoolValue enabled = 7;
+  google.protobuf.StringValue name = 8;
+  google.protobuf.StringValue description = 9;
+  repeated TagChange tag_changes = 10;
+  google.protobuf.BoolValue archived = 11;
+  bool reset_sampling_seed = 12;
+  google.protobuf.StringValue maintainer = 13;
+}
+
+// ============================================
+// Conflict Information
+// ============================================
+
+// Represents a conflict with another scheduled change or current state
+message ScheduledChangeConflict {
+  enum ConflictType {
+    CONFLICT_TYPE_UNSPECIFIED = 0;
+    CONFLICT_TYPE_VERSION_MISMATCH =
+        1;  // Flag was modified after schedule was created
+    CONFLICT_TYPE_OVERLAPPING_SCHEDULE =
+        2;  // Another schedule modifies same field
+    CONFLICT_TYPE_DEPENDENCY_MISSING =
+        3;  // Referenced variation/rule will be deleted
+    CONFLICT_TYPE_INVALID_REFERENCE =
+        4;  // Referenced variation/rule doesn't exist
+  }
+
+  ConflictType type = 1;
+  string description = 2;  // Human-readable conflict description
+  string conflicting_schedule_id =
+      3;                         // ID of conflicting schedule (if applicable)
+  string conflicting_field = 4;  // Field path that conflicts
+  int64 detected_at = 5;
+}
+
+// ============================================
+// Main Entity
+// ============================================
+
+// ScheduledFlagChange represents a scheduled change to a feature flag
+message ScheduledFlagChange {
+  // Identity
+  string id = 1;
+  string feature_id = 2;
+  string environment_id = 3;
+
+  // Scheduling
+  int64 scheduled_at = 4;  // Unix timestamp in UTC
+  string timezone = 5;     // Display timezone e.g., "Asia/Tokyo"
+
+  // Content
+  ScheduledChangePayload payload = 6;
+  string comment = 7;
+
+  // Status tracking
+  ScheduledFlagChangeStatus status = 8;
+  string failure_reason = 9;
+
+  // Conflict detection
+  int32 flag_version_at_creation =
+      10;  // Flag version when schedule was created
+  repeated ScheduledChangeConflict conflicts = 11;
+
+  // Audit
+  string created_by = 12;
+  int64 created_at = 13;
+  string updated_by = 14;
+  int64 updated_at = 15;
+  int64 executed_at = 16;
+
+  // Derived fields for display
+  ScheduledChangeCategory category = 17;  // Computed from payload content
+  repeated string change_summaries = 18;  // Human-readable summaries
+}
+
+// Summary of scheduled changes for a flag (for display in UI)
+message ScheduledFlagChangeSummary {
+  string feature_id = 1;
+  int32 pending_count = 2;      // Number of pending schedules
+  int32 conflict_count = 3;     // Number of schedules with conflicts
+  int64 next_scheduled_at = 4;  // Timestamp of next scheduled change
+  ScheduledChangeCategory next_category = 5;  // Category of next change
+}
