@@ -1524,6 +1524,62 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Team),
 			),
 		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_CANCELLED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CancelledTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_EXECUTED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ExecutedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_FAILED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.FailedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_SKIPPED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.SkippedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
+	case proto.Event_SCHEDULED_FLAG_CHANGE_APPLIED_NOW:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.AppliedNowTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ScheduledFlagChange),
+			),
+		}
 	}
 
 	return &proto.LocalizedMessage{

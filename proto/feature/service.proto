@@ -25,17 +25,14 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "proto/common/string.proto";
 import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
-import "proto/feature/scheduled_update.proto";
+import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature_last_used_info.proto";
 import "proto/user/user.proto";
 import "proto/feature/segment.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/feature/variation.proto";
-import "proto/feature/prerequisite.proto";
-import "proto/feature/rule.proto";
 import "proto/feature/strategy.proto";
-import "proto/feature/target.proto";
 
 message GetFeatureRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
@@ -141,37 +138,15 @@ message CreateFeatureResponse {
   Feature feature = 1;
 }
 
-enum ChangeType {
-  UNSPECIFIED = 0;
-  CREATE = 1;
-  UPDATE = 2;
-  DELETE = 3;
-}
-
-message PrerequisiteChange {
-  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
-  Prerequisite prerequisite = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-message TargetChange {
-  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
-  Target target = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-message VariationChange {
-  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
-  Variation variation = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-message RuleChange {
-  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
-  Rule rule = 2 [(google.api.field_behavior) = REQUIRED];
-}
-
-message TagChange {
-  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
-  string tag = 2 [(google.api.field_behavior) = REQUIRED];
-}
+// ChangeType and *Change messages are now defined in
+// scheduled_feature_change.proto and imported here to avoid duplication. The
+// following types are available:
+// - ChangeType (UNSPECIFIED, CREATE, UPDATE, DELETE)
+// - PrerequisiteChange
+// - TargetChange
+// - VariationChange
+// - RuleChange
+// - TagChange
 
 message UpdateFeatureRequest {
   string comment = 1;
@@ -198,27 +173,40 @@ message UpdateFeatureResponse {
   Feature feature = 1;
 }
 
-message ScheduleFlagChangeRequest {
+// Create a new scheduled flag change
+message CreateScheduledFlagChangeRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
   int64 scheduled_at = 3 [(google.api.field_behavior) = REQUIRED];
-  repeated ScheduledChange scheduled_changes = 4
-      [(google.api.field_behavior) = REQUIRED];
+  string timezone = 4;
+  ScheduledChangePayload payload = 5 [(google.api.field_behavior) = REQUIRED];
+  string comment = 6;
+  bool ignore_conflicts = 7;  // If true, create even if conflicts detected
 }
 
-message ScheduleFlagChangeResponse {}
+message CreateScheduledFlagChangeResponse {
+  ScheduledFlagChange scheduled_flag_change = 1;
+  repeated ScheduledChangeConflict detected_conflicts =
+      2;  // Conflicts found during creation
+}
 
+// Update an existing scheduled flag change
 message UpdateScheduledFlagChangeRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
   string id = 2 [(google.api.field_behavior) = REQUIRED];
-  google.protobuf.Int64Value scheduled_at = 3
-      [(google.api.field_behavior) = REQUIRED];
-  repeated ScheduledChange scheduled_changes = 4
-      [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Int64Value scheduled_at = 3;
+  google.protobuf.StringValue timezone = 4;
+  ScheduledChangePayload payload = 5;
+  google.protobuf.StringValue comment = 6;
+  bool ignore_conflicts = 7;
 }
 
-message UpdateScheduledFlagChangeResponse {}
+message UpdateScheduledFlagChangeResponse {
+  ScheduledFlagChange scheduled_flag_change = 1;
+  repeated ScheduledChangeConflict detected_conflicts = 2;
+}
 
+// Delete (cancel) a scheduled flag change
 message DeleteScheduledFlagChangeRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
   string id = 2 [(google.api.field_behavior) = REQUIRED];
@@ -226,13 +214,63 @@ message DeleteScheduledFlagChangeRequest {
 
 message DeleteScheduledFlagChangeResponse {}
 
+// List scheduled flag changes
 message ListScheduledFlagChangesRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 2;  // Optional: filter by feature
+  repeated ScheduledFlagChangeStatus statuses =
+      3;                        // Optional: filter by status
+  int64 from_scheduled_at = 4;  // Optional: filter by scheduled time range
+  int64 to_scheduled_at = 5;
+  int64 page_size = 6;
+  string cursor = 7;
+  enum OrderBy {
+    DEFAULT = 0;
+    SCHEDULED_AT = 1;
+    CREATED_AT = 2;
+  }
+  OrderBy order_by = 8;
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  OrderDirection order_direction = 9;
+}
+
+message ListScheduledFlagChangesResponse {
+  repeated ScheduledFlagChange scheduled_flag_changes = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+// Get a single scheduled flag change
+message GetScheduledFlagChangeRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetScheduledFlagChangeResponse {
+  ScheduledFlagChange scheduled_flag_change = 1;
+}
+
+// Execute a scheduled flag change immediately (manual trigger)
+message ExecuteScheduledFlagChangeRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ExecuteScheduledFlagChangeResponse {
+  ScheduledFlagChange scheduled_flag_change = 1;
+}
+
+// Get summary of scheduled changes for a flag
+message GetScheduledFlagChangeSummaryRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
-message ListScheduledFlagChangesResponse {
-  repeated ScheduledFlagUpdate scheduled_flag_updates = 1;
+message GetScheduledFlagChangeSummaryResponse {
+  ScheduledFlagChangeSummary summary = 1;
 }
 
 message EnableFeatureRequest {
@@ -788,17 +826,62 @@ service FeatureService {
       }
     };
   }
-  rpc ScheduleFlagChange(ScheduleFlagChangeRequest)
-      returns (ScheduleFlagChangeResponse) {
+  rpc CreateScheduledFlagChange(CreateScheduledFlagChangeRequest)
+      returns (CreateScheduledFlagChangeResponse) {
     option (google.api.http) = {
-      post: "/v1/schedule_flag"
+      post: "/v1/scheduled_flag_change"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Schedule Feature Change",
-      description: "Schedule a feature flag change. To call this API, you need an EDITOR role in the specified environment.",
-      tags: "Feature",
-      operation_id: "web.v1.schedule_flag.create",
+      summary: "Create Scheduled Flag Change",
+      description: "Create a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.create",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetScheduledFlagChange(GetScheduledFlagChangeRequest)
+      returns (GetScheduledFlagChangeResponse) {
+    option (google.api.http) = {
+      get: "/v1/scheduled_flag_change"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Scheduled Flag Change",
+      description: "Get a scheduled flag change. To call this API, you need at least a MEMBER role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.get",
       responses: {
         key: "400"
         value: {
@@ -837,14 +920,14 @@ service FeatureService {
   rpc UpdateScheduledFlagChange(UpdateScheduledFlagChangeRequest)
       returns (UpdateScheduledFlagChangeResponse) {
     option (google.api.http) = {
-      patch: "/v1/schedule_flag"
+      patch: "/v1/scheduled_flag_change"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Update Scheduled Feature Change",
-      description: "Update a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.",
-      tags: "Feature",
-      operation_id: "web.v1.schedule_flag.update",
+      summary: "Update Scheduled Flag Change",
+      description: "Update a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.update",
       responses: {
         key: "400"
         value: {
@@ -883,13 +966,13 @@ service FeatureService {
   rpc DeleteScheduledFlagChange(DeleteScheduledFlagChangeRequest)
       returns (DeleteScheduledFlagChangeResponse) {
     option (google.api.http) = {
-      delete: "/v1/schedule_flag"
+      delete: "/v1/scheduled_flag_change"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Delete Scheduled Feature Change",
-      description: "Delete a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.",
-      tags: "Feature",
-      operation_id: "web.v1.schedule_flag.delete",
+      summary: "Delete Scheduled Flag Change",
+      description: "Delete (cancel) a scheduled flag change. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.delete",
       responses: {
         key: "400"
         value: {
@@ -928,13 +1011,48 @@ service FeatureService {
   rpc ListScheduledFlagChanges(ListScheduledFlagChangesRequest)
       returns (ListScheduledFlagChangesResponse) {
     option (google.api.http) = {
-      get: "/v1/schedule_flags"
+      get: "/v1/scheduled_flag_changes"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List Scheduled Feature Changes",
-      description: "List scheduled feature flag changes. To call this API, you need at least a MEMBER role in the specified organizations.",
-      tags: "Feature",
-      operation_id: "web.v1.schedule_flag.update",
+      summary: "List Scheduled Flag Changes",
+      description: "List scheduled flag changes. To call this API, you need at least a MEMBER role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ExecuteScheduledFlagChange(ExecuteScheduledFlagChangeRequest)
+      returns (ExecuteScheduledFlagChangeResponse) {
+    option (google.api.http) = {
+      post: "/v1/scheduled_flag_change/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute Scheduled Flag Change",
+      description: "Execute a scheduled flag change immediately (manual trigger). To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.execute",
       responses: {
         key: "400"
         value: {
@@ -965,6 +1083,40 @@ service FeatureService {
           examples: {
             key: "application/json"
             value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetScheduledFlagChangeSummary(GetScheduledFlagChangeSummaryRequest)
+      returns (GetScheduledFlagChangeSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v1/scheduled_flag_change/summary"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Scheduled Flag Change Summary",
+      description: "Get summary of scheduled changes for a flag. To call this API, you need at least a MEMBER role in the specified environment.",
+      tags: "Scheduled Flag Change",
+      operation_id: "web.v1.scheduled_flag_change.summary",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
           }
         }
       }

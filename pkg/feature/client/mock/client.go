@@ -174,6 +174,26 @@ func (mr *MockClientMockRecorder) CreateFlagTrigger(ctx, in any, opts ...any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFlagTrigger", reflect.TypeOf((*MockClient)(nil).CreateFlagTrigger), varargs...)
 }
 
+// CreateScheduledFlagChange mocks base method.
+func (m *MockClient) CreateScheduledFlagChange(ctx context.Context, in *feature.CreateScheduledFlagChangeRequest, opts ...grpc.CallOption) (*feature.CreateScheduledFlagChangeResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateScheduledFlagChange", varargs...)
+	ret0, _ := ret[0].(*feature.CreateScheduledFlagChangeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateScheduledFlagChange indicates an expected call of CreateScheduledFlagChange.
+func (mr *MockClientMockRecorder) CreateScheduledFlagChange(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateScheduledFlagChange", reflect.TypeOf((*MockClient)(nil).CreateScheduledFlagChange), varargs...)
+}
+
 // CreateSegment mocks base method.
 func (m *MockClient) CreateSegment(ctx context.Context, in *feature.CreateSegmentRequest, opts ...grpc.CallOption) (*feature.CreateSegmentResponse, error) {
 	m.ctrl.T.Helper()
@@ -354,6 +374,26 @@ func (mr *MockClientMockRecorder) EvaluateFeatures(ctx, in any, opts ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvaluateFeatures", reflect.TypeOf((*MockClient)(nil).EvaluateFeatures), varargs...)
 }
 
+// ExecuteScheduledFlagChange mocks base method.
+func (m *MockClient) ExecuteScheduledFlagChange(ctx context.Context, in *feature.ExecuteScheduledFlagChangeRequest, opts ...grpc.CallOption) (*feature.ExecuteScheduledFlagChangeResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecuteScheduledFlagChange", varargs...)
+	ret0, _ := ret[0].(*feature.ExecuteScheduledFlagChangeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecuteScheduledFlagChange indicates an expected call of ExecuteScheduledFlagChange.
+func (mr *MockClientMockRecorder) ExecuteScheduledFlagChange(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScheduledFlagChange", reflect.TypeOf((*MockClient)(nil).ExecuteScheduledFlagChange), varargs...)
+}
+
 // FlagTriggerWebhook mocks base method.
 func (m *MockClient) FlagTriggerWebhook(ctx context.Context, in *feature.FlagTriggerWebhookRequest, opts ...grpc.CallOption) (*feature.FlagTriggerWebhookResponse, error) {
 	m.ctrl.T.Helper()
@@ -432,6 +472,46 @@ func (mr *MockClientMockRecorder) GetFlagTrigger(ctx, in any, opts ...any) *gomo
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockClient)(nil).GetFlagTrigger), varargs...)
+}
+
+// GetScheduledFlagChange mocks base method.
+func (m *MockClient) GetScheduledFlagChange(ctx context.Context, in *feature.GetScheduledFlagChangeRequest, opts ...grpc.CallOption) (*feature.GetScheduledFlagChangeResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetScheduledFlagChange", varargs...)
+	ret0, _ := ret[0].(*feature.GetScheduledFlagChangeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledFlagChange indicates an expected call of GetScheduledFlagChange.
+func (mr *MockClientMockRecorder) GetScheduledFlagChange(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledFlagChange", reflect.TypeOf((*MockClient)(nil).GetScheduledFlagChange), varargs...)
+}
+
+// GetScheduledFlagChangeSummary mocks base method.
+func (m *MockClient) GetScheduledFlagChangeSummary(ctx context.Context, in *feature.GetScheduledFlagChangeSummaryRequest, opts ...grpc.CallOption) (*feature.GetScheduledFlagChangeSummaryResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetScheduledFlagChangeSummary", varargs...)
+	ret0, _ := ret[0].(*feature.GetScheduledFlagChangeSummaryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledFlagChangeSummary indicates an expected call of GetScheduledFlagChangeSummary.
+func (mr *MockClientMockRecorder) GetScheduledFlagChangeSummary(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledFlagChangeSummary", reflect.TypeOf((*MockClient)(nil).GetScheduledFlagChangeSummary), varargs...)
 }
 
 // GetSegment mocks base method.
@@ -612,26 +692,6 @@ func (mr *MockClientMockRecorder) ListTags(ctx, in any, opts ...any) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockClient)(nil).ListTags), varargs...)
-}
-
-// ScheduleFlagChange mocks base method.
-func (m *MockClient) ScheduleFlagChange(ctx context.Context, in *feature.ScheduleFlagChangeRequest, opts ...grpc.CallOption) (*feature.ScheduleFlagChangeResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ScheduleFlagChange", varargs...)
-	ret0, _ := ret[0].(*feature.ScheduleFlagChangeResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ScheduleFlagChange indicates an expected call of ScheduleFlagChange.
-func (mr *MockClientMockRecorder) ScheduleFlagChange(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduleFlagChange", reflect.TypeOf((*MockClient)(nil).ScheduleFlagChange), varargs...)
 }
 
 // UnarchiveFeature mocks base method.

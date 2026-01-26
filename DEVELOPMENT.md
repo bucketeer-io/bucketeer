@@ -172,6 +172,35 @@ docker compose -f docker-compose/compose.yml restart api
 docker-compose -f docker-compose/compose.yml restart api
 ```
 
+# Running Unit Tests
+
+Before running unit tests, ensure that the httpstan container is running. The experiment package unit tests depend on httpstan for Bayesian analysis.
+
+### Start httpstan
+
+```shell
+make start-httpstan
+```
+
+This command is idempotent - it will:
+- Skip if the container is already running
+- Start the existing container if it was stopped
+- Create and start a new container if it doesn't exist
+
+### Run Unit Tests
+
+```shell
+make test-go
+```
+
+### Stop httpstan (Optional)
+
+When you're done running tests:
+
+```shell
+make stop-httpstan
+```
+
 # Running E2E Tests
 
 ## For Minikube Setup

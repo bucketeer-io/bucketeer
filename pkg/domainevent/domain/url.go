@@ -84,6 +84,9 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 		return fmt.Sprintf(urlTemplateCodeRef, url, envURLCode, id), nil
 	case proto.Event_TEAM:
 		return fmt.Sprintf(urlTemplateTeam, url, envURLCode, id), nil
+	case proto.Event_SCHEDULED_FLAG_CHANGE:
+		// Scheduled flag changes link to the feature flag page
+		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	}
 	return "", ErrUnknownEntityType
 }
