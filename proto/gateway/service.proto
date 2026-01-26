@@ -27,6 +27,7 @@ import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
+import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/variation.proto";
 import "proto/feature/strategy.proto";
 import "proto/feature/segment.proto";

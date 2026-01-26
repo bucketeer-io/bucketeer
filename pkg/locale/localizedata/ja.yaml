@@ -74,6 +74,7 @@ WebhookRule: "Webhookのルール"
 FlagTrigger: "フラグトリガー"
 CodeReference: "コードリファレンス"
 Team: "チーム"
+ScheduledFlagChange: "スケジュールフラグ変更"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }}は必須です"
@@ -144,3 +145,7 @@ TrialConverted: "トライアルを正式なプロジェクトに変換しまし
 ValueAdded: "{{ .Field_1 }}の値が追加されました"
 ValueDeleted: "{{ .Field_1 }}の値が削除されました"
 ValueUpdated: "{{ .Field_1 }}の値が更新されました"
+Cancelled: "{{ .Field_1 }}がキャンセルされました"
+Failed: "{{ .Field_1 }}が失敗しました"
+Skipped: "{{ .Field_1 }}がスキップされました"
+AppliedNow: "{{ .Field_1 }}が即時適用されました"

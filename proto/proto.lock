@@ -19264,6 +19264,10 @@
               {
                 "name": "TEAM",
                 "integer": 19
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE",
+                "integer": 20
               }
             ],
             "reserved_ids": [
@@ -20085,6 +20089,34 @@
               {
                 "name": "TEAM_UPDATED",
                 "integer": 1902
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_CREATED",
+                "integer": 2000
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_UPDATED",
+                "integer": 2001
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_CANCELLED",
+                "integer": 2002
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_EXECUTED",
+                "integer": 2003
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_FAILED",
+                "integer": 2004
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_SKIPPED",
+                "integer": 2005
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_APPLIED_NOW",
+                "integer": 2006
               }
             ],
             "reserved_ids": [
@@ -23834,6 +23866,379 @@
                 "id": 2,
                 "name": "organization_id",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "category",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "payload_json",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "scheduled_by",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "previous_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "new_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "payload_json",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeCancelledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "originally_scheduled_by",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "originally_created_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeExecutedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "executed_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "payload_json",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "originally_scheduled_by",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "originally_created_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeFailedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "failed_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "failure_reason",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "originally_scheduled_by",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "originally_created_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeSkippedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "skipped_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "skip_reason",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "conflict_descriptions",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "originally_scheduled_by",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "originally_created_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChangeAppliedNowEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "original_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "applied_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "change_summaries",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "payload_json",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "originally_scheduled_by",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "originally_created_at",
+                "type": "int64"
               }
             ]
           }
@@ -31328,90 +31733,289 @@
       }
     },
     {
-      "protopath": "feature:/:scheduled_update.proto",
+      "protopath": "feature:/:scheduled_feature_change.proto",
       "def": {
         "enums": [
           {
-            "name": "ScheduledChange.FieldType",
+            "name": "ScheduledFlagChangeStatus",
+            "enum_fields": [
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_UNSPECIFIED"
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_PENDING",
+                "integer": 1
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED",
+                "integer": 2
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_FAILED",
+                "integer": 3
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED",
+                "integer": 4
+              },
+              {
+                "name": "SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ScheduledChangeCategory",
+            "enum_fields": [
+              {
+                "name": "SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED"
+              },
+              {
+                "name": "SCHEDULED_CHANGE_CATEGORY_TARGETING",
+                "integer": 1
+              },
+              {
+                "name": "SCHEDULED_CHANGE_CATEGORY_VARIATIONS",
+                "integer": 2
+              },
+              {
+                "name": "SCHEDULED_CHANGE_CATEGORY_SETTINGS",
+                "integer": 3
+              },
+              {
+                "name": "SCHEDULED_CHANGE_CATEGORY_MIXED",
+                "integer": 4
+              }
+            ]
+          },
+          {
+            "name": "ChangeType",
             "enum_fields": [
               {
                 "name": "UNSPECIFIED"
               },
               {
-                "name": "PREREQUISITES",
+                "name": "CREATE",
                 "integer": 1
               },
               {
-                "name": "TARGETS",
+                "name": "UPDATE",
                 "integer": 2
               },
               {
-                "name": "RULES",
+                "name": "DELETE",
                 "integer": 3
-              },
-              {
-                "name": "DEFAULT_STRATEGY",
-                "integer": 4
-              },
-              {
-                "name": "OFF_VARIATION",
-                "integer": 5
-              },
-              {
-                "name": "VARIATIONS",
-                "integer": 6
               }
             ]
           },
           {
-            "name": "ScheduledChange.ChangeType",
+            "name": "ScheduledChangeConflict.ConflictType",
             "enum_fields": [
               {
-                "name": "CHANGE_UNSPECIFIED"
+                "name": "CONFLICT_TYPE_UNSPECIFIED"
               },
               {
-                "name": "CHANGE_CREATE",
+                "name": "CONFLICT_TYPE_VERSION_MISMATCH",
                 "integer": 1
               },
               {
-                "name": "CHANGE_UPDATE",
+                "name": "CONFLICT_TYPE_OVERLAPPING_SCHEDULE",
                 "integer": 2
               },
               {
-                "name": "CHANGE_DELETE",
+                "name": "CONFLICT_TYPE_DEPENDENCY_MISSING",
                 "integer": 3
+              },
+              {
+                "name": "CONFLICT_TYPE_INVALID_REFERENCE",
+                "integer": 4
               }
             ]
           }
         ],
         "messages": [
           {
-            "name": "ScheduledChange",
+            "name": "PrerequisiteChange",
             "fields": [
               {
                 "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
                 "name": "change_type",
                 "type": "ChangeType"
               },
               {
-                "id": 3,
-                "name": "field_type",
-                "type": "FieldType"
+                "id": 2,
+                "name": "prerequisite",
+                "type": "Prerequisite"
+              }
+            ]
+          },
+          {
+            "name": "TargetChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType"
               },
               {
-                "id": 4,
-                "name": "field_value",
+                "id": 2,
+                "name": "target",
+                "type": "Target"
+              }
+            ]
+          },
+          {
+            "name": "VariationChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType"
+              },
+              {
+                "id": 2,
+                "name": "variation",
+                "type": "Variation"
+              }
+            ]
+          },
+          {
+            "name": "RuleChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType"
+              },
+              {
+                "id": 2,
+                "name": "rule",
+                "type": "Rule"
+              }
+            ]
+          },
+          {
+            "name": "TagChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType"
+              },
+              {
+                "id": 2,
+                "name": "tag",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "ScheduledFlagUpdate",
+            "name": "ScheduledChangePayload",
+            "fields": [
+              {
+                "id": 1,
+                "name": "rule_changes",
+                "type": "RuleChange",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "target_changes",
+                "type": "TargetChange",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "prerequisite_changes",
+                "type": "PrerequisiteChange",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "default_strategy",
+                "type": "Strategy"
+              },
+              {
+                "id": 5,
+                "name": "variation_changes",
+                "type": "VariationChange",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "off_variation",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 7,
+                "name": "enabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "tag_changes",
+                "type": "TagChange",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 12,
+                "name": "reset_sampling_seed",
+                "type": "bool"
+              },
+              {
+                "id": 13,
+                "name": "maintainer",
+                "type": "google.protobuf.StringValue"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledChangeConflict",
+            "fields": [
+              {
+                "id": 1,
+                "name": "type",
+                "type": "ConflictType"
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "conflicting_schedule_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "conflicting_field",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "detected_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagChange",
             "fields": [
               {
                 "id": 1,
@@ -31435,21 +32039,127 @@
               },
               {
                 "id": 5,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "payload",
+                "type": "ScheduledChangePayload"
+              },
+              {
+                "id": 7,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "status",
+                "type": "ScheduledFlagChangeStatus"
+              },
+              {
+                "id": 9,
+                "name": "failure_reason",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "flag_version_at_creation",
+                "type": "int32"
+              },
+              {
+                "id": 11,
+                "name": "conflicts",
+                "type": "ScheduledChangeConflict",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "created_by",
+                "type": "string"
+              },
+              {
+                "id": 13,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 6,
+                "id": 14,
+                "name": "updated_by",
+                "type": "string"
+              },
+              {
+                "id": 15,
                 "name": "updated_at",
                 "type": "int64"
               },
               {
-                "id": 7,
-                "name": "changes",
-                "type": "ScheduledChange",
+                "id": 16,
+                "name": "executed_at",
+                "type": "int64"
+              },
+              {
+                "id": 17,
+                "name": "category",
+                "type": "ScheduledChangeCategory"
+              },
+              {
+                "id": 18,
+                "name": "change_summaries",
+                "type": "string",
                 "is_repeated": true
               }
             ]
+          },
+          {
+            "name": "ScheduledFlagChangeSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "pending_count",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "conflict_count",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "next_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "next_category",
+                "type": "ScheduledChangeCategory"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "proto/feature/variation.proto"
+          },
+          {
+            "path": "proto/feature/rule.proto"
+          },
+          {
+            "path": "proto/feature/target.proto"
+          },
+          {
+            "path": "proto/feature/prerequisite.proto"
+          },
+          {
+            "path": "proto/feature/strategy.proto"
           }
         ],
         "package": {
@@ -31711,22 +32421,30 @@
             ]
           },
           {
-            "name": "ChangeType",
+            "name": "ListScheduledFlagChangesRequest.OrderBy",
             "enum_fields": [
               {
-                "name": "UNSPECIFIED"
+                "name": "DEFAULT"
               },
               {
-                "name": "CREATE",
+                "name": "SCHEDULED_AT",
                 "integer": 1
               },
               {
-                "name": "UPDATE",
+                "name": "CREATED_AT",
                 "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "ListScheduledFlagChangesRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
               },
               {
-                "name": "DELETE",
-                "integer": 3
+                "name": "DESC",
+                "integer": 1
               }
             ]
           },
@@ -32224,141 +32942,6 @@
             ]
           },
           {
-            "name": "PrerequisiteChange",
-            "fields": [
-              {
-                "id": 1,
-                "name": "change_type",
-                "type": "ChangeType",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "prerequisite",
-                "type": "Prerequisite",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "TargetChange",
-            "fields": [
-              {
-                "id": 1,
-                "name": "change_type",
-                "type": "ChangeType",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "target",
-                "type": "Target",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "VariationChange",
-            "fields": [
-              {
-                "id": 1,
-                "name": "change_type",
-                "type": "ChangeType",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "variation",
-                "type": "Variation",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "RuleChange",
-            "fields": [
-              {
-                "id": 1,
-                "name": "change_type",
-                "type": "ChangeType",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "rule",
-                "type": "Rule",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "TagChange",
-            "fields": [
-              {
-                "id": 1,
-                "name": "change_type",
-                "type": "ChangeType",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "tag",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
-              }
-            ]
-          },
-          {
             "name": "UpdateFeatureRequest",
             "fields": [
               {
@@ -32481,7 +33064,7 @@
             ]
           },
           {
-            "name": "ScheduleFlagChangeRequest",
+            "name": "CreateScheduledFlagChangeRequest",
             "fields": [
               {
                 "id": 1,
@@ -32518,20 +33101,47 @@
               },
               {
                 "id": 4,
-                "name": "scheduled_changes",
-                "type": "ScheduledChange",
-                "is_repeated": true,
+                "name": "timezone",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "payload",
+                "type": "ScheduledChangePayload",
                 "options": [
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 6,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "ignore_conflicts",
+                "type": "bool"
               }
             ]
           },
           {
-            "name": "ScheduleFlagChangeResponse"
+            "name": "CreateScheduledFlagChangeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "scheduled_flag_change",
+                "type": "ScheduledFlagChange"
+              },
+              {
+                "id": 2,
+                "name": "detected_conflicts",
+                "type": "ScheduledChangeConflict",
+                "is_repeated": true
+              }
+            ]
           },
           {
             "name": "UpdateScheduledFlagChangeRequest",
@@ -32561,30 +33171,45 @@
               {
                 "id": 3,
                 "name": "scheduled_at",
-                "type": "google.protobuf.Int64Value",
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
+                "type": "google.protobuf.Int64Value"
               },
               {
                 "id": 4,
-                "name": "scheduled_changes",
-                "type": "ScheduledChange",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "(google.api.field_behavior)",
-                    "value": "REQUIRED"
-                  }
-                ]
+                "name": "timezone",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "payload",
+                "type": "ScheduledChangePayload"
+              },
+              {
+                "id": 6,
+                "name": "comment",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 7,
+                "name": "ignore_conflicts",
+                "type": "bool"
               }
             ]
           },
           {
-            "name": "UpdateScheduledFlagChangeResponse"
+            "name": "UpdateScheduledFlagChangeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "scheduled_flag_change",
+                "type": "ScheduledFlagChange"
+              },
+              {
+                "id": 2,
+                "name": "detected_conflicts",
+                "type": "ScheduledChangeConflict",
+                "is_repeated": true
+              }
+            ]
           },
           {
             "name": "DeleteScheduledFlagChangeRequest",
@@ -32633,6 +33258,84 @@
               {
                 "id": 2,
                 "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "statuses",
+                "type": "ScheduledFlagChangeStatus",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "from_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "to_scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 9,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              }
+            ]
+          },
+          {
+            "name": "ListScheduledFlagChangesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "scheduled_flag_changes",
+                "type": "ScheduledFlagChange",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "GetScheduledFlagChangeRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "id",
                 "type": "string",
                 "options": [
                   {
@@ -32644,13 +33347,86 @@
             ]
           },
           {
-            "name": "ListScheduledFlagChangesResponse",
+            "name": "GetScheduledFlagChangeResponse",
             "fields": [
               {
                 "id": 1,
-                "name": "scheduled_flag_updates",
-                "type": "ScheduledFlagUpdate",
-                "is_repeated": true
+                "name": "scheduled_flag_change",
+                "type": "ScheduledFlagChange"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteScheduledFlagChangeRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ExecuteScheduledFlagChangeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "scheduled_flag_change",
+                "type": "ScheduledFlagChange"
+              }
+            ]
+          },
+          {
+            "name": "GetScheduledFlagChangeSummaryRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetScheduledFlagChangeSummaryResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summary",
+                "type": "ScheduledFlagChangeSummary"
               }
             ]
           },
@@ -34712,16 +35488,16 @@
                 ]
               },
               {
-                "name": "ScheduleFlagChange",
-                "in_type": "ScheduleFlagChangeRequest",
-                "out_type": "ScheduleFlagChangeResponse",
+                "name": "CreateScheduledFlagChange",
+                "in_type": "CreateScheduledFlagChangeRequest",
+                "out_type": "CreateScheduledFlagChangeResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/schedule_flag"
+                        "value": "/v1/scheduled_flag_change"
                       },
                       {
                         "name": "body",
@@ -34734,19 +35510,191 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Schedule Feature Change"
+                        "value": "Create Scheduled Flag Change"
                       },
                       {
                         "name": "description",
-                        "value": "Schedule a feature flag change. To call this API, you need an EDITOR role in the specified environment."
+                        "value": "Create a scheduled flag change. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
-                        "value": "Feature"
+                        "value": "Scheduled Flag Change"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.schedule_flag.create"
+                        "value": "web.v1.scheduled_flag_change.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetScheduledFlagChange",
+                "in_type": "GetScheduledFlagChangeRequest",
+                "out_type": "GetScheduledFlagChangeResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/scheduled_flag_change"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Scheduled Flag Change"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a scheduled flag change. To call this API, you need at least a MEMBER role in the specified environment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Scheduled Flag Change"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.scheduled_flag_change.get"
                       },
                       {
                         "name": "responses",
@@ -34897,7 +35845,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/schedule_flag"
+                        "value": "/v1/scheduled_flag_change"
                       },
                       {
                         "name": "body",
@@ -34910,19 +35858,19 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Update Scheduled Feature Change"
+                        "value": "Update Scheduled Flag Change"
                       },
                       {
                         "name": "description",
-                        "value": "Update a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment."
+                        "value": "Update a scheduled flag change. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
-                        "value": "Feature"
+                        "value": "Scheduled Flag Change"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.schedule_flag.update"
+                        "value": "web.v1.scheduled_flag_change.update"
                       },
                       {
                         "name": "responses",
@@ -35073,7 +36021,7 @@
                     "aggregated": [
                       {
                         "name": "delete",
-                        "value": "/v1/schedule_flag"
+                        "value": "/v1/scheduled_flag_change"
                       }
                     ]
                   },
@@ -35082,19 +36030,19 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Delete Scheduled Feature Change"
+                        "value": "Delete Scheduled Flag Change"
                       },
                       {
                         "name": "description",
-                        "value": "Delete a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment."
+                        "value": "Delete (cancel) a scheduled flag change. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
-                        "value": "Feature"
+                        "value": "Scheduled Flag Change"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.schedule_flag.delete"
+                        "value": "web.v1.scheduled_flag_change.delete"
                       },
                       {
                         "name": "responses",
@@ -35245,7 +36193,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/schedule_flags"
+                        "value": "/v1/scheduled_flag_changes"
                       }
                     ]
                   },
@@ -35254,19 +36202,150 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "List Scheduled Feature Changes"
+                        "value": "List Scheduled Flag Changes"
                       },
                       {
                         "name": "description",
-                        "value": "List scheduled feature flag changes. To call this API, you need at least a MEMBER role in the specified organizations."
+                        "value": "List scheduled flag changes. To call this API, you need at least a MEMBER role in the specified environment."
                       },
                       {
                         "name": "tags",
-                        "value": "Feature"
+                        "value": "Scheduled Flag Change"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.schedule_flag.update"
+                        "value": "web.v1.scheduled_flag_change.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExecuteScheduledFlagChange",
+                "in_type": "ExecuteScheduledFlagChangeRequest",
+                "out_type": "ExecuteScheduledFlagChangeResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/scheduled_flag_change/execute"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Execute Scheduled Flag Change"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Execute a scheduled flag change immediately (manual trigger). To call this API, you need an EDITOR role in the specified environment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Scheduled Flag Change"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.scheduled_flag_change.execute"
                       },
                       {
                         "name": "responses",
@@ -35396,6 +36475,133 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetScheduledFlagChangeSummary",
+                "in_type": "GetScheduledFlagChangeSummaryRequest",
+                "out_type": "GetScheduledFlagChangeSummaryResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/scheduled_flag_change/summary"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Scheduled Flag Change Summary"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get summary of scheduled changes for a flag. To call this API, you need at least a MEMBER role in the specified environment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Scheduled Flag Change"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.scheduled_flag_change.summary"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
                                   }
                                 ]
                               }
@@ -37836,7 +39042,7 @@
             "path": "proto/feature/feature.proto"
           },
           {
-            "path": "proto/feature/scheduled_update.proto"
+            "path": "proto/feature/scheduled_feature_change.proto"
           },
           {
             "path": "proto/feature/evaluation.proto"
@@ -37857,16 +39063,7 @@
             "path": "proto/feature/variation.proto"
           },
           {
-            "path": "proto/feature/prerequisite.proto"
-          },
-          {
-            "path": "proto/feature/rule.proto"
-          },
-          {
             "path": "proto/feature/strategy.proto"
-          },
-          {
-            "path": "proto/feature/target.proto"
           }
         ],
         "package": {
@@ -45247,6 +46444,9 @@
             "path": "proto/feature/service.proto"
           },
           {
+            "path": "proto/feature/scheduled_feature_change.proto"
+          },
+          {
             "path": "proto/feature/variation.proto"
           },
           {
@@ -47534,6 +48734,10 @@
               {
                 "name": "DOMAIN_EVENT_DEMO_ORGANIZATION",
                 "integer": 20
+              },
+              {
+                "name": "DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE",
+                "integer": 21
               },
               {
                 "name": "FEATURE_STALE",
