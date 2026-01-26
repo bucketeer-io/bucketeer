@@ -25,10 +25,12 @@ import (
 const (
 	callerGatewayService = "GatewayService"
 
-	methodGetEvaluations = "GetEvaluations"
-	methodGetEvaluation  = "GetEvaluation"
-	methodRegisterEvents = "RegisterEvent"
-	methodTrack          = "Track"
+	methodGetEvaluations  = "GetEvaluations"
+	methodGetEvaluation   = "GetEvaluation"
+	methodRegisterEvents  = "RegisterEvent"
+	methodTrack           = "Track"
+	methodGetFeatureFlags = "GetFeatureFlags"
+	methodGetSegmentUsers = "GetSegmentUsers"
 
 	methodGetGoal    = "Goal"
 	methodListGoals  = "ListGoals"
@@ -187,6 +189,14 @@ var (
 			"project_id", "project_url_code",
 			"environment_id", "environment_url_code", "tag", "evaluation_type",
 		})
+	// evaluationsCounterV2 exists for filtering by source_id.
+	evaluationsCounterV2 = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_evaluations_v2_total",
+			Help:      "Total number of evaluations with source_id label",
+		}, []string{"environment_id", "environment_url_code", "tag", "evaluation_type", "source_id"})
 	getFeatureFlagsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -236,6 +246,14 @@ var (
 			Name:      "api_rest_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	handledSecondsHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_handling_seconds",
+			Help:      "Histogram of response latency (seconds)",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"environment_id", "source_id", "api_id"})
 	// TODO: Remove after deleting api-gateway REST server
 	sdkGetEvaluationsLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -311,6 +329,8 @@ func registerMetrics(r metrics.Registerer) {
 			sdkLatencyHistogram,
 			sdkSizeHistogram,
 			sdkErrorCounter,
+			handledSecondsHistogram,
+			evaluationsCounterV2,
 		)
 	})
 }
