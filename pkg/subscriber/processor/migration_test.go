@@ -23,7 +23,9 @@ import (
 )
 
 func TestGetEnvironmentIDMigration(t *testing.T) {
-	t.Parallel()
+	// NOTE: Cannot use t.Parallel() because this test manipulates global state:
+	// - Environment variables via os.Setenv()
+	// - Global singleton migrationConfig and migrationConfigOnce via resetMigrationConfig()
 	patterns := []struct {
 		desc        string
 		setupFunc   func()
@@ -180,7 +182,9 @@ func TestGetEnvironmentIDMigration(t *testing.T) {
 }
 
 func TestGetMigrationTargetEnvironmentID(t *testing.T) {
-	t.Parallel()
+	// NOTE: Cannot use t.Parallel() because this test manipulates global state:
+	// - Environment variables via os.Setenv()
+	// - Global singleton migrationConfig and migrationConfigOnce via resetMigrationConfig()
 	patterns := []struct {
 		desc           string
 		setupFunc      func()
