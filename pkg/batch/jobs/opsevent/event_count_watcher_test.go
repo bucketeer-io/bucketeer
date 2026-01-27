@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	envclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	eccmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/client/mock"
+	ftcachermock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher/mock"
 	ftmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
@@ -42,7 +43,7 @@ import (
 )
 
 func TestNewEvaluationRealtimeCountPersister(t *testing.T) {
-	g := NewEventCountWatcher(nil, nil, nil, nil, nil, nil)
+	g := NewEventCountWatcher(nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &eventCountWatcher{}, g)
 }
 
@@ -56,6 +57,7 @@ func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller)
 		eventCounterClient: eccmock.NewMockClient(mockController),
 		featureClient:      ftmock.NewMockClient(mockController),
 		autoOpsExecutor:    executormock.NewMockAutoOpsExecutor(mockController),
+		ftCacher:           ftcachermock.NewMockFeatureFlagCacher(mockController),
 		logger:             logger,
 		opts: &jobs.Options{
 			Timeout: time.Minute,
@@ -298,6 +300,9 @@ func TestRunCountWatcher(t *testing.T) {
 
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
 					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				// Cache should be refreshed after successful execution
+				w.ftCacher.(*ftcachermock.MockFeatureFlagCacher).
+					EXPECT().RefreshEnvironmentCache(gomock.Any(), "ns0").Return(nil)
 			},
 			expectedErr: nil,
 		},
