@@ -106,12 +106,10 @@ export const EvaluationChart = forwardRef(
         tooltip: {
           callbacks: {
             title: tooltipItems => {
-              const dateString = tooltipItems[0].label;
-
-              const date = new Date(dateString);
-              if (date instanceof Date) {
+              const timestamp = tooltipItems[0].parsed.x;
+              if (timestamp) {
                 return formatLongDateTime({
-                  value: String(date.getTime() / 1000)
+                  value: String(timestamp / 1000)
                 });
               }
               return tooltipItems[0].label;
