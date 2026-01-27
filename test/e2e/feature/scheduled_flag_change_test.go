@@ -378,6 +378,60 @@ func TestCreateScheduledFlagChangeWithMultipleChanges(t *testing.T) {
 	assert.GreaterOrEqual(t, len(resp.ScheduledFlagChange.ChangeSummaries), 3)
 }
 
+func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create a feature first
+	featureID := newFeatureID(t)
+	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create multiple pending scheduled flag changes
+	createResp1 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
+		Enabled: wrapperspb.Bool(true),
+	})
+	createResp2 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
+		Enabled: wrapperspb.Bool(false),
+	})
+
+	// Verify they are pending
+	getResp1 := getScheduledFlagChange(t, client, createResp1.ScheduledFlagChange.Id)
+	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, getResp1.ScheduledFlagChange.Status)
+	getResp2 := getScheduledFlagChange(t, client, createResp2.ScheduledFlagChange.Id)
+	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, getResp2.ScheduledFlagChange.Status)
+
+	// Archive the feature
+	archiveReq := &featureproto.ArchiveFeatureRequest{
+		Id:            featureID,
+		Command:       &featureproto.ArchiveFeatureCommand{},
+		EnvironmentId: *environmentID,
+	}
+	_, err := client.ArchiveFeature(ctx, archiveReq)
+	require.NoError(t, err)
+
+	// Verify both scheduled changes are now CANCELLED
+	getResp1After := getScheduledFlagChange(t, client, createResp1.ScheduledFlagChange.Id)
+	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED, getResp1After.ScheduledFlagChange.Status)
+
+	getResp2After := getScheduledFlagChange(t, client, createResp2.ScheduledFlagChange.Id)
+	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED, getResp2After.ScheduledFlagChange.Status)
+
+	// Verify listing pending returns none for this feature
+	listReq := &featureproto.ListScheduledFlagChangesRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     featureID,
+		Statuses:      []featureproto.ScheduledFlagChangeStatus{featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING},
+		PageSize:      10,
+	}
+	listResp, err := client.ListScheduledFlagChanges(ctx, listReq)
+	require.NoError(t, err)
+	assert.Empty(t, listResp.ScheduledFlagChanges, "No pending scheduled changes should exist after archiving")
+}
+
 // Helper functions
 
 func createScheduledFlagChange(
