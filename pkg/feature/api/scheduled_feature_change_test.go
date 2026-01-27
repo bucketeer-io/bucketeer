@@ -26,6 +26,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -114,12 +115,15 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 
 	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
 
+	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
 
 	feature := &domain.Feature{
 		Feature: &featureproto.Feature{
 			Id:      "feature-id",
+			Name:    "Test Feature",
 			Version: 1,
 			Variations: []*featureproto.Variation{
 				{Id: "var-1", Name: "Variation 1", Value: "true"},
@@ -128,9 +132,17 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 		},
 	}
 
+	// Mock transaction - execute the function passed to it
+	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
+			return f(ctx, nil)
+		},
+	)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
 	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
 	scheduledStorage.EXPECT().CreateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+	// Mock domain event publishing
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
 	ctx := createContextWithToken()
 	req := &featureproto.CreateScheduledFlagChangeRequest{
@@ -255,7 +267,9 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
 	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
 
 	sfc := &domain.ScheduledFlagChange{
 		ScheduledFlagChange: &featureproto.ScheduledFlagChange{
@@ -266,13 +280,23 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 		},
 	}
 
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:   "feature-id",
+			Name: "Test Feature",
+		},
+	}
+
 	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
 			return f(ctx, nil)
 		},
 	)
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(sfc, nil)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
 	scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+	// Mock domain event publishing
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
 	ctx := createContextWithToken()
 	req := &featureproto.DeleteScheduledFlagChangeRequest{

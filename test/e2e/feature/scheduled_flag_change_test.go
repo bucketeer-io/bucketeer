@@ -16,6 +16,7 @@ package feature
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,7 +26,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -432,7 +437,127 @@ func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
 	assert.Empty(t, listResp.ScheduledFlagChanges, "No pending scheduled changes should exist after archiving")
 }
 
+func TestScheduledFlagChangeAuditLogs(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	auditLogClient := newAuditLogClient(t)
+	defer auditLogClient.Close()
+
+	// Record start time for filtering audit logs
+	startTime := time.Now().Unix() - 60 // 60 seconds buffer for clock skew
+
+	// Create a feature first
+	featureID := newFeatureID(t)
+	createFeatureNoCmd(t, featureClient, newCreateFeatureReq(featureID))
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// 1. Create a scheduled flag change
+	createResp := createScheduledFlagChange(t, featureClient, featureID, &featureproto.ScheduledChangePayload{
+		Enabled: wrapperspb.Bool(true),
+	})
+	scheduleID := createResp.ScheduledFlagChange.Id
+	t.Logf("Created scheduled flag change with ID: %s", scheduleID)
+
+	// 2. Update the scheduled flag change
+	newScheduledAt := time.Now().Add(2 * time.Hour).Unix()
+	updateReq := &featureproto.UpdateScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		Id:            scheduleID,
+		ScheduledAt:   wrapperspb.Int64(newScheduledAt),
+		Comment:       wrapperspb.String("Updated schedule time"),
+	}
+	_, err := featureClient.UpdateScheduledFlagChange(ctx, updateReq)
+	require.NoError(t, err)
+	t.Log("Updated scheduled flag change")
+
+	// 3. Delete (cancel) the scheduled flag change
+	deleteReq := &featureproto.DeleteScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		Id:            scheduleID,
+	}
+	_, err = featureClient.DeleteScheduledFlagChange(ctx, deleteReq)
+	require.NoError(t, err)
+	t.Log("Cancelled scheduled flag change")
+
+	// Wait for audit logs to be processed
+	time.Sleep(5 * time.Second)
+
+	// 4. List audit logs and verify all three events are recorded
+	toTime := time.Now().Unix() + 60 // 60 seconds buffer
+
+	// Search for audit logs with SCHEDULED_FLAG_CHANGE entity type
+	var foundCreated, foundUpdated, foundCancelled bool
+	maxRetries := 30
+	for retry := 0; retry < maxRetries; retry++ {
+		time.Sleep(2 * time.Second)
+
+		listResp, err := auditLogClient.ListAuditLogs(ctx, &auditlog.ListAuditLogsRequest{
+			EnvironmentId:  *environmentID,
+			EntityType:     wrapperspb.Int32(int32(eventproto.Event_SCHEDULED_FLAG_CHANGE)),
+			PageSize:       50,
+			Cursor:         "0",
+			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
+			OrderDirection: auditlog.ListAuditLogsRequest_DESC,
+			From:           startTime,
+			To:             toTime,
+		})
+		if err != nil {
+			t.Logf("Retry %d: Failed to list audit logs: %v", retry+1, err)
+			continue
+		}
+
+		for _, log := range listResp.AuditLogs {
+			if log.EntityId == scheduleID {
+				switch log.Type {
+				case eventproto.Event_SCHEDULED_FLAG_CHANGE_CREATED:
+					foundCreated = true
+					t.Logf("Found CREATED audit log: %s", log.Id)
+				case eventproto.Event_SCHEDULED_FLAG_CHANGE_UPDATED:
+					foundUpdated = true
+					t.Logf("Found UPDATED audit log: %s", log.Id)
+				case eventproto.Event_SCHEDULED_FLAG_CHANGE_CANCELLED:
+					foundCancelled = true
+					t.Logf("Found CANCELLED audit log: %s", log.Id)
+				}
+			}
+		}
+
+		if foundCreated && foundUpdated && foundCancelled {
+			t.Logf("All audit logs found after %d retries", retry+1)
+			break
+		}
+	}
+
+	// Assert all events were found
+	assert.True(t, foundCreated, "SCHEDULED_FLAG_CHANGE_CREATED audit log should exist")
+	assert.True(t, foundUpdated, "SCHEDULED_FLAG_CHANGE_UPDATED audit log should exist")
+	assert.True(t, foundCancelled, "SCHEDULED_FLAG_CHANGE_CANCELLED audit log should exist")
+}
+
 // Helper functions
+
+func newAuditLogClient(t *testing.T) auditlogclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := auditlogclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create auditlog client:", err)
+	}
+	return client
+}
 
 func createScheduledFlagChange(
 	t *testing.T,
