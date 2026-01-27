@@ -130,7 +130,11 @@ func (s *ScheduledFlagChange) IsDue() bool {
 	return s.ScheduledAt <= time.Now().Unix()
 }
 
-// DetermineCategory computes the category based on the payload content
+// DetermineCategory computes the category based on the payload content.
+// Note: ResetSamplingSeed is intentionally excluded from category calculation
+// because it's a modifier that can be used from both Targeting and Variations tabs.
+// This prevents confusing MIXED categorization when users make targeting/variation
+// changes and also check "Reset Sampling Seed" on the same tab.
 func (s *ScheduledFlagChange) DetermineCategory() proto.ScheduledChangeCategory {
 	if s.Payload == nil {
 		return proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_UNSPECIFIED
@@ -144,12 +148,13 @@ func (s *ScheduledFlagChange) DetermineCategory() proto.ScheduledChangeCategory 
 	hasVariations := len(s.Payload.VariationChanges) > 0 ||
 		s.Payload.OffVariation != nil
 
+	// ResetSamplingSeed is excluded from hasSettings because it's a modifier
+	// that accompanies targeting/variation changes, not a standalone setting
 	hasSettings := s.Payload.Enabled != nil ||
 		s.Payload.Name != nil ||
 		s.Payload.Description != nil ||
 		len(s.Payload.TagChanges) > 0 ||
 		s.Payload.Archived != nil ||
-		s.Payload.ResetSamplingSeed ||
 		s.Payload.Maintainer != nil
 
 	categoryCount := 0
@@ -173,6 +178,11 @@ func (s *ScheduledFlagChange) DetermineCategory() proto.ScheduledChangeCategory 
 		return proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_VARIATIONS
 	}
 	if hasSettings {
+		return proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_SETTINGS
+	}
+
+	// If only ResetSamplingSeed is set (no other changes), treat as SETTINGS
+	if s.Payload.ResetSamplingSeed {
 		return proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_SETTINGS
 	}
 

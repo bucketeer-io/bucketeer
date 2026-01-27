@@ -417,6 +417,63 @@ func TestScheduledFlagChangeDetermineCategory(t *testing.T) {
 			},
 			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_MIXED,
 		},
+		// ResetSamplingSeed tests - it should NOT cause MIXED when combined with targeting/variations
+		{
+			desc: "settings: reset sampling seed alone",
+			payload: &proto.ScheduledChangePayload{
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_SETTINGS,
+		},
+		{
+			desc: "targeting: rule changes + reset sampling seed (should NOT be MIXED)",
+			payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{ChangeType: proto.ChangeType_CREATE},
+				},
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_TARGETING,
+		},
+		{
+			desc: "targeting: default strategy + reset sampling seed (should NOT be MIXED)",
+			payload: &proto.ScheduledChangePayload{
+				DefaultStrategy:   &proto.Strategy{},
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_TARGETING,
+		},
+		{
+			desc: "variations: variation changes + reset sampling seed (should NOT be MIXED)",
+			payload: &proto.ScheduledChangePayload{
+				VariationChanges: []*proto.VariationChange{
+					{ChangeType: proto.ChangeType_UPDATE},
+				},
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_VARIATIONS,
+		},
+		{
+			desc: "variations: off variation + reset sampling seed (should NOT be MIXED)",
+			payload: &proto.ScheduledChangePayload{
+				OffVariation:      wrapperspb.String("var-1"),
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_VARIATIONS,
+		},
+		{
+			desc: "mixed: targeting + variations + reset sampling seed",
+			payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{ChangeType: proto.ChangeType_CREATE},
+				},
+				VariationChanges: []*proto.VariationChange{
+					{ChangeType: proto.ChangeType_UPDATE},
+				},
+				ResetSamplingSeed: true,
+			},
+			expected: proto.ScheduledChangeCategory_SCHEDULED_CHANGE_CATEGORY_MIXED,
+		},
 	}
 
 	for _, p := range patterns {
