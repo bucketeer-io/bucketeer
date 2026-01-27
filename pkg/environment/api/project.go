@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -224,43 +225,7 @@ func (s *EnvironmentService) CreateProject(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createProjectNoCommand(ctx, req, editor)
-	}
 	if err := validateCreateProjectRequest(req); err != nil {
-		return nil, err
-	}
-	name := strings.TrimSpace(req.Command.Name)
-	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	project, err := domain.NewProject(
-		name,
-		urlCode,
-		req.Command.Description,
-		editor.Email,
-		req.Command.OrganizationId,
-		false,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create project",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, err
-	}
-	if err := s.createProject(ctx, req.Command, project, editor); err != nil {
-		return nil, err
-	}
-	return &environmentproto.CreateProjectResponse{Project: project.Project}, nil
-}
-
-func (s *EnvironmentService) createProjectNoCommand(
-	ctx context.Context,
-	req *environmentproto.CreateProjectRequest,
-	editor *eventproto.Editor,
-) (*environmentproto.CreateProjectResponse, error) {
-	if err := validateCreateProjectRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	newProj, err := domain.NewProject(
@@ -294,9 +259,7 @@ func (s *EnvironmentService) createProjectNoCommand(
 	}, nil
 }
 
-func validateCreateProjectRequestNoCommand(
-	req *environmentproto.CreateProjectRequest,
-) error {
+func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest) error {
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		return statusProjectNameRequired.Err()
@@ -359,24 +322,6 @@ func (s *EnvironmentService) newCreateDomainEvent(
 		return nil, err
 	}
 	return event, nil
-}
-
-func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	name := strings.TrimSpace(req.Command.Name)
-	if name == "" {
-		return statusProjectNameRequired.Err()
-	}
-	if len(name) > maxProjectNameLength {
-		return statusInvalidProjectName.Err()
-	}
-	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	if !projectUrlCodeRegex.MatchString(urlCode) {
-		return statusInvalidProjectUrlCode.Err()
-	}
-	return nil
 }
 
 func (s *EnvironmentService) createProject(
@@ -459,13 +404,10 @@ func (s *EnvironmentService) CreateTrialProject(
 		)
 		return nil, err
 	}
-	createOrgCmd := &environmentproto.CreateOrganizationCommand{
-		Name:        organization.Name,
-		UrlCode:     organization.UrlCode,
-		Description: organization.Description,
-		IsTrial:     true,
-	}
-	if err = s.createOrganization(ctx, createOrgCmd, organization, editor); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		return s.orgStorage.CreateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
 		s.logger.Error(
 			"Failed to save organization",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -473,6 +415,33 @@ func (s *EnvironmentService) CreateTrialProject(
 			)...,
 		)
 		return nil, err
+	}
+	// CreateTrialProject creates trial Organization, use organization event
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_ORGANIZATION,
+		organization.Id,
+		eventproto.Event_ORGANIZATION_CREATED,
+		&eventproto.OrganizationCreatedEvent{
+			Id:          organization.Id,
+			Name:        organization.Name,
+			UrlCode:     organization.UrlCode,
+			OwnerEmail:  organization.OwnerEmail,
+			Description: organization.Description,
+			Disabled:    organization.Disabled,
+			Archived:    organization.Archived,
+			Trial:       organization.Trial,
+			CreatedAt:   organization.CreatedAt,
+			UpdatedAt:   organization.UpdatedAt,
+		},
+		organization,
+		nil,
+	)
+	if err != nil {
+		return nil, statusInternal.Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		return nil, statusInternal.Err()
 	}
 	s.logger.Info(
 		`Trial organization is created at the same time as Project.
@@ -549,18 +518,48 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	}
 	for _, name := range envNames {
 		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
-		createEnvCmdV2 := &environmentproto.CreateEnvironmentV2Command{
-			Name:        name,
-			UrlCode:     envURLCode,
-			ProjectId:   project.Id,
-			Description: "",
-		}
 		envV2, err := domain.NewEnvironmentV2(name, envURLCode, "", project.Id, project.OrganizationId, false, s.logger)
 		if err != nil {
 			return err
 		}
-		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor); err != nil {
-			return err
+		// Create environment directly without command pattern
+		err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+			event, err := domainevent.NewAdminEvent(
+				editor,
+				eventproto.Event_ENVIRONMENT,
+				envV2.Id,
+				eventproto.Event_ENVIRONMENT_V2_CREATED,
+				&eventproto.EnvironmentV2CreatedEvent{
+					Id:             envV2.Id,
+					Name:           envV2.Name,
+					UrlCode:        envV2.UrlCode,
+					Description:    envV2.Description,
+					ProjectId:      envV2.ProjectId,
+					Archived:       envV2.Archived,
+					RequireComment: envV2.RequireComment,
+					CreatedAt:      envV2.CreatedAt,
+					UpdatedAt:      envV2.UpdatedAt,
+				},
+				envV2.EnvironmentV2,
+				nil,
+			)
+			if err != nil {
+				return err
+			}
+			if err := s.publisher.Publish(ctx, event); err != nil {
+				return err
+			}
+			return s.environmentStorage.CreateEnvironmentV2(ctxWithTx, envV2)
+		})
+		if err != nil {
+			if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
+				return statusEnvironmentAlreadyExists.Err()
+			}
+			s.logger.Error(
+				"Failed to create trial environment",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return api.NewGRPCStatus(err).Err()
 		}
 		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
 			EnvironmentId: envV2.Id,
@@ -585,26 +584,7 @@ func (s *EnvironmentService) UpdateProject(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
-	if isNoUpdatePushCommand(req) {
-		if err := validateUpdateProjectRequestNoCommand(req); err != nil {
-			return nil, err
-		}
-		project, err := s.getProject(ctx, req.Id)
-		if err != nil {
-			return nil, err
-		}
-		editor, err := s.checkOrganizationRole(
-			ctx,
-			project.OrganizationId,
-			accountproto.AccountV2_Role_Organization_ADMIN,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return s.updateProjectNoCommand(ctx, req, project, editor)
-	}
-	commands := getUpdateProjectCommands(req)
-	if err := validateUpdateProjectRequest(req.Id, commands); err != nil {
+	if err := validateUpdateProjectRequest(req); err != nil {
 		return nil, err
 	}
 	project, err := s.getProject(ctx, req.Id)
@@ -619,57 +599,8 @@ func (s *EnvironmentService) UpdateProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, commands...); err != nil {
-		return nil, err
-	}
-	return &environmentproto.UpdateProjectResponse{}, nil
-}
-
-func getUpdateProjectCommands(req *environmentproto.UpdateProjectRequest) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.ChangeDescriptionCommand != nil {
-		commands = append(commands, req.ChangeDescriptionCommand)
-	}
-	if req.RenameCommand != nil {
-		commands = append(commands, req.RenameCommand)
-	}
-	return commands
-}
-
-func isNoUpdatePushCommand(req *environmentproto.UpdateProjectRequest) bool {
-	return req.RenameCommand == nil &&
-		req.ChangeDescriptionCommand == nil
-}
-
-func validateUpdateProjectRequest(id string, commands []command.Command) error {
-	if len(commands) == 0 {
-		return statusNoCommand.Err()
-	}
-	if id == "" {
-		return statusProjectIDRequired.Err()
-	}
-	for _, cmd := range commands {
-		if c, ok := cmd.(*environmentproto.RenameProjectCommand); ok {
-			name := strings.TrimSpace(c.Name)
-			if name == "" {
-				return statusProjectNameRequired.Err()
-			}
-			if len(name) > maxProjectNameLength {
-				return statusInvalidProjectName.Err()
-			}
-		}
-	}
-	return nil
-}
-
-func (s *EnvironmentService) updateProjectNoCommand(
-	ctx context.Context,
-	req *environmentproto.UpdateProjectRequest,
-	project *domain.Project,
-	editor *eventproto.Editor,
-) (*environmentproto.UpdateProjectResponse, error) {
 	var domainEvent *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
 		updated, err := project.Update(
 			req.Name,
@@ -699,7 +630,7 @@ func (s *EnvironmentService) updateProjectNoCommand(
 	return &environmentproto.UpdateProjectResponse{}, nil
 }
 
-func validateUpdateProjectRequestNoCommand(
+func validateUpdateProjectRequest(
 	req *environmentproto.UpdateProjectRequest,
 ) error {
 	if req.Id == "" {
@@ -761,37 +692,6 @@ func (s *EnvironmentService) newUpdateDomainEvent(
 	return event, nil
 }
 
-func (s *EnvironmentService) updateProject(
-	ctx context.Context,
-	project *domain.Project,
-	editor *eventproto.Editor,
-	commands ...command.Command,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
-		if err != nil {
-			return err
-		}
-		for _, command := range commands {
-			if err := handler.Handle(ctx, command); err != nil {
-				return err
-			}
-		}
-		return s.projectStorage.UpdateProject(contextWithTx, project)
-	})
-	if err != nil {
-		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
-			return statusProjectNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to update project",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
 func (s *EnvironmentService) EnableProject(
 	ctx context.Context,
 	req *environmentproto.EnableProjectRequest,
@@ -811,16 +711,55 @@ func (s *EnvironmentService) EnableProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2es.NewProjectStorage(tx)
+		prev := &domain.Project{}
+		if err := copier.Copy(prev, project); err != nil {
+			return err
+		}
+		project.Enable()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_PROJECT,
+			project.Id,
+			eventproto.Event_PROJECT_ENABLED,
+			&eventproto.ProjectEnabledEvent{
+				Id: project.Id,
+			},
+			project,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return storage.UpdateProject(ctxWithTx, project)
+	})
+	if err != nil {
+		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
+			return nil, statusProjectNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to enable project",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish enable project event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.EnableProjectResponse{}, nil
 }
 
 func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusProjectIDRequired.Err()
 	}
@@ -846,16 +785,55 @@ func (s *EnvironmentService) DisableProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2es.NewProjectStorage(tx)
+		prev := &domain.Project{}
+		if err := copier.Copy(prev, project); err != nil {
+			return err
+		}
+		project.Disable()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_PROJECT,
+			project.Id,
+			eventproto.Event_PROJECT_DISABLED,
+			&eventproto.ProjectDisabledEvent{
+				Id: project.Id,
+			},
+			project,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return storage.UpdateProject(ctxWithTx, project)
+	})
+	if err != nil {
+		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
+			return nil, statusProjectNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to disable project",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish disable project event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.DisableProjectResponse{}, nil
 }
 
 func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusProjectIDRequired.Err()
 	}
@@ -881,8 +859,50 @@ func (s *EnvironmentService) ConvertTrialProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, project, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2es.NewProjectStorage(tx)
+		prev := &domain.Project{}
+		if err := copier.Copy(prev, project); err != nil {
+			return err
+		}
+		project.ConvertTrial()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_PROJECT,
+			project.Id,
+			eventproto.Event_PROJECT_TRIAL_CONVERTED,
+			&eventproto.ProjectTrialConvertedEvent{
+				Id: project.Id,
+			},
+			project,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return storage.UpdateProject(ctxWithTx, project)
+	})
+	if err != nil {
+		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
+			return nil, statusProjectNotFound.Err()
+		}
+		s.logger.Error(
+			"Failed to convert trial project",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish convert trial project event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ConvertTrialProjectResponse{}, nil
 }
@@ -890,9 +910,6 @@ func (s *EnvironmentService) ConvertTrialProject(
 func validateConvertTrialProjectRequest(
 	req *environmentproto.ConvertTrialProjectRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusProjectIDRequired.Err()
 	}

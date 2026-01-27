@@ -39,7 +39,6 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestGetProjectMySQL(t *testing.T) {
@@ -173,147 +172,6 @@ func TestListProjectsMySQL(t *testing.T) {
 }
 
 func TestCreateProjectMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithToken(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	projExpected, err := domain.NewProject(
-		"name",
-		"url-code",
-		"description",
-		"email",
-		"organizationID",
-		false,
-	)
-	require.NoError(t, err)
-
-	patterns := []struct {
-		desc        string
-		setup       func(*EnvironmentService)
-		req         *proto.CreateProjectRequest
-		expected    *proto.Project
-		expectedErr error
-	}{
-		{
-			desc:  "err: ErrInvalidProjectName: empty name",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: ""},
-			},
-			expectedErr: statusProjectNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectName: only space",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "    "},
-			},
-			expectedErr: statusProjectNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectName: max name length exceeded",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: strings.Repeat("a", 51)},
-			},
-			expectedErr: statusInvalidProjectName.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "CODE"},
-			},
-			expectedErr: statusInvalidProjectUrlCode.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
-			},
-			expectedErr: statusInvalidProjectUrlCode.Err(),
-		},
-		{
-			desc: "err: ErrProjectAlreadyExists: duplicate id",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectAlreadyExists)
-			},
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-0", UrlCode: "id-0"},
-			},
-			expectedErr: statusProjectAlreadyExists.Err(),
-		},
-		{
-			desc: "err: ErrInternal",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
-			},
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-1", UrlCode: "id-1"},
-			},
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().CreateProject(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{
-					OrganizationId: "organization-id",
-					Name:           projExpected.Name,
-					UrlCode:        projExpected.UrlCode,
-					Description:    projExpected.Description,
-				},
-			},
-			expected:    projExpected.Project,
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			service := newEnvironmentService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			resp, err := service.CreateProject(ctx, p.req)
-			if resp != nil {
-				assert.True(t, len(resp.Project.Name) > 0)
-				assert.Equal(t, p.expected.Name, resp.Project.Name)
-				assert.Equal(t, p.expected.UrlCode, resp.Project.UrlCode)
-				assert.Equal(t, p.expected.Description, resp.Project.Description)
-				assert.Equal(t, p.expected.CreatorEmail, resp.Project.CreatorEmail)
-				assert.True(t, resp.Project.CreatedAt > 0)
-				assert.True(t, resp.Project.UpdatedAt > 0)
-				assert.Equal(t, p.expected.Disabled, resp.Project.Disabled)
-				assert.Equal(t, p.expected.Trial, resp.Project.Trial)
-			}
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestCreateProjectNoCommand(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -714,132 +572,6 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectNoCommand(t *testing.T) {
-	// This test focuses on internal logic (database operations, domain events)
-	// and assumes inputs are already validated by the API layer (UpdateProject).
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	// Set up a context with token and language metadata.
-	ctx := createContextWithToken(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	editor := &eventproto.Editor{
-		Email: "test@bucketer.io",
-	}
-
-	// Create a test project for the internal method tests
-	testProject := &domain.Project{
-		Project: &environmentproto.Project{
-			Id:             "project-id",
-			Name:           "Test Project",
-			Description:    "Test Description",
-			OrganizationId: "org-1",
-		},
-	}
-
-	// Define test patterns.
-	patterns := []struct {
-		ctx         context.Context
-		desc        string
-		setup       func(*EnvironmentService)
-		req         *environmentproto.UpdateProjectRequest
-		expected    *environmentproto.UpdateProjectResponse
-		expectedErr error
-	}{
-		{
-			ctx:  ctx,
-			desc: "err: project not found",
-			setup: func(s *EnvironmentService) {
-				// Simulate that the transaction returns an error from GetProject.
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectNotFound)
-			},
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "nonexistent",
-				Name:        &wrappers.StringValue{Value: "ValidName"},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: statusProjectNotFound.Err(),
-		},
-		{
-			ctx:  ctx,
-			desc: "err: update failed",
-			setup: func(s *EnvironmentService) {
-				// Simulate an error during the transaction (e.g. when calling proj.Update).
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
-					return pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "update failed")
-				})
-			},
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: "ValidName"},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "update failed")).Err(),
-		},
-		{
-			ctx:  ctx,
-			desc: "err: publish domain event failed",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-				// Simulate a failure when publishing the update event.
-				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed"))
-			},
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: "ValidName"},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish failed")).Err(),
-		},
-		{
-			ctx:  ctx,
-			desc: "success",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &environmentproto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: "ValidName"},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expected: &environmentproto.UpdateProjectResponse{},
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			service := newEnvironmentService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			resp, err := service.updateProjectNoCommand(p.ctx, p.req, testProject, editor)
-			if resp != nil {
-				// For a successful update, compare the expected response.
-				assert.Equal(t, p.expected, resp)
-			} else {
-				assert.Equal(t, p.expectedErr, err)
-			}
-		})
-	}
-}
-
 func TestUpdateProjectMySQL(t *testing.T) {
 	// This test covers API-level validation and security checks for UpdateProject.
 	t.Parallel()
@@ -861,7 +593,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
-				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
+				Id:          "",
+				Description: &wrappers.StringValue{Value: "desc"},
 			},
 			expectedErr: statusProjectIDRequired.Err(),
 		},
@@ -869,13 +602,13 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidProjectName",
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
-				Id:            "id-0",
-				RenameCommand: &proto.RenameProjectCommand{Name: strings.Repeat("a", 51)},
+				Id:   "id-0",
+				Name: &wrappers.StringValue{Value: strings.Repeat("a", 51)},
 			},
 			expectedErr: statusInvalidProjectName.Err(),
 		},
 		{
-			desc:  "err: empty name (no-command path)",
+			desc:  "err: empty name",
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				Id:          "project-id",
@@ -885,16 +618,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			expectedErr: statusProjectNameRequired.Err(),
 		},
 		{
-			desc:  "err: max name length exceeded (no-command path)",
-			setup: nil,
-			req: &proto.UpdateProjectRequest{
-				Id:          "project-id",
-				Name:        &wrappers.StringValue{Value: strings.Repeat("a", 51)},
-				Description: &wrappers.StringValue{Value: "updated description"},
-			},
-			expectedErr: statusInvalidProjectName.Err(),
-		},
-		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
@@ -902,8 +625,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.UpdateProjectRequest{
-				Id:                       "id-0",
-				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
+				Id:          "id-0",
+				Description: &wrappers.StringValue{Value: "desc"},
 			},
 			expectedErr: statusProjectNotFound.Err(),
 		},
@@ -920,8 +643,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.UpdateProjectRequest{
-				Id:                       "id-1",
-				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
+				Id:          "id-1",
+				Description: &wrappers.StringValue{Value: "desc"},
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -935,19 +658,14 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &proto.UpdateProjectRequest{
-				Id:                       "id-1",
-				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
+				Id:          "id-1",
+				Description: &wrappers.StringValue{Value: "desc"},
 			},
 			expectedErr: nil,
 		},
@@ -981,18 +699,10 @@ func TestEnableProjectMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.EnableProjectRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.EnableProjectRequest{
-				Command: &proto.EnableProjectCommand{},
+				Id: "",
 			},
 			expectedErr: statusProjectIDRequired.Err(),
 		},
@@ -1004,8 +714,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.EnableProjectRequest{
-				Id:      "id-0",
-				Command: &proto.EnableProjectCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusProjectNotFound.Err(),
 		},
@@ -1022,8 +731,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.EnableProjectRequest{
-				Id:      "id-1",
-				Command: &proto.EnableProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -1037,17 +745,11 @@ func TestEnableProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.EnableProjectRequest{
-				Id:      "id-1",
-				Command: &proto.EnableProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -1081,18 +783,10 @@ func TestDisableProjectMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.DisableProjectRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.DisableProjectRequest{
-				Command: &proto.DisableProjectCommand{},
+				Id: "",
 			},
 			expectedErr: statusProjectIDRequired.Err(),
 		},
@@ -1104,8 +798,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.DisableProjectRequest{
-				Id:      "id-0",
-				Command: &proto.DisableProjectCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusProjectNotFound.Err(),
 		},
@@ -1122,8 +815,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.DisableProjectRequest{
-				Id:      "id-1",
-				Command: &proto.DisableProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -1137,17 +829,11 @@ func TestDisableProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.DisableProjectRequest{
-				Id:      "id-1",
-				Command: &proto.DisableProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -1181,18 +867,10 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.ConvertTrialProjectRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.ConvertTrialProjectRequest{
-				Command: &proto.ConvertTrialProjectCommand{},
+				Id: "",
 			},
 			expectedErr: statusProjectIDRequired.Err(),
 		},
@@ -1204,8 +882,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.ConvertTrialProjectRequest{
-				Id:      "id-0",
-				Command: &proto.ConvertTrialProjectCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusProjectNotFound.Err(),
 		},
@@ -1222,8 +899,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.ConvertTrialProjectRequest{
-				Id:      "id-1",
-				Command: &proto.ConvertTrialProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -1237,17 +913,11 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().UpdateProject(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.ConvertTrialProjectRequest{
-				Id:      "id-1",
-				Command: &proto.ConvertTrialProjectCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -1313,8 +983,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{
-					Id:      "project-id",
-					Command: &proto.EnableProjectCommand{},
+					Id: "project-id",
 				})
 				return err
 			},
@@ -1343,8 +1012,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{
-					Id:      "project-id",
-					Command: &proto.DisableProjectCommand{},
+					Id: "project-id",
 				})
 				return err
 			},
@@ -1373,41 +1041,8 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
-					Id:            "project-id",
-					RenameCommand: &proto.RenameProjectCommand{Name: "New Name"},
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "UpdateProjectNoCommand",
-			setup: func(s *EnvironmentService) {
-				// Mock project fetch to succeed so we can reach the permission check
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), "project-id",
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
-				}, nil)
-				// Mock account client call to return permission denied
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				name := "Updated Name"
-				description := "Updated Description"
-				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
-					Id:          "project-id",
-					Name:        &wrapperspb.StringValue{Value: name},
-					Description: &wrapperspb.StringValue{Value: description},
+					Id:   "project-id",
+					Name: &wrapperspb.StringValue{Value: "New Name"},
 				})
 				return err
 			},
@@ -1436,8 +1071,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			},
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.ConvertTrialProject(ctx, &proto.ConvertTrialProjectRequest{
-					Id:      "project-id",
-					Command: &proto.ConvertTrialProjectCommand{},
+					Id: "project-id",
 				})
 				return err
 			},

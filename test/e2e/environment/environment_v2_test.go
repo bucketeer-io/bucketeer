@@ -113,35 +113,13 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	id := getEnvironmentID(t)
 	newDesc := fmt.Sprintf("This environment is for local development (Updated at %d)", time.Now().Unix())
 	_, err := c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
-		Id:                       id,
-		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionEnvironmentV2Command{Description: newDesc},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Environment.Id != id {
-		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
-	}
-	if getResp.Environment.Name != environmentName {
-		t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
-	}
-	if getResp.Environment.Description != newDesc {
-		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
-	}
-
-	newDesc = fmt.Sprintf("This environment is for local development (Updated at %d with no command)", time.Now().Unix())
-	_, err = c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
 		Id:          id,
 		Description: wrapperspb.String(newDesc),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	getResp, err = c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
+	getResp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
 	if err != nil {
 		t.Fatal(err)
 	}

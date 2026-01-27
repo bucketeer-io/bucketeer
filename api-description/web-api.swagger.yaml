@@ -10592,78 +10592,32 @@ definitions:
       newVersion:
         type: integer
         format: int32
-  environmentArchiveEnvironmentV2Command:
-    type: object
   environmentArchiveEnvironmentV2Request:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentArchiveEnvironmentV2Command'
   environmentArchiveEnvironmentV2Response:
-    type: object
-  environmentArchiveOrganizationCommand:
     type: object
   environmentArchiveOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentArchiveOrganizationCommand'
   environmentArchiveOrganizationResponse:
-    type: object
-  environmentChangeDescriptionEnvironmentV2Command:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeDescriptionOrganizationCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeDescriptionProjectCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeNameOrganizationCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentChangeOwnerEmailOrganizationCommand:
-    type: object
-    properties:
-      ownerEmail:
-        type: string
-  environmentChangeRequireCommentCommand:
-    type: object
-    properties:
-      requireComment:
-        type: boolean
-  environmentConvertTrialOrganizationCommand:
     type: object
   environmentConvertTrialOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentConvertTrialOrganizationCommand'
   environmentConvertTrialOrganizationResponse:
-    type: object
-  environmentConvertTrialProjectCommand:
     type: object
   environmentConvertTrialProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentConvertTrialProjectCommand'
   environmentConvertTrialProjectResponse:
     type: object
   environmentCreateDemoOrganizationRequest:
@@ -10683,26 +10637,9 @@ definitions:
     properties:
       organization:
         $ref: '#/definitions/bucketeerenvironmentOrganization'
-  environmentCreateEnvironmentV2Command:
-    type: object
-    properties:
-      name:
-        type: string
-      urlCode:
-        type: string
-      description:
-        type: string
-        title: optional
-      projectId:
-        type: string
-      requireComment:
-        type: boolean
   environmentCreateEnvironmentV2Request:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateEnvironmentV2Command'
-        description: deprecated
       name:
         type: string
       urlCode:
@@ -10722,28 +10659,9 @@ definitions:
     properties:
       environment:
         $ref: '#/definitions/environmentEnvironmentV2'
-  environmentCreateOrganizationCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      urlCode:
-        type: string
-      description:
-        type: string
-        title: optional
-      isTrial:
-        type: boolean
-      isSystemAdmin:
-        type: boolean
-      ownerEmail:
-        type: string
-    title: Deprecated
   environmentCreateOrganizationRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateOrganizationCommand'
       name:
         type: string
       urlCode:
@@ -10765,24 +10683,9 @@ definitions:
     properties:
       Organization:
         $ref: '#/definitions/bucketeerenvironmentOrganization'
-  environmentCreateProjectCommand:
-    type: object
-    properties:
-      organizationId:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-        title: optional
-      urlCode:
-        type: string
   environmentCreateProjectRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateProjectCommand'
-        description: deprecated
       organizationId:
         type: string
       name:
@@ -10830,48 +10733,32 @@ definitions:
       expiry:
         type: string
         format: int64
-  environmentDisableOrganizationCommand:
-    type: object
   environmentDisableOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentDisableOrganizationCommand'
   environmentDisableOrganizationResponse:
-    type: object
-  environmentDisableProjectCommand:
     type: object
   environmentDisableProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentDisableProjectCommand'
   environmentDisableProjectResponse:
-    type: object
-  environmentEnableOrganizationCommand:
     type: object
   environmentEnableOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentEnableOrganizationCommand'
   environmentEnableOrganizationResponse:
-    type: object
-  environmentEnableProjectCommand:
     type: object
   environmentEnableProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentEnableProjectCommand'
   environmentEnableProjectResponse:
     type: object
   environmentEnvironmentV2:
@@ -11098,36 +10985,18 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
-  environmentRenameEnvironmentV2Command:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentRenameProjectCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentUnarchiveEnvironmentV2Command:
-    type: object
   environmentUnarchiveEnvironmentV2Request:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentUnarchiveEnvironmentV2Command'
   environmentUnarchiveEnvironmentV2Response:
-    type: object
-  environmentUnarchiveOrganizationCommand:
     type: object
   environmentUnarchiveOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentUnarchiveOrganizationCommand'
   environmentUnarchiveOrganizationResponse:
     type: object
   environmentUpdateEnvironmentV2Request:
@@ -11135,15 +11004,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/environmentRenameEnvironmentV2Command'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionEnvironmentV2Command'
-        description: deprecated
-      changeRequireCommentCommand:
-        $ref: '#/definitions/environmentChangeRequireCommentCommand'
-        description: deprecated
       name:
         type: string
       description:
@@ -11169,15 +11029,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/environmentChangeNameOrganizationCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionOrganizationCommand'
-        description: deprecated
-      changeOwnerEmailCommand:
-        $ref: '#/definitions/environmentChangeOwnerEmailOrganizationCommand'
-        description: deprecated
       name:
         type: string
       description:
@@ -11191,12 +11042,6 @@ definitions:
     properties:
       id:
         type: string
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionProjectCommand'
-        description: deprecated
-      renameCommand:
-        $ref: '#/definitions/environmentRenameProjectCommand'
-        description: deprecated
       organizationId:
         type: string
         description: deprecated

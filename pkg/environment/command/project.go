@@ -16,7 +16,6 @@ package command
 
 import (
 	"context"
-	"strings"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/jinzhu/copier"
@@ -54,37 +53,11 @@ func NewProjectCommandHandler(
 
 func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
 	switch c := cmd.(type) {
-	case *proto.CreateProjectCommand:
-		return h.create(ctx, c)
 	case *proto.CreateTrialProjectCommand:
 		return h.createTrial(ctx, c)
-	case *proto.ChangeDescriptionProjectCommand:
-		return h.changeDescription(ctx, c)
-	case *proto.RenameProjectCommand:
-		return h.rename(ctx, c)
-	case *proto.EnableProjectCommand:
-		return h.enable(ctx, c)
-	case *proto.DisableProjectCommand:
-		return h.disable(ctx, c)
-	case *proto.ConvertTrialProjectCommand:
-		return h.convertTrial(ctx, c)
 	default:
 		return errUnknownCommand
 	}
-}
-
-func (h *projectCommandHandler) create(ctx context.Context, cmd *proto.CreateProjectCommand) error {
-	return h.send(ctx, eventproto.Event_PROJECT_CREATED, &eventproto.ProjectCreatedEvent{
-		Id:           h.project.Id,
-		Name:         h.project.Name,
-		UrlCode:      h.project.UrlCode,
-		Description:  h.project.Description,
-		Disabled:     h.project.Disabled,
-		Trial:        h.project.Trial,
-		CreatorEmail: h.project.CreatorEmail,
-		CreatedAt:    h.project.CreatedAt,
-		UpdatedAt:    h.project.UpdatedAt,
-	})
 }
 
 func (h *projectCommandHandler) createTrial(ctx context.Context, cmd *proto.CreateTrialProjectCommand) error {
@@ -98,47 +71,6 @@ func (h *projectCommandHandler) createTrial(ctx context.Context, cmd *proto.Crea
 		CreatorEmail: h.project.CreatorEmail,
 		CreatedAt:    h.project.CreatedAt,
 		UpdatedAt:    h.project.UpdatedAt,
-	})
-}
-
-func (h *projectCommandHandler) changeDescription(
-	ctx context.Context,
-	cmd *proto.ChangeDescriptionProjectCommand,
-) error {
-	h.project.ChangeDescription(cmd.Description)
-	return h.send(ctx, eventproto.Event_PROJECT_DESCRIPTION_CHANGED, &eventproto.ProjectDescriptionChangedEvent{
-		Id:          h.project.Id,
-		Description: cmd.Description,
-	})
-}
-
-func (h *projectCommandHandler) rename(ctx context.Context, cmd *proto.RenameProjectCommand) error {
-	newName := strings.TrimSpace(cmd.Name)
-	h.project.Rename(newName)
-	return h.send(ctx, eventproto.Event_PROJECT_RENAMED, &eventproto.ProjectRenamedEvent{
-		Id:   h.project.Id,
-		Name: newName,
-	})
-}
-
-func (h *projectCommandHandler) enable(ctx context.Context, cmd *proto.EnableProjectCommand) error {
-	h.project.Enable()
-	return h.send(ctx, eventproto.Event_PROJECT_ENABLED, &eventproto.ProjectEnabledEvent{
-		Id: h.project.Id,
-	})
-}
-
-func (h *projectCommandHandler) disable(ctx context.Context, cmd *proto.DisableProjectCommand) error {
-	h.project.Disable()
-	return h.send(ctx, eventproto.Event_PROJECT_DISABLED, &eventproto.ProjectDisabledEvent{
-		Id: h.project.Id,
-	})
-}
-
-func (h *projectCommandHandler) convertTrial(ctx context.Context, cmd *proto.ConvertTrialProjectCommand) error {
-	h.project.ConvertTrial()
-	return h.send(ctx, eventproto.Event_PROJECT_TRIAL_CONVERTED, &eventproto.ProjectTrialConvertedEvent{
-		Id: h.project.Id,
 	})
 }
 
