@@ -16,17 +16,20 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
 
 	"go.uber.org/zap"
 
+	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -41,91 +44,130 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		return nil, err
 	}
 
-	// Validate request
+	// Validate request (can be done outside transaction - no DB access)
 	if err := s.validateCreateScheduledFlagChangeRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Get the feature to validate it exists and get its version
-	feature, err := s.featureStorage.GetFeature(ctx, req.FeatureId, req.EnvironmentId)
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			return nil, statusFeatureNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to get feature for scheduled change",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.FeatureId),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
+	var sfc *domain.ScheduledFlagChange
+	var featureName string
 
-	// Validate payload references
-	if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
+	// Use transaction to ensure atomic check-and-create:
+	// - Feature lookup, count check, and create must be atomic to prevent race conditions
+	// - Without transaction, concurrent requests could exceed the max schedules limit
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		// Get the feature to validate it exists and get its version
+		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.FeatureId, req.EnvironmentId)
+		if err != nil {
+			if errors.Is(err, v2fs.ErrFeatureNotFound) {
+				return statusFeatureNotFound.Err()
+			}
+			s.logger.Error(
+				"Failed to get feature for scheduled change",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+		featureName = feature.Name
+
+		// Validate payload references
+		if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
+			return err
+		}
+
+		// Check max schedules per flag limit
+		pendingCount, err := s.countPendingSchedulesForFeature(
+			ctxWithTx,
+			req.FeatureId,
+			req.EnvironmentId,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to count pending schedules",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+		if pendingCount >= maxSchedulesPerFlag {
+			return statusExceededMaxSchedulesPerFlag.Err()
+		}
+
+		// Create the scheduled flag change
+		sfc, err = domain.NewScheduledFlagChange(
+			req.FeatureId,
+			req.EnvironmentId,
+			req.ScheduledAt,
+			req.Timezone,
+			req.Payload,
+			req.Comment,
+			feature.Version,
+			editor.Email,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create scheduled flag change domain object",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+
+		// Set derived fields
+		sfc.Category = sfc.DetermineCategory()
+		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
+
+		// Store the scheduled flag change
+		if err := s.scheduledFlagChangeStorage.CreateScheduledFlagChange(ctxWithTx, sfc); err != nil {
+			if errors.Is(err, v2fs.ErrScheduledFlagChangeAlreadyExists) {
+				return statusAlreadyExists.Err()
+			}
+			s.logger.Error(
+				"Failed to store scheduled flag change",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
-	// Check max schedules per flag limit
-	pendingCount, err := s.countPendingSchedulesForFeature(ctx, req.FeatureId, req.EnvironmentId)
-	if err != nil {
-		s.logger.Error(
-			"Failed to count pending schedules",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.FeatureId),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	if pendingCount >= maxSchedulesPerFlag {
-		return nil, statusExceededMaxSchedulesPerFlag.Err()
-	}
-
-	// Create the scheduled flag change
-	sfc, err := domain.NewScheduledFlagChange(
-		req.FeatureId,
+	// Publish domain event for audit log
+	if err := s.publishScheduledFlagChangeCreatedEvent(
+		ctx,
+		editor,
+		sfc,
+		featureName,
 		req.EnvironmentId,
-		req.ScheduledAt,
-		req.Timezone,
-		req.Payload,
-		req.Comment,
-		feature.Version,
-		editor.Email,
-	)
-	if err != nil {
+	); err != nil {
 		s.logger.Error(
-			"Failed to create scheduled flag change domain object",
+			"Failed to publish scheduled flag change created event",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("id", sfc.Id),
 				zap.String("featureId", req.FeatureId),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, statusInternal.Err()
-	}
-
-	// Set derived fields
-	sfc.Category = sfc.DetermineCategory()
-	sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
-
-	// Store the scheduled flag change
-	if err := s.scheduledFlagChangeStorage.CreateScheduledFlagChange(ctx, sfc); err != nil {
-		if errors.Is(err, v2fs.ErrScheduledFlagChangeAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to store scheduled flag change",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.FeatureId),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
+		// Don't fail the request if event publishing fails
 	}
 
 	// TODO: Detect conflicts with existing schedules (Phase 4)
@@ -208,6 +250,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 
 	var sfc *domain.ScheduledFlagChange
 	var feature *domain.Feature
+	var previousScheduledAt int64
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		var err error
@@ -218,6 +261,9 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 			}
 			return err
 		}
+
+		// Capture previous scheduled time for audit event
+		previousScheduledAt = sfc.ScheduledAt
 
 		// Only allow updating pending schedules
 		if !sfc.IsPending() && !sfc.IsConflict() {
@@ -282,6 +328,31 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		return nil, err
 	}
 
+	// Publish domain event for audit log
+	featureName := ""
+	if feature != nil {
+		featureName = feature.Name
+	}
+	if err := s.publishScheduledFlagChangeUpdatedEvent(
+		ctx,
+		editor,
+		sfc,
+		featureName,
+		previousScheduledAt,
+		req.EnvironmentId,
+	); err != nil {
+		s.logger.Error(
+			"Failed to publish scheduled flag change updated event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", sfc.Id),
+				zap.String("featureId", sfc.FeatureId),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		// Don't fail the request if event publishing fails
+	}
+
 	// TODO: Detect conflicts with existing schedules (Phase 4)
 	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
@@ -306,8 +377,12 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 		return nil, statusMissingScheduledFlagChangeID.Err()
 	}
 
+	var sfc *domain.ScheduledFlagChange
+	var featureName string
+
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		sfc, err := s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
+		var err error
+		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
 				return statusScheduledFlagChangeNotFound.Err()
@@ -318,6 +393,12 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 		// Only allow deleting pending or conflict schedules
 		if !sfc.IsPending() && !sfc.IsConflict() {
 			return statusScheduledFlagChangeNotPending.Err()
+		}
+
+		// Get feature name for audit event
+		feature, err := s.featureStorage.GetFeature(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
+		if err == nil && feature != nil {
+			featureName = feature.Name
 		}
 
 		// Cancel the schedule instead of hard delete (for audit trail)
@@ -335,6 +416,26 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 			)...,
 		)
 		return nil, err
+	}
+
+	// Publish domain event for audit log
+	if err := s.publishScheduledFlagChangeCancelledEvent(
+		ctx,
+		editor,
+		sfc,
+		featureName,
+		req.EnvironmentId,
+	); err != nil {
+		s.logger.Error(
+			"Failed to publish scheduled flag change cancelled event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", sfc.Id),
+				zap.String("featureId", sfc.FeatureId),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		// Don't fail the request if event publishing fails
 	}
 
 	return &ftproto.DeleteScheduledFlagChangeResponse{}, nil
@@ -889,4 +990,124 @@ func (s *FeatureService) cancelPendingScheduledFlagChanges(
 	}
 
 	return nil
+}
+
+// publishScheduledFlagChangeCreatedEvent publishes a domain event for audit logging
+func (s *FeatureService) publishScheduledFlagChangeCreatedEvent(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	sfc *domain.ScheduledFlagChange,
+	featureName string,
+	environmentID string,
+) error {
+	payloadJSON, _ := json.Marshal(sfc.Payload)
+	changeSummaries := changeSummariesToStrings(sfc.ChangeSummaries)
+
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE,
+		sfc.Id,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE_CREATED,
+		&eventproto.ScheduledFlagChangeCreatedEvent{
+			Id:              sfc.Id,
+			FeatureId:       sfc.FeatureId,
+			FeatureName:     featureName,
+			ScheduledAt:     sfc.ScheduledAt,
+			Timezone:        sfc.Timezone,
+			Category:        sfc.Category.String(),
+			ChangeSummaries: changeSummaries,
+			PayloadJson:     string(payloadJSON),
+			ScheduledBy:     sfc.CreatedBy,
+		},
+		environmentID,
+		sfc.ScheduledFlagChange,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	return s.domainPublisher.Publish(ctx, event)
+}
+
+// publishScheduledFlagChangeUpdatedEvent publishes a domain event for audit logging
+func (s *FeatureService) publishScheduledFlagChangeUpdatedEvent(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	sfc *domain.ScheduledFlagChange,
+	featureName string,
+	previousScheduledAt int64,
+	environmentID string,
+) error {
+	payloadJSON, _ := json.Marshal(sfc.Payload)
+	changeSummaries := changeSummariesToStrings(sfc.ChangeSummaries)
+
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE,
+		sfc.Id,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE_UPDATED,
+		&eventproto.ScheduledFlagChangeUpdatedEvent{
+			Id:                  sfc.Id,
+			FeatureId:           sfc.FeatureId,
+			FeatureName:         featureName,
+			PreviousScheduledAt: previousScheduledAt,
+			NewScheduledAt:      sfc.ScheduledAt,
+			Timezone:            sfc.Timezone,
+			ChangeSummaries:     changeSummaries,
+			PayloadJson:         string(payloadJSON),
+		},
+		environmentID,
+		sfc.ScheduledFlagChange,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	return s.domainPublisher.Publish(ctx, event)
+}
+
+// publishScheduledFlagChangeCancelledEvent publishes a domain event for audit logging
+func (s *FeatureService) publishScheduledFlagChangeCancelledEvent(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	sfc *domain.ScheduledFlagChange,
+	featureName string,
+	environmentID string,
+) error {
+	changeSummaries := changeSummariesToStrings(sfc.ChangeSummaries)
+
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE,
+		sfc.Id,
+		eventproto.Event_SCHEDULED_FLAG_CHANGE_CANCELLED,
+		&eventproto.ScheduledFlagChangeCancelledEvent{
+			Id:                    sfc.Id,
+			FeatureId:             sfc.FeatureId,
+			FeatureName:           featureName,
+			ScheduledAt:           sfc.ScheduledAt,
+			Timezone:              sfc.Timezone,
+			ChangeSummaries:       changeSummaries,
+			OriginallyScheduledBy: sfc.CreatedBy,
+			OriginallyCreatedAt:   sfc.CreatedAt,
+		},
+		environmentID,
+		sfc.ScheduledFlagChange,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	return s.domainPublisher.Publish(ctx, event)
+}
+
+// changeSummariesToStrings converts structured ChangeSummary objects to simple strings for events
+func changeSummariesToStrings(summaries []*ftproto.ChangeSummary) []string {
+	result := make([]string, 0, len(summaries))
+	for _, s := range summaries {
+		// Use the message key as the string representation
+		// The audit log UI can look up translations if needed
+		result = append(result, s.MessageKey)
+	}
+	return result
 }
