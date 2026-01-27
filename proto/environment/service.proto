@@ -263,10 +263,9 @@ message CreateOrganizationResponse {
 
 message UpdateOrganizationRequest {
   string id = 1;
-  reserved 2;  // ChangeNameOrganizationCommand rename_command
+  reserved 2;  // ChangeNameOrganizationCommand
   reserved 3;  // ChangeDescriptionOrganizationCommand
-               // change_description_command
-  reserved 4;  // ChangeOwnerEmailOrganizationCommand change_owner_email_command
+  reserved 4;  // ChangeOwnerEmailOrganizationCommand
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
   google.protobuf.StringValue owner_email = 7;
