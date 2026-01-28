@@ -341,6 +341,73 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 	}
 }
 
+func TestListFeaturesByEnvironmentMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc          string
+		setup         func(*featureStorage)
+		environmentID string
+		expected      []*proto.Feature
+		expectedErr   error
+	}{
+		{
+			desc: "error: query fails",
+			setup: func(s *featureStorage) {
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("query error"))
+			},
+			environmentID: "env-id",
+			expected:      nil,
+			expectedErr:   errors.New("query error"),
+		},
+		{
+			desc: "success: empty result",
+			setup: func(s *featureStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), "env-id",
+				).Return(rows, nil)
+			},
+			environmentID: "env-id",
+			expected:      []*proto.Feature{},
+			expectedErr:   nil,
+		},
+		{
+			desc: "error: scan fails",
+			setup: func(s *featureStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(true)
+				rows.EXPECT().Scan(gomock.Any()).Return(errors.New("scan error"))
+				s.qe.(*mock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), "env-id",
+				).Return(rows, nil)
+			},
+			environmentID: "env-id",
+			expected:      nil,
+			expectedErr:   errors.New("scan error"),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &featureStorage{qe: mock.NewMockClient(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			features, err := storage.ListFeaturesByEnvironment(context.Background(), p.environmentID)
+			assert.Equal(t, p.expected, features)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestCountFeaturesByStatus(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

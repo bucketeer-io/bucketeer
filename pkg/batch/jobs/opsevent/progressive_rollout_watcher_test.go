@@ -29,6 +29,7 @@ import (
 	aoclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	envclientemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	ftcachermock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -36,7 +37,7 @@ import (
 )
 
 func TestNewProgressiveRolloutWacher(t *testing.T) {
-	w := NewProgressiveRolloutWacher(nil, nil, nil)
+	w := NewProgressiveRolloutWacher(nil, nil, nil, nil)
 	assert.IsType(t, &progressiveRolloutWatcher{}, w)
 }
 
@@ -201,6 +202,9 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 				w.progressiveRolloutExecutor.(*executormock.MockProgressiveRolloutExecutor).EXPECT().ExecuteProgressiveRollout(
 					gomock.Any(), "eID", "sID", "sID",
 				).Return(nil)
+				// Cache should be refreshed after successful execution
+				w.ftCacher.(*ftcachermock.MockFeatureFlagCacher).
+					EXPECT().RefreshEnvironmentCache(gomock.Any(), "eID").Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -275,6 +279,7 @@ func newProgressiveRolloutWacherWithMock(t *testing.T, mockController *gomock.Co
 		envClient:                  envclientemock.NewMockClient(mockController),
 		aoClient:                   aoclientemock.NewMockClient(mockController),
 		progressiveRolloutExecutor: executormock.NewMockProgressiveRolloutExecutor(mockController),
+		ftCacher:                   ftcachermock.NewMockFeatureFlagCacher(mockController),
 		logger:                     logger,
 		opts: &jobs.Options{
 			Timeout: time.Minute,
