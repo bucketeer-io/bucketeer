@@ -135,7 +135,8 @@ func (w *progressiveRolloutWatcher) listProgressiveRollouts(
 }
 
 // executeProgressiveRollout returns (executed bool, err error)
-// executed is true if a schedule was actually executed
+// // executed is true if the progressive rollout operation was actually executed
+// (i.e. ExecuteProgressiveRollout was called and succeeded)
 func (w *progressiveRolloutWatcher) executeProgressiveRollout(
 	ctx context.Context,
 	progressiveRollout *aoproto.ProgressiveRollout,
