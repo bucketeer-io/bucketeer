@@ -46,6 +46,8 @@ var (
 			"invalid environment url code",
 			"EnvironmentUrlCode",
 		))
+	statusEnvironmentIDRequired = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "environment id must be specified", "environment_id"))
 	statusProjectIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EnvironmentPackageName, "project id must be specified", "ProjectId"))
 	statusProjectNameRequired = api.NewGRPCStatus(
@@ -96,6 +98,11 @@ var (
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.EnvironmentPackageName,
 			"cannot update system admin organization",
+		))
+	statusCannotDeleteOrganization = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.EnvironmentPackageName,
+			"cannot delete organization",
 		))
 	statusEnvironmentNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.EnvironmentPackageName, "environment not found", "Environment"))

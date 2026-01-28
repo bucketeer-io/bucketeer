@@ -13361,6 +13361,264 @@
                 "type": "Organization"
               }
             ]
+          },
+          {
+            "name": "DeleteOrganizationDataRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Set to true to preview the data that would be deleted."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "force flag to bypass safety checks"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteOrganizationDataResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summaries",
+                "type": "OrganizationDeletionSummary",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "OrganizationDeletionSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "projects_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "features_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "accounts_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "experiments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "subscriptions_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "pushes_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "tags_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "teams_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 11,
+                "name": "segments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "flag_triggers_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 13,
+                "name": "api_keys_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 14,
+                "name": "operations_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "feature_last_used_infos_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 16,
+                "name": "goals_deleted",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "DeleteEnvironmentDataRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Set to true to preview the data that would be deleted."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "force flag to bypass safety checks"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteEnvironmentDataResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summaries",
+                "type": "EnvironmentDeletionSummary",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentDeletionSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "features_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "experiments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "subscriptions_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "pushes_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "tags_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "segments_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "flag_triggers_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "api_keys_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "operations_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 11,
+                "name": "feature_last_used_infos_deleted",
+                "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "goals_deleted",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -17869,6 +18127,358 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "DeleteOrganizationData",
+                "in_type": "DeleteOrganizationDataRequest",
+                "out_type": "DeleteOrganizationDataResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/environment/delete_organization_data"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Organization Data"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete all data in an organization. To call this API, you need an `SYSTEM_ADMIN` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Organization"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.environment.delete_organization_data"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteEnvironmentData",
+                "in_type": "DeleteEnvironmentDataRequest",
+                "out_type": "DeleteEnvironmentDataResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/environment/delete_environment_data"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Environment Data"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete all data in the environment. To call this API, you need an `SYSTEM_ADMIN` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Environment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.environment.delete_environment_data"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -19310,6 +19920,10 @@
                 "integer": 610
               },
               {
+                "name": "ENVIRONMENT_V2_DELETED",
+                "integer": 611
+              },
+              {
                 "name": "ADMIN_ACCOUNT_CREATED",
                 "integer": 700,
                 "options": [
@@ -19572,6 +20186,10 @@
               {
                 "name": "DEMO_ORGANIZATION_CREATED",
                 "integer": 1510
+              },
+              {
+                "name": "ORGANIZATION_DELETED",
+                "integer": 1511
               },
               {
                 "name": "FLAG_TRIGGER_CREATED",
@@ -21934,6 +22552,26 @@
             ]
           },
           {
+            "name": "EnvironmentV2DeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summary",
+                "type": "bucketeer.environment.OrganizationDeletionSummary"
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "force",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "AutoOpsRuleCreatedEvent",
             "fields": [
               {
@@ -22819,6 +23457,26 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "summary",
+                "type": "bucketeer.environment.OrganizationDeletionSummary"
+              },
+              {
+                "id": 2,
+                "name": "dry_run",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "forced",
+                "type": "bool"
               }
             ]
           },
@@ -23866,6 +24524,9 @@
           },
           {
             "path": "proto/coderef/code_reference.proto"
+          },
+          {
+            "path": "proto/environment/service.proto"
           }
         ],
         "package": {
