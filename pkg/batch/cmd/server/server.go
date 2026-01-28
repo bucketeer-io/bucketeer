@@ -255,6 +255,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	registerer := metrics.DefaultRegisterer()
 	jobs.RegisterMetrics(registerer)
+	ftcacher.RegisterMetrics(registerer)
 
 	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthAudience)
 	if err != nil {

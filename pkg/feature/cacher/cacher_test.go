@@ -367,8 +367,8 @@ func TestPutCache(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			cacher := newFeatureFlagCacherWithMock(t, controller, 1)
 			p.setup(cacher)
-			// putCache doesn't return error, it just logs
-			cacher.putCache(features, envID)
+			// putCache doesn't return error, it just logs and records metrics
+			cacher.putCache(features, envID, len(features.Features))
 		})
 	}
 }
@@ -415,7 +415,7 @@ func TestPutCacheMultipleInstances(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			cacher := newFeatureFlagCacherWithMock(t, controller, 2)
 			p.setup(cacher)
-			cacher.putCache(features, envID)
+			cacher.putCache(features, envID, len(features.Features))
 		})
 	}
 }

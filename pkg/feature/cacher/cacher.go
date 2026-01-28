@@ -20,6 +20,7 @@ package cacher
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -72,14 +73,18 @@ func NewFeatureFlagCacher(
 
 // RefreshEnvironmentCache updates the Redis cache for a specific environment.
 func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environmentID string) error {
+	startTime := time.Now()
+
 	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list features for cache update",
 			zap.Error(err),
 			zap.String("environmentId", environmentID),
 		)
+		recordListFeatures(environmentID, CodeFail, time.Since(startTime).Seconds())
 		return err
 	}
+	recordListFeatures(environmentID, CodeSuccess, time.Since(startTime).Seconds())
 
 	// Find the features for the target environment
 	var features []*ftproto.Feature
@@ -103,7 +108,7 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 		Id:       evaluation.GenerateFeaturesID(filtered),
 		Features: filtered,
 	}
-	c.putCache(fts, environmentID)
+	c.putCache(fts, environmentID, len(filtered))
 
 	c.logger.Info("Successfully updated feature flag cache",
 		zap.String("environmentId", environmentID),
@@ -116,19 +121,26 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 
 // RefreshAllEnvironmentCaches updates the Redis cache for all environments.
 func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) error {
+	startTime := time.Now()
+
 	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list all environment features")
+		// Use "all" as environment_id for batch operation that covers all environments
+		recordListFeatures("all", CodeFail, time.Since(startTime).Seconds())
 		return err
 	}
+	recordListFeatures("all", CodeSuccess, time.Since(startTime).Seconds())
+
 	for _, envFt := range envFts {
 		filtered := c.removeOldFeatures(envFt.Features)
 		fts := &ftproto.Features{
 			Id:       evaluation.GenerateFeaturesID(filtered),
 			Features: filtered,
 		}
-		c.putCache(fts, envFt.EnvironmentId)
+		c.putCache(fts, envFt.EnvironmentId, len(filtered))
 	}
+
 	return nil
 }
 
@@ -144,9 +156,12 @@ func (c *featureFlagCacher) removeOldFeatures(features []*ftproto.Feature) []*ft
 	return result
 }
 
-// putCache saves features to all Redis instances.
-func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) {
+// putCache saves features to all Redis instances and records metrics.
+func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string, featureCount int) {
 	var wg sync.WaitGroup
+	var hasError bool
+	var mu sync.Mutex
+
 	for _, cache := range c.caches {
 		wg.Add(1)
 		go func(cache cachev3.FeaturesCache) {
@@ -156,8 +171,19 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 				)
+				mu.Lock()
+				hasError = true
+				mu.Unlock()
 			}
 		}(cache)
 	}
 	wg.Wait()
+
+	// Record metrics based on overall success/failure
+	if hasError {
+		recordCachePut(environmentID, CodeFail)
+	} else {
+		recordCachePut(environmentID, CodeSuccess)
+		recordFeaturesUpdated(environmentID, featureCount)
+	}
 }
