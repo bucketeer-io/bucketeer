@@ -25,6 +25,16 @@ Add a Dashboard page where users can view Bucketeer usage metrics (request count
   - **API**: All or select specific API
   - **Time Range**: Presets (1h, 6h, 24h, 7d, 30d, This Month) + Custom range (max 31 days)
 
+### CSV Export
+- A button to download MAU / Monthly Requests for the past 12 months filtered by currently selected Project/Environment/SDK
+
+```csv
+yearmonth,project_name,environment_name,sdk,mau,request_count
+202601,Project-A,Production,JAVASCRIPT,12345,9876543
+202601,Project-A,Production,IOS,8901,1234567
+...
+```
+
 
 ## Architecture
 
@@ -140,6 +150,8 @@ message MonthlySummarySeries {
   string environment_id = 1;
   bucketeer.event.client.SourceId source_id = 2;
   repeated MonthlySummaryDataPoint data = 3;  // Sorted by yearmonth ascending
+  string project_name = 4;
+  string environment_name = 5;
 }
 
 message MonthlySummaryDataPoint {
@@ -200,7 +212,7 @@ CREATE TABLE `monthly_summary` (
   `request_count` bigint NOT NULL DEFAULT 0,
   `created_at` bigint NOT NULL,
   `updated_at` bigint NOT NULL,
-  PRIMARY KEY (`environment_id`, `source_id`, `yearmonth`)
+  PRIMARY KEY (`environment_id`, `yearmonth`, `source_id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_bin;
 ```
 
@@ -208,7 +220,7 @@ CREATE TABLE `monthly_summary` (
 
 ### Prometheus Metrics
 
-We're going to use 1 existing metrics and add 2 new metrics.
+Use 1 existing metrics and add 2 new metrics.
 
 | Metric        | Name                                         | Status   | Note                                                                                            |
 | ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
@@ -227,5 +239,7 @@ We're going to use 1 existing metrics and add 2 new metrics.
   - Requests: UPSERT
 - Backend:
   - Add proto definitions
-  - Implement APIs (query from each data source and build response)
-- Frontend: UI implementation
+  - Implement APIs
+- Frontend:
+  - UI implementation
+  - CSV export
