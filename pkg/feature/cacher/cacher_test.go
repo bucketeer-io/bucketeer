@@ -47,26 +47,20 @@ func TestRefreshEnvironmentCache(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: failed to list all environment features",
+			desc: "err: failed to list features for environment",
 			setup: func(fc *featureFlagCacher) {
 				fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
-					ListAllEnvironmentFeatures(gomock.Any()).
+					ListFeaturesByEnvironment(gomock.Any(), envID).
 					Return(nil, internalErr)
 			},
 			expectedErr: internalErr,
 		},
 		{
-			desc: "success: environment not found (empty cache)",
+			desc: "success: empty features for environment",
 			setup: func(fc *featureFlagCacher) {
 				fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
-					ListAllEnvironmentFeatures(gomock.Any()).
-					Return([]*ftproto.EnvironmentFeature{
-						{
-							EnvironmentId: "other-env-id",
-							Features:      []*ftproto.Feature{{Id: "ft-id-1"}},
-						},
-					}, nil)
-				// Should still update cache with empty features
+					ListFeaturesByEnvironment(gomock.Any(), envID).
+					Return([]*ftproto.Feature{}, nil)
 				fc.caches[0].(*mockcachev3.MockFeaturesCache).EXPECT().
 					Put(gomock.Any(), envID).
 					Return(nil)
@@ -77,19 +71,10 @@ func TestRefreshEnvironmentCache(t *testing.T) {
 			desc: "success: refresh cache for specific environment",
 			setup: func(fc *featureFlagCacher) {
 				fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
-					ListAllEnvironmentFeatures(gomock.Any()).
-					Return([]*ftproto.EnvironmentFeature{
-						{
-							EnvironmentId: envID,
-							Features: []*ftproto.Feature{
-								{Id: "ft-id-1", OffVariation: "var-1"},
-								{Id: "ft-id-2", OffVariation: "var-2"},
-							},
-						},
-						{
-							EnvironmentId: "other-env-id",
-							Features:      []*ftproto.Feature{{Id: "ft-id-3"}},
-						},
+					ListFeaturesByEnvironment(gomock.Any(), envID).
+					Return([]*ftproto.Feature{
+						{Id: "ft-id-1", OffVariation: "var-1"},
+						{Id: "ft-id-2", OffVariation: "var-2"},
 					}, nil)
 				fc.caches[0].(*mockcachev3.MockFeaturesCache).EXPECT().
 					Put(gomock.Any(), envID).
@@ -101,21 +86,16 @@ func TestRefreshEnvironmentCache(t *testing.T) {
 			desc: "success: filters out old archived features",
 			setup: func(fc *featureFlagCacher) {
 				fc.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
-					ListAllEnvironmentFeatures(gomock.Any()).
-					Return([]*ftproto.EnvironmentFeature{
+					ListFeaturesByEnvironment(gomock.Any(), envID).
+					Return([]*ftproto.Feature{
+						{Id: "ft-id-1", OffVariation: "var-1"}, // valid
 						{
-							EnvironmentId: envID,
-							Features: []*ftproto.Feature{
-								{Id: "ft-id-1", OffVariation: "var-1"}, // valid
-								{
-									Id:           "ft-id-2",
-									Archived:     true,
-									OffVariation: "var-2",
-									UpdatedAt:    time.Now().AddDate(0, 0, -31).Unix(), // older than 30 days
-								},
-								{Id: "ft-id-3", OffVariation: "var-3"}, // valid
-							},
+							Id:           "ft-id-2",
+							Archived:     true,
+							OffVariation: "var-2",
+							UpdatedAt:    time.Now().AddDate(0, 0, -31).Unix(), // older than 30 days
 						},
+						{Id: "ft-id-3", OffVariation: "var-3"}, // valid
 					}, nil)
 				fc.caches[0].(*mockcachev3.MockFeaturesCache).EXPECT().
 					Put(gomock.Any(), envID).

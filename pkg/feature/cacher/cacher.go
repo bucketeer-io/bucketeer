@@ -75,7 +75,8 @@ func NewFeatureFlagCacher(
 func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environmentID string) error {
 	startTime := time.Now()
 
-	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
+	// Use targeted query for single environment instead of fetching all environments
+	features, err := c.ftStorage.ListFeaturesByEnvironment(ctx, environmentID)
 	if err != nil {
 		c.logger.Error("Failed to list features for cache update",
 			zap.Error(err),
@@ -85,23 +86,6 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 		return err
 	}
 	recordListFeatures(environmentID, CodeSuccess, time.Since(startTime).Seconds())
-
-	// Find the features for the target environment
-	var features []*ftproto.Feature
-	for _, envFt := range envFts {
-		if envFt.EnvironmentId == environmentID {
-			features = envFt.Features
-			break
-		}
-	}
-
-	if features == nil {
-		c.logger.Warn("No features found for environment",
-			zap.String("environmentId", environmentID),
-		)
-		// Still update the cache with empty features to ensure consistency
-		features = []*ftproto.Feature{}
-	}
 
 	filtered := c.removeOldFeatures(features)
 	fts := &ftproto.Features{
