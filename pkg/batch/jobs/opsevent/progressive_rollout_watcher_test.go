@@ -258,6 +258,108 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: skip stopped progressive rollout",
+			setup: func(w *progressiveRolloutWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "eID", ProjectId: "pID"},
+						},
+					},
+					nil,
+				)
+				dc := &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+						{
+							ScheduleId: "sID",
+							ExecuteAt:  time.Now().Unix(),
+						},
+					},
+				}
+				c, err := ptypes.MarshalAny(dc)
+				require.NoError(t, err)
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&autoopsproto.ListProgressiveRolloutsRequest{
+						EnvironmentId: "eID",
+						PageSize:      0,
+					},
+				).Return(
+					&autoopsproto.ListProgressiveRolloutsResponse{
+						ProgressiveRollouts: []*autoopsproto.ProgressiveRollout{
+							{
+								Id:        "sID",
+								FeatureId: "fID",
+								Clause:    c,
+								Type:      autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+								Status:    autoopsproto.ProgressiveRollout_STOPPED,
+							},
+						},
+					},
+					nil,
+				)
+				// No executor call expected - stopped rollouts should be skipped
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: skip finished progressive rollout",
+			setup: func(w *progressiveRolloutWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "eID", ProjectId: "pID"},
+						},
+					},
+					nil,
+				)
+				dc := &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+						{
+							ScheduleId: "sID",
+							ExecuteAt:  time.Now().Unix(),
+						},
+					},
+				}
+				c, err := ptypes.MarshalAny(dc)
+				require.NoError(t, err)
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&autoopsproto.ListProgressiveRolloutsRequest{
+						EnvironmentId: "eID",
+						PageSize:      0,
+					},
+				).Return(
+					&autoopsproto.ListProgressiveRolloutsResponse{
+						ProgressiveRollouts: []*autoopsproto.ProgressiveRollout{
+							{
+								Id:        "sID",
+								FeatureId: "fID",
+								Clause:    c,
+								Type:      autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE,
+								Status:    autoopsproto.ProgressiveRollout_FINISHED,
+							},
+						},
+					},
+					nil,
+				)
+				// No executor call expected - finished rollouts should be skipped
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
