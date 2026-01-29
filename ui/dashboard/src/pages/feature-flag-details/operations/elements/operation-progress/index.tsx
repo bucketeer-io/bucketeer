@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AutoOpsCount } from '@types';
+import { AutoOpsCount, RuleStrategyVariation } from '@types';
 import { OperationCombinedType, OpsTypeMap } from '../../types';
 import EventRateProgress from './event-rate-progress';
 import RolloutProgress from './rollout-progress';
@@ -7,8 +7,10 @@ import ScheduleProgress from './schedule-progress';
 
 const OperationProgress = ({
   operation,
-  opsCounts
+  opsCounts,
+  currentAllocationPercentage
 }: {
+  currentAllocationPercentage: RuleStrategyVariation[];
   operation: OperationCombinedType;
   opsCounts: AutoOpsCount[];
 }) => {
@@ -23,7 +25,12 @@ const OperationProgress = ({
   if (isSchedule) return <ScheduleProgress operation={operation} />;
   if (isEventRate)
     return <EventRateProgress operation={operation} opsCounts={opsCounts} />;
-  return <RolloutProgress operation={operation} />;
+  return (
+    <RolloutProgress
+      currentAllocationPercentage={currentAllocationPercentage}
+      operation={operation}
+    />
+  );
 };
 
 export default OperationProgress;

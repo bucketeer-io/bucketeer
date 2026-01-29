@@ -29,12 +29,12 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/command"
 	btclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	exprclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"

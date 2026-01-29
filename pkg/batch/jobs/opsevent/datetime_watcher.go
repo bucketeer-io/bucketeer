@@ -26,6 +26,7 @@ import (
 	autoopsdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	envclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
+	ftcacher "github.com/bucketeer-io/bucketeer/v2/pkg/feature/cacher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/batch/executor"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -35,6 +36,7 @@ type datetimeWatcher struct {
 	envClient       envclient.Client
 	aoClient        aoclient.Client
 	autoOpsExecutor executor.AutoOpsExecutor
+	ftCacher        ftcacher.FeatureFlagCacher
 	opts            *jobs.Options
 	logger          *zap.Logger
 }
@@ -43,6 +45,7 @@ func NewDatetimeWatcher(
 	envClient envclient.Client,
 	aoClient aoclient.Client,
 	autoOpsExecutor executor.AutoOpsExecutor,
+	ftCacher ftcacher.FeatureFlagCacher,
 	opts ...jobs.Option) jobs.Job {
 
 	dopts := &jobs.Options{
@@ -56,6 +59,7 @@ func NewDatetimeWatcher(
 		envClient:       envClient,
 		aoClient:        aoClient,
 		autoOpsExecutor: autoOpsExecutor,
+		ftCacher:        ftCacher,
 		opts:            dopts,
 		logger:          dopts.Logger.Named("datetime-watcher"),
 	}
@@ -75,6 +79,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			lastErr = err
 			return
 		}
+		var executed bool
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
 			if aor.IsFinished() || aor.IsStopped() || aor.OpsType != autoopsproto.OpsType_SCHEDULE {
@@ -89,6 +94,20 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			}
 			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeClauseID); err != nil {
 				lastErr = err
+			} else {
+				executed = true
+			}
+		}
+		// Update Redis cache immediately after successful auto-ops execution
+		// This ensures SDKs receive the updated flags without waiting for the periodic cache refresh
+		if executed && w.ftCacher != nil {
+			if err := w.ftCacher.RefreshEnvironmentCache(ctx, env.Id); err != nil {
+				w.logger.Error("Failed to update feature flag cache after auto-ops execution",
+					zap.Error(err),
+					zap.String("environmentId", env.Id),
+				)
+				// Don't set lastErr here - the auto-ops execution succeeded,
+				// cache update failure shouldn't be reported as main job failure
 			}
 		}
 	}

@@ -207,28 +207,64 @@ func local_request_FeatureService_UpdateFeature_0(ctx context.Context, marshaler
 
 }
 
-func request_FeatureService_ScheduleFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, client FeatureServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ScheduleFlagChangeRequest
+func request_FeatureService_CreateScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, client FeatureServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateScheduledFlagChangeRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ScheduleFlagChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.CreateScheduledFlagChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_FeatureService_ScheduleFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, server FeatureServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ScheduleFlagChangeRequest
+func local_request_FeatureService_CreateScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, server FeatureServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateScheduledFlagChangeRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ScheduleFlagChange(ctx, &protoReq)
+	msg, err := server.CreateScheduledFlagChange(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_FeatureService_GetScheduledFlagChange_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_FeatureService_GetScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, client FeatureServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetScheduledFlagChangeRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_FeatureService_GetScheduledFlagChange_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.GetScheduledFlagChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_FeatureService_GetScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, server FeatureServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetScheduledFlagChangeRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_FeatureService_GetScheduledFlagChange_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.GetScheduledFlagChange(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -327,6 +363,68 @@ func local_request_FeatureService_ListScheduledFlagChanges_0(ctx context.Context
 	}
 
 	msg, err := server.ListScheduledFlagChanges(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_FeatureService_ExecuteScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, client FeatureServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ExecuteScheduledFlagChangeRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ExecuteScheduledFlagChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_FeatureService_ExecuteScheduledFlagChange_0(ctx context.Context, marshaler runtime.Marshaler, server FeatureServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ExecuteScheduledFlagChangeRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ExecuteScheduledFlagChange(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_FeatureService_GetScheduledFlagChangeSummary_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_FeatureService_GetScheduledFlagChangeSummary_0(ctx context.Context, marshaler runtime.Marshaler, client FeatureServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetScheduledFlagChangeSummaryRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_FeatureService_GetScheduledFlagChangeSummary_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.GetScheduledFlagChangeSummary(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_FeatureService_GetScheduledFlagChangeSummary_0(ctx context.Context, marshaler runtime.Marshaler, server FeatureServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetScheduledFlagChangeSummaryRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_FeatureService_GetScheduledFlagChangeSummary_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.GetScheduledFlagChangeSummary(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1373,7 +1471,7 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("POST", pattern_FeatureService_ScheduleFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_FeatureService_CreateScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -1381,12 +1479,12 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ScheduleFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/CreateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_FeatureService_ScheduleFlagChange_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_FeatureService_CreateScheduledFlagChange_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -1394,7 +1492,32 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_FeatureService_ScheduleFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_FeatureService_CreateScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_FeatureService_GetScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/GetScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_FeatureService_GetScheduledFlagChange_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_GetScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1406,7 +1529,7 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/UpdateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/UpdateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1431,7 +1554,7 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/DeleteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/DeleteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1456,7 +1579,7 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ListScheduledFlagChanges", runtime.WithHTTPPathPattern("/v1/schedule_flags"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ListScheduledFlagChanges", runtime.WithHTTPPathPattern("/v1/scheduled_flag_changes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1470,6 +1593,56 @@ func RegisterFeatureServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 
 		forward_FeatureService_ListScheduledFlagChanges_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_FeatureService_ExecuteScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ExecuteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change/execute"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_FeatureService_ExecuteScheduledFlagChange_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_ExecuteScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_FeatureService_GetScheduledFlagChangeSummary_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.feature.FeatureService/GetScheduledFlagChangeSummary", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change/summary"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_FeatureService_GetScheduledFlagChangeSummary_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_GetScheduledFlagChangeSummary_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2396,25 +2569,47 @@ func RegisterFeatureServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("POST", pattern_FeatureService_ScheduleFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_FeatureService_CreateScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ScheduleFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/CreateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_FeatureService_ScheduleFlagChange_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_FeatureService_CreateScheduledFlagChange_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_FeatureService_ScheduleFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_FeatureService_CreateScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_FeatureService_GetScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/GetScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_FeatureService_GetScheduledFlagChange_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_GetScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2424,7 +2619,7 @@ func RegisterFeatureServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/UpdateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/UpdateScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2446,7 +2641,7 @@ func RegisterFeatureServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/DeleteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/schedule_flag"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/DeleteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2468,7 +2663,7 @@ func RegisterFeatureServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ListScheduledFlagChanges", runtime.WithHTTPPathPattern("/v1/schedule_flags"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ListScheduledFlagChanges", runtime.WithHTTPPathPattern("/v1/scheduled_flag_changes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2481,6 +2676,50 @@ func RegisterFeatureServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 
 		forward_FeatureService_ListScheduledFlagChanges_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_FeatureService_ExecuteScheduledFlagChange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/ExecuteScheduledFlagChange", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change/execute"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_FeatureService_ExecuteScheduledFlagChange_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_ExecuteScheduledFlagChange_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_FeatureService_GetScheduledFlagChangeSummary_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.feature.FeatureService/GetScheduledFlagChangeSummary", runtime.WithHTTPPathPattern("/v1/scheduled_flag_change/summary"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_FeatureService_GetScheduledFlagChangeSummary_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FeatureService_GetScheduledFlagChangeSummary_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -3160,13 +3399,19 @@ var (
 
 	pattern_FeatureService_UpdateFeature_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "feature"}, ""))
 
-	pattern_FeatureService_ScheduleFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "schedule_flag"}, ""))
+	pattern_FeatureService_CreateScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "scheduled_flag_change"}, ""))
 
-	pattern_FeatureService_UpdateScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "schedule_flag"}, ""))
+	pattern_FeatureService_GetScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "scheduled_flag_change"}, ""))
 
-	pattern_FeatureService_DeleteScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "schedule_flag"}, ""))
+	pattern_FeatureService_UpdateScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "scheduled_flag_change"}, ""))
 
-	pattern_FeatureService_ListScheduledFlagChanges_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "schedule_flags"}, ""))
+	pattern_FeatureService_DeleteScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "scheduled_flag_change"}, ""))
+
+	pattern_FeatureService_ListScheduledFlagChanges_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "scheduled_flag_changes"}, ""))
+
+	pattern_FeatureService_ExecuteScheduledFlagChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "scheduled_flag_change", "execute"}, ""))
+
+	pattern_FeatureService_GetScheduledFlagChangeSummary_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "scheduled_flag_change", "summary"}, ""))
 
 	pattern_FeatureService_EnableFeature_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.feature.FeatureService", "EnableFeature"}, ""))
 
@@ -3242,13 +3487,19 @@ var (
 
 	forward_FeatureService_UpdateFeature_0 = runtime.ForwardResponseMessage
 
-	forward_FeatureService_ScheduleFlagChange_0 = runtime.ForwardResponseMessage
+	forward_FeatureService_CreateScheduledFlagChange_0 = runtime.ForwardResponseMessage
+
+	forward_FeatureService_GetScheduledFlagChange_0 = runtime.ForwardResponseMessage
 
 	forward_FeatureService_UpdateScheduledFlagChange_0 = runtime.ForwardResponseMessage
 
 	forward_FeatureService_DeleteScheduledFlagChange_0 = runtime.ForwardResponseMessage
 
 	forward_FeatureService_ListScheduledFlagChanges_0 = runtime.ForwardResponseMessage
+
+	forward_FeatureService_ExecuteScheduledFlagChange_0 = runtime.ForwardResponseMessage
+
+	forward_FeatureService_GetScheduledFlagChangeSummary_0 = runtime.ForwardResponseMessage
 
 	forward_FeatureService_EnableFeature_0 = runtime.ForwardResponseMessage
 
