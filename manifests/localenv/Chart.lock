@@ -5,6 +5,9 @@ dependencies:
 - name: mysql
   repository: file://./dependencies/mysql
   version: 1.1.0
+- name: postgresql
+  repository: file://./dependencies/postgresql
+  version: 0.1.0
 - name: pubsub
   repository: file://./dependencies/pubsub
   version: 1.1.0
@@ -14,5 +17,5 @@ dependencies:
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:22631cd6e9d8638e1e40fb43e0e01aa47beb7e92aaed657fc98550f54f1e7d81
-generated: "2025-12-17T11:19:54.471243345Z"
+digest: sha256:414f100711785705d6b36535390e7a95c38ef41d557693109154d50fe5655a97
+generated: "2025-12-22T19:24:11.003491+09:00"

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "postgres.fullname" . }}
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "NodePort" }}
+  {{- if eq (.Values.service.type | default "NodePort") "NodePort" }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+  {{- end }}
+  selector:
+    {{- include "postgres.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "postgres.fullname" . }}-headless
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+  selector:
+    {{- include "postgres.selectorLabels" . | nindent 4 }}
+

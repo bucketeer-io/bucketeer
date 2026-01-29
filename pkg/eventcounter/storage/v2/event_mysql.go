@@ -217,7 +217,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, ErrNoResultsFound
+		return nil, ErrMySQLNoResultsFound
 	}
 
 	var ue UserEvaluation
@@ -239,7 +239,7 @@ func (es *mysqlEventStorage) QueryUserEvaluation(
 	}
 
 	if rows.Next() {
-		return nil, ErrUnexpectedMultipleResults
+		return nil, ErrMySQLUnexpectedMultipleResults
 	}
 
 	if err := rows.Err(); err != nil {
