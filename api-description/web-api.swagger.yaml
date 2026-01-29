@@ -11830,11 +11830,6 @@ definitions:
     properties:
       description:
         type: string
-  featureChangeFlagTriggerDescriptionCommand:
-    type: object
-    properties:
-      description:
-        type: string
   featureClauseOperator:
     type: string
     enum:
@@ -11947,23 +11942,9 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
-  featureCreateFlagTriggerCommand:
-    type: object
-    properties:
-      featureId:
-        type: string
-      type:
-        $ref: '#/definitions/featureFlagTriggerType'
-      action:
-        $ref: '#/definitions/FlagTriggerAction'
-      description:
-        type: string
   featureCreateFlagTriggerRequest:
     type: object
     properties:
-      createFlagTriggerCommand:
-        $ref: '#/definitions/featureCreateFlagTriggerCommand'
-        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -12073,8 +12054,6 @@ definitions:
     type: object
   featureDeleteFeatureResponse:
     type: object
-  featureDeleteFlagTriggerCommand:
-    type: object
   featureDeleteFlagTriggerResponse:
     type: object
   featureDeleteScheduledFlagChangeResponse:
@@ -12085,17 +12064,9 @@ definitions:
     type: object
   featureDisableFeatureResponse:
     type: object
-  featureDisableFlagTriggerCommand:
-    type: object
-  featureDisableFlagTriggerResponse:
-    type: object
   featureEnableFeatureCommand:
     type: object
   featureEnableFeatureResponse:
-    type: object
-  featureEnableFlagTriggerCommand:
-    type: object
-  featureEnableFlagTriggerResponse:
     type: object
   featureEvaluateFeaturesResponse:
     type: object
@@ -12512,15 +12483,6 @@ definitions:
     properties:
       name:
         type: string
-  featureResetFlagTriggerCommand:
-    type: object
-  featureResetFlagTriggerResponse:
-    type: object
-    properties:
-      flagTrigger:
-        $ref: '#/definitions/featureFlagTrigger'
-      url:
-        type: string
   featureRolloutStrategy:
     type: object
     properties:
@@ -12918,11 +12880,9 @@ definitions:
         type: string
       environmentId:
         type: string
-      changeFlagTriggerDescriptionCommand:
-        $ref: '#/definitions/featureChangeFlagTriggerDescriptionCommand'
-        description: deprecated
       description:
         type: string
+        title: change_flag_trigger_description_command
       reset:
         type: boolean
         description: If true, reset the trigger hook URL.

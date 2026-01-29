@@ -33839,26 +33839,6 @@
             "name": "CreateFlagTriggerRequest",
             "fields": [
               {
-                "id": 2,
-                "name": "create_flag_trigger_command",
-                "type": "CreateFlagTriggerCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string",
@@ -33909,7 +33889,8 @@
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
@@ -33936,33 +33917,14 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "delete_flag_trigger_command",
-                "type": "DeleteFlagTriggerCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              2
+              2,
+              3
             ]
           },
           {
@@ -33990,26 +33952,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_flag_trigger_description_command",
-                "type": "ChangeFlagTriggerDescriptionCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -34052,7 +33994,8 @@
               }
             ],
             "reserved_ids": [
-              2
+              2,
+              3
             ]
           },
           {
@@ -34073,96 +34016,6 @@
                     ]
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "EnableFlagTriggerRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "enable_flag_trigger_command",
-                "type": "EnableFlagTriggerCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          },
-          {
-            "name": "EnableFlagTriggerResponse"
-          },
-          {
-            "name": "DisableFlagTriggerRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "disable_flag_trigger_command",
-                "type": "DisableFlagTriggerCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          },
-          {
-            "name": "DisableFlagTriggerResponse"
-          },
-          {
-            "name": "ResetFlagTriggerRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "reset_flag_trigger_command",
-                "type": "ResetFlagTriggerCommand"
-              },
-              {
-                "id": 4,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ],
-            "reserved_ids": [
-              2
-            ]
-          },
-          {
-            "name": "ResetFlagTriggerResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "flag_trigger",
-                "type": "FlagTrigger"
-              },
-              {
-                "id": 2,
-                "name": "url",
-                "type": "string"
               }
             ]
           },
@@ -37847,21 +37700,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "name": "EnableFlagTrigger",
-                "in_type": "EnableFlagTriggerRequest",
-                "out_type": "EnableFlagTriggerResponse"
-              },
-              {
-                "name": "DisableFlagTrigger",
-                "in_type": "DisableFlagTriggerRequest",
-                "out_type": "DisableFlagTriggerResponse"
-              },
-              {
-                "name": "ResetFlagTrigger",
-                "in_type": "ResetFlagTriggerRequest",
-                "out_type": "ResetFlagTriggerResponse"
               },
               {
                 "name": "DeleteFlagTrigger",

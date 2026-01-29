@@ -544,12 +544,7 @@ message ListTagsResponse {
 
 message CreateFlagTriggerRequest {
   reserved 1;
-  CreateFlagTriggerCommand create_flag_trigger_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // CreateFlagTriggerCommand create_flag_trigger_command
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
   FlagTrigger.Type type = 5 [(google.api.field_behavior) = REQUIRED];
@@ -565,12 +560,7 @@ message CreateFlagTriggerResponse {
 message DeleteFlagTriggerRequest {
   string id = 1;
   reserved 2;
-  DeleteFlagTriggerCommand delete_flag_trigger_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 3;  // DeleteFlagTriggerCommand delete_flag_trigger_command
   string environment_id = 4;
 }
 
@@ -580,13 +570,8 @@ message UpdateFlagTriggerRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
-  ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command =
-      3 [
-        deprecated = true,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "deprecated"
-        }
-      ];
+  reserved 3;  // ChangeFlagTriggerDescriptionCommand
+               // change_flag_trigger_description_command
   google.protobuf.StringValue description = 5;
   bool reset = 6
       [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -603,36 +588,6 @@ message UpdateFlagTriggerResponse {
                        .openapiv2_field) = {
     description: "If reset is true, new generated trigger hook URL will be returned."
   }];
-}
-
-message EnableFlagTriggerRequest {
-  string id = 1;
-  reserved 2;
-  EnableFlagTriggerCommand enable_flag_trigger_command = 3;
-  string environment_id = 4;
-}
-
-message EnableFlagTriggerResponse {}
-
-message DisableFlagTriggerRequest {
-  string id = 1;
-  reserved 2;
-  DisableFlagTriggerCommand disable_flag_trigger_command = 3;
-  string environment_id = 4;
-}
-
-message DisableFlagTriggerResponse {}
-
-message ResetFlagTriggerRequest {
-  string id = 1;
-  reserved 2;
-  ResetFlagTriggerCommand reset_flag_trigger_command = 3;
-  string environment_id = 4;
-}
-
-message ResetFlagTriggerResponse {
-  FlagTrigger flag_trigger = 1;
-  string url = 2;
 }
 
 message GetFlagTriggerRequest {
@@ -1612,12 +1567,6 @@ service FeatureService {
       }
     };
   }
-  rpc EnableFlagTrigger(EnableFlagTriggerRequest)
-      returns (EnableFlagTriggerResponse) {}
-  rpc DisableFlagTrigger(DisableFlagTriggerRequest)
-      returns (DisableFlagTriggerResponse) {}
-  rpc ResetFlagTrigger(ResetFlagTriggerRequest)
-      returns (ResetFlagTriggerResponse) {}
   rpc DeleteFlagTrigger(DeleteFlagTriggerRequest)
       returns (DeleteFlagTriggerResponse) {
     option (google.api.http) = {

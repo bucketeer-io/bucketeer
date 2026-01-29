@@ -663,20 +663,7 @@ func (s *FeatureService) validateEnvironmentSettings(
 	return nil
 }
 
-func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand) error {
-	if cmd.FeatureId == "" {
-		return statusMissingTriggerFeatureID.Err()
-	}
-	if cmd.Type == featureproto.FlagTrigger_Type_UNKNOWN {
-		return statusMissingTriggerType.Err()
-	}
-	if cmd.Action == featureproto.FlagTrigger_Action_UNKNOWN {
-		return statusMissingTriggerAction.Err()
-	}
-	return nil
-}
-
-func validateCreateFlagTriggerNoCommand(req *featureproto.CreateFlagTriggerRequest) error {
+func validateCreateFlagTriggerRequest(req *featureproto.CreateFlagTriggerRequest) error {
 	if req.FeatureId == "" {
 		return statusMissingTriggerFeatureID.Err()
 	}
@@ -685,27 +672,6 @@ func validateCreateFlagTriggerNoCommand(req *featureproto.CreateFlagTriggerReque
 	}
 	if req.Action == featureproto.FlagTrigger_Action_UNKNOWN {
 		return statusMissingTriggerAction.Err()
-	}
-	return nil
-}
-
-func validateEnableFlagTriggerCommand(cmd *featureproto.EnableFlagTriggerCommand) error {
-	if cmd == nil {
-		return statusMissingCommand.Err()
-	}
-	return nil
-}
-
-func validateDisableFlagTriggerCommand(cmd *featureproto.DisableFlagTriggerCommand) error {
-	if cmd == nil {
-		return statusMissingCommand.Err()
-	}
-	return nil
-}
-
-func validateResetFlagTriggerCommand(cmd *featureproto.ResetFlagTriggerCommand) error {
-	if cmd == nil {
-		return statusMissingCommand.Err()
 	}
 	return nil
 }

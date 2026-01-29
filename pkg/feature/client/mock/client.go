@@ -334,26 +334,6 @@ func (mr *MockClientMockRecorder) DisableFeature(ctx, in any, opts ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableFeature", reflect.TypeOf((*MockClient)(nil).DisableFeature), varargs...)
 }
 
-// DisableFlagTrigger mocks base method.
-func (m *MockClient) DisableFlagTrigger(ctx context.Context, in *feature.DisableFlagTriggerRequest, opts ...grpc.CallOption) (*feature.DisableFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DisableFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*feature.DisableFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DisableFlagTrigger indicates an expected call of DisableFlagTrigger.
-func (mr *MockClientMockRecorder) DisableFlagTrigger(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableFlagTrigger", reflect.TypeOf((*MockClient)(nil).DisableFlagTrigger), varargs...)
-}
-
 // EnableFeature mocks base method.
 func (m *MockClient) EnableFeature(ctx context.Context, in *feature.EnableFeatureRequest, opts ...grpc.CallOption) (*feature.EnableFeatureResponse, error) {
 	m.ctrl.T.Helper()
@@ -372,26 +352,6 @@ func (mr *MockClientMockRecorder) EnableFeature(ctx, in any, opts ...any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFeature", reflect.TypeOf((*MockClient)(nil).EnableFeature), varargs...)
-}
-
-// EnableFlagTrigger mocks base method.
-func (m *MockClient) EnableFlagTrigger(ctx context.Context, in *feature.EnableFlagTriggerRequest, opts ...grpc.CallOption) (*feature.EnableFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "EnableFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*feature.EnableFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EnableFlagTrigger indicates an expected call of EnableFlagTrigger.
-func (mr *MockClientMockRecorder) EnableFlagTrigger(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFlagTrigger", reflect.TypeOf((*MockClient)(nil).EnableFlagTrigger), varargs...)
 }
 
 // EvaluateFeatures mocks base method.
@@ -732,26 +692,6 @@ func (mr *MockClientMockRecorder) ListTags(ctx, in any, opts ...any) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockClient)(nil).ListTags), varargs...)
-}
-
-// ResetFlagTrigger mocks base method.
-func (m *MockClient) ResetFlagTrigger(ctx context.Context, in *feature.ResetFlagTriggerRequest, opts ...grpc.CallOption) (*feature.ResetFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ResetFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*feature.ResetFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ResetFlagTrigger indicates an expected call of ResetFlagTrigger.
-func (mr *MockClientMockRecorder) ResetFlagTrigger(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetFlagTrigger", reflect.TypeOf((*MockClient)(nil).ResetFlagTrigger), varargs...)
 }
 
 // UnarchiveFeature mocks base method.
