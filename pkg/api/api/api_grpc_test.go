@@ -1436,6 +1436,9 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			Archived:  true,
 		},
 	}
+	// Calculate expected feature flags IDs dynamically using UpdatedAt
+	multiFeaturesID := evaluation.GenerateFeaturesID(multiFeatures[:3])
+	singleFeatureID := evaluation.GenerateFeaturesID(singleFeature)
 	patterns := []struct {
 		desc        string
 		setup       func(*grpcGatewayService)
@@ -1597,7 +1600,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				Features: []*featureproto.Feature{
 					multiFeatures[0],
 					multiFeatures[1],
@@ -1628,12 +1631,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            "",
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "12580091098247002273",
+				FeatureFlagsId:         multiFeaturesID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1666,7 +1669,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				Features: []*featureproto.Feature{
 					multiFeatures[0],
 					multiFeatures[1],
@@ -1702,7 +1705,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				RequestedAt:            timeNow.Unix(),
 				ArchivedFeatureFlagIds: make([]string, 0),
@@ -1729,12 +1732,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            tag,
-				FeatureFlagsId: "13164487566000689278",
+				FeatureFlagsId: singleFeatureID,
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1766,7 +1769,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1799,7 +1802,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               make([]*featureproto.Feature, 0),
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
 				RequestedAt:            timeNow.Unix(),
