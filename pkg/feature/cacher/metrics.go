@@ -104,8 +104,8 @@ func normalizeEnvironmentID(environmentID string) string {
 }
 
 // recordListFeatures records a list features operation from DB.
-// scope: ScopeBatch for all-environments fetch, ScopeSingle for per-environment fetch
-// environmentID: EnvironmentIDAll for batch, actual environment ID for single
+// scope: scopeBatch for all-environments fetch, scopeSingle for per-environment fetch
+// environmentID: environmentIDAll for batch, actual environment ID for single
 func recordListFeatures(scope, environmentID, code string, durationSeconds float64) {
 	envID := normalizeEnvironmentID(environmentID)
 	listFeaturesCounter.WithLabelValues(scope, envID, code).Inc()
