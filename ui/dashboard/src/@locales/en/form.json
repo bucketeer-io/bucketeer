@@ -255,6 +255,7 @@
   "weight": "Weight",
   "execute-at": "Execute at",
   "frequency": "Frequency",
+  "select-frequency": "Select Frequency",
   "hourly": "Hourly",
   "daily": "Daily",
   "weekly": "Weekly",
