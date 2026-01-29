@@ -107,10 +107,10 @@ flowchart TB
 
 #### Redis Keys
 
-| Key Pattern                         | Data Type   | Purpose                      | TTL     |
-| ----------------------------------- | ----------- | ---------------------------- | ------- |
-| `{envId}:{sourceId}:dau:{yyyyMMdd}` | HyperLogLog | Daily DAU                    | 60 days |
-| `{envId}:{sourceId}:mau:{yyyyMM}`   | HyperLogLog | Monthly MAU (PFMERGE result) | 60 days |
+| Key Pattern                         | Data Type   | Purpose                      |
+| ----------------------------------- | ----------- | ---------------------------- |
+| `{envId}:{sourceId}:dau:{yyyyMMdd}` | HyperLogLog | Daily DAU                    |
+| `{envId}:{sourceId}:mau:{yyyyMM}`   | HyperLogLog | Monthly MAU (PFMERGE result) |
 
 
 #### Processing Flow
