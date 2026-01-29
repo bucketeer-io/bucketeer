@@ -733,6 +733,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 			return err
 		}
 		prevOwnerEmail = organization.OwnerEmail
+
 		updated, err := organization.Update(
 			req.Name,
 			req.Description,
