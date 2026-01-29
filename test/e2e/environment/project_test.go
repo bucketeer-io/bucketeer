@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
 
@@ -104,9 +106,9 @@ func TestUpdateProject(t *testing.T) {
 	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())
 	newName := fmt.Sprintf("name-%v", time.Now().Unix())
 	_, err := c.UpdateProject(ctx, &environmentproto.UpdateProjectRequest{
-		Id:                       id,
-		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionProjectCommand{Description: newDesc},
-		RenameCommand:            &environmentproto.RenameProjectCommand{Name: newName},
+		Id:          id,
+		Description: wrapperspb.String(newDesc),
+		Name:        wrapperspb.String(newName),
 	})
 	if err != nil {
 		t.Fatal(err)

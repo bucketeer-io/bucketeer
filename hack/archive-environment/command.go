@@ -57,8 +57,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	defer client.Close()
 	req := &environmentproto.ArchiveEnvironmentV2Request{
-		Id:      *c.id,
-		Command: &environmentproto.ArchiveEnvironmentV2Command{},
+		Id: *c.id,
 	}
 	if _, err = client.ArchiveEnvironmentV2(ctx, req); err != nil {
 		logger.Error("Failed to delete environment", zap.Error(err))
