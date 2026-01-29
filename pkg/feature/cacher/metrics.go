@@ -23,22 +23,36 @@ import (
 )
 
 const (
-	// Code values for metrics labels
-	CodeSuccess = "Success"
-	CodeFail    = "Fail"
+	// code values for metrics labels
+	codeSuccess = "Success"
+	codeFail    = "Fail"
+
+	// scope values for list features operations
+	// scopeBatch is used for RefreshAllEnvironmentCaches (batch job fetching all environments)
+	scopeBatch = "batch"
+	// scopeSingle is used for RefreshEnvironmentCache (single environment refresh)
+	scopeSingle = "single"
+
+	// environmentIDAll is used for batch operations that cover all environments
+	environmentIDAll = "all"
+	// environmentIDProduction is used as a fallback for empty environment IDs
+	// TODO: Remove this after the empty environment ID migration is complete
+	environmentIDProduction = "production"
 )
 
 var (
 	registerOnce sync.Once
 
 	// listFeaturesCounter tracks DB fetch operations
+	// scope: "batch" for all-environments fetch, "single" for per-environment fetch
+	// environment_id: empty for batch, actual ID for single
 	listFeaturesCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "feature_flag_cacher",
 			Name:      "list_features_total",
 			Help:      "Total number of list features operations from DB",
-		}, []string{"environment_id", "code"})
+		}, []string{"scope", "environment_id", "code"})
 
 	listFeaturesDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -47,7 +61,7 @@ var (
 			Name:      "list_features_duration_seconds",
 			Help:      "Duration of list features operations from DB in seconds",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_id"})
+		}, []string{"scope", "environment_id"})
 
 	// cachePutCounter tracks Redis put operations per environment
 	cachePutCounter = prometheus.NewCounterVec(
@@ -80,18 +94,32 @@ func RegisterMetrics(r metrics.Registerer) {
 	})
 }
 
+// normalizeEnvironmentID returns the environment ID or a fallback for empty values.
+// TODO: Remove this function after the empty environment ID migration is complete
+func normalizeEnvironmentID(environmentID string) string {
+	if environmentID == "" {
+		return environmentIDProduction
+	}
+	return environmentID
+}
+
 // recordListFeatures records a list features operation from DB.
-func recordListFeatures(environmentID, code string, durationSeconds float64) {
-	listFeaturesCounter.WithLabelValues(environmentID, code).Inc()
-	listFeaturesDuration.WithLabelValues(environmentID).Observe(durationSeconds)
+// scope: scopeBatch for all-environments fetch, scopeSingle for per-environment fetch
+// environmentID: environmentIDAll for batch, actual environment ID for single
+func recordListFeatures(scope, environmentID, code string, durationSeconds float64) {
+	envID := normalizeEnvironmentID(environmentID)
+	listFeaturesCounter.WithLabelValues(scope, envID, code).Inc()
+	listFeaturesDuration.WithLabelValues(scope, envID).Observe(durationSeconds)
 }
 
 // recordCachePut records a cache put operation to Redis.
 func recordCachePut(environmentID, code string) {
-	cachePutCounter.WithLabelValues(environmentID, code).Inc()
+	envID := normalizeEnvironmentID(environmentID)
+	cachePutCounter.WithLabelValues(envID, code).Inc()
 }
 
 // recordFeaturesUpdated records the number of features in the last successful cache update.
 func recordFeaturesUpdated(environmentID string, count int) {
-	featuresUpdatedGauge.WithLabelValues(environmentID).Set(float64(count))
+	envID := normalizeEnvironmentID(environmentID)
+	featuresUpdatedGauge.WithLabelValues(envID).Set(float64(count))
 }

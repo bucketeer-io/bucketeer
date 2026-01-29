@@ -82,10 +82,10 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 			zap.Error(err),
 			zap.String("environmentId", environmentID),
 		)
-		recordListFeatures(environmentID, CodeFail, time.Since(startTime).Seconds())
+		recordListFeatures(scopeSingle, environmentID, codeFail, time.Since(startTime).Seconds())
 		return err
 	}
-	recordListFeatures(environmentID, CodeSuccess, time.Since(startTime).Seconds())
+	recordListFeatures(scopeSingle, environmentID, codeSuccess, time.Since(startTime).Seconds())
 
 	filtered := c.removeOldFeatures(features)
 	fts := &ftproto.Features{
@@ -110,11 +110,12 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
 		c.logger.Error("Failed to list all environment features")
-		// Use "all" as environment_id for batch operation that covers all environments
-		recordListFeatures("all", CodeFail, time.Since(startTime).Seconds())
+		// Use scopeBatch with environmentIDAll for batch operations covering all environments
+		recordListFeatures(scopeBatch, environmentIDAll, codeFail, time.Since(startTime).Seconds())
 		return err
 	}
-	recordListFeatures("all", CodeSuccess, time.Since(startTime).Seconds())
+	// Use scopeBatch with environmentIDAll for batch operations covering all environments
+	recordListFeatures(scopeBatch, environmentIDAll, codeSuccess, time.Since(startTime).Seconds())
 
 	for _, envFt := range envFts {
 		filtered := c.removeOldFeatures(envFt.Features)
@@ -165,9 +166,9 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 
 	// Record metrics based on overall success/failure
 	if hasError {
-		recordCachePut(environmentID, CodeFail)
+		recordCachePut(environmentID, codeFail)
 	} else {
-		recordCachePut(environmentID, CodeSuccess)
+		recordCachePut(environmentID, codeSuccess)
 		recordFeaturesUpdated(environmentID, featureCount)
 	}
 }
