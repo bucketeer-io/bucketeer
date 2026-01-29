@@ -49,7 +49,7 @@ var (
 	registerOnce sync.Once
 
 	// listFeaturesCounter tracks DB fetch operations
-	// cacher: "feature_flag" or "segment"
+	// cacher: "feature_flag" or "segment_user"
 	// scope: "batch" for all-environments fetch, "single" for per-environment fetch
 	// environment_id: "all" for batch, actual ID for single
 	listFeaturesCounter = prometheus.NewCounterVec(
