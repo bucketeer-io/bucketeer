@@ -121,6 +121,29 @@ func TestRefreshEnvironmentCache(t *testing.T) {
 	}
 }
 
+func TestRefreshEnvironmentCacheWithEmptyEnvID(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	// Test with empty environment ID - this is a valid case
+	// because there is an environment with empty ID
+	emptyEnvID := ""
+
+	cacher := newFeatureFlagCacherWithMock(t, controller, 1)
+	cacher.ftStorage.(*mockftstorage.MockFeatureStorage).EXPECT().
+		ListFeaturesByEnvironment(gomock.Any(), emptyEnvID).
+		Return([]*ftproto.Feature{
+			{Id: "ft-id-1", OffVariation: "var-1"},
+		}, nil)
+	cacher.caches[0].(*mockcachev3.MockFeaturesCache).EXPECT().
+		Put(gomock.Any(), emptyEnvID).
+		Return(nil)
+
+	err := cacher.RefreshEnvironmentCache(context.Background(), emptyEnvID)
+	assert.NoError(t, err)
+}
+
 func TestRefreshAllEnvironmentCaches(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
