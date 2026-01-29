@@ -1588,6 +1588,23 @@ func (s *FeatureService) ArchiveFeature(
 		}
 		return nil, err
 	}
+
+	// Cancel all pending scheduled flag changes for the archived feature
+	err = s.cancelPendingScheduledFlagChanges(
+		ctx, req.Id, req.EnvironmentId, editor.Email, "Flag was archived",
+	)
+	if err != nil {
+		// Log but don't fail - the archive was successful
+		s.logger.Error(
+			"Failed to cancel pending scheduled flag changes for archived feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+	}
+
 	return &featureproto.ArchiveFeatureResponse{}, nil
 }
 
