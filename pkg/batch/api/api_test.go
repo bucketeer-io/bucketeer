@@ -544,42 +544,17 @@ func TestSegmentUserCacher(t *testing.T) {
 		redisMockClient *redismock.MockMultiGetCache,
 		mysqlMockQueryExecer *mysqlmock.MockQueryExecer,
 	) {
-		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
-			Return(
-				&environmentproto.ListEnvironmentsV2Response{
-					Environments: []*environmentproto.EnvironmentV2{
-						{Id: "env0", ProjectId: "pj0"},
-						{Id: "env1", ProjectId: "pj1"},
-					},
-				},
-				nil,
-			)
-		featureMockClient.EXPECT().
-			ListSegments(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&featureproto.ListSegmentsResponse{
-					Segments: []*featureproto.Segment{
-						{
-							Id: "segment-id",
-						},
-					},
-				},
-				nil,
-			)
-		featureMockClient.EXPECT().
-			ListSegmentUsers(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{},
-				},
-				nil,
-			)
+		// Mock for ListAllInUseSegments query - returns empty (no in-use segments)
+		mysqlMockRows.EXPECT().Close().Return(nil)
+		mysqlMockRows.EXPECT().Next().Return(false)
+		mysqlMockRows.EXPECT().Err().Return(nil)
+
+		mysqlMockClient.EXPECT().QueryContext(
+			gomock.Any(), gomock.Any(),
+		).Return(mysqlMockRows, nil)
 		redisMockClient.EXPECT().
 			Put(gomock.Any(), gomock.Any(), gomock.Any()).
-			Times(2).
+			AnyTimes().
 			Return(nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
@@ -846,8 +821,7 @@ func newBatchService(t *testing.T,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewSegmentUserCacher(
-			environmentMockClient,
-			featureMockClient,
+			mysqlMockClient,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewAPIKeyCacher(

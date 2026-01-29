@@ -82,10 +82,10 @@ func (w *progressiveRolloutWatcher) Run(
 		}
 		var executed bool
 		for _, p := range progressiveRollouts {
-			progressiveRollout := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: p}
+			pr := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: p}
 			// Skip finished or stopped progressive rollouts to avoid unnecessary processing
 			// This is consistent with datetime_watcher and event_count_watcher behavior
-			if progressiveRollout.IsFinished() || progressiveRollout.IsStopped() {
+			if pr.IsFinished() || pr.IsStopped() {
 				continue
 			}
 			wasExecuted, err := w.executeProgressiveRollout(ctx, p, e.Id)

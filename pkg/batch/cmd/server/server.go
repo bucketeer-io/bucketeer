@@ -549,8 +549,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
-			environmentClient,
-			featureClient,
+			mysqlClient,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),

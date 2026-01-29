@@ -38,51 +38,57 @@ const (
 	// environmentIDProduction is used as a fallback for empty environment IDs
 	// TODO: Remove this after the empty environment ID migration is complete
 	environmentIDProduction = "production"
+
+	// cacherTypeFeatureFlag is the cacher type for feature flags
+	cacherTypeFeatureFlag = "feature_flag"
+	// cacherTypeSegmentUser is the cacher type for segment users
+	cacherTypeSegmentUser = "segment_user"
 )
 
 var (
 	registerOnce sync.Once
 
 	// listFeaturesCounter tracks DB fetch operations
+	// cacher: "feature_flag" or "segment"
 	// scope: "batch" for all-environments fetch, "single" for per-environment fetch
-	// environment_id: empty for batch, actual ID for single
+	// environment_id: "all" for batch, actual ID for single
 	listFeaturesCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "feature_flag_cacher",
+			Subsystem: "cacher",
 			Name:      "list_features_total",
 			Help:      "Total number of list features operations from DB",
-		}, []string{"scope", "environment_id", "code"})
+		}, []string{"cacher", "scope", "environment_id", "code"})
 
 	listFeaturesDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
-			Subsystem: "feature_flag_cacher",
+			Subsystem: "cacher",
 			Name:      "list_features_duration_seconds",
 			Help:      "Duration of list features operations from DB in seconds",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"scope", "environment_id"})
+		}, []string{"cacher", "scope", "environment_id"})
 
 	// cachePutCounter tracks Redis put operations per environment
 	cachePutCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "feature_flag_cacher",
+			Subsystem: "cacher",
 			Name:      "cache_put_total",
 			Help:      "Total number of cache put operations to Redis",
-		}, []string{"environment_id", "code"})
+		}, []string{"cacher", "environment_id", "code"})
 
 	// featuresUpdatedGauge tracks the number of features in the last successful cache update
 	featuresUpdatedGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "bucketeer",
-			Subsystem: "feature_flag_cacher",
+			Subsystem: "cacher",
 			Name:      "features_updated",
 			Help:      "Number of features in the last successful cache update",
-		}, []string{"environment_id"})
+		}, []string{"cacher", "environment_id"})
 )
 
-// RegisterMetrics registers the feature flag cacher metrics.
+// RegisterMetrics registers the cacher metrics.
 func RegisterMetrics(r metrics.Registerer) {
 	registerOnce.Do(func() {
 		r.MustRegister(
@@ -104,22 +110,23 @@ func normalizeEnvironmentID(environmentID string) string {
 }
 
 // recordListFeatures records a list features operation from DB.
+// cacherType: cacherTypeFeatureFlag or cacherTypeSegment
 // scope: scopeBatch for all-environments fetch, scopeSingle for per-environment fetch
 // environmentID: environmentIDAll for batch, actual environment ID for single
-func recordListFeatures(scope, environmentID, code string, durationSeconds float64) {
+func recordListFeatures(cacherType, scope, environmentID, code string, durationSeconds float64) {
 	envID := normalizeEnvironmentID(environmentID)
-	listFeaturesCounter.WithLabelValues(scope, envID, code).Inc()
-	listFeaturesDuration.WithLabelValues(scope, envID).Observe(durationSeconds)
+	listFeaturesCounter.WithLabelValues(cacherType, scope, envID, code).Inc()
+	listFeaturesDuration.WithLabelValues(cacherType, scope, envID).Observe(durationSeconds)
 }
 
 // recordCachePut records a cache put operation to Redis.
-func recordCachePut(environmentID, code string) {
+func recordCachePut(cacherType, environmentID, code string) {
 	envID := normalizeEnvironmentID(environmentID)
-	cachePutCounter.WithLabelValues(envID, code).Inc()
+	cachePutCounter.WithLabelValues(cacherType, envID, code).Inc()
 }
 
 // recordFeaturesUpdated records the number of features in the last successful cache update.
-func recordFeaturesUpdated(environmentID string, count int) {
+func recordFeaturesUpdated(cacherType, environmentID string, count int) {
 	envID := normalizeEnvironmentID(environmentID)
-	featuresUpdatedGauge.WithLabelValues(envID).Set(float64(count))
+	featuresUpdatedGauge.WithLabelValues(cacherType, envID).Set(float64(count))
 }
