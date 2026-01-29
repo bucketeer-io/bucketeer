@@ -4005,6 +4005,11 @@ func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) *grpcGatewayService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
+	// Using AnyTimes() because RecordDAU() is called asynchronously.
+	mauMock := cachev3mock.NewMockMAUCache(mockController)
+	mauMock.EXPECT().RecordDAU(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(nil).AnyTimes()
 	return &grpcGatewayService{
 		featureClient:            featureclientmock.NewMockClient(mockController),
 		accountClient:            accountclientmock.NewMockClient(mockController),
@@ -4024,6 +4029,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		featuresCache:            cachev3mock.NewMockFeaturesCache(mockController),
 		segmentUsersCache:        cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache:   cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		mauCache:                 mauMock,
 		apiKeyLastUsedInfoCacher: sync.Map{},
 		opts:                     &defaultOptions,
 		logger:                   logger,

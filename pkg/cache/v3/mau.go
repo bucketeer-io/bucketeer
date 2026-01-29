@@ -24,13 +24,12 @@ import (
 
 const (
 	dauKeyPrefix = "dau"
-	dauTTL       = 60 * 24 * time.Hour // 60 days
+	dauTTL       = 35 * 24 * time.Hour // 35 days
 )
 
-// MAUCache provides DAU/MAU counting operations for Insights Dashboard.
+// MAUCache provides DAU/MAU counting operations.
 type MAUCache interface {
 	// RecordDAU adds a user ID to the DAU HyperLogLog for the given date.
-	// Key pattern: {envId}:{sourceId}:dau:{yyyyMMdd}
 	RecordDAU(envID, sourceID, userID string, date time.Time) error
 }
 
@@ -38,7 +37,6 @@ type mauCache struct {
 	cache cache.MultiGetDeleteCountCache
 }
 
-// NewMAUCache creates a new MAUCache.
 func NewMAUCache(c cache.MultiGetDeleteCountCache) MAUCache {
 	return &mauCache{cache: c}
 }
@@ -51,7 +49,7 @@ func (*mauCache) dauKey(envID, sourceID string, date time.Time) string {
 }
 
 // RecordDAU adds a user ID to the DAU HyperLogLog using PFADD.
-// Uses Pipeline for atomic PFAdd + Expire execution (same pattern as userAttributesCache).
+// If the userID is empty, it will be no-op and return nil.
 func (c *mauCache) RecordDAU(envID, sourceID, userID string, date time.Time) error {
 	if len(userID) == 0 {
 		return nil
