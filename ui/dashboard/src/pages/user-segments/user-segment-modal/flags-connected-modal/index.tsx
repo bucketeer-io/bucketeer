@@ -26,7 +26,7 @@ const FlagsConnectedModal = ({
 
   return (
     <DialogModal
-      className="w-[496px]"
+      className="max-w-[496px]"
       title={t(`flags-connected`)}
       isOpen={isOpen}
       onClose={onClose}
@@ -34,7 +34,7 @@ const FlagsConnectedModal = ({
       <div className="flex flex-col w-full px-5 py-8 gap-y-5">
         <div className="flex-center flex-col gap-8">
           <Icon icon={IconFlagConnected} size={'fit'} />
-          <div className="typo-para-medium text-gray-700 text-center px-[42px]">
+          <div className="typo-para-medium text-gray-700 text-center px-1 sm:px-[42px]">
             {t('flags-connected-desc')}
           </div>
         </div>

@@ -1,5 +1,4 @@
-import React, { ReactNode, HTMLAttributes } from 'react';
-import clsx from 'clsx';
+import React, { HTMLAttributes, ReactNode } from 'react';
 import { cn } from 'utils/style';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -19,14 +18,6 @@ const CardRoot: React.FC<CardProps> = ({ children, className, ...props }) => {
     </div>
   );
 };
-
-export interface CardStatusBarProps {
-  colorClass: string;
-}
-
-const StatusBar: React.FC<CardStatusBarProps> = ({ colorClass }) => (
-  <div className={clsx('absolute left-0 top-0 bottom-0 w-1', colorClass)} />
-);
 
 export interface CardHeaderProps {
   icon?: ReactNode;
@@ -113,7 +104,6 @@ const Footer: React.FC<CardFooterProps> = ({ left, right }) => (
 );
 
 export const Card = Object.assign(CardRoot, {
-  StatusBar,
   Header,
   Action,
   Meta,

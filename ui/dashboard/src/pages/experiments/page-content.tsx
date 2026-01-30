@@ -214,7 +214,7 @@ const PageContent = ({
         </TabsList>
 
         <TabsContent value={(filters.status as string) || ''} className="mt-0">
-          <TableListContainer>
+          <TableListContainer className="relative">
             <CollectionLoader
               onAdd={onAdd}
               filters={filters}
