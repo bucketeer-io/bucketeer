@@ -2,6 +2,7 @@ import { memo, useEffect } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { useSearchParams } from 'utils/search-params';
@@ -10,6 +11,7 @@ import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { ExperimentActionsType, ExperimentFilters } from '../types';
@@ -35,6 +37,7 @@ const CollectionLoader = memo(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { searchOptions, onChangSearchParams } = useSearchParams();
+    const { fromMobileScreen } = useScreen();
     const {
       data: collection,
       isLoading,
@@ -106,13 +109,23 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        <DataTable
-          isLoading={isLoading}
-          data={experiments}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading}
+            data={experiments}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            data={experiments}
+            isLoading={isLoading}
+            emptyCollection={emptyState}
+            onActions={onActions}
+          />
+        )}
+
         {!isLoading && (
           <Pagination
             page={filters.page}

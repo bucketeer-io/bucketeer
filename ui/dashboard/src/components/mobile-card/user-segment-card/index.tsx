@@ -149,7 +149,7 @@ export const UserSegmentCard: React.FC<UserSegmentCardProps> = ({
             <Icon icon={IconWatch} size={'xxs'} />
             <DateTooltip
               trigger={
-                <div className="text-gray-700 typo-para-small whitespace-nowrap">
+                <div className="text-gray-500 typo-para-small whitespace-nowrap">
                   {Number(data.updatedAt) === 0 ? (
                     t('never')
                   ) : (

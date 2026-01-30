@@ -124,7 +124,7 @@ const GoalResultItem = ({
   return (
     <div
       className={cn(
-        'flex flex-col w-full min-w-fit gap-y-6 p-5 shadow-card rounded-lg bg-white',
+        'flex flex-col w-full gap-y-6 p-3 sm:p-5 shadow-card rounded-lg bg-white',
         {
           'h-16 overflow-hidden': isNarrow
         }

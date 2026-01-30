@@ -103,9 +103,9 @@ const ExperimentState = ({
   };
 
   return (
-    <div className="flex items-center justify-between w-full min-w-fit px-4 py-2 gap-x-4 bg-gray-100 rounded-lg">
-      <div className="flex items-center">
-        <div className="flex items-center gap-x-2 pr-3 border-r border-gray-400">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full min-w-fit px-4 py-2 gap-x-4 bg-gray-100 rounded-lg">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+        <div className="flex items-center gap-x-2 pr-3 sm:border-r border-gray-400">
           <Icon
             icon={
               isRunning
@@ -131,7 +131,7 @@ const ExperimentState = ({
             )}
           </p>
         </div>
-        <div className="px-3 typo-para-small text-gray-700 whitespace-nowrap">
+        <div className="sm:px-3 typo-para-small text-gray-700 whitespace-nowrap">
           <Trans
             i18nKey={
               isRunning
@@ -157,7 +157,7 @@ const ExperimentState = ({
             }}
           />
         </div>
-        <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 whitespace-nowrap border-l border-gray-400">
+        <div className="flex items-center gap-x-3 sm:pl-3 typo-para-small text-gray-700 whitespace-nowrap sm:border-l border-gray-400">
           <Icon icon={IconMember} size="sm" />
           <p>
             <Trans
@@ -178,9 +178,12 @@ const ExperimentState = ({
           <Button
             disabled={isStopped || !editable}
             variant={'text'}
-            className={cn('!typo-para-small h-10 whitespace-nowrap', {
-              'text-accent-red-500 hover:text-accent-red-600': isRunning
-            })}
+            className={cn(
+              '!typo-para-small h-10 whitespace-nowrap px-0 sm:px-2',
+              {
+                'text-accent-red-500 hover:text-accent-red-600': isRunning
+              }
+            )}
             onClick={onOpenToggleExperimentModal}
           >
             <Icon

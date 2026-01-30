@@ -67,66 +67,68 @@ const EvaluationTable = ({
   );
 
   return (
-    <div className="min-w-fit">
-      <div className="flex w-full">
-        {headerList.map((item, index) => (
-          <ResultHeaderCell
-            key={index}
-            text={t(`table:results.${item.name}`)}
-            tooltip={
-              item.tooltipKey ? t(`table:results.${item.tooltipKey}`) : ''
-            }
-            isShowIcon={index > 0}
-            minSize={item.minSize}
-          />
-        ))}
-      </div>
-      <div className="divide-y divide-gray-300">
-        {evaluationData?.map((item, i) => {
-          const { experimentCount, evaluationCount } = item;
+    <div className="overflow-x-scroll overflow-y-hidden small-scroll">
+      <div className="min-w-fit">
+        <div className="flex w-full">
+          {headerList.map((item, index) => (
+            <ResultHeaderCell
+              key={index}
+              text={t(`table:results.${item.name}`)}
+              tooltip={
+                item.tooltipKey ? t(`table:results.${item.tooltipKey}`) : ''
+              }
+              isShowIcon={index > 0}
+              minSize={item.minSize}
+            />
+          ))}
+        </div>
+        <div className="divide-y divide-gray-300">
+          {evaluationData?.map((item, i) => {
+            const { experimentCount, evaluationCount } = item;
 
-          const valuePerUser =
-            Number(experimentCount.userCount) > 0
-              ? Number(experimentCount.valueSum) /
-                Number(experimentCount.userCount)
-              : 0;
+            const valuePerUser =
+              Number(experimentCount.userCount) > 0
+                ? Number(experimentCount.valueSum) /
+                  Number(experimentCount.userCount)
+                : 0;
 
-          const isHidden = evaluationDataSets.find(
-            dataset => dataset.label === item?.variationName
-          )?.hidden;
+            const isHidden = evaluationDataSets.find(
+              dataset => dataset.label === item?.variationName
+            )?.hidden;
 
-          return (
-            <div key={i} className="flex items-center w-full">
-              <ResultCell
-                currentIndex={i}
-                variationId={item.variationId}
-                isFirstItem={true}
-                value={item?.variationName || ''}
-                minSize={270}
-                isChecked={!isHidden}
-                variationType={variationType}
-                onToggleShowData={onToggleShowData}
-              />
-              <ResultCell
-                value={Number(evaluationCount?.userCount)?.toLocaleString()}
-                minSize={143}
-              />
-              <ResultCell
-                value={Number(experimentCount?.eventCount)?.toLocaleString()}
-                minSize={123}
-              />
-              <ResultCell
-                value={Number(experimentCount?.userCount)?.toLocaleString()}
-                minSize={119}
-              />
-              <ResultCell
-                value={Number(experimentCount?.valueSum)?.toLocaleString()}
-                minSize={125}
-              />
-              <ResultCell value={valuePerUser.toFixed(2)} minSize={123} />
-            </div>
-          );
-        })}
+            return (
+              <div key={i} className="flex items-center w-full">
+                <ResultCell
+                  currentIndex={i}
+                  variationId={item.variationId}
+                  isFirstItem={true}
+                  value={item?.variationName || ''}
+                  minSize={270}
+                  isChecked={!isHidden}
+                  variationType={variationType}
+                  onToggleShowData={onToggleShowData}
+                />
+                <ResultCell
+                  value={Number(evaluationCount?.userCount)?.toLocaleString()}
+                  minSize={143}
+                />
+                <ResultCell
+                  value={Number(experimentCount?.eventCount)?.toLocaleString()}
+                  minSize={123}
+                />
+                <ResultCell
+                  value={Number(experimentCount?.userCount)?.toLocaleString()}
+                  minSize={119}
+                />
+                <ResultCell
+                  value={Number(experimentCount?.valueSum)?.toLocaleString()}
+                  minSize={125}
+                />
+                <ResultCell value={valuePerUser.toFixed(2)} minSize={123} />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
