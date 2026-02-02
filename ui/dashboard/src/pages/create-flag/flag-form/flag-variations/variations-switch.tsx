@@ -78,81 +78,83 @@ const VariationsSwitch = () => {
   );
 
   return (
-    <div className="flex items-center w-full justify-between">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center w-full justify-between gap-y-1">
       <p className="typo-para-medium text-gray-700">
         {t('feature-flags.flag-variations')}
       </p>
-      <Form.Field
-        name="switchVariationType"
-        render={() => (
-          <Form.Item className="py-0">
-            <Form.Control>
-              <div className="flex items-center">
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-r-none',
-                    buttonCls,
-                    currentSwitchVariation === FlagSwitchVariationType.CUSTOM &&
-                      buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.CUSTOM)
-                  }
-                >
-                  {t(`custom`)}
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.RELEASE && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.RELEASE)
-                  }
-                >
-                  {t(`release`)}
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.KILL_SWITCH && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.KILL_SWITCH)
-                  }
-                >
-                  {t(`kill-switch`)}
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  type="button"
-                  className={cn(
-                    'rounded-l-none',
-                    buttonCls,
-                    currentSwitchVariation ===
-                      FlagSwitchVariationType.EXPERIMENT && buttonActiveCls
-                  )}
-                  onClick={() =>
-                    handleSwitchVariation(FlagSwitchVariationType.EXPERIMENT)
-                  }
-                >
-                  {t(`common:source-type.experiment`)}
-                </Button>
-              </div>
-            </Form.Control>
-          </Form.Item>
-        )}
-      />
+      <div className="w-full overflow-x-scroll">
+        <Form.Field
+          name="switchVariationType"
+          render={() => (
+            <Form.Item className="py-0">
+              <Form.Control>
+                <div className="flex items-center">
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-r-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.CUSTOM && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.CUSTOM)
+                    }
+                  >
+                    {t(`custom`)}
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.RELEASE && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.RELEASE)
+                    }
+                  >
+                    {t(`release`)}
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.KILL_SWITCH && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.KILL_SWITCH)
+                    }
+                  >
+                    {t(`kill-switch`)}
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    type="button"
+                    className={cn(
+                      'rounded-l-none',
+                      buttonCls,
+                      currentSwitchVariation ===
+                        FlagSwitchVariationType.EXPERIMENT && buttonActiveCls
+                    )}
+                    onClick={() =>
+                      handleSwitchVariation(FlagSwitchVariationType.EXPERIMENT)
+                    }
+                  >
+                    {t(`common:source-type.experiment`)}
+                  </Button>
+                </div>
+              </Form.Control>
+            </Form.Item>
+          )}
+        />
+      </div>
     </div>
   );
 };

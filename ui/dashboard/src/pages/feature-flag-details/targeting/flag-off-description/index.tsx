@@ -53,7 +53,7 @@ const FlagOffDescription = ({
   return (
     <div
       className={cn(
-        'flex-center w-full gap-x-2 py-2 typo-para-medium text-gray-600',
+        'inline sm:flex-center w-full gap-x-2 py-2 typo-para-medium text-gray-600',
         {
           'flex-col gap-y-4': !isShowRules
         }

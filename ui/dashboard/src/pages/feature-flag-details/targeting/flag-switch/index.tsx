@@ -42,7 +42,7 @@ const FlagSwitch = ({
   );
 
   return (
-    <div className="flex items-center justify-between w-full px-4 sm:px-5 h-[104px] rounded-lg shadow-card-secondary">
+    <div className="flex flex-col sm:flex-row items-center justify-between w-full p-2 sm:p-5 h-[104px] rounded-lg shadow-card-secondary">
       <Form.Field
         control={control}
         name="enabled"
@@ -97,14 +97,14 @@ const FlagSwitch = ({
           name="offVariation"
           control={control}
           render={({ field }) => (
-            <Form.Item>
+            <Form.Item className="w-full">
               <Form.Control>
                 <Dropdown
                   value={field.value}
                   onChange={field.onChange}
                   options={options}
                   disabled={!editable}
-                  className="max-w-[400px] truncate"
+                  className="max-w-[400px] w-full truncate"
                   contentClassName="max-w-[400px]"
                   alignContent="end"
                 />

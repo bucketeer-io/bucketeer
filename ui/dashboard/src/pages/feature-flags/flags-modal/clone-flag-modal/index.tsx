@@ -204,7 +204,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                         placeholder={t(`form:select-environment`)}
                         disabled
                         className="w-full"
-                        contentClassName="min-w-[502px]"
+                        contentClassName="min-w-[350px] sm:min-w-[502px]"
                       />
                     </Form.Control>
                     <Form.Message />
@@ -224,6 +224,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                       <EnvironmentEditorList
                         value={field.value}
                         disabled={!editable}
+                        contentClassName="max-w-[390px] sm:max-w-full"
                         currentEnvironmentId={
                           currentEnvironment?.id || emptyEnvironmentId
                         }

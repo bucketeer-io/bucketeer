@@ -302,5 +302,6 @@
   "detail": "Detail",
   "last-seen": "Last seen",
   "time-stop": "Time stop",
-  "time-start": "Time start"
+  "time-start": "Time start",
+  "loading": "Loading..."
 }

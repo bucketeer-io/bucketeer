@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
@@ -17,7 +18,7 @@ import Input from 'components/input';
 
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
-
+  const { fromMobileScreen } = useScreen();
   const {
     control,
     watch,
@@ -66,22 +67,39 @@ const Variations = () => {
   };
 
   return (
-    <div className="flex flex-col w-full gap-y-4">
+    <div className="flex flex-col w-full gap-y-6 sm:gap-y-4">
       {variations.map((item, variationIndex) => (
         <div key={item.flagVariation} className="flex flex-col w-full">
-          <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600">
-            <FlagVariationPolygon index={variationIndex} />
-            <Trans
-              i18nKey={'form:feature-flags.variation'}
-              values={{
-                index: `${variationIndex + 1}`
-              }}
-            />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600">
+              <FlagVariationPolygon index={variationIndex} />
+              <Trans
+                i18nKey={'form:feature-flags.variation'}
+                values={{
+                  index: `${variationIndex + 1}`
+                }}
+              />
+            </div>
+            {!fromMobileScreen && (
+              <Button
+                variant="grey"
+                size="icon"
+                type="button"
+                className="p-0 size-5 mb-1 self-center"
+                disabled={
+                  variations.length <= 2 ||
+                  [onVariation, offVariation].includes(item.id)
+                }
+                onClick={() => onDeleteVariation(variationIndex)}
+              >
+                <Icon icon={IconTrash} size="sm" />
+              </Button>
+            )}
           </div>
           <div className="flex gap-x-4">
             <div className="flex flex-col w-full gap-y-4">
               <div
-                className={cn('flex w-full gap-4', {
+                className={cn('flex flex-col sm:flex-row w-full gap-4', {
                   'flex-col': isJSON || isYAML
                 })}
               >
@@ -185,19 +203,21 @@ const Variations = () => {
                 />
               )}
             </div>
-            <Button
-              variant="grey"
-              size="icon"
-              type="button"
-              className="p-0 size-5 mt-5 self-center"
-              disabled={
-                variations.length <= 2 ||
-                [onVariation, offVariation].includes(item.id)
-              }
-              onClick={() => onDeleteVariation(variationIndex)}
-            >
-              <Icon icon={IconTrash} size="sm" />
-            </Button>
+            {fromMobileScreen && (
+              <Button
+                variant="grey"
+                size="icon"
+                type="button"
+                className="p-0 size-5 mt-5 self-center"
+                disabled={
+                  variations.length <= 2 ||
+                  [onVariation, offVariation].includes(item.id)
+                }
+                onClick={() => onDeleteVariation(variationIndex)}
+              >
+                <Icon icon={IconTrash} size="sm" />
+              </Button>
+            )}
           </div>
         </div>
       ))}
