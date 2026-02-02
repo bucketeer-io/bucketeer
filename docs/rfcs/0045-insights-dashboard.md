@@ -107,19 +107,22 @@ flowchart TB
 
 #### Redis Keys
 
-| Key Pattern                         | Data Type   | Purpose                      |
-| ----------------------------------- | ----------- | ---------------------------- |
-| `{envId}:{sourceId}:dau:{yyyyMMdd}` | HyperLogLog | Daily DAU                    |
-| `{envId}:{sourceId}:mau:{yyyyMM}`   | HyperLogLog | Monthly MAU (PFMERGE result) |
+| Key Pattern                      | Data Type   | Purpose                      |
+| -------------------------------- | ----------- | ---------------------------- |
+| `{envId:sourceId:au}:d:yyyyMMdd` | HyperLogLog | Daily DAU                    |
+| `{envId:sourceId:au}:m:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) |
+
+Using the hash tag `{envId:sourceId:au}` to ensure that multiple keys are allocated in the same hash slot.
+See https://redis.io/topics/cluster-spec#keys-hash-tags.
 
 
 #### Processing Flow
 
-| Timing       | Process                         | Command                                                                          |
-| ------------ | ------------------------------- | -------------------------------------------------------------------------------- |
-| Realtime     | Add user ID to DAU              | `PFADD {envId}:{sourceId}:dau:{yyyyMMdd} {user_id}`                              |
-| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId}:{sourceId}:mau:{yyyyMM} {envId}:{sourceId}:dau:{yyyyMMdd}`      |
-| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId}:{sourceId}:mau:{yyyyMM}`<br>2. `UPSERT INTO monthly_summary` |
+| Timing       | Process                         | Command                                              |
+| ------------ | ------------------------------- | ---------------------------------------------------- |
+| Realtime     | Add user ID to DAU              | `PFADD dau {user_id}`                                |
+| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE mau dau`                                    |
+| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT mau`<br>2. `UPSERT INTO monthly_summary` |
 
 
 ## Details
