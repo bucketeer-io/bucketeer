@@ -30,7 +30,7 @@ export default function ReactCodeEditorModal({
   const { t } = useTranslation('common');
   return (
     <DialogModal
-      className="w-full sm:w-[60vw] h-full sm:h-[80%] overflow-hidden"
+      className="w-full h-full sm:w-[60vw] sm:h-[80%] overflow-hidden"
       overlayCls="bg-overlay-second"
       title={title}
       closeContent={

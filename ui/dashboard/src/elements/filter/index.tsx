@@ -1,10 +1,9 @@
 import { ReactNode } from 'react';
 import {
-  IconLaunchOutlined,
-  IconFilterListOutlined
+  IconFilterListOutlined,
+  IconLaunchOutlined
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
-import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import Button from 'components/button';
@@ -17,6 +16,7 @@ interface FilterProps {
   filterCount?: number;
   isShowDocumentation?: boolean;
   className?: string;
+  actionClassName?: string;
   link?: string;
   placeholder?: string;
   name?: string;
@@ -31,6 +31,7 @@ const Filter = ({
   filterCount,
   isShowDocumentation = true,
   className,
+  actionClassName,
   link = '',
   placeholder,
   name,
@@ -38,7 +39,6 @@ const Filter = ({
   onOpenFilter
 }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
-  const { lessThanXLScreen } = useScreen();
   return (
     <div
       className={cn(
@@ -59,10 +59,8 @@ const Filter = ({
       )}
       <div
         className={cn(
-          'flex flex-1 w-full items-center justify-end gap-4 mt-3 lg:mt-0',
-          {
-            'flex-wrap': lessThanXLScreen
-          }
+          'flex flex-wrap flex-1 w-full items-center justify-end gap-4 mt-3 lg:mt-0',
+          actionClassName
         )}
       >
         {isShowDocumentation && (

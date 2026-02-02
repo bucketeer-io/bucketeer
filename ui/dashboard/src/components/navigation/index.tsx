@@ -299,7 +299,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         />
       ) : (
         <DialogModal
-          className="w-full max-w-[350px]"
+          className="w-[350px]"
           title=""
           isOpen={isOpenSwitchOrg}
           onClose={onCloseSwitchOrg}

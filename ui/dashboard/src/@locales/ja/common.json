@@ -295,7 +295,6 @@
   "docs": "ドキュメント",
   "new": "新規",
   "discard": "変更を破棄",
-  "add-rule": "ルールを追加",
   "continue-editing": "編集を続ける",
   "leave-page": "ページを離れる",
   "note": "メモ",
@@ -314,5 +313,6 @@
   "change": "変更する",
   "rule": "ルール",
   "rules": "ルール",
-  "rule-deleted": "({{count}}) {{tailTitle}} が削除されます："
+  "rule-deleted": "({{count}}) {{tailTitle}} が削除されます：",
+  "loading": "Loading..."
 }

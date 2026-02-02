@@ -69,7 +69,7 @@ const FlagType = () => {
   );
 
   return (
-    <div className=" w-full h-fit flex flex-col gap-3">
+    <div className="w-full h-fit flex flex-col gap-3">
       <Form.Field
         control={control}
         name={`variationType`}

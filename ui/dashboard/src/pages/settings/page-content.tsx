@@ -98,7 +98,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
 
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
-    <PageLayout.Content className="p-6">
+    <PageLayout.Content className="p-3 sm:p-6">
       <div className="p-5 shadow-card rounded-lg bg-white">
         <div className="flex items-center justify-between">
           <p className="text-gray-800 typo-head-bold-small">

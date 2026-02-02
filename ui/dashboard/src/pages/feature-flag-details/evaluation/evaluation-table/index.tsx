@@ -48,7 +48,7 @@ const EvaluationTable = ({
           <Trans
             i18nKey="table:evaluation.total-evaluations"
             components={{
-              desc: <span className="text-gray-500" />
+              desc: <span className="text-gray-500 hidden sm:inline" />
             }}
             values={{
               value: `(${timeRangeLabel})`

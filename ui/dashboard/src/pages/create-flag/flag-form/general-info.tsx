@@ -32,7 +32,7 @@ const GeneralInfo = ({
     <div className="flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card">
       <p className="typo-para-medium text-gray-700">{t('general-info')}</p>
       <div className="flex flex-col w-full gap-y-5">
-        <div className="flex w-full gap-x-4">
+        <div className="flex flex-col sm:flex-row w-full gap-4">
           <Form.Field
             control={control}
             name="name"
@@ -93,7 +93,7 @@ const GeneralInfo = ({
             )}
           />
         </div>
-        <div className="flex w-full gap-x-4">
+        <div className="flex flex-col sm:flex-row w-full gap-4">
           <Form.Field
             control={control}
             name="description"

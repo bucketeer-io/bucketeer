@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
+import { FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
-import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
-import { IconPlus } from '@icons';
+import { IconPlus, IconTrash } from '@icons';
 import { ExperimentFilters } from 'pages/experiments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -11,6 +9,7 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption, DropdownValue } from 'components/dropdown';
 import Icon from 'components/icon';
 import SlideModal from 'components/modal/slide';
+import useExperimentFilterLogic from './use-filter-experiment-logic';
 
 export type FilterProps = {
   isOpen: boolean;
@@ -20,7 +19,7 @@ export type FilterProps = {
   onClearFilters: () => void;
 };
 
-const FilterExperimentSlideModal = ({
+const FilterExperimentSlide = ({
   isOpen,
   filters,
   onSubmit,
@@ -28,113 +27,33 @@ const FilterExperimentSlideModal = ({
   onClearFilters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-
-  const { experimentFilterOptions } = useOptions();
-
-  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
-    experimentFilterOptions[0]
-  ]);
-
-  const remainingFilterOptions = useMemo(
-    () =>
-      experimentFilterOptions.filter(
-        option => !selectedFilters.find(item => item.value === option.value)
-      ),
-    [selectedFilters, experimentFilterOptions]
-  );
-
-  const isDisabledAddButton = useMemo(
-    () =>
-      !remainingFilterOptions.length ||
-      selectedFilters.length >= experimentFilterOptions.length,
-
-    [experimentFilterOptions, selectedFilters, remainingFilterOptions]
-  );
-
-  const isDisabledSubmitButton = useMemo(
-    () => !!selectedFilters.find(item => isEmpty(item.filterValue)),
-    [selectedFilters]
-  );
-
-  const handleSetFilterOnInit = useCallback(() => {
-    if (filters) {
-      const { maintainer, statuses } = filters || {};
-      const filterTypeArr: FilterOption[] = [];
-
-      const addFilterOption = (
-        index: number,
-        value: FilterOption['filterValue']
-      ) => {
-        if (!isEmpty(value)) {
-          const option = experimentFilterOptions[index];
-          filterTypeArr.push({
-            ...option,
-            filterValue: value
-          });
-        }
-      };
-      addFilterOption(0, statuses);
-      addFilterOption(1, maintainer);
-      setSelectedFilters(
-        filterTypeArr.length ? filterTypeArr : [experimentFilterOptions[0]]
-      );
-    }
-  }, [filters]);
-
-  const handleChangeOption = (value: DropdownValue, filterIndex: number) => {
-    {
-      const selectedOption = experimentFilterOptions.find(
-        item => item.value === value
-      );
-      if (selectedOption) {
-        const filterValue =
-          selectedOption.value === FilterTypes.STATUSES ? [] : '';
-        selectedFilters[filterIndex] = {
-          ...selectedOption,
-          filterValue
-        };
-        setSelectedFilters([...selectedFilters]);
-      }
-    }
-  };
-
-  const onConfirmHandler = () => {
-    const defaultFilters = {
-      statuses: undefined,
-      maintainer: undefined
-    };
-
-    const newFilters = {};
-
-    selectedFilters.forEach(filter => {
-      Object.assign(newFilters, {
-        [filter.value!]: filter.filterValue
-      });
-    });
-    onSubmit({
-      ...defaultFilters,
-      ...newFilters,
-      isFilter: true
-    });
-  };
-
-  useEffect(() => {
-    if (filters?.isFilter || filters?.filterBySummary) {
-      handleSetFilterOnInit();
-    }
-  }, [filters]);
-
+  const {
+    selectedFilters,
+    isDisabledAddButton,
+    isDisabledSubmitButton,
+    isLoading,
+    remainingFilterOptions,
+    setSelectedFilters,
+    onConfirmHandler,
+    getValueOptions,
+    handleGetLabelFilterValue,
+    handleChangeFilterValue,
+    handleChangeOption
+  } = useExperimentFilterLogic(filters, onSubmit);
   return (
     <SlideModal title={t('filters')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full h-full flex flex-col justify-between relative">
         <div className="flex flex-col w-full items-start p-5 gap-y-4">
           {selectedFilters.map((filterOption, filterIndex) => {
             const { label, value: filterType } = filterOption;
+            const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
+            const isStatusFilter = filterType === FilterTypes.STATUSES;
+            const valueOptions = getValueOptions(filterOption);
 
             return (
               <div
-                className="flex items-start w-full h-[100px] gap-x-3"
                 key={filterIndex}
+                className="flex items-start w-full h-[100px] gap-x-3"
               >
                 <div className="h-full flex flex-col gap-y-4 items-center justify-center">
                   <div
@@ -153,19 +72,62 @@ const FilterExperimentSlideModal = ({
                   <Dropdown
                     placeholder={t(`select-filter`)}
                     labelCustom={label}
-                    options={remainingFilterOptions as DropdownOption[]}
-                    value={filterType}
-                    onChange={value => {
-                      handleChangeOption(value as string, filterIndex);
-                    }}
                     className="w-full truncate py-2"
                     contentClassName="w-[270px]"
+                    options={remainingFilterOptions as DropdownOption[]}
+                    value={filterType}
+                    onChange={value =>
+                      handleChangeOption(value as DropdownValue, filterIndex)
+                    }
                   />
+
+                  <div className="flex items-center gap-3 mt-3 pl-3">
+                    <p className="typo-para-medium text-gray-600">is</p>
+                    <Dropdown
+                      disabled={isLoading || !filterType}
+                      placeholder={t(`select-value`)}
+                      labelCustom={handleGetLabelFilterValue(filterOption)}
+                      className={cn('w-full truncate py-2', {
+                        capitalize: isStatusFilter
+                      })}
+                      contentClassName={cn('w-[235px]', {
+                        'pt-0 w-[300px]': isMaintainerFilter,
+                        'hidden-scroll': valueOptions?.length > 15
+                      })}
+                      value={
+                        isStatusFilter &&
+                        Array.isArray(filterOption?.filterValue)
+                          ? filterOption.filterValue
+                          : (filterOption.filterValue as string)
+                      }
+                      options={valueOptions as DropdownOption[]}
+                      isSearchable={isMaintainerFilter}
+                      onChange={value =>
+                        handleChangeFilterValue(value as string, filterIndex)
+                      }
+                      multiselect={isStatusFilter}
+                      isListItem={isMaintainerFilter || isStatusFilter}
+                    />
+
+                    <Button
+                      variant={'grey'}
+                      className="px-0 w-fit"
+                      disabled={selectedFilters.length <= 1}
+                      onClick={() =>
+                        setSelectedFilters(
+                          selectedFilters.filter(
+                            (_, index) => filterIndex !== index
+                          )
+                        )
+                      }
+                    >
+                      <Icon icon={IconTrash} size={'sm'} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
           })}
-
           <Button
             disabled={isDisabledAddButton}
             variant={'text'}
@@ -175,7 +137,7 @@ const FilterExperimentSlideModal = ({
                 ...selectedFilters,
                 {
                   label: '',
-                  value: undefined,
+                  value: '',
                   filterValue: ''
                 }
               ]);
@@ -207,4 +169,4 @@ const FilterExperimentSlideModal = ({
   );
 };
 
-export default FilterExperimentSlideModal;
+export default FilterExperimentSlide;

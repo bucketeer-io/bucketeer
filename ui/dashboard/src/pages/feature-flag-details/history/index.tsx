@@ -148,6 +148,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
       <Filter
         link={DOCUMENTATION_LINKS.FLAG_HISTORY}
         placeholder={t('form:name-email-search-placeholder')}
+        actionClassName="flex-nowrap"
         action={
           <>
             <ReactDateRangePicker
@@ -165,6 +166,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
               }}
             />
             <Button
+              className="w-full"
               variant={'secondary'}
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
