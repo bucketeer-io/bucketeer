@@ -36,11 +36,11 @@ func TestMAUCache_DAUKey(t *testing.T) {
 		expected string
 	}{
 		{
-			desc:     "success: builds correct key format",
+			desc:     "success: builds correct key format with hash tag",
 			envID:    "env-123",
 			sourceID: "ANDROID",
 			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
-			expected: "env-123:ANDROID:dau:20260128",
+			expected: "{env-123:ANDROID:au}:d:20260128",
 		},
 	}
 	for _, p := range patterns {
@@ -65,7 +65,7 @@ func TestMAUCache_RecordDAU_Success(t *testing.T) {
 	sourceID := "ANDROID"
 	userID := "user-456"
 	date := time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC)
-	expectedKey := "env-123:ANDROID:dau:20260128"
+	expectedKey := "{env-123:ANDROID:au}:d:20260128"
 
 	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
 	mockPipe.EXPECT().PFAdd(expectedKey, userID)
@@ -109,7 +109,7 @@ func TestMAUCache_RecordDAU_PipelineError(t *testing.T) {
 	sourceID := "ANDROID"
 	userID := "user-456"
 	date := time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC)
-	expectedKey := "env-123:ANDROID:dau:20260128"
+	expectedKey := "{env-123:ANDROID:au}:d:20260128"
 	expectedErr := errors.New("redis connection error")
 
 	mockCache.EXPECT().Pipeline(false).Return(mockPipe)

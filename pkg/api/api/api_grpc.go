@@ -415,11 +415,14 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 
 	go func() {
-		if err := s.mauCache.RecordDAU(environmentId, sourceID, req.User.Id, time.Now()); err != nil {
+		envID := environmentId
+		srcID := req.SourceId.String()
+		userID := req.User.Id
+		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
 			s.logger.Warn("Failed to record DAU",
 				zap.Error(err),
-				zap.String("environmentId", environmentId),
-				zap.String("sourceId", sourceID),
+				zap.String("environmentId", envID),
+				zap.String("sourceId", srcID),
 			)
 		}
 	}()

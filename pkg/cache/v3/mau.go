@@ -23,8 +23,7 @@ import (
 )
 
 const (
-	dauKeyPrefix = "dau"
-	dauTTL       = 35 * 24 * time.Hour // 35 days
+	dauTTL = 35 * 24 * time.Hour // 35 days
 )
 
 // MAUCache provides DAU/MAU counting operations.
@@ -42,10 +41,14 @@ func NewMAUCache(c cache.MultiGetDeleteCountCache) MAUCache {
 }
 
 // dauKey builds the Redis key for DAU HyperLogLog.
-// Format: {envId}:{sourceId}:dau:{yyyyMMdd}
+// Format: {envId:sourceId:au}:d:yyyyMMdd
+// The {envId:sourceId:au} hash tag ensures DAU and MAU keys
+// for the same env/source are in the same Redis Cluster slot,
+// enabling PFMERGE operations.
+// See: https://redis.io/topics/cluster-spec#keys-hash-tags
 func (*mauCache) dauKey(envID, sourceID string, date time.Time) string {
 	dateStr := date.Format("20060102")
-	return fmt.Sprintf("%s:%s:%s:%s", envID, sourceID, dauKeyPrefix, dateStr)
+	return fmt.Sprintf("{%s:%s:au}:d:%s", envID, sourceID, dateStr)
 }
 
 // RecordDAU adds a user ID to the DAU HyperLogLog using PFADD.
