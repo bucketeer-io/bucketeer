@@ -1614,9 +1614,11 @@ func newFeatureID(t *testing.T, uuid string) string {
 }
 
 func newFixedStrategyRule(variationID string) *featureproto.Rule {
-	uuid, _ := uuid.NewUUID()
+	featureID, _ := uuid.NewUUID()
+	clauseID1, _ := uuid.NewUUID()
+	clauseID2, _ := uuid.NewUUID()
 	return &featureproto.Rule{
-		Id: uuid.String(),
+		Id: featureID.String(),
 		Strategy: &featureproto.Strategy{
 			Type: featureproto.Strategy_FIXED,
 			FixedStrategy: &featureproto.FixedStrategy{
@@ -1625,11 +1627,13 @@ func newFixedStrategyRule(variationID string) *featureproto.Rule {
 		},
 		Clauses: []*featureproto.Clause{
 			{
+				Id:        clauseID1.String(),
 				Attribute: "attribute-1",
 				Operator:  featureproto.Clause_EQUALS,
 				Values:    []string{"value-1", "value-2"},
 			},
 			{
+				Id:        clauseID2.String(),
 				Attribute: "attribute-2",
 				Operator:  featureproto.Clause_IN,
 				Values:    []string{"value-1", "value-2"},
