@@ -150,17 +150,9 @@ message GetInsightsMonthlySummaryResponse {
 }
 
 message MonthlySummarySeries {
-  string environment_id = 1;
-  bucketeer.event.client.SourceId source_id = 2;
-  repeated MonthlySummaryDataPoint data = 3;  // Sorted by yearmonth ascending
-  string project_name = 4;
-  string environment_name = 5;
+  // TBD
 }
 
-message MonthlySummaryDataPoint {
-  string yearmonth = 1;  // "202601"
-  double value = 2;
-}
 
 // =====================================
 // 2. Time Series APIs (Common for Latency, Requests, Evaluations)
