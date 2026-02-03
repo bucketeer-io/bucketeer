@@ -15,6 +15,9 @@ Add a Dashboard page where users can view Bucketeer usage metrics (request count
 3. Latency time series graph
 4. Request count time series graph
 5. Evaluations by type time series graph
+6. Error rates time series graph
+
+1~4 are based on the API gateway metrics, not SDK.
 
 ### Filters:
 - Common to all:
@@ -43,7 +46,7 @@ yearmonth,project_name,environment_name,sdk,mau,request_count
 ```mermaid
 graph TD
     UI[Dashboard UI] -->|GetInsightsXxx| BK[InsightsService]
-    BK -->|Get: latency,<br>requests,<br>evaluations| PROM[(Prometheus)]
+    BK -->|Get: latency,<br>requests,<br>evaluations,<br>error rates| PROM[(Prometheus)]
     %% BK --> REDIS[(Redis)]
     BK -->|Get: MAU,<br>monthly requests|RDB[(RDB<br>monthly_summary)]
 
@@ -53,7 +56,7 @@ graph TD
 
 ### API
 
-Instead of fetching all data with a single API, we split into 4 APIs per UI area for better read performance, extensibility, and fault isolation.
+Instead of fetching all data with a single API, we split into 5 APIs per UI area for better read performance, extensibility, and fault isolation.
 
 | API                         | UI Area             | Data Source |
 | --------------------------- | ------------------- | ----------- |
@@ -61,7 +64,7 @@ Instead of fetching all data with a single API, we split into 4 APIs per UI area
 | `GetInsightsLatency`        | Latency             | Prometheus  |
 | `GetInsightsRequests`       | Request Count       | Prometheus  |
 | `GetInsightsEvaluations`    | Evaluations         | Prometheus  |
-
+| `GetInsightsErrorRates`     | Error Rates         | Prometheus  |
 
 ### Data Sources
 
@@ -74,11 +77,11 @@ Reasons:
 
 Usage:
 
-| Data Source | Purpose                                  |
-| ----------- | ---------------------------------------- |
-| Prometheus  | Request count, Latency, Evaluation types |
-| Redis       | MAU calculation                          |
-| RDB         | Historical MAU, Request count            |
+| Data Source | Purpose                                               |
+| ----------- | ----------------------------------------------------- |
+| Prometheus  | Request count, Latency, Evaluation types, Error rates |
+| Redis       | MAU calculation                                       |
+| RDB         | Historical MAU, Request count                         |
 
 ### Persisting Monthly Data
 
@@ -127,73 +130,6 @@ See https://redis.io/topics/cluster-spec#keys-hash-tags.
 
 ## Details
 
-### Proto
-
-To ensure extensibility for future graph additions, Latency/Requests/Evaluations share common message types.
-
-`proto/insights/service.proto`:
-
-
-```protobuf
-// =====================================
-// 1. Monthly Usage API
-// =====================================
-
-message GetInsightsMonthlySummaryRequest {
-  repeated string environment_ids = 1;
-  repeated bucketeer.event.client.SourceId source_ids = 2;
-}
-
-message GetInsightsMonthlySummaryResponse {
-  repeated MonthlySummarySeries mau_series = 1;
-  repeated MonthlySummarySeries requests_series = 2;
-}
-
-message MonthlySummarySeries {
-  // TBD
-}
-
-
-// =====================================
-// 2. Time Series APIs (Common for Latency, Requests, Evaluations)
-// =====================================
-
-message GetInsightsTimeSeriesRequest {
-  repeated string environment_ids = 1;
-  repeated bucketeer.event.client.SourceId source_ids = 2;
-  repeated bucketeer.event.client.ApiId api_ids = 3;
-  int64 start_at = 4; // Unix timestamp in seconds
-  int64 end_at = 5;   // Unix timestamp in seconds
-}
-
-message GetInsightsTimeSeriesResponse {
-  repeated InsightsTimeSeries timeseries = 1;
-}
-
-message InsightsTimeSeries {
-  string environment_id = 1;
-  bucketeer.event.client.SourceId source_id = 2;
-  bucketeer.event.client.ApiId api_id = 3;
-  repeated InsightsDataPoint data = 4;  // Sorted by timestamp ascending
-}
-
-message InsightsDataPoint {
-  int64 timestamp = 1;  // Unix timestamp in seconds
-  double value = 2;
-}
-
-// =====================================
-// Service
-// =====================================
-
-service InsightsService {
-  rpc GetInsightsMonthlySummary(GetInsightsMonthlySummaryRequest) returns (GetInsightsMonthlySummaryResponse);
-  rpc GetInsightsLatency(InsightsTimeSeriesRequest) returns (InsightsTimeSeriesResponse);
-  rpc GetInsightsRequests(InsightsTimeSeriesRequest) returns (InsightsTimeSeriesResponse);
-  rpc GetInsightsEvaluations(InsightsTimeSeriesRequest) returns (InsightsTimeSeriesResponse);
-}
-```
-
 ### RDB
 
 **Table**: `monthly_summary` (new)
@@ -215,26 +151,33 @@ CREATE TABLE `monthly_summary` (
 
 ### Prometheus Metrics
 
-Use 1 existing metrics and add 2 new metrics.
+Use 1 existing metrics and add 3 new metrics.
 
-| Metric        | Name                                         | Status   | Note                                                                                            |
-| ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
-| Request count | `bucketeer_gateway_api_request_total`        | Existing | Has all required labels                                                                         |
-| Latency       | `bucketeer_gateway_api_handling_seconds`     | New      | Existing `bucketeer_grpc_server_handling_seconds` lacks `environment_id` and `source_id` labels |
-| Evaluations   | `bucketeer_gateway_api_evaluations_v2_total` | New      | Existing `bucketeer_gateway_api_evaluations_total` lacks `source_id` label                      |
+| Metric        | Name                                         | Status   | Note                                                                                                                                      |
+| ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Request count | `bucketeer_gateway_api_request_total`        | Existing | Has all required labels                                                                                                                   |
+| Latency       | `bucketeer_gateway_api_handling_seconds`     | New      | Existing `bucketeer_grpc_server_handling_seconds` lacks `environment_id` and `source_id` labels                                           |
+| Evaluations   | `bucketeer_gateway_api_evaluations_v2_total` | New      | Existing `bucketeer_gateway_api_evaluations_total` lacks `source_id` label                                                                |
+| Error count   | `bucketeer_gateway_api_error_total`          | New      | Existing `bucketeer_grpc_server_handled_total` lacks `environment_id` and `source_id` labels.<br>Error rate = error_total / request_total |
 
 ## Tasks
 
-- Data Generation:
+- Data Definition / Generation:
+  - Create `monthly_summary` table
   - Add Prometheus Metrics
   - Add Redis PFADD processing to Backend (DAU counting)
 - Daily Batch:
-  - RDB: Create table
-  - MAU: PFMERGE, PFCOUNT, UPSERT
+  - MAU: PFMERGE->PFCOUNT->UPSERT
   - Requests: UPSERT
 - Backend:
   - Add proto definitions
-  - Implement APIs
+  - Implement Monthly Summary API
+  - Implement Time Series APIs
 - Frontend:
   - UI implementation
   - CSV export
+
+## Future Work
+
+- Add SDK-based graphs to the dashboard for better observability.
+  - This RFC only covers metrics collected by grpc-gateway.
