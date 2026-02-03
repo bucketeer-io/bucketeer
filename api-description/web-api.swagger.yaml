@@ -13401,12 +13401,7 @@ definitions:
   insightsGetInsightsMonthlySummaryResponse:
     type: object
     properties:
-      mauSeries:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/insightsMonthlySummarySeries'
-      requestsSeries:
+      series:
         type: array
         items:
           type: object
@@ -13449,9 +13444,12 @@ definitions:
       yearmonth:
         type: string
         title: '"202601"'
-      value:
-        type: number
-        format: double
+      mau:
+        type: string
+        format: int64
+      requests:
+        type: string
+        format: int64
   insightsMonthlySummarySeries:
     type: object
     properties:
@@ -13459,6 +13457,10 @@ definitions:
         type: string
       sourceId:
         $ref: '#/definitions/clientSourceId'
+      environmentName:
+        type: string
+      projectName:
+        type: string
       data:
         type: array
         items:

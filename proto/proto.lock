@@ -46196,13 +46196,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "mau_series",
-                "type": "MonthlySummarySeries",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "requests_series",
+                "name": "series",
                 "type": "MonthlySummarySeries",
                 "is_repeated": true
               }
@@ -46223,6 +46217,16 @@
               },
               {
                 "id": 3,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "project_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
                 "name": "data",
                 "type": "MonthlySummaryDataPoint",
                 "is_repeated": true
@@ -46239,8 +46243,13 @@
               },
               {
                 "id": 2,
-                "name": "value",
-                "type": "double"
+                "name": "mau",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "requests",
+                "type": "int64"
               }
             ]
           },

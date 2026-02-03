@@ -29,19 +29,21 @@ message GetInsightsMonthlySummaryRequest {
 }
 
 message GetInsightsMonthlySummaryResponse {
-  repeated MonthlySummarySeries mau_series = 1;
-  repeated MonthlySummarySeries requests_series = 2;
+  repeated MonthlySummarySeries series = 1;
 }
 
 message MonthlySummarySeries {
   string environment_id = 1;
   bucketeer.event.client.SourceId source_id = 2;
-  repeated MonthlySummaryDataPoint data = 3;  // Sorted by yearmonth ascending
+  string environment_name = 3;
+  string project_name = 4;
+  repeated MonthlySummaryDataPoint data = 5;  // Sorted by yearmonth ascending
 }
 
 message MonthlySummaryDataPoint {
   string yearmonth = 1;  // "202601"
-  double value = 2;
+  int64 mau = 2;
+  int64 requests = 3;
 }
 
 message GetInsightsTimeSeriesRequest {
