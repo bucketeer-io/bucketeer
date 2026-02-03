@@ -29,10 +29,10 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
@@ -2089,8 +2089,8 @@ func newBatchClient(t *testing.T) btclient.Client {
 	return client
 }
 
-func newCreateFeatureCommand(featureID string, variations []string) *featureproto.CreateFeatureCommand {
-	cmd := &featureproto.CreateFeatureCommand{
+func newCreateFeatureReq(featureID string, variations []string) *featureproto.CreateFeatureRequest {
+	req := &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        featureID,
 		Description: "e2e-test-eventcounter-feature-description",
@@ -2102,15 +2102,16 @@ func newCreateFeatureCommand(featureID string, variations []string) *featureprot
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 	for _, v := range variations {
-		cmd.Variations = append(cmd.Variations, &featureproto.Variation{
+		req.Variations = append(req.Variations, &featureproto.Variation{
 			Value:       v,
 			Name:        "Variation " + v,
 			Description: "Thing does " + v,
 		})
 	}
-	return cmd
+	return req
 }
 
 func createFeature(
@@ -2119,11 +2120,7 @@ func createFeature(
 	featureID, tag, variationA, variationB string,
 ) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID, []string{variationA, variationB})
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
+	createReq := newCreateFeatureReq(featureID, []string{variationA, variationB})
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
@@ -2135,57 +2132,65 @@ func createFeature(
 
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
 	t.Helper()
-	addReq := &featureproto.UpdateFeatureDetailsRequest{
-		Id: featureID,
-		AddTagCommands: []*featureproto.AddTagCommand{
-			{Tag: tag},
-		},
-		EnvironmentId: *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, addReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TagChanges: []*featureproto.TagChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Tag:        tag,
+			},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID string, client featureclient.Client) {
 	t.Helper()
-	c := &featureproto.AddUserToVariationCommand{
-		Id:   variationID,
-		User: userID,
-	}
-	cmd, err := ptypes.MarshalAny(c)
-	assert.NoError(t, err)
-	req := &featureproto.UpdateFeatureTargetingRequest{
-		Id: featureID,
-		Commands: []*featureproto.Command{
-			{
-				Command: cmd,
-			},
-		},
-		EnvironmentId: *environmentID,
-		From:          featureproto.UpdateFeatureTargetingRequest_USER,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureTargeting(ctx, req); err != nil {
-		t.Fatalf("Failed add user to individual targeting: %s. Error: %v", featureID, err)
+	f, err := getFeature(t, client, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 	}
+	var users []string
+	for _, v := range f.Targets {
+		if v.Variation == variationID {
+			users = append(v.Users, userID)
+			break
+		}
+	}
+	_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TargetChanges: []*featureproto.TargetChange{
+			{
+				ChangeType: featureproto.ChangeType_UPDATE,
+				Target: &featureproto.Target{
+					Variation: variationID,
+					Users:     users,
+				},
+			},
+		},
+	})
 }
 
 func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEvaluationsResponse, error) {

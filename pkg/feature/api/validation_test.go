@@ -24,57 +24,6 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-func TestValidateUpdateFeatureTargetingRequest(t *testing.T) {
-	t.Parallel()
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	patterns := []struct {
-		desc     string
-		request  *featureproto.UpdateFeatureTargetingRequest
-		expected error
-	}{
-		{
-			desc: "error: missing feature id",
-			request: &featureproto.UpdateFeatureTargetingRequest{
-				Id: "",
-			},
-			expected: statusMissingID.Err(),
-		},
-		{
-			desc: "error: missing from",
-			request: &featureproto.UpdateFeatureTargetingRequest{
-				Id: "feature-id",
-			},
-			expected: statusMissingFrom.Err(),
-		},
-		{
-			desc: "success: request from user",
-			request: &featureproto.UpdateFeatureTargetingRequest{
-				Id:   "feature-id",
-				From: featureproto.UpdateFeatureTargetingRequest_USER,
-			},
-			expected: nil,
-		},
-		{
-			desc: "success: request from ops",
-			request: &featureproto.UpdateFeatureTargetingRequest{
-				Id:   "feature-id",
-				From: featureproto.UpdateFeatureTargetingRequest_OPS,
-			},
-			expected: nil,
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			err := validateUpdateFeatureTargetingRequest(p.request)
-			assert.Equal(t, p.expected, err)
-		})
-	}
-}
-
 func TestValidateVariationDeletion(t *testing.T) {
 	t.Parallel()
 	ctx := context.TODO()

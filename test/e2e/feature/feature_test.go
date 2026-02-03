@@ -25,10 +25,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
@@ -37,6 +38,7 @@ import (
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
 	aoproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 	"github.com/bucketeer-io/bucketeer/v2/test/util"
@@ -69,7 +71,7 @@ func TestGetFeatureByVersion(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, featureClient, req)
+	createFeature(t, featureClient, req)
 
 	// update feature to increase version
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -117,7 +119,6 @@ func TestGetFeatureByVersion(t *testing.T) {
 	_, err = featureClient.DeleteFeature(ctx, &feature.DeleteFeatureRequest{
 		Id:            req.Id,
 		EnvironmentId: *environmentID,
-		Command:       &feature.DeleteFeatureCommand{},
 	})
 	assert.NoError(t, err)
 }
@@ -127,7 +128,7 @@ func TestUpdateFeatureMaintainer(t *testing.T) {
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
 	req := newCreateFeatureReq(featureID)
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 
 	// Get the created feature
 	f := getFeature(t, featureID, client)
@@ -164,44 +165,8 @@ func TestUpdateFeatureMaintainer(t *testing.T) {
 func TestCreateFeature(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	f := getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
-	}
-	if cmd.Name != f.Name {
-		t.Fatalf("Different names. Expected: %s actual: %s", cmd.Name, f.Name)
-	}
-	if cmd.Description != f.Description {
-		t.Fatalf("Different descriptions. Expected: %s actual: %s", cmd.Description, f.Description)
-	}
-	if f.Enabled {
-		t.Fatalf("Enabled flag is true")
-	}
-	for i := range f.Variations {
-		compareVariation(t, cmd.Variations[i], f.Variations[i])
-	}
-	if !reflect.DeepEqual(cmd.Tags, f.Tags) {
-		t.Fatalf("Different tags. Expected: %v actual: %v: ", cmd.Tags, f.Tags)
-	}
-	defaultOnVariation := findVariation(f.DefaultStrategy.FixedStrategy.Variation, f.Variations)
-	cmdDefaultOnVariation := cmd.Variations[int(cmd.DefaultOnVariationIndex.Value)]
-	if cmdDefaultOnVariation.Value != defaultOnVariation.Value {
-		t.Fatalf("Different default on variation value. Expected: %s actual: %s", cmdDefaultOnVariation.Value, defaultOnVariation.Value)
-	}
-	defaultOffVariation := findVariation(f.OffVariation, f.Variations)
-	cmdDefaultOffVariation := cmd.Variations[int(cmd.DefaultOffVariationIndex.Value)]
-	if cmdDefaultOffVariation.Value != defaultOffVariation.Value {
-		t.Fatalf("Different default off variation value. Expected: %s actual: %s", cmdDefaultOffVariation.Value, defaultOffVariation.Value)
-	}
-}
-
-func TestCreateFeatureNoCommand(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 	f := getFeature(t, req.Id, client)
 	if req.Id != f.Id {
 		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
@@ -222,72 +187,14 @@ func TestCreateFeatureNoCommand(t *testing.T) {
 		t.Fatalf("Different tags. Expected: %v actual: %v: ", req.Tags, f.Tags)
 	}
 	defaultOnVariation := findVariation(f.DefaultStrategy.FixedStrategy.Variation, f.Variations)
-	cmdDefaultOnVariation := req.Variations[int(req.DefaultOnVariationIndex.Value)]
-	if cmdDefaultOnVariation.Value != defaultOnVariation.Value {
-		t.Fatalf("Different default on variation value. Expected: %s actual: %s", cmdDefaultOnVariation.Value, defaultOnVariation.Value)
+	reqDefaultOnVariation := req.Variations[int(req.DefaultOnVariationIndex.Value)]
+	if reqDefaultOnVariation.Value != defaultOnVariation.Value {
+		t.Fatalf("Different default on variation value. Expected: %s actual: %s", reqDefaultOnVariation.Value, defaultOnVariation.Value)
 	}
 	defaultOffVariation := findVariation(f.OffVariation, f.Variations)
-	cmdDefaultOffVariation := req.Variations[int(req.DefaultOffVariationIndex.Value)]
-	if cmdDefaultOffVariation.Value != defaultOffVariation.Value {
-		t.Fatalf("Different default off variation value. Expected: %s actual: %s", cmdDefaultOffVariation.Value, defaultOffVariation.Value)
-	}
-}
-
-func TestArchiveFeature(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	req := &feature.ArchiveFeatureRequest{
-		Id:            featureID,
-		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.ArchiveFeature(ctx, req); err != nil {
-		t.Fatal(err)
-	}
-	f := getFeature(t, featureID, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
-	}
-	if !f.Archived {
-		t.Fatal("Delete flag is false")
-	}
-}
-
-func TestUnarchiveFeature(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	req := &feature.ArchiveFeatureRequest{
-		Id:            featureID,
-		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.ArchiveFeature(ctx, req); err != nil {
-		t.Fatal(err)
-	}
-	reqUnarchive := &feature.UnarchiveFeatureRequest{
-		Id:            featureID,
-		Command:       &feature.UnarchiveFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.UnarchiveFeature(ctx, reqUnarchive); err != nil {
-		t.Fatal(err)
-	}
-	f := getFeature(t, featureID, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
-	}
-	if f.Archived {
-		t.Fatal("Delete flag is true")
+	reqDefaultOffVariation := req.Variations[int(req.DefaultOffVariationIndex.Value)]
+	if reqDefaultOffVariation.Value != defaultOffVariation.Value {
+		t.Fatalf("Different default off variation value. Expected: %s actual: %s", reqDefaultOffVariation.Value, defaultOffVariation.Value)
 	}
 }
 
@@ -295,11 +202,10 @@ func TestDeleteFeature(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	deleteReq := &feature.DeleteFeatureRequest{
 		Id:            featureID,
-		Command:       &feature.DeleteFeatureCommand{},
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -308,8 +214,8 @@ func TestDeleteFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 	f := getFeature(t, featureID, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if !f.Deleted {
 		t.Fatal("Delete flag is false")
@@ -321,9 +227,9 @@ func TestEnableFeature(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureWithTwoVariationsCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	f := getFeature(t, cmd.Id, client)
+	req := newCreateFeatureWithTwoVariationsRequest(newFeatureID(t))
+	createFeature(t, client, req)
+	f := getFeature(t, req.Id, client)
 	aoCLient := newAutoOpsClient(t)
 	schedules := []*aoproto.ProgressiveRolloutSchedule{
 		{
@@ -335,21 +241,21 @@ func TestEnableFeature(t *testing.T) {
 		ctx,
 		t,
 		aoCLient,
-		cmd.Id,
+		req.Id,
 		&aoproto.ProgressiveRolloutManualScheduleClause{
 			Schedules:   schedules,
 			VariationId: f.Variations[0].Id,
 		},
 		nil,
 	)
-	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
+	progressiveRollouts := listProgressiveRollouts(t, aoCLient, req.Id)
 	if len(progressiveRollouts) != 1 {
 		t.Fatal("Progressive rollout list shouldn't be empty")
 	}
-	enableFeature(t, cmd.Id, client)
-	f = getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	enableFeature(t, req.Id, client)
+	f = getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if !f.Enabled {
 		t.Fatal("Enabled flag is false")
@@ -363,151 +269,22 @@ func TestEnableFeature(t *testing.T) {
 	}
 }
 
-func TestUpdateTargetingEnableFeature(t *testing.T) {
+func TestDisableFeature(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureWithTwoVariationsCommand(featureID)
-	createFeature(t, client, cmd)
-	f := getFeature(t, cmd.Id, client)
-	aoCLient := newAutoOpsClient(t)
-	schedules := []*aoproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		aoCLient,
-		cmd.Id,
-		&aoproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: f.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
-	f = getFeature(t, featureID, client)
-	disableCmd, _ := util.MarshalCommand(&feature.EnableFeatureCommand{})
-	updateFeatureTargeting(t, client, disableCmd, featureID)
-	f = getFeature(t, cmd.Id, client)
+	req := newCreateFeatureWithTwoVariationsRequest(featureID)
+	createFeature(t, client, req)
+	enableFeature(t, featureID, client)
+	f := getFeature(t, featureID, client)
 	if !f.Enabled {
 		t.Fatal("Flag must be enabled")
 	}
-	// As a requirement, when disabling a flag,
-	// It must stop the progressive rollout if it is running.
-	// In this case, we ensure that the status didn't change after enabling the flag.
-	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
-	if pr.Status != aoproto.ProgressiveRollout_WAITING {
-		t.Fatalf("Progressive rollout must be in waiting status. Current status: %v", pr.Status)
-	}
-}
 
-func TestDisableFeature(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	cmd := newCreateFeatureWithTwoVariationsCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	enableFeature(t, cmd.Id, client)
-	f := getFeature(t, cmd.Id, client)
-	aoCLient := newAutoOpsClient(t)
-	schedules := []*aoproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		aoCLient,
-		cmd.Id,
-		&aoproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: f.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
-	disableReq := &feature.DisableFeatureRequest{
-		Id:            cmd.Id,
-		Command:       &feature.DisableFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.DisableFeature(ctx, disableReq); err != nil {
-		t.Fatal(err)
-	}
-	f = getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
-	}
-	if f.Enabled {
-		t.Fatal("Enabled flag is true")
-	}
-	// As a requirement, when disabling a flag using an auto operation,
-	// It must stop the progressive rollout if it is running
-	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
-	if pr.Status != aoproto.ProgressiveRollout_STOPPED {
-		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
-	}
-}
-
-func TestUpdateTargetingDisableFeature(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	client := newFeatureClient(t)
-	featureID := newFeatureID(t)
-	cmd := newCreateFeatureWithTwoVariationsCommand(featureID)
-	createFeature(t, client, cmd)
-	enableFeature(t, cmd.Id, client)
-	f := getFeature(t, cmd.Id, client)
-	aoCLient := newAutoOpsClient(t)
-	schedules := []*aoproto.ProgressiveRolloutSchedule{
-		{
-			Weight:    20000,
-			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
-		},
-	}
-	createProgressiveRollout(
-		ctx,
-		t,
-		aoCLient,
-		cmd.Id,
-		&aoproto.ProgressiveRolloutManualScheduleClause{
-			Schedules:   schedules,
-			VariationId: f.Variations[0].Id,
-		},
-		nil,
-	)
-	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
-	if len(progressiveRollouts) != 1 {
-		t.Fatal("Progressive rollout list shouldn't be empty")
-	}
+	disableFeature(t, featureID, client)
 	f = getFeature(t, featureID, client)
-	disableCmd, _ := util.MarshalCommand(&feature.DisableFeatureCommand{})
-	updateFeatureTargeting(t, client, disableCmd, featureID)
-	f = getFeature(t, cmd.Id, client)
 	if f.Enabled {
 		t.Fatal("Flag must be disabled")
-	}
-	// As a requirement, when disabling a flag using an auto operation,
-	// It must stop the progressive rollout if it is running
-	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
-	if pr.Status != aoproto.ProgressiveRollout_STOPPED {
-		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
 	}
 }
 
@@ -516,16 +293,15 @@ func TestListArchivedFeatures(t *testing.T) {
 	client := newFeatureClient(t)
 	size := int64(1)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	req := &feature.ArchiveFeatureRequest{
-		Id:            featureID,
-		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
+	createFeature(t, client, newCreateFeatureReq(featureID))
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.ArchiveFeature(ctx, req); err != nil {
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Archived:      wrapperspb.Bool(true),
+	}); err != nil {
 		t.Fatal(err)
 	}
 	listReq := &feature.ListFeaturesRequest{
@@ -572,7 +348,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	// Create 3 features with the unique prefix
 	for i := 0; i < 3; i++ {
 		featureID := fmt.Sprintf("%s-%d", testPrefix, i)
-		createFeature(t, client, newCreateFeatureCommand(featureID))
+		createFeature(t, client, newCreateFeatureReq(featureID))
 	}
 	size := int64(1)
 	listReq := &feature.ListFeaturesRequest{
@@ -740,7 +516,7 @@ func TestListFeaturesOrderByAutoOps(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	size := int64(3)
-	createRandomIDFeaturesNoCommand(t, 3, client)
+	createRandomIDFeatures(t, 3, client)
 
 	testcases := []struct {
 		orderDirection  feature.ListFeaturesRequest_OrderDirection
@@ -788,7 +564,7 @@ func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	featureIDs := make([]string, 0)
 	for i := 0; i < 3; i++ {
 		featureIDs = append(featureIDs, newFeatureID(t))
-		createFeatureNoCmd(t, client, newCreateFeatureReq(featureIDs[i]))
+		createFeature(t, client, newCreateFeatureReq(featureIDs[i]))
 	}
 
 	listReq := &feature.ListFeaturesRequest{
@@ -859,7 +635,7 @@ func TestListFeaturesFilterStatus(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	size := int64(3)
-	createRandomIDFeaturesNoCommand(t, 3, client)
+	createRandomIDFeatures(t, 3, client)
 
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
@@ -949,22 +725,24 @@ func TestListEnabledFeaturesCursor(t *testing.T) {
 func TestRename(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
 	expected := "new-feature-name"
-	updateReq := &feature.UpdateFeatureDetailsRequest{
-		Id:                   cmd.Id,
-		RenameFeatureCommand: &feature.RenameFeatureCommand{Name: expected},
-		EnvironmentId:        *environmentID,
-	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, updateReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		Name:          wrapperspb.String(expected),
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	f := getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+
+	f := getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if expected != f.Name {
 		t.Fatalf("Different names. Expected: %s actual: %s", expected, f.Name)
@@ -974,22 +752,22 @@ func TestRename(t *testing.T) {
 func TestChangeDescription(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
 	expected := "new-feature-description"
-	updateReq := &feature.UpdateFeatureDetailsRequest{
-		Id:                       cmd.Id,
-		ChangeDescriptionCommand: &feature.ChangeDescriptionCommand{Description: expected},
-		EnvironmentId:            *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, updateReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		Description:   wrapperspb.String(expected),
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	f := getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	f := getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if expected != f.Description {
 		t.Fatalf("Different names. Expected: %s actual: %s", expected, f.Description)
@@ -999,61 +777,81 @@ func TestChangeDescription(t *testing.T) {
 func TestAddTags(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
 	newTags := []string{"e2e-test-tag-4", "e2e-test-tag-5", "e2e-test-tag-6"}
-	addReq := &feature.UpdateFeatureDetailsRequest{
-		Id: cmd.Id,
-		AddTagCommands: []*feature.AddTagCommand{
-			{Tag: newTags[0]},
-			{Tag: newTags[1]},
-			{Tag: newTags[2]},
-		},
-		EnvironmentId: *environmentID,
-	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, addReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		TagChanges: []*feature.TagChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Tag:        newTags[0],
+			},
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Tag:        newTags[1],
+			},
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Tag:        newTags[2],
+			},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	f := getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+
+	f := getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
-	cmd.Tags = append(cmd.Tags, newTags...)
-	if !reflect.DeepEqual(cmd.Tags, f.Tags) {
-		t.Fatalf("Different tags. Expected: %v actual: %v: ", cmd.Tags, f.Tags)
+	req.Tags = append(req.Tags, newTags...)
+	if !reflect.DeepEqual(req.Tags, f.Tags) {
+		t.Fatalf("Different tags. Expected: %v actual: %v: ", req.Tags, f.Tags)
 	}
 }
 
 func TestRemoveTags(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, cmd)
-	removeTargetTags := []*feature.RemoveTagCommand{
-		{Tag: cmd.Tags[0]},
-		{Tag: cmd.Tags[2]},
-	}
-	removeReq := &feature.UpdateFeatureDetailsRequest{
-		Id:                cmd.Id,
-		RemoveTagCommands: removeTargetTags,
-		EnvironmentId:     *environmentID,
-	}
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, removeReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		TagChanges: []*feature.TagChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Tag:        req.Tags[0],
+			},
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Tag:        req.Tags[2],
+			},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	f := getFeature(t, cmd.Id, client)
-	if cmd.Id != f.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+
+	f := getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if len(f.Tags) != 1 {
-		t.Fatalf("Tags should have only 1 element. Expected: %s actual: %v", cmd.Tags[1], f.Tags)
+		t.Fatalf("Tags should have only 1 element. Expected: %s actual: %v", req.Tags[1], f.Tags)
 	}
-	if f.Tags[0] != cmd.Tags[1] {
-		t.Fatalf("The wrong tag might has been deleted. Expected to be deleted: %v actual: %v", removeTargetTags, f.Tags)
+	if f.Tags[0] != req.Tags[1] {
+		t.Fatalf("The wrong tag might has been deleted. Expected to be deleted: [%v, %v] actual: %v",
+			req.Tags[0], req.Tags[1], f.Tags,
+		)
 	}
 }
 
@@ -1061,15 +859,34 @@ func TestAddVariation(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	targetVariationValues := []string{newUUID(t), newUUID(t)}
 	targetVariations := newVariations(targetVariationValues)
-	addCmd := newAddVariationsCommand(t, targetVariations)
-	updateVariations(t, featureID, addCmd, client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Variation:  targetVariations[0],
+			},
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Variation:  targetVariations[1],
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	feature := getFeature(t, featureID, client)
-	if feature.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, feature.Id)
+	if feature.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, feature.Id)
 	}
 	var matched int
 	for _, e := range targetVariations {
@@ -1090,14 +907,31 @@ func TestRemoveVariation(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	targetVariationID := getFeature(t, featureID, client).Variations[2].Id
-	removeCmd := newRemoveVariationsCommand(t, []string{targetVariationID})
-	updateVariations(t, featureID, removeCmd, client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Variation: &feature.Variation{
+					Id: targetVariationID,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	feature := getFeature(t, featureID, client)
-	if feature.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, feature.Id)
+	if feature.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, feature.Id)
 	}
 	if len(feature.Variations) != 3 {
 		t.Fatal("Variations should have 3 elements. Actual:", feature.Variations)
@@ -1111,21 +945,44 @@ func TestRemoveVariations(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	feature := getFeature(t, featureID, client)
-	targetVariationIDS := []string{feature.Variations[2].Id, feature.Variations[3].Id}
-	cmds := newRemoveVariationsCommand(t, targetVariationIDS)
-	updateVariations(t, featureID, cmds, client)
-	feature = getFeature(t, featureID, client)
-	if feature.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, feature.Id)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	ft := getFeature(t, featureID, client)
+	targetVariationIDs := []string{ft.Variations[2].Id, ft.Variations[3].Id}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Variation: &feature.Variation{
+					Id: targetVariationIDs[0],
+				},
+			},
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Variation: &feature.Variation{
+					Id: targetVariationIDs[1],
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(feature.Variations) != 2 {
-		t.Fatal("Variations should have only 2 elements. Actual:", feature.Variations)
+
+	ft = getFeature(t, featureID, client)
+	if ft.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, ft.Id)
 	}
-	if variation := findOneOfVariations(targetVariationIDS, feature.Variations); variation != nil {
-		t.Fatalf("The wrong variation might has been deleted. Expected: %v actual: %v", targetVariationIDS, feature.Variations)
+	if len(ft.Variations) != 2 {
+		t.Fatal("Variations should have only 2 elements. Actual:", ft.Variations)
+	}
+	if variation := findOneOfVariations(targetVariationIDs, ft.Variations); variation != nil {
+		t.Fatalf("The wrong variation might has been deleted. Expected: %v actual: %v", targetVariationIDs, ft.Variations)
 	}
 }
 
@@ -1133,26 +990,40 @@ func TestChangeVariationValue(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	targetVariationID := getFeature(t, featureID, client).Variations[1].Id
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	targetVariation := getFeature(t, featureID, client).Variations[1]
 	targetVariationValue := "new-variation-value"
-	changeCmd, err := util.MarshalCommand(&feature.ChangeVariationValueCommand{
-		Id:    targetVariationID,
-		Value: targetVariationValue,
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Variation: &feature.Variation{
+					Id:          targetVariation.Id,
+					Value:       targetVariationValue,
+					Name:        targetVariation.Name,
+					Description: targetVariation.Description,
+				},
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	updateVariations(t, featureID, []*feature.Command{{Command: changeCmd}}, client)
+
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	expected := &feature.Variation{
 		Value:       targetVariationValue,
-		Name:        cmd.Variations[1].Name,
-		Description: cmd.Variations[1].Description,
+		Name:        req.Variations[1].Name,
+		Description: req.Variations[1].Description,
 	}
 	compareVariation(t, expected, f.Variations[1])
 }
@@ -1161,26 +1032,40 @@ func TestChangeVariationName(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	targetVariationID := getFeature(t, featureID, client).Variations[1].Id
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	targetVariation := getFeature(t, featureID, client).Variations[1]
 	targetVariationName := "new-variation-name"
-	changeCmd, err := util.MarshalCommand(&feature.ChangeVariationNameCommand{
-		Id:   targetVariationID,
-		Name: targetVariationName,
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Variation: &feature.Variation{
+					Id:          targetVariation.Id,
+					Value:       targetVariation.Value,
+					Name:        targetVariationName,
+					Description: targetVariation.Description,
+				},
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	updateVariations(t, featureID, []*feature.Command{{Command: changeCmd}}, client)
+
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	expected := &feature.Variation{
-		Value:       cmd.Variations[1].Value,
+		Value:       req.Variations[1].Value,
 		Name:        targetVariationName,
-		Description: cmd.Variations[1].Description,
+		Description: req.Variations[1].Description,
 	}
 	compareVariation(t, expected, f.Variations[1])
 }
@@ -1189,25 +1074,39 @@ func TestChangeVariationDescription(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	targetVariationID := getFeature(t, featureID, client).Variations[1].Id
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	targetVariation := getFeature(t, featureID, client).Variations[1]
 	targetVariationDescription := "new-variation-description"
-	changeCmd, err := util.MarshalCommand(&feature.ChangeVariationDescriptionCommand{
-		Id:          targetVariationID,
-		Description: targetVariationDescription,
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*feature.VariationChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Variation: &feature.Variation{
+					Id:          targetVariation.Id,
+					Value:       targetVariation.Value,
+					Name:        targetVariation.Name,
+					Description: targetVariationDescription,
+				},
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	updateVariations(t, featureID, []*feature.Command{{Command: changeCmd}}, client)
+
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	expected := &feature.Variation{
-		Value:       cmd.Variations[1].Value,
-		Name:        cmd.Variations[1].Name,
+		Value:       req.Variations[1].Value,
+		Name:        req.Variations[1].Name,
 		Description: targetVariationDescription,
 	}
 	compareVariation(t, expected, f.Variations[1])
@@ -1217,23 +1116,32 @@ func TestChangeFixedStrategy(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	f := getFeature(t, featureID, client)
 	rule := newFixedStrategyRule(f.Variations[0].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
+
 	expected := f.Variations[1].Id
-	changeCmd, err := util.MarshalCommand(&feature.ChangeFixedStrategyCommand{
-		Id:       featureID,
-		RuleId:   rule.Id,
-		Strategy: &feature.FixedStrategy{Variation: expected},
-	})
-	require.NoError(t, err)
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Strategy.FixedStrategy.Variation = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f = getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	actual := f.Rules[0].Strategy.FixedStrategy.Variation
 	if expected != actual {
@@ -1245,12 +1153,11 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	f := getFeature(t, featureID, client)
 	rule := newRolloutStrategyRule(f.Variations)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	expected := &feature.RolloutStrategy{
 		Variations: []*feature.RolloutStrategy_Variation{
 			{
@@ -1271,16 +1178,25 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			},
 		},
 	}
-	changeCmd, err := util.MarshalCommand(&feature.ChangeRolloutStrategyCommand{
-		Id:       featureID,
-		RuleId:   rule.Id,
-		Strategy: expected,
-	})
-	require.NoError(t, err)
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Strategy.RolloutStrategy = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f = getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	actual := f.Rules[0].Strategy.RolloutStrategy
 	if !proto.Equal(expected, actual) {
@@ -1292,17 +1208,23 @@ func TestChangeOffVariation(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	expected := getFeature(t, featureID, client).Variations[1].Id
-	changeCmd, err := util.MarshalCommand(&feature.ChangeOffVariationCommand{Id: expected})
-	if err != nil {
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	expected := getFeature(t, featureID, client).Variations[0].Id
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		OffVariation:  wrapperspb.String(expected),
+	}); err != nil {
 		t.Fatal(err)
 	}
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if expected != f.OffVariation {
 		t.Fatalf("Off variation does not match. Expected: %s actual: %s", expected, f.OffVariation)
@@ -1313,20 +1235,30 @@ func TestAddUserToVariation(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	expected := "new-user"
-	addCmd, err := util.MarshalCommand(&feature.AddUserToVariationCommand{
-		Id:   getFeature(t, featureID, client).Variations[1].Id,
-		User: expected,
-	})
-	if err != nil {
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TargetChanges: []*feature.TargetChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Target: &feature.Target{
+					Variation: getFeature(t, featureID, client).Variations[1].Id,
+					Users:     []string{expected},
+				},
+			},
+		},
+	}); err != nil {
 		t.Fatal(err)
 	}
-	updateFeatureTargeting(t, client, addCmd, featureID)
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if expected != f.Targets[1].Users[0] {
 		t.Fatalf("User does not match. Expected to be deleted: %s actual: %s", expected, f.Targets[1].Users[0])
@@ -1337,31 +1269,56 @@ func TestRemoveUserToVariation(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	variationID := getFeature(t, featureID, client).Variations[1].Id
-	expected := "new-user"
-	addCmd, err := util.MarshalCommand(&feature.AddUserToVariationCommand{
-		Id:   variationID,
-		User: expected,
-	})
-	if err != nil {
+	expected := []string{"user1", "user2"}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TargetChanges: []*feature.TargetChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Target: &feature.Target{
+					Variation: variationID,
+					Users:     expected,
+				},
+			},
+		},
+	}); err != nil {
 		t.Fatal(err)
 	}
-	updateFeatureTargeting(t, client, addCmd, featureID)
-	removeCmd, err := util.MarshalCommand(&feature.RemoveUserFromVariationCommand{
-		Id:   variationID,
-		User: expected,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	updateFeatureTargeting(t, client, removeCmd, featureID)
 	f := getFeature(t, featureID, client)
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
-	if len(f.Targets[1].Users) > 0 {
+	if len(f.Targets[1].Users) != 2 {
+		t.Fatalf("User was not targeting correctly. Expected: %s actual: %s", expected, f.Targets[1])
+	}
+
+	removedUser := []string{"user1"}
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TargetChanges: []*feature.TargetChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Target: &feature.Target{
+					Variation: variationID,
+					Users:     removedUser,
+				},
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	f = getFeature(t, featureID, client)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
+	}
+	if len(f.Targets[1].Users) > 1 {
 		t.Fatalf("User was not deleted. Expected: %s actual: %s", expected, f.Targets[0].Users[0])
 	}
 }
@@ -1370,15 +1327,15 @@ func TestAddRule(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
+
 	f := getFeature(t, featureID, client)
 	r := f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if !proto.Equal(rule.Strategy, r.Strategy) {
 		t.Fatalf("Strategy is not equal. Expected: %v actual: %v", rule.Strategy, r.Strategy)
@@ -1400,25 +1357,33 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	f := getFeature(t, featureID, client)
 	rule := newRolloutStrategyRule(f.Variations)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	expected := &feature.Strategy{
 		Type:          feature.Strategy_FIXED,
 		FixedStrategy: &feature.FixedStrategy{Variation: f.Variations[1].Id},
 	}
-	changeCmd, err := util.MarshalCommand(&feature.ChangeRuleStrategyCommand{
-		Id:       featureID,
-		RuleId:   rule.Id,
-		Strategy: expected,
-	})
-	require.NoError(t, err)
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Strategy = expected
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	f = getFeature(t, featureID, client)
-	assert.Equal(t, cmd.Id, f.Id, fmt.Sprintf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id))
+	assert.Equal(t, req.Id, f.Id, fmt.Sprintf("Different ids. Expected: %s actual: %s", req.Id, f.Id))
 	actual := f.Rules[0].Strategy
 	if !proto.Equal(expected, actual) {
 		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expected, actual)
@@ -1429,12 +1394,11 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	f := getFeature(t, featureID, client)
 	rule := newFixedStrategyRule(f.Variations[0].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	expected := &feature.Strategy{
 		Type: feature.Strategy_ROLLOUT,
 		RolloutStrategy: &feature.RolloutStrategy{
@@ -1458,15 +1422,23 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 		},
 	}
-	changeCmd, err := util.MarshalCommand(&feature.ChangeRuleStrategyCommand{
-		Id:       featureID,
-		RuleId:   rule.Id,
-		Strategy: expected,
-	})
-	require.NoError(t, err)
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Strategy = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	f = getFeature(t, featureID, client)
-	assert.Equal(t, cmd.Id, f.Id, fmt.Sprintf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id))
+	assert.Equal(t, req.Id, f.Id, fmt.Sprintf("Different ids. Expected: %s actual: %s", req.Id, f.Id))
 	actual := f.Rules[0].Strategy
 	if !proto.Equal(expected, actual) {
 		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expected, actual)
@@ -1477,18 +1449,29 @@ func TestDeleteRule(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	f := getFeature(t, featureID, client)
 	rule = f.Rules[0]
-	removeCmd, _ := util.MarshalCommand(&feature.DeleteRuleCommand{Id: rule.Id})
-	updateFeatureTargeting(t, client, removeCmd, featureID)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_DELETE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	r := getFeature(t, featureID, client).Rules
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	if len(r) > 0 {
 		t.Fatalf("The wrong rule might has been delete. Expected: %v actual: %v", rule, r)
@@ -1499,22 +1482,33 @@ func TestAddClause(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	r := getFeature(t, featureID, client).Rules[0]
 	clause := newClause()
-	addCmd, _ = util.MarshalCommand(&feature.AddClauseCommand{
-		RuleId: r.Id,
-		Clause: clause,
-	})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	rule.Clauses = append(rule.Clauses, clause)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	expectedSize := 3
 	actualSize := len(r.Clauses)
@@ -1528,30 +1522,42 @@ func TestDeleteClause(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	r := getFeature(t, featureID, client).Rules[0]
-	expected := r.Clauses[1]
-	removeCmd, _ := util.MarshalCommand(&feature.DeleteClauseCommand{
-		Id:     expected.Id,
-		RuleId: r.Id,
-	})
-	updateFeatureTargeting(t, client, removeCmd, featureID)
+
+	// remove clause in index 1, keep 0
+	rule.Clauses = []*feature.Clause{r.Clauses[0]}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	expectedSize := 1
 	actualSize := len(r.Clauses)
 	if expectedSize != actualSize {
 		t.Fatalf("Clauses have different sizes. Expected: %d actual: %d", expectedSize, actualSize)
 	}
-	if proto.Equal(expected, r.Clauses[0]) {
-		t.Fatalf("The wrong clause might has been delete. Expected: %v actual: %v", expected, r.Clauses[0])
+	if !proto.Equal(rule.Clauses[0], r.Clauses[0]) {
+		t.Fatalf("The wrong clause might has been delete. Expected: %v actual: %v", rule.Clauses[0], r.Clauses[0])
 	}
 }
 
@@ -1559,28 +1565,39 @@ func TestChangeClauseAttribute(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	r := getFeature(t, featureID, client).Rules[0]
 	c := r.Clauses[1]
 	expected := &feature.Clause{
+		Id:        c.Id,
 		Attribute: "change-clause-attribute",
 		Operator:  c.Operator,
 		Values:    c.Values,
 	}
-	changeCmd, _ := util.MarshalCommand(&feature.ChangeClauseAttributeCommand{
-		Id:        c.Id,
-		RuleId:    r.Id,
-		Attribute: expected.Attribute,
-	})
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Clauses[1] = expected
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	compareClause(t, expected, r.Clauses[1])
 }
@@ -1589,28 +1606,38 @@ func TestChangeClauseOperator(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
+
 	r := getFeature(t, featureID, client).Rules[0]
 	c := r.Clauses[1]
 	expected := &feature.Clause{
+		Id:        c.Id,
 		Attribute: c.Attribute,
 		Operator:  feature.Clause_EQUALS,
 		Values:    c.Values,
 	}
-	changeCmd, _ := util.MarshalCommand(&feature.ChangeClauseOperatorCommand{
-		Id:       c.Id,
-		RuleId:   r.Id,
-		Operator: expected.Operator,
-	})
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Clauses[1] = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
 	}
 	compareClause(t, expected, r.Clauses[1])
 }
@@ -1619,29 +1646,39 @@ func TestAddClauseValue(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	r := getFeature(t, featureID, client).Rules[0]
 	c := r.Clauses[1]
 	values := append(c.Values, "new-value")
 	expected := &feature.Clause{
+		Id:        c.Id,
 		Attribute: c.Attribute,
 		Operator:  c.Operator,
 		Values:    values,
 	}
-	changeCmd, _ := util.MarshalCommand(&feature.AddClauseValueCommand{
-		Id:     c.Id,
-		RuleId: r.Id,
-		Value:  expected.Values[2],
-	})
-	updateFeatureTargeting(t, client, changeCmd, featureID)
+	rule.Clauses[1] = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("different ids. expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("different ids. expected: %s actual: %s", req.Id, f.Id)
 	}
 	compareClause(t, expected, r.Clauses[1])
 }
@@ -1650,28 +1687,38 @@ func TestRemoveClauseValue(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	rule := newFixedStrategyRule(getFeature(t, featureID, client).Variations[1].Id)
-	addCmd, _ := util.MarshalCommand(&feature.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	r := getFeature(t, featureID, client).Rules[0]
 	c := r.Clauses[0]
 	expected := &feature.Clause{
+		Id:        c.Id,
 		Attribute: c.Attribute,
 		Operator:  c.Operator,
 		Values:    []string{c.Values[0]},
 	}
-	removeCmd, _ := util.MarshalCommand(&feature.RemoveClauseValueCommand{
-		Id:     c.Id,
-		RuleId: r.Id,
-		Value:  c.Values[1],
-	})
-	updateFeatureTargeting(t, client, removeCmd, featureID)
+	rule.Clauses[0] = expected
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_UPDATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	f := getFeature(t, featureID, client)
 	r = f.Rules[0]
-	if f.Id != cmd.Id {
-		t.Fatalf("different ids. expected: %s actual: %s", cmd.Id, f.Id)
+	if f.Id != req.Id {
+		t.Fatalf("different ids. expected: %s actual: %s", req.Id, f.Id)
 	}
 	expectedSize := 1
 	actualSize := len(r.Clauses[0].Values)
@@ -1760,12 +1807,12 @@ func TestEvaluateFeatures(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID1 := newFeatureID(t)
-	cmd1 := newCreateFeatureCommand(featureID1)
-	createFeature(t, client, cmd1)
+	req1 := newCreateFeatureReq(featureID1)
+	createFeature(t, client, req1)
 	featureID2 := newFeatureID(t)
-	cmd2 := newCreateFeatureCommand(featureID2)
-	createFeature(t, client, cmd2)
-	enableFeature(t, cmd2.Id, client)
+	req2 := newCreateFeatureReq(featureID2)
+	createFeature(t, client, req2)
+	enableFeature(t, req2.Id, client)
 	userID := "user-id-01"
 	tag := tags[0]
 	res := evaluateFeatures(t, client, userID, tag)
@@ -1778,16 +1825,33 @@ func TestEvaluateFeaturesWithEmptyTag(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureID1 := newFeatureID(t)
-	cmd1 := newCreateFeatureCommand(featureID1)
-	createFeature(t, client, cmd1)
+	req1 := newCreateFeatureReq(featureID1)
+	createFeature(t, client, req1)
 	featureID2 := newFeatureID(t)
-	cmd2 := newCreateFeatureCommand(featureID2)
-	createFeature(t, client, cmd2)
-	enableFeature(t, cmd2.Id, client)
+	req2 := newCreateFeatureReq(featureID2)
+	createFeature(t, client, req2)
+	enableFeature(t, req2.Id, client)
 	userID := "user-id-01"
 	res := evaluateFeatures(t, client, userID, "")
 	if len(res.UserEvaluations.Evaluations) < 2 {
 		t.Fatalf("length of user evaluations is not enough. Expected: >=%d, Actual: %d", 2, len(res.UserEvaluations.Evaluations))
+	}
+}
+
+func addRule(t *testing.T, featureID string, rule *feature.Rule, client feature.FeatureServiceClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -1796,7 +1860,7 @@ func TestEvaluateFeaturesWithEmptyTag(t *testing.T) {
 func TestCloneFeature(t *testing.T) {
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, client, cmd)
 	enableFeature(t, featureID, client)
 	f := getFeature(t, featureID, client)
@@ -1972,43 +2036,6 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 	return featureClient
 }
 
-func newCreateFeatureCommand(featureID string) *feature.CreateFeatureCommand {
-	return &feature.CreateFeatureCommand{
-		Id:          featureID,
-		Name:        "e2e-test-feature-name",
-		Description: "e2e-test-feature-description",
-		Variations: []*feature.Variation{
-			{
-				Value:       "A",
-				Name:        "Variation A",
-				Description: "Thing does A",
-			},
-			{
-				Value:       "B",
-				Name:        "Variation B",
-				Description: "Thing does B",
-			},
-			{
-				Value:       "C",
-				Name:        "Variation C",
-				Description: "Thing does C",
-			},
-			{
-				Value:       "D",
-				Name:        "Variation D",
-				Description: "Thing does D",
-			},
-		},
-		Tags: []string{
-			"e2e-test-tag-1",
-			"e2e-test-tag-2",
-			"e2e-test-tag-3",
-		},
-		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-	}
-}
-
 func newCreateFeatureReq(featureID string) *feature.CreateFeatureRequest {
 	return &feature.CreateFeatureRequest{
 		Id:            featureID,
@@ -2047,8 +2074,8 @@ func newCreateFeatureReq(featureID string) *feature.CreateFeatureRequest {
 	}
 }
 
-func newCreateFeatureWithTwoVariationsCommand(featureID string) *feature.CreateFeatureCommand {
-	return &feature.CreateFeatureCommand{
+func newCreateFeatureWithTwoVariationsRequest(featureID string) *feature.CreateFeatureRequest {
+	return &feature.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        "e2e-test-feature-name",
 		Description: "e2e-test-feature-description",
@@ -2071,41 +2098,15 @@ func newCreateFeatureWithTwoVariationsCommand(featureID string) *feature.CreateF
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
-}
-
-func newAddVariationsCommand(t *testing.T, vs []*feature.Variation) []*feature.Command {
-	var cmds []*feature.Command
-	for _, v := range vs {
-		cmd, err := util.MarshalCommand(&feature.AddVariationCommand{
-			Value:       v.Value,
-			Name:        v.Name,
-			Description: v.Description,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		cmds = append(cmds, &feature.Command{Command: cmd})
-	}
-	return cmds
-}
-
-func newRemoveVariationsCommand(t *testing.T, featureIDS []string) []*feature.Command {
-	var cmds []*feature.Command
-	for _, id := range featureIDS {
-		cmd, err := util.MarshalCommand(&feature.RemoveVariationCommand{Id: id})
-		if err != nil {
-			t.Fatal(err)
-		}
-		cmds = append(cmds, &feature.Command{Command: cmd})
-	}
-	return cmds
 }
 
 func newVariations(randomValues []string) []*feature.Variation {
 	var vs []*feature.Variation
 	for _, value := range randomValues {
 		v := &feature.Variation{
+			Id:          value,
 			Value:       fmt.Sprintf("%s", value),
 			Name:        fmt.Sprintf("Variation %s", value),
 			Description: fmt.Sprintf("Thing does %s", value),
@@ -2118,38 +2119,18 @@ func newVariations(randomValues []string) []*feature.Variation {
 func createRandomIDFeatures(t *testing.T, size int, client featureclient.Client) {
 	t.Helper()
 	for i := 0; i < size; i++ {
-		createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
-	}
-}
-
-func createRandomIDFeaturesNoCommand(t *testing.T, size int, client featureclient.Client) {
-	t.Helper()
-	for i := 0; i < size; i++ {
-		createFeatureNoCmd(t, client, newCreateFeatureReq(newFeatureID(t)))
+		createFeature(t, client, newCreateFeatureReq(newFeatureID(t)))
 	}
 }
 
 func createFeatures(t *testing.T, featureIDS []string, client featureclient.Client) {
 	t.Helper()
 	for _, id := range featureIDS {
-		createFeature(t, client, newCreateFeatureCommand(id))
+		createFeature(t, client, newCreateFeatureReq(id))
 	}
 }
 
-func createFeature(t *testing.T, client featureclient.Client, cmd *feature.CreateFeatureCommand) {
-	t.Helper()
-	createReq := &feature.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
+func createFeature(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2199,15 +2180,72 @@ func enableFeatures(t *testing.T, featureIDS []string, client featureclient.Clie
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &feature.EnableFeatureRequest{
+	enableReq := &feature.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &feature.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
+	}
+}
+
+func disableFeature(t *testing.T, featureID string, client featureclient.Client) {
+	t.Helper()
+	disableReq := &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		Enabled:       wrapperspb.Bool(false),
+		EnvironmentId: *environmentID,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, disableReq); err != nil {
+		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
+	}
+}
+
+func createAutoOpsRule(
+	ctx context.Context,
+	t *testing.T,
+	client aoclient.Client,
+	featureID string,
+	opsType aoproto.OpsType,
+	oercs []*aoproto.OpsEventRateClause,
+	dcs []*aoproto.DatetimeClause,
+) {
+	t.Helper()
+	_, err := client.CreateAutoOpsRule(ctx, &aoproto.CreateAutoOpsRuleRequest{
+		EnvironmentId:       *environmentID,
+		FeatureId:           featureID,
+		OpsType:             opsType,
+		OpsEventRateClauses: oercs,
+		DatetimeClauses:     dcs,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Update auto ops rules cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_AutoOpsRulesCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute auto ops rules cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -2233,20 +2271,6 @@ func compareVariation(t *testing.T, expected *feature.Variation, actual *feature
 	}
 }
 
-func updateVariations(t *testing.T, featureID string, commands []*feature.Command, client featureclient.Client) {
-	t.Helper()
-	updateReq := &feature.UpdateFeatureVariationsRequest{
-		Id:            featureID,
-		Commands:      commands,
-		EnvironmentId: *environmentID,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeatureVariations(ctx, updateReq); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func findOneOfVariations(ids []string, vs []*feature.Variation) *feature.Variation {
 	for _, id := range ids {
 		if variation := findVariation(id, vs); variation != nil {
@@ -2266,9 +2290,11 @@ func findVariation(id string, vs []*feature.Variation) *feature.Variation {
 }
 
 func newFixedStrategyRule(variationID string) *feature.Rule {
-	uuid, _ := uuid.NewUUID()
+	featureID, _ := uuid.NewUUID()
+	clauseID1, _ := uuid.NewUUID()
+	clauseID2, _ := uuid.NewUUID()
 	return &feature.Rule{
-		Id: uuid.String(),
+		Id: featureID.String(),
 		Strategy: &feature.Strategy{
 			Type: feature.Strategy_FIXED,
 			FixedStrategy: &feature.FixedStrategy{
@@ -2277,11 +2303,13 @@ func newFixedStrategyRule(variationID string) *feature.Rule {
 		},
 		Clauses: []*feature.Clause{
 			{
+				Id:        clauseID1.String(),
 				Attribute: "attribute-1",
 				Operator:  feature.Clause_EQUALS,
 				Values:    []string{"value-1", "value-2"},
 			},
 			{
+				Id:        clauseID2.String(),
 				Attribute: "attribute-2",
 				Operator:  feature.Clause_IN,
 				Values:    []string{"value-1", "value-2"},
@@ -2291,9 +2319,10 @@ func newFixedStrategyRule(variationID string) *feature.Rule {
 }
 
 func newFixedStrategyRuleWithSegment(variationID, segmentID string) *feature.Rule {
-	uuid, _ := uuid.NewUUID()
+	featureID, _ := uuid.NewUUID()
+	clauseID, _ := uuid.NewUUID()
 	return &feature.Rule{
-		Id: uuid.String(),
+		Id: featureID.String(),
 		Strategy: &feature.Strategy{
 			Type: feature.Strategy_FIXED,
 			FixedStrategy: &feature.FixedStrategy{
@@ -2302,6 +2331,7 @@ func newFixedStrategyRuleWithSegment(variationID, segmentID string) *feature.Rul
 		},
 		Clauses: []*feature.Clause{
 			{
+				Id:       clauseID.String(),
 				Operator: feature.Clause_SEGMENT,
 				Values:   []string{segmentID},
 			},
@@ -2310,9 +2340,11 @@ func newFixedStrategyRuleWithSegment(variationID, segmentID string) *feature.Rul
 }
 
 func newRolloutStrategyRule(variations []*feature.Variation) *feature.Rule {
-	uuid, _ := uuid.NewUUID()
+	featureID, _ := uuid.NewUUID()
+	clauseID1, _ := uuid.NewUUID()
+	clauseID2, _ := uuid.NewUUID()
 	return &feature.Rule{
-		Id: uuid.String(),
+		Id: featureID.String(),
 		Strategy: &feature.Strategy{
 			Type: feature.Strategy_ROLLOUT,
 			RolloutStrategy: &feature.RolloutStrategy{
@@ -2338,11 +2370,13 @@ func newRolloutStrategyRule(variations []*feature.Variation) *feature.Rule {
 		},
 		Clauses: []*feature.Clause{
 			{
+				Id:        clauseID1.String(),
 				Attribute: "attribute-1",
 				Operator:  feature.Clause_EQUALS,
 				Values:    []string{"value-1", "value-2"},
 			},
 			{
+				Id:        clauseID2.String(),
 				Attribute: "attribute-2",
 				Operator:  feature.Clause_IN,
 				Values:    []string{"value-1", "value-2"},
@@ -2352,7 +2386,9 @@ func newRolloutStrategyRule(variations []*feature.Variation) *feature.Rule {
 }
 
 func newClause() *feature.Clause {
+	clauseID, _ := uuid.NewUUID()
 	return &feature.Clause{
+		Id:        clauseID.String(),
 		Attribute: "attribute-3",
 		Operator:  feature.Clause_EQUALS,
 		Values:    []string{"value-3-a", "value-3-b"},
@@ -2369,35 +2405,6 @@ func compareClause(t *testing.T, expected *feature.Clause, actual *feature.Claus
 	}
 	if !reflect.DeepEqual(expected.Values, actual.Values) {
 		t.Fatalf("Values does not match. Expected: %v actual %v", expected.Values, actual.Values)
-	}
-}
-
-func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.Any, featureID string) {
-	t.Helper()
-	updateReq := &feature.UpdateFeatureTargetingRequest{
-		Id: featureID,
-		Commands: []*feature.Command{
-			{Command: cmd},
-		},
-		EnvironmentId: *environmentID,
-		From:          feature.UpdateFeatureTargetingRequest_USER,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeatureTargeting(ctx, updateReq); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func compareFeatures(t *testing.T, expected []*feature.Feature, actual []*feature.Feature) {
-	t.Helper()
-	if len(actual) != len(expected) {
-		t.Fatalf("Different sizes. Expected: %d, actual: %d", len(expected), len(actual))
-	}
-	for i := 0; i < len(expected); i++ {
-		if !proto.Equal(actual[i], expected[i]) {
-			t.Fatalf("Features do not match. Expected: %v, actual: %v", expected[i], actual[i])
-		}
 	}
 }
 
@@ -2485,47 +2492,3 @@ func newAutoOpsClient(t *testing.T) aoclient.Client {
 	}
 	return client
 }
-
-/*
-func newEnvironmentClient(t *testing.T) environmentclient.Client {
-	t.Helper()
-	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
-	if err != nil {
-		t.Fatal("Failed to create RPC credentials:", err)
-	}
-	client, err := environmentclient.NewClient(
-		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
-		*webGatewayCert,
-		rpcclient.WithPerRPCCredentials(creds),
-		rpcclient.WithDialTimeout(30*time.Second),
-		rpcclient.WithBlock(),
-	)
-	if err != nil {
-		t.Fatal("Failed to create environment client:", err)
-	}
-	return client
-}
-
-func newEnvironmentCommand(id string) *environment.CreateEnvironmentCommand {
-	namespace := strings.Replace(id, "-", "", -1)
-	return &environment.CreateEnvironmentCommand{
-		Namespace:   namespace,
-		Name:        "e2e-test-environment-id",
-		Description: "e2e-test-environment-id-description",
-		Id:          id,
-		ProjectId:   defaultProjectID,
-	}
-}
-
-func createEnvironment(t *testing.T, client environmentclient.Client, cmd *environment.CreateEnvironmentCommand) {
-	t.Helper()
-	createReq := &environment.CreateEnvironmentRequest{
-		Command: cmd,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.CreateEnvironment(ctx, createReq); err != nil {
-		t.Fatal(err)
-	}
-}
-*/

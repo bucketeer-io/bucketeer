@@ -66,8 +66,8 @@ func TestFeatureAutoArchiver_BasicAutoArchive(t *testing.T) {
 
 	// Create a test feature
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, featureClient, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, featureClient, req)
 
 	// Enable the feature to generate last used info
 	enableFeature(t, featureID, featureClient)
@@ -121,14 +121,14 @@ func TestFeatureAutoArchiver_PrerequisiteDependency(t *testing.T) {
 
 	// Create parent feature (will be depended upon)
 	parentFeatureID := fmt.Sprintf("%s-parent-%s", prefixID, newUUID(t))
-	parentCmd := newCreateFeatureCommand(parentFeatureID)
+	parentCmd := newCreateFeatureReq(parentFeatureID)
 	createFeature(t, featureClient, parentCmd)
 	enableFeature(t, parentFeatureID, featureClient)
 	parentFeature := getFeature(t, parentFeatureID, featureClient)
 
 	// Create child feature that depends on parent
 	childFeatureID := fmt.Sprintf("%s-child-%s", prefixID, newUUID(t))
-	childCmd := newCreateFeatureCommand(childFeatureID)
+	childCmd := newCreateFeatureReq(childFeatureID)
 	createFeature(t, featureClient, childCmd)
 	enableFeature(t, childFeatureID, featureClient)
 
@@ -196,7 +196,7 @@ func TestFeatureAutoArchiver_BulkArchive(t *testing.T) {
 	for i := 0; i < numFeatures; i++ {
 		featureID := fmt.Sprintf("%s-bulk-%d-%s", prefixID, i, newUUID(t))
 		featureIDs[i] = featureID
-		cmd := newCreateFeatureCommand(featureID)
+		cmd := newCreateFeatureReq(featureID)
 		createFeature(t, featureClient, cmd)
 		enableFeature(t, featureID, featureClient)
 	}
@@ -255,7 +255,7 @@ func TestFeatureAutoArchiver_DisabledEnvironment(t *testing.T) {
 
 	// Create a test feature
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, featureClient, cmd)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureID, featureClient)
@@ -302,7 +302,7 @@ func TestFeatureAutoArchiver_RecentlyUsedNotArchived(t *testing.T) {
 
 	// Create a test feature
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, featureClient, cmd)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureID, featureClient)
