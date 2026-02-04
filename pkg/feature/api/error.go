@@ -22,8 +22,6 @@ import (
 var (
 	statusInternal = api.NewGRPCStatus(
 		pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
-	statusMissingFrom = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "missing from", "From"))
 	statusMissingID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing id", "ID"))
 	statusMissingIDs = api.NewGRPCStatus(
@@ -36,8 +34,6 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing user id", "UserId"))
 	statusMissingFeatureIDs = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing feature ids", "FeatureFlagID"))
-	statusMissingCommand = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "missing command", "Command"))
 	statusMissingDefaultOnVariation = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing default on variation", "DefaultOnVariation"))
 	statusMissingDefaultOffVariation = api.NewGRPCStatus(
@@ -53,30 +49,6 @@ var (
 			pkgErr.FeaturePackageName,
 			"invalid default off variation",
 			"DefaultOffVariation",
-		))
-	statusMissingVariationID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing variation id", "VariationId"))
-	statusInvalidVariationID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "invalid variation id", "VariationId"))
-	statusDifferentVariationsSize = api.NewGRPCStatus(
-		pkgErr.NewErrorDifferentVariationsSize(
-			pkgErr.FeaturePackageName,
-			"feature variations and rollout variations must have the same size",
-		))
-	statusExceededMaxVariationWeight = api.NewGRPCStatus(
-		pkgErr.NewErrorExceededMax(
-			pkgErr.FeaturePackageName,
-			"the sum of all weights value exceeded",
-			"SumOfWeights",
-			int(totalVariationWeight),
-		))
-	statusIncorrectVariationWeight = api.NewGRPCStatus(
-		pkgErr.NewErrorOutOfRange(
-			pkgErr.FeaturePackageName,
-			"variation weight must be between 0 and 100",
-			"VariationWeight",
-			0,
-			100,
 		))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "cursor is invalid", "Cursor"))
@@ -94,20 +66,10 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "feature must contain one or more tags", "Tag"))
 	statusCommentRequiredForUpdating = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "a comment is required for updating"))
-	statusMissingRuleID = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing rule id", "RuleId"))
 	statusMissingSegmentID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing segment id", "Segment"))
 	statusMissingSegmentUsersData = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing segment users data", "SegmentUser"))
-	statusMissingRuleStrategy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing rule strategy", "RuleStrategy"))
-	statusUnknownStrategy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "unknown strategy", "Strategy"))
-	statusMissingFixedStrategy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing fixed strategy", "FixedStrategy"))
-	statusMissingRolloutStrategy = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing rollout strategy", "RolloutStrategy"))
 	statusExceededMaxSegmentUsersDataSize = api.NewGRPCStatus(
 		pkgErr.NewErrorExceededMax(
 			pkgErr.FeaturePackageName,
@@ -117,8 +79,6 @@ var (
 		))
 	statusUnknownSegmentUserState = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "unknown segment user state", "SegmentUserState"))
-	statusIncorrectUUIDFormat = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "uuid format must be an uuid version 4", "UUID"))
 	statusIncorrectDestinationEnvironment = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
@@ -150,27 +110,14 @@ var (
 		pkgErr.NewErrorPermissionDenied(pkgErr.FeaturePackageName, "permission denied"))
 	statusWaitingOrRunningExperimentExists = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "experiment in waiting or running status exists"))
-	statusCycleExists = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "circular dependency detected"))
 	statusInvalidArchive = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
 			"can't archive because this feature is used as a prerequsite"))
-	statusInvalidChangingVariation = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(
-			pkgErr.FeaturePackageName,
-			"can't change or remove this variation because it is used as a prerequsite"))
 	statusVariationInUseByOtherFeatures = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName,
 			"can't remove this variation because it is used as a prerequisite or rule in other features",
-		))
-	statusInvalidPrerequisite = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "invalid prerequisite"))
-	statusProgressiveRolloutWaitingOrRunningState = api.NewGRPCStatus(
-		pkgErr.NewErrorFailedPrecondition(
-			pkgErr.FeaturePackageName,
-			"there is a progressive rollout in the waiting or running state",
 		))
 	// flag trigger
 	statusMissingTriggerFeatureID = api.NewGRPCStatus(

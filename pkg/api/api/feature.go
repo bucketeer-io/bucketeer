@@ -103,17 +103,15 @@ func (s *grpcGatewayService) CreateFeature(
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
-		EnvironmentId: envAPIKey.Environment.Id,
-		Command: &featureproto.CreateFeatureCommand{
-			Id:                       req.Id,
-			Name:                     req.Name,
-			Description:              req.Description,
-			Variations:               req.Variations,
-			Tags:                     req.Tags,
-			DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: req.OnVariationIndex},
-			DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: req.OffVariationIndex},
-			VariationType:            req.VariationType,
-		},
+		EnvironmentId:            envAPIKey.Environment.Id,
+		Id:                       req.Id,
+		Name:                     req.Name,
+		Description:              req.Description,
+		Variations:               req.Variations,
+		Tags:                     req.Tags,
+		DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: req.OnVariationIndex},
+		DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: req.OffVariationIndex},
+		VariationType:            req.VariationType,
 	})
 	if err != nil {
 		return nil, err

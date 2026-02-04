@@ -41,7 +41,7 @@ const (
 func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, cmd)
 	enableFeature(t, cmd.Id, client)
 	f := getFeature(t, cmd.Id, client)
@@ -74,7 +74,7 @@ func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 func TestGetFeatureLastUsedInfo(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, cmd)
 	enableFeature(t, cmd.Id, client)
 	f := getFeature(t, cmd.Id, client)

@@ -260,11 +260,7 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID, tag string) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID, tag)
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
+	createReq := newCreateFeatureReq(featureID, tag)
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
 	}
@@ -273,20 +269,20 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
-func newCreateFeatureCommand(featureID, tag string) *featureproto.CreateFeatureCommand {
-	return &featureproto.CreateFeatureCommand{
+func newCreateFeatureReq(featureID, tag string) *featureproto.CreateFeatureRequest {
+	return &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        "e2e-test-push-feature-name",
 		Description: "e2e-test-push-feature-description",
@@ -305,6 +301,7 @@ func newCreateFeatureCommand(featureID, tag string) *featureproto.CreateFeatureC
 		Tags:                     []string{tag},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 }
 

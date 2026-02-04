@@ -28,7 +28,7 @@ func TestCreateAndListTag(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, cmd)
 	actual := listTags(ctx, t, client)
 	tags := findTags(actual, cmd.Tags)
@@ -43,7 +43,7 @@ func TestUpdateTag(t *testing.T) {
 	defer cancel()
 	client := newFeatureClient(t)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, client, cmd)
 	actual := listTags(ctx, t, client)
 	tags := findTags(actual, cmd.Tags)
@@ -96,16 +96,19 @@ func listTags(ctx context.Context, t *testing.T, client featureclient.Client) []
 
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
 	t.Helper()
-	addReq := &feature.UpdateFeatureDetailsRequest{
-		Id: featureID,
-		AddTagCommands: []*feature.AddTagCommand{
-			{Tag: tag},
-		},
-		EnvironmentId: *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, addReq); err != nil {
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		TagChanges: []*feature.TagChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Tag:        tag,
+			},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
 }

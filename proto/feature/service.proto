@@ -23,7 +23,6 @@ import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/common/string.proto";
-import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/evaluation.proto";
@@ -116,12 +115,7 @@ message ListEnabledFeaturesResponse {
 }
 
 message CreateFeatureRequest {
-  CreateFeatureCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateFeatureCommand
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string id = 4 [(google.api.field_behavior) = REQUIRED];
@@ -273,49 +267,9 @@ message GetScheduledFlagChangeSummaryResponse {
   ScheduledFlagChangeSummary summary = 1;
 }
 
-message EnableFeatureRequest {
-  string id = 1;
-  EnableFeatureCommand command = 2;
-  reserved 3;
-  string comment = 4;
-  string environment_id = 5;
-}
-
-message EnableFeatureResponse {}
-
-message DisableFeatureRequest {
-  string id = 1;
-  DisableFeatureCommand command = 2;
-  reserved 3;
-  string comment = 4;
-  string environment_id = 5;
-}
-
-message DisableFeatureResponse {}
-
-message ArchiveFeatureRequest {
-  string id = 1;
-  ArchiveFeatureCommand command = 2;
-  reserved 3;
-  string comment = 4;
-  string environment_id = 5;
-}
-
-message ArchiveFeatureResponse {}
-
-message UnarchiveFeatureRequest {
-  string id = 1;
-  UnarchiveFeatureCommand command = 2;
-  reserved 3;
-  string comment = 4;
-  string environment_id = 5;
-}
-
-message UnarchiveFeatureResponse {}
-
 message DeleteFeatureRequest {
   string id = 1;
-  DeleteFeatureCommand command = 2;
+  reserved 2;  // DeleteFeatureCommand
   reserved 3;
   string comment = 4;
   string environment_id = 5;
@@ -323,53 +277,9 @@ message DeleteFeatureRequest {
 
 message DeleteFeatureResponse {}
 
-message UpdateFeatureDetailsRequest {
-  string id = 1;
-  RenameFeatureCommand rename_feature_command = 2;
-  ChangeDescriptionCommand change_description_command = 3;
-  repeated AddTagCommand add_tag_commands = 4;
-  repeated RemoveTagCommand remove_tag_commands = 5;
-  reserved 6;
-  string comment = 7;
-  string environment_id = 8;
-}
-
-message UpdateFeatureDetailsResponse {}
-
-message UpdateFeatureVariationsRequest {
-  string id = 1;
-  repeated Command commands = 2;
-  reserved 3;
-  string comment = 4;
-  string environment_id = 5;
-}
-
-message UpdateFeatureVariationsResponse {}
-
-message UpdateFeatureTargetingRequest {
-  enum From {
-    UNKNOWN = 0;
-    USER = 1;
-    OPS = 2;
-  }
-  string id = 1;
-  repeated Command commands = 2;
-  reserved 3;
-  string comment = 4;
-  From from = 5;
-  string environment_id = 6;
-}
-
-message UpdateFeatureTargetingResponse {}
-
 message CloneFeatureRequest {
   string id = 1;
-  CloneFeatureCommand command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated, use targetEnvironmentId instead"
-    }
-  ];
+  reserved 2;  // CloneFeatureCommand
   reserved 3;
   string environment_id = 4;
   string target_environment_id = 5;
@@ -1122,26 +1032,7 @@ service FeatureService {
       }
     };
   }
-  rpc EnableFeature(EnableFeatureRequest) returns (EnableFeatureResponse) {
-    option deprecated = true;
-  }
-  rpc DisableFeature(DisableFeatureRequest) returns (DisableFeatureResponse) {
-    option deprecated = true;
-  }
-  rpc ArchiveFeature(ArchiveFeatureRequest) returns (ArchiveFeatureResponse) {
-    option deprecated = true;
-  }
-  rpc UnarchiveFeature(UnarchiveFeatureRequest)
-      returns (UnarchiveFeatureResponse) {
-    option deprecated = true;
-  }
   rpc DeleteFeature(DeleteFeatureRequest) returns (DeleteFeatureResponse) {}
-  rpc UpdateFeatureDetails(UpdateFeatureDetailsRequest)
-      returns (UpdateFeatureDetailsResponse) {}
-  rpc UpdateFeatureVariations(UpdateFeatureVariationsRequest)
-      returns (UpdateFeatureVariationsResponse) {}
-  rpc UpdateFeatureTargeting(UpdateFeatureTargetingRequest)
-      returns (UpdateFeatureTargetingResponse) {}
   rpc CloneFeature(CloneFeatureRequest) returns (CloneFeatureResponse) {
     option (google.api.http) = {
       post: "/v1/feature/clone"

@@ -387,7 +387,7 @@ func createFeatureID(t *testing.T) string {
 
 func createFeature(t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	cmd := &featureproto.CreateFeatureCommand{
+	req := &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        "e2e-test-feature",
 		Description: "e2e test feature",
@@ -406,13 +406,10 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-	}
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
+		EnvironmentId:            *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	_, err := client.CreateFeature(ctx, createReq)
+	_, err := client.CreateFeature(ctx, req)
 	assert.NoError(t, err)
 }
