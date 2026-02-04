@@ -6037,6 +6037,107 @@ paths:
           default: UNKNOWN
       tags:
         - goal
+  /v1/insights/error_rates:
+    get:
+      summary: Get Insights Error Rates
+      description: Get error rate time series data
+      operationId: web.v1.insights.error_rates.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/insightsGetInsightsTimeSeriesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: sourceIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN
+              - ANDROID
+              - IOS
+              - WEB
+              - GO_SERVER
+              - NODE_SERVER
+              - JAVASCRIPT
+              - FLUTTER
+              - REACT
+              - REACT_NATIVE
+              - OPEN_FEATURE_KOTLIN
+              - OPEN_FEATURE_SWIFT
+              - OPEN_FEATURE_JAVASCRIPT
+              - OPEN_FEATURE_GO
+              - OPEN_FEATURE_NODE
+              - OPEN_FEATURE_REACT
+              - OPEN_FEATURE_REACT_NATIVE
+          collectionFormat: multi
+        - name: apiIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - UNKNOWN_API
+              - GET_EVALUATION
+              - GET_EVALUATIONS
+              - REGISTER_EVENTS
+              - GET_FEATURE_FLAGS
+              - GET_SEGMENT_USERS
+              - SDK_GET_VARIATION
+          collectionFormat: multi
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+      tags:
+        - insights
   /v1/insights/evaluations:
     get:
       summary: Get Insights Evaluations
@@ -13438,6 +13539,11 @@ definitions:
           type: object
           $ref: '#/definitions/insightsInsightsDataPoint'
         title: Sorted by timestamp ascending
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+        title: Additional labels (e.g., evaluation_type, error_type)
   insightsMonthlySummaryDataPoint:
     type: object
     properties:
