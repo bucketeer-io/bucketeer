@@ -31,11 +31,13 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
 func TestGetEnvironmentV2(t *testing.T) {
@@ -1231,6 +1233,203 @@ func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
 					assert.Equal(t, expectedErr, err)
 				})
 			}
+		})
+	}
+}
+
+func TestDeleteEnvironmentV2Data(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.DeleteEnvironmentDataRequest
+		expectedErr error
+		expected    *proto.DeleteEnvironmentDataResponse
+	}{
+		{
+			desc: "Environment not found",
+			setup: func(s *EnvironmentService) {
+				for range 11 {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						CountTargetEntitiesInEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(0), nil)
+				}
+				s.fluiStorage.(*ftstoragemock.MockFeatureLastUsedInfoStorage).EXPECT().
+					SelectFeatureLastUsedInfos(gomock.Any(), gomock.Any()).
+					Return([]*ftproto.FeatureLastUsedInfo{}, nil)
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(statusEnvironmentNotFound.Err())
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(statusEnvironmentNotFound.Err())
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+			},
+			expectedErr: statusEnvironmentNotFound.Err(),
+			expected:    nil,
+		},
+		{
+			desc: "success dry run",
+			setup: func(s *EnvironmentService) {
+				for range 11 {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						CountTargetEntitiesInEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(1), nil)
+				}
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+				DryRun:         true,
+			},
+			expectedErr: nil,
+			expected: &proto.DeleteEnvironmentDataResponse{
+				Summaries: []*proto.EnvironmentDeletionSummary{
+					{
+						EnvironmentId:               "env-id",
+						FeaturesDeleted:             1,
+						ExperimentsDeleted:          1,
+						SubscriptionsDeleted:        1,
+						PushesDeleted:               1,
+						TagsDeleted:                 1,
+						SegmentsDeleted:             1,
+						FlagTriggersDeleted:         1,
+						ApiKeysDeleted:              1,
+						OperationsDeleted:           1,
+						FeatureLastUsedInfosDeleted: 1,
+						GoalsDeleted:                1,
+					},
+				},
+			},
+		},
+		{
+			desc: "success no force",
+			setup: func(s *EnvironmentService) {
+				for range 11 {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						CountTargetEntitiesInEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(1), nil)
+				}
+				s.fluiStorage.(*ftstoragemock.MockFeatureLastUsedInfoStorage).EXPECT().
+					SelectFeatureLastUsedInfos(gomock.Any(), gomock.Any()).
+					Return([]*ftproto.FeatureLastUsedInfo{}, nil)
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+			},
+			expectedErr: nil,
+			expected: &proto.DeleteEnvironmentDataResponse{
+				Summaries: []*proto.EnvironmentDeletionSummary{
+					{
+						EnvironmentId:               "env-id",
+						FeaturesDeleted:             1,
+						ExperimentsDeleted:          1,
+						SubscriptionsDeleted:        1,
+						PushesDeleted:               1,
+						TagsDeleted:                 1,
+						SegmentsDeleted:             1,
+						FlagTriggersDeleted:         1,
+						ApiKeysDeleted:              1,
+						OperationsDeleted:           1,
+						FeatureLastUsedInfosDeleted: 1,
+						GoalsDeleted:                1,
+					},
+				},
+			},
+		},
+		{
+			desc: "success with force",
+			setup: func(s *EnvironmentService) {
+				for range 11 {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						CountTargetEntitiesInEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(int64(1), nil)
+				}
+				for range targetEntitiesInEnvironment {
+					s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+						DeleteTargetFromEnvironmentV2(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil)
+				}
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().
+					DeleteEnvironmentV2(gomock.Any(), gomock.Any()).
+					Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().
+					Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			},
+			req: &proto.DeleteEnvironmentDataRequest{
+				EnvironmentIds: []string{"env-id"},
+				Force:          true,
+			},
+			expectedErr: nil,
+			expected: &proto.DeleteEnvironmentDataResponse{
+				Summaries: []*proto.EnvironmentDeletionSummary{
+					{
+						EnvironmentId:               "env-id",
+						FeaturesDeleted:             1,
+						ExperimentsDeleted:          1,
+						SubscriptionsDeleted:        1,
+						PushesDeleted:               1,
+						TagsDeleted:                 1,
+						SegmentsDeleted:             1,
+						FlagTriggersDeleted:         1,
+						ApiKeysDeleted:              1,
+						OperationsDeleted:           1,
+						FeatureLastUsedInfosDeleted: 1,
+						GoalsDeleted:                1,
+					},
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.DeleteEnvironmentData(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, resp)
 		})
 	}
 }

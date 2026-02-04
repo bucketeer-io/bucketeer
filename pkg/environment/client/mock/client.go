@@ -234,6 +234,46 @@ func (mr *MockClientMockRecorder) CreateTrialProject(ctx, in any, opts ...any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrialProject", reflect.TypeOf((*MockClient)(nil).CreateTrialProject), varargs...)
 }
 
+// DeleteEnvironmentData mocks base method.
+func (m *MockClient) DeleteEnvironmentData(ctx context.Context, in *environment.DeleteEnvironmentDataRequest, opts ...grpc.CallOption) (*environment.DeleteEnvironmentDataResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteEnvironmentData", varargs...)
+	ret0, _ := ret[0].(*environment.DeleteEnvironmentDataResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteEnvironmentData indicates an expected call of DeleteEnvironmentData.
+func (mr *MockClientMockRecorder) DeleteEnvironmentData(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEnvironmentData", reflect.TypeOf((*MockClient)(nil).DeleteEnvironmentData), varargs...)
+}
+
+// DeleteOrganizationData mocks base method.
+func (m *MockClient) DeleteOrganizationData(ctx context.Context, in *environment.DeleteOrganizationDataRequest, opts ...grpc.CallOption) (*environment.DeleteOrganizationDataResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteOrganizationData", varargs...)
+	ret0, _ := ret[0].(*environment.DeleteOrganizationDataResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteOrganizationData indicates an expected call of DeleteOrganizationData.
+func (mr *MockClientMockRecorder) DeleteOrganizationData(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganizationData", reflect.TypeOf((*MockClient)(nil).DeleteOrganizationData), varargs...)
+}
+
 // DisableOrganization mocks base method.
 func (m *MockClient) DisableOrganization(ctx context.Context, in *environment.DisableOrganizationRequest, opts ...grpc.CallOption) (*environment.DisableOrganizationResponse, error) {
 	m.ctrl.T.Helper()
