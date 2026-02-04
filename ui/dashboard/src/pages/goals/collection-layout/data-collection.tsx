@@ -6,34 +6,17 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { ConnectionType, Goal } from '@types';
+import { Goal } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
-import { cn } from 'utils/style';
 import { IconArrowDown, IconCopy, IconTrash } from '@icons';
 import Icon from 'components/icon';
+import { Tag } from 'components/mobile-card/goal-card';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { GoalActions } from '../types';
-
-const Tag = ({ tag, type }: { tag: string; type: ConnectionType }) => {
-  return (
-    <div
-      className={cn(
-        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize whitespace-nowrap',
-        {
-          'px-4 text-gray-600 bg-gray-100': type === 'UNKNOWN',
-          'text-primary-500 bg-primary-50': type === 'EXPERIMENT',
-          'text-accent-pink-500 bg-accent-pink-50': type === 'OPERATION'
-        }
-      )}
-    >
-      {tag}
-    </div>
-  );
-};
 
 export const useColumns = ({
   onActions
@@ -58,7 +41,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 200,
       cell: ({ row }) => {
         const goal = row.original;
         const { id, name } = goal;
@@ -77,7 +60,7 @@ export const useColumns = ({
               }
             />
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {id}
+              <p className="truncate">{id}</p>
               <div onClick={() => handleCopyId(id)}>
                 <Icon
                   icon={IconCopy}

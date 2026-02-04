@@ -157,6 +157,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
+              className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
@@ -166,7 +167,7 @@ const HistoryPage = ({ feature }: { feature: Feature }) => {
               }}
             />
             <Button
-              className="w-full"
+              className="w-fit"
               variant={'secondary'}
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
