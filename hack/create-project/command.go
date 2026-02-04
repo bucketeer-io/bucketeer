@@ -65,11 +65,9 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	// create project
 	req := &environmentproto.CreateProjectRequest{
-		Command: &environmentproto.CreateProjectCommand{
-			Name:        *c.name,
-			UrlCode:     strings.ToLower(strings.ReplaceAll(*c.urlCode, " ", "-")),
-			Description: *c.description,
-		},
+		Name:        *c.name,
+		UrlCode:     strings.ToLower(strings.ReplaceAll(*c.urlCode, " ", "-")),
+		Description: *c.description,
 	}
 	resp, err := client.CreateProject(ctx, req)
 	if err != nil {
@@ -81,11 +79,9 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	// create environments (optional)
 	for _, envName := range *c.createEnvironments {
 		req := &environmentproto.CreateEnvironmentV2Request{
-			Command: &environmentproto.CreateEnvironmentV2Command{
-				Name:      envName,
-				UrlCode:   strings.ToLower(strings.ReplaceAll(envName, " ", "-")),
-				ProjectId: projID,
-			},
+			Name:      envName,
+			UrlCode:   strings.ToLower(strings.ReplaceAll(envName, " ", "-")),
+			ProjectId: projID,
 		}
 		resp, err := client.CreateEnvironmentV2(ctx, req)
 		if err != nil {

@@ -17,33 +17,6 @@ syntax = "proto3";
 package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/v2/proto/environment";
 
-message CreateEnvironmentV2Command {
-  string name = 1;
-  string url_code = 2;
-  string description = 3;  // optional
-  string project_id = 4;
-  bool require_comment = 5;
-}
-
-message RenameEnvironmentV2Command {
-  string name = 1;
-}
-
-message ChangeDescriptionEnvironmentV2Command {
-  string description = 1;
-}
-
-message ArchiveEnvironmentV2Command {}
-
-message UnarchiveEnvironmentV2Command {}
-
-message CreateProjectCommand {
-  string organization_id = 1;
-  string name = 2;
-  string description = 3;  // optional
-  string url_code = 4;
-}
-
 message CreateTrialProjectCommand {
   string id = 1 [deprecated = true];
   string email = 2;
@@ -51,53 +24,3 @@ message CreateTrialProjectCommand {
   string url_code = 4;
   string owner_email = 5;
 }
-
-message RenameProjectCommand {
-  string name = 1;
-}
-
-message ChangeDescriptionProjectCommand {
-  string description = 1;
-}
-
-message EnableProjectCommand {}
-
-message DisableProjectCommand {}
-
-message ConvertTrialProjectCommand {}
-
-// Deprecated
-message CreateOrganizationCommand {
-  string name = 1;
-  string url_code = 2;
-  string description = 3;  // optional
-  bool is_trial = 4;
-  bool is_system_admin = 5;
-  string owner_email = 6;
-}
-
-message ChangeNameOrganizationCommand {
-  string name = 1;
-}
-
-message ChangeDescriptionOrganizationCommand {
-  string description = 1;
-}
-
-message ChangeOwnerEmailOrganizationCommand {
-  string owner_email = 1;
-}
-
-message ChangeRequireCommentCommand {
-  bool require_comment = 1;
-}
-
-message EnableOrganizationCommand {}
-
-message DisableOrganizationCommand {}
-
-message ArchiveOrganizationCommand {}
-
-message UnarchiveOrganizationCommand {}
-
-message ConvertTrialOrganizationCommand {}

@@ -198,7 +198,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidOrganizationName: empty name",
 			setup: nil,
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: ""},
+				Name: "",
 			},
 			expectedErr: statusOrganizationNameRequired.Err(),
 		},
@@ -206,7 +206,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidOrganizationName: only space",
 			setup: nil,
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "    "},
+				Name: "    ",
 			},
 			expectedErr: statusOrganizationNameRequired.Err(),
 		},
@@ -214,7 +214,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
 			setup: nil,
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: strings.Repeat("a", 51)},
+				Name: strings.Repeat("a", 51),
 			},
 			expectedErr: statusInvalidOrganizationName.Err(),
 		},
@@ -222,7 +222,8 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidOrganizationUrlCode: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "CODE"},
+				Name:    "id-1",
+				UrlCode: "CODE",
 			},
 			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
@@ -230,7 +231,8 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 			desc:  "err: ErrInvalidOrganizationUrlCode: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+				Name:    "id-1",
+				UrlCode: strings.Repeat("a", 51),
 			},
 			expectedErr: statusInvalidOrganizationUrlCode.Err(),
 		},
@@ -242,7 +244,9 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationAlreadyExists)
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
+				Name:       "id-0",
+				UrlCode:    "id-0",
+				OwnerEmail: "test@test.org",
 			},
 			expectedErr: statusOrganizationAlreadyExists.Err(),
 		},
@@ -254,7 +258,9 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
+				Name:       "id-1",
+				UrlCode:    "id-1",
+				OwnerEmail: "test@test.org",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
@@ -266,19 +272,26 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().CreateOrganization(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().CreateProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Times(2).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{
-					Name:        orgExpected.Name,
-					UrlCode:     orgExpected.UrlCode,
-					Description: orgExpected.Description,
-					IsTrial:     false,
-					OwnerEmail:  "test@test.org",
-				},
+				Name:        orgExpected.Name,
+				UrlCode:     orgExpected.UrlCode,
+				Description: orgExpected.Description,
+				IsTrial:     false,
+				OwnerEmail:  "test@test.org",
 			},
 			expected:    orgExpected.Organization,
 			expectedErr: nil,
@@ -291,19 +304,26 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().CreateOrganization(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().CreateProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Times(2).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{
-					Name:        trialOrgExpected.Name,
-					UrlCode:     trialOrgExpected.UrlCode,
-					Description: trialOrgExpected.Description,
-					IsTrial:     trialOrgExpected.Trial,
-					OwnerEmail:  "test@test.org",
-				},
+				Name:        trialOrgExpected.Name,
+				UrlCode:     trialOrgExpected.UrlCode,
+				Description: trialOrgExpected.Description,
+				IsTrial:     trialOrgExpected.Trial,
+				OwnerEmail:  "test@test.org",
 			},
 			expected:    trialOrgExpected.Organization,
 			expectedErr: nil,
@@ -333,112 +353,6 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 }
 
 func TestUpdateOrganizationMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithToken(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc        string
-		setup       func(*EnvironmentService)
-		req         *proto.UpdateOrganizationRequest
-		expectedErr error
-	}{
-		{
-			desc:  "err: ErrInvalidOrganizationName: empty name",
-			setup: nil,
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "id-0",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: ""},
-			},
-			expectedErr: statusOrganizationNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidOrganizationName: only space",
-			setup: nil,
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "id-0",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "    "},
-			},
-			expectedErr: statusOrganizationNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
-			setup: nil,
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "id-0",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: strings.Repeat("a", 51)},
-			},
-			expectedErr: statusInvalidOrganizationName.Err(),
-		},
-		{
-			desc: "err: ErrOrganizationNotFound",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrOrganizationNotFound)
-			},
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "err-id-0",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-0"},
-			},
-			expectedErr: statusOrganizationNotFound.Err(),
-		},
-		{
-			desc: "err: ErrInternal",
-			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
-			},
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "err-id-1",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-1"},
-			},
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *EnvironmentService) {
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "success-id-0"},
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &proto.UpdateOrganizationRequest{
-				Id:            "success-id-0",
-				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-0"},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			s := newEnvironmentService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(s)
-			}
-			_, err := s.UpdateOrganization(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -553,18 +467,10 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.EnableOrganizationRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrOrganizationIDRequired",
 			setup: nil,
 			req: &proto.EnableOrganizationRequest{
-				Command: &proto.EnableOrganizationCommand{},
+				Id: "",
 			},
 			expectedErr: statusOrganizationIDRequired.Err(),
 		},
@@ -576,8 +482,7 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationNotFound)
 			},
 			req: &proto.EnableOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.EnableOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusOrganizationNotFound.Err(),
 		},
@@ -589,8 +494,7 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.EnableOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.EnableOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -599,22 +503,11 @@ func TestEnableOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "id-1"},
-				}, nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.EnableOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.EnableOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -648,18 +541,10 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.DisableOrganizationRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrOrganizationIDRequired",
 			setup: nil,
 			req: &proto.DisableOrganizationRequest{
-				Command: &proto.DisableOrganizationCommand{},
+				Id: "",
 			},
 			expectedErr: statusOrganizationIDRequired.Err(),
 		},
@@ -671,8 +556,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationNotFound)
 			},
 			req: &proto.DisableOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.DisableOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusOrganizationNotFound.Err(),
 		},
@@ -684,8 +568,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 				).Return(domain.ErrCannotDisableSystemAdmin)
 			},
 			req: &proto.DisableOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.DisableOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusCannotUpdateSystemAdmin.Err(),
 		},
@@ -697,8 +580,7 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.DisableOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.DisableOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -707,22 +589,11 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "id-1"},
-				}, nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.DisableOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.DisableOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -756,18 +627,10 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.ArchiveOrganizationRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrOrganizationIDRequired",
 			setup: nil,
 			req: &proto.ArchiveOrganizationRequest{
-				Command: &proto.ArchiveOrganizationCommand{},
+				Id: "",
 			},
 			expectedErr: statusOrganizationIDRequired.Err(),
 		},
@@ -779,8 +642,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationNotFound)
 			},
 			req: &proto.ArchiveOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.ArchiveOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusOrganizationNotFound.Err(),
 		},
@@ -792,8 +654,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				).Return(domain.ErrCannotArchiveSystemAdmin)
 			},
 			req: &proto.ArchiveOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.ArchiveOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusCannotUpdateSystemAdmin.Err(),
 		},
@@ -805,8 +666,7 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
 			},
 			req: &proto.ArchiveOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.ArchiveOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
 		},
@@ -815,22 +675,11 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "id-1"},
-				}, nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.ArchiveOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.ArchiveOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -864,18 +713,10 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.UnarchiveOrganizationRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrOrganizationIDRequired",
 			setup: nil,
 			req: &proto.UnarchiveOrganizationRequest{
-				Command: &proto.UnarchiveOrganizationCommand{},
+				Id: "",
 			},
 			expectedErr: statusOrganizationIDRequired.Err(),
 		},
@@ -887,8 +728,7 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationNotFound)
 			},
 			req: &proto.UnarchiveOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.UnarchiveOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusOrganizationNotFound.Err(),
 		},
@@ -900,8 +740,7 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.UnarchiveOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.UnarchiveOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
@@ -910,22 +749,11 @@ func TestUnarchiveOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "id-1"},
-				}, nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.UnarchiveOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.UnarchiveOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
@@ -959,18 +787,10 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.ConvertTrialOrganizationRequest{
-				Id: "id-0",
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
 			desc:  "err: ErrOrganizationIDRequired",
 			setup: nil,
 			req: &proto.ConvertTrialOrganizationRequest{
-				Command: &proto.ConvertTrialOrganizationCommand{},
+				Id: "",
 			},
 			expectedErr: statusOrganizationIDRequired.Err(),
 		},
@@ -982,8 +802,7 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationNotFound)
 			},
 			req: &proto.ConvertTrialOrganizationRequest{
-				Id:      "id-0",
-				Command: &proto.ConvertTrialOrganizationCommand{},
+				Id: "id-0",
 			},
 			expectedErr: statusOrganizationNotFound.Err(),
 		},
@@ -995,8 +814,7 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
 			},
 			req: &proto.ConvertTrialOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.ConvertTrialOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
@@ -1005,22 +823,11 @@ func TestConvertTrialOrganizationMySQL(t *testing.T) {
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Organization{
-					Organization: &proto.Organization{Id: "id-1"},
-				}, nil)
-				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.ConvertTrialOrganizationRequest{
-				Id:      "id-1",
-				Command: &proto.ConvertTrialOrganizationCommand{},
+				Id: "id-1",
 			},
 			expectedErr: nil,
 		},
