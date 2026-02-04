@@ -39,7 +39,7 @@ const CustomizeNavigator = memo(
     );
 
     return (
-      <div className={cn(' w-full relative z-[1000] p-5 pb-0')}>
+      <div className={cn('w-full relative z-[1000] p-5 pb-0')}>
         <div className="flex items-center justify-between w-full border-b border-gray-200 pb-5">
           <Button
             type="button"
@@ -66,11 +66,13 @@ const CustomizeNavigator = memo(
                 label: item,
                 value: index
               }))}
+              labelCustom={months[currFocusedDate.getMonth()]}
               value={months[currFocusedDate.getMonth()]}
               onChange={value => {
                 const newDate = setMonth(currFocusedDate, +value);
                 changeShownDate(newDate);
               }}
+              isTruncate={false}
               className="!shadow-none !border-none p-0"
               contentClassName="min-w-[120px]"
               sideOffsetContent={-8}
