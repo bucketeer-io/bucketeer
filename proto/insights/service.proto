@@ -63,6 +63,7 @@ message InsightsTimeSeries {
   bucketeer.event.client.SourceId source_id = 2;
   bucketeer.event.client.ApiId api_id = 3;
   repeated InsightsDataPoint data = 4;  // Sorted by timestamp ascending
+  map<string, string> labels = 5;       // Additional labels (e.g., evaluation_type, error_type)
 }
 
 message InsightsDataPoint {
