@@ -32,7 +32,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
 
   return (
     <DialogModal
-      className="w-[500px]"
+      className="max-w-[300px] sm:max-w-[500px]"
       title={
         isExperimentType
           ? t(`experiments-connected`)
@@ -54,7 +54,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
         </div>
 
         <div className="flex-center flex-col w-full gap-y-5">
-          <div className="flex-center w-full text-center px-[67px] text-gray-700">
+          <div className="flex-center w-full text-center px-0 sm:px-[67px] text-gray-700">
             <Trans
               i18nKey="goal-connected-desc"
               values={{

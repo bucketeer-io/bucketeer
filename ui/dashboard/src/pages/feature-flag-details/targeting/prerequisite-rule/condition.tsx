@@ -90,7 +90,7 @@ const ConditionForm = forwardRef(
         </div>
         <div className="flex items-center w-full flex-1 pl-4 border-l-0 sm:border-l border-primary-500">
           <div className="flex items-center w-full gap-x-4">
-            <div className="w-full flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <div className="w-full flex flex-col lg:flex-row gap-2 lg:gap-4">
               <Form.Field
                 control={control}
                 name={`${commonName}.featureId`}
@@ -104,7 +104,7 @@ const ConditionForm = forwardRef(
                         isExpand
                         options={flagOptions}
                         selectedOptions={field.value}
-                        triggerClassName="py-2 max-w-[288px] sm:max-w-full"
+                        triggerClassName="max-w-[288px] sm:max-w-full"
                         additionalElement={item => (
                           <FeatureFlagStatus
                             status={t(
@@ -147,7 +147,7 @@ const ConditionForm = forwardRef(
                         onChange={field.onChange}
                         placeholder={t('experiments.select-variation')}
                         disabled={!variationOptions?.length}
-                        className="w-full py-2 max-w-[288px] sm:max-w-full"
+                        className="w-full max-w-[288px] sm:max-w-full"
                       />
                     </Form.Control>
                     <Form.Message />

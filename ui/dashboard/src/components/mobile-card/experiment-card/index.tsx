@@ -7,9 +7,8 @@ import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { ClockIcon } from 'lucide-react';
 import { Experiment } from '@types';
-import { formatLongDateTime, useFormatDateTime } from 'utils/date-time';
+import { formatLongDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import {
   IconGoal,
@@ -52,7 +51,6 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
 
   const { searchOptions } = useSearchParams();
   const { status } = data;
-  const formatDateTime = useFormatDateTime();
   const formatDate = (value: string) => {
     return formatLongDateTime({
       value: value,
@@ -132,7 +130,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
       </Card.Header>
 
       <Card.Meta>
-        <div className="flex flex-wrap h-full w-full pb-5 items-stretch justify-between gap-3 typo-para-medium">
+        <div className="flex flex-wrap h-full w-full items-stretch justify-between gap-3 typo-para-medium pb-5">
           <div className="flex-1 p-3 rounded-xl bg-gray-100">
             <p className="flex items-center gap-2 uppercase typo-para-tiny text-gray-500">
               <span>{t('common:goal')}</span>
@@ -141,7 +139,7 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
               className="mt-2 flex items-center gap-2"
               onClick={() => onActions(data, 'GOALS-CONNECTION')}
             >
-              <Icon icon={IconGoal} size="sm" /> {data.goals.length}{' '}
+              <Icon icon={IconGoal} size="sm" /> {data.goals.length}
               {t('common:goal')}
             </div>
           </div>
@@ -158,13 +156,20 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
           </div>
         </div>
         <Divider />
-        <div className="flex flex-wrap h-full w-full py-5 items-stretch justify-between gap-3 typo-para-medium">
+        <div className="flex flex-wrap h-full w-full pt-3 items-stretch justify-between gap-3 typo-para-medium">
           <div className="flex-1 p-3 rounded-xl text-gray-500">
             <p className="flex items-center gap-2 uppercase typo-para-tiny">
               <span>{t('time-start')}</span>
             </p>
             <div className="mt-2 typo-para-small text-nowrap">
-              {formatDate(data.startAt)}
+              <DateTooltip
+                trigger={
+                  <div className="text-gray-700 typo-para-medium min-w-[150px]">
+                    {formatDate(data.startAt)}
+                  </div>
+                }
+                date={data.startAt}
+              />
             </div>
           </div>
 
@@ -174,31 +179,19 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
                 <span>{t('common:time-stop')}</span>
               </p>
               <div className="mt-2 typo-para-small text-nowrap">
-                {formatDate(data.stopAt)}
+                <DateTooltip
+                  trigger={
+                    <div className="text-gray-700 typo-para-medium min-w-[150px]">
+                      {formatDate(data.stopAt)}
+                    </div>
+                  }
+                  date={data.stopAt}
+                />
               </div>
             </div>
           </div>
         </div>
-        <Divider />
       </Card.Meta>
-
-      <Card.Footer
-        left={
-          <div className="mt-3 ml-1 text-gray-500 flex items-center gap-1">
-            <Icon icon={ClockIcon} size="xs" />
-            <DateTooltip
-              trigger={
-                <div className="typo-para-small">
-                  {Number(data.updatedAt) === 0
-                    ? t('never')
-                    : formatDateTime(data.updatedAt)}
-                </div>
-              }
-              date={data.updatedAt}
-            />
-          </div>
-        }
-      />
     </Card>
   );
 };
