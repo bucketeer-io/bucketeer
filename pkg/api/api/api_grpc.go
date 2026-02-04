@@ -434,6 +434,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		evaluationsCounterV2.WithLabelValues(
 			environmentId,
 			envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -479,6 +480,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 		evaluationsCounterV2.WithLabelValues(
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromIncomingContext(ctx).AddFields(
@@ -512,6 +514,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 			evaluationsCounterV2.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
 			// Extract feature IDs for debugging dependency issues
 			featureIDs := make([]string, len(features))
@@ -556,6 +559,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
 			evaluationsCounterV2.WithLabelValues(
 				environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError, sourceID).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, sourceID, methodGetEvaluations).Inc()
 
 			// Extract feature IDs for debugging dependency issues
 			featureIDs := make([]string, len(features))
@@ -678,6 +682,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		},
 	)
 	if err != nil {
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, req.SourceId.String(), methodGetEvaluation).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -695,6 +700,7 @@ func (s *grpcGatewayService) GetEvaluation(
 				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, req.SourceId.String(), methodGetEvaluation).Inc()
 		return nil, err
 	}
 	evaluator := evaluation.NewEvaluator()
@@ -707,6 +713,7 @@ func (s *grpcGatewayService) GetEvaluation(
 				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, req.SourceId.String(), methodGetEvaluation).Inc()
 		return nil, err
 	}
 	if err != nil {
@@ -719,6 +726,7 @@ func (s *grpcGatewayService) GetEvaluation(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
+		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, req.SourceId.String(), methodGetEvaluation).Inc()
 		return nil, ErrInternal
 	}
 	eval, err := s.findEvaluation(evaluations.Evaluations, req.FeatureId)
@@ -800,6 +808,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	if err != nil {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
 			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeInternalError).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, req.SourceId.String(), methodGetFeatureFlags).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -970,6 +979,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		getSegmentUsersCounter.WithLabelValues(
 			projectID, envAPIKey.ProjectUrlCode, environmentId,
 			envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+		apiErrorCounter.WithLabelValues(environmentId, req.SourceId.String(), methodGetSegmentUsers).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -1013,6 +1023,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			getSegmentUsersCounter.WithLabelValues(
 				projectID, envAPIKey.ProjectUrlCode, environmentId,
 				envAPIKey.Environment.UrlCode, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+			apiErrorCounter.WithLabelValues(environmentId, req.SourceId.String(), methodGetSegmentUsers).Inc()
 			return nil, err
 		}
 		spanGetSegmentUsers.End()

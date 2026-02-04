@@ -253,7 +253,14 @@ var (
 			Name:      "api_handling_seconds",
 			Help:      "Histogram of response latency (seconds)",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_id", "source_id", "api_id"})
+		}, []string{"environment_id", "source_id", "method"})
+	apiErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_error_total",
+			Help:      "Total number of internal API errors",
+		}, []string{"environment_id", "source_id", "method"})
 	// TODO: Remove after deleting api-gateway REST server
 	sdkGetEvaluationsLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -331,6 +338,7 @@ func registerMetrics(r metrics.Registerer) {
 			sdkErrorCounter,
 			handledSecondsHistogram,
 			evaluationsCounterV2,
+			apiErrorCounter,
 		)
 	})
 }
