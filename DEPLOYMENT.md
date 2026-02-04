@@ -74,6 +74,7 @@ Customize deployment by setting environment variables:
 # Use specific versions
 export BUCKETEER_VERSION=v1.4.0
 export MYSQL_VERSION=8.1
+export POSTGRES_VERSION=18.0 # optional datawarehouse alternative
 export REDIS_VERSION=7.2-alpine
 
 # Start with custom versions
@@ -97,7 +98,8 @@ make docker-compose-up
 
 ```bash
 # Infrastructure versions
-MYSQL_VERSION=8.0                    # MySQL version
+MYSQL_VERSION=8.0                   # MySQL version
+POSTGRES_VERSION=18.0               # POSTGRES version
 REDIS_VERSION=7-alpine              # Redis version
 NGINX_VERSION=1.25-alpine           # Nginx version
 
@@ -132,10 +134,17 @@ add_header 'Access-Control-Allow-Origin' 'https://your-domain.com' always;
 
 **Use Docker secrets for sensitive data:**
 ```bash
+# For MySQL
 # Create secret files
 mkdir -p docker-compose/secrets
 echo "your-mysql-password" > docker-compose/secrets/mysql_password.txt
 echo "your-mysql-root-password" > docker-compose/secrets/mysql_root_password.txt
+```
+
+```bash
+# For PostgresQL
+mkdir -p docker-compose/secrets
+echo "your-postgres-password" > docker-compose/secrets/postgres_password.txt
 ```
 
 #### 2. Performance Configuration
@@ -143,6 +152,7 @@ echo "your-mysql-root-password" > docker-compose/secrets/mysql_root_password.txt
 **Update resource limits for production:**
 The current configuration includes resource limits suitable for medium deployments:
 - MySQL: 2GB RAM, 1 CPU
+- PostgresQL: 2GB RAM, 1 CPU
 - Web Service: 1.5GB RAM, 1 CPU
 - API Service: 1GB RAM, 0.75 CPU
 
@@ -202,6 +212,8 @@ docker exec -it bucketeer-web sh
 ```bash
 # Create MySQL event tables for data warehouse
 make docker-compose-create-mysql-event-tables
+# If you use Postgres for data warehouse
+make docker-compose-create-postgres-event-tables
 
 # Delete E2E test data
 make docker-compose-delete-data
@@ -263,19 +275,27 @@ For larger deployments requiring high availability and scalability, use Kubernet
 ### Deployment Steps
 
 ```bash
-# Add required repositories
+# Add required repositories (if needed for dependencies)
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-# Deploy dependencies
+# Deploy dependencies using local/custom Bucketeer Helm charts
 kubectl create namespace bucketeer
-helm install mysql bitnami/mysql -n bucketeer
-helm install redis bitnami/redis -n bucketeer
 
-# Deploy Bucketeer
+# Deploy MySQL using the custom chart and development values
+helm install mysql ./manifests/localenv/dependencies/mysql -n bucketeer \
+  --values ./manifests/localenv/dependencies/mysql/values.yaml
+
+# Deploy Redis using the custom chart and development values
+helm install redis ./manifests/localenv/dependencies/redis -n bucketeer \
+  --values ./manifests/localenv/dependencies/redis/values.yaml
+
+# Deploy Bucketeer using the custom chart
 helm install bucketeer ./manifests/bucketeer -n bucketeer \
   --values ./manifests/bucketeer/values.prod.yaml
 ```
+
+_Note: The paths point to the Bucketeer repository's custom Helm charts for MySQL and Redis. Update the `values.yaml` paths if you use different configurations._
 
 For detailed Kubernetes deployment instructions, see the [Minikube development guide](DEVELOPMENT.md#option-1-minikube-setup).
 
