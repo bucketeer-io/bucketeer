@@ -210,4 +210,39 @@ service InsightsService {
       }
     };
   }
+
+  rpc GetInsightsErrorRates(GetInsightsTimeSeriesRequest)
+      returns (GetInsightsTimeSeriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/insights/error_rates"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Insights Error Rates"
+      description: "Get error rate time series data"
+      tags: "insights"
+      operation_id: "web.v1.insights.error_rates.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }
