@@ -87,7 +87,7 @@ const FilterExperimentSlide = ({
                       disabled={isLoading || !filterType}
                       placeholder={t(`select-value`)}
                       labelCustom={handleGetLabelFilterValue(filterOption)}
-                      className={cn('w-full truncate py-2', {
+                      className={cn('w-full max-w-[230px] truncate py-2', {
                         capitalize: isStatusFilter
                       })}
                       contentClassName={cn('w-[235px]', {
