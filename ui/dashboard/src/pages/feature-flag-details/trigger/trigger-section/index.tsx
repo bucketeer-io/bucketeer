@@ -156,7 +156,7 @@ const TriggerList = ({
   return (
     <Card className="gap-y-6">
       <p className="typo-head-bold-small text-gray-800">{t('trigger.title')}</p>
-      <div className="flex items-center typo-para-small text-gray-500 gap-x-1">
+      <div className="inline typo-para-small text-gray-500 gap-x-1">
         <Trans
           i18nKey={'table:trigger.description'}
           components={{

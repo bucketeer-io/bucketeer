@@ -3,19 +3,19 @@
 }
 
 .range__months {
-  @apply grid w-full grid-cols-2 justify-between gap-x-8 overflow-visible p-5;
+  @apply sm:grid w-full grid-cols-1 sm:grid-cols-2 justify-between gap-x-8 overflow-visible p-5;
 }
 
 .range__months--month {
-  @apply col-span-1 flex w-full flex-col gap-y-4 p-0;
+  @apply sm:col-span-1 flex w-full flex-col gap-y-4 p-0;
 }
 
 .range__months--monthName {
-  @apply hidden;
+  @apply sm:hidden;
 }
 
 .range__weekDay {
-  @apply flex-center typo-para-tiny !h-6 !w-10 !max-w-10 uppercase text-gray-500 last:w-9;
+  @apply flex-center typo-para-tiny !h-6 sm:!w-10 !max-w-10 uppercase text-gray-500 last:w-9;
 }
 
 .range__days {
@@ -32,7 +32,7 @@
 }
 
 .range__days--day {
-  @apply relative size-10;
+  @apply relative sm:size-10;
 }
 
 .range__days--number {
@@ -65,7 +65,7 @@
   @apply !text-gray-500;
 }
 .rdrDefinedRangesWrapper {
-  @apply max-w-[175px];
+  @apply hidden md:block max-w-[175px];
 }
 .rdrStaticRanges {
   @apply max-w-[175px] p-5;
@@ -137,4 +137,12 @@
 
 .rdrDateDisplayItemActive {
   @apply !border-primary-500;
+}
+
+.rdrMonthsVertical{
+  @apply max-h-[600px] overflow-y-scroll
+}
+
+.rdrCalendarWrapper {
+  @apply sm:!w-[645px]
 }

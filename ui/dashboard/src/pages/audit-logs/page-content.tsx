@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import dayjs from 'dayjs';
-import { usePartialState } from 'hooks';
+import { usePartialState, useScreen } from 'hooks';
 import pickBy from 'lodash/pickBy';
 import { AuditLog } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -72,7 +72,7 @@ const PageContent = () => {
   >(undefined);
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
+  const { fromMobileScreen } = useScreen();
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
@@ -141,18 +141,19 @@ const PageContent = () => {
         action={
           <>
             <EntityTypeDropdown
-              className="w-full sm:w-fit [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
+              className="w-fit [&>div>button]:!max-w-full sm:[&>div>button]:!max-w-[175px] [&>div>button]:!w-full"
               isSystemAdmin={!!consoleAccount?.isSystemAdmin}
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
             />
             <ReactDateRangePicker
-              className="!max-w-full w-full"
               from={filters?.from}
               to={filters?.to}
               isAllTime={[filters?.range, searchFilters?.range].includes(
                 'all-time'
               )}
+              direction={fromMobileScreen ? 'horizontal' : 'vertical'}
+              className="w-fit"
               onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
@@ -163,7 +164,7 @@ const PageContent = () => {
             />
             <Button
               variant={'secondary'}
-              className="w-full sm:w-fit"
+              className="w-fit px-[10px]"
               onClick={() => expandOfCollapseRef.current?.toggle()}
             >
               <Icon
