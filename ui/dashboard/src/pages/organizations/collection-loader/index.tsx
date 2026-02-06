@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Organization } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
@@ -8,6 +9,7 @@ import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { OrganizationActionsType, OrganizationFilters } from '../types';
@@ -27,6 +29,7 @@ const CollectionLoader = memo(
     onActions: (item: Organization, type: OrganizationActionsType) => void;
     onClearFilters: () => void;
   }) => {
+    const { fromMobileScreen } = useScreen();
     const columns = useColumns({ onActions });
     const {
       data: collection,
@@ -64,13 +67,22 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        <DataTable
-          isLoading={isLoading}
-          data={organizations}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading}
+            data={organizations}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            isLoading={isLoading}
+            emptyCollection={emptyState}
+            data={organizations}
+            onActions={onActions}
+          />
+        )}
         {!isLoading && (
           <Pagination
             page={filters.page}

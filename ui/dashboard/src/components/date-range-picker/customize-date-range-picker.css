@@ -11,7 +11,7 @@
 }
 
 .range__months--monthName {
-  @apply sm:hidden;
+  @apply sm:hidden typo-para-tiny uppercase text-gray-500;
 }
 
 .range__weekDay {
@@ -32,7 +32,7 @@
 }
 
 .range__days--day {
-  @apply relative sm:size-10;
+  @apply relative sm:size-10 min-h-[42px] sm:min-h-fit;
 }
 
 .range__days--number {

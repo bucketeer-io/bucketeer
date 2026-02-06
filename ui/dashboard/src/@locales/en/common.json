@@ -116,6 +116,7 @@
     "feature-flag": "Feature Flag",
     "feature-flag-description": "Get notified when someone adds or updates a feature flag",
     "goal": "Goal",
+    "goal-value": "{{value}} Goal",
     "goal-description": "Get notified when someone adds or updates a goal",
     "mau-count": "Monthly Active Users count",
     "mau-count-description": "Get notified the monthly active users count on the first day of every month",
