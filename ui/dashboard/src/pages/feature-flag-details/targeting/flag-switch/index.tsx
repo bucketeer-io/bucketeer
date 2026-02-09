@@ -49,7 +49,7 @@ const FlagSwitch = ({
         render={({ field }) => (
           <Form.Item className="w-fit py-0">
             <Form.Control>
-              <div className="flex items-center w-full gap-x-2 typo-para-medium text-gray-700">
+              <div className="flex flex-wrap items-center w-full gap-x-2 typo-para-medium text-gray-700">
                 <Trans
                   i18nKey={`form:targeting.flag-switch-${field.value ? 'on' : 'off'}`}
                   components={{

@@ -38,13 +38,14 @@ const DialogModal = ({
   }, []);
 
   return (
-    <div className="w-full px-3 sm:px-6">
+    <div className="w-full p-6">
       <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Overlay
             className={cn(
               'fixed inset-0 grid h-full w-full animate-fade z-50',
               'place-items-center overflow-y-auto bg-overlay',
+              'p-6',
               overlayCls
             )}
           >

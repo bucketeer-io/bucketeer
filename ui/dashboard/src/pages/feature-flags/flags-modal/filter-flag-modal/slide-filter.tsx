@@ -107,7 +107,7 @@ const FilterFlagSlide = ({
                           filterIndex
                         )
                       }
-                      className="w-full truncate py-2"
+                      className="w-full max-w-[235px] sm:max-w-full truncate py-2"
                       contentClassName={cn('w-[235px]', {
                         'pt-0 w-[300px]': isHaveSearchingDropdown,
                         'hidden-scroll': valueOptions?.length > 15

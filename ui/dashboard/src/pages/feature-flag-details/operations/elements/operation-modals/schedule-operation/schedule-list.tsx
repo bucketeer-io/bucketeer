@@ -137,102 +137,112 @@ const ScheduleList = ({
             <Form.Control>
               <div className="flex flex-col gap-y-4">
                 {scheduleData.map((item, index) => (
-                  <div
-                    className="flex w-full gap-x-4"
-                    key={item.scheduleOperationId}
-                  >
-                    <Form.Field
-                      name={`datetimeClausesList.${index}.actionType`}
-                      control={control}
-                      render={({ field }) => (
-                        <Form.Item className="py-0">
-                          <Form.Label required>{t('common:state')}</Form.Label>
-                          <Form.Control>
-                            <Dropdown
-                              value={field.value}
-                              options={stateOptions}
-                              onChange={field.onChange}
-                              className="w-[124px] uppercase"
-                              disabled={isDisabledField(item.wasPassed)}
-                              contentClassName="min-w-[124px]"
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                    <Form.Field
-                      name={`datetimeClausesList.${index}.time`}
-                      control={control}
-                      render={({ field }) => (
-                        <>
-                          <Form.Item className="py-0">
-                            <Form.Control>
-                              <div className="flex gap-x-4">
-                                <div>
-                                  <Form.Label required>
-                                    {t('feature-flags.start-date')}
-                                  </Form.Label>
-                                  <ReactDatePicker
-                                    dateFormat={'yyyy/MM/dd'}
-                                    selected={field.value ?? null}
-                                    showTimeSelect={false}
-                                    className={cn('w-[186px]', {
-                                      '!border !border-accent-yellow-500':
-                                        conflictWithRolloutIndexes.includes(
-                                          index
-                                        )
-                                    })}
-                                    disabled={isDisabledField(item.wasPassed)}
-                                    onChange={date => {
-                                      if (date) {
-                                        field.onChange(date, {
-                                          shouldValidate: true
-                                        });
-                                        trigger('datetimeClausesList');
-                                      }
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <Form.Label required>
-                                    {t('feature-flags.time')}
-                                  </Form.Label>
-                                  <ReactDatePicker
-                                    dateFormat={'HH:mm'}
-                                    timeFormat="HH:mm"
-                                    selected={field.value ?? null}
-                                    showTimeSelectOnly={true}
-                                    className={cn('w-[124px]', {
-                                      '!border !border-accent-yellow-500':
-                                        conflictWithRolloutIndexes.includes(
-                                          index
-                                        )
-                                    })}
-                                    disabled={isDisabledField(item.wasPassed)}
-                                    onChange={date => {
-                                      if (date) {
-                                        field.onChange(date, {
-                                          shouldValidate: true
-                                        });
-                                        trigger('datetimeClausesList');
-                                      }
-                                    }}
-                                    icon={
-                                      <Icon
-                                        icon={IconWatch}
-                                        className="flex-center"
+                  <div className="w-full flex items-center">
+                    <div
+                      className="w-full sm:w-fit gap-x-4"
+                      key={item.scheduleOperationId}
+                    >
+                      <div className="flex flex-wrap sm:flex-nowrap gap-4">
+                        <Form.Field
+                          name={`datetimeClausesList.${index}.actionType`}
+                          control={control}
+                          render={({ field }) => (
+                            <Form.Item className="py-0 w-full sm:w-fit">
+                              <Form.Label required>
+                                {t('common:state')}
+                              </Form.Label>
+                              <Form.Control>
+                                <Dropdown
+                                  value={field.value}
+                                  options={stateOptions}
+                                  onChange={field.onChange}
+                                  className="w-full sm:w-[124px] uppercase"
+                                  disabled={isDisabledField(item.wasPassed)}
+                                  contentClassName="min-w-[124px]"
+                                />
+                              </Form.Control>
+                              <Form.Message />
+                            </Form.Item>
+                          )}
+                        />
+                        <Form.Field
+                          name={`datetimeClausesList.${index}.time`}
+                          control={control}
+                          render={({ field }) => (
+                            <>
+                              <Form.Item className="py-0 w-full">
+                                <Form.Control>
+                                  <div className="flex gap-x-4">
+                                    <div>
+                                      <Form.Label required>
+                                        {t('feature-flags.start-date')}
+                                      </Form.Label>
+                                      <ReactDatePicker
+                                        dateFormat={'yyyy/MM/dd'}
+                                        selected={field.value ?? null}
+                                        showTimeSelect={false}
+                                        className={cn('w-[186px]', {
+                                          '!border !border-accent-yellow-500':
+                                            conflictWithRolloutIndexes.includes(
+                                              index
+                                            )
+                                        })}
+                                        disabled={isDisabledField(
+                                          item.wasPassed
+                                        )}
+                                        onChange={date => {
+                                          if (date) {
+                                            field.onChange(date, {
+                                              shouldValidate: true
+                                            });
+                                            trigger('datetimeClausesList');
+                                          }
+                                        }}
                                       />
-                                    }
-                                  />
-                                </div>
-                              </div>
-                            </Form.Control>
-                            <Form.Message />
-                          </Form.Item>
-                        </>
-                      )}
-                    />
+                                    </div>
+                                    <div>
+                                      <Form.Label required>
+                                        {t('feature-flags.time')}
+                                      </Form.Label>
+                                      <ReactDatePicker
+                                        dateFormat={'HH:mm'}
+                                        timeFormat="HH:mm"
+                                        selected={field.value ?? null}
+                                        showTimeSelectOnly={true}
+                                        className={cn('w-[124px]', {
+                                          '!border !border-accent-yellow-500':
+                                            conflictWithRolloutIndexes.includes(
+                                              index
+                                            )
+                                        })}
+                                        disabled={isDisabledField(
+                                          item.wasPassed
+                                        )}
+                                        onChange={date => {
+                                          if (date) {
+                                            field.onChange(date, {
+                                              shouldValidate: true
+                                            });
+                                            trigger('datetimeClausesList');
+                                          }
+                                        }}
+                                        icon={
+                                          <Icon
+                                            icon={IconWatch}
+                                            className="flex-center"
+                                          />
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                </Form.Control>
+                                <Form.Message />
+                              </Form.Item>
+                            </>
+                          )}
+                        />
+                      </div>
+                    </div>
                     <Button
                       variant={'grey'}
                       size={'icon-sm'}
