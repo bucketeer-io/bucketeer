@@ -85,8 +85,14 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
     autoArchiveCheckCodeRefs: yup.boolean().required()
   });
 
-// Auto-archive days preset options
 const PRESET_DAYS = [7, 14, 30] as const;
+
+const isPresetDays = (days: number | undefined): boolean => {
+  return (
+    days !== undefined &&
+    (PRESET_DAYS as readonly number[]).includes(days)
+  );
+};
 
 interface DaysOption {
   label: string;
@@ -112,15 +118,19 @@ const EnvironmentCreateUpdateModal = ({
 
   const disabled = !envEditable || !isOrganizationAdmin;
 
-  const [isCustomDays, setIsCustomDays] = useState(false);
+
+  const [customDaysOverride, setCustomDaysOverride] = useState<boolean | null>(
+    null
+  );
   const inputDaysRef = useRef<HTMLInputElement>(null);
 
   const daysOptions: DaysOption[] = useMemo(
     () => [
-      { label: t('form:auto-archive-days-7'), value: 7 },
-      { label: t('form:auto-archive-days-14'), value: 14 },
-      { label: t('form:auto-archive-days-30'), value: 30 },
-      { label: t('form:custom'), value: 'custom' }
+      ...PRESET_DAYS.map(days => ({
+        label: t(`form:auto-archive-days-${days}`),
+        value: days as number
+      })),
+      { label: t('form:custom'), value: 'custom' as const }
     ],
     [t]
   );
@@ -145,6 +155,11 @@ const EnvironmentCreateUpdateModal = ({
   const environmentDetail = envCollections?.environment;
   const project = collection?.project;
 
+  const isCustomDays =
+    customDaysOverride ??
+    (environmentDetail?.autoArchiveUnusedDays !== undefined &&
+      !isPresetDays(environmentDetail.autoArchiveUnusedDays));
+
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
     values: {
@@ -154,13 +169,7 @@ const EnvironmentCreateUpdateModal = ({
       projectId: projectId || '',
       urlCode: environmentDetail?.urlCode || '',
       autoArchiveEnabled: environmentDetail?.autoArchiveEnabled || false,
-      autoArchiveUnusedDays:
-        environmentDetail?.autoArchiveUnusedDays &&
-        PRESET_DAYS.includes(
-          environmentDetail.autoArchiveUnusedDays as (typeof PRESET_DAYS)[number]
-        )
-          ? environmentDetail.autoArchiveUnusedDays
-          : 7,
+      autoArchiveUnusedDays: environmentDetail?.autoArchiveUnusedDays ?? 7,
       autoArchiveCheckCodeRefs:
         environmentDetail?.autoArchiveCheckCodeRefs || false
     },
@@ -215,11 +224,11 @@ const EnvironmentCreateUpdateModal = ({
   const handleSelectDays = useCallback(
     (value: string | number) => {
       if (value === 'custom') {
-        setIsCustomDays(true);
+        setCustomDaysOverride(true);
         setTimeout(() => inputDaysRef.current?.focus(), 100);
         return;
       }
-      setIsCustomDays(false);
+      setCustomDaysOverride(false);
       form.setValue('autoArchiveUnusedDays', value as number, {
         shouldDirty: true,
         shouldValidate: true
