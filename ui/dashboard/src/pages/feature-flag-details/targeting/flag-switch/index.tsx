@@ -42,12 +42,12 @@ const FlagSwitch = ({
   );
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between w-full p-2 sm:p-5 h-[104px] rounded-lg shadow-card-secondary">
+    <div className="flex flex-wrap items-center justify-between w-full p-2 sm:p-5 rounded-lg shadow-card-secondary">
       <Form.Field
         control={control}
         name="enabled"
         render={({ field }) => (
-          <Form.Item className="w-full py-0">
+          <Form.Item className="w-fit py-0">
             <Form.Control>
               <div className="flex items-center w-full gap-x-2 typo-para-medium text-gray-700">
                 <Trans
@@ -97,7 +97,7 @@ const FlagSwitch = ({
           name="offVariation"
           control={control}
           render={({ field }) => (
-            <Form.Item className="w-full">
+            <Form.Item className="w-fit">
               <Form.Control>
                 <Dropdown
                   value={field.value}

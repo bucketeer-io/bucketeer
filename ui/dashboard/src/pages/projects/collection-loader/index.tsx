@@ -1,13 +1,17 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { SortingState } from '@tanstack/react-table';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Project } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { useFetchMembers } from 'pages/members/collection-loader/use-fetch-members';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import TableListContent from 'elements/table-list-content';
+import { CardCollection } from '../collection-layout/card-collection';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { ProjectFilters } from '../types';
@@ -29,7 +33,24 @@ const CollectionLoader = memo(
     onActionHandler: (value: Project) => void;
     onClearFilters: () => void;
   }) => {
-    const columns = useColumns({ organizationId, onActionHandler });
+    const { consoleAccount } = useAuth();
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const { data: accountCollection } = useFetchMembers({
+      organizationId: currentEnvironment.organizationId,
+      pageSize: 0
+    });
+
+    const accounts = useMemo(
+      () => accountCollection?.accounts || [],
+      [accountCollection]
+    );
+    const columns = useColumns({
+      organizationId,
+      accounts,
+      currentEnvironment,
+      onActionHandler
+    });
+    const { fromMobileScreen } = useScreen();
     const {
       data: collection,
       isLoading,
@@ -66,13 +87,25 @@ const CollectionLoader = memo(
       <PageLayout.ErrorState onRetry={refetch} />
     ) : (
       <TableListContent>
-        <DataTable
-          isLoading={isLoading}
-          data={projects}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
-        />
+        {fromMobileScreen ? (
+          <DataTable
+            isLoading={isLoading}
+            data={projects}
+            columns={columns}
+            onSortingChange={onSortingChangeHandler}
+            emptyCollection={emptyState}
+          />
+        ) : (
+          <CardCollection
+            isLoading={isLoading}
+            accounts={accounts}
+            currentEnvironment={currentEnvironment}
+            emptyCollection={emptyState}
+            organizationId={organizationId}
+            data={projects}
+            onActions={onActionHandler}
+          />
+        )}
         {!isLoading && (
           <Pagination
             page={filters.page}

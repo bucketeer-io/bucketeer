@@ -207,7 +207,6 @@ export const EvaluationChart = forwardRef(
           if (dataset?.value === value)
             datasets[index].hidden = !datasets[index].hidden;
         });
-
         chart.update();
         setDataSets(
           datasets.map(dataset => ({

@@ -1,15 +1,13 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { Project } from '@types';
+import { Account, Environment, Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
-import { useFetchMembers } from 'pages/members/collection-loader/use-fetch-members';
 import { AvatarImage } from 'components/avatar';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
@@ -17,25 +15,17 @@ import NameWithTooltip from 'elements/name-with-tooltip';
 
 export const useColumns = ({
   organizationId,
+  accounts,
+  currentEnvironment,
   onActionHandler
 }: {
   organizationId?: string;
+  accounts: Account[];
+  currentEnvironment: Environment;
   onActionHandler: (value: Project) => void;
 }): ColumnDef<Project>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { data: accountCollection } = useFetchMembers({
-    organizationId: currentEnvironment.organizationId,
-    pageSize: 0
-  });
-
-  const accounts = useMemo(
-    () => accountCollection?.accounts || [],
-    [accountCollection]
-  );
 
   const handleGetCurrentAccount = useCallback(
     (email: string) => {
@@ -69,7 +59,7 @@ export const useColumns = ({
                   id={id}
                   name={name}
                   maxLines={1}
-                  className="min-w-[300px]"
+                  className="min-w-[230px]"
                 />
               </Link>
             }

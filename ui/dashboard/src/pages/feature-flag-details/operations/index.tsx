@@ -327,7 +327,7 @@ const Operations = ({
   return (
     <div className="flex flex-col w-full gap-y-4">
       <div className="flex flex-wrap flex-col md:flex-row items-start md:items-center justify-between w-full gap-3 md:gap-6 px-3 sm:px-6">
-        <p className="flex flex-1 typo-head-bold-medium sm:typo-head-bold-big text-gray-800 xl:whitespace-nowrap">
+        <p className="flex flex-1 typo-head-bold-medium sm:typo-head-bold-big text-gray-800 sm:text-nowrap lg:text-wrap xl:whitespace-nowrap">
           {t('table:feature-flags:operations-desc')}
         </p>
         <Filter
@@ -337,7 +337,7 @@ const Operations = ({
               onOperationActions={onOperationActions}
             />
           }
-          className="justify-end w-fit px-0"
+          className="justify-end w-fit px-0 sm:px-0 lg:px-6"
           link={DOCUMENTATION_LINKS.FLAG_OPERATION}
         />
       </div>

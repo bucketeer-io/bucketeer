@@ -50,7 +50,7 @@ const DialogModal = ({
           >
             <Dialog.Content
               className={cn(
-                'relative mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
+                'relative w-full mx-4 my-8 animate-zoom rounded-lg bg-gray-50',
                 className
               )}
               onEscapeKeyDown={
