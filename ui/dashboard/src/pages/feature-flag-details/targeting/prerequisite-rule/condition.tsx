@@ -124,7 +124,7 @@ const ConditionForm = forwardRef(
                   </Form.Item>
                 )}
               />
-              <div className="flex-center size-fit px-3 py-1 sm:py-3.5 mt-0 sm:mt-6 rounded bg-gray-100 typo-para-small sm:typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
+              <div className="flex-center size-fit px-3 py-1 sm:py-3.5 mt-0 md:mt-6 rounded bg-gray-100 typo-para-small sm:typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
                 <Trans
                   i18nKey={'form:feature-flags.receiving-state'}
                   values={{

@@ -37,7 +37,6 @@ const EvaluationTable = ({
     },
     [feature]
   );
-
   return (
     <div className="flex flex-col gap-y-6 w-full">
       <div className="flex items-center w-full gap-x-6">
@@ -86,7 +85,7 @@ const EvaluationTable = ({
                   content={t('default-value-tooltip')}
                   trigger={
                     <div className="flex items-center gap-x-2">
-                      <p className="typo-para-small text-gray-700">
+                      <p className="line-clamp-2 typo-para-small text-gray-700">
                         {getVariationLabel(item)}
                       </p>
                       <Icon icon={IconInfo} size={'xs'} color="gray-500" />
@@ -95,7 +94,7 @@ const EvaluationTable = ({
                   className="max-w-[300px]"
                 />
               ) : (
-                <p className="typo-para-small text-gray-700">
+                <p className="line-clamp-2 typo-para-small text-gray-700">
                   {getVariationLabel(item)}
                 </p>
               )}

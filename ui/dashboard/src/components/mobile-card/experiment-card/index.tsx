@@ -1,3 +1,4 @@
+import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
   IconEditOutlined,
@@ -139,8 +140,11 @@ export const ExperimentCard: React.FC<ExperimentCardProps> = ({
               className="mt-2 flex items-center gap-2"
               onClick={() => onActions(data, 'GOALS-CONNECTION')}
             >
-              <Icon icon={IconGoal} size="sm" /> {data.goals.length}
-              {t('common:goal')}
+              <Icon icon={IconGoal} size="sm" />
+              <Trans
+                i18nKey={'common:source-type.goal-value'}
+                values={{ value: data.goals.length }}
+              />
             </div>
           </div>
 

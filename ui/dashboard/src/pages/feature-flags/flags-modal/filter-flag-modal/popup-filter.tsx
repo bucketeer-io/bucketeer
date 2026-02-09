@@ -43,7 +43,7 @@ const FilterFlagPopup = ({
   } = useFilterFlagLogic(filters, onSubmit);
   return (
     <DialogModal
-      className="w-full max-w-[750px]"
+      className="w-full max-w-[550px] lg:max-w-[750px]"
       title={t('filters')}
       isOpen={isOpen}
       onClose={onClose}
