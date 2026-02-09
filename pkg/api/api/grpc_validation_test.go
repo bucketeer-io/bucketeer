@@ -822,6 +822,60 @@ func TestGrpcValidateEvaluationEventAllowsEmptyVariationIdForAllProtoErrorTypes(
 	}
 }
 
+func TestIsEvaluationEventErrorReason(t *testing.T) {
+	t.Parallel()
+	assert.False(t, isEvaluationEventErrorReason(nil), "nil reason (e.g. from old SDKs) must return false")
+	assert.False(t, isEvaluationEventErrorReason(&feature.Reason{Type: feature.Reason_DEFAULT}))
+	assert.False(t, isEvaluationEventErrorReason(&feature.Reason{Type: feature.Reason_RULE}))
+	assert.True(t, isEvaluationEventErrorReason(&feature.Reason{Type: feature.Reason_CLIENT}))
+	assert.True(t, isEvaluationEventErrorReason(&feature.Reason{Type: feature.Reason_ERROR_FLAG_NOT_FOUND}))
+	assert.True(t, isEvaluationEventErrorReason(&feature.Reason{Type: feature.Reason_ERROR_CACHE_NOT_FOUND}))
+}
+
+func TestEventEvaluationValidatorStoresLastUnmarshaledEvent(t *testing.T) {
+	t.Parallel()
+	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+		Timestamp:   time.Now().Unix(),
+		FeatureId:   "feature-id",
+		VariationId: "",
+		User: &user.User{
+			Id: "user-id",
+		},
+		Reason: &feature.Reason{
+			Type: feature.Reason_ERROR_FLAG_NOT_FOUND,
+		},
+		Tag:        "tag1",
+		SdkVersion: "1.0.0",
+		SourceId:   eventproto.SourceId_GO_SERVER,
+	})
+	if err != nil {
+		t.Fatalf("could not serialize evaluation event: %v", err)
+	}
+	event := &eventproto.Event{
+		Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
+		Event: &any.Any{
+			TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
+			Value:   bEvaluationEvent,
+		},
+	}
+	logger, _ := log.NewLogger()
+	v := &eventEvaluationValidator{
+		event:                     event,
+		logger:                    logger,
+		oldestTimestampDuration:   oldestTimestampDuration,
+		furthestTimestampDuration: furthestTimestampDuration,
+	}
+	code, err := v.validate(context.Background())
+	assert.Empty(t, code)
+	assert.NoError(t, err)
+	assert.NotNil(t, v.lastUnmarshaledEvent, "lastUnmarshaledEvent should be set after successful validation")
+	assert.Equal(t, "feature-id", v.lastUnmarshaledEvent.FeatureId)
+	assert.Equal(t, feature.Reason_ERROR_FLAG_NOT_FOUND, v.lastUnmarshaledEvent.Reason.Type)
+	assert.Equal(t, "tag1", v.lastUnmarshaledEvent.Tag)
+	assert.Equal(t, "1.0.0", v.lastUnmarshaledEvent.SdkVersion)
+	assert.Equal(t, eventproto.SourceId_GO_SERVER, v.lastUnmarshaledEvent.SourceId)
+}
+
 func TestGrpcValidateMetrics(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
