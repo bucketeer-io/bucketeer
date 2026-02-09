@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
@@ -372,6 +373,201 @@ func TestCacheUserAttributes(t *testing.T) {
 					assert.Equal(t, expectedSorted, actualSorted, "Values mismatch for key %s", key)
 				}
 			}
+		})
+	}
+}
+
+func TestIsErrorReason(t *testing.T) {
+	tests := []struct {
+		name       string
+		reason     *featureproto.Reason
+		expectTrue bool
+	}{
+		{name: "nil reason", reason: nil, expectTrue: false},
+		{
+			name:       "Reason_CLIENT (deprecated)",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_NO_EVALUATIONS",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_NO_EVALUATIONS},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_FLAG_NOT_FOUND",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_FLAG_NOT_FOUND},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_WRONG_TYPE",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_WRONG_TYPE},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_USER_ID_NOT_SPECIFIED",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_USER_ID_NOT_SPECIFIED},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_EXCEPTION",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_EXCEPTION},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_ERROR_CACHE_NOT_FOUND",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_ERROR_CACHE_NOT_FOUND},
+			expectTrue: true,
+		},
+		{
+			name:       "Reason_TARGET",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_TARGET},
+			expectTrue: false,
+		},
+		{
+			name:       "Reason_RULE",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_RULE},
+			expectTrue: false,
+		},
+		{
+			name:       "Reason_DEFAULT",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+			expectTrue: false,
+		},
+		{
+			name:       "Reason_OFF_VARIATION",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_OFF_VARIATION},
+			expectTrue: false,
+		},
+		{
+			name:       "Reason_PREREQUISITE",
+			reason:     &featureproto.Reason{Type: featureproto.Reason_PREREQUISITE},
+			expectTrue: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isErrorReason(tt.reason)
+			assert.Equal(t, tt.expectTrue, got, "isErrorReason must stay in sync with grpc_validation.go")
+		})
+	}
+}
+
+func TestGetVariationID(t *testing.T) {
+	tests := []struct {
+		name        string
+		reason      *featureproto.Reason
+		vID         string
+		expectedVID string
+		expectErr   bool
+	}{
+		{
+			name:      "nil reason returns error",
+			reason:    nil,
+			vID:       "variation-1",
+			expectErr: true,
+		},
+		{
+			name:        "Reason_CLIENT returns default (deprecated)",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+			vID:         "variation-1",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_NO_EVALUATIONS returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_NO_EVALUATIONS},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_FLAG_NOT_FOUND returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_FLAG_NOT_FOUND},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_WRONG_TYPE returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_WRONG_TYPE},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_USER_ID_NOT_SPECIFIED returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_USER_ID_NOT_SPECIFIED},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_EXCEPTION returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_EXCEPTION},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_ERROR_CACHE_NOT_FOUND returns default",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_CACHE_NOT_FOUND},
+			vID:         "",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "error reason with non-empty vID still returns default (overrides client value)",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_ERROR_FLAG_NOT_FOUND},
+			vID:         "variation-A",
+			expectedVID: defaultVariationID,
+		},
+		{
+			name:        "Reason_TARGET returns actual variation id",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_TARGET},
+			vID:         "variation-1",
+			expectedVID: "variation-1",
+		},
+		{
+			name:        "Reason_RULE returns actual variation id",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_RULE},
+			vID:         "variation-2",
+			expectedVID: "variation-2",
+		},
+		{
+			name:        "Reason_DEFAULT returns actual variation id",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+			vID:         "variation-3",
+			expectedVID: "variation-3",
+		},
+		{
+			name:        "Reason_OFF_VARIATION returns actual variation id",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_OFF_VARIATION},
+			vID:         "variation-4",
+			expectedVID: "variation-4",
+		},
+		{
+			name:        "Reason_PREREQUISITE returns actual variation id",
+			reason:      &featureproto.Reason{Type: featureproto.Reason_PREREQUISITE},
+			vID:         "variation-5",
+			expectedVID: "variation-5",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getVariationID(tt.reason, tt.vID)
+			if tt.expectErr {
+				assert.Error(t, err)
+				assert.Equal(t, ErrReasonNil, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedVID, got, "getVariationID should return expected variation ID for default value counter")
 		})
 	}
 }
