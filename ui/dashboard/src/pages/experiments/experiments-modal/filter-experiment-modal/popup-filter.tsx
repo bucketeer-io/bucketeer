@@ -44,7 +44,7 @@ const FilterExperimentPopup = ({
 
   return (
     <DialogModal
-      className="w-[750px]"
+      className="max-w-[550px] lg:max-w-[750px]"
       title={t('filters')}
       isOpen={isOpen}
       onClose={onClose}

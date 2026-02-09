@@ -2,29 +2,34 @@ import { FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
-import { MembersFilters } from 'pages/members/types';
+import { NotificationFilters } from 'pages/notifications/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
-import useFilterMemberLogic from './use-filter-member-logic';
+import useFilterAPIKeyLogic from './use-filter-push-logic';
 
 export type FilterProps = {
-  onSubmit: (v: Partial<MembersFilters>) => void;
+  onSubmit: (v: Partial<NotificationFilters>) => void;
   isOpen: boolean;
   onClose: () => void;
   onClearFilters: () => void;
-  filters?: Partial<MembersFilters>;
+  filters?: Partial<NotificationFilters>;
 };
 
-const FilterMemberPopup = ({
-  isOpen,
-  filters,
+export interface Option {
+  value: string;
+  label: string;
+}
+
+const FilterNotificationSlide = ({
   onSubmit,
+  isOpen,
   onClose,
-  onClearFilters
+  onClearFilters,
+  filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
   const {
@@ -35,13 +40,13 @@ const FilterMemberPopup = ({
     handleChangeFilterValue,
     isDisabledAddButton,
     isDisabledSubmitButton,
+    environmentEnabledFilterOptions,
     onConfirmHandler,
-    handleGetLabelFilterValue,
-    isLoadingTeams
-  } = useFilterMemberLogic(onSubmit, filters);
+    handleGetLabelFilterValue
+  } = useFilterAPIKeyLogic(onSubmit, filters);
   return (
     <DialogModal
-      className="max-w-[550px] lg:max-w-[750px]"
+      className="w-[750px]"
       title={t('filters')}
       isOpen={isOpen}
       onClose={onClose}
@@ -49,12 +54,13 @@ const FilterMemberPopup = ({
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
         {selectedFilters.map((filterOption, filterIndex) => {
           const { label, value: filterType } = filterOption;
-          const isTeamsFilter = filterType === FilterTypes.TEAMS;
+          const isEnvironmentFilter =
+            filterType === FilterTypes.ENVIRONMENT_IDs;
           const valueOptions = getValueOptions(filterOption);
           return (
             <div
-              key={filterIndex}
               className="flex items-center w-full h-12 gap-x-4"
+              key={filterIndex}
             >
               <div
                 className={cn(
@@ -68,48 +74,50 @@ const FilterMemberPopup = ({
               </div>
               <Divider vertical={true} className="border-primary-500" />
               <Dropdown
-                placeholder={t(`select-filter`)}
-                labelCustom={label}
                 options={remainingFilterOptions as DropdownOption[]}
+                labelCustom={label}
                 value={filterType}
                 onChange={value => {
-                  const selected = remainingFilterOptions.find(
+                  const selected = environmentEnabledFilterOptions.find(
                     item => item.value === value
                   );
-                  if (selected) {
-                    selectedFilters[filterIndex] = {
-                      ...selected,
-                      filterValue: value === FilterTypes.TEAMS ? [] : ''
-                    };
-                    setSelectedFilters([...selectedFilters]);
-                  }
+                  const filterValue =
+                    selected?.value === FilterTypes.ENVIRONMENT_IDs ? [] : '';
+                  selectedFilters[filterIndex] = {
+                    ...selected!,
+                    filterValue
+                  };
+                  setSelectedFilters([...selectedFilters]);
                 }}
+                placeholder={t(`select-filter`)}
+                className="w-full truncate"
+                contentClassName="w-[270px]"
               />
 
               <p className="typo-para-medium text-gray-600">is</p>
               <Dropdown
+                isSearchable={isEnvironmentFilter}
+                disabled={!filterType}
                 placeholder={t(`select-value`)}
                 labelCustom={handleGetLabelFilterValue(filterOption)}
-                disabled={(isTeamsFilter && isLoadingTeams) || !filterType}
-                loading={isTeamsFilter && isLoadingTeams}
-                multiselect={isTeamsFilter}
-                isSearchable={isTeamsFilter}
+                className="w-full truncate"
+                wrapTriggerStyle="truncate"
+                options={valueOptions as DropdownOption[]}
+                multiselect={isEnvironmentFilter}
                 value={
-                  isTeamsFilter && Array.isArray(filterOption?.filterValue)
+                  isEnvironmentFilter
                     ? (filterOption.filterValue as string[])
                     : (filterOption.filterValue as string)
                 }
-                options={valueOptions as DropdownOption[]}
-                onChange={value =>
-                  handleChangeFilterValue(value as string, filterIndex)
-                }
-                className="w-full truncate"
+                onChange={val => {
+                  handleChangeFilterValue(val as string | number, filterIndex);
+                }}
                 contentClassName={cn('w-[235px]', {
-                  'pt-0 w-[300px]': isTeamsFilter,
+                  'pt-0 w-[300px]': isEnvironmentFilter,
                   'hidden-scroll': valueOptions?.length > 15
                 })}
-                menuContentSide="bottom"
               />
+
               <Button
                 variant={'grey'}
                 className="px-0 w-fit"
@@ -134,7 +142,7 @@ const FilterMemberPopup = ({
               ...selectedFilters,
               {
                 label: '',
-                value: '',
+                value: undefined,
                 filterValue: ''
               }
             ]);
@@ -161,4 +169,4 @@ const FilterMemberPopup = ({
   );
 };
 
-export default FilterMemberPopup;
+export default FilterNotificationSlide;

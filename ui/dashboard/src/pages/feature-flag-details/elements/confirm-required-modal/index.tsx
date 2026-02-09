@@ -96,7 +96,7 @@ const ConfirmationRequiredModal = ({
 
   return (
     <DialogModal
-      className="w-full max-w-[350px] sm:max-w-[500px]"
+      className="max-w-[500px]"
       title={t('table:feature-flags.confirm-required')}
       isOpen={isOpen}
       onClose={onClose}

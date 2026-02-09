@@ -73,3 +73,6 @@
 .react-datepicker__day--disabled {
   @apply text-gray-500;
 }
+.react-datepicker__view-calendar-icon input{
+  @apply w-full
+}
