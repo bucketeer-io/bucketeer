@@ -35,7 +35,7 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, cmd)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
@@ -68,7 +68,7 @@ func TestUpdateFeatureFlagDescriptionTriggerNoCommand(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
 		req.Id,
@@ -120,7 +120,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
@@ -155,7 +155,7 @@ func TestResetFlagUpdateTrigger(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
 		req.Id,
@@ -183,7 +183,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
@@ -216,7 +216,7 @@ func TestListFlagTriggers(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag triggers
 	trigger1, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
@@ -278,11 +278,11 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, command)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
 	// Create Enable flag triggers
 	enableTrigger, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
-		command.Id,
+		req.Id,
 		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	))
@@ -298,7 +298,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status code: %s", resp.Status)
 	}
-	enabledFeature := getFeature(t, command.Id, client)
+	enabledFeature := getFeature(t, req.Id, client)
 	if enabledFeature.Enabled != true {
 		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
 	}
@@ -314,7 +314,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	}
 	// Create Disable flag triggers
 	disableTrigger, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
-		command.Id,
+		req.Id,
 		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_OFF,
 	))
@@ -330,7 +330,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status code: %s", resp.Status)
 	}
-	disabledFeature := getFeature(t, command.Id, client)
+	disabledFeature := getFeature(t, req.Id, client)
 	if disabledFeature.Enabled != false {
 		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
 	}
