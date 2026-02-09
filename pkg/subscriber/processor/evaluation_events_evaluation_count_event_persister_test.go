@@ -2,6 +2,7 @@ package processor
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -455,6 +456,25 @@ func TestIsErrorReason(t *testing.T) {
 			got := isErrorReason(tt.reason)
 			assert.Equal(t, tt.expectTrue, got, "isErrorReason must stay in sync with grpc_validation.go")
 		})
+	}
+}
+
+// TestIsErrorReasonCoversAllProtoErrorTypes fails when a new error reason type is added to the proto
+// (CLIENT or ERROR_* naming) but isErrorReason in the persister hasn't been updated.
+// This forces us to update isErrorReason and grpc_validation.go when adding new error types.
+func TestIsErrorReasonCoversAllProtoErrorTypes(t *testing.T) {
+	for value, name := range featureproto.Reason_Type_name {
+		isErrorType := name == "CLIENT" || strings.HasPrefix(name, "ERROR_")
+		if !isErrorType {
+			continue
+		}
+		reasonType := featureproto.Reason_Type(value)
+		reason := &featureproto.Reason{Type: reasonType}
+		assert.True(t, isErrorReason(reason),
+			"Reason %s (value=%d) is an error type per proto naming but isErrorReason returns false. "+
+				"Update isErrorReason in evaluation_events_evaluation_count_event_persister.go and "+
+				"isErrorReason in grpc_validation.go to include this type.",
+			name, value)
 	}
 }
 

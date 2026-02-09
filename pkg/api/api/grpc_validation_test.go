@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -772,6 +773,52 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
+	}
+}
+
+// TestGrpcValidateEvaluationEventAllowsEmptyVariationIdForAllProtoErrorTypes fails when a new error
+// reason type is added to the proto (CLIENT or ERROR_* naming) but the grpc_validation.go's isErrorReason
+// logic hasn't been updated. This forces us to update the validation when adding new error types.
+func TestGrpcValidateEvaluationEventAllowsEmptyVariationIdForAllProtoErrorTypes(t *testing.T) {
+	t.Parallel()
+	for value, name := range feature.Reason_Type_name {
+		isErrorType := name == "CLIENT" || strings.HasPrefix(name, "ERROR_")
+		if !isErrorType {
+			continue
+		}
+		reasonType := feature.Reason_Type(value)
+		bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+			Timestamp:   time.Now().Unix(),
+			FeatureId:   "feature-id",
+			VariationId: "",
+			User: &user.User{
+				Id: "user-id",
+			},
+			Reason: &feature.Reason{
+				Type: reasonType,
+			},
+		})
+		if err != nil {
+			t.Fatalf("could not serialize evaluation event: %v", err)
+		}
+		event := &eventproto.Event{
+			Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
+			Event: &any.Any{
+				TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
+				Value:   bEvaluationEvent,
+			},
+		}
+		logger, _ := log.NewLogger()
+		v := &eventEvaluationValidator{
+			event:                     event,
+			logger:                    logger,
+			oldestTimestampDuration:   oldestTimestampDuration,
+			furthestTimestampDuration: furthestTimestampDuration,
+		}
+		code, err := v.validate(context.Background())
+		assert.Empty(t, code, "Reason %s (value=%d): validation should pass for error types with empty variation_id. "+
+			"Update isErrorReason in grpc_validation.go to include this type.", name, value)
+		assert.NoError(t, err)
 	}
 }
 
