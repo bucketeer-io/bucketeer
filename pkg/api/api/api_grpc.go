@@ -1412,6 +1412,20 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			evaluationMessages = append(evaluationMessages, event)
+			// Report evaluation events with error reasons for monitoring.
+			if evValidator, ok := validator.(*eventEvaluationValidator); ok &&
+				evValidator.lastUnmarshaledEvent != nil &&
+				isEvaluationEventErrorReason(evValidator.lastUnmarshaledEvent.Reason) {
+				ev := evValidator.lastUnmarshaledEvent
+				evaluationEventErrorReasonCounter.WithLabelValues(
+					envAPIKey.ProjectId,
+					envAPIKey.Environment.UrlCode,
+					ev.Tag,
+					ev.Reason.Type.String(),
+					ev.SdkVersion,
+					ev.SourceId.String(),
+				).Inc()
+			}
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {

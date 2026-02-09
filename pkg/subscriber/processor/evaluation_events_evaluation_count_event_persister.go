@@ -247,11 +247,33 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 	return envEvents
 }
 
+// isErrorReason returns true if the reason indicates the user received the default value
+// due to an error (e.g., flag not found, cache miss). These should be counted toward
+// the default variation. Must stay in sync with grpc_validation.go's isErrorReason.
+func isErrorReason(reason *featureproto.Reason) bool {
+	if reason == nil {
+		return false
+	}
+	switch reason.Type {
+	case featureproto.Reason_CLIENT, // deprecated, replaced by specific error types
+		featureproto.Reason_ERROR_NO_EVALUATIONS,
+		featureproto.Reason_ERROR_FLAG_NOT_FOUND,
+		featureproto.Reason_ERROR_WRONG_TYPE,
+		featureproto.Reason_ERROR_USER_ID_NOT_SPECIFIED,
+		featureproto.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED,
+		featureproto.Reason_ERROR_EXCEPTION,
+		featureproto.Reason_ERROR_CACHE_NOT_FOUND:
+		return true
+	default:
+		return false
+	}
+}
+
 func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	if reason == nil {
 		return "", ErrReasonNil
 	}
-	if reason.Type == featureproto.Reason_CLIENT {
+	if isErrorReason(reason) {
 		return defaultVariationID, nil
 	}
 	return vID, nil
