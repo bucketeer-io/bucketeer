@@ -89,8 +89,7 @@ const PRESET_DAYS = [7, 14, 30] as const;
 
 const isPresetDays = (days: number | undefined): boolean => {
   return (
-    days !== undefined &&
-    (PRESET_DAYS as readonly number[]).includes(days)
+    days !== undefined && (PRESET_DAYS as readonly number[]).includes(days)
   );
 };
 
@@ -117,7 +116,6 @@ const EnvironmentCreateUpdateModal = ({
   );
 
   const disabled = !envEditable || !isOrganizationAdmin;
-
 
   const [customDaysOverride, setCustomDaysOverride] = useState<boolean | null>(
     null
