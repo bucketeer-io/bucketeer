@@ -23,7 +23,7 @@ const PageDetailsHeader = ({
   return (
     <header className="grid pt-7 px-3 sm:px-6">
       <div className="flex items-start justify-between gap-x-2">
-        <div className="flex flex-1 flex-wrap items-center gap-4">
+        <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-4">
           <button
             className={cn(
               'size-6 min-w-6 flex-center rounded hover:shadow-border-gray-500',
@@ -35,7 +35,7 @@ const PageDetailsHeader = ({
           </button>
           <div className="flex flex-1 items-center justify-between gap-x-2">
             {title && (
-              <h1 className="text-gray-900 flex-1 typo-head-bold-huge truncate -mt-1.5">
+              <h1 className="text-gray-900 flex-1 typo-head-bold-huge -mt-1.5">
                 {title}
               </h1>
             )}
