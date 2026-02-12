@@ -28,7 +28,6 @@ import (
 const (
 	maxPageSizePerRequest   = 100
 	maxSegmentUsersDataSize = 2000000 // 2MB
-	totalVariationWeight    = int32(100000)
 	// Scheduled flag change limits
 	maxSchedulesPerFlag    = 50
 	maxChangesPerSchedule  = 50
