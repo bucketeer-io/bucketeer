@@ -47,7 +47,6 @@ yearmonth,project_name,environment_name,sdk,mau,request_count
 graph TD
     UI[Dashboard UI] -->|GetInsightsXxx| BK[InsightsService]
     BK -->|Get: latency,<br>requests,<br>evaluations,<br>error rates| PROM[(Prometheus)]
-    %% BK --> REDIS[(Redis)]
     BK -->|Get: MAU,<br>monthly requests|RDB[(RDB<br>monthly_summary)]
 
     PROM-.->|batch:<br>monthly requests|RDB
@@ -121,11 +120,11 @@ See https://redis.io/topics/cluster-spec#keys-hash-tags.
 
 #### Processing Flow
 
-| Timing       | Process                         | Command                                              |
-| ------------ | ------------------------------- | ---------------------------------------------------- |
-| Realtime     | Add user ID to DAU              | `PFADD dau {user_id}`                                |
-| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE mau dau`                                    |
-| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT mau`<br>2. `UPSERT INTO monthly_summary` |
+| Timing       | Process                         | Command                                                                                       |
+| ------------ | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| Realtime     | Add user ID to DAU              | `PFADD {envId:sourceId:au}:d:yyyyMMdd {user_id}`                                             |
+| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId:sourceId:au}:m:yyyyMM {envId:sourceId:au}:d:yyyyMMdd`                        |
+| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId:sourceId:au}:m:yyyyMM`<br>2. `UPSERT INTO monthly_summary`                |
 
 
 ## Details
@@ -141,8 +140,8 @@ CREATE TABLE `monthly_summary` (
   `yearmonth` varchar(6) NOT NULL,       -- YYYYMM
   `mau` bigint NOT NULL DEFAULT 0,
   `request_count` bigint NOT NULL DEFAULT 0,
-  `created_at` bigint NOT NULL,
-  `updated_at` bigint NOT NULL,
+  `created_at` bigint NOT NULL,          -- Unix seconds (UTC)
+  `updated_at` bigint NOT NULL,          -- Unix seconds (UTC)
   PRIMARY KEY (`environment_id`, `yearmonth`, `source_id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_bin;
 ```
@@ -151,7 +150,7 @@ CREATE TABLE `monthly_summary` (
 
 ### Prometheus Metrics
 
-Use 1 existing metrics and add 3 new metrics.
+Use 1 existing metric and add 3 new metrics.
 
 | Metric        | Name                                         | Status   | Note                                                                                                                                      |
 | ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
