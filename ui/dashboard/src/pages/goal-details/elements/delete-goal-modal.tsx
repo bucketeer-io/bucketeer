@@ -27,7 +27,7 @@ const DeleteGoalModal = ({
 
   return (
     <DialogModal
-      className="max-w-[350px] sm:max-w-[500px]"
+      className="max-w-[500px]"
       title={t(`delete-goal`)}
       isOpen={isOpen}
       onClose={onClose}

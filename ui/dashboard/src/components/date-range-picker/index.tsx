@@ -264,7 +264,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
             handleSetRange();
             onCloseRangePicker();
           }}
-          className="w-fit lg:w-[820px] p-4 sm:p-0 rounded-lg overflow-y-auto"
+          className="!w-fit lg:w-[820px] p-4 sm:p-0 rounded-lg overflow-y-auto"
         >
           <ReactDateRangePickerComp
             {...props}
