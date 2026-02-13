@@ -68,7 +68,7 @@ const FilterMemberSlide = ({
                   </div>
                   <Divider vertical={true} className="border-primary-500" />
                 </div>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col min-w-0 w-full">
                   <Dropdown
                     placeholder={t(`select-filter`)}
                     labelCustom={label}
@@ -109,7 +109,7 @@ const FilterMemberSlide = ({
                           filterIndex
                         )
                       }
-                      className="w-full max-w-[235px] sm:max-w-full truncate py-2"
+                      className="w-full max-w-full truncate py-2"
                       contentClassName={cn('w-[235px]', {
                         'pt-0 w-[300px]': isHaveSearchingDropdown,
                         'hidden-scroll': valueOptions?.length > 15
