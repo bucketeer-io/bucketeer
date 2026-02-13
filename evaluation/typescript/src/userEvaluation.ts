@@ -27,6 +27,11 @@ function sortMapKeys(data: Record<string, string>): string[] {
   return keys;
 }
 
+// GenerateFeaturesID generates a hash ID for the server SDK to detect feature flag changes.
+// It uses FNV-1a 64-bit hash algorithm which is:
+// - Fast enough for SDK polling frequency
+// - 64-bit provides negligible collision risk for feature flag counts
+// - No cryptographic requirements for change detection
 function GenerateFeaturesID(features: Feature[]): string {
   // Sort features based on the 'id'
   features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
@@ -34,9 +39,9 @@ function GenerateFeaturesID(features: Feature[]): string {
   // Initialize FNV-1a 64-bit hash string
   let hashInput = '';
 
-  // Concatenate each feature's 'id' and 'version' into the hash input
+  // Concatenate each feature's 'id' and 'updatedAt' into the hash input
   features.forEach((feature) => {
-    hashInput += `${feature.getId()}:${feature.getVersion()}`;
+    hashInput += `${feature.getId()}:${feature.getUpdatedAt()}`;
   });
 
   // Generate the FNV-1a 64-bit hash and return it as a decimal string
@@ -44,6 +49,11 @@ function GenerateFeaturesID(features: Feature[]): string {
   return hash.dec();
 }
 
+// UserEvaluationsID generates a hash ID for the client SDK to detect evaluation changes.
+// It uses FNV-1a 64-bit hash algorithm which is:
+// - Fast enough for SDK polling frequency
+// - 64-bit provides negligible collision risk for feature flag counts
+// - No cryptographic requirements for change detection
 function UserEvaluationsID(
   userID: string,
   userMetadata: Record<string, string>, // equivalent to map[string]string in Go

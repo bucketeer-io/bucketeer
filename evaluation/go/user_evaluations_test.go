@@ -95,7 +95,72 @@ func TestSortMapKeys(t *testing.T) {
 	}
 }
 
+func TestUserEvaluationsID(t *testing.T) {
+	patterns := []struct {
+		desc         string
+		userID       string
+		userMetadata map[string]string
+		features     []*ftproto.Feature
+		expected     string
+	}{
+		{
+			desc:         "empty user ID, empty metadata, empty features",
+			userID:       "",
+			userMetadata: nil,
+			features:     nil,
+			expected:     "14695981039346656037",
+		},
+		{
+			desc:         "user ID only",
+			userID:       "user-1",
+			userMetadata: nil,
+			features:     nil,
+			expected:     "17891572797655370708",
+		},
+		{
+			desc:         "user ID with metadata",
+			userID:       "user-1",
+			userMetadata: map[string]string{"age": "25", "country": "jp"},
+			features:     nil,
+			expected:     "15857499200645826216",
+		},
+		{
+			desc:         "user ID with metadata and single feature",
+			userID:       "user-1",
+			userMetadata: map[string]string{"age": "25", "country": "jp"},
+			features: []*ftproto.Feature{
+				{
+					Id:        "feature-1",
+					UpdatedAt: 1000,
+				},
+			},
+			expected: "10450974209164395423",
+		},
+		{
+			desc:         "user ID with metadata and multiple features",
+			userID:       "user-1",
+			userMetadata: map[string]string{"age": "25", "country": "jp"},
+			features: []*ftproto.Feature{
+				{
+					Id:        "feature-1",
+					UpdatedAt: 1000,
+				},
+				{
+					Id:        "feature-2",
+					UpdatedAt: 2000,
+				},
+			},
+			expected: "7257619227440290900",
+		},
+	}
+	for _, p := range patterns {
+		actual := UserEvaluationsID(p.userID, p.userMetadata, p.features)
+		assert.Equal(t, p.expected, actual, p.desc)
+	}
+}
+
 func TestGenerateFeaturesID(t *testing.T) {
+	// Note: GenerateFeaturesID uses UpdatedAt (not Version) to generate the hash
 	patterns := []struct {
 		desc     string
 		input    []*ftproto.Feature
@@ -110,8 +175,8 @@ func TestGenerateFeaturesID(t *testing.T) {
 			desc: "success: single",
 			input: []*ftproto.Feature{
 				{
-					Id:      "id-1",
-					Version: 1,
+					Id:        "id-1",
+					UpdatedAt: 1,
 				},
 			},
 			expected: "5476413260388599211",
@@ -120,12 +185,12 @@ func TestGenerateFeaturesID(t *testing.T) {
 			desc: "success: multiple",
 			input: []*ftproto.Feature{
 				{
-					Id:      "id-1",
-					Version: 1,
+					Id:        "id-1",
+					UpdatedAt: 1,
 				},
 				{
-					Id:      "id-2",
-					Version: 2,
+					Id:        "id-2",
+					UpdatedAt: 2,
 				},
 			},
 			expected: "17283374094628184689",

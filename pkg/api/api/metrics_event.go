@@ -384,6 +384,19 @@ func (s *grpcGatewayService) saveInternalSdkError(event *eventproto.MetricsEvent
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
+	// Log the error message for debugging SDK internal errors
+	if ev.Labels != nil {
+		s.logger.Warn("SDK internal error received",
+			zap.String("projectID", projectID),
+			zap.String("environmentUrlCode", env),
+			zap.String("apiId", ev.ApiId.String()),
+			zap.String("sdkVersion", event.SdkVersion),
+			zap.String("sourceId", event.SourceId.String()),
+			zap.String("tag", ev.Labels["tag"]),
+			zap.String("errorMessage", ev.Labels["error_message"]),
+			zap.Any("labels", ev.Labels),
+		)
+	}
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 

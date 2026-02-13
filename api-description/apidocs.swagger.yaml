@@ -4520,6 +4520,7 @@ paths:
               - DOMAIN_EVENT_CODEREF
               - DOMAIN_EVENT_TEAM
               - DOMAIN_EVENT_DEMO_ORGANIZATION
+              - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -5094,6 +5095,7 @@ definitions:
       - DOMAIN_EVENT_CODEREF
       - DOMAIN_EVENT_TEAM
       - DOMAIN_EVENT_DEMO_ORGANIZATION
+      - DOMAIN_EVENT_SCHEDULED_FLAG_CHANGE
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -5625,9 +5627,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       tag:
         type: string
-    required:
-      - changeType
-      - tag
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -6842,6 +6841,7 @@ definitions:
       - TAG
       - CODEREF
       - TEAM
+      - SCHEDULED_FLAG_CHANGE
     default: FEATURE
   domainEventType:
     type: string
@@ -7036,7 +7036,15 @@ definitions:
       - TEAM_CREATED
       - TEAM_DELETED
       - TEAM_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CREATED
+      - SCHEDULED_FLAG_CHANGE_UPDATED
+      - SCHEDULED_FLAG_CHANGE_CANCELLED
+      - SCHEDULED_FLAG_CHANGE_EXECUTED
+      - SCHEDULED_FLAG_CHANGE_FAILED
+      - SCHEDULED_FLAG_CHANGE_SKIPPED
+      - SCHEDULED_FLAG_CHANGE_APPLIED_NOW
     default: UNKNOWN
+    title: '- SCHEDULED_FLAG_CHANGE_CREATED: Scheduled Flag Changes (2000-2010)'
   domainLocalizedMessage:
     type: object
     properties:
@@ -7754,9 +7762,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       prerequisite:
         $ref: '#/definitions/featurePrerequisite'
-    required:
-      - changeType
-      - prerequisite
   featureReason:
     type: object
     properties:
@@ -7819,9 +7824,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
-    required:
-      - changeType
-      - rule
   featureSegment:
     type: object
     properties:
@@ -7934,9 +7936,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
-    required:
-      - changeType
-      - target
   featureUserEvaluations:
     type: object
     properties:
@@ -7970,9 +7969,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
-    required:
-      - changeType
-      - variation
   gatewayGetEvaluationRequest:
     type: object
     properties:

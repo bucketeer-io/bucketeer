@@ -1436,6 +1436,9 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			Archived:  true,
 		},
 	}
+	// Calculate expected feature flags IDs dynamically using UpdatedAt
+	multiFeaturesID := evaluation.GenerateFeaturesID(multiFeatures[:3])
+	singleFeatureID := evaluation.GenerateFeaturesID(singleFeature)
 	patterns := []struct {
 		desc        string
 		setup       func(*grpcGatewayService)
@@ -1597,7 +1600,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				Features: []*featureproto.Feature{
 					multiFeatures[0],
 					multiFeatures[1],
@@ -1628,12 +1631,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            "",
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "12580091098247002273",
+				FeatureFlagsId:         multiFeaturesID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1666,7 +1669,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12580091098247002273",
+				FeatureFlagsId: multiFeaturesID,
 				Features: []*featureproto.Feature{
 					multiFeatures[0],
 					multiFeatures[1],
@@ -1702,7 +1705,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				RequestedAt:            timeNow.Unix(),
 				ArchivedFeatureFlagIds: make([]string, 0),
@@ -1729,12 +1732,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			},
 			input: &gwproto.GetFeatureFlagsRequest{
 				Tag:            tag,
-				FeatureFlagsId: "13164487566000689278",
+				FeatureFlagsId: singleFeatureID,
 				SourceId:       eventproto.SourceId_GO_SERVER,
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               []*featureproto.Feature{},
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1766,7 +1769,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               singleFeature,
 				ArchivedFeatureFlagIds: make([]string, 0),
 				RequestedAt:            timeNow.Unix(),
@@ -1799,7 +1802,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				SdkVersion:     "v0.0.1",
 			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         "13164487566000689278",
+				FeatureFlagsId:         singleFeatureID,
 				Features:               make([]*featureproto.Feature, 0),
 				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
 				RequestedAt:            timeNow.Unix(),
@@ -3804,6 +3807,23 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
 	}
+	bEvaluationEventWithErrorReason, err := proto.Marshal(&eventproto.EvaluationEvent{
+		Timestamp:   time.Now().Unix(),
+		FeatureId:   "feature-id-1",
+		VariationId: "", // empty for error reason
+		User: &userproto.User{
+			Id: "user-id-1",
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_ERROR_FLAG_NOT_FOUND,
+		},
+		Tag:        "tag1",
+		SdkVersion: "1.0.0",
+		SourceId:   eventproto.SourceId_GO_SERVER,
+	})
+	if err != nil {
+		t.Fatal("could not serialize evaluation event with error reason")
+	}
 	bInvalidEvent, err := proto.Marshal(&any.Any{})
 	if err != nil {
 		t.Fatal("could not serialize experiment event")
@@ -3937,6 +3957,41 @@ func TestGrcpRegisterEvents(t *testing.T) {
 						Event: &any.Any{
 							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.MetricsEvent",
 							Value:   bMetricsEvent,
+						},
+					},
+				},
+			},
+			expected:    &gwproto.RegisterEventsResponse{Errors: make(map[string]*gwproto.RegisterEventsResponse_Error)},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: evaluation event with error reason increments metric",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						ProjectId: "project-id",
+						Environment: &environmentproto.EnvironmentV2{
+							Id:      "ns0",
+							UrlCode: "env-url",
+						},
+						ApiKey: &accountproto.APIKey{
+							Id:       "api-key-id-0",
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.RegisterEventsRequest{
+				Events: []*eventproto.Event{
+					{
+						Id: newUUID(t),
+						Event: &any.Any{
+							TypeUrl: "github.com/bucketeer-io/bucketeer/v2/proto/event/client/bucketeer.event.client.EvaluationEvent",
+							Value:   bEvaluationEventWithErrorReason,
 						},
 					},
 				},
