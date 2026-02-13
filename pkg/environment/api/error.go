@@ -58,12 +58,6 @@ var (
 			"invalid project url code",
 			"ProjectUrlCode",
 		))
-	statusInvalidProjectCreatorEmail = api.NewGRPCStatus(
-		pkgErr.NewErrorInvalidArgNotMatchFormat(
-			pkgErr.EnvironmentPackageName,
-			"invalid project creator email",
-			"Email",
-		))
 	statusInvalidOrganizationCreatorEmail = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.EnvironmentPackageName,

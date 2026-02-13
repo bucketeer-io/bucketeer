@@ -21,12 +21,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
@@ -202,26 +202,12 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.CreateEnvironmentV2Request,
 ) (*environmentproto.CreateEnvironmentV2Response, error) {
-	if req.Command != nil {
-		if err := validateCreateEnvironmentV2Request(req); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := validateCreateEnvironmentV2RequestNoCommand(req); err != nil {
-			return nil, err
-		}
-	}
-
-	// Get project ID from request
-	var projectID string
-	if req.Command != nil {
-		projectID = req.Command.ProjectId
-	} else {
-		projectID = req.ProjectId
+	if err := validateCreateEnvironmentV2Request(req); err != nil {
+		return nil, err
 	}
 
 	// Validate the project and get the actual organization ID
-	orgID, err := s.getOrganizationID(ctx, projectID)
+	orgID, err := s.getOrganizationID(ctx, req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -233,41 +219,6 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		accountproto.AccountV2_Role_Organization_ADMIN,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	if req.Command == nil {
-		return s.createEnvironmentV2NoCommand(ctx, req, editor, orgID)
-	}
-
-	name := strings.TrimSpace(req.Command.Name)
-	newEnvironment, err := domain.NewEnvironmentV2(
-		name,
-		req.Command.UrlCode,
-		req.Command.Description,
-		req.Command.ProjectId,
-		orgID,
-		req.Command.RequireComment,
-		s.logger,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.createEnvironmentV2(ctx, req.Command, newEnvironment, editor); err != nil {
-		return nil, err
-	}
-	return &environmentproto.CreateEnvironmentV2Response{
-		Environment: newEnvironment.EnvironmentV2,
-	}, nil
-}
-
-func (s *EnvironmentService) createEnvironmentV2NoCommand(
-	ctx context.Context,
-	req *environmentproto.CreateEnvironmentV2Request,
-	editor *eventproto.Editor,
-	orgID string,
-) (*environmentproto.CreateEnvironmentV2Response, error) {
-	if err := validateCreateEnvironmentV2RequestNoCommand(req); err != nil {
 		return nil, err
 	}
 
@@ -331,25 +282,6 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 func validateCreateEnvironmentV2Request(
 	req *environmentproto.CreateEnvironmentV2Request,
 ) error {
-	name := strings.TrimSpace(req.Command.Name)
-	if name == "" {
-		return statusEnvironmentNameRequired.Err()
-	}
-	if len(name) > maxEnvironmentNameLength {
-		return statusInvalidEnvironmentName.Err()
-	}
-	if !environmentUrlCodeRegex.MatchString(req.Command.UrlCode) {
-		return statusInvalidEnvironmentUrlCode.Err()
-	}
-	if req.Command.ProjectId == "" {
-		return statusProjectIDRequired.Err()
-	}
-	return nil
-}
-
-func validateCreateEnvironmentV2RequestNoCommand(
-	req *environmentproto.CreateEnvironmentV2Request,
-) error {
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		return statusEnvironmentNameRequired.Err()
@@ -381,35 +313,6 @@ func (s *EnvironmentService) getOrganizationID(
 	return existingProject.OrganizationId, nil
 }
 
-func (s *EnvironmentService) createEnvironmentV2(
-	ctx context.Context,
-	cmd command.Command,
-	environment *domain.EnvironmentV2,
-	editor *eventproto.Editor,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			return err
-		}
-		return s.environmentStorage.CreateEnvironmentV2(contextWithTx, environment)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
-			return statusEnvironmentAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create environment",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
 func (s *EnvironmentService) UpdateEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentV2Request,
@@ -422,32 +325,12 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 	if err != nil {
 		return nil, err
 	}
-	commands := getUpdateEnvironmentV2Commands(req)
-
-	if len(commands) == 0 {
-		return s.updateEnvironmentV2NoCommand(ctx, req, editor)
-	}
-
-	if err := validateUpdateEnvironmentV2Request(req.Id, commands); err != nil {
-		return nil, err
-	}
-	if err := s.updateEnvironmentV2(ctx, req.Id, commands, editor); err != nil {
-		return nil, err
-	}
-	return &environmentproto.UpdateEnvironmentV2Response{}, nil
-}
-
-func (s *EnvironmentService) updateEnvironmentV2NoCommand(
-	ctx context.Context,
-	req *environmentproto.UpdateEnvironmentV2Request,
-	editor *eventproto.Editor,
-) (*environmentproto.UpdateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if err := validateUpdateEnvironmentV2RequestNoCommand(ctx, req); err != nil {
+	if err := validateUpdateEnvironmentV2Request(ctx, req); err != nil {
 		return nil, err
 	}
 
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -519,72 +402,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	return &environmentproto.UpdateEnvironmentV2Response{}, nil
 }
 
-func (s *EnvironmentService) updateEnvironmentV2(
-	ctx context.Context,
-	envId string,
-	commands []command.Command,
-	editor *eventproto.Editor,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, envId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
-		if err != nil {
-			return err
-		}
-		for _, c := range commands {
-			if err := handler.Handle(ctx, c); err != nil {
-				return err
-			}
-		}
-		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
-			return statusEnvironmentNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to update environment",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
-func getUpdateEnvironmentV2Commands(req *environmentproto.UpdateEnvironmentV2Request) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.RenameCommand != nil {
-		commands = append(commands, req.RenameCommand)
-	}
-	if req.ChangeDescriptionCommand != nil {
-		commands = append(commands, req.ChangeDescriptionCommand)
-	}
-	if req.ChangeRequireCommentCommand != nil {
-		commands = append(commands, req.ChangeRequireCommentCommand)
-	}
-	return commands
-}
-
-func validateUpdateEnvironmentV2Request(id string, commands []command.Command) error {
-	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
-	for _, cmd := range commands {
-		if c, ok := cmd.(*environmentproto.RenameEnvironmentV2Command); ok {
-			newName := strings.TrimSpace(c.Name)
-			if newName == "" {
-				return statusEnvironmentNameRequired.Err()
-			}
-			if len(newName) > maxEnvironmentNameLength {
-				return statusInvalidEnvironmentName.Err()
-			}
-		}
-	}
-	return nil
-}
-
-func validateUpdateEnvironmentV2RequestNoCommand(
+func validateUpdateEnvironmentV2Request(
 	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentV2Request,
 ) error {
@@ -624,21 +442,38 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 		req.Id,
 	)
 	if err != nil {
+		s.logger.Error("Failed to check organization role",
+			zap.Error(err),
+			zap.String("id", req.Id),
+		)
 		return nil, err
 	}
-	if err := validateArchiveEnvironmentV2Request(req); err != nil {
-		return nil, err
-	}
+
+	event := &eventproto.Event{}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
-		if err != nil {
+		prev := &domain.EnvironmentV2{}
+		if err := copier.Copy(prev, environment); err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
+		environment.SetArchived()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ENVIRONMENT,
+			environment.Id,
+			eventproto.Event_ENVIRONMENT_V2_ARCHIVED,
+			&eventproto.EnvironmentV2ArchivedEvent{
+				Id:        environment.Id,
+				Name:      environment.Name,
+				ProjectId: environment.ProjectId,
+			},
+			environment,
+			prev,
+		)
+		if err != nil {
 			return err
 		}
 		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
@@ -653,17 +488,17 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &environmentproto.ArchiveEnvironmentV2Response{}, nil
-}
-
-func validateArchiveEnvironmentV2Request(
-	req *environmentproto.ArchiveEnvironmentV2Request,
-) error {
-	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
-	if req.Command == nil {
-		return statusNoCommand.Err()
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish archive environment event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return nil
+	return &environmentproto.ArchiveEnvironmentV2Response{}, nil
 }
 
 func (s *EnvironmentService) UnarchiveEnvironmentV2(
@@ -676,21 +511,38 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 		req.Id,
 	)
 	if err != nil {
+		s.logger.Error("Failed to check organization role",
+			zap.Error(err),
+			zap.String("id", req.Id),
+		)
 		return nil, err
 	}
-	if err := validateUnarchiveEnvironmentV2Request(req); err != nil {
-		return nil, err
-	}
+
+	event := &eventproto.Event{}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
-		if err != nil {
+		prev := &domain.EnvironmentV2{}
+		if err := copier.Copy(prev, environment); err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
+		environment.SetUnarchived()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ENVIRONMENT,
+			environment.Id,
+			eventproto.Event_ENVIRONMENT_V2_UNARCHIVED,
+			&eventproto.EnvironmentV2UnarchivedEvent{
+				Id:        environment.Id,
+				Name:      environment.Name,
+				ProjectId: environment.ProjectId,
+			},
+			environment,
+			prev,
+		)
+		if err != nil {
 			return err
 		}
 		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
@@ -705,15 +557,15 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return &environmentproto.UnarchiveEnvironmentV2Response{}, nil
-}
-
-func validateUnarchiveEnvironmentV2Request(
-	req *environmentproto.UnarchiveEnvironmentV2Request,
-) error {
-	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
-	if req.Command == nil {
-		return statusNoCommand.Err()
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish unarchive environment event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
-	return nil
+	return &environmentproto.UnarchiveEnvironmentV2Response{}, nil
 }

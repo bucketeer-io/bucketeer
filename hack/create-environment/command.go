@@ -61,12 +61,10 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	defer client.Close()
 	req := &environmentproto.CreateEnvironmentV2Request{
-		Command: &environmentproto.CreateEnvironmentV2Command{
-			Name:        *c.name,
-			UrlCode:     *c.name,
-			Description: *c.description,
-			ProjectId:   *c.projectID,
-		},
+		Name:        *c.name,
+		UrlCode:     *c.name,
+		Description: *c.description,
+		ProjectId:   *c.projectID,
 	}
 	if _, err = client.CreateEnvironmentV2(ctx, req); err != nil {
 		logger.Error("Failed to create environment", zap.Error(err))
