@@ -402,7 +402,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 		}
 
 		// Cancel the schedule instead of hard delete (for audit trail)
-		sfc.Cancel(editor.Email, "Cancelled by user")
+		sfc.Cancel(editor.Email, domain.CancelReasonUserCancelled)
 		return s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
 	})
 

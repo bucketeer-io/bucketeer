@@ -41,7 +41,7 @@ func TestCreateScheduledFlagChange(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	// Create scheduled flag change
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -78,7 +78,7 @@ func TestGetScheduledFlagChange(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	// Create scheduled flag change
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -126,7 +126,7 @@ func TestUpdateScheduledFlagChange(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	// Create scheduled flag change
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -163,7 +163,7 @@ func TestDeleteScheduledFlagChange(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	// Create scheduled flag change
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -193,7 +193,7 @@ func TestListScheduledFlagChanges(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -202,7 +202,7 @@ func TestListScheduledFlagChanges(t *testing.T) {
 	createResp1 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
 		Enabled: wrapperspb.Bool(true),
 	})
-	time.Sleep(100 * time.Millisecond) // Ensure different created_at times
+	time.Sleep(1 * time.Second) // Ensure different created_at times
 	createResp2 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
 		Enabled: wrapperspb.Bool(false),
 	})
@@ -233,7 +233,7 @@ func TestListScheduledFlagChangesWithStatusFilter(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -273,7 +273,7 @@ func TestGetScheduledFlagChangeSummary(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -306,7 +306,7 @@ func TestCreateScheduledFlagChangeWithVariationChanges(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	// Get the feature to get variation IDs
 	feature := getFeature(t, featureID, client)
@@ -349,7 +349,7 @@ func TestCreateScheduledFlagChangeWithMultipleChanges(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -383,6 +383,9 @@ func TestCreateScheduledFlagChangeWithMultipleChanges(t *testing.T) {
 	assert.GreaterOrEqual(t, len(resp.ScheduledFlagChange.ChangeSummaries), 3)
 }
 
+// TestArchiveFeatureCancelsPendingScheduledChanges verifies that when a feature is archived,
+// all pending and conflicting scheduled changes for that feature are automatically cancelled.
+// This prevents orphaned schedules from attempting to execute on archived flags.
 func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -390,7 +393,7 @@ func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, client, newCreateFeatureReq(featureID))
+	createFeature(t, client, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -409,13 +412,14 @@ func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
 	getResp2 := getScheduledFlagChange(t, client, createResp2.ScheduledFlagChange.Id)
 	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, getResp2.ScheduledFlagChange.Status)
 
-	// Archive the feature
-	archiveReq := &featureproto.ArchiveFeatureRequest{
+	// Archive the feature using UpdateFeature
+	updateReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.ArchiveFeatureCommand{},
 		EnvironmentId: *environmentID,
+		Archived:      wrapperspb.Bool(true),
+		Comment:       "Archiving feature to test scheduled change cancellation",
 	}
-	_, err := client.ArchiveFeature(ctx, archiveReq)
+	_, err := client.UpdateFeature(ctx, updateReq)
 	require.NoError(t, err)
 
 	// Verify both scheduled changes are now CANCELLED
@@ -450,7 +454,7 @@ func TestScheduledFlagChangeAuditLogs(t *testing.T) {
 
 	// Create a feature first
 	featureID := newFeatureID(t)
-	createFeatureNoCmd(t, featureClient, newCreateFeatureReq(featureID))
+	createFeature(t, featureClient, newCreateFeatureReq(featureID))
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

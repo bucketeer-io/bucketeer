@@ -31,8 +31,8 @@ const (
 	// Scheduled flag change limits
 	maxSchedulesPerFlag    = 50
 	maxChangesPerSchedule  = 50
-	minScheduleTimeMinutes = 5   // 5 minutes
-	maxScheduleTimeDays    = 365 // 1 year
+	minScheduleTimeMinutes = 5
+	maxScheduleTimeDays    = 365
 )
 
 var featureIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")

@@ -1005,6 +1005,25 @@ func (s *FeatureService) UpdateFeature(
 			if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
 				return statusInvalidArchive.Err()
 			}
+
+			// Cancel all pending scheduled changes before archiving the flag
+			if err := s.cancelPendingScheduledFlagChanges(
+				ctxWithTx,
+				feature.Id,
+				req.EnvironmentId,
+				editor.Email,
+				domain.CancelReasonFlagArchived,
+			); err != nil {
+				s.logger.Error(
+					"Failed to cancel pending scheduled changes during archive",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("featureId", feature.Id),
+						zap.String("environmentId", req.EnvironmentId),
+					)...,
+				)
+				// Don't fail the archive operation, just log the error
+			}
 		}
 
 		updated, err := feature.Update(

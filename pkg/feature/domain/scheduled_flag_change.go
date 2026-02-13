@@ -219,6 +219,13 @@ const (
 	MsgKeyChangeDefaultStrategy = "ScheduledChange.ChangeDefaultStrategy"
 )
 
+// Cancellation reasons - currently plain text, will be i18n-ready in future
+// TODO(i18n): Convert these to message keys when implementing i18n for failure reasons
+const (
+	CancelReasonUserCancelled = "Cancelled by user"
+	CancelReasonFlagArchived  = "Flag was archived"
+)
+
 // newChangeSummary creates a new ChangeSummary with the given message key and values
 func newChangeSummary(messageKey string, values map[string]string) *proto.ChangeSummary {
 	return &proto.ChangeSummary{
