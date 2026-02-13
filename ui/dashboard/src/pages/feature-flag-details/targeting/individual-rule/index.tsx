@@ -78,7 +78,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                     <p>{item?.name}</p>
                   </Form.Label>
                   <Form.Control>
-                    <div className="flex items-center w-full gap-x-2">
+                    <div className="flex items-center w-full min-w-0 gap-x-2">
                       <CreatableSelect
                         value={field.value?.map((item: string) => ({
                           label: item,
@@ -97,7 +97,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                             field.onChange(options.map(o => o.value));
                           }
                         }}
-                        className="w-full max-w-[300px] sm:max-w-full"
+                        className="w-full min-w-0 max-w-full"
                         formatCreateLabel={v => {
                           const isAlreadyExisted = getAlreadyTargetedVariation(
                             individualRulesWatch,

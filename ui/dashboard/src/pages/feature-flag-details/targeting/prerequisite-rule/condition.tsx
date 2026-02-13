@@ -88,14 +88,14 @@ const ConditionForm = forwardRef(
           </div>
           <div className="block sm:hidden h-full w-[1px] bg-primary-500" />
         </div>
-        <div className="flex items-center w-full flex-1 pl-4 border-l-0 sm:border-l border-primary-500">
-          <div className="flex items-center w-full gap-x-4">
-            <div className="w-full flex flex-col lg:flex-row gap-2 lg:gap-4">
+        <div className="flex min-w-0 max-w-full items-center w-full flex-1 pl-4 border-l-0 sm:border-l border-primary-500">
+          <div className="flex min-w-0 max-w-full items-center w-full gap-x-4">
+            <div className="w-full min-w-0 flex flex-col lg:flex-row gap-2 lg:gap-4">
               <Form.Field
                 control={control}
                 name={`${commonName}.featureId`}
                 render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
+                  <Form.Item className="flex min-w-0 max-w-full flex-col flex-1 self-stretch py-0">
                     <Form.Label required>{t('feature-flags.flag')}</Form.Label>
                     <Form.Control>
                       <DropdownMenuWithSearch
@@ -104,7 +104,7 @@ const ConditionForm = forwardRef(
                         isExpand
                         options={flagOptions}
                         selectedOptions={field.value}
-                        triggerClassName="max-w-[288px] sm:max-w-full"
+                        triggerClassName="max-w-full"
                         additionalElement={item => (
                           <FeatureFlagStatus
                             status={t(
@@ -136,7 +136,7 @@ const ConditionForm = forwardRef(
                 control={control}
                 name={`${commonName}.variationId`}
                 render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
+                  <Form.Item className="flex min-w-0 flex-col flex-1 self-stretch py-0">
                     <Form.Label required>
                       {t('table:feature-flags.variation')}
                     </Form.Label>
@@ -147,7 +147,7 @@ const ConditionForm = forwardRef(
                         onChange={field.onChange}
                         placeholder={t('experiments.select-variation')}
                         disabled={!variationOptions?.length}
-                        className="w-full max-w-[288px] sm:max-w-full"
+                        className="w-full max-w-full"
                       />
                     </Form.Control>
                     <Form.Message />
