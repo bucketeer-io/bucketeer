@@ -255,6 +255,7 @@
   "weight": "重み",
   "execute-at": "実行日時",
   "frequency": "頻度",
+  "select-frequency": "頻度を選択",
   "hourly": "毎時",
   "daily": "毎日",
   "weekly": "毎週",

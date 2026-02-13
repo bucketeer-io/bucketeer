@@ -1,35 +1,43 @@
 import { forwardRef, Ref, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
+import { useFeatureFlagsLoader } from 'hooks/use-feature-loading-more';
 import { useTranslation } from 'i18n';
-import { Feature } from '@types';
+import { Environment, Feature } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
-import VariationLabel from 'elements/variation-label';
 import { PrerequisiteSchema } from '../types';
 
 interface Props {
-  features: Feature[];
   type: 'if' | 'and';
   prerequisiteIndex: number;
   featureId: string;
+  features: Feature[];
+  currentEnvironment: Environment;
   onDeleteCondition: () => void;
 }
 
 const ConditionForm = forwardRef(
   (
-    { features, type, prerequisiteIndex, featureId, onDeleteCondition }: Props,
+    {
+      type,
+      prerequisiteIndex,
+      featureId,
+      currentEnvironment,
+      features,
+      onDeleteCondition
+    }: Props,
     ref: Ref<HTMLDivElement>
   ) => {
     const { t } = useTranslation(['form', 'common', 'table']);
-
     const methods = useFormContext();
     const { control, watch } = methods;
 
@@ -40,29 +48,38 @@ const ConditionForm = forwardRef(
       [prerequisiteIndex]
     );
     const currentFeatureId = watch(`${commonName}.featureId`);
+
     const currentFeature = useMemo(
       () => features.find(item => item.id === currentFeatureId),
       [currentFeatureId, features]
     );
 
-    const flagOptions = useMemo(() => {
-      const featuresSelected = prerequisitesWatch.map(
-        (item: PrerequisiteSchema) => item.featureId
-      );
-      return features
-        .filter(f => ![...featuresSelected, featureId].includes(f.id))
-        .map(item => ({
-          label: item.name,
-          value: item.id,
-          enabled: item.enabled
-        }));
-    }, [features, prerequisitesWatch, featureId]);
+    const featuresSelected = prerequisitesWatch.map(
+      (item: PrerequisiteSchema) => item.featureId
+    );
+
+    const {
+      isLoadingMore,
+      hasMore,
+      remainingFlagOptions,
+      loadMore,
+      onSearchChange,
+      isInitialLoading: isLoadingFeature
+    } = useFeatureFlagsLoader({
+      environmentId: currentEnvironment.id,
+      selectedFlagIds: featuresSelected || [],
+      currentFeatureId: featureId,
+      filterSelected: true
+    });
 
     const variationOptions = useMemo(
       () =>
         currentFeature?.variations?.map((item, index) => ({
           label: (
-            <VariationLabel label={item.name || item.value} index={index} />
+            <div className="flex items-center gap-x-2 pl-0.5">
+              <FlagVariationPolygon index={index} />
+              <p className="-mt-0.5 truncate">{item.name}</p>
+            </div>
           ),
           value: item.id
         })),
@@ -94,8 +111,13 @@ const ConditionForm = forwardRef(
                     <DropdownMenuWithSearch
                       label={truncateBySide(currentFeature?.name || '', 50)}
                       placeholder={t('experiments.select-flag')}
+                      isLoadingMore={isLoadingMore}
+                      isLoading={isLoadingFeature}
+                      isHasMore={hasMore || isLoadingMore}
+                      onSearchChange={onSearchChange}
+                      onHasMoreOptions={loadMore}
                       isExpand
-                      options={flagOptions}
+                      options={remainingFlagOptions}
                       selectedOptions={field.value}
                       additionalElement={item => (
                         <FeatureFlagStatus
