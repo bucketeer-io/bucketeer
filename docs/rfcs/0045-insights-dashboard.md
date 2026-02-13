@@ -22,6 +22,7 @@ Add a Dashboard page where users can view Bucketeer usage metrics (request count
 ### Filters:
 - Common to all:
   - **Project**: All or select specific Project
+    - Note: In order to avoid exceeded response size, hen multiple projects are selected, then the frontend requests per project separately.
   - **Environment**: All or select specific Environment
   - **SDK**: All or select specific SDK
 - For 3, 4, 5 only:
@@ -82,6 +83,8 @@ Usage:
 | Redis       | MAU calculation                                       |
 | RDB         | Historical MAU, Request count                         |
 
+Note: If the bucketeer server does not depend on Prometheus, then the UI only shows an unavailable message and the batch processing will be skipped.
+
 ### Persisting Monthly Data
 
 MAU and request count are persisted to RDB via daily batch to display 1+ years of historical monthly data.
@@ -109,10 +112,10 @@ flowchart TB
 
 #### Redis Keys
 
-| Key Pattern                      | Data Type   | Purpose                      |
-| -------------------------------- | ----------- | ---------------------------- |
-| `{envId:sourceId:au}:d:yyyyMMdd` | HyperLogLog | Daily DAU                    |
-| `{envId:sourceId:au}:m:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) |
+| Key Pattern                      | Data Type   | Purpose                      | TTL    |
+| -------------------------------- | ----------- | ---------------------------- | ------ |
+| `{envId:sourceId:au}:d:yyyyMMdd` | HyperLogLog | Daily DAU                    | 35days |
+| `{envId:sourceId:au}:m:yyyyMM`   | HyperLogLog | Monthly MAU (PFMERGE result) | 65days |
 
 Using the hash tag `{envId:sourceId:au}` to ensure that multiple keys are allocated in the same hash slot.
 See https://redis.io/topics/cluster-spec#keys-hash-tags.
@@ -120,11 +123,11 @@ See https://redis.io/topics/cluster-spec#keys-hash-tags.
 
 #### Processing Flow
 
-| Timing       | Process                         | Command                                                                                       |
-| ------------ | ------------------------------- | --------------------------------------------------------------------------------------------- |
-| Realtime     | Add user ID to DAU              | `PFADD {envId:sourceId:au}:d:yyyyMMdd {user_id}`                                             |
-| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId:sourceId:au}:m:yyyyMM {envId:sourceId:au}:d:yyyyMMdd`                        |
-| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId:sourceId:au}:m:yyyyMM`<br>2. `UPSERT INTO monthly_summary`                |
+| Timing       | Process                         | Command                                                                       |
+| ------------ | ------------------------------- | ----------------------------------------------------------------------------- |
+| Realtime     | Add user ID to DAU              | `PFADD {envId:sourceId:au}:d:yyyyMMdd {user_id}`                              |
+| Daily (0:00) | Merge previous day's DAU to MAU | `PFMERGE {envId:sourceId:au}:m:yyyyMM {envId:sourceId:au}:d:yyyyMMdd`         |
+| Daily (0:00) | UPSERT MAU to RDB               | 1. `PFCOUNT {envId:sourceId:au}:m:yyyyMM`<br>2. `UPSERT INTO monthly_summary` |
 
 
 ## Details
