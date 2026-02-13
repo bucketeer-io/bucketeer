@@ -44,7 +44,6 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		return nil, err
 	}
 
-	// Validate request (can be done outside transaction - no DB access)
 	if err := s.validateCreateScheduledFlagChangeRequest(req); err != nil {
 		return nil, err
 	}
@@ -52,9 +51,8 @@ func (s *FeatureService) CreateScheduledFlagChange(
 	var sfc *domain.ScheduledFlagChange
 	var featureName string
 
-	// Use transaction to ensure atomic check-and-create:
-	// - Feature lookup, count check, and create must be atomic to prevent race conditions
-	// - Without transaction, concurrent requests could exceed the max schedules limit
+	// Feature lookup, count check, and create must be atomic to prevent race conditions
+	// Without transaction, concurrent requests could exceed the max schedules limit
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		// Get the feature to validate it exists and get its version
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.FeatureId, req.EnvironmentId)
@@ -74,7 +72,6 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		}
 		featureName = feature.Name
 
-		// Validate payload references
 		if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
 			return err
 		}
@@ -150,7 +147,6 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		return nil, err
 	}
 
-	// Publish domain event for audit log
 	if err := s.publishScheduledFlagChangeCreatedEvent(
 		ctx,
 		editor,
