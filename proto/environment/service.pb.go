@@ -3576,6 +3576,528 @@ func (x *CreateDemoOrganizationResponse) GetOrganization() *Organization {
 	return nil
 }
 
+type DeleteOrganizationDataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrganizationIds []string `protobuf:"bytes,1,rep,name=organization_ids,json=organizationIds,proto3" json:"organization_ids"`
+	DryRun          bool     `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run"`
+	Force           bool     `protobuf:"varint,3,opt,name=force,proto3" json:"force"`
+}
+
+func (x *DeleteOrganizationDataRequest) Reset() {
+	*x = DeleteOrganizationDataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[53]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteOrganizationDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrganizationDataRequest) ProtoMessage() {}
+
+func (x *DeleteOrganizationDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[53]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrganizationDataRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOrganizationDataRequest) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *DeleteOrganizationDataRequest) GetOrganizationIds() []string {
+	if x != nil {
+		return x.OrganizationIds
+	}
+	return nil
+}
+
+func (x *DeleteOrganizationDataRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+func (x *DeleteOrganizationDataRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+type DeleteOrganizationDataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Summaries []*OrganizationDeletionSummary `protobuf:"bytes,1,rep,name=summaries,proto3" json:"summaries"`
+}
+
+func (x *DeleteOrganizationDataResponse) Reset() {
+	*x = DeleteOrganizationDataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[54]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteOrganizationDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrganizationDataResponse) ProtoMessage() {}
+
+func (x *DeleteOrganizationDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[54]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrganizationDataResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOrganizationDataResponse) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *DeleteOrganizationDataResponse) GetSummaries() []*OrganizationDeletionSummary {
+	if x != nil {
+		return x.Summaries
+	}
+	return nil
+}
+
+type OrganizationDeletionSummary struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrganizationId              string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	EnvironmentsDeleted         int64  `protobuf:"varint,2,opt,name=environments_deleted,json=environmentsDeleted,proto3" json:"environments_deleted"`
+	ProjectsDeleted             int64  `protobuf:"varint,3,opt,name=projects_deleted,json=projectsDeleted,proto3" json:"projects_deleted"`
+	FeaturesDeleted             int64  `protobuf:"varint,4,opt,name=features_deleted,json=featuresDeleted,proto3" json:"features_deleted"`
+	AccountsDeleted             int64  `protobuf:"varint,5,opt,name=accounts_deleted,json=accountsDeleted,proto3" json:"accounts_deleted"`
+	ExperimentsDeleted          int64  `protobuf:"varint,6,opt,name=experiments_deleted,json=experimentsDeleted,proto3" json:"experiments_deleted"`
+	SubscriptionsDeleted        int64  `protobuf:"varint,7,opt,name=subscriptions_deleted,json=subscriptionsDeleted,proto3" json:"subscriptions_deleted"`
+	PushesDeleted               int64  `protobuf:"varint,8,opt,name=pushes_deleted,json=pushesDeleted,proto3" json:"pushes_deleted"`
+	TagsDeleted                 int64  `protobuf:"varint,9,opt,name=tags_deleted,json=tagsDeleted,proto3" json:"tags_deleted"`
+	TeamsDeleted                int64  `protobuf:"varint,10,opt,name=teams_deleted,json=teamsDeleted,proto3" json:"teams_deleted"`
+	SegmentsDeleted             int64  `protobuf:"varint,11,opt,name=segments_deleted,json=segmentsDeleted,proto3" json:"segments_deleted"`
+	FlagTriggersDeleted         int64  `protobuf:"varint,12,opt,name=flag_triggers_deleted,json=flagTriggersDeleted,proto3" json:"flag_triggers_deleted"`
+	ApiKeysDeleted              int64  `protobuf:"varint,13,opt,name=api_keys_deleted,json=apiKeysDeleted,proto3" json:"api_keys_deleted"`
+	OperationsDeleted           int64  `protobuf:"varint,14,opt,name=operations_deleted,json=operationsDeleted,proto3" json:"operations_deleted"`
+	FeatureLastUsedInfosDeleted int64  `protobuf:"varint,15,opt,name=feature_last_used_infos_deleted,json=featureLastUsedInfosDeleted,proto3" json:"feature_last_used_infos_deleted"`
+	GoalsDeleted                int64  `protobuf:"varint,16,opt,name=goals_deleted,json=goalsDeleted,proto3" json:"goals_deleted"`
+}
+
+func (x *OrganizationDeletionSummary) Reset() {
+	*x = OrganizationDeletionSummary{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[55]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OrganizationDeletionSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrganizationDeletionSummary) ProtoMessage() {}
+
+func (x *OrganizationDeletionSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[55]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrganizationDeletionSummary.ProtoReflect.Descriptor instead.
+func (*OrganizationDeletionSummary) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *OrganizationDeletionSummary) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *OrganizationDeletionSummary) GetEnvironmentsDeleted() int64 {
+	if x != nil {
+		return x.EnvironmentsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetProjectsDeleted() int64 {
+	if x != nil {
+		return x.ProjectsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetFeaturesDeleted() int64 {
+	if x != nil {
+		return x.FeaturesDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetAccountsDeleted() int64 {
+	if x != nil {
+		return x.AccountsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetExperimentsDeleted() int64 {
+	if x != nil {
+		return x.ExperimentsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetSubscriptionsDeleted() int64 {
+	if x != nil {
+		return x.SubscriptionsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetPushesDeleted() int64 {
+	if x != nil {
+		return x.PushesDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetTagsDeleted() int64 {
+	if x != nil {
+		return x.TagsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetTeamsDeleted() int64 {
+	if x != nil {
+		return x.TeamsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetSegmentsDeleted() int64 {
+	if x != nil {
+		return x.SegmentsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetFlagTriggersDeleted() int64 {
+	if x != nil {
+		return x.FlagTriggersDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetApiKeysDeleted() int64 {
+	if x != nil {
+		return x.ApiKeysDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetOperationsDeleted() int64 {
+	if x != nil {
+		return x.OperationsDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetFeatureLastUsedInfosDeleted() int64 {
+	if x != nil {
+		return x.FeatureLastUsedInfosDeleted
+	}
+	return 0
+}
+
+func (x *OrganizationDeletionSummary) GetGoalsDeleted() int64 {
+	if x != nil {
+		return x.GoalsDeleted
+	}
+	return 0
+}
+
+type DeleteEnvironmentDataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentIds []string `protobuf:"bytes,1,rep,name=environment_ids,json=environmentIds,proto3" json:"environment_ids"`
+	DryRun         bool     `protobuf:"varint,2,opt,name=dry_run,json=dryRun,proto3" json:"dry_run"`
+	Force          bool     `protobuf:"varint,3,opt,name=force,proto3" json:"force"`
+}
+
+func (x *DeleteEnvironmentDataRequest) Reset() {
+	*x = DeleteEnvironmentDataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[56]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteEnvironmentDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEnvironmentDataRequest) ProtoMessage() {}
+
+func (x *DeleteEnvironmentDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[56]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEnvironmentDataRequest.ProtoReflect.Descriptor instead.
+func (*DeleteEnvironmentDataRequest) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *DeleteEnvironmentDataRequest) GetEnvironmentIds() []string {
+	if x != nil {
+		return x.EnvironmentIds
+	}
+	return nil
+}
+
+func (x *DeleteEnvironmentDataRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+func (x *DeleteEnvironmentDataRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+type DeleteEnvironmentDataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Summaries []*EnvironmentDeletionSummary `protobuf:"bytes,1,rep,name=summaries,proto3" json:"summaries"`
+}
+
+func (x *DeleteEnvironmentDataResponse) Reset() {
+	*x = DeleteEnvironmentDataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[57]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteEnvironmentDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEnvironmentDataResponse) ProtoMessage() {}
+
+func (x *DeleteEnvironmentDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[57]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEnvironmentDataResponse.ProtoReflect.Descriptor instead.
+func (*DeleteEnvironmentDataResponse) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *DeleteEnvironmentDataResponse) GetSummaries() []*EnvironmentDeletionSummary {
+	if x != nil {
+		return x.Summaries
+	}
+	return nil
+}
+
+type EnvironmentDeletionSummary struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentId               string `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	FeaturesDeleted             int64  `protobuf:"varint,2,opt,name=features_deleted,json=featuresDeleted,proto3" json:"features_deleted"`
+	ExperimentsDeleted          int64  `protobuf:"varint,3,opt,name=experiments_deleted,json=experimentsDeleted,proto3" json:"experiments_deleted"`
+	SubscriptionsDeleted        int64  `protobuf:"varint,4,opt,name=subscriptions_deleted,json=subscriptionsDeleted,proto3" json:"subscriptions_deleted"`
+	PushesDeleted               int64  `protobuf:"varint,5,opt,name=pushes_deleted,json=pushesDeleted,proto3" json:"pushes_deleted"`
+	TagsDeleted                 int64  `protobuf:"varint,6,opt,name=tags_deleted,json=tagsDeleted,proto3" json:"tags_deleted"`
+	SegmentsDeleted             int64  `protobuf:"varint,7,opt,name=segments_deleted,json=segmentsDeleted,proto3" json:"segments_deleted"`
+	FlagTriggersDeleted         int64  `protobuf:"varint,8,opt,name=flag_triggers_deleted,json=flagTriggersDeleted,proto3" json:"flag_triggers_deleted"`
+	ApiKeysDeleted              int64  `protobuf:"varint,9,opt,name=api_keys_deleted,json=apiKeysDeleted,proto3" json:"api_keys_deleted"`
+	OperationsDeleted           int64  `protobuf:"varint,10,opt,name=operations_deleted,json=operationsDeleted,proto3" json:"operations_deleted"`
+	FeatureLastUsedInfosDeleted int64  `protobuf:"varint,11,opt,name=feature_last_used_infos_deleted,json=featureLastUsedInfosDeleted,proto3" json:"feature_last_used_infos_deleted"`
+	GoalsDeleted                int64  `protobuf:"varint,12,opt,name=goals_deleted,json=goalsDeleted,proto3" json:"goals_deleted"`
+}
+
+func (x *EnvironmentDeletionSummary) Reset() {
+	*x = EnvironmentDeletionSummary{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_service_proto_msgTypes[58]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EnvironmentDeletionSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnvironmentDeletionSummary) ProtoMessage() {}
+
+func (x *EnvironmentDeletionSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_service_proto_msgTypes[58]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnvironmentDeletionSummary.ProtoReflect.Descriptor instead.
+func (*EnvironmentDeletionSummary) Descriptor() ([]byte, []int) {
+	return file_proto_environment_service_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *EnvironmentDeletionSummary) GetEnvironmentId() string {
+	if x != nil {
+		return x.EnvironmentId
+	}
+	return ""
+}
+
+func (x *EnvironmentDeletionSummary) GetFeaturesDeleted() int64 {
+	if x != nil {
+		return x.FeaturesDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetExperimentsDeleted() int64 {
+	if x != nil {
+		return x.ExperimentsDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetSubscriptionsDeleted() int64 {
+	if x != nil {
+		return x.SubscriptionsDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetPushesDeleted() int64 {
+	if x != nil {
+		return x.PushesDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetTagsDeleted() int64 {
+	if x != nil {
+		return x.TagsDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetSegmentsDeleted() int64 {
+	if x != nil {
+		return x.SegmentsDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetFlagTriggersDeleted() int64 {
+	if x != nil {
+		return x.FlagTriggersDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetApiKeysDeleted() int64 {
+	if x != nil {
+		return x.ApiKeysDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetOperationsDeleted() int64 {
+	if x != nil {
+		return x.OperationsDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetFeatureLastUsedInfosDeleted() int64 {
+	if x != nil {
+		return x.FeatureLastUsedInfosDeleted
+	}
+	return 0
+}
+
+func (x *EnvironmentDeletionSummary) GetGoalsDeleted() int64 {
+	if x != nil {
+		return x.GoalsDeleted
+	}
+	return 0
+}
+
 var File_proto_environment_service_proto protoreflect.FileDescriptor
 
 var file_proto_environment_service_proto_rawDesc = []byte{
@@ -4163,7 +4685,133 @@ var file_proto_environment_service_proto_rawDesc = []byte{
 	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
 	0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e,
 	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x6f, 0x72,
-	0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x32, 0xeb, 0xaa, 0x01, 0x0a, 0x12,
+	0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xdf, 0x01, 0x0a, 0x1d, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x29, 0x0a, 0x10,
+	0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x73, 0x12, 0x54, 0x0a, 0x07, 0x64, 0x72, 0x79, 0x5f, 0x72,
+	0x75, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x42, 0x3b, 0x92, 0x41, 0x38, 0x32, 0x36, 0x53,
+	0x65, 0x74, 0x20, 0x74, 0x6f, 0x20, 0x74, 0x72, 0x75, 0x65, 0x20, 0x74, 0x6f, 0x20, 0x70, 0x72,
+	0x65, 0x76, 0x69, 0x65, 0x77, 0x20, 0x74, 0x68, 0x65, 0x20, 0x64, 0x61, 0x74, 0x61, 0x20, 0x74,
+	0x68, 0x61, 0x74, 0x20, 0x77, 0x6f, 0x75, 0x6c, 0x64, 0x20, 0x62, 0x65, 0x20, 0x64, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x64, 0x2e, 0x52, 0x06, 0x64, 0x72, 0x79, 0x52, 0x75, 0x6e, 0x12, 0x3d, 0x0a,
+	0x05, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x42, 0x27, 0x92, 0x41,
+	0x24, 0x32, 0x22, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x20, 0x66, 0x6c, 0x61, 0x67, 0x20, 0x74, 0x6f,
+	0x20, 0x62, 0x79, 0x70, 0x61, 0x73, 0x73, 0x20, 0x73, 0x61, 0x66, 0x65, 0x74, 0x79, 0x20, 0x63,
+	0x68, 0x65, 0x63, 0x6b, 0x73, 0x52, 0x05, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x22, 0x72, 0x0a, 0x1e,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50,
+	0x0a, 0x09, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69,
+	0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x75,
+	0x6d, 0x6d, 0x61, 0x72, 0x79, 0x52, 0x09, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69, 0x65, 0x73,
+	0x22, 0xf2, 0x05, 0x0a, 0x1b, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79,
+	0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e,
+	0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x14, 0x65, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x13, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x29, 0x0a, 0x10,
+	0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x29, 0x0a, 0x10, 0x66, 0x65, 0x61, 0x74, 0x75,
+	0x72, 0x65, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x0f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x64, 0x12, 0x29, 0x0a, 0x10, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x61, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x2f, 0x0a,
+	0x13, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x5f, 0x64, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x12, 0x65, 0x78, 0x70, 0x65,
+	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x33,
+	0x0a, 0x15, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x5f,
+	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x07, 0x20, 0x01, 0x28, 0x03, 0x52, 0x14, 0x73,
+	0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x75, 0x73, 0x68, 0x65, 0x73, 0x5f, 0x64, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0d, 0x70, 0x75, 0x73,
+	0x68, 0x65, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x74, 0x61,
+	0x67, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x09, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x0b, 0x74, 0x61, 0x67, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x23, 0x0a,
+	0x0d, 0x74, 0x65, 0x61, 0x6d, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0a,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x74, 0x65, 0x61, 0x6d, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x64, 0x12, 0x29, 0x0a, 0x10, 0x73, 0x65, 0x67, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x5f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x73, 0x65,
+	0x67, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x32, 0x0a,
+	0x15, 0x66, 0x6c, 0x61, 0x67, 0x5f, 0x74, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x73, 0x5f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x03, 0x52, 0x13, 0x66, 0x6c,
+	0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x64, 0x12, 0x28, 0x0a, 0x10, 0x61, 0x70, 0x69, 0x5f, 0x6b, 0x65, 0x79, 0x73, 0x5f, 0x64, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0e, 0x61, 0x70, 0x69,
+	0x4b, 0x65, 0x79, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x2d, 0x0a, 0x12, 0x6f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x64, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x03, 0x52, 0x11, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x44, 0x0a, 0x1f, 0x66, 0x65,
+	0x61, 0x74, 0x75, 0x72, 0x65, 0x5f, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x75, 0x73, 0x65, 0x64, 0x5f,
+	0x69, 0x6e, 0x66, 0x6f, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0f, 0x20,
+	0x01, 0x28, 0x03, 0x52, 0x1b, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x4c, 0x61, 0x73, 0x74,
+	0x55, 0x73, 0x65, 0x64, 0x49, 0x6e, 0x66, 0x6f, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64,
+	0x12, 0x23, 0x0a, 0x0d, 0x67, 0x6f, 0x61, 0x6c, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x64, 0x18, 0x10, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x67, 0x6f, 0x61, 0x6c, 0x73, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x64, 0x22, 0xdc, 0x01, 0x0a, 0x1c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52,
+	0x0e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x73, 0x12,
+	0x54, 0x0a, 0x07, 0x64, 0x72, 0x79, 0x5f, 0x72, 0x75, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08,
+	0x42, 0x3b, 0x92, 0x41, 0x38, 0x32, 0x36, 0x53, 0x65, 0x74, 0x20, 0x74, 0x6f, 0x20, 0x74, 0x72,
+	0x75, 0x65, 0x20, 0x74, 0x6f, 0x20, 0x70, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77, 0x20, 0x74, 0x68,
+	0x65, 0x20, 0x64, 0x61, 0x74, 0x61, 0x20, 0x74, 0x68, 0x61, 0x74, 0x20, 0x77, 0x6f, 0x75, 0x6c,
+	0x64, 0x20, 0x62, 0x65, 0x20, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x2e, 0x52, 0x06, 0x64,
+	0x72, 0x79, 0x52, 0x75, 0x6e, 0x12, 0x3d, 0x0a, 0x05, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x08, 0x42, 0x27, 0x92, 0x41, 0x24, 0x32, 0x22, 0x66, 0x6f, 0x72, 0x63, 0x65,
+	0x20, 0x66, 0x6c, 0x61, 0x67, 0x20, 0x74, 0x6f, 0x20, 0x62, 0x79, 0x70, 0x61, 0x73, 0x73, 0x20,
+	0x73, 0x61, 0x66, 0x65, 0x74, 0x79, 0x20, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x52, 0x05, 0x66,
+	0x6f, 0x72, 0x63, 0x65, 0x22, 0x70, 0x0a, 0x1d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4f, 0x0a, 0x09, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69,
+	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
+	0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
+	0x2e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x69, 0x6f, 0x6e, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x52, 0x09, 0x73, 0x75, 0x6d,
+	0x6d, 0x61, 0x72, 0x69, 0x65, 0x73, 0x22, 0xc1, 0x04, 0x0a, 0x1a, 0x45, 0x6e, 0x76, 0x69, 0x72,
+	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x75,
+	0x6d, 0x6d, 0x61, 0x72, 0x79, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x65,
+	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x29, 0x0a, 0x10,
+	0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x2f, 0x0a, 0x13, 0x65, 0x78, 0x70, 0x65, 0x72,
+	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x12, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x33, 0x0a, 0x15, 0x73, 0x75, 0x62, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x14, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x25, 0x0a,
+	0x0e, 0x70, 0x75, 0x73, 0x68, 0x65, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0d, 0x70, 0x75, 0x73, 0x68, 0x65, 0x73, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x74, 0x61, 0x67, 0x73, 0x5f, 0x64, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x74, 0x61, 0x67, 0x73,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x29, 0x0a, 0x10, 0x73, 0x65, 0x67, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x07, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x0f, 0x73, 0x65, 0x67, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x64, 0x12, 0x32, 0x0a, 0x15, 0x66, 0x6c, 0x61, 0x67, 0x5f, 0x74, 0x72, 0x69, 0x67, 0x67,
+	0x65, 0x72, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x13, 0x66, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x73, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x28, 0x0a, 0x10, 0x61, 0x70, 0x69, 0x5f, 0x6b, 0x65,
+	0x79, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x09, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x0e, 0x61, 0x70, 0x69, 0x4b, 0x65, 0x79, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64,
+	0x12, 0x2d, 0x0a, 0x12, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x5f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x03, 0x52, 0x11, 0x6f, 0x70,
+	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x12,
+	0x44, 0x0a, 0x1f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x5f, 0x6c, 0x61, 0x73, 0x74, 0x5f,
+	0x75, 0x73, 0x65, 0x64, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x73, 0x5f, 0x64, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x64, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x03, 0x52, 0x1b, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
+	0x65, 0x4c, 0x61, 0x73, 0x74, 0x55, 0x73, 0x65, 0x64, 0x49, 0x6e, 0x66, 0x6f, 0x73, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x67, 0x6f, 0x61, 0x6c, 0x73, 0x5f, 0x64,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x67, 0x6f,
+	0x61, 0x6c, 0x73, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x32, 0xf2, 0xb8, 0x01, 0x0a, 0x12,
 	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69,
 	0x63, 0x65, 0x12, 0xb7, 0x06, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f,
 	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x12, 0x2e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
@@ -5530,11 +6178,124 @@ var file_proto_environment_service_proto_rawDesc = []byte{
 	0x7b, 0x20, 0x22, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a, 0x20, 0x37, 0x2c, 0x20, 0x22, 0x6d, 0x65,
 	0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3a, 0x20, 0x22, 0x6e, 0x6f, 0x74, 0x20, 0x61, 0x75, 0x74,
 	0x68, 0x6f, 0x72, 0x69, 0x7a, 0x65, 0x64, 0x22, 0x2c, 0x20, 0x22, 0x64, 0x65, 0x74, 0x61, 0x69,
-	0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
-	0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x76,
-	0x32, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
-	0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d, 0x12, 0x84, 0x07, 0x0a, 0x16, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x44, 0x61, 0x74, 0x61, 0x12, 0x34, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x44,
+	0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x35, 0x2e, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0xfc, 0x05, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x2d, 0x22, 0x28, 0x2f, 0x76, 0x31, 0x2f,
+	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2f, 0x64, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x5f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
+	0x64, 0x61, 0x74, 0x61, 0x3a, 0x01, 0x2a, 0x92, 0x41, 0xc5, 0x05, 0x0a, 0x0c, 0x4f, 0x72, 0x67,
+	0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x20, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x20, 0x44,
+	0x61, 0x74, 0x61, 0x1a, 0x56, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x20, 0x61, 0x6c, 0x6c, 0x20,
+	0x64, 0x61, 0x74, 0x61, 0x20, 0x69, 0x6e, 0x20, 0x61, 0x6e, 0x20, 0x6f, 0x72, 0x67, 0x61, 0x6e,
+	0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x20, 0x54, 0x6f, 0x20, 0x63, 0x61, 0x6c, 0x6c,
+	0x20, 0x74, 0x68, 0x69, 0x73, 0x20, 0x41, 0x50, 0x49, 0x2c, 0x20, 0x79, 0x6f, 0x75, 0x20, 0x6e,
+	0x65, 0x65, 0x64, 0x20, 0x61, 0x6e, 0x20, 0x60, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x41,
+	0x44, 0x4d, 0x49, 0x4e, 0x60, 0x20, 0x72, 0x6f, 0x6c, 0x65, 0x2e, 0x2a, 0x2b, 0x77, 0x65, 0x62,
+	0x2e, 0x76, 0x31, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e,
+	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x4a, 0xb4, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x30,
+	0x12, 0xac, 0x01, 0x0a, 0x3a, 0x52, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x65, 0x64, 0x20, 0x66, 0x6f,
+	0x72, 0x20, 0x62, 0x61, 0x64, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x20, 0x74,
+	0x68, 0x61, 0x74, 0x20, 0x6d, 0x61, 0x79, 0x20, 0x68, 0x61, 0x76, 0x65, 0x20, 0x66, 0x61, 0x69,
+	0x6c, 0x65, 0x64, 0x20, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x12,
+	0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x56, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69,
+	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x42, 0x7b, 0x20, 0x22,
+	0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a, 0x20, 0x33, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x22, 0x3a, 0x20, 0x22, 0x69, 0x6e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x20, 0x61, 0x72,
+	0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x20, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x2c, 0x20,
+	0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d, 0x4a,
+	0xb2, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x31, 0x12, 0xaa, 0x01, 0x0a, 0x3d, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x20, 0x63, 0x6f, 0x75, 0x6c, 0x64, 0x20, 0x6e, 0x6f, 0x74, 0x20, 0x62, 0x65,
+	0x20, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x64, 0x20, 0x28,
+	0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x20, 0x72,
+	0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x29, 0x2e, 0x12, 0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x22, 0x51, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x3d, 0x7b, 0x20, 0x22, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a,
+	0x20, 0x31, 0x36, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3a, 0x20,
+	0x22, 0x6e, 0x6f, 0x74, 0x20, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74,
+	0x65, 0x64, 0x22, 0x2c, 0x20, 0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20,
+	0x5b, 0x5d, 0x20, 0x7d, 0x4a, 0xa9, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x33, 0x12, 0xa1, 0x01, 0x0a,
+	0x38, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x20, 0x64, 0x6f, 0x65, 0x73, 0x20, 0x6e, 0x6f,
+	0x74, 0x20, 0x68, 0x61, 0x76, 0x65, 0x20, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x20, 0x74, 0x6f, 0x20, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x20, 0x74, 0x68, 0x65, 0x20,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x12, 0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x22, 0x4d, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x39, 0x7b, 0x20, 0x22, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a,
+	0x20, 0x37, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3a, 0x20, 0x22,
+	0x6e, 0x6f, 0x74, 0x20, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x7a, 0x65, 0x64, 0x22, 0x2c,
+	0x20, 0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d,
+	0x12, 0xfd, 0x06, 0x0a, 0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72,
+	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x12, 0x33, 0x2e, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x34, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69,
+	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x45, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf8, 0x05, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x2c, 0x22, 0x27,
+	0x2f, 0x76, 0x31, 0x2f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2f,
+	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x3a, 0x01, 0x2a, 0x92, 0x41, 0xc2, 0x05, 0x0a, 0x0b,
+	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x17, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x20, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x20,
+	0x44, 0x61, 0x74, 0x61, 0x1a, 0x56, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x20, 0x61, 0x6c, 0x6c,
+	0x20, 0x64, 0x61, 0x74, 0x61, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x65, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x20, 0x54, 0x6f, 0x20, 0x63, 0x61, 0x6c,
+	0x6c, 0x20, 0x74, 0x68, 0x69, 0x73, 0x20, 0x41, 0x50, 0x49, 0x2c, 0x20, 0x79, 0x6f, 0x75, 0x20,
+	0x6e, 0x65, 0x65, 0x64, 0x20, 0x61, 0x6e, 0x20, 0x60, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f,
+	0x41, 0x44, 0x4d, 0x49, 0x4e, 0x60, 0x20, 0x72, 0x6f, 0x6c, 0x65, 0x2e, 0x2a, 0x2a, 0x77, 0x65,
+	0x62, 0x2e, 0x76, 0x31, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
+	0x2e, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x5f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x4a, 0xb4, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x30,
+	0x12, 0xac, 0x01, 0x0a, 0x3a, 0x52, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x65, 0x64, 0x20, 0x66, 0x6f,
+	0x72, 0x20, 0x62, 0x61, 0x64, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x20, 0x74,
+	0x68, 0x61, 0x74, 0x20, 0x6d, 0x61, 0x79, 0x20, 0x68, 0x61, 0x76, 0x65, 0x20, 0x66, 0x61, 0x69,
+	0x6c, 0x65, 0x64, 0x20, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x12,
+	0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63,
+	0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x56, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69,
+	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x42, 0x7b, 0x20, 0x22,
+	0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a, 0x20, 0x33, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x22, 0x3a, 0x20, 0x22, 0x69, 0x6e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x20, 0x61, 0x72,
+	0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x20, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x2c, 0x20,
+	0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d, 0x4a,
+	0xb2, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x31, 0x12, 0xaa, 0x01, 0x0a, 0x3d, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x20, 0x63, 0x6f, 0x75, 0x6c, 0x64, 0x20, 0x6e, 0x6f, 0x74, 0x20, 0x62, 0x65,
+	0x20, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x64, 0x20, 0x28,
+	0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x20, 0x72,
+	0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x29, 0x2e, 0x12, 0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x22, 0x51, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x3d, 0x7b, 0x20, 0x22, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a,
+	0x20, 0x31, 0x36, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3a, 0x20,
+	0x22, 0x6e, 0x6f, 0x74, 0x20, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74,
+	0x65, 0x64, 0x22, 0x2c, 0x20, 0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20,
+	0x5b, 0x5d, 0x20, 0x7d, 0x4a, 0xa9, 0x01, 0x0a, 0x03, 0x34, 0x30, 0x33, 0x12, 0xa1, 0x01, 0x0a,
+	0x38, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x20, 0x64, 0x6f, 0x65, 0x73, 0x20, 0x6e, 0x6f,
+	0x74, 0x20, 0x68, 0x61, 0x76, 0x65, 0x20, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x20, 0x74, 0x6f, 0x20, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x20, 0x74, 0x68, 0x65, 0x20,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x12, 0x16, 0x0a, 0x14, 0x1a, 0x12, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x22, 0x4d, 0x0a, 0x10, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x12, 0x39, 0x7b, 0x20, 0x22, 0x63, 0x6f, 0x64, 0x65, 0x22, 0x3a,
+	0x20, 0x37, 0x2c, 0x20, 0x22, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3a, 0x20, 0x22,
+	0x6e, 0x6f, 0x74, 0x20, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x7a, 0x65, 0x64, 0x22, 0x2c,
+	0x20, 0x22, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x3a, 0x20, 0x5b, 0x5d, 0x20, 0x7d,
+	0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x76, 0x32, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x65,
+	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -5550,7 +6311,7 @@ func file_proto_environment_service_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_environment_service_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_proto_environment_service_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
+var file_proto_environment_service_proto_msgTypes = make([]protoimpl.MessageInfo, 59)
 var file_proto_environment_service_proto_goTypes = []interface{}{
 	(ListEnvironmentsV2Request_OrderBy)(0),        // 0: bucketeer.environment.ListEnvironmentsV2Request.OrderBy
 	(ListEnvironmentsV2Request_OrderDirection)(0), // 1: bucketeer.environment.ListEnvironmentsV2Request.OrderDirection
@@ -5613,154 +6374,166 @@ var file_proto_environment_service_proto_goTypes = []interface{}{
 	(*DemoCreationToken)(nil),                     // 58: bucketeer.environment.DemoCreationToken
 	(*CreateDemoOrganizationRequest)(nil),         // 59: bucketeer.environment.CreateDemoOrganizationRequest
 	(*CreateDemoOrganizationResponse)(nil),        // 60: bucketeer.environment.CreateDemoOrganizationResponse
-	(*EnvironmentV2)(nil),                         // 61: bucketeer.environment.EnvironmentV2
-	(*wrapperspb.BoolValue)(nil),                  // 62: google.protobuf.BoolValue
-	(*CreateEnvironmentV2Command)(nil),            // 63: bucketeer.environment.CreateEnvironmentV2Command
-	(*RenameEnvironmentV2Command)(nil),            // 64: bucketeer.environment.RenameEnvironmentV2Command
-	(*ChangeDescriptionEnvironmentV2Command)(nil), // 65: bucketeer.environment.ChangeDescriptionEnvironmentV2Command
-	(*ChangeRequireCommentCommand)(nil),           // 66: bucketeer.environment.ChangeRequireCommentCommand
-	(*wrapperspb.StringValue)(nil),                // 67: google.protobuf.StringValue
-	(*wrapperspb.Int32Value)(nil),                 // 68: google.protobuf.Int32Value
-	(*ArchiveEnvironmentV2Command)(nil),           // 69: bucketeer.environment.ArchiveEnvironmentV2Command
-	(*UnarchiveEnvironmentV2Command)(nil),         // 70: bucketeer.environment.UnarchiveEnvironmentV2Command
-	(*Project)(nil),                               // 71: bucketeer.environment.Project
-	(*CreateProjectCommand)(nil),                  // 72: bucketeer.environment.CreateProjectCommand
-	(*CreateTrialProjectCommand)(nil),             // 73: bucketeer.environment.CreateTrialProjectCommand
-	(*ChangeDescriptionProjectCommand)(nil),       // 74: bucketeer.environment.ChangeDescriptionProjectCommand
-	(*RenameProjectCommand)(nil),                  // 75: bucketeer.environment.RenameProjectCommand
-	(*EnableProjectCommand)(nil),                  // 76: bucketeer.environment.EnableProjectCommand
-	(*DisableProjectCommand)(nil),                 // 77: bucketeer.environment.DisableProjectCommand
-	(*ConvertTrialProjectCommand)(nil),            // 78: bucketeer.environment.ConvertTrialProjectCommand
-	(*Organization)(nil),                          // 79: bucketeer.environment.Organization
-	(*CreateOrganizationCommand)(nil),             // 80: bucketeer.environment.CreateOrganizationCommand
-	(*ChangeNameOrganizationCommand)(nil),         // 81: bucketeer.environment.ChangeNameOrganizationCommand
-	(*ChangeDescriptionOrganizationCommand)(nil),  // 82: bucketeer.environment.ChangeDescriptionOrganizationCommand
-	(*ChangeOwnerEmailOrganizationCommand)(nil),   // 83: bucketeer.environment.ChangeOwnerEmailOrganizationCommand
-	(*EnableOrganizationCommand)(nil),             // 84: bucketeer.environment.EnableOrganizationCommand
-	(*DisableOrganizationCommand)(nil),            // 85: bucketeer.environment.DisableOrganizationCommand
-	(*ArchiveOrganizationCommand)(nil),            // 86: bucketeer.environment.ArchiveOrganizationCommand
-	(*UnarchiveOrganizationCommand)(nil),          // 87: bucketeer.environment.UnarchiveOrganizationCommand
-	(*ConvertTrialOrganizationCommand)(nil),       // 88: bucketeer.environment.ConvertTrialOrganizationCommand
-	(auth.AuthType)(0),                            // 89: bucketeer.auth.AuthType
+	(*DeleteOrganizationDataRequest)(nil),         // 61: bucketeer.environment.DeleteOrganizationDataRequest
+	(*DeleteOrganizationDataResponse)(nil),        // 62: bucketeer.environment.DeleteOrganizationDataResponse
+	(*OrganizationDeletionSummary)(nil),           // 63: bucketeer.environment.OrganizationDeletionSummary
+	(*DeleteEnvironmentDataRequest)(nil),          // 64: bucketeer.environment.DeleteEnvironmentDataRequest
+	(*DeleteEnvironmentDataResponse)(nil),         // 65: bucketeer.environment.DeleteEnvironmentDataResponse
+	(*EnvironmentDeletionSummary)(nil),            // 66: bucketeer.environment.EnvironmentDeletionSummary
+	(*EnvironmentV2)(nil),                         // 67: bucketeer.environment.EnvironmentV2
+	(*wrapperspb.BoolValue)(nil),                  // 68: google.protobuf.BoolValue
+	(*CreateEnvironmentV2Command)(nil),            // 69: bucketeer.environment.CreateEnvironmentV2Command
+	(*RenameEnvironmentV2Command)(nil),            // 70: bucketeer.environment.RenameEnvironmentV2Command
+	(*ChangeDescriptionEnvironmentV2Command)(nil), // 71: bucketeer.environment.ChangeDescriptionEnvironmentV2Command
+	(*ChangeRequireCommentCommand)(nil),           // 72: bucketeer.environment.ChangeRequireCommentCommand
+	(*wrapperspb.StringValue)(nil),                // 73: google.protobuf.StringValue
+	(*wrapperspb.Int32Value)(nil),                 // 74: google.protobuf.Int32Value
+	(*ArchiveEnvironmentV2Command)(nil),           // 75: bucketeer.environment.ArchiveEnvironmentV2Command
+	(*UnarchiveEnvironmentV2Command)(nil),         // 76: bucketeer.environment.UnarchiveEnvironmentV2Command
+	(*Project)(nil),                               // 77: bucketeer.environment.Project
+	(*CreateProjectCommand)(nil),                  // 78: bucketeer.environment.CreateProjectCommand
+	(*CreateTrialProjectCommand)(nil),             // 79: bucketeer.environment.CreateTrialProjectCommand
+	(*ChangeDescriptionProjectCommand)(nil),       // 80: bucketeer.environment.ChangeDescriptionProjectCommand
+	(*RenameProjectCommand)(nil),                  // 81: bucketeer.environment.RenameProjectCommand
+	(*EnableProjectCommand)(nil),                  // 82: bucketeer.environment.EnableProjectCommand
+	(*DisableProjectCommand)(nil),                 // 83: bucketeer.environment.DisableProjectCommand
+	(*ConvertTrialProjectCommand)(nil),            // 84: bucketeer.environment.ConvertTrialProjectCommand
+	(*Organization)(nil),                          // 85: bucketeer.environment.Organization
+	(*CreateOrganizationCommand)(nil),             // 86: bucketeer.environment.CreateOrganizationCommand
+	(*ChangeNameOrganizationCommand)(nil),         // 87: bucketeer.environment.ChangeNameOrganizationCommand
+	(*ChangeDescriptionOrganizationCommand)(nil),  // 88: bucketeer.environment.ChangeDescriptionOrganizationCommand
+	(*ChangeOwnerEmailOrganizationCommand)(nil),   // 89: bucketeer.environment.ChangeOwnerEmailOrganizationCommand
+	(*EnableOrganizationCommand)(nil),             // 90: bucketeer.environment.EnableOrganizationCommand
+	(*DisableOrganizationCommand)(nil),            // 91: bucketeer.environment.DisableOrganizationCommand
+	(*ArchiveOrganizationCommand)(nil),            // 92: bucketeer.environment.ArchiveOrganizationCommand
+	(*UnarchiveOrganizationCommand)(nil),          // 93: bucketeer.environment.UnarchiveOrganizationCommand
+	(*ConvertTrialOrganizationCommand)(nil),       // 94: bucketeer.environment.ConvertTrialOrganizationCommand
+	(auth.AuthType)(0),                            // 95: bucketeer.auth.AuthType
 }
 var file_proto_environment_service_proto_depIdxs = []int32{
-	61, // 0: bucketeer.environment.GetEnvironmentV2Response.environment:type_name -> bucketeer.environment.EnvironmentV2
+	67, // 0: bucketeer.environment.GetEnvironmentV2Response.environment:type_name -> bucketeer.environment.EnvironmentV2
 	0,  // 1: bucketeer.environment.ListEnvironmentsV2Request.order_by:type_name -> bucketeer.environment.ListEnvironmentsV2Request.OrderBy
 	1,  // 2: bucketeer.environment.ListEnvironmentsV2Request.order_direction:type_name -> bucketeer.environment.ListEnvironmentsV2Request.OrderDirection
-	62, // 3: bucketeer.environment.ListEnvironmentsV2Request.archived:type_name -> google.protobuf.BoolValue
-	61, // 4: bucketeer.environment.ListEnvironmentsV2Response.environments:type_name -> bucketeer.environment.EnvironmentV2
-	63, // 5: bucketeer.environment.CreateEnvironmentV2Request.command:type_name -> bucketeer.environment.CreateEnvironmentV2Command
-	61, // 6: bucketeer.environment.CreateEnvironmentV2Response.environment:type_name -> bucketeer.environment.EnvironmentV2
-	64, // 7: bucketeer.environment.UpdateEnvironmentV2Request.rename_command:type_name -> bucketeer.environment.RenameEnvironmentV2Command
-	65, // 8: bucketeer.environment.UpdateEnvironmentV2Request.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionEnvironmentV2Command
-	66, // 9: bucketeer.environment.UpdateEnvironmentV2Request.change_require_comment_command:type_name -> bucketeer.environment.ChangeRequireCommentCommand
-	67, // 10: bucketeer.environment.UpdateEnvironmentV2Request.name:type_name -> google.protobuf.StringValue
-	67, // 11: bucketeer.environment.UpdateEnvironmentV2Request.description:type_name -> google.protobuf.StringValue
-	62, // 12: bucketeer.environment.UpdateEnvironmentV2Request.require_comment:type_name -> google.protobuf.BoolValue
-	62, // 13: bucketeer.environment.UpdateEnvironmentV2Request.archived:type_name -> google.protobuf.BoolValue
-	62, // 14: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_enabled:type_name -> google.protobuf.BoolValue
-	68, // 15: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_unused_days:type_name -> google.protobuf.Int32Value
-	62, // 16: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_check_code_refs:type_name -> google.protobuf.BoolValue
-	69, // 17: bucketeer.environment.ArchiveEnvironmentV2Request.command:type_name -> bucketeer.environment.ArchiveEnvironmentV2Command
-	70, // 18: bucketeer.environment.UnarchiveEnvironmentV2Request.command:type_name -> bucketeer.environment.UnarchiveEnvironmentV2Command
-	71, // 19: bucketeer.environment.GetProjectResponse.project:type_name -> bucketeer.environment.Project
+	68, // 3: bucketeer.environment.ListEnvironmentsV2Request.archived:type_name -> google.protobuf.BoolValue
+	67, // 4: bucketeer.environment.ListEnvironmentsV2Response.environments:type_name -> bucketeer.environment.EnvironmentV2
+	69, // 5: bucketeer.environment.CreateEnvironmentV2Request.command:type_name -> bucketeer.environment.CreateEnvironmentV2Command
+	67, // 6: bucketeer.environment.CreateEnvironmentV2Response.environment:type_name -> bucketeer.environment.EnvironmentV2
+	70, // 7: bucketeer.environment.UpdateEnvironmentV2Request.rename_command:type_name -> bucketeer.environment.RenameEnvironmentV2Command
+	71, // 8: bucketeer.environment.UpdateEnvironmentV2Request.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionEnvironmentV2Command
+	72, // 9: bucketeer.environment.UpdateEnvironmentV2Request.change_require_comment_command:type_name -> bucketeer.environment.ChangeRequireCommentCommand
+	73, // 10: bucketeer.environment.UpdateEnvironmentV2Request.name:type_name -> google.protobuf.StringValue
+	73, // 11: bucketeer.environment.UpdateEnvironmentV2Request.description:type_name -> google.protobuf.StringValue
+	68, // 12: bucketeer.environment.UpdateEnvironmentV2Request.require_comment:type_name -> google.protobuf.BoolValue
+	68, // 13: bucketeer.environment.UpdateEnvironmentV2Request.archived:type_name -> google.protobuf.BoolValue
+	68, // 14: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_enabled:type_name -> google.protobuf.BoolValue
+	74, // 15: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_unused_days:type_name -> google.protobuf.Int32Value
+	68, // 16: bucketeer.environment.UpdateEnvironmentV2Request.auto_archive_check_code_refs:type_name -> google.protobuf.BoolValue
+	75, // 17: bucketeer.environment.ArchiveEnvironmentV2Request.command:type_name -> bucketeer.environment.ArchiveEnvironmentV2Command
+	76, // 18: bucketeer.environment.UnarchiveEnvironmentV2Request.command:type_name -> bucketeer.environment.UnarchiveEnvironmentV2Command
+	77, // 19: bucketeer.environment.GetProjectResponse.project:type_name -> bucketeer.environment.Project
 	2,  // 20: bucketeer.environment.ListProjectsRequest.order_by:type_name -> bucketeer.environment.ListProjectsRequest.OrderBy
 	3,  // 21: bucketeer.environment.ListProjectsRequest.order_direction:type_name -> bucketeer.environment.ListProjectsRequest.OrderDirection
-	62, // 22: bucketeer.environment.ListProjectsRequest.disabled:type_name -> google.protobuf.BoolValue
-	71, // 23: bucketeer.environment.ListProjectsResponse.projects:type_name -> bucketeer.environment.Project
-	72, // 24: bucketeer.environment.CreateProjectRequest.command:type_name -> bucketeer.environment.CreateProjectCommand
-	71, // 25: bucketeer.environment.CreateProjectResponse.project:type_name -> bucketeer.environment.Project
-	73, // 26: bucketeer.environment.CreateTrialProjectRequest.command:type_name -> bucketeer.environment.CreateTrialProjectCommand
-	74, // 27: bucketeer.environment.UpdateProjectRequest.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionProjectCommand
-	75, // 28: bucketeer.environment.UpdateProjectRequest.rename_command:type_name -> bucketeer.environment.RenameProjectCommand
-	67, // 29: bucketeer.environment.UpdateProjectRequest.name:type_name -> google.protobuf.StringValue
-	67, // 30: bucketeer.environment.UpdateProjectRequest.description:type_name -> google.protobuf.StringValue
-	76, // 31: bucketeer.environment.EnableProjectRequest.command:type_name -> bucketeer.environment.EnableProjectCommand
-	77, // 32: bucketeer.environment.DisableProjectRequest.command:type_name -> bucketeer.environment.DisableProjectCommand
-	78, // 33: bucketeer.environment.ConvertTrialProjectRequest.command:type_name -> bucketeer.environment.ConvertTrialProjectCommand
-	79, // 34: bucketeer.environment.GetOrganizationResponse.organization:type_name -> bucketeer.environment.Organization
+	68, // 22: bucketeer.environment.ListProjectsRequest.disabled:type_name -> google.protobuf.BoolValue
+	77, // 23: bucketeer.environment.ListProjectsResponse.projects:type_name -> bucketeer.environment.Project
+	78, // 24: bucketeer.environment.CreateProjectRequest.command:type_name -> bucketeer.environment.CreateProjectCommand
+	77, // 25: bucketeer.environment.CreateProjectResponse.project:type_name -> bucketeer.environment.Project
+	79, // 26: bucketeer.environment.CreateTrialProjectRequest.command:type_name -> bucketeer.environment.CreateTrialProjectCommand
+	80, // 27: bucketeer.environment.UpdateProjectRequest.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionProjectCommand
+	81, // 28: bucketeer.environment.UpdateProjectRequest.rename_command:type_name -> bucketeer.environment.RenameProjectCommand
+	73, // 29: bucketeer.environment.UpdateProjectRequest.name:type_name -> google.protobuf.StringValue
+	73, // 30: bucketeer.environment.UpdateProjectRequest.description:type_name -> google.protobuf.StringValue
+	82, // 31: bucketeer.environment.EnableProjectRequest.command:type_name -> bucketeer.environment.EnableProjectCommand
+	83, // 32: bucketeer.environment.DisableProjectRequest.command:type_name -> bucketeer.environment.DisableProjectCommand
+	84, // 33: bucketeer.environment.ConvertTrialProjectRequest.command:type_name -> bucketeer.environment.ConvertTrialProjectCommand
+	85, // 34: bucketeer.environment.GetOrganizationResponse.organization:type_name -> bucketeer.environment.Organization
 	4,  // 35: bucketeer.environment.ListOrganizationsRequest.order_by:type_name -> bucketeer.environment.ListOrganizationsRequest.OrderBy
 	5,  // 36: bucketeer.environment.ListOrganizationsRequest.order_direction:type_name -> bucketeer.environment.ListOrganizationsRequest.OrderDirection
-	62, // 37: bucketeer.environment.ListOrganizationsRequest.disabled:type_name -> google.protobuf.BoolValue
-	62, // 38: bucketeer.environment.ListOrganizationsRequest.archived:type_name -> google.protobuf.BoolValue
-	79, // 39: bucketeer.environment.ListOrganizationsResponse.Organizations:type_name -> bucketeer.environment.Organization
-	80, // 40: bucketeer.environment.CreateOrganizationRequest.command:type_name -> bucketeer.environment.CreateOrganizationCommand
-	79, // 41: bucketeer.environment.CreateOrganizationResponse.Organization:type_name -> bucketeer.environment.Organization
-	81, // 42: bucketeer.environment.UpdateOrganizationRequest.rename_command:type_name -> bucketeer.environment.ChangeNameOrganizationCommand
-	82, // 43: bucketeer.environment.UpdateOrganizationRequest.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionOrganizationCommand
-	83, // 44: bucketeer.environment.UpdateOrganizationRequest.change_owner_email_command:type_name -> bucketeer.environment.ChangeOwnerEmailOrganizationCommand
-	67, // 45: bucketeer.environment.UpdateOrganizationRequest.name:type_name -> google.protobuf.StringValue
-	67, // 46: bucketeer.environment.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
-	67, // 47: bucketeer.environment.UpdateOrganizationRequest.owner_email:type_name -> google.protobuf.StringValue
-	84, // 48: bucketeer.environment.EnableOrganizationRequest.command:type_name -> bucketeer.environment.EnableOrganizationCommand
-	85, // 49: bucketeer.environment.DisableOrganizationRequest.command:type_name -> bucketeer.environment.DisableOrganizationCommand
-	86, // 50: bucketeer.environment.ArchiveOrganizationRequest.command:type_name -> bucketeer.environment.ArchiveOrganizationCommand
-	87, // 51: bucketeer.environment.UnarchiveOrganizationRequest.command:type_name -> bucketeer.environment.UnarchiveOrganizationCommand
-	88, // 52: bucketeer.environment.ConvertTrialOrganizationRequest.command:type_name -> bucketeer.environment.ConvertTrialOrganizationCommand
+	68, // 37: bucketeer.environment.ListOrganizationsRequest.disabled:type_name -> google.protobuf.BoolValue
+	68, // 38: bucketeer.environment.ListOrganizationsRequest.archived:type_name -> google.protobuf.BoolValue
+	85, // 39: bucketeer.environment.ListOrganizationsResponse.Organizations:type_name -> bucketeer.environment.Organization
+	86, // 40: bucketeer.environment.CreateOrganizationRequest.command:type_name -> bucketeer.environment.CreateOrganizationCommand
+	85, // 41: bucketeer.environment.CreateOrganizationResponse.Organization:type_name -> bucketeer.environment.Organization
+	87, // 42: bucketeer.environment.UpdateOrganizationRequest.rename_command:type_name -> bucketeer.environment.ChangeNameOrganizationCommand
+	88, // 43: bucketeer.environment.UpdateOrganizationRequest.change_description_command:type_name -> bucketeer.environment.ChangeDescriptionOrganizationCommand
+	89, // 44: bucketeer.environment.UpdateOrganizationRequest.change_owner_email_command:type_name -> bucketeer.environment.ChangeOwnerEmailOrganizationCommand
+	73, // 45: bucketeer.environment.UpdateOrganizationRequest.name:type_name -> google.protobuf.StringValue
+	73, // 46: bucketeer.environment.UpdateOrganizationRequest.description:type_name -> google.protobuf.StringValue
+	73, // 47: bucketeer.environment.UpdateOrganizationRequest.owner_email:type_name -> google.protobuf.StringValue
+	90, // 48: bucketeer.environment.EnableOrganizationRequest.command:type_name -> bucketeer.environment.EnableOrganizationCommand
+	91, // 49: bucketeer.environment.DisableOrganizationRequest.command:type_name -> bucketeer.environment.DisableOrganizationCommand
+	92, // 50: bucketeer.environment.ArchiveOrganizationRequest.command:type_name -> bucketeer.environment.ArchiveOrganizationCommand
+	93, // 51: bucketeer.environment.UnarchiveOrganizationRequest.command:type_name -> bucketeer.environment.UnarchiveOrganizationCommand
+	94, // 52: bucketeer.environment.ConvertTrialOrganizationRequest.command:type_name -> bucketeer.environment.ConvertTrialOrganizationCommand
 	6,  // 53: bucketeer.environment.ListProjectsV2Request.order_by:type_name -> bucketeer.environment.ListProjectsV2Request.OrderBy
 	7,  // 54: bucketeer.environment.ListProjectsV2Request.order_direction:type_name -> bucketeer.environment.ListProjectsV2Request.OrderDirection
-	62, // 55: bucketeer.environment.ListProjectsV2Request.disabled:type_name -> google.protobuf.BoolValue
-	71, // 56: bucketeer.environment.ListProjectsV2Response.projects:type_name -> bucketeer.environment.Project
-	89, // 57: bucketeer.environment.ExchangeDemoTokenRequest.type:type_name -> bucketeer.auth.AuthType
+	68, // 55: bucketeer.environment.ListProjectsV2Request.disabled:type_name -> google.protobuf.BoolValue
+	77, // 56: bucketeer.environment.ListProjectsV2Response.projects:type_name -> bucketeer.environment.Project
+	95, // 57: bucketeer.environment.ExchangeDemoTokenRequest.type:type_name -> bucketeer.auth.AuthType
 	58, // 58: bucketeer.environment.ExchangeDemoTokenResponse.demo_creation_token:type_name -> bucketeer.environment.DemoCreationToken
-	79, // 59: bucketeer.environment.CreateDemoOrganizationResponse.organization:type_name -> bucketeer.environment.Organization
-	8,  // 60: bucketeer.environment.EnvironmentService.GetEnvironmentV2:input_type -> bucketeer.environment.GetEnvironmentV2Request
-	10, // 61: bucketeer.environment.EnvironmentService.ListEnvironmentsV2:input_type -> bucketeer.environment.ListEnvironmentsV2Request
-	12, // 62: bucketeer.environment.EnvironmentService.CreateEnvironmentV2:input_type -> bucketeer.environment.CreateEnvironmentV2Request
-	14, // 63: bucketeer.environment.EnvironmentService.UpdateEnvironmentV2:input_type -> bucketeer.environment.UpdateEnvironmentV2Request
-	16, // 64: bucketeer.environment.EnvironmentService.ArchiveEnvironmentV2:input_type -> bucketeer.environment.ArchiveEnvironmentV2Request
-	18, // 65: bucketeer.environment.EnvironmentService.UnarchiveEnvironmentV2:input_type -> bucketeer.environment.UnarchiveEnvironmentV2Request
-	20, // 66: bucketeer.environment.EnvironmentService.GetProject:input_type -> bucketeer.environment.GetProjectRequest
-	22, // 67: bucketeer.environment.EnvironmentService.ListProjects:input_type -> bucketeer.environment.ListProjectsRequest
-	24, // 68: bucketeer.environment.EnvironmentService.CreateProject:input_type -> bucketeer.environment.CreateProjectRequest
-	26, // 69: bucketeer.environment.EnvironmentService.CreateTrialProject:input_type -> bucketeer.environment.CreateTrialProjectRequest
-	28, // 70: bucketeer.environment.EnvironmentService.UpdateProject:input_type -> bucketeer.environment.UpdateProjectRequest
-	30, // 71: bucketeer.environment.EnvironmentService.EnableProject:input_type -> bucketeer.environment.EnableProjectRequest
-	32, // 72: bucketeer.environment.EnvironmentService.DisableProject:input_type -> bucketeer.environment.DisableProjectRequest
-	34, // 73: bucketeer.environment.EnvironmentService.ConvertTrialProject:input_type -> bucketeer.environment.ConvertTrialProjectRequest
-	36, // 74: bucketeer.environment.EnvironmentService.GetOrganization:input_type -> bucketeer.environment.GetOrganizationRequest
-	38, // 75: bucketeer.environment.EnvironmentService.ListOrganizations:input_type -> bucketeer.environment.ListOrganizationsRequest
-	40, // 76: bucketeer.environment.EnvironmentService.CreateOrganization:input_type -> bucketeer.environment.CreateOrganizationRequest
-	42, // 77: bucketeer.environment.EnvironmentService.UpdateOrganization:input_type -> bucketeer.environment.UpdateOrganizationRequest
-	44, // 78: bucketeer.environment.EnvironmentService.EnableOrganization:input_type -> bucketeer.environment.EnableOrganizationRequest
-	46, // 79: bucketeer.environment.EnvironmentService.DisableOrganization:input_type -> bucketeer.environment.DisableOrganizationRequest
-	48, // 80: bucketeer.environment.EnvironmentService.ArchiveOrganization:input_type -> bucketeer.environment.ArchiveOrganizationRequest
-	50, // 81: bucketeer.environment.EnvironmentService.UnarchiveOrganization:input_type -> bucketeer.environment.UnarchiveOrganizationRequest
-	52, // 82: bucketeer.environment.EnvironmentService.ConvertTrialOrganization:input_type -> bucketeer.environment.ConvertTrialOrganizationRequest
-	54, // 83: bucketeer.environment.EnvironmentService.ListProjectsV2:input_type -> bucketeer.environment.ListProjectsV2Request
-	56, // 84: bucketeer.environment.EnvironmentService.ExchangeDemoToken:input_type -> bucketeer.environment.ExchangeDemoTokenRequest
-	59, // 85: bucketeer.environment.EnvironmentService.CreateDemoOrganization:input_type -> bucketeer.environment.CreateDemoOrganizationRequest
-	9,  // 86: bucketeer.environment.EnvironmentService.GetEnvironmentV2:output_type -> bucketeer.environment.GetEnvironmentV2Response
-	11, // 87: bucketeer.environment.EnvironmentService.ListEnvironmentsV2:output_type -> bucketeer.environment.ListEnvironmentsV2Response
-	13, // 88: bucketeer.environment.EnvironmentService.CreateEnvironmentV2:output_type -> bucketeer.environment.CreateEnvironmentV2Response
-	15, // 89: bucketeer.environment.EnvironmentService.UpdateEnvironmentV2:output_type -> bucketeer.environment.UpdateEnvironmentV2Response
-	17, // 90: bucketeer.environment.EnvironmentService.ArchiveEnvironmentV2:output_type -> bucketeer.environment.ArchiveEnvironmentV2Response
-	19, // 91: bucketeer.environment.EnvironmentService.UnarchiveEnvironmentV2:output_type -> bucketeer.environment.UnarchiveEnvironmentV2Response
-	21, // 92: bucketeer.environment.EnvironmentService.GetProject:output_type -> bucketeer.environment.GetProjectResponse
-	23, // 93: bucketeer.environment.EnvironmentService.ListProjects:output_type -> bucketeer.environment.ListProjectsResponse
-	25, // 94: bucketeer.environment.EnvironmentService.CreateProject:output_type -> bucketeer.environment.CreateProjectResponse
-	27, // 95: bucketeer.environment.EnvironmentService.CreateTrialProject:output_type -> bucketeer.environment.CreateTrialProjectResponse
-	29, // 96: bucketeer.environment.EnvironmentService.UpdateProject:output_type -> bucketeer.environment.UpdateProjectResponse
-	31, // 97: bucketeer.environment.EnvironmentService.EnableProject:output_type -> bucketeer.environment.EnableProjectResponse
-	33, // 98: bucketeer.environment.EnvironmentService.DisableProject:output_type -> bucketeer.environment.DisableProjectResponse
-	35, // 99: bucketeer.environment.EnvironmentService.ConvertTrialProject:output_type -> bucketeer.environment.ConvertTrialProjectResponse
-	37, // 100: bucketeer.environment.EnvironmentService.GetOrganization:output_type -> bucketeer.environment.GetOrganizationResponse
-	39, // 101: bucketeer.environment.EnvironmentService.ListOrganizations:output_type -> bucketeer.environment.ListOrganizationsResponse
-	41, // 102: bucketeer.environment.EnvironmentService.CreateOrganization:output_type -> bucketeer.environment.CreateOrganizationResponse
-	43, // 103: bucketeer.environment.EnvironmentService.UpdateOrganization:output_type -> bucketeer.environment.UpdateOrganizationResponse
-	45, // 104: bucketeer.environment.EnvironmentService.EnableOrganization:output_type -> bucketeer.environment.EnableOrganizationResponse
-	47, // 105: bucketeer.environment.EnvironmentService.DisableOrganization:output_type -> bucketeer.environment.DisableOrganizationResponse
-	49, // 106: bucketeer.environment.EnvironmentService.ArchiveOrganization:output_type -> bucketeer.environment.ArchiveOrganizationResponse
-	51, // 107: bucketeer.environment.EnvironmentService.UnarchiveOrganization:output_type -> bucketeer.environment.UnarchiveOrganizationResponse
-	53, // 108: bucketeer.environment.EnvironmentService.ConvertTrialOrganization:output_type -> bucketeer.environment.ConvertTrialOrganizationResponse
-	55, // 109: bucketeer.environment.EnvironmentService.ListProjectsV2:output_type -> bucketeer.environment.ListProjectsV2Response
-	57, // 110: bucketeer.environment.EnvironmentService.ExchangeDemoToken:output_type -> bucketeer.environment.ExchangeDemoTokenResponse
-	60, // 111: bucketeer.environment.EnvironmentService.CreateDemoOrganization:output_type -> bucketeer.environment.CreateDemoOrganizationResponse
-	86, // [86:112] is the sub-list for method output_type
-	60, // [60:86] is the sub-list for method input_type
-	60, // [60:60] is the sub-list for extension type_name
-	60, // [60:60] is the sub-list for extension extendee
-	0,  // [0:60] is the sub-list for field type_name
+	85, // 59: bucketeer.environment.CreateDemoOrganizationResponse.organization:type_name -> bucketeer.environment.Organization
+	63, // 60: bucketeer.environment.DeleteOrganizationDataResponse.summaries:type_name -> bucketeer.environment.OrganizationDeletionSummary
+	66, // 61: bucketeer.environment.DeleteEnvironmentDataResponse.summaries:type_name -> bucketeer.environment.EnvironmentDeletionSummary
+	8,  // 62: bucketeer.environment.EnvironmentService.GetEnvironmentV2:input_type -> bucketeer.environment.GetEnvironmentV2Request
+	10, // 63: bucketeer.environment.EnvironmentService.ListEnvironmentsV2:input_type -> bucketeer.environment.ListEnvironmentsV2Request
+	12, // 64: bucketeer.environment.EnvironmentService.CreateEnvironmentV2:input_type -> bucketeer.environment.CreateEnvironmentV2Request
+	14, // 65: bucketeer.environment.EnvironmentService.UpdateEnvironmentV2:input_type -> bucketeer.environment.UpdateEnvironmentV2Request
+	16, // 66: bucketeer.environment.EnvironmentService.ArchiveEnvironmentV2:input_type -> bucketeer.environment.ArchiveEnvironmentV2Request
+	18, // 67: bucketeer.environment.EnvironmentService.UnarchiveEnvironmentV2:input_type -> bucketeer.environment.UnarchiveEnvironmentV2Request
+	20, // 68: bucketeer.environment.EnvironmentService.GetProject:input_type -> bucketeer.environment.GetProjectRequest
+	22, // 69: bucketeer.environment.EnvironmentService.ListProjects:input_type -> bucketeer.environment.ListProjectsRequest
+	24, // 70: bucketeer.environment.EnvironmentService.CreateProject:input_type -> bucketeer.environment.CreateProjectRequest
+	26, // 71: bucketeer.environment.EnvironmentService.CreateTrialProject:input_type -> bucketeer.environment.CreateTrialProjectRequest
+	28, // 72: bucketeer.environment.EnvironmentService.UpdateProject:input_type -> bucketeer.environment.UpdateProjectRequest
+	30, // 73: bucketeer.environment.EnvironmentService.EnableProject:input_type -> bucketeer.environment.EnableProjectRequest
+	32, // 74: bucketeer.environment.EnvironmentService.DisableProject:input_type -> bucketeer.environment.DisableProjectRequest
+	34, // 75: bucketeer.environment.EnvironmentService.ConvertTrialProject:input_type -> bucketeer.environment.ConvertTrialProjectRequest
+	36, // 76: bucketeer.environment.EnvironmentService.GetOrganization:input_type -> bucketeer.environment.GetOrganizationRequest
+	38, // 77: bucketeer.environment.EnvironmentService.ListOrganizations:input_type -> bucketeer.environment.ListOrganizationsRequest
+	40, // 78: bucketeer.environment.EnvironmentService.CreateOrganization:input_type -> bucketeer.environment.CreateOrganizationRequest
+	42, // 79: bucketeer.environment.EnvironmentService.UpdateOrganization:input_type -> bucketeer.environment.UpdateOrganizationRequest
+	44, // 80: bucketeer.environment.EnvironmentService.EnableOrganization:input_type -> bucketeer.environment.EnableOrganizationRequest
+	46, // 81: bucketeer.environment.EnvironmentService.DisableOrganization:input_type -> bucketeer.environment.DisableOrganizationRequest
+	48, // 82: bucketeer.environment.EnvironmentService.ArchiveOrganization:input_type -> bucketeer.environment.ArchiveOrganizationRequest
+	50, // 83: bucketeer.environment.EnvironmentService.UnarchiveOrganization:input_type -> bucketeer.environment.UnarchiveOrganizationRequest
+	52, // 84: bucketeer.environment.EnvironmentService.ConvertTrialOrganization:input_type -> bucketeer.environment.ConvertTrialOrganizationRequest
+	54, // 85: bucketeer.environment.EnvironmentService.ListProjectsV2:input_type -> bucketeer.environment.ListProjectsV2Request
+	56, // 86: bucketeer.environment.EnvironmentService.ExchangeDemoToken:input_type -> bucketeer.environment.ExchangeDemoTokenRequest
+	59, // 87: bucketeer.environment.EnvironmentService.CreateDemoOrganization:input_type -> bucketeer.environment.CreateDemoOrganizationRequest
+	61, // 88: bucketeer.environment.EnvironmentService.DeleteOrganizationData:input_type -> bucketeer.environment.DeleteOrganizationDataRequest
+	64, // 89: bucketeer.environment.EnvironmentService.DeleteEnvironmentData:input_type -> bucketeer.environment.DeleteEnvironmentDataRequest
+	9,  // 90: bucketeer.environment.EnvironmentService.GetEnvironmentV2:output_type -> bucketeer.environment.GetEnvironmentV2Response
+	11, // 91: bucketeer.environment.EnvironmentService.ListEnvironmentsV2:output_type -> bucketeer.environment.ListEnvironmentsV2Response
+	13, // 92: bucketeer.environment.EnvironmentService.CreateEnvironmentV2:output_type -> bucketeer.environment.CreateEnvironmentV2Response
+	15, // 93: bucketeer.environment.EnvironmentService.UpdateEnvironmentV2:output_type -> bucketeer.environment.UpdateEnvironmentV2Response
+	17, // 94: bucketeer.environment.EnvironmentService.ArchiveEnvironmentV2:output_type -> bucketeer.environment.ArchiveEnvironmentV2Response
+	19, // 95: bucketeer.environment.EnvironmentService.UnarchiveEnvironmentV2:output_type -> bucketeer.environment.UnarchiveEnvironmentV2Response
+	21, // 96: bucketeer.environment.EnvironmentService.GetProject:output_type -> bucketeer.environment.GetProjectResponse
+	23, // 97: bucketeer.environment.EnvironmentService.ListProjects:output_type -> bucketeer.environment.ListProjectsResponse
+	25, // 98: bucketeer.environment.EnvironmentService.CreateProject:output_type -> bucketeer.environment.CreateProjectResponse
+	27, // 99: bucketeer.environment.EnvironmentService.CreateTrialProject:output_type -> bucketeer.environment.CreateTrialProjectResponse
+	29, // 100: bucketeer.environment.EnvironmentService.UpdateProject:output_type -> bucketeer.environment.UpdateProjectResponse
+	31, // 101: bucketeer.environment.EnvironmentService.EnableProject:output_type -> bucketeer.environment.EnableProjectResponse
+	33, // 102: bucketeer.environment.EnvironmentService.DisableProject:output_type -> bucketeer.environment.DisableProjectResponse
+	35, // 103: bucketeer.environment.EnvironmentService.ConvertTrialProject:output_type -> bucketeer.environment.ConvertTrialProjectResponse
+	37, // 104: bucketeer.environment.EnvironmentService.GetOrganization:output_type -> bucketeer.environment.GetOrganizationResponse
+	39, // 105: bucketeer.environment.EnvironmentService.ListOrganizations:output_type -> bucketeer.environment.ListOrganizationsResponse
+	41, // 106: bucketeer.environment.EnvironmentService.CreateOrganization:output_type -> bucketeer.environment.CreateOrganizationResponse
+	43, // 107: bucketeer.environment.EnvironmentService.UpdateOrganization:output_type -> bucketeer.environment.UpdateOrganizationResponse
+	45, // 108: bucketeer.environment.EnvironmentService.EnableOrganization:output_type -> bucketeer.environment.EnableOrganizationResponse
+	47, // 109: bucketeer.environment.EnvironmentService.DisableOrganization:output_type -> bucketeer.environment.DisableOrganizationResponse
+	49, // 110: bucketeer.environment.EnvironmentService.ArchiveOrganization:output_type -> bucketeer.environment.ArchiveOrganizationResponse
+	51, // 111: bucketeer.environment.EnvironmentService.UnarchiveOrganization:output_type -> bucketeer.environment.UnarchiveOrganizationResponse
+	53, // 112: bucketeer.environment.EnvironmentService.ConvertTrialOrganization:output_type -> bucketeer.environment.ConvertTrialOrganizationResponse
+	55, // 113: bucketeer.environment.EnvironmentService.ListProjectsV2:output_type -> bucketeer.environment.ListProjectsV2Response
+	57, // 114: bucketeer.environment.EnvironmentService.ExchangeDemoToken:output_type -> bucketeer.environment.ExchangeDemoTokenResponse
+	60, // 115: bucketeer.environment.EnvironmentService.CreateDemoOrganization:output_type -> bucketeer.environment.CreateDemoOrganizationResponse
+	62, // 116: bucketeer.environment.EnvironmentService.DeleteOrganizationData:output_type -> bucketeer.environment.DeleteOrganizationDataResponse
+	65, // 117: bucketeer.environment.EnvironmentService.DeleteEnvironmentData:output_type -> bucketeer.environment.DeleteEnvironmentDataResponse
+	90, // [90:118] is the sub-list for method output_type
+	62, // [62:90] is the sub-list for method input_type
+	62, // [62:62] is the sub-list for extension type_name
+	62, // [62:62] is the sub-list for extension extendee
+	0,  // [0:62] is the sub-list for field type_name
 }
 
 func init() { file_proto_environment_service_proto_init() }
@@ -6409,6 +7182,78 @@ func file_proto_environment_service_proto_init() {
 				return nil
 			}
 		}
+		file_proto_environment_service_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteOrganizationDataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_service_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteOrganizationDataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_service_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OrganizationDeletionSummary); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_service_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteEnvironmentDataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_service_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteEnvironmentDataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_service_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EnvironmentDeletionSummary); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -6416,7 +7261,7 @@ func file_proto_environment_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_environment_service_proto_rawDesc,
 			NumEnums:      8,
-			NumMessages:   53,
+			NumMessages:   59,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -6469,6 +7314,8 @@ type EnvironmentServiceClient interface {
 	ListProjectsV2(ctx context.Context, in *ListProjectsV2Request, opts ...grpc.CallOption) (*ListProjectsV2Response, error)
 	ExchangeDemoToken(ctx context.Context, in *ExchangeDemoTokenRequest, opts ...grpc.CallOption) (*ExchangeDemoTokenResponse, error)
 	CreateDemoOrganization(ctx context.Context, in *CreateDemoOrganizationRequest, opts ...grpc.CallOption) (*CreateDemoOrganizationResponse, error)
+	DeleteOrganizationData(ctx context.Context, in *DeleteOrganizationDataRequest, opts ...grpc.CallOption) (*DeleteOrganizationDataResponse, error)
+	DeleteEnvironmentData(ctx context.Context, in *DeleteEnvironmentDataRequest, opts ...grpc.CallOption) (*DeleteEnvironmentDataResponse, error)
 }
 
 type environmentServiceClient struct {
@@ -6713,6 +7560,24 @@ func (c *environmentServiceClient) CreateDemoOrganization(ctx context.Context, i
 	return out, nil
 }
 
+func (c *environmentServiceClient) DeleteOrganizationData(ctx context.Context, in *DeleteOrganizationDataRequest, opts ...grpc.CallOption) (*DeleteOrganizationDataResponse, error) {
+	out := new(DeleteOrganizationDataResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.environment.EnvironmentService/DeleteOrganizationData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *environmentServiceClient) DeleteEnvironmentData(ctx context.Context, in *DeleteEnvironmentDataRequest, opts ...grpc.CallOption) (*DeleteEnvironmentDataResponse, error) {
+	out := new(DeleteEnvironmentDataResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.environment.EnvironmentService/DeleteEnvironmentData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EnvironmentServiceServer is the server API for EnvironmentService service.
 type EnvironmentServiceServer interface {
 	GetEnvironmentV2(context.Context, *GetEnvironmentV2Request) (*GetEnvironmentV2Response, error)
@@ -6741,6 +7606,8 @@ type EnvironmentServiceServer interface {
 	ListProjectsV2(context.Context, *ListProjectsV2Request) (*ListProjectsV2Response, error)
 	ExchangeDemoToken(context.Context, *ExchangeDemoTokenRequest) (*ExchangeDemoTokenResponse, error)
 	CreateDemoOrganization(context.Context, *CreateDemoOrganizationRequest) (*CreateDemoOrganizationResponse, error)
+	DeleteOrganizationData(context.Context, *DeleteOrganizationDataRequest) (*DeleteOrganizationDataResponse, error)
+	DeleteEnvironmentData(context.Context, *DeleteEnvironmentDataRequest) (*DeleteEnvironmentDataResponse, error)
 }
 
 // UnimplementedEnvironmentServiceServer can be embedded to have forward compatible implementations.
@@ -6824,6 +7691,12 @@ func (*UnimplementedEnvironmentServiceServer) ExchangeDemoToken(context.Context,
 }
 func (*UnimplementedEnvironmentServiceServer) CreateDemoOrganization(context.Context, *CreateDemoOrganizationRequest) (*CreateDemoOrganizationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDemoOrganization not implemented")
+}
+func (*UnimplementedEnvironmentServiceServer) DeleteOrganizationData(context.Context, *DeleteOrganizationDataRequest) (*DeleteOrganizationDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganizationData not implemented")
+}
+func (*UnimplementedEnvironmentServiceServer) DeleteEnvironmentData(context.Context, *DeleteEnvironmentDataRequest) (*DeleteEnvironmentDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteEnvironmentData not implemented")
 }
 
 func RegisterEnvironmentServiceServer(s *grpc.Server, srv EnvironmentServiceServer) {
@@ -7298,6 +8171,42 @@ func _EnvironmentService_CreateDemoOrganization_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EnvironmentService_DeleteOrganizationData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganizationDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentServiceServer).DeleteOrganizationData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.environment.EnvironmentService/DeleteOrganizationData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentServiceServer).DeleteOrganizationData(ctx, req.(*DeleteOrganizationDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EnvironmentService_DeleteEnvironmentData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteEnvironmentDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentServiceServer).DeleteEnvironmentData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.environment.EnvironmentService/DeleteEnvironmentData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentServiceServer).DeleteEnvironmentData(ctx, req.(*DeleteEnvironmentDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _EnvironmentService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "bucketeer.environment.EnvironmentService",
 	HandlerType: (*EnvironmentServiceServer)(nil),
@@ -7405,6 +8314,14 @@ var _EnvironmentService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateDemoOrganization",
 			Handler:    _EnvironmentService_CreateDemoOrganization_Handler,
+		},
+		{
+			MethodName: "DeleteOrganizationData",
+			Handler:    _EnvironmentService_DeleteOrganizationData_Handler,
+		},
+		{
+			MethodName: "DeleteEnvironmentData",
+			Handler:    _EnvironmentService_DeleteEnvironmentData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

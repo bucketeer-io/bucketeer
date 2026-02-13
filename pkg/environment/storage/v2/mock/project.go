@@ -57,6 +57,20 @@ func (mr *MockProjectStorageMockRecorder) CreateProject(ctx, p any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockProjectStorage)(nil).CreateProject), ctx, p)
 }
 
+// DeleteProjects mocks base method.
+func (m *MockProjectStorage) DeleteProjects(ctx context.Context, whereParts []mysql.WherePart) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProjects", ctx, whereParts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteProjects indicates an expected call of DeleteProjects.
+func (mr *MockProjectStorageMockRecorder) DeleteProjects(ctx, whereParts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProjects", reflect.TypeOf((*MockProjectStorage)(nil).DeleteProjects), ctx, whereParts)
+}
+
 // GetProject mocks base method.
 func (m *MockProjectStorage) GetProject(ctx context.Context, id string) (*domain.Project, error) {
 	m.ctrl.T.Helper()

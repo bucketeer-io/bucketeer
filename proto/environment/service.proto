@@ -415,6 +415,72 @@ message CreateDemoOrganizationResponse {
   Organization organization = 1;
 }
 
+message DeleteOrganizationDataRequest {
+  repeated string organization_ids = 1;
+  bool dry_run = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Set to true to preview the data that would be deleted."
+      }];
+  bool force = 3
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "force flag to bypass safety checks"
+      }];
+}
+
+message DeleteOrganizationDataResponse {
+  repeated OrganizationDeletionSummary summaries = 1;
+}
+
+message OrganizationDeletionSummary {
+  string organization_id = 1;
+  int64 environments_deleted = 2;
+  int64 projects_deleted = 3;
+  int64 features_deleted = 4;
+  int64 accounts_deleted = 5;
+  int64 experiments_deleted = 6;
+  int64 subscriptions_deleted = 7;
+  int64 pushes_deleted = 8;
+  int64 tags_deleted = 9;
+  int64 teams_deleted = 10;
+  int64 segments_deleted = 11;
+  int64 flag_triggers_deleted = 12;
+  int64 api_keys_deleted = 13;
+  int64 operations_deleted = 14;
+  int64 feature_last_used_infos_deleted = 15;
+  int64 goals_deleted = 16;
+}
+
+message DeleteEnvironmentDataRequest {
+  repeated string environment_ids = 1;
+  bool dry_run = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Set to true to preview the data that would be deleted."
+      }];
+  bool force = 3
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "force flag to bypass safety checks"
+      }];
+}
+
+message DeleteEnvironmentDataResponse {
+  repeated EnvironmentDeletionSummary summaries = 1;
+}
+
+message EnvironmentDeletionSummary {
+  string environment_id = 1;
+  int64 features_deleted = 2;
+  int64 experiments_deleted = 3;
+  int64 subscriptions_deleted = 4;
+  int64 pushes_deleted = 5;
+  int64 tags_deleted = 6;
+  int64 segments_deleted = 7;
+  int64 flag_triggers_deleted = 8;
+  int64 api_keys_deleted = 9;
+  int64 operations_deleted = 10;
+  int64 feature_last_used_infos_deleted = 11;
+  int64 goals_deleted = 12;
+}
+
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {
@@ -1555,6 +1621,98 @@ service EnvironmentService {
       description: "Create a demo organization. To call this API, you need an `SYSTEM_ADMIN` role.",
       tags: "Organization",
       operation_id: "web.v1.environment.create_demo_organization",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DeleteOrganizationData(DeleteOrganizationDataRequest)
+      returns (DeleteOrganizationDataResponse) {
+    option (google.api.http) = {
+      post: "/v1/environment/delete_organization_data"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Organization Data",
+      description: "Delete all data in an organization. To call this API, you need an `SYSTEM_ADMIN` role.",
+      tags: "Organization",
+      operation_id: "web.v1.environment.delete_organization_data",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DeleteEnvironmentData(DeleteEnvironmentDataRequest)
+      returns (DeleteEnvironmentDataResponse) {
+    option (google.api.http) = {
+      post: "/v1/environment/delete_environment_data"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Environment Data",
+      description: "Delete all data in the environment. To call this API, you need an `SYSTEM_ADMIN` role.",
+      tags: "Environment",
+      operation_id: "web.v1.environment.delete_environment_data",
       responses: {
         key: "400"
         value: {
