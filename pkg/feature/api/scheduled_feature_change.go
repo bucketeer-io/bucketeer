@@ -255,7 +255,15 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
 				return statusScheduledFlagChangeNotFound.Err()
 			}
-			return err
+			s.logger.Error(
+				"Failed to get scheduled flag change for update",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Capture previous scheduled time for audit event
@@ -269,7 +277,15 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		// Get feature for validation and summary generation
 		feature, err = s.featureStorage.GetFeature(ctxWithTx, sfc.FeatureId, req.EnvironmentId)
 		if err != nil {
-			return err
+			s.logger.Error(
+				"Failed to get feature for scheduled change update",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", sfc.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Update schedule time if provided
@@ -287,7 +303,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 			if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
 				return err
 			}
-			comment := ""
+			comment := sfc.Comment // Preserve existing comment if not provided
 			if req.Comment != nil {
 				comment = req.Comment.Value
 			}
@@ -383,7 +399,15 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
 				return statusScheduledFlagChangeNotFound.Err()
 			}
-			return err
+			s.logger.Error(
+				"Failed to get scheduled flag change for deletion",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Only allow deleting pending or conflict schedules
@@ -527,6 +551,9 @@ func (s *FeatureService) ListScheduledFlagChanges(
 		if err != nil {
 			return nil, statusInvalidCursor.Err()
 		}
+		if offset < 0 {
+			return nil, statusInvalidCursor.Err()
+		}
 	}
 
 	options := &mysql.ListOptions{
@@ -594,7 +621,15 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeNotFound) {
 				return statusScheduledFlagChangeNotFound.Err()
 			}
-			return err
+			s.logger.Error(
+				"Failed to get scheduled flag change for execution",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return statusInternal.Err()
 		}
 
 		// Only allow executing pending schedules
@@ -797,6 +832,9 @@ func (s *FeatureService) validateScheduledChangePayload(
 
 	// Validate variation references
 	for _, vc := range payload.VariationChanges {
+		if vc.Variation == nil {
+			return statusInvalidVariationReference.Err()
+		}
 		if vc.ChangeType == ftproto.ChangeType_UPDATE || vc.ChangeType == ftproto.ChangeType_DELETE {
 			if !variationExists(feature, vc.Variation.Id) {
 				return statusInvalidVariationReference.Err()
@@ -806,10 +844,27 @@ func (s *FeatureService) validateScheduledChangePayload(
 
 	// Validate rule references
 	for _, rc := range payload.RuleChanges {
+		if rc.Rule == nil {
+			return statusInvalidRuleReference.Err()
+		}
 		if rc.ChangeType == ftproto.ChangeType_UPDATE || rc.ChangeType == ftproto.ChangeType_DELETE {
 			if !ruleExists(feature, rc.Rule.Id) {
 				return statusInvalidRuleReference.Err()
 			}
+		}
+	}
+
+	// Validate target references
+	for _, tc := range payload.TargetChanges {
+		if tc.Target == nil {
+			return statusInvalidRuleReference.Err() // Reuse status code for general validation error
+		}
+	}
+
+	// Validate prerequisite references
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc.Prerequisite == nil {
+			return statusInvalidRuleReference.Err() // Reuse status code for general validation error
 		}
 	}
 

@@ -302,6 +302,9 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 
 	// Variation changes (Variations)
 	for _, vc := range s.Payload.VariationChanges {
+		if vc.Variation == nil {
+			continue // Skip invalid entries
+		}
 		switch vc.ChangeType {
 		case proto.ChangeType_CREATE:
 			summaries = append(summaries, newChangeSummary(MsgKeyAddVariation, map[string]string{
@@ -362,6 +365,9 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 
 	// Rule changes (Targeting)
 	for _, rc := range s.Payload.RuleChanges {
+		if rc.Rule == nil {
+			continue // Skip invalid entries
+		}
 		switch rc.ChangeType {
 		case proto.ChangeType_CREATE:
 			summaries = append(summaries, newChangeSummary(MsgKeyAddRule, map[string]string{
@@ -385,6 +391,9 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 
 	// Target changes (Targeting - individual user targeting)
 	for _, tc := range s.Payload.TargetChanges {
+		if tc.Target == nil {
+			continue // Skip invalid entries
+		}
 		variationName := sfcGetVariationName(flag, tc.Target.Variation)
 		switch tc.ChangeType {
 		case proto.ChangeType_CREATE, proto.ChangeType_UPDATE:
@@ -401,6 +410,9 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 
 	// Prerequisite changes (Targeting)
 	for _, pc := range s.Payload.PrerequisiteChanges {
+		if pc.Prerequisite == nil {
+			continue // Skip invalid entries
+		}
 		switch pc.ChangeType {
 		case proto.ChangeType_CREATE:
 			summaries = append(summaries, newChangeSummary(MsgKeyAddPrerequisite, map[string]string{
