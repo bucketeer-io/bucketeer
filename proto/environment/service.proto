@@ -25,7 +25,6 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "proto/environment/environment.proto";
 import "proto/environment/project.proto";
 import "proto/environment/organization.proto";
-import "proto/environment/command.proto";
 
 import "proto/auth/token.proto";
 import "proto/auth/service.proto";
@@ -164,12 +163,6 @@ message CreateProjectRequest {
 message CreateProjectResponse {
   Project project = 1;
 }
-
-message CreateTrialProjectRequest {
-  CreateTrialProjectCommand command = 1;
-}
-
-message CreateTrialProjectResponse {}
 
 message UpdateProjectRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
@@ -740,52 +733,6 @@ service EnvironmentService {
       description: "Create a project. To call this API, you need an `SYSTEM_ADMIN` role.",
       tags: "Project",
       operation_id: "web.v1.environment.create_project",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "403"
-        value: {
-          description: "Request does not have permission to access the resource."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc CreateTrialProject(CreateTrialProjectRequest)
-      returns (CreateTrialProjectResponse) {
-    option (google.api.http) = {
-      post: "/v1/environment/create_trial_project"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Create Trial",
-      description: "Create a trial project. To call this API, you need an `SYSTEM_ADMIN` role.",
-      tags: "Project",
-      operation_id: "web.v1.environment.create_trial_project",
       responses: {
         key: "400"
         value: {

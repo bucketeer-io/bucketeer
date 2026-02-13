@@ -34,7 +34,6 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pubmock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -393,181 +392,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 			} else {
 				assert.Equal(t, p.expectedErr, err)
 			}
-		})
-	}
-}
-
-func TestCreateTrialProjectMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	ctx := createContextWithToken(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc        string
-		setup       func(*EnvironmentService)
-		req         *proto.CreateTrialProjectRequest
-		expectedErr error
-	}{
-		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: nil,
-			},
-			expectedErr: statusNoCommand.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectName: empty name",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: ""},
-			},
-			expectedErr: statusProjectNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectName: only space",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "   "},
-			},
-			expectedErr: statusProjectNameRequired.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectName: max id length exceeded",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: strings.Repeat("a", 51)},
-			},
-			expectedErr: statusInvalidProjectName.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: "CODE"},
-			},
-			expectedErr: statusInvalidProjectUrlCode.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
-			},
-			expectedErr: statusInvalidProjectUrlCode.Err(),
-		},
-		{
-			desc:  "err: ErrInvalidProjectCreatorEmail",
-			setup: nil,
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "email"},
-			},
-			expectedErr: statusInvalidProjectCreatorEmail.Err(),
-		},
-		{
-			desc: "err: ErrProjectAlreadyExists: trial exists",
-			setup: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetTrialProjectByEmail(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-0"},
-				}, nil)
-			},
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
-			},
-			expectedErr: statusProjectAlreadyExists.Err(),
-		},
-		{
-			desc: "err: ErrProjectAlreadyExists: duplicated id",
-			setup: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetTrialProjectByEmail(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "id-0"},
-				}, nil)
-			},
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
-			},
-			expectedErr: statusProjectAlreadyExists.Err(),
-		},
-		{
-			desc: "err: ErrInternal",
-			setup: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetTrialProjectByEmail(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
-			},
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-1", Email: "test@example.com"},
-			},
-			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal")).Err(),
-		},
-		{
-			desc: "success",
-			setup: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetTrialProjectByEmail(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: nil,
-				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
-				).Return(nil).AnyTimes()
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().CreateProject(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-
-				// CreateEnvironmentV2 is called for two purposes: development environment and production environment.
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
-					_ = fn(ctx, nil)
-				}).Return(nil).Times(2)
-				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil).Times(2)
-
-				// Verify that the account is created with OWNER role
-				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccountV2(
-					gomock.Any(),
-					gomock.Any(),
-				).Do(func(_ context.Context, req *accountproto.CreateAccountV2Request, _ ...interface{}) {
-					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, req.OrganizationRole,
-						"Organization creator must have OWNER role, not ADMIN")
-					assert.Equal(t, "test@example.com", req.Email)
-					assert.NotNil(t, req.EnvironmentRoles)
-					assert.Len(t, req.EnvironmentRoles, 2, "Should create environment roles for Development and Production")
-				}).Return(&accountproto.CreateAccountV2Response{}, nil)
-			},
-			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			service := newEnvironmentService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			_, err := service.CreateTrialProject(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
@@ -949,17 +773,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
-		{
-			desc: "CreateTrialProject",
-			setup: func(s *EnvironmentService) {
-				// No setup needed - this fails at system admin check
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
 		{
 			desc: "EnableProject",
 			setup: func(s *EnvironmentService) {
