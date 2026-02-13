@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -319,94 +318,6 @@ func (s *EnvironmentService) newCreateDomainEvent(
 		return nil, err
 	}
 	return event, nil
-}
-
-func (s *EnvironmentService) getTrialProjectByEmail(
-	ctx context.Context,
-	email string,
-) (*environmentproto.Project, error) {
-	project, err := s.projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
-	if err != nil {
-		if err == v2es.ErrProjectNotFound {
-			return nil, statusProjectNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return project.Project, nil
-}
-
-func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
-	ctx context.Context,
-	project *domain.Project,
-	editor *eventproto.Editor,
-) error {
-	envRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0, 2)
-	envNames := []string{
-		"Development",
-		"Production",
-	}
-	for _, name := range envNames {
-		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
-		envV2, err := domain.NewEnvironmentV2(name, envURLCode, "", project.Id, project.OrganizationId, false, s.logger)
-		if err != nil {
-			return err
-		}
-		// Create environment directly without command pattern
-		err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-			event, err := domainevent.NewAdminEvent(
-				editor,
-				eventproto.Event_ENVIRONMENT,
-				envV2.Id,
-				eventproto.Event_ENVIRONMENT_V2_CREATED,
-				&eventproto.EnvironmentV2CreatedEvent{
-					Id:             envV2.Id,
-					Name:           envV2.Name,
-					UrlCode:        envV2.UrlCode,
-					Description:    envV2.Description,
-					ProjectId:      envV2.ProjectId,
-					Archived:       envV2.Archived,
-					RequireComment: envV2.RequireComment,
-					CreatedAt:      envV2.CreatedAt,
-					UpdatedAt:      envV2.UpdatedAt,
-				},
-				envV2.EnvironmentV2,
-				nil,
-			)
-			if err != nil {
-				return err
-			}
-			if err := s.publisher.Publish(ctx, event); err != nil {
-				return err
-			}
-			return s.environmentStorage.CreateEnvironmentV2(ctxWithTx, envV2)
-		})
-		if err != nil {
-			if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
-				return statusEnvironmentAlreadyExists.Err()
-			}
-			s.logger.Error(
-				"Failed to create trial environment",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return api.NewGRPCStatus(err).Err()
-		}
-		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
-			EnvironmentId: envV2.Id,
-			Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-		})
-	}
-	createAccountReq := &accountproto.CreateAccountV2Request{
-		OrganizationId:   project.OrganizationId,
-		Email:            editor.Email,
-		Name:             strings.Split(editor.Email, "@")[0],
-		AvatarImageUrl:   "",
-		OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
-		EnvironmentRoles: envRoles,
-	}
-	if _, err := s.accountClient.CreateAccountV2(ctx, createAccountReq); err != nil {
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
 }
 
 func (s *EnvironmentService) UpdateProject(
