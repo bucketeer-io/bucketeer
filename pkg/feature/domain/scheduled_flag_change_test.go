@@ -487,3 +487,237 @@ func TestScheduledFlagChangeDetermineCategory(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateChangeSummaries_EnableFlag(t *testing.T) {
+	t.Parallel()
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				Enabled: wrapperspb.Bool(true),
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(nil)
+
+	assert.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyEnableFlag, summaries[0].MessageKey)
+	assert.Nil(t, summaries[0].Values)
+}
+
+func TestGenerateChangeSummaries_DisableFlag(t *testing.T) {
+	t.Parallel()
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				Enabled: wrapperspb.Bool(false),
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(nil)
+
+	assert.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyDisableFlag, summaries[0].MessageKey)
+}
+
+func TestGenerateChangeSummaries_UpdateVariation_ValueOnly(t *testing.T) {
+	t.Parallel()
+
+	flag := &proto.Feature{
+		Variations: []*proto.Variation{
+			{Id: "v1", Name: "Variation A", Value: "old-value"},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				VariationChanges: []*proto.VariationChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Variation: &proto.Variation{
+							Id:    "v1",
+							Name:  "Variation A", // Same name
+							Value: "new-value",   // Different value
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(flag)
+
+	assert.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyChangeVariationValue, summaries[0].MessageKey)
+	assert.Equal(t, "Variation A", summaries[0].Values["name"])
+	assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
+	assert.Equal(t, "new-value", summaries[0].Values["newValue"])
+}
+
+func TestGenerateChangeSummaries_UpdateVariation_NameOnly(t *testing.T) {
+	t.Parallel()
+
+	flag := &proto.Feature{
+		Variations: []*proto.Variation{
+			{Id: "v1", Name: "Old Name", Value: "same-value"},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				VariationChanges: []*proto.VariationChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Variation: &proto.Variation{
+							Id:    "v1",
+							Name:  "New Name",   // Different name
+							Value: "same-value", // Same value
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(flag)
+
+	assert.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyRenameVariation, summaries[0].MessageKey)
+	assert.Equal(t, "Old Name", summaries[0].Values["oldName"])
+	assert.Equal(t, "New Name", summaries[0].Values["newName"])
+}
+
+func TestGenerateChangeSummaries_UpdateVariation_BothNameAndValue(t *testing.T) {
+	t.Parallel()
+
+	flag := &proto.Feature{
+		Variations: []*proto.Variation{
+			{Id: "v1", Name: "Old Name", Value: "old-value"},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				VariationChanges: []*proto.VariationChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Variation: &proto.Variation{
+							Id:    "v1",
+							Name:  "New Name",  // Different name
+							Value: "new-value", // Different value
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(flag)
+
+	// Should generate TWO summaries: one for value change, one for name change
+	assert.Len(t, summaries, 2)
+
+	// First summary: value change
+	assert.Equal(t, MsgKeyChangeVariationValue, summaries[0].MessageKey)
+	assert.Equal(t, "New Name", summaries[0].Values["name"])
+	assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
+	assert.Equal(t, "new-value", summaries[0].Values["newValue"])
+
+	// Second summary: name change
+	assert.Equal(t, MsgKeyRenameVariation, summaries[1].MessageKey)
+	assert.Equal(t, "Old Name", summaries[1].Values["oldName"])
+	assert.Equal(t, "New Name", summaries[1].Values["newName"])
+}
+
+func TestGenerateChangeSummaries_UpdateVariation_NoChange(t *testing.T) {
+	t.Parallel()
+
+	flag := &proto.Feature{
+		Variations: []*proto.Variation{
+			{Id: "v1", Name: "Same Name", Value: "same-value"},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				VariationChanges: []*proto.VariationChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Variation: &proto.Variation{
+							Id:    "v1",
+							Name:  "Same Name",  // Same
+							Value: "same-value", // Same
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(flag)
+
+	// Should show generic update message
+	assert.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyUpdateVariation, summaries[0].MessageKey)
+	assert.Equal(t, "Same Name", summaries[0].Values["name"])
+}
+
+func TestGenerateChangeSummaries_MultipleChanges(t *testing.T) {
+	t.Parallel()
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				Enabled:           wrapperspb.Bool(true),
+				Name:              wrapperspb.String("Updated Name"),
+				ResetSamplingSeed: true,
+				TagChanges: []*proto.TagChange{
+					{ChangeType: proto.ChangeType_CREATE, Tag: "tag1"},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(nil)
+
+	assert.Len(t, summaries, 4)
+	assert.Equal(t, MsgKeyEnableFlag, summaries[0].MessageKey)
+	assert.Equal(t, MsgKeyRenameFlag, summaries[1].MessageKey)
+	assert.Equal(t, MsgKeyResetSamplingSeed, summaries[2].MessageKey)
+	assert.Equal(t, MsgKeyAddTag, summaries[3].MessageKey)
+}
+
+func TestGenerateChangeSummaries_NilPayload(t *testing.T) {
+	t.Parallel()
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: nil,
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(nil)
+
+	assert.Nil(t, summaries)
+}
+
+func TestGenerateChangeSummaries_EmptyPayload(t *testing.T) {
+	t.Parallel()
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(nil)
+
+	assert.Empty(t, summaries)
+}

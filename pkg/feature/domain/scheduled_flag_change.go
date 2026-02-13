@@ -310,18 +310,32 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 			}))
 		case proto.ChangeType_UPDATE:
 			originalVar := sfcFindVariation(flag, vc.Variation.Id)
-			if originalVar != nil && originalVar.Value != vc.Variation.Value {
-				summaries = append(summaries, newChangeSummary(MsgKeyChangeVariationValue, map[string]string{
-					"name":     vc.Variation.Name,
-					"oldValue": originalVar.Value,
-					"newValue": vc.Variation.Value,
-				}))
-			} else if originalVar != nil && originalVar.Name != vc.Variation.Name {
-				summaries = append(summaries, newChangeSummary(MsgKeyRenameVariation, map[string]string{
-					"oldName": originalVar.Name,
-					"newName": vc.Variation.Name,
-				}))
+			if originalVar != nil {
+				valueChanged := originalVar.Value != vc.Variation.Value
+				nameChanged := originalVar.Name != vc.Variation.Name
+
+				// Generate separate summaries for each type of change
+				if valueChanged {
+					summaries = append(summaries, newChangeSummary(MsgKeyChangeVariationValue, map[string]string{
+						"name":     vc.Variation.Name,
+						"oldValue": originalVar.Value,
+						"newValue": vc.Variation.Value,
+					}))
+				}
+				if nameChanged {
+					summaries = append(summaries, newChangeSummary(MsgKeyRenameVariation, map[string]string{
+						"oldName": originalVar.Name,
+						"newName": vc.Variation.Name,
+					}))
+				}
+				// If neither changed, it's some other update (e.g., description in future)
+				if !valueChanged && !nameChanged {
+					summaries = append(summaries, newChangeSummary(MsgKeyUpdateVariation, map[string]string{
+						"name": vc.Variation.Name,
+					}))
+				}
 			} else {
+				// Original variation not found, show generic update
 				summaries = append(summaries, newChangeSummary(MsgKeyUpdateVariation, map[string]string{
 					"name": vc.Variation.Name,
 				}))
