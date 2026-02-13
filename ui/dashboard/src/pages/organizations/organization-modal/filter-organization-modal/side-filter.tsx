@@ -74,7 +74,7 @@ const FilterOrganizationSlide = ({
                     );
                     setSelectedValue(selected);
                   }}
-                  className="w-full truncate py-2"
+                  className="w-full max-w-[235px] sm:max-w-full truncate py-2"
                   contentClassName="w-[235px]"
                 />
               </div>

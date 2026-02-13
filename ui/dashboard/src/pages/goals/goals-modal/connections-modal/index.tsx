@@ -32,7 +32,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
 
   return (
     <DialogModal
-      className="max-w-[300px] sm:max-w-[500px]"
+      className="max-w-[500px]"
       title={
         isExperimentType
           ? t(`experiments-connected`)
