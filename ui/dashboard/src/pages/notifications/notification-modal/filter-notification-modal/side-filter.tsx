@@ -46,8 +46,8 @@ const FilterNotificationSlide = ({
   } = useFilterNotificationLogic(onSubmit, filters);
   return (
     <SlideModal title={t('filters')} isOpen={isOpen} onClose={onClose}>
-      <div className="w-full h-full flex flex-col justify-between relative">
-        <div className="flex flex-col w-full items-start p-5 gap-y-4">
+      <div className="w-full h-full min-w-0 flex flex-col justify-between relative">
+        <div className="flex flex-col min-w-0 w-full items-start p-5 gap-y-4">
           {selectedFilters.map((filterOption, filterIndex) => {
             const { label, value: filterType } = filterOption;
             const isEnvironmentFilter =
@@ -56,7 +56,7 @@ const FilterNotificationSlide = ({
 
             return (
               <div
-                className="flex items-start w-full h-[100px] gap-x-3"
+                className="flex min-w-0 items-start w-full h-[100px] gap-x-3"
                 key={filterIndex}
               >
                 <div className="h-full flex flex-col gap-y-4 items-center justify-center">
@@ -72,7 +72,7 @@ const FilterNotificationSlide = ({
                   </div>
                   <Divider vertical={true} className="border-primary-500" />
                 </div>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full min-w-0">
                   <Dropdown
                     options={remainingFilterOptions as DropdownOption[]}
                     labelCustom={label}
@@ -96,14 +96,14 @@ const FilterNotificationSlide = ({
                     contentClassName="w-[270px]"
                   />
 
-                  <div className="flex items-center gap-3 mt-3 pl-3">
+                  <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
                     <p className="typo-para-medium text-gray-600">is</p>
                     <Dropdown
                       isSearchable={isEnvironmentFilter}
                       disabled={!filterType}
                       placeholder={t(`select-value`)}
                       labelCustom={handleGetLabelFilterValue(filterOption)}
-                      className="w-full max-w-[235px] sm:max-w-full truncate py-2"
+                      className="w-full truncate py-2"
                       wrapTriggerStyle="truncate"
                       options={valueOptions as DropdownOption[]}
                       multiselect={isEnvironmentFilter}
