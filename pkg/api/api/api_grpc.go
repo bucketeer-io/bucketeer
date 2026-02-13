@@ -666,16 +666,6 @@ func (s *grpcGatewayService) GetEvaluation(
 	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
 	if err != nil {
 		s.logger.Error(
-			"Failed to evaluate",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", envAPIKey.Environment.Id),
-			)...,
-		)
-		return nil, err
-	}
-	if err != nil {
-		s.logger.Error(
 			"Failed to evaluate features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
