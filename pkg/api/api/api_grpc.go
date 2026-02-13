@@ -63,8 +63,14 @@ import (
 const (
 	listRequestSize         = 500
 	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
-	secondsForAdjustment    = 10                // 10 seconds
-	obfuscateAPIKeyLength   = 4
+	// secondsForAdjustment is a safety buffer subtracted from the SDK's requestedAt timestamp
+	// when filtering for updated items. This handles:
+	// - Minor clock skew between SDK and server
+	// - Race conditions where items are updated during the request window
+	// - Near-simultaneous updates that might otherwise be missed
+	// The value should be small enough to avoid excessive duplicate data in responses.
+	secondsForAdjustment  = 10
+	obfuscateAPIKeyLength = 4
 )
 
 var (
@@ -820,7 +826,9 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ForceUpdate:            true,
 		}, nil
 	}
-	// Check and return only the updated feature flags
+	// Check and return only the updated feature flags.
+	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
+	// to account for clock skew and ensure recently updated flags aren't missed.
 	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
 	archivedIDs := make([]string, 0)
@@ -987,7 +995,9 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		}
 	}
 
-	// Filter the updated segments
+	// Filter the updated segments.
+	// We subtract a small buffer (secondsForAdjustment) from the SDK's requestedAt
+	// to account for clock skew and ensure recently updated segments aren't missed.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
 	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	for _, su := range targetSegmentUsers {
@@ -1402,6 +1412,20 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			evaluationMessages = append(evaluationMessages, event)
+			// Report evaluation events with error reasons for monitoring.
+			if evValidator, ok := validator.(*eventEvaluationValidator); ok &&
+				evValidator.lastUnmarshaledEvent != nil &&
+				isEvaluationEventErrorReason(evValidator.lastUnmarshaledEvent.Reason) {
+				ev := evValidator.lastUnmarshaledEvent
+				evaluationEventErrorReasonCounter.WithLabelValues(
+					envAPIKey.ProjectId,
+					envAPIKey.Environment.UrlCode,
+					ev.Tag,
+					ev.Reason.Type.String(),
+					ev.SdkVersion,
+					ev.SourceId.String(),
+				).Inc()
+			}
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {

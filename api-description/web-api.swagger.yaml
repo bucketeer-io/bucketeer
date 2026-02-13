@@ -8782,13 +8782,6 @@ definitions:
     properties:
       status:
         $ref: '#/definitions/experimentExperimentStatus'
-  UpdateFeatureTargetingRequestFrom:
-    type: string
-    enum:
-      - UNKNOWN
-      - USER
-      - OPS
-    default: UNKNOWN
   UserData:
     type: object
     properties:
@@ -11539,15 +11532,6 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  featureAddTagCommand:
-    type: object
-    properties:
-      tag:
-        type: string
-  featureArchiveFeatureCommand:
-    type: object
-  featureArchiveFeatureResponse:
-    type: object
   featureAudience:
     type: object
     properties:
@@ -11592,16 +11576,6 @@ definitions:
         $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersResponse:
     type: object
-  featureChangeDescriptionCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  featureChangeFlagTriggerDescriptionCommand:
-    type: object
-    properties:
-      description:
-        type: string
   featureClauseOperator:
     type: string
     enum:
@@ -11621,63 +11595,20 @@ definitions:
       - NOT_EQUALS
     default: EQUALS
     description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
-  featureCloneFeatureCommand:
-    type: object
-    properties:
-      environmentId:
-        type: string
   featureCloneFeatureRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/featureCloneFeatureCommand'
-        description: deprecated, use targetEnvironmentId instead
       environmentId:
         type: string
       targetEnvironmentId:
         type: string
   featureCloneFeatureResponse:
     type: object
-  featureCommand:
-    type: object
-    properties:
-      command:
-        $ref: '#/definitions/protobufAny'
-  featureCreateFeatureCommand:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-        title: This is an optional field
-      variations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
-      tags:
-        type: array
-        items:
-          type: string
-      defaultOnVariationIndex:
-        type: integer
-        format: int32
-      defaultOffVariationIndex:
-        type: integer
-        format: int32
-      variationType:
-        $ref: '#/definitions/FeatureVariationType'
   featureCreateFeatureRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/featureCreateFeatureCommand'
-        description: deprecated
       environmentId:
         type: string
       id:
@@ -11714,23 +11645,9 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
-  featureCreateFlagTriggerCommand:
-    type: object
-    properties:
-      featureId:
-        type: string
-      type:
-        $ref: '#/definitions/featureFlagTriggerType'
-      action:
-        $ref: '#/definitions/FlagTriggerAction'
-      description:
-        type: string
   featureCreateFlagTriggerRequest:
     type: object
     properties:
-      createFlagTriggerCommand:
-        $ref: '#/definitions/featureCreateFlagTriggerCommand'
-        description: deprecated
       environmentId:
         type: string
       featureId:
@@ -11836,33 +11753,13 @@ definitions:
         type: array
         items:
           type: string
-  featureDeleteFeatureCommand:
-    type: object
   featureDeleteFeatureResponse:
-    type: object
-  featureDeleteFlagTriggerCommand:
     type: object
   featureDeleteFlagTriggerResponse:
     type: object
   featureDeleteScheduledFlagChangeResponse:
     type: object
   featureDeleteSegmentResponse:
-    type: object
-  featureDisableFeatureCommand:
-    type: object
-  featureDisableFeatureResponse:
-    type: object
-  featureDisableFlagTriggerCommand:
-    type: object
-  featureDisableFlagTriggerResponse:
-    type: object
-  featureEnableFeatureCommand:
-    type: object
-  featureEnableFeatureResponse:
-    type: object
-  featureEnableFlagTriggerCommand:
-    type: object
-  featureEnableFlagTriggerResponse:
     type: object
   featureEvaluateFeaturesResponse:
     type: object
@@ -12269,25 +12166,6 @@ definitions:
       - ERROR_EXCEPTION
       - ERROR_CACHE_NOT_FOUND
     default: TARGET
-  featureRemoveTagCommand:
-    type: object
-    properties:
-      tag:
-        type: string
-  featureRenameFeatureCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  featureResetFlagTriggerCommand:
-    type: object
-  featureResetFlagTriggerResponse:
-    type: object
-    properties:
-      flagTrigger:
-        $ref: '#/definitions/featureFlagTrigger'
-      url:
-        type: string
   featureRolloutStrategy:
     type: object
     properties:
@@ -12606,12 +12484,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
-  featureUnarchiveFeatureCommand:
-    type: object
-  featureUnarchiveFeatureResponse:
-    type: object
-  featureUpdateFeatureDetailsResponse:
-    type: object
   featureUpdateFeatureRequest:
     type: object
     properties:
@@ -12674,10 +12546,6 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
-  featureUpdateFeatureTargetingResponse:
-    type: object
-  featureUpdateFeatureVariationsResponse:
-    type: object
   featureUpdateFlagTriggerRequest:
     type: object
     properties:
@@ -12685,11 +12553,9 @@ definitions:
         type: string
       environmentId:
         type: string
-      changeFlagTriggerDescriptionCommand:
-        $ref: '#/definitions/featureChangeFlagTriggerDescriptionCommand'
-        description: deprecated
       description:
         type: string
+        title: change_flag_trigger_description_command
       reset:
         type: boolean
         description: If true, reset the trigger hook URL.

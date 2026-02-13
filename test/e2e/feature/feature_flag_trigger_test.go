@@ -35,28 +35,28 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, cmd)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+	createFlagTriggerReq := newCreateFlagTriggerReq(
 		cmd.Id,
 		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
-	resp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
+	resp := createFeatureFlagTrigger(t, client, createFlagTriggerReq)
 	if resp.FlagTrigger.FeatureId != cmd.Id {
 		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, cmd.Id)
 	}
-	if resp.FlagTrigger.Type != createFlagTriggerCommand.Type {
-		t.Fatalf("unexpected trigger type: %s, type: %s", resp.FlagTrigger.Type, createFlagTriggerCommand.Type)
+	if resp.FlagTrigger.Type != createFlagTriggerReq.Type {
+		t.Fatalf("unexpected trigger type: %s, type: %s", resp.FlagTrigger.Type, createFlagTriggerReq.Type)
 	}
-	if resp.FlagTrigger.Action != createFlagTriggerCommand.Action {
+	if resp.FlagTrigger.Action != createFlagTriggerReq.Action {
 		t.Fatalf("unexpected trigger action: %s, action: %s",
-			resp.FlagTrigger.Action, createFlagTriggerCommand.Action)
+			resp.FlagTrigger.Action, createFlagTriggerReq.Action)
 	}
-	if resp.FlagTrigger.Description != createFlagTriggerCommand.Description {
+	if resp.FlagTrigger.Description != createFlagTriggerReq.Description {
 		t.Fatalf("unexpected trigger description: %s, description: %s",
-			resp.FlagTrigger.Description, createFlagTriggerCommand.Description)
+			resp.FlagTrigger.Description, createFlagTriggerReq.Description)
 	}
 	if resp.GetUrl() == "" {
 		t.Fatal("unexpected empty url")
@@ -68,7 +68,7 @@ func TestUpdateFeatureFlagDescriptionTriggerNoCommand(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
 		req.Id,
@@ -120,22 +120,20 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+	createFlagTriggerReq := newCreateFlagTriggerReq(
 		command.Id,
 		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
-	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
+	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerReq)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
 		Id:            createResp.FlagTrigger.Id,
 		EnvironmentId: *environmentID,
-		ChangeFlagTriggerDescriptionCommand: &featureproto.ChangeFlagTriggerDescriptionCommand{
-			Description: newTriggerDescription(t),
-		},
+		Description:   wrapperspb.String(newTriggerDescription(t)),
 	}
 	_, err := client.UpdateFlagTrigger(context.Background(), updateFlagTriggerReq)
 	if err != nil {
@@ -147,85 +145,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		EnvironmentId: *environmentID,
 	}
 	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
-	if resp.FlagTrigger.Description != updateFlagTriggerReq.ChangeFlagTriggerDescriptionCommand.Description {
+	if resp.FlagTrigger.Description != updateFlagTriggerReq.Description.Value {
 		t.Fatal("unexpected description")
-	}
-}
-
-func TestDisableEnableFlagTrigger(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, command)
-	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command.Id,
-		newTriggerDescription(t),
-		featureproto.FlagTrigger_Action_ON,
-	)
-	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
-	// Disable flag trigger
-	disableFlagTriggerReq := &featureproto.DisableFlagTriggerRequest{
-		Id:                        createResp.FlagTrigger.Id,
-		EnvironmentId:             *environmentID,
-		DisableFlagTriggerCommand: &featureproto.DisableFlagTriggerCommand{},
-	}
-	_, err := client.DisableFlagTrigger(context.Background(), disableFlagTriggerReq)
-	if err != nil {
-		t.Fatal(err)
-	}
-	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
-		Id:            createResp.FlagTrigger.Id,
-		EnvironmentId: *environmentID,
-	}
-	// Get flag trigger
-	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
-	if resp.FlagTrigger.Disabled != true {
-		t.Fatalf("unexpected disabled: %v", resp.FlagTrigger.Disabled)
-	}
-	// Enable flag trigger
-	enableFlagTriggerReq := &featureproto.EnableFlagTriggerRequest{
-		Id:                       createResp.FlagTrigger.Id,
-		EnvironmentId:            *environmentID,
-		EnableFlagTriggerCommand: &featureproto.EnableFlagTriggerCommand{},
-	}
-	_, err = client.EnableFlagTrigger(context.Background(), enableFlagTriggerReq)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Get flag trigger
-	resp = getFeatureFlagTrigger(t, client, getFlagTriggerReq)
-	if resp.FlagTrigger.Disabled != false {
-		t.Fatal("unexpected disabled")
-	}
-}
-
-func TestResetFlagTrigger(t *testing.T) {
-	t.Parallel()
-	client := newFeatureClient(t)
-	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, command)
-	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command.Id,
-		newTriggerDescription(t),
-		featureproto.FlagTrigger_Action_ON,
-	)
-	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
-	// Reset flag trigger
-	resetFlagTriggerReq := &featureproto.ResetFlagTriggerRequest{
-		Id:                      createResp.FlagTrigger.Id,
-		EnvironmentId:           *environmentID,
-		ResetFlagTriggerCommand: &featureproto.ResetFlagTriggerCommand{},
-	}
-	resetResp, err := client.ResetFlagTrigger(context.Background(), resetFlagTriggerReq)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resetResp.Url == createResp.Url {
-		t.Fatalf("unexpected reset url: %s, create url: %s", resetResp.Url, createResp.Url)
 	}
 }
 
@@ -234,7 +155,7 @@ func TestResetFlagUpdateTrigger(t *testing.T) {
 	client := newFeatureClient(t)
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
-	createFeatureNoCmd(t, client, req)
+	createFeature(t, client, req)
 	// Create flag trigger
 	createFlagTriggerReq := newCreateFlagTriggerReq(
 		req.Id,
@@ -262,15 +183,15 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+	createFlagTriggerReq := newCreateFlagTriggerReq(
 		command.Id,
 		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
-	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
+	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerReq)
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
 		Id:            createResp.FlagTrigger.Id,
@@ -295,29 +216,23 @@ func TestListFlagTriggers(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
+	command := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag triggers
-	trigger1, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentId: *environmentID,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command.Id,
-			newTriggerDescription(t),
-			featureproto.FlagTrigger_Action_ON,
-		),
-	})
+	trigger1, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
+		command.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(1 * time.Second)
-	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentId: *environmentID,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command.Id,
-			newTriggerDescription(t),
-			featureproto.FlagTrigger_Action_ON,
-		),
-	})
+	trigger2, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
+		command.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -363,17 +278,14 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	command := newCreateFeatureCommand(newFeatureID(t))
-	createFeature(t, client, command)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeature(t, client, req)
 	// Create Enable flag triggers
-	enableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentId: *environmentID,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command.Id,
-			newTriggerDescription(t),
-			featureproto.FlagTrigger_Action_ON,
-		),
-	})
+	enableTrigger, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
+		req.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -386,7 +298,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status code: %s", resp.Status)
 	}
-	enabledFeature := getFeature(t, command.Id, client)
+	enabledFeature := getFeature(t, req.Id, client)
 	if enabledFeature.Enabled != true {
 		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
 	}
@@ -401,14 +313,11 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		t.Fatal("unexpected last triggered at")
 	}
 	// Create Disable flag triggers
-	disableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentId: *environmentID,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command.Id,
-			newTriggerDescription(t),
-			featureproto.FlagTrigger_Action_OFF,
-		),
-	})
+	disableTrigger, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
+		req.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_OFF,
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,7 +330,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status code: %s", resp.Status)
 	}
-	disabledFeature := getFeature(t, command.Id, client)
+	disabledFeature := getFeature(t, req.Id, client)
 	if disabledFeature.Enabled != false {
 		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
 	}
@@ -456,20 +365,6 @@ func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
 	return resp, nil
 }
 
-func newCreateFlagTriggerCmd(
-	featureID string,
-	description string,
-	action featureproto.FlagTrigger_Action,
-) *featureproto.CreateFlagTriggerCommand {
-	createFlagTriggerCommand := &featureproto.CreateFlagTriggerCommand{
-		FeatureId:   featureID,
-		Type:        featureproto.FlagTrigger_Type_WEBHOOK,
-		Action:      action,
-		Description: description,
-	}
-	return createFlagTriggerCommand
-}
-
 func newCreateFlagTriggerReq(
 	featureID string,
 	description string,
@@ -500,13 +395,10 @@ func getFeatureFlagTrigger(
 func createFeatureFlagTrigger(
 	t *testing.T,
 	client featureproto.FeatureServiceClient,
-	cmd *featureproto.CreateFlagTriggerCommand,
+	req *featureproto.CreateFlagTriggerRequest,
 ) *featureproto.CreateFlagTriggerResponse {
 	t.Helper()
-	resp, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentId:            *environmentID,
-		CreateFlagTriggerCommand: cmd,
-	})
+	resp, err := client.CreateFlagTrigger(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

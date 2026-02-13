@@ -25,12 +25,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
 	btclient "github.com/bucketeer-io/bucketeer/v2/pkg/batch/client"
@@ -42,7 +42,6 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
-	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (
@@ -105,17 +104,17 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	// Feature 1
 	featureID1 := newFeatureID(t, uuid)
-	cmd1 := createFeatureWithTag(t, tag, featureID1)
+	req1 := createFeatureWithTag(t, tag, featureID1)
 
 	// Feature 2
 	uuid = newUUID(t)
 	featureID2 := newFeatureID(t, uuid)
-	cmd2 := createFeature(t, client, newCreateFeatureCommand(featureID2))
+	req2 := createFeature(t, client, newCreateFeatureReq(featureID2))
 
 	// Feature 3
 	uuid = newUUID(t)
 	featureID3 := newFeatureID(t, uuid)
-	cmd3 := createFeatureWithTag(t, tag, featureID3)
+	req3 := createFeatureWithTag(t, tag, featureID3)
 
 	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
 
@@ -126,9 +125,9 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd2.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req2.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Find feature with tag and no features ID
 	response = grpcGetFeatureFlags(t, tag, "", 0)
@@ -137,8 +136,8 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Find feature with tag, with the same features ID, and requested at
 	ffid := response.FeatureFlagsId
@@ -166,17 +165,17 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	// Feature 1
 	featureID1 := newFeatureID(t, uuid)
-	cmd1 := createFeatureWithTag(t, tag, featureID1)
+	req1 := createFeatureWithTag(t, tag, featureID1)
 
 	// Feature 2
 	uuid = newUUID(t)
 	featureID2 := newFeatureID(t, uuid)
-	createFeature(t, client, newCreateFeatureCommand(featureID2))
+	createFeature(t, client, newCreateFeatureReq(featureID2))
 
 	// Feature 3
 	uuid = newUUID(t)
 	featureID3 := newFeatureID(t, uuid)
-	cmd3 := createFeatureWithTag(t, tag, featureID3)
+	req3 := createFeatureWithTag(t, tag, featureID3)
 
 	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
 
@@ -188,11 +187,11 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Archive feature
-	archiveFeature(t, cmd1.Id, client)
+	archiveFeature(t, req1.Id, client)
 
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
@@ -205,7 +204,7 @@ func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
 	assert.Equal(t, 1, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.False(t, response.ForceUpdate)
-	assert.Equal(t, cmd1.Id, response.ArchivedFeatureFlagIds[0])
+	assert.Equal(t, req1.Id, response.ArchivedFeatureFlagIds[0])
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
@@ -216,17 +215,17 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	// Feature 1
 	featureID1 := newFeatureID(t, uuid)
-	cmd1 := createFeatureWithTag(t, tag, featureID1)
+	req1 := createFeatureWithTag(t, tag, featureID1)
 
 	// Feature 2
 	uuid = newUUID(t)
 	featureID2 := newFeatureID(t, uuid)
-	createFeature(t, client, newCreateFeatureCommand(featureID2))
+	createFeature(t, client, newCreateFeatureReq(featureID2))
 
 	// Feature 3
 	uuid = newUUID(t)
 	featureID3 := newFeatureID(t, uuid)
-	cmd3 := createFeatureWithTag(t, tag, featureID3)
+	req3 := createFeatureWithTag(t, tag, featureID3)
 
 	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
 
@@ -238,14 +237,14 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 
 	// Create another Flag
 	// Feature 4
 	uuid = newUUID(t)
 	featureID4 := newFeatureID(t, uuid)
-	cmd4 := createFeatureWithTag(t, tag, featureID4)
+	req4 := createFeatureWithTag(t, tag, featureID4)
 
 	// Find the flag 4
 	requestFFID = response.FeatureFlagsId
@@ -255,7 +254,7 @@ func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.False(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd4.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req4.Id, response.Features))
 }
 
 func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
@@ -266,17 +265,17 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	// Feature 1
 	featureID1 := newFeatureID(t, uuid)
-	cmd1 := createFeatureWithTag(t, tag, featureID1)
+	req1 := createFeatureWithTag(t, tag, featureID1)
 
 	// Feature 2
 	uuid = newUUID(t)
 	featureID2 := newFeatureID(t, uuid)
-	createFeature(t, client, newCreateFeatureCommand(featureID2))
+	createFeature(t, client, newCreateFeatureReq(featureID2))
 
 	// Feature 3
 	uuid = newUUID(t)
 	featureID3 := newFeatureID(t, uuid)
-	cmd3 := createFeatureWithTag(t, tag, featureID3)
+	req3 := createFeatureWithTag(t, tag, featureID3)
 
 	// Find feature by tag with tag with random id, and old requested at
 	requestFFID := "random-id"
@@ -287,8 +286,8 @@ func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
 	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
 	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
 	assert.True(t, response.ForceUpdate)
-	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
-	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, req3.Id, response.Features))
 }
 
 func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
@@ -309,7 +308,7 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := createFeatureWithTag(t, tag, featureID)
+	req := createFeatureWithTag(t, tag, featureID)
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
@@ -328,14 +327,14 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	if reason != featureproto.Reason_DEFAULT {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
 	}
-	cmdVariation := cmd.Variations[0]
+	reqVariation := req.Variations[0]
 	variationValue := eval.VariationValue
-	if variationValue != cmdVariation.Value {
-		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	if variationValue != reqVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, reqVariation.Value)
 	}
 	variationName := eval.VariationName
-	if variationName != cmdVariation.Name {
-		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	if variationName != reqVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, reqVariation.Name)
 	}
 	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
@@ -351,8 +350,8 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	addTag(t, tag, featureID, client)
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
@@ -375,14 +374,14 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	if reason != featureproto.Reason_OFF_VARIATION {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
 	}
-	cmdVariation := cmd.Variations[1]
+	reqVariation := req.Variations[1]
 	variationValue := eval.VariationValue
-	if variationValue != cmdVariation.Value {
-		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	if variationValue != reqVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, reqVariation.Value)
 	}
 	variationName := eval.VariationName
-	if variationName != cmdVariation.Name {
-		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	if variationName != reqVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, reqVariation.Name)
 	}
 	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
@@ -425,7 +424,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
 	featureID2 := newFeatureID(t, newUUID(t))
-	cmd := createFeatureWithTag(t, tag, featureID2)
+	req := createFeatureWithTag(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
@@ -447,14 +446,14 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to find evaluation. Error: %v", err)
 	}
-	cmdVariation := cmd.Variations[0]
+	reqVariation := req.Variations[0]
 	variationValue := eval.VariationValue
-	if variationValue != cmdVariation.Value {
-		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	if variationValue != reqVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, reqVariation.Value)
 	}
 	variationName := eval.VariationName
-	if variationName != cmdVariation.Name {
-		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	if variationName != reqVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, reqVariation.Name)
 	}
 	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
@@ -473,8 +472,8 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, fc, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, fc, req)
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
@@ -482,8 +481,8 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
-	cmd2 := newCreateFeatureCommand(featureID2)
-	createFeature(t, fc, cmd2)
+	req2 := newCreateFeatureReq(featureID2)
+	createFeature(t, fc, req2)
 	addTag(t, tag, featureID2, fc)
 	enableFeature(t, featureID2, fc)
 	archiveFeature(t, featureID2, fc)
@@ -685,7 +684,7 @@ func TestGrpcGetEvaluationWithYAMLVariation(t *testing.T) {
 	// Create a feature with YAML variation type
 	// Note: Feature_YAML (value 4) is not yet in the proto enum definition,
 	// so we use the numeric value directly until the proto is updated
-	cmd := &featureproto.CreateFeatureCommand{
+	req := &featureproto.CreateFeatureRequest{
 		Id:            featureID,
 		Name:          featureID,
 		Description:   "e2e-test-yaml-feature",
@@ -721,9 +720,10 @@ app:
 		Tags:                     []string{tag},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 
-	createFeature(t, client, cmd)
+	createFeature(t, client, req)
 	enableFeature(t, featureID, client)
 	updateFeatueFlagCache(t)
 
@@ -1302,25 +1302,25 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
-func createFeatureWithTag(t *testing.T, tag, featureID string) *featureproto.CreateFeatureCommand {
+func createFeatureWithTag(t *testing.T, tag, featureID string) *featureproto.CreateFeatureRequest {
 	client := newFeatureClient(t)
 	defer client.Close()
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, cmd.Id, client)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	addTag(t, tag, req.Id, client)
 	enableFeature(t, featureID, client)
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
-	return cmd
+	return req
 }
 
 func createFeatureWithRule(t *testing.T, tag, featureID string) {
 	client := newFeatureClient(t)
 	defer client.Close()
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, cmd.Id, client)
-	addRule(t, cmd.Id, getFeature(t, featureID, client).Variations[1].Id, client)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
+	addTag(t, tag, req.Id, client)
+	addRule(t, req.Id, getFeature(t, featureID, client).Variations[1].Id, client)
 	enableFeature(t, featureID, client)
 	// Update feature flag cache
 	updateFeatueFlagCache(t)
@@ -1390,8 +1390,8 @@ func newBatchClient(t *testing.T) btclient.Client {
 	return client
 }
 
-func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureCommand {
-	return &featureproto.CreateFeatureCommand{
+func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
+	return &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        featureID,
 		Description: "e2e-test-gateway-feature-description",
@@ -1414,25 +1414,26 @@ func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureComman
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 }
 
 func createFeature(
 	t *testing.T,
 	client featureclient.Client,
-	cmd *featureproto.CreateFeatureCommand,
-) *featureproto.CreateFeatureCommand {
+	req *featureproto.CreateFeatureRequest,
+) *featureproto.Feature {
 	t.Helper()
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	createRes, err := client.CreateFeature(ctx, req)
+	if err != nil {
 		t.Fatal(err)
 	}
-	return cmd
+	if createRes == nil {
+		t.Fatal("Created resonse is nil")
+	}
+	return createRes.Feature
 }
 
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
@@ -1452,16 +1453,19 @@ func getFeature(t *testing.T, featureID string, client featureclient.Client) *fe
 
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
 	t.Helper()
-	addReq := &featureproto.UpdateFeatureDetailsRequest{
-		Id: featureID,
-		AddTagCommands: []*featureproto.AddTagCommand{
-			{Tag: tag},
-		},
+	addReq := &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
 		EnvironmentId: *environmentID,
+		TagChanges: []*featureproto.TagChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Tag:        tag,
+			},
+		},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.UpdateFeatureDetails(ctx, addReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, addReq); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -1469,34 +1473,46 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 func addRule(t *testing.T, featureID, variationID string, client featureclient.Client) {
 	t.Helper()
 	rule := newFixedStrategyRule(variationID)
-	addCmd, _ := util.MarshalCommand(&featureproto.AddRuleCommand{Rule: rule})
-	updateFeatureTargeting(t, client, addCmd, featureID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*featureproto.RuleChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Rule:       rule,
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }
 
 func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	req := &featureproto.ArchiveFeatureRequest{
-		Id:            featureID,
-		Command:       &featureproto.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentID,
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.ArchiveFeature(ctx, req); err != nil {
+	if _, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Archived:      wrapperspb.Bool(true),
+	}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -1598,9 +1614,11 @@ func newFeatureID(t *testing.T, uuid string) string {
 }
 
 func newFixedStrategyRule(variationID string) *featureproto.Rule {
-	uuid, _ := uuid.NewUUID()
+	featureID, _ := uuid.NewUUID()
+	clauseID1, _ := uuid.NewUUID()
+	clauseID2, _ := uuid.NewUUID()
 	return &featureproto.Rule{
-		Id: uuid.String(),
+		Id: featureID.String(),
 		Strategy: &featureproto.Strategy{
 			Type: featureproto.Strategy_FIXED,
 			FixedStrategy: &featureproto.FixedStrategy{
@@ -1609,33 +1627,18 @@ func newFixedStrategyRule(variationID string) *featureproto.Rule {
 		},
 		Clauses: []*featureproto.Clause{
 			{
+				Id:        clauseID1.String(),
 				Attribute: "attribute-1",
 				Operator:  featureproto.Clause_EQUALS,
 				Values:    []string{"value-1", "value-2"},
 			},
 			{
+				Id:        clauseID2.String(),
 				Attribute: "attribute-2",
 				Operator:  featureproto.Clause_IN,
 				Values:    []string{"value-1", "value-2"},
 			},
 		},
-	}
-}
-
-func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.Any, featureID string) {
-	t.Helper()
-	updateReq := &featureproto.UpdateFeatureTargetingRequest{
-		Id: featureID,
-		Commands: []*featureproto.Command{
-			{Command: cmd},
-		},
-		EnvironmentId: *environmentID,
-		From:          featureproto.UpdateFeatureTargetingRequest_USER,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if _, err := client.UpdateFeatureTargeting(ctx, updateReq); err != nil {
-		t.Fatal(err)
 	}
 }
 
