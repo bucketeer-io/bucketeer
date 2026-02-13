@@ -230,7 +230,6 @@ export const ApiCard: React.FC<ApiCardProps> = ({ data, onActions }) => {
                 <span>{t('table:created-at')}</span>
               </p>
               <div className="mt-2 text-nowrap">
-                {' '}
                 <DateTooltip
                   trigger={
                     <div className="text-gray-500 typo-para-medium">
