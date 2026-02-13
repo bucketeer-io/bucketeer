@@ -35,7 +35,7 @@ const FilterOrganizationSlide = ({
   } = useFilterOrganizationLogic(onSubmit, filters);
   return (
     <SlideModal title={t('filters')} isOpen={isOpen} onClose={onClose}>
-      <div className="w-full h-full flex flex-col justify-between relative">
+      <div className="w-full h-full min-w-0 flex flex-col justify-between relative">
         <div className="flex flex-col w-full items-start p-5 gap-y-4">
           <div className="flex items-start w-full h-[100px] gap-x-3">
             <div className="h-full flex flex-col gap-y-4 items-center justify-center">
@@ -60,7 +60,7 @@ const FilterOrganizationSlide = ({
                 className="w-full truncate py-2"
                 contentClassName="w-[270px]"
               />
-              <div className="flex items-center gap-3 mt-3 pl-3">
+              <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
                 <p className="typo-para-medium text-gray-600">is</p>
                 <Dropdown
                   disabled={!selectedFilterType}
@@ -74,7 +74,7 @@ const FilterOrganizationSlide = ({
                     );
                     setSelectedValue(selected);
                   }}
-                  className="w-full max-w-[235px] sm:max-w-full truncate py-2"
+                  className="w-full truncate py-2"
                   contentClassName="w-[235px]"
                 />
               </div>

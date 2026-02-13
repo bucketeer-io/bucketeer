@@ -42,8 +42,8 @@ const FilterExperimentSlide = ({
   } = useExperimentFilterLogic(filters, onSubmit);
   return (
     <SlideModal title={t('filters')} isOpen={isOpen} onClose={onClose}>
-      <div className="w-full h-full flex flex-col justify-between relative">
-        <div className="flex flex-col w-full items-start p-5 gap-y-4">
+      <div className="w-full h-full flex min-w-0 flex-col justify-between relative">
+        <div className="flex flex-col min-w-0 w-full items-start p-5 gap-y-4">
           {selectedFilters.map((filterOption, filterIndex) => {
             const { label, value: filterType } = filterOption;
             const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
@@ -53,9 +53,9 @@ const FilterExperimentSlide = ({
             return (
               <div
                 key={filterIndex}
-                className="flex items-start w-full h-[100px] gap-x-3"
+                className="flex min-w-0 items-start w-full h-[100px] gap-x-3"
               >
-                <div className="h-full flex flex-col gap-y-4 items-center justify-center">
+                <div className="h-full flex min-w-0 flex-col gap-y-4 items-center justify-center">
                   <div
                     className={cn(
                       'mt-2 typo-para-small text-center py-[3px] w-[42px] min-w-[42px] rounded text-accent-pink-500 bg-accent-pink-50',
@@ -68,7 +68,7 @@ const FilterExperimentSlide = ({
                   </div>
                   <Divider vertical={true} className="border-primary-500" />
                 </div>
-                <div className="flex flex-col w-full">
+                <div className="flex min-w-0 flex-col w-full">
                   <Dropdown
                     placeholder={t(`select-filter`)}
                     labelCustom={label}
@@ -81,13 +81,13 @@ const FilterExperimentSlide = ({
                     }
                   />
 
-                  <div className="flex items-center gap-3 mt-3 pl-3">
+                  <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
                     <p className="typo-para-medium text-gray-600">is</p>
                     <Dropdown
                       disabled={isLoading || !filterType}
                       placeholder={t(`select-value`)}
                       labelCustom={handleGetLabelFilterValue(filterOption)}
-                      className={cn('w-full max-w-[230px] truncate py-2', {
+                      className={cn('w-full truncate py-2', {
                         capitalize: isStatusFilter
                       })}
                       contentClassName={cn('w-[235px]', {

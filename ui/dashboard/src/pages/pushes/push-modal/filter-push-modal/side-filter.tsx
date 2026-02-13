@@ -46,8 +46,8 @@ const FilterPushSlide = ({
   } = useFilterPushLogic(onSubmit, filters);
   return (
     <SlideModal title={t('filters')} isOpen={isOpen} onClose={onClose}>
-      <div className="w-full h-full flex flex-col justify-between relative">
-        <div className="flex flex-col w-full items-start p-5 gap-y-4">
+      <div className="w-full min-w-0 h-full flex flex-col justify-between relative">
+        <div className="flex flex-col min-w-0 w-full items-start p-5 gap-y-4">
           {selectedFilters.map((filterOption, filterIndex) => {
             const { label, value: filterType } = filterOption;
             const isEnvironmentFilter =
@@ -56,7 +56,7 @@ const FilterPushSlide = ({
 
             return (
               <div
-                className="flex items-start w-full h-[100px] gap-x-3"
+                className="min-w-0 flex items-start w-full h-[100px] gap-x-3"
                 key={filterIndex}
               >
                 <div className="h-full flex flex-col gap-y-4 items-center justify-center">
@@ -72,7 +72,7 @@ const FilterPushSlide = ({
                   </div>
                   <Divider vertical={true} className="border-primary-500" />
                 </div>
-                <div className="flex flex-col w-full">
+                <div className="flex min-w-0 flex-col w-full">
                   <Dropdown
                     labelCustom={label}
                     placeholder={t(`select-filter`)}
@@ -89,7 +89,7 @@ const FilterPushSlide = ({
                     contentClassName="w-[270px]"
                   />
 
-                  <div className="flex items-center gap-3 mt-3 pl-3">
+                  <div className="flex min-w-0 items-center gap-3 mt-3 pl-3">
                     <p className="typo-para-medium text-gray-600">is</p>
                     <Dropdown
                       isSearchable={isEnvironmentFilter}
