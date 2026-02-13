@@ -523,150 +523,129 @@ func TestGenerateChangeSummaries_DisableFlag(t *testing.T) {
 	assert.Equal(t, MsgKeyDisableFlag, summaries[0].MessageKey)
 }
 
-func TestGenerateChangeSummaries_UpdateVariation_ValueOnly(t *testing.T) {
+func TestGenerateChangeSummaries_UpdateVariation(t *testing.T) {
 	t.Parallel()
 
-	flag := &proto.Feature{
-		Variations: []*proto.Variation{
-			{Id: "v1", Name: "Variation A", Value: "old-value"},
-		},
-	}
-
-	sfc := &ScheduledFlagChange{
-		ScheduledFlagChange: &proto.ScheduledFlagChange{
-			Payload: &proto.ScheduledChangePayload{
-				VariationChanges: []*proto.VariationChange{
-					{
-						ChangeType: proto.ChangeType_UPDATE,
-						Variation: &proto.Variation{
-							Id:    "v1",
-							Name:  "Variation A", // Same name
-							Value: "new-value",   // Different value
-						},
-					},
+	patterns := []struct {
+		desc              string
+		flag              *proto.Feature
+		variation         *proto.Variation
+		expectedCount     int
+		expectedFirstKey  string
+		expectedSecondKey string
+		assertions        func(t *testing.T, summaries []*proto.ChangeSummary)
+	}{
+		{
+			desc: "value only changed",
+			flag: &proto.Feature{
+				Variations: []*proto.Variation{
+					{Id: "v1", Name: "Variation A", Value: "old-value"},
 				},
+			},
+			variation: &proto.Variation{
+				Id:    "v1",
+				Name:  "Variation A", // Same name
+				Value: "new-value",   // Different value
+			},
+			expectedCount:    1,
+			expectedFirstKey: MsgKeyChangeVariationValue,
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Equal(t, "Variation A", summaries[0].Values["name"])
+				assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
+				assert.Equal(t, "new-value", summaries[0].Values["newValue"])
+			},
+		},
+		{
+			desc: "name only changed",
+			flag: &proto.Feature{
+				Variations: []*proto.Variation{
+					{Id: "v1", Name: "Old Name", Value: "same-value"},
+				},
+			},
+			variation: &proto.Variation{
+				Id:    "v1",
+				Name:  "New Name",   // Different name
+				Value: "same-value", // Same value
+			},
+			expectedCount:    1,
+			expectedFirstKey: MsgKeyRenameVariation,
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Equal(t, "Old Name", summaries[0].Values["oldName"])
+				assert.Equal(t, "New Name", summaries[0].Values["newName"])
+			},
+		},
+		{
+			desc: "both name and value changed",
+			flag: &proto.Feature{
+				Variations: []*proto.Variation{
+					{Id: "v1", Name: "Old Name", Value: "old-value"},
+				},
+			},
+			variation: &proto.Variation{
+				Id:    "v1",
+				Name:  "New Name",  // Different name
+				Value: "new-value", // Different value
+			},
+			expectedCount:     2,
+			expectedFirstKey:  MsgKeyChangeVariationValue,
+			expectedSecondKey: MsgKeyRenameVariation,
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				// First summary: value change
+				assert.Equal(t, "New Name", summaries[0].Values["name"])
+				assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
+				assert.Equal(t, "new-value", summaries[0].Values["newValue"])
+				// Second summary: name change
+				assert.Equal(t, "Old Name", summaries[1].Values["oldName"])
+				assert.Equal(t, "New Name", summaries[1].Values["newName"])
+			},
+		},
+		{
+			desc: "no change",
+			flag: &proto.Feature{
+				Variations: []*proto.Variation{
+					{Id: "v1", Name: "Same Name", Value: "same-value"},
+				},
+			},
+			variation: &proto.Variation{
+				Id:    "v1",
+				Name:  "Same Name",  // Same
+				Value: "same-value", // Same
+			},
+			expectedCount:    1,
+			expectedFirstKey: MsgKeyUpdateVariation,
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Equal(t, "Same Name", summaries[0].Values["name"])
 			},
 		},
 	}
 
-	summaries := sfc.GenerateChangeSummaries(flag)
-
-	assert.Len(t, summaries, 1)
-	assert.Equal(t, MsgKeyChangeVariationValue, summaries[0].MessageKey)
-	assert.Equal(t, "Variation A", summaries[0].Values["name"])
-	assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
-	assert.Equal(t, "new-value", summaries[0].Values["newValue"])
-}
-
-func TestGenerateChangeSummaries_UpdateVariation_NameOnly(t *testing.T) {
-	t.Parallel()
-
-	flag := &proto.Feature{
-		Variations: []*proto.Variation{
-			{Id: "v1", Name: "Old Name", Value: "same-value"},
-		},
-	}
-
-	sfc := &ScheduledFlagChange{
-		ScheduledFlagChange: &proto.ScheduledFlagChange{
-			Payload: &proto.ScheduledChangePayload{
-				VariationChanges: []*proto.VariationChange{
-					{
-						ChangeType: proto.ChangeType_UPDATE,
-						Variation: &proto.Variation{
-							Id:    "v1",
-							Name:  "New Name",   // Different name
-							Value: "same-value", // Same value
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sfc := &ScheduledFlagChange{
+				ScheduledFlagChange: &proto.ScheduledFlagChange{
+					Payload: &proto.ScheduledChangePayload{
+						VariationChanges: []*proto.VariationChange{
+							{
+								ChangeType: proto.ChangeType_UPDATE,
+								Variation:  p.variation,
+							},
 						},
 					},
 				},
-			},
-		},
+			}
+
+			summaries := sfc.GenerateChangeSummaries(p.flag)
+
+			assert.Len(t, summaries, p.expectedCount)
+			assert.Equal(t, p.expectedFirstKey, summaries[0].MessageKey)
+			if p.expectedSecondKey != "" {
+				assert.Equal(t, p.expectedSecondKey, summaries[1].MessageKey)
+			}
+			if p.assertions != nil {
+				p.assertions(t, summaries)
+			}
+		})
 	}
-
-	summaries := sfc.GenerateChangeSummaries(flag)
-
-	assert.Len(t, summaries, 1)
-	assert.Equal(t, MsgKeyRenameVariation, summaries[0].MessageKey)
-	assert.Equal(t, "Old Name", summaries[0].Values["oldName"])
-	assert.Equal(t, "New Name", summaries[0].Values["newName"])
-}
-
-func TestGenerateChangeSummaries_UpdateVariation_BothNameAndValue(t *testing.T) {
-	t.Parallel()
-
-	flag := &proto.Feature{
-		Variations: []*proto.Variation{
-			{Id: "v1", Name: "Old Name", Value: "old-value"},
-		},
-	}
-
-	sfc := &ScheduledFlagChange{
-		ScheduledFlagChange: &proto.ScheduledFlagChange{
-			Payload: &proto.ScheduledChangePayload{
-				VariationChanges: []*proto.VariationChange{
-					{
-						ChangeType: proto.ChangeType_UPDATE,
-						Variation: &proto.Variation{
-							Id:    "v1",
-							Name:  "New Name",  // Different name
-							Value: "new-value", // Different value
-						},
-					},
-				},
-			},
-		},
-	}
-
-	summaries := sfc.GenerateChangeSummaries(flag)
-
-	// Should generate TWO summaries: one for value change, one for name change
-	assert.Len(t, summaries, 2)
-
-	// First summary: value change
-	assert.Equal(t, MsgKeyChangeVariationValue, summaries[0].MessageKey)
-	assert.Equal(t, "New Name", summaries[0].Values["name"])
-	assert.Equal(t, "old-value", summaries[0].Values["oldValue"])
-	assert.Equal(t, "new-value", summaries[0].Values["newValue"])
-
-	// Second summary: name change
-	assert.Equal(t, MsgKeyRenameVariation, summaries[1].MessageKey)
-	assert.Equal(t, "Old Name", summaries[1].Values["oldName"])
-	assert.Equal(t, "New Name", summaries[1].Values["newName"])
-}
-
-func TestGenerateChangeSummaries_UpdateVariation_NoChange(t *testing.T) {
-	t.Parallel()
-
-	flag := &proto.Feature{
-		Variations: []*proto.Variation{
-			{Id: "v1", Name: "Same Name", Value: "same-value"},
-		},
-	}
-
-	sfc := &ScheduledFlagChange{
-		ScheduledFlagChange: &proto.ScheduledFlagChange{
-			Payload: &proto.ScheduledChangePayload{
-				VariationChanges: []*proto.VariationChange{
-					{
-						ChangeType: proto.ChangeType_UPDATE,
-						Variation: &proto.Variation{
-							Id:    "v1",
-							Name:  "Same Name",  // Same
-							Value: "same-value", // Same
-						},
-					},
-				},
-			},
-		},
-	}
-
-	summaries := sfc.GenerateChangeSummaries(flag)
-
-	// Should show generic update message
-	assert.Len(t, summaries, 1)
-	assert.Equal(t, MsgKeyUpdateVariation, summaries[0].MessageKey)
-	assert.Equal(t, "Same Name", summaries[0].Values["name"])
 }
 
 func TestGenerateChangeSummaries_MultipleChanges(t *testing.T) {
