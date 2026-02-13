@@ -912,192 +912,9 @@ func (s *FeatureService) UpdateFeature(
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		filters := []*mysql.FilterV2{
-			{
-				Column:   "feature.deleted",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			},
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    req.EnvironmentId,
-			},
-		}
-		options := &mysql.ListOptions{
-			Filters:     filters,
-			JSONFilters: nil,
-			Orders:      nil,
-			NullFilters: nil,
-			InFilters:   nil,
-			SearchQuery: nil,
-			Limit:       mysql.QueryNoLimit,
-			Offset:      mysql.QueryNoOffset,
-		}
-		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
-		if err != nil {
-			s.logger.Error(
-				"Failed to list features",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		var feature *domain.Feature
-		for _, f := range features {
-			if f.Id == req.Id {
-				feature = &domain.Feature{Feature: f}
-				break
-			}
-		}
-		if feature == nil {
-			err := statusFeatureNotFound.Err()
-			s.logger.Error(
-				"Failed to find feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-
-		// Clean up any orphaned variation references BEFORE validation
-		// This fixes data corruption from the historical variation deletion bug
-		cleanupResult := feature.CleanupOrphanedVariationReferences()
-		if cleanupResult.Changed {
-			s.logger.Warn(
-				"Cleaned up orphaned variation references in feature during update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
-					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
-					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
-					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
-					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
-				)...,
-			)
-		}
-
-		// Ensure all variations are present in rollout strategies BEFORE validation
-		// This fixes data corruption from the historical AddVariation bug
-		migrationResult := feature.EnsureVariationsInStrategies()
-		if migrationResult.Changed {
-			s.logger.Warn(
-				"Added missing variations to rollout strategies in feature during update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("addedToRules", migrationResult.AddedToRules),
-					zap.Int("addedToDefault", migrationResult.AddedToDefault),
-					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
-				)...,
-			)
-		}
-
-		// Check if this is an archive request and if other features depend on this one.
-		// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
-		if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
-			if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
-				return statusInvalidArchive.Err()
-			}
-
-			// Cancel all pending scheduled changes before archiving the flag
-			if err := s.cancelPendingScheduledFlagChanges(
-				ctxWithTx,
-				feature.Id,
-				req.EnvironmentId,
-				editor.Email,
-				domain.CancelReasonFlagArchived,
-			); err != nil {
-				s.logger.Error(
-					"Failed to cancel pending scheduled changes during archive",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("featureId", feature.Id),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				// Don't fail the archive operation, just log the error
-			}
-		}
-
-		updated, err := feature.Update(
-			req.Name,
-			req.Description,
-			req.Tags,
-			req.Enabled,
-			req.Archived,
-			req.DefaultStrategy,
-			req.OffVariation,
-			req.ResetSamplingSeed,
-			req.PrerequisiteChanges,
-			req.TargetChanges,
-			req.RuleChanges,
-			req.VariationChanges,
-			req.TagChanges,
-			req.Maintainer,
-		)
-		if err != nil {
-			return err
-		}
-		if err := s.upsertTags(ctxWithTx, updated.Tags, req.EnvironmentId); err != nil {
-			return err
-		}
-		// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
-		// Exclude all the archived and deleted flags from the list.
-		tgts := []*featureproto.Feature{}
-		for _, f := range features {
-			if f.Id == updated.Id {
-				f = updated.Feature
-			}
-			if f.Archived || f.Deleted {
-				continue
-			}
-			tgts = append(tgts, f)
-		}
-		if err := domain.ValidateFeatureDependencies(tgts); err != nil {
-			return err
-		}
-		// Validate that variations being deleted are not used in other features
-		if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
-			return err
-		}
-		updatedpb = updated.Feature
-		event, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_FEATURE,
-			feature.Id,
-			eventproto.Event_FEATURE_UPDATED,
-			&eventproto.FeatureUpdatedEvent{
-				Id: req.Id,
-			},
-			req.EnvironmentId,
-			updated.Feature,
-			feature.Feature,
-			// check require comment.
-			domainevent.WithComment(req.Comment),
-			domainevent.WithNewVersion(updated.Version),
-		)
-		if err != nil {
-			return err
-		}
-		err = s.featureStorage.UpdateFeature(ctxWithTx, updated, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
+		var err error
+		event, updatedpb, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, req)
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -1116,6 +933,201 @@ func (s *FeatureService) UpdateFeature(
 	return &featureproto.UpdateFeatureResponse{
 		Feature: updatedpb,
 	}, nil
+}
+
+// updateFeatureWithinTransaction performs the update logic within an existing transaction context.
+// This helper is used by both UpdateFeature (which creates its own transaction) and
+// ExecuteScheduledFlagChange (which calls this from within its transaction to avoid nested transactions).
+func (s *FeatureService) updateFeatureWithinTransaction(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	req *featureproto.UpdateFeatureRequest,
+) (*eventproto.Event, *featureproto.Feature, error) {
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
+	}
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		JSONFilters: nil,
+		Orders:      nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		SearchQuery: nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	}
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, options)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	var feature *domain.Feature
+	for _, f := range features {
+		if f.Id == req.Id {
+			feature = &domain.Feature{Feature: f}
+			break
+		}
+	}
+	if feature == nil {
+		err := statusFeatureNotFound.Err()
+		s.logger.Error(
+			"Failed to find feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+
+	// Clean up any orphaned variation references BEFORE validation
+	// This fixes data corruption from the historical variation deletion bug
+	cleanupResult := feature.CleanupOrphanedVariationReferences()
+	if cleanupResult.Changed {
+		s.logger.Warn(
+			"Cleaned up orphaned variation references in feature during update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+				zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+				zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+				zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+				zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+			)...,
+		)
+	}
+
+	// Ensure all variations are present in rollout strategies BEFORE validation
+	// This fixes data corruption from the historical AddVariation bug
+	migrationResult := feature.EnsureVariationsInStrategies()
+	if migrationResult.Changed {
+		s.logger.Warn(
+			"Added missing variations to rollout strategies in feature during update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("addedToRules", migrationResult.AddedToRules),
+				zap.Int("addedToDefault", migrationResult.AddedToDefault),
+				zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+			)...,
+		)
+	}
+
+	// Check if this is an archive request and if other features depend on this one.
+	// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
+	if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+		if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
+			return nil, nil, statusInvalidArchive.Err()
+		}
+
+		// Cancel all pending scheduled changes before archiving the flag
+		if err := s.cancelPendingScheduledFlagChanges(
+			ctx,
+			feature.Id,
+			req.EnvironmentId,
+			editor.Email,
+			domain.CancelReasonFlagArchived,
+		); err != nil {
+			s.logger.Error(
+				"Failed to cancel pending scheduled changes during archive",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", feature.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			// Don't fail the archive operation, just log the error
+		}
+	}
+
+	updated, err := feature.Update(
+		req.Name,
+		req.Description,
+		req.Tags,
+		req.Enabled,
+		req.Archived,
+		req.DefaultStrategy,
+		req.OffVariation,
+		req.ResetSamplingSeed,
+		req.PrerequisiteChanges,
+		req.TargetChanges,
+		req.RuleChanges,
+		req.VariationChanges,
+		req.TagChanges,
+		req.Maintainer,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := s.upsertTags(ctx, updated.Tags, req.EnvironmentId); err != nil {
+		return nil, nil, err
+	}
+	// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
+	// Exclude all the archived and deleted flags from the list.
+	tgts := []*featureproto.Feature{}
+	for _, f := range features {
+		if f.Id == updated.Id {
+			f = updated.Feature
+		}
+		if f.Archived || f.Deleted {
+			continue
+		}
+		tgts = append(tgts, f)
+	}
+	if err := domain.ValidateFeatureDependencies(tgts); err != nil {
+		return nil, nil, err
+	}
+	// Validate that variations being deleted are not used in other features
+	if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
+		return nil, nil, err
+	}
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_FEATURE,
+		feature.Id,
+		eventproto.Event_FEATURE_UPDATED,
+		&eventproto.FeatureUpdatedEvent{
+			Id: req.Id,
+		},
+		req.EnvironmentId,
+		updated.Feature,
+		feature.Feature,
+		// check require comment.
+		domainevent.WithComment(req.Comment),
+		domainevent.WithNewVersion(updated.Version),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to update feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	return event, updated.Feature, nil
 }
 
 func (s *FeatureService) existsRunningExperiment(

@@ -613,6 +613,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	}
 
 	var sfc *domain.ScheduledFlagChange
+	var event *eventproto.Event
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		var err error
@@ -655,11 +656,11 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 			return err
 		}
 
-		// Apply the changes using the existing UpdateFeature flow
+		// Apply the changes using updateFeatureWithinTransaction (to avoid nested transactions)
 		updateReq := convertPayloadToUpdateRequest(sfc.Payload, sfc.FeatureId, req.EnvironmentId)
 		updateReq.Comment = "Applied from scheduled change: " + sfc.Comment
 
-		_, err = s.UpdateFeature(ctxWithTx, updateReq)
+		event, _, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, updateReq)
 		if err != nil {
 			sfc.MarkFailed(err.Error())
 			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
@@ -683,6 +684,19 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		)
 		return nil, err
 	}
+
+	// Publish domain event and update cache (post-transaction operations)
+	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
+		s.logger.Error(
+			"Failed to publish events after scheduled flag change execution",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Any("errors", errs),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		// Don't fail the execution if event publishing fails
+	}
+	s.updateFeatureFlagCache(ctx)
 
 	return &ftproto.ExecuteScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
