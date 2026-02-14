@@ -6,7 +6,7 @@ global:
   dataWarehouse:
     # Data warehouse type configuration
     # Supported types: bigquery, mysql
-    type: bigquery # Options: bigquery, mysql
+    type: bigquery # Options: bigquery, mysql, postgres
     batchSize: 1000
     timezone: "UTC"
     # BigQuery configuration (used when type: bigquery)
@@ -19,6 +19,13 @@ global:
       useMainConnection: true
       host: ""
       port: 3306
+      user: ""
+      password: ""
+      database: ""
+    # PostgreSQL configuration (used when type: postgres)
+    postgres:
+      host: ""
+      port: 5432
       user: ""
       password: ""
       database: ""
