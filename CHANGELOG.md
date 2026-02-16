@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.3.0](https://github.com/bucketeer-io/bucketeer/compare/v2.2.0...v2.3.0) (2026-02-16)
+
+
+### Features
+
+* remove command layer and redundant API in feature package ([#2393](https://github.com/bucketeer-io/bucketeer/issues/2393)) ([6b3e5cc](https://github.com/bucketeer-io/bucketeer/commit/6b3e5ccdadcd2e3db7479bcbf3a9adbb28e427c5))
+* **ui/dashboard:** add auto-archive settings to environment management ([#2318](https://github.com/bucketeer-io/bucketeer/issues/2318)) ([d62bceb](https://github.com/bucketeer-io/bucketeer/commit/d62bcebfdf7114fb15dc97263716d0b75bac4520))
+* **ui/dashboard:** improvement progress rollout ui/ux ([#2351](https://github.com/bucketeer-io/bucketeer/issues/2351)) ([e1c3eb6](https://github.com/bucketeer-io/bucketeer/commit/e1c3eb611d9919b9603ae7a497e6ed04f272b7b0))
+
+
+### Bug Fixes
+
+* default value count not being incremented when using detailed error types ([#2398](https://github.com/bucketeer-io/bucketeer/issues/2398)) ([a03b249](https://github.com/bucketeer-io/bucketeer/commit/a03b2499df78e7c18a362f014d7f7f52132f3d7a))
+* **devcontainer:** make httpstan docker targets idempotent ([#2370](https://github.com/bucketeer-io/bucketeer/issues/2370)) ([eceb033](https://github.com/bucketeer-io/bucketeer/commit/eceb033d7e408e1d58ab24b3ad023c4560734145))
+* dropdown select date range ([#2394](https://github.com/bucketeer-io/bucketeer/issues/2394)) ([8b503fd](https://github.com/bucketeer-io/bucketeer/commit/8b503fd82fc8dffec5b27779e5ac36b90439cb58))
+* progressive rollout watcher to skip stopped/finished rollouts ([#2382](https://github.com/bucketeer-io/bucketeer/issues/2382)) ([b1d05b9](https://github.com/bucketeer-io/bucketeer/commit/b1d05b9dabbb6bdab07c43b7a1cfac10195683e1))
+* resolve tar race condition vulnerability (CVE-2026-23950) ([#2365](https://github.com/bucketeer-io/bucketeer/issues/2365)) ([c07e57a](https://github.com/bucketeer-io/bucketeer/commit/c07e57a66da4e852e5ecea68775399243dbc388f))
+* segment e2e failed after switch to no command API ([#2363](https://github.com/bucketeer-io/bucketeer/issues/2363)) ([72146e4](https://github.com/bucketeer-io/bucketeer/commit/72146e4e2c7d46831b7a7cf0f77e2423fb0f6010))
+* **ui/dashboard:** fix auto-archive custom days value being reset on modal reopen ([#2396](https://github.com/bucketeer-io/bucketeer/issues/2396)) ([d5875e3](https://github.com/bucketeer-io/bucketeer/commit/d5875e31d414374646a7a1ea401f3d68fb8d38d2))
+* **ui:** resolve console warnings on targeting page ([#2372](https://github.com/bucketeer-io/bucketeer/issues/2372)) ([e96c651](https://github.com/bucketeer-io/bucketeer/commit/e96c6514cecd3a01b9c10b1b1081c154b52f8130))
+
+
+### Miscellaneous
+
+* add debug logs for sdk internal errors ([#2379](https://github.com/bucketeer-io/bucketeer/issues/2379)) ([568abca](https://github.com/bucketeer-io/bucketeer/commit/568abca30b39bc167bc3484ee7d88066433696d5))
+* add scheduled flag changes proto definitions and api stubs ([#2368](https://github.com/bucketeer-io/bucketeer/issues/2368)) ([1923f90](https://github.com/bucketeer-io/bucketeer/commit/1923f90ca56a533a6e1494f16d268096f1640ef6))
+* add scope label to feature flag cacher metrics ([#2380](https://github.com/bucketeer-io/bucketeer/issues/2380)) ([8f38996](https://github.com/bucketeer-io/bucketeer/commit/8f389963e823eb22028f913e376b8603f377dfb5))
+* add storage layer for scheduled flag changes ([#2374](https://github.com/bucketeer-io/bucketeer/issues/2374)) ([c129d56](https://github.com/bucketeer-io/bucketeer/commit/c129d56fce9e616dea1c6455a5f935837a26ba4f))
+* **evaluation:** update typescript evaluation version to 0.0.7 ([#2359](https://github.com/bucketeer-io/bucketeer/issues/2359)) ([ab72a0e](https://github.com/bucketeer-io/bucketeer/commit/ab72a0e7cf346b4982d029eefaa1e5f737dc6ae0))
+* improve flag cache update delay when executing auto operations ([#2376](https://github.com/bucketeer-io/bucketeer/issues/2376)) ([b6713b7](https://github.com/bucketeer-io/bucketeer/commit/b6713b763505a04128216f3f6d96a8e0f78f06ae))
+* use updated_at for server sdk feature hash to match client sdk ([#2383](https://github.com/bucketeer-io/bucketeer/issues/2383)) ([62e9f60](https://github.com/bucketeer-io/bucketeer/commit/62e9f60542be2acf7661bcd2797a5175ecf1872e))
+
+
+### Build System
+
+* **deps:** bump axios from 1.12.0 to 1.13.5 in /ui/dashboard ([#2399](https://github.com/bucketeer-io/bucketeer/issues/2399)) ([2b3e389](https://github.com/bucketeer-io/bucketeer/commit/2b3e3891cc6d0bfeb51b175be3942632e2111f03))
+* **deps:** bump diff from 5.2.0 to 5.2.2 in /ui/dashboard ([#2361](https://github.com/bucketeer-io/bucketeer/issues/2361)) ([1aa6c17](https://github.com/bucketeer-io/bucketeer/commit/1aa6c17fce73d3916d049c3d787f9981fa9c9ccd))
+* **deps:** bump lodash from 4.17.21 to 4.17.23 in /ui/dashboard ([#2366](https://github.com/bucketeer-io/bucketeer/issues/2366)) ([7b61d86](https://github.com/bucketeer-io/bucketeer/commit/7b61d86ddc03160e1c3d0c7c7518dfbe0b7da6d0))
+* **deps:** bump lodash in /evaluation/typescript ([#2367](https://github.com/bucketeer-io/bucketeer/issues/2367)) ([c15769b](https://github.com/bucketeer-io/bucketeer/commit/c15769b142ff8ea2fc28e0f53c6d68c2c8b2665e))
+* **deps:** bump the dependencies group with 14 updates ([#2386](https://github.com/bucketeer-io/bucketeer/issues/2386)) ([e3593c6](https://github.com/bucketeer-io/bucketeer/commit/e3593c6242969a0cccfd0cf9c866824a53e6dab7))
+* **deps:** bump the dependencies group with 6 updates ([#2385](https://github.com/bucketeer-io/bucketeer/issues/2385)) ([44637bb](https://github.com/bucketeer-io/bucketeer/commit/44637bb51dbad27edc4ff188946bc5f5123b6c84))
+
 ## [2.2.0](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.2.0) (2026-01-20)
 
 
