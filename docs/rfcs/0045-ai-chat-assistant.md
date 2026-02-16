@@ -127,6 +127,9 @@ Two primary endpoints:
 | Data Type | Sent to LLM | Rationale |
 |-----------|-------------|-----------|
 | Flag names | Yes | Required for contextual suggestions |
+| Flag descriptions | Yes | Provides additional context for better recommendations |
+| Variation names | Yes | Required to understand flag structure and suggest best practices |
+| Variation descriptions | Yes | Helps assistant explain flag behavior to users |
 | Tag names | Yes | Required for organization recommendations |
 | Rule structure | Yes | Required for complexity analysis |
 | Attribute values | **No** | May contain sensitive data |
@@ -228,7 +231,7 @@ Two primary endpoints:
 
 - **Authentication**: Reuse existing `token.Verifier` for all AI Chat endpoints
 - **Authorization**: Require minimum Viewer role via `checkEnvironmentRole`
-- **Rate Limiting**: Per-user and per-organization limits to prevent abuse
+- **Rate Limiting**: Per-user, per-environment, and per-organization limits to prevent abuse
 - **Input Sanitization**: Sanitize all user inputs before sending to LLM
 - **Prompt Injection**: System prompt includes explicit boundaries and restrictions
 - **Error Handling**: Internal errors logged but not exposed to clients
