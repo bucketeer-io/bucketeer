@@ -28,6 +28,11 @@ import (
 const (
 	maxPageSizePerRequest   = 100
 	maxSegmentUsersDataSize = 2000000 // 2MB
+	// Scheduled flag change limits
+	maxSchedulesPerFlag    = 50
+	maxChangesPerSchedule  = 50
+	minScheduleTimeMinutes = 5
+	maxScheduleTimeDays    = 365
 )
 
 var featureIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")

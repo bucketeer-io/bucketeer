@@ -142,4 +142,61 @@ var (
 		pkgErr.NewErrorInvalidArgUnknown(pkgErr.FeaturePackageName, "trigger action is invalid", "TriggerAction"))
 	statusTriggerUsageUpdateFailed = api.NewGRPCStatus(
 		pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "trigger usage update failed"))
+	// scheduled flag change
+	statusMissingScheduledFlagChangeID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(
+			pkgErr.FeaturePackageName,
+			"missing scheduled flag change id",
+			"ScheduledFlagChangeId",
+		))
+	statusMissingFeatureID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing feature id", "FeatureFlagID"))
+	statusMissingScheduledAt = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "missing scheduled at", "ScheduledAt"))
+	statusMissingPayload = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNil(pkgErr.FeaturePackageName, "missing payload", "Payload"))
+	statusScheduledTimeTooSoon = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"scheduled time must be at least 5 minutes in the future",
+			"ScheduledAt",
+		))
+	statusScheduledTimeTooFar = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"scheduled time must be at most 1 year in the future",
+			"ScheduledAt",
+		))
+	statusExceededMaxSchedulesPerFlag = api.NewGRPCStatus(
+		pkgErr.NewErrorExceededMax(
+			pkgErr.FeaturePackageName,
+			"exceeded maximum number of schedules per flag",
+			"SchedulesPerFlag",
+			maxSchedulesPerFlag,
+		))
+	statusExceededMaxChangesPerSchedule = api.NewGRPCStatus(
+		pkgErr.NewErrorExceededMax(
+			pkgErr.FeaturePackageName,
+			"exceeded maximum number of changes per schedule",
+			"ChangesPerSchedule",
+			maxChangesPerSchedule,
+		))
+	statusScheduledFlagChangeNotFound = api.NewGRPCStatus(
+		pkgErr.NewErrorNotFound(pkgErr.FeaturePackageName, "scheduled flag change not found", "ScheduledFlagChange"))
+	statusScheduledFlagChangeNotPending = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "scheduled flag change is not pending"))
+	statusEmptyPayload = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.FeaturePackageName, "payload must contain at least one change", "Payload"))
+	statusInvalidVariationReference = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"invalid variation reference in payload",
+			"VariationId",
+		))
+	statusInvalidRuleReference = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"invalid rule reference in payload",
+			"RuleId",
+		))
 )
