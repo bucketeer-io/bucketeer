@@ -11576,6 +11576,23 @@ definitions:
         $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersResponse:
     type: object
+  featureChangeSummary:
+    type: object
+    properties:
+      messageKey:
+        type: string
+        title: Semantic key for translation lookup (e.g., "ScheduledChange.EnableFlag")
+      values:
+        type: object
+        additionalProperties:
+          type: string
+        title: Key-value pairs for interpolation in the translated message
+    title: |-
+      ChangeSummary represents a single change in a human-readable, translatable
+      format. The frontend uses message_key to look up the translation and
+      interpolates values. Example: message_key="ScheduledChange.AddVariation",
+      values={"name": "Premium", "value": "true"} Frontend translation: "Add
+      variation: {{name}} ({{value}})" -> "Add variation: Premium (true)"
   featureClauseOperator:
     type: string
     enum:
@@ -12344,8 +12361,9 @@ definitions:
       changeSummaries:
         type: array
         items:
-          type: string
-        title: Human-readable summaries
+          type: object
+          $ref: '#/definitions/featureChangeSummary'
+        title: i18n-ready change summaries
     title: ScheduledFlagChange represents a scheduled change to a feature flag
   featureScheduledFlagChangeStatus:
     type: string

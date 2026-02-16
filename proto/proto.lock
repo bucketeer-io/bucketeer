@@ -30194,6 +30194,26 @@
             ]
           },
           {
+            "name": "ChangeSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "message_key",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "values",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
             "name": "ScheduledChangeConflict",
             "fields": [
               {
@@ -30315,7 +30335,7 @@
               {
                 "id": 18,
                 "name": "change_summaries",
-                "type": "string",
+                "type": "ChangeSummary",
                 "is_repeated": true
               }
             ]
