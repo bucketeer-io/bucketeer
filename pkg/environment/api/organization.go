@@ -21,13 +21,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -299,72 +299,7 @@ func (s *EnvironmentService) CreateOrganization(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createOrganizationNoCommand(
-			ctx,
-			req,
-			editor,
-		)
-	}
 	if err := s.validateCreateOrganizationRequest(req); err != nil {
-		return nil, err
-	}
-	name := strings.TrimSpace(req.Command.Name)
-	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	organization, err := domain.NewOrganization(
-		name,
-		urlCode,
-		req.Command.OwnerEmail,
-		req.Command.Description,
-		req.Command.IsTrial,
-		req.Command.IsSystemAdmin,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create an organization",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	if err := s.createOrganization(ctx, req.Command, organization, editor); err != nil {
-		return nil, err
-	}
-	return &environmentproto.CreateOrganizationResponse{
-		Organization: organization.Organization,
-	}, nil
-}
-
-func (s *EnvironmentService) validateCreateOrganizationRequest(
-	req *environmentproto.CreateOrganizationRequest,
-) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
-	name := strings.TrimSpace(req.Command.Name)
-	if name == "" {
-		return statusOrganizationNameRequired.Err()
-	}
-	if len(name) > maxOrganizationNameLength {
-		return statusInvalidOrganizationName.Err()
-	}
-	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	if !organizationUrlCodeRegex.MatchString(urlCode) {
-		return statusInvalidOrganizationUrlCode.Err()
-	}
-	if !emailRegex.MatchString(req.Command.OwnerEmail) {
-		return statusInvalidOrganizationCreatorEmail.Err()
-	}
-	return nil
-}
-
-func (s *EnvironmentService) createOrganizationNoCommand(
-	ctx context.Context,
-	req *environmentproto.CreateOrganizationRequest,
-	editor *eventproto.Editor,
-) (*environmentproto.CreateOrganizationResponse, error) {
-	if err := s.validateCreateOrganizationRequestNoCommand(req); err != nil {
 		return nil, err
 	}
 	// Create the organization
@@ -412,6 +347,26 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 	return &environmentproto.CreateOrganizationResponse{
 		Organization: organization.Organization,
 	}, nil
+}
+
+func (s *EnvironmentService) validateCreateOrganizationRequest(
+	req *environmentproto.CreateOrganizationRequest,
+) error {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return statusOrganizationNameRequired.Err()
+	}
+	if len(name) > maxOrganizationNameLength {
+		return statusInvalidOrganizationName.Err()
+	}
+	urlCode := strings.TrimSpace(req.UrlCode)
+	if !organizationUrlCodeRegex.MatchString(urlCode) {
+		return statusInvalidOrganizationUrlCode.Err()
+	}
+	if !emailRegex.MatchString(req.OwnerEmail) {
+		return statusInvalidOrganizationCreatorEmail.Err()
+	}
+	return nil
 }
 
 func (s *EnvironmentService) createOrganizationMySQL(
@@ -538,67 +493,6 @@ func (s *EnvironmentService) createOrganizationMySQL(
 	return organization, nil
 }
 
-func (s *EnvironmentService) validateCreateOrganizationRequestNoCommand(
-	req *environmentproto.CreateOrganizationRequest,
-) error {
-	name := strings.TrimSpace(req.Name)
-	if name == "" {
-		return statusOrganizationNameRequired.Err()
-	}
-	if len(name) > maxOrganizationNameLength {
-		return statusInvalidOrganizationName.Err()
-	}
-	urlCode := strings.TrimSpace(req.UrlCode)
-	if !organizationUrlCodeRegex.MatchString(urlCode) {
-		return statusInvalidOrganizationUrlCode.Err()
-	}
-	if !emailRegex.MatchString(req.OwnerEmail) {
-		return statusInvalidOrganizationCreatorEmail.Err()
-	}
-	return nil
-}
-
-// Deprecated
-func (s *EnvironmentService) createOrganization(
-	ctx context.Context,
-	cmd command.Command,
-	organization *domain.Organization,
-	editor *eventproto.Editor,
-) error {
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if organization.SystemAdmin {
-			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
-			if err != nil {
-				return err
-			}
-			if org != nil {
-				return v2es.ErrOrganizationAlreadyExists
-			}
-		}
-		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			return err
-		}
-		return s.orgStorage.CreateOrganization(contextWithTx, organization)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
-			return statusOrganizationAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create organization",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	return nil
-}
-
 // Create a default project.
 // We must create a project when creating an Organization
 // because we also need to create the organization owner in the account table.
@@ -695,38 +589,18 @@ func (s *EnvironmentService) UpdateOrganization(
 		return nil, err
 	}
 	// Additional security validations for ownership transfer
-	if req.OwnerEmail != nil || (req.ChangeOwnerEmailCommand != nil && req.ChangeOwnerEmailCommand.OwnerEmail != "") {
+	if req.OwnerEmail != nil {
 		if err := s.validateOwnershipTransfer(ctx, req, editor); err != nil {
 			return nil, err
 		}
 	}
-
-	commands := s.getUpdateOrganizationCommands(req)
-	if len(commands) == 0 {
-		return s.updateOrganizationNoCommand(ctx, req, editor)
-	}
-
-	if err := s.validateUpdateOrganizationRequest(req.Id, commands); err != nil {
-		return nil, err
-	}
-	if err := s.updateOrganization(ctx, req.Id, editor, commands...); err != nil {
-		return nil, err
-	}
-	return &environmentproto.UpdateOrganizationResponse{}, nil
-}
-
-func (s *EnvironmentService) updateOrganizationNoCommand(
-	ctx context.Context,
-	req *environmentproto.UpdateOrganizationRequest,
-	editor *eventproto.Editor,
-) (*environmentproto.UpdateOrganizationResponse, error) {
-	if err := s.validateUpdateOrganizationRequestNoCommand(req); err != nil {
+	if err := s.validateUpdateOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 	var prevOwnerEmail string
 	var newOwnerEmail string
 	var event *eventproto.Event
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		orgStorage := v2es.NewOrganizationStorage(tx)
 		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
@@ -813,44 +687,7 @@ func (s *EnvironmentService) reportUpdateOrganizationError(
 	return api.NewGRPCStatus(err).Err()
 }
 
-func (s *EnvironmentService) getUpdateOrganizationCommands(
-	req *environmentproto.UpdateOrganizationRequest,
-) []command.Command {
-	commands := make([]command.Command, 0)
-	if req.ChangeDescriptionCommand != nil {
-		commands = append(commands, req.ChangeDescriptionCommand)
-	}
-	if req.RenameCommand != nil {
-		commands = append(commands, req.RenameCommand)
-	}
-	if req.ChangeOwnerEmailCommand != nil {
-		commands = append(commands, req.ChangeOwnerEmailCommand)
-	}
-	return commands
-}
-
 func (s *EnvironmentService) validateUpdateOrganizationRequest(
-	id string,
-	commands []command.Command,
-) error {
-	if id == "" {
-		return statusOrganizationIDRequired.Err()
-	}
-	for _, cmd := range commands {
-		if c, ok := cmd.(*environmentproto.ChangeNameOrganizationCommand); ok {
-			name := strings.TrimSpace(c.Name)
-			if name == "" {
-				return statusOrganizationNameRequired.Err()
-			}
-			if len(name) > maxOrganizationNameLength {
-				return statusInvalidOrganizationName.Err()
-			}
-		}
-	}
-	return nil
-}
-
-func (s *EnvironmentService) validateUpdateOrganizationRequestNoCommand(
 	req *environmentproto.UpdateOrganizationRequest,
 ) error {
 	if req.Id == "" {
@@ -868,53 +705,6 @@ func (s *EnvironmentService) validateUpdateOrganizationRequestNoCommand(
 	return nil
 }
 
-func (s *EnvironmentService) updateOrganization(
-	ctx context.Context,
-	id string,
-	editor *eventproto.Editor,
-	commands ...command.Command,
-) error {
-	var prevOwnerEmail string
-	var newOwnerEmail string
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		organization, err := s.orgStorage.GetOrganization(contextWithTx, id)
-		if err != nil {
-			return err
-		}
-		prevOwnerEmail = organization.OwnerEmail
-		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
-		if err != nil {
-			return err
-		}
-		for _, c := range commands {
-			if err := handler.Handle(ctx, c); err != nil {
-				return err
-			}
-		}
-		// Set the new owner email if it changes
-		if prevOwnerEmail != organization.OwnerEmail {
-			newOwnerEmail = organization.OwnerEmail
-		}
-		return s.orgStorage.UpdateOrganization(contextWithTx, organization)
-	})
-	if err != nil {
-		return s.reportUpdateOrganizationError(ctx, err)
-	}
-	// Update the organization role when the owner email changes
-	if prevOwnerEmail != "" && newOwnerEmail != "" {
-		if err := s.updateOwnerRole(ctx, id, prevOwnerEmail, newOwnerEmail); err != nil {
-			s.logger.Error("Failed to update the new owner's role",
-				zap.Error(err),
-				zap.String("organizationId", id),
-				zap.String("prevOwnerEmail", prevOwnerEmail),
-				zap.String("newOwnerEmail", newOwnerEmail),
-			)
-			return api.NewGRPCStatus(err).Err()
-		}
-	}
-	return nil
-}
-
 // validateOwnershipTransfer performs additional security validations for ownership transfer
 func (s *EnvironmentService) validateOwnershipTransfer(
 	ctx context.Context,
@@ -927,13 +717,7 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 		return err
 	}
 
-	// Determine the new owner email being requested
-	var newOwnerEmail string
-	if req.OwnerEmail != nil {
-		newOwnerEmail = req.OwnerEmail.Value
-	} else if req.ChangeOwnerEmailCommand != nil {
-		newOwnerEmail = req.ChangeOwnerEmailCommand.OwnerEmail
-	}
+	newOwnerEmail := req.OwnerEmail.Value
 
 	// Don't allow no-op updates (setting same owner)
 	if newOwnerEmail == organization.OwnerEmail {
@@ -1002,8 +786,47 @@ func (s *EnvironmentService) EnableOrganization(
 	if err := s.validateEnableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Organization{}
+		if err := copier.Copy(prev, organization); err != nil {
+			return err
+		}
+		organization.Enable()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			organization.Id,
+			eventproto.Event_ORGANIZATION_ENABLED,
+			&eventproto.OrganizationEnabledEvent{
+				Id: organization.Id,
+			},
+			organization,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err)
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish enable organization event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.EnableOrganizationResponse{}, nil
 }
@@ -1011,9 +834,6 @@ func (s *EnvironmentService) EnableOrganization(
 func (s *EnvironmentService) validateEnableOrganizationRequest(
 	req *environmentproto.EnableOrganizationRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusOrganizationIDRequired.Err()
 	}
@@ -1031,8 +851,49 @@ func (s *EnvironmentService) DisableOrganization(
 	if err := s.validateDisableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Organization{}
+		if err := copier.Copy(prev, organization); err != nil {
+			return err
+		}
+		if err := organization.Disable(); err != nil {
+			return err
+		}
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			organization.Id,
+			eventproto.Event_ORGANIZATION_DISABLED,
+			&eventproto.OrganizationDisabledEvent{
+				Id: organization.Id,
+			},
+			organization,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err)
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish disable organization event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.DisableOrganizationResponse{}, nil
 }
@@ -1040,9 +901,6 @@ func (s *EnvironmentService) DisableOrganization(
 func (s *EnvironmentService) validateDisableOrganizationRequest(
 	req *environmentproto.DisableOrganizationRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusOrganizationIDRequired.Err()
 	}
@@ -1060,8 +918,49 @@ func (s *EnvironmentService) ArchiveOrganization(
 	if err := s.validateArchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Organization{}
+		if err := copier.Copy(prev, organization); err != nil {
+			return err
+		}
+		if err := organization.Archive(); err != nil {
+			return err
+		}
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			organization.Id,
+			eventproto.Event_ORGANIZATION_ARCHIVED,
+			&eventproto.OrganizationArchivedEvent{
+				Id: organization.Id,
+			},
+			organization,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err)
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish archive organization event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ArchiveOrganizationResponse{}, nil
 }
@@ -1069,9 +968,6 @@ func (s *EnvironmentService) ArchiveOrganization(
 func (s *EnvironmentService) validateArchiveOrganizationRequest(
 	req *environmentproto.ArchiveOrganizationRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusOrganizationIDRequired.Err()
 	}
@@ -1089,8 +985,47 @@ func (s *EnvironmentService) UnarchiveOrganization(
 	if err := s.validateUnarchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Organization{}
+		if err := copier.Copy(prev, organization); err != nil {
+			return err
+		}
+		organization.Unarchive()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			organization.Id,
+			eventproto.Event_ORGANIZATION_UNARCHIVED,
+			&eventproto.OrganizationUnarchivedEvent{
+				Id: organization.Id,
+			},
+			organization,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err)
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish unarchive organization event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.UnarchiveOrganizationResponse{}, nil
 }
@@ -1098,9 +1033,6 @@ func (s *EnvironmentService) UnarchiveOrganization(
 func (s *EnvironmentService) validateUnarchiveOrganizationRequest(
 	req *environmentproto.UnarchiveOrganizationRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusOrganizationIDRequired.Err()
 	}
@@ -1118,8 +1050,47 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 	if err := s.validateConvertTrialOrganizationRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateOrganization(ctx, req.Id, editor, req.Command); err != nil {
-		return nil, err
+
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Organization{}
+		if err := copier.Copy(prev, organization); err != nil {
+			return err
+		}
+		organization.ConvertTrial()
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			organization.Id,
+			eventproto.Event_ORGANIZATION_TRIAL_CONVERTED,
+			&eventproto.OrganizationTrialConvertedEvent{
+				Id: organization.Id,
+			},
+			organization,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		return orgStorage.UpdateOrganization(ctxWithTx, organization)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err)
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish convert trial organization event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("event", event),
+			)...,
+		)
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 	return &environmentproto.ConvertTrialOrganizationResponse{}, nil
 }
@@ -1127,9 +1098,6 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 func (s *EnvironmentService) validateConvertTrialOrganizationRequest(
 	req *environmentproto.ConvertTrialOrganizationRequest,
 ) error {
-	if req.Command == nil {
-		return statusNoCommand.Err()
-	}
 	if req.Id == "" {
 		return statusOrganizationIDRequired.Err()
 	}

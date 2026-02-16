@@ -214,26 +214,6 @@ func (mr *MockClientMockRecorder) CreateProject(ctx, in any, opts ...any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockClient)(nil).CreateProject), varargs...)
 }
 
-// CreateTrialProject mocks base method.
-func (m *MockClient) CreateTrialProject(ctx context.Context, in *environment.CreateTrialProjectRequest, opts ...grpc.CallOption) (*environment.CreateTrialProjectResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateTrialProject", varargs...)
-	ret0, _ := ret[0].(*environment.CreateTrialProjectResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTrialProject indicates an expected call of CreateTrialProject.
-func (mr *MockClientMockRecorder) CreateTrialProject(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrialProject", reflect.TypeOf((*MockClient)(nil).CreateTrialProject), varargs...)
-}
-
 // DisableOrganization mocks base method.
 func (m *MockClient) DisableOrganization(ctx context.Context, in *environment.DisableOrganizationRequest, opts ...grpc.CallOption) (*environment.DisableOrganizationResponse, error) {
 	m.ctrl.T.Helper()
