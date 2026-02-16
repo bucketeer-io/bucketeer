@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -128,7 +128,7 @@ func (d *ConflictDetector) DetectConflictsOnFlagChange(
 			continue // No stale references, this schedule is still valid
 		}
 
-		sfcDomain := &domain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+		sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
 		sfcDomain.MarkConflict(invalidRefs)
 		if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
 			return markedCount, err
@@ -273,7 +273,7 @@ func validatePayloadReferences(
 			continue
 		}
 		if vc.ChangeType == proto.ChangeType_UPDATE || vc.ChangeType == proto.ChangeType_DELETE {
-			if !variationExists(flag, vc.Variation.Id) {
+			if !featuredomain.VariationExists(flag, vc.Variation.Id) {
 				conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 					Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 					Description:      fmt.Sprintf("Variation %s does not exist", vc.Variation.Id),
@@ -291,7 +291,7 @@ func validatePayloadReferences(
 			continue
 		}
 		if rc.ChangeType == proto.ChangeType_UPDATE || rc.ChangeType == proto.ChangeType_DELETE {
-			if !ruleExists(flag, rc.Rule.Id) {
+			if !featuredomain.RuleExists(flag, rc.Rule.Id) {
 				conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 					Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 					Description:      fmt.Sprintf("Rule %s does not exist", rc.Rule.Id),
@@ -303,7 +303,7 @@ func validatePayloadReferences(
 		if rc.Rule.Strategy != nil {
 			if rc.Rule.Strategy.FixedStrategy != nil {
 				vid := rc.Rule.Strategy.FixedStrategy.Variation
-				if vid != "" && !variationExists(flag, vid) {
+				if vid != "" && !featuredomain.VariationExists(flag, vid) {
 					conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 						Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 						Description:      fmt.Sprintf("Rule strategy references non-existent variation %s", vid),
@@ -314,7 +314,7 @@ func validatePayloadReferences(
 			}
 			if rc.Rule.Strategy.RolloutStrategy != nil {
 				for _, rv := range rc.Rule.Strategy.RolloutStrategy.Variations {
-					if !variationExists(flag, rv.Variation) {
+					if !featuredomain.VariationExists(flag, rv.Variation) {
 						conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 							Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 							Description:      fmt.Sprintf("Rule strategy references non-existent variation %s", rv.Variation),
@@ -334,7 +334,7 @@ func validatePayloadReferences(
 			continue
 		}
 		vid := tc.Target.Variation
-		if vid != "" && !variationExists(flag, vid) {
+		if vid != "" && !featuredomain.VariationExists(flag, vid) {
 			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 				Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 				Description:      fmt.Sprintf("Target references non-existent variation %s", vid),
@@ -346,7 +346,7 @@ func validatePayloadReferences(
 
 	// Off variation reference
 	if payload.OffVariation != nil && payload.OffVariation.Value != "" {
-		if !variationExists(flag, payload.OffVariation.Value) {
+		if !featuredomain.VariationExists(flag, payload.OffVariation.Value) {
 			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 				Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 				Description:      fmt.Sprintf("OFF variation %s does not exist", payload.OffVariation.Value),
@@ -359,7 +359,7 @@ func validatePayloadReferences(
 	// Default strategy variation references
 	if payload.DefaultStrategy != nil {
 		if payload.DefaultStrategy.FixedStrategy != nil {
-			if !variationExists(flag, payload.DefaultStrategy.FixedStrategy.Variation) {
+			if !featuredomain.VariationExists(flag, payload.DefaultStrategy.FixedStrategy.Variation) {
 				conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 					Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 					Description:      "Default strategy references non-existent variation",
@@ -370,7 +370,7 @@ func validatePayloadReferences(
 		}
 		if payload.DefaultStrategy.RolloutStrategy != nil {
 			for _, rv := range payload.DefaultStrategy.RolloutStrategy.Variations {
-				if !variationExists(flag, rv.Variation) {
+				if !featuredomain.VariationExists(flag, rv.Variation) {
 					conflicts = append(conflicts, &proto.ScheduledChangeConflict{
 						Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
 						Description:      "Default strategy references non-existent variation",
@@ -384,28 +384,4 @@ func validatePayloadReferences(
 	}
 
 	return conflicts
-}
-
-func variationExists(flag *proto.Feature, variationID string) bool {
-	if flag == nil {
-		return false
-	}
-	for _, v := range flag.Variations {
-		if v.Id == variationID {
-			return true
-		}
-	}
-	return false
-}
-
-func ruleExists(flag *proto.Feature, ruleID string) bool {
-	if flag == nil {
-		return false
-	}
-	for _, r := range flag.Rules {
-		if r.Id == ruleID {
-			return true
-		}
-	}
-	return false
 }

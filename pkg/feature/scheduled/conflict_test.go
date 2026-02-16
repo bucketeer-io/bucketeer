@@ -629,7 +629,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 		desc              string
 		flag              *featureproto.Feature
 		pendingSchedules  []*featureproto.ScheduledFlagChange
-		setupUpdateExpect func(storage *mock.MockScheduledFlagChangeStorage)
+		setupUpdateExpect func(t *testing.T, storage *mock.MockScheduledFlagChangeStorage)
 		expectedCount     int
 	}{
 		{
@@ -642,7 +642,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 				},
 			},
 			pendingSchedules:  []*featureproto.ScheduledFlagChange{},
-			setupUpdateExpect: func(_ *mock.MockScheduledFlagChangeStorage) {},
+			setupUpdateExpect: func(_ *testing.T, _ *mock.MockScheduledFlagChangeStorage) {},
 			expectedCount:     0,
 		},
 		{
@@ -662,7 +662,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 					Payload:               &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
 				},
 			},
-			setupUpdateExpect: func(_ *mock.MockScheduledFlagChangeStorage) {},
+			setupUpdateExpect: func(_ *testing.T, _ *mock.MockScheduledFlagChangeStorage) {},
 			expectedCount:     0,
 		},
 		{
@@ -684,7 +684,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 					Payload:               &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
 				},
 			},
-			setupUpdateExpect: func(_ *mock.MockScheduledFlagChangeStorage) {},
+			setupUpdateExpect: func(_ *testing.T, _ *mock.MockScheduledFlagChangeStorage) {},
 			expectedCount:     0, // Enable flag doesn't reference any variation/rule, so no conflict
 		},
 		{
@@ -710,11 +710,12 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 					},
 				},
 			},
-			setupUpdateExpect: func(storage *mock.MockScheduledFlagChangeStorage) {
+			setupUpdateExpect: func(t *testing.T, storage *mock.MockScheduledFlagChangeStorage) {
+				t.Helper()
 				storage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
-						assert.Equal(&testing.T{}, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT, sfc.Status)
-						assert.NotEmpty(&testing.T{}, sfc.Conflicts)
+						assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT, sfc.Status)
+						assert.NotEmpty(t, sfc.Conflicts)
 						return nil
 					})
 			},
@@ -759,7 +760,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 					Payload:               &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(false)},
 				},
 			},
-			setupUpdateExpect: func(storage *mock.MockScheduledFlagChangeStorage) {
+			setupUpdateExpect: func(_ *testing.T, storage *mock.MockScheduledFlagChangeStorage) {
 				// Only sfc-stale-ref gets updated (has invalid var-removed reference)
 				// sfc-stale-but-valid has version mismatch but no stale refs, so no update
 				storage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil).Times(1)
@@ -778,7 +779,7 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 
 			storage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
 				Return(p.pendingSchedules, len(p.pendingSchedules), int64(len(p.pendingSchedules)), nil)
-			p.setupUpdateExpect(storage)
+			p.setupUpdateExpect(t, storage)
 
 			count, err := detector.DetectConflictsOnFlagChange(context.Background(), p.flag, "ns0")
 			require.NoError(t, err)

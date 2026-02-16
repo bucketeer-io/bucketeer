@@ -898,7 +898,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 			return statusInvalidVariationReference.Err()
 		}
 		if vc.ChangeType == ftproto.ChangeType_UPDATE || vc.ChangeType == ftproto.ChangeType_DELETE {
-			if !variationExists(feature, vc.Variation.Id) {
+			if !domain.VariationExists(feature, vc.Variation.Id) {
 				return statusInvalidVariationReference.Err()
 			}
 		}
@@ -910,7 +910,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 			return statusInvalidRuleReference.Err()
 		}
 		if rc.ChangeType == ftproto.ChangeType_UPDATE || rc.ChangeType == ftproto.ChangeType_DELETE {
-			if !ruleExists(feature, rc.Rule.Id) {
+			if !domain.RuleExists(feature, rc.Rule.Id) {
 				return statusInvalidRuleReference.Err()
 			}
 		}
@@ -936,7 +936,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 			if err != nil {
 				return statusInvalidPrerequisiteReference.Err()
 			}
-			if !variationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
+			if !domain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
 				return statusInvalidPrerequisiteReference.Err()
 			}
 		}
@@ -944,7 +944,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 
 	// Validate off variation reference
 	if payload.OffVariation != nil && payload.OffVariation.Value != "" {
-		if !variationExists(feature, payload.OffVariation.Value) {
+		if !domain.VariationExists(feature, payload.OffVariation.Value) {
 			return statusInvalidVariationReference.Err()
 		}
 	}
@@ -952,13 +952,13 @@ func (s *FeatureService) validateScheduledChangePayload(
 	// Validate default strategy variation references
 	if payload.DefaultStrategy != nil {
 		if payload.DefaultStrategy.FixedStrategy != nil {
-			if !variationExists(feature, payload.DefaultStrategy.FixedStrategy.Variation) {
+			if !domain.VariationExists(feature, payload.DefaultStrategy.FixedStrategy.Variation) {
 				return statusInvalidVariationReference.Err()
 			}
 		}
 		if payload.DefaultStrategy.RolloutStrategy != nil {
 			for _, rv := range payload.DefaultStrategy.RolloutStrategy.Variations {
-				if !variationExists(feature, rv.Variation) {
+				if !domain.VariationExists(feature, rv.Variation) {
 					return statusInvalidVariationReference.Err()
 				}
 			}
@@ -966,30 +966,6 @@ func (s *FeatureService) validateScheduledChangePayload(
 	}
 
 	return nil
-}
-
-func variationExists(feature *ftproto.Feature, variationID string) bool {
-	if feature == nil {
-		return false
-	}
-	for _, v := range feature.Variations {
-		if v.Id == variationID {
-			return true
-		}
-	}
-	return false
-}
-
-func ruleExists(feature *ftproto.Feature, ruleID string) bool {
-	if feature == nil {
-		return false
-	}
-	for _, r := range feature.Rules {
-		if r.Id == ruleID {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *FeatureService) countPendingSchedulesForFeature(
