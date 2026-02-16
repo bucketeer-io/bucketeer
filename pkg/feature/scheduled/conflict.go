@@ -285,6 +285,7 @@ func validatePayloadReferences(
 	}
 
 	// Rule references (update/delete require the rule to exist)
+	// Also check that any variation references inside the rule's strategy are valid
 	for _, rc := range payload.RuleChanges {
 		if rc == nil || rc.Rule == nil {
 			continue
@@ -298,6 +299,48 @@ func validatePayloadReferences(
 					DetectedAt:       now,
 				})
 			}
+		}
+		if rc.Rule.Strategy != nil {
+			if rc.Rule.Strategy.FixedStrategy != nil {
+				vid := rc.Rule.Strategy.FixedStrategy.Variation
+				if vid != "" && !variationExists(flag, vid) {
+					conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+						Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+						Description:      fmt.Sprintf("Rule strategy references non-existent variation %s", vid),
+						ConflictingField: "rules.strategy",
+						DetectedAt:       now,
+					})
+				}
+			}
+			if rc.Rule.Strategy.RolloutStrategy != nil {
+				for _, rv := range rc.Rule.Strategy.RolloutStrategy.Variations {
+					if !variationExists(flag, rv.Variation) {
+						conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+							Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+							Description:      fmt.Sprintf("Rule strategy references non-existent variation %s", rv.Variation),
+							ConflictingField: "rules.strategy",
+							DetectedAt:       now,
+						})
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Target variation references (the variation a target points to must exist)
+	for _, tc := range payload.TargetChanges {
+		if tc == nil || tc.Target == nil {
+			continue
+		}
+		vid := tc.Target.Variation
+		if vid != "" && !variationExists(flag, vid) {
+			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+				Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+				Description:      fmt.Sprintf("Target references non-existent variation %s", vid),
+				ConflictingField: "targets",
+				DetectedAt:       now,
+			})
 		}
 	}
 

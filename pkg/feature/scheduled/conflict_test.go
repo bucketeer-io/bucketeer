@@ -282,6 +282,107 @@ func TestValidatePayloadReferences(t *testing.T) {
 			checkField:  "default_strategy",
 		},
 		{
+			desc: "invalid target variation reference",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				TargetChanges: []*featureproto.TargetChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Target: &featureproto.Target{
+							Variation: "var-gone",
+							Users:     []string{"user-1"},
+						},
+					},
+				},
+			},
+			expectedLen: 1,
+			checkField:  "targets",
+		},
+		{
+			desc: "valid target variation reference",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				TargetChanges: []*featureproto.TargetChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Target: &featureproto.Target{
+							Variation: "var-1",
+							Users:     []string{"user-1"},
+						},
+					},
+				},
+			},
+			expectedLen: 0,
+		},
+		{
+			desc: "invalid rule strategy fixed variation reference",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-new",
+							Strategy: &featureproto.Strategy{
+								Type: featureproto.Strategy_FIXED,
+								FixedStrategy: &featureproto.FixedStrategy{
+									Variation: "var-gone",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedLen: 1,
+			checkField:  "rules.strategy",
+		},
+		{
+			desc: "invalid rule strategy rollout variation reference",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-new",
+							Strategy: &featureproto.Strategy{
+								Type: featureproto.Strategy_ROLLOUT,
+								RolloutStrategy: &featureproto.RolloutStrategy{
+									Variations: []*featureproto.RolloutStrategy_Variation{
+										{Variation: "var-1", Weight: 50000},
+										{Variation: "var-gone", Weight: 50000},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedLen: 1,
+			checkField:  "rules.strategy",
+		},
+		{
+			desc: "valid rule strategy variation references",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-new",
+							Strategy: &featureproto.Strategy{
+								Type: featureproto.Strategy_FIXED,
+								FixedStrategy: &featureproto.FixedStrategy{
+									Variation: "var-1",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedLen: 0,
+		},
+		{
 			desc: "no changes: no conflicts",
 			flag: defaultFlag,
 			payload: &featureproto.ScheduledChangePayload{
