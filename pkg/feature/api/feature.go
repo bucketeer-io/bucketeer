@@ -32,6 +32,7 @@ import (
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
@@ -929,9 +930,29 @@ func (s *FeatureService) UpdateFeature(
 		)
 		return nil, statusInternal.Err()
 	}
+
+	// Detect conflicts in pending scheduled changes after flag update
+	conflictCount := int32(0)
+	conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
+	if count, err := conflictDetector.DetectConflictsOnFlagChange(ctx, updatedpb, req.EnvironmentId); err != nil {
+		s.logger.Error(
+			"Failed to detect conflicts on flag change",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		// Don't fail the update, conflict detection is best-effort
+	} else {
+		conflictCount = int32(count)
+	}
+
 	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureResponse{
-		Feature: updatedpb,
+		Feature:                   updatedpb,
+		ScheduleConflictsDetected: conflictCount > 0,
+		ConflictCount:             conflictCount,
 	}, nil
 }
 

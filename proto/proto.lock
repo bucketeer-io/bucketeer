@@ -31254,6 +31254,16 @@
                 "id": 1,
                 "name": "feature",
                 "type": "Feature"
+              },
+              {
+                "id": 2,
+                "name": "schedule_conflicts_detected",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "conflict_count",
+                "type": "int32"
               }
             ]
           },

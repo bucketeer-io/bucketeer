@@ -165,6 +165,9 @@ message UpdateFeatureRequest {
 
 message UpdateFeatureResponse {
   Feature feature = 1;
+  bool schedule_conflicts_detected =
+      2;  // True if any pending schedules were marked as conflicted
+  int32 conflict_count = 3;  // Number of schedules marked as conflicted
 }
 
 // Create a new scheduled flag change

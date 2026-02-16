@@ -2872,6 +2872,10 @@ func TestUpdateFeature(t *testing.T) {
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				// Conflict detection runs after update (Phase 4)
+				s.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage).EXPECT().ListScheduledFlagChanges(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			ctx: createContextWithToken(),
