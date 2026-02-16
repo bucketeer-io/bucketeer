@@ -56,27 +56,28 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type FeatureService struct {
-	fluiStorage           v2fs.FeatureLastUsedInfoStorage
-	flagTriggerStorage    v2fs.FlagTriggerStorage
-	featureStorage        v2fs.FeatureStorage
-	segmentStorage        v2fs.SegmentStorage
-	segmentUserStorage    v2fs.SegmentUserStorage
-	tagStorage            v2ts.TagStorage
-	mysqlClient           mysql.Client
-	accountClient         accountclient.Client
-	experimentClient      experimentclient.Client
-	featuresCache         cachev3.FeaturesCache
-	autoOpsClient         autoopsclient.Client
-	batchClient           btclient.Client
-	environmentClient     envclient.Client
-	segmentUsersCache     cachev3.SegmentUsersCache
-	userAttributesCache   cachev3.UserAttributesCache
-	segmentUsersPublisher publisher.Publisher
-	domainPublisher       publisher.Publisher
-	flightgroup           singleflight.Group
-	triggerURL            string
-	opts                  *options
-	logger                *zap.Logger
+	fluiStorage                v2fs.FeatureLastUsedInfoStorage
+	flagTriggerStorage         v2fs.FlagTriggerStorage
+	featureStorage             v2fs.FeatureStorage
+	segmentStorage             v2fs.SegmentStorage
+	segmentUserStorage         v2fs.SegmentUserStorage
+	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
+	tagStorage                 v2ts.TagStorage
+	mysqlClient                mysql.Client
+	accountClient              accountclient.Client
+	experimentClient           experimentclient.Client
+	featuresCache              cachev3.FeaturesCache
+	autoOpsClient              autoopsclient.Client
+	batchClient                btclient.Client
+	environmentClient          envclient.Client
+	segmentUsersCache          cachev3.SegmentUsersCache
+	userAttributesCache        cachev3.UserAttributesCache
+	segmentUsersPublisher      publisher.Publisher
+	domainPublisher            publisher.Publisher
+	flightgroup                singleflight.Group
+	triggerURL                 string
+	opts                       *options
+	logger                     *zap.Logger
 }
 
 func NewFeatureService(
@@ -100,26 +101,27 @@ func NewFeatureService(
 		opt(dopts)
 	}
 	return &FeatureService{
-		fluiStorage:           v2fs.NewFeatureLastUsedInfoStorage(mysqlClient),
-		flagTriggerStorage:    v2fs.NewFlagTriggerStorage(mysqlClient),
-		featureStorage:        v2fs.NewFeatureStorage(mysqlClient),
-		segmentStorage:        v2fs.NewSegmentStorage(mysqlClient),
-		segmentUserStorage:    v2fs.NewSegmentUserStorage(mysqlClient),
-		tagStorage:            v2ts.NewTagStorage(mysqlClient),
-		mysqlClient:           mysqlClient,
-		accountClient:         accountClient,
-		experimentClient:      experimentClient,
-		autoOpsClient:         autoOpsClient,
-		batchClient:           batchClient,
-		environmentClient:     environmentClient,
-		featuresCache:         cachev3.NewFeaturesCache(v3Cache),
-		segmentUsersCache:     cachev3.NewSegmentUsersCache(v3Cache),
-		userAttributesCache:   cachev3.NewUserAttributesCache(persistentRedisV3Cache),
-		segmentUsersPublisher: segmentUsersPublisher,
-		domainPublisher:       domainPublisher,
-		triggerURL:            triggerURL,
-		opts:                  dopts,
-		logger:                dopts.logger.Named("api"),
+		fluiStorage:                v2fs.NewFeatureLastUsedInfoStorage(mysqlClient),
+		flagTriggerStorage:         v2fs.NewFlagTriggerStorage(mysqlClient),
+		featureStorage:             v2fs.NewFeatureStorage(mysqlClient),
+		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
+		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
+		scheduledFlagChangeStorage: v2fs.NewScheduledFlagChangeStorage(mysqlClient),
+		tagStorage:                 v2ts.NewTagStorage(mysqlClient),
+		mysqlClient:                mysqlClient,
+		accountClient:              accountClient,
+		experimentClient:           experimentClient,
+		autoOpsClient:              autoOpsClient,
+		batchClient:                batchClient,
+		environmentClient:          environmentClient,
+		featuresCache:              cachev3.NewFeaturesCache(v3Cache),
+		segmentUsersCache:          cachev3.NewSegmentUsersCache(v3Cache),
+		userAttributesCache:        cachev3.NewUserAttributesCache(persistentRedisV3Cache),
+		segmentUsersPublisher:      segmentUsersPublisher,
+		domainPublisher:            domainPublisher,
+		triggerURL:                 triggerURL,
+		opts:                       dopts,
+		logger:                     dopts.logger.Named("api"),
 	}
 }
 
