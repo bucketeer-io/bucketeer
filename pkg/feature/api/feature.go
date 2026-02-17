@@ -931,7 +931,15 @@ func (s *FeatureService) UpdateFeature(
 		return nil, statusInternal.Err()
 	}
 
-	// Detect conflicts in pending scheduled changes after flag update
+	// Detect conflicts in pending scheduled changes after flag update.
+	//
+	// NOTE: This runs OUTSIDE the UpdateFeature transaction intentionally.
+	// Running outside means conflict detection sees all committed data at query time,
+	// including changes from any concurrent requests that committed between the flag
+	// update and the detection. Running inside the transaction would operate on a
+	// pre-commit snapshot and miss concurrent modifications.
+	// As a final safety net, the executor validates all references before
+	// executing any schedule.
 	conflictCount := int32(0)
 	conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
 	if count, err := conflictDetector.DetectConflictsOnFlagChange(ctx, updatedpb, req.EnvironmentId); err != nil {
