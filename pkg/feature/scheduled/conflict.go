@@ -19,10 +19,19 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
+
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+)
+
+const (
+	// maxCrossFlagSchedulesToCheck limits the number of cross-flag
+	// schedules evaluated per UpdateFeature call to bound the DB
+	// queries and processing time.
+	maxCrossFlagSchedulesToCheck = 100
 )
 
 // ConflictDetector detects conflicts between scheduled flag changes.
@@ -41,22 +50,34 @@ import (
 type ConflictDetector struct {
 	storage        v2fs.ScheduledFlagChangeStorage
 	featureStorage v2fs.FeatureStorage
+	logger         *zap.Logger
 }
 
 // NewConflictDetector creates a new ConflictDetector.
-func NewConflictDetector(storage v2fs.ScheduledFlagChangeStorage) *ConflictDetector {
-	return &ConflictDetector{storage: storage}
+func NewConflictDetector(
+	storage v2fs.ScheduledFlagChangeStorage,
+) *ConflictDetector {
+	return &ConflictDetector{
+		storage: storage,
+		logger:  zap.NewNop(),
+	}
 }
 
-// NewConflictDetectorWithFeatureStorage creates a ConflictDetector with feature storage
-// for cross-flag conflict detection (e.g., prerequisite validation across flags).
+// NewConflictDetectorWithFeatureStorage creates a ConflictDetector
+// with feature storage for cross-flag conflict detection
+// (e.g., prerequisite validation across flags).
 func NewConflictDetectorWithFeatureStorage(
 	storage v2fs.ScheduledFlagChangeStorage,
 	featureStorage v2fs.FeatureStorage,
+	logger *zap.Logger,
 ) *ConflictDetector {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
 	return &ConflictDetector{
 		storage:        storage,
 		featureStorage: featureStorage,
+		logger:         logger,
 	}
 }
 
@@ -202,49 +223,84 @@ func (d *ConflictDetector) DetectCrossFlagConflicts(
 	flagCache := make(map[string]*proto.Feature)
 
 	for _, schedule := range schedules {
-		// Only process schedules that have prerequisite changes referencing other flags
+		// Only process schedules that have prerequisite changes
+		// referencing other flags.
 		if !hasPrerequisiteChanges(schedule.Payload) {
-			// For non-prerequisite schedules on other flags, same-flag check already covers them
-			// via their own flag's DetectConflictsOnFlagChange call.
+			// For non-prerequisite schedules on other flags, same-flag
+			// check already covers them via their own flag's
+			// DetectConflictsOnFlagChange call.
 			// But for CONFLICT recovery, we should still check.
-			if schedule.Status != proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT {
+			if schedule.Status !=
+				proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT {
 				continue
 			}
 		}
 
-		// Get the schedule's own flag (the flag this schedule will modify)
+		// Get the schedule's own flag
 		scheduleFlagID := schedule.FeatureId
 		flag, ok := flagCache[scheduleFlagID]
 		if !ok {
-			flagDomain, err := d.featureStorage.GetFeature(ctx, scheduleFlagID, environmentID)
+			flagDomain, err := d.featureStorage.GetFeature(
+				ctx, scheduleFlagID, environmentID,
+			)
 			if err != nil {
-				continue // Skip if we can't get the flag
+				d.logger.Warn(
+					"Failed to get feature for cross-flag conflict check",
+					zap.String("featureId", scheduleFlagID),
+					zap.String("scheduleId", schedule.Id),
+					zap.Error(err),
+				)
+				continue
 			}
 			flag = flagDomain.Feature
 			flagCache[scheduleFlagID] = flag
 		}
 
 		// Validate same-flag references
-		invalidRefs := validatePayloadReferences(flag, schedule.Payload, now)
+		invalidRefs := validatePayloadReferences(
+			flag, schedule.Payload, now,
+		)
 
 		// Validate cross-flag prerequisite references
-		prereqConflicts := d.validatePrerequisiteReferences(ctx, schedule.Payload, environmentID, now)
+		prereqConflicts := d.validatePrerequisiteReferences(
+			ctx, schedule.Payload, environmentID, now,
+		)
 		invalidRefs = append(invalidRefs, prereqConflicts...)
 
-		isPending := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
-		isConflict := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+		isPending := schedule.Status ==
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+		isConflict := schedule.Status ==
+			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
 
 		if len(invalidRefs) > 0 && isPending {
-			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain := &featuredomain.ScheduledFlagChange{
+				ScheduledFlagChange: schedule,
+			}
 			sfcDomain.MarkConflict(invalidRefs)
-			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+			if err := d.storage.UpdateScheduledFlagChange(
+				ctx, sfcDomain,
+			); err != nil {
+				d.logger.Warn(
+					"Failed to mark schedule as CONFLICT",
+					zap.String("scheduleId", schedule.Id),
+					zap.Error(err),
+				)
 				continue
 			}
 			changedCount++
 		} else if len(invalidRefs) == 0 && isConflict {
-			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain := &featuredomain.ScheduledFlagChange{
+				ScheduledFlagChange: schedule,
+			}
 			sfcDomain.RestoreToPending()
-			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+			if err := d.storage.UpdateScheduledFlagChange(
+				ctx, sfcDomain,
+			); err != nil {
+				d.logger.Warn(
+					"Failed to restore schedule to PENDING",
+					zap.String("scheduleId", schedule.Id),
+					zap.Error(err),
+				)
 				continue
 			}
 			changedCount++
@@ -275,11 +331,21 @@ func (d *ConflictDetector) validatePrerequisiteReferences(
 			continue
 		}
 
-		prereqFeature, err := d.featureStorage.GetFeature(ctx, pc.Prerequisite.FeatureId, environmentID)
+		prereqFeature, err := d.featureStorage.GetFeature(
+			ctx, pc.Prerequisite.FeatureId, environmentID,
+		)
 		if err != nil {
+			d.logger.Warn(
+				"Failed to get prerequisite feature for conflict check",
+				zap.String("prerequisiteFeatureId", pc.Prerequisite.FeatureId),
+				zap.Error(err),
+			)
 			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
-				Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
-				Description:      fmt.Sprintf("Prerequisite flag %s not found", pc.Prerequisite.FeatureId),
+				Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+				Description: fmt.Sprintf(
+					"Prerequisite flag %s not found",
+					pc.Prerequisite.FeatureId,
+				),
 				ConflictingField: "prerequisites",
 				DetectedAt:       now,
 			})
@@ -322,8 +388,16 @@ func (d *ConflictDetector) listCrossFlagSchedules(
 	excludeFeatureID, environmentID string,
 ) ([]*proto.ScheduledFlagChange, error) {
 	filters := []*mysql.FilterV2{
-		{Column: "environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
-		{Column: "feature_id", Operator: mysql.OperatorNotEqual, Value: excludeFeatureID},
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentID,
+		},
+		{
+			Column:   "feature_id",
+			Operator: mysql.OperatorNotEqual,
+			Value:    excludeFeatureID,
+		},
 	}
 	inFilters := []*mysql.InFilter{
 		{
@@ -337,11 +411,15 @@ func (d *ConflictDetector) listCrossFlagSchedules(
 	options := &mysql.ListOptions{
 		Filters:   filters,
 		InFilters: inFilters,
-		Orders:    []*mysql.Order{mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc)},
-		Limit:     mysql.QueryNoLimit,
-		Offset:    mysql.QueryNoOffset,
+		Orders: []*mysql.Order{
+			mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc),
+		},
+		Limit:  maxCrossFlagSchedulesToCheck,
+		Offset: mysql.QueryNoOffset,
 	}
-	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(
+		ctx, options,
+	)
 	return sfcs, err
 }
 

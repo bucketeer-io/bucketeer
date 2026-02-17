@@ -1052,7 +1052,7 @@ func TestDetectCrossFlagConflicts(t *testing.T) {
 			sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
 			featureStorage := mock.NewMockFeatureStorage(ctrl)
 			detector := NewConflictDetectorWithFeatureStorage(
-				sfcStorage, featureStorage,
+				sfcStorage, featureStorage, nil,
 			)
 
 			sfcStorage.EXPECT().ListScheduledFlagChanges(

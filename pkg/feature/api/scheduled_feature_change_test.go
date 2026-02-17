@@ -484,7 +484,7 @@ func TestValidateScheduleGap(t *testing.T) {
 			expectedErr: statusScheduledTimeTooClose.Err(),
 		},
 		{
-			desc:        "1 minute after existing schedule",
+			desc:        "1 minute after existing (too close, needs 5 min gap)",
 			scheduledAt: baseTime + 60,
 			expectedErr: statusScheduledTimeTooClose.Err(),
 		},
@@ -517,7 +517,7 @@ func TestValidateScheduleGap(t *testing.T) {
 			desc:        "too close but excluded (updating same schedule)",
 			scheduledAt: baseTime + 60,
 			excludeID:   "sfc-1",
-			expectedErr: nil, // sfc-1 is excluded; 1min+60s from sfc-2 at +10min = ~9min gap, OK
+			expectedErr: nil, // sfc-1 excluded; gap to sfc-2 at baseTime+10min is 9min, OK
 		},
 		{
 			desc:        "no existing schedules",
@@ -702,7 +702,7 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 					},
 					0, int64(0), nil,
 				)
-				// Validation fails → count/conflict/create never called
+				// Cycle detected → count/conflict/create never called
 			},
 			expectedErr: statusCircularPrerequisiteDetected.Err(),
 		},
@@ -788,7 +788,7 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 					},
 					0, int64(0), nil,
 				)
-				// Validation fails → count/conflict/create never called
+				// Cycle detected → count/conflict/create never called
 			},
 			expectedErr: statusCircularPrerequisiteDetected.Err(),
 		},

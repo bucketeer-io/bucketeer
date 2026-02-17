@@ -1318,14 +1318,12 @@ func (s *FeatureService) checkCircularPrerequisites(
 	tgts := make([]*ftproto.Feature, 0, len(features))
 	for _, f := range features {
 		if f.Id == feature.Id {
-			// Use a shallow copy with the simulated prerequisites
-			// We only modify Prerequisites, so other fields can remain shared.
-			simulated := &ftproto.Feature{}
-			*simulated = ftproto.Feature{
+			// Replace with a copy that has the simulated prerequisites.
+			// Only Id and Prerequisites are needed for cycle detection.
+			tgts = append(tgts, &ftproto.Feature{
 				Id:            f.Id,
 				Prerequisites: simulatedPrereqs,
-			}
-			tgts = append(tgts, simulated)
+			})
 		} else {
 			tgts = append(tgts, f)
 		}

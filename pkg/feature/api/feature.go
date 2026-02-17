@@ -942,7 +942,7 @@ func (s *FeatureService) UpdateFeature(
 	// executing any schedule.
 	conflictCount := int32(0)
 	conflictDetector := scheduled.NewConflictDetectorWithFeatureStorage(
-		s.scheduledFlagChangeStorage, s.featureStorage,
+		s.scheduledFlagChangeStorage, s.featureStorage, s.logger,
 	)
 
 	// Same-flag conflict detection (includes auto-recovery)
