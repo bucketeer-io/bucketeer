@@ -542,7 +542,240 @@ func TestScheduledFlagChangeAuditLogs(t *testing.T) {
 	assert.True(t, foundCancelled, "SCHEDULED_FLAG_CHANGE_CANCELLED audit log should exist")
 }
 
+// TestScheduledFlagChangeConflict_DependencyMissing verifies that when creating
+// a new schedule that references a variation which an earlier schedule deletes,
+// the response includes a DEPENDENCY_MISSING conflict.
+func TestScheduledFlagChangeConflict_DependencyMissing(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create a feature
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+
+	// Get the feature to get variation IDs
+	feature := getFeature(t, featureID, client)
+	require.GreaterOrEqual(t, len(feature.Variations), 2)
+	varToDelete := feature.Variations[2] // Variation C (not used by default/off)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Schedule A at +1h: delete variation C
+	scheduleAResp := createScheduledFlagChangeAt(t, client, featureID,
+		&featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation:  &featureproto.Variation{Id: varToDelete.Id},
+				},
+			},
+		},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	require.NotEmpty(t, scheduleAResp.ScheduledFlagChange.Id)
+
+	// Schedule B at +2h: update the same variation C (which Schedule A deletes)
+	scheduleBReq := &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     featureID,
+		ScheduledAt:   time.Now().Add(2 * time.Hour).Unix(),
+		Timezone:      "UTC",
+		Payload: &featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    varToDelete.Id,
+						Value: "updated-value",
+						Name:  varToDelete.Name,
+					},
+				},
+			},
+		},
+		Comment: "e2e test - update variation that earlier schedule deletes",
+	}
+	scheduleBResp, err := client.CreateScheduledFlagChange(ctx, scheduleBReq)
+	require.NoError(t, err)
+	require.NotEmpty(t, scheduleBResp.ScheduledFlagChange.Id)
+
+	// Verify DEPENDENCY_MISSING conflict is detected
+	require.NotEmpty(t, scheduleBResp.DetectedConflicts,
+		"Expected DEPENDENCY_MISSING conflict when earlier schedule deletes referenced variation")
+	foundDependencyMissing := false
+	for _, c := range scheduleBResp.DetectedConflicts {
+		if c.Type == featureproto.ScheduledChangeConflict_CONFLICT_TYPE_DEPENDENCY_MISSING {
+			foundDependencyMissing = true
+			assert.Contains(t, c.ConflictingScheduleId, scheduleAResp.ScheduledFlagChange.Id)
+			t.Logf("DEPENDENCY_MISSING conflict: %s (field: %s)", c.Description, c.ConflictingField)
+		}
+	}
+	assert.True(t, foundDependencyMissing, "Expected at least one DEPENDENCY_MISSING conflict")
+}
+
+// TestScheduledFlagChangeConflict_InvalidReferenceOnFlagUpdate verifies that when
+// a flag is updated directly (e.g., a variation is deleted), pending schedules that
+// reference the deleted variation are marked as CONFLICT with INVALID_REFERENCE.
+func TestScheduledFlagChangeConflict_InvalidReferenceOnFlagUpdate(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create a feature
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+
+	// Get the feature to get variation IDs
+	feature := getFeature(t, featureID, client)
+	require.GreaterOrEqual(t, len(feature.Variations), 4)
+	// Use variation C (index 2) — not the default on/off variation
+	varToDelete := feature.Variations[2]
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create a schedule that updates variation C
+	scheduleResp := createScheduledFlagChangeAt(t, client, featureID,
+		&featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    varToDelete.Id,
+						Value: "scheduled-updated-value",
+						Name:  varToDelete.Name,
+					},
+				},
+			},
+		},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	require.NotEmpty(t, scheduleResp.ScheduledFlagChange.Id)
+
+	// Verify the schedule is PENDING
+	getResp := getScheduledFlagChange(t, client, scheduleResp.ScheduledFlagChange.Id)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getResp.ScheduledFlagChange.Status,
+	)
+
+	// Now directly delete variation C via UpdateFeature
+	updateReq := &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*featureproto.VariationChange{
+			{
+				ChangeType: featureproto.ChangeType_DELETE,
+				Variation:  &featureproto.Variation{Id: varToDelete.Id},
+			},
+		},
+		Comment: "e2e test - delete variation to trigger conflict",
+	}
+	updateResp, err := client.UpdateFeature(ctx, updateReq)
+	require.NoError(t, err)
+
+	// Verify UpdateFeatureResponse indicates conflicts were detected
+	assert.True(t, updateResp.ScheduleConflictsDetected,
+		"Expected ScheduleConflictsDetected=true after deleting a variation referenced by a schedule")
+	assert.GreaterOrEqual(t, updateResp.ConflictCount, int32(1))
+	t.Logf("UpdateFeature detected %d schedule conflict(s)", updateResp.ConflictCount)
+
+	// Verify the schedule is now marked as CONFLICT
+	getAfter := getScheduledFlagChange(t, client, scheduleResp.ScheduledFlagChange.Id)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getAfter.ScheduledFlagChange.Status,
+		"Schedule should be CONFLICT after referenced variation was deleted",
+	)
+
+	// Verify INVALID_REFERENCE conflict details
+	require.NotEmpty(t, getAfter.ScheduledFlagChange.Conflicts)
+	foundInvalidRef := false
+	for _, c := range getAfter.ScheduledFlagChange.Conflicts {
+		if c.Type == featureproto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE {
+			foundInvalidRef = true
+			t.Logf("INVALID_REFERENCE conflict: %s (field: %s)", c.Description, c.ConflictingField)
+		}
+	}
+	assert.True(t, foundInvalidRef, "Expected INVALID_REFERENCE conflict on the schedule")
+}
+
+// TestScheduledFlagChangeConflict_NoConflictOnUnrelatedFlagUpdate verifies that
+// updating an unrelated field on the flag (e.g., description) does NOT mark
+// pending schedules as CONFLICT.
+func TestScheduledFlagChangeConflict_NoConflictOnUnrelatedFlagUpdate(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create a feature
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create a schedule that enables the flag
+	scheduleResp := createScheduledFlagChange(t, client, featureID,
+		&featureproto.ScheduledChangePayload{
+			Enabled: wrapperspb.Bool(true),
+		},
+	)
+	require.NotEmpty(t, scheduleResp.ScheduledFlagChange.Id)
+
+	// Update an unrelated field (description)
+	updateReq := &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Description:   wrapperspb.String("updated description - should not cause conflict"),
+		Comment:       "e2e test - unrelated update",
+	}
+	updateResp, err := client.UpdateFeature(ctx, updateReq)
+	require.NoError(t, err)
+
+	// Verify no conflicts detected
+	assert.False(t, updateResp.ScheduleConflictsDetected,
+		"Unrelated flag update should NOT cause schedule conflicts")
+	assert.Equal(t, int32(0), updateResp.ConflictCount)
+
+	// Verify the schedule is still PENDING
+	getAfter := getScheduledFlagChange(t, client, scheduleResp.ScheduledFlagChange.Id)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getAfter.ScheduledFlagChange.Status,
+		"Schedule should still be PENDING after unrelated flag update",
+	)
+}
+
 // Helper functions
+
+func createScheduledFlagChangeAt(
+	t *testing.T,
+	client featureclient.Client,
+	featureID string,
+	payload *featureproto.ScheduledChangePayload,
+	scheduledAt int64,
+) *featureproto.CreateScheduledFlagChangeResponse {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	req := &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     featureID,
+		ScheduledAt:   scheduledAt,
+		Timezone:      "UTC",
+		Payload:       payload,
+		Comment:       "e2e test scheduled change",
+	}
+
+	resp, err := client.CreateScheduledFlagChange(ctx, req)
+	if err != nil {
+		t.Fatalf("Failed to create scheduled flag change: %v", err)
+	}
+	return resp
+}
 
 func newAuditLogClient(t *testing.T) auditlogclient.Client {
 	t.Helper()

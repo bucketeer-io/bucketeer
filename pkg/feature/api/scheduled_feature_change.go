@@ -25,6 +25,7 @@ import (
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
@@ -50,6 +51,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 
 	var sfc *domain.ScheduledFlagChange
 	var featureName string
+	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
 	// Feature lookup, count check, and create must be atomic to prevent race conditions
 	// Without transaction, concurrent requests could exceed the max schedules limit
@@ -72,7 +74,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		}
 		featureName = feature.Name
 
-		if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
+		if err := s.validateScheduledChangePayload(ctxWithTx, req.Payload, feature.Feature, req.EnvironmentId); err != nil {
 			return err
 		}
 
@@ -124,6 +126,29 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		sfc.Category = sfc.DetermineCategory()
 		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
 
+		// Detect conflicts with existing schedules (before we add this one)
+		conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
+		var detectErr error
+		detectedConflicts, detectErr = conflictDetector.DetectConflictsOnCreate(
+			ctxWithTx,
+			feature.Feature,
+			req.Payload,
+			req.ScheduledAt,
+			req.EnvironmentId,
+			"", // No schedule to exclude when creating
+		)
+		if detectErr != nil {
+			s.logger.Error(
+				"Failed to detect conflicts for scheduled flag change",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(detectErr),
+					zap.String("featureId", req.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			// Don't fail creation, conflicts are informational
+		}
+
 		// Store the scheduled flag change
 		if err := s.scheduledFlagChangeStorage.CreateScheduledFlagChange(ctxWithTx, sfc); err != nil {
 			if errors.Is(err, v2fs.ErrScheduledFlagChangeAlreadyExists) {
@@ -165,9 +190,6 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		)
 		// Don't fail the request if event publishing fails
 	}
-
-	// TODO: Detect conflicts with existing schedules (Phase 4)
-	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
 	return &ftproto.CreateScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
@@ -247,6 +269,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 	var sfc *domain.ScheduledFlagChange
 	var feature *domain.Feature
 	var previousScheduledAt int64
+	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		var err error
@@ -300,7 +323,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		// Update payload if provided
 		if req.Payload != nil {
 			// Validate payload
-			if err := s.validateScheduledChangePayload(req.Payload, feature.Feature); err != nil {
+			if err := s.validateScheduledChangePayload(ctxWithTx, req.Payload, feature.Feature, req.EnvironmentId); err != nil {
 				return err
 			}
 			comment := sfc.Comment // Preserve existing comment if not provided
@@ -325,7 +348,33 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		sfc.Category = sfc.DetermineCategory()
 		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
 
-		return s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
+		if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc); err != nil {
+			return err
+		}
+
+		// Detect conflicts with other schedules (exclude self)
+		conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
+		var detectErr error
+		detectedConflicts, detectErr = conflictDetector.DetectConflictsOnCreate(
+			ctxWithTx,
+			feature.Feature,
+			sfc.Payload,
+			sfc.ScheduledAt,
+			req.EnvironmentId,
+			sfc.Id, // Exclude the schedule we're updating
+		)
+		if detectErr != nil {
+			s.logger.Error(
+				"Failed to detect conflicts for scheduled flag change update",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(detectErr),
+					zap.String("id", sfc.Id),
+					zap.String("featureId", sfc.FeatureId),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+		}
+		return nil
 	})
 
 	if err != nil {
@@ -364,9 +413,6 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		)
 		// Don't fail the request if event publishing fails
 	}
-
-	// TODO: Detect conflicts with existing schedules (Phase 4)
-	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
 	return &ftproto.UpdateScheduledFlagChangeResponse{
 		ScheduledFlagChange: sfc.ScheduledFlagChange,
@@ -650,7 +696,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		}
 
 		// Validate references still exist
-		if err := s.validateScheduledChangePayload(sfc.Payload, feature.Feature); err != nil {
+		if err := s.validateScheduledChangePayload(ctxWithTx, sfc.Payload, feature.Feature, req.EnvironmentId); err != nil {
 			sfc.MarkFailed(err.Error())
 			_ = s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc)
 			return err
@@ -837,8 +883,10 @@ func validateScheduledTime(scheduledAt int64) error {
 }
 
 func (s *FeatureService) validateScheduledChangePayload(
+	ctx context.Context,
 	payload *ftproto.ScheduledChangePayload,
 	feature *ftproto.Feature,
+	environmentID string,
 ) error {
 	if payload == nil {
 		return nil
@@ -850,7 +898,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 			return statusInvalidVariationReference.Err()
 		}
 		if vc.ChangeType == ftproto.ChangeType_UPDATE || vc.ChangeType == ftproto.ChangeType_DELETE {
-			if !variationExists(feature, vc.Variation.Id) {
+			if !domain.VariationExists(feature, vc.Variation.Id) {
 				return statusInvalidVariationReference.Err()
 			}
 		}
@@ -862,7 +910,7 @@ func (s *FeatureService) validateScheduledChangePayload(
 			return statusInvalidRuleReference.Err()
 		}
 		if rc.ChangeType == ftproto.ChangeType_UPDATE || rc.ChangeType == ftproto.ChangeType_DELETE {
-			if !ruleExists(feature, rc.Rule.Id) {
+			if !domain.RuleExists(feature, rc.Rule.Id) {
 				return statusInvalidRuleReference.Err()
 			}
 		}
@@ -871,20 +919,32 @@ func (s *FeatureService) validateScheduledChangePayload(
 	// Validate target references
 	for _, tc := range payload.TargetChanges {
 		if tc.Target == nil {
-			return statusInvalidRuleReference.Err() // Reuse status code for general validation error
+			return statusInvalidRuleReference.Err()
 		}
 	}
 
-	// Validate prerequisite references
+	// Validate prerequisite references: the referenced flag and variation must exist
 	for _, pc := range payload.PrerequisiteChanges {
 		if pc.Prerequisite == nil {
-			return statusInvalidRuleReference.Err() // Reuse status code for general validation error
+			return statusInvalidPrerequisiteReference.Err()
+		}
+		if pc.ChangeType == ftproto.ChangeType_CREATE || pc.ChangeType == ftproto.ChangeType_UPDATE {
+			if pc.Prerequisite.FeatureId == "" || pc.Prerequisite.VariationId == "" {
+				return statusInvalidPrerequisiteReference.Err()
+			}
+			prereqFeature, err := s.featureStorage.GetFeature(ctx, pc.Prerequisite.FeatureId, environmentID)
+			if err != nil {
+				return statusInvalidPrerequisiteReference.Err()
+			}
+			if !domain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
+				return statusInvalidPrerequisiteReference.Err()
+			}
 		}
 	}
 
 	// Validate off variation reference
 	if payload.OffVariation != nil && payload.OffVariation.Value != "" {
-		if !variationExists(feature, payload.OffVariation.Value) {
+		if !domain.VariationExists(feature, payload.OffVariation.Value) {
 			return statusInvalidVariationReference.Err()
 		}
 	}
@@ -892,13 +952,13 @@ func (s *FeatureService) validateScheduledChangePayload(
 	// Validate default strategy variation references
 	if payload.DefaultStrategy != nil {
 		if payload.DefaultStrategy.FixedStrategy != nil {
-			if !variationExists(feature, payload.DefaultStrategy.FixedStrategy.Variation) {
+			if !domain.VariationExists(feature, payload.DefaultStrategy.FixedStrategy.Variation) {
 				return statusInvalidVariationReference.Err()
 			}
 		}
 		if payload.DefaultStrategy.RolloutStrategy != nil {
 			for _, rv := range payload.DefaultStrategy.RolloutStrategy.Variations {
-				if !variationExists(feature, rv.Variation) {
+				if !domain.VariationExists(feature, rv.Variation) {
 					return statusInvalidVariationReference.Err()
 				}
 			}
@@ -906,30 +966,6 @@ func (s *FeatureService) validateScheduledChangePayload(
 	}
 
 	return nil
-}
-
-func variationExists(feature *ftproto.Feature, variationID string) bool {
-	if feature == nil {
-		return false
-	}
-	for _, v := range feature.Variations {
-		if v.Id == variationID {
-			return true
-		}
-	}
-	return false
-}
-
-func ruleExists(feature *ftproto.Feature, ruleID string) bool {
-	if feature == nil {
-		return false
-	}
-	for _, r := range feature.Rules {
-		if r.Id == ruleID {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *FeatureService) countPendingSchedulesForFeature(

@@ -12564,6 +12564,13 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+      scheduleConflictsDetected:
+        type: boolean
+        title: True if any pending schedules were marked as conflicted
+      conflictCount:
+        type: integer
+        format: int32
+        title: Number of schedules marked as conflicted
   featureUpdateFlagTriggerRequest:
     type: object
     properties:

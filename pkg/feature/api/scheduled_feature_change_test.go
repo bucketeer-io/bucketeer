@@ -139,7 +139,10 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 		},
 	)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
-	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
+	// ListScheduledFlagChanges is called twice: count check and conflict detection
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil).
+		Times(2)
 	scheduledStorage.EXPECT().CreateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 	// Mock domain event publishing
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)

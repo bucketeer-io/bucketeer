@@ -199,4 +199,10 @@ var (
 			"invalid rule reference in payload",
 			"RuleId",
 		))
+	statusInvalidPrerequisiteReference = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"invalid prerequisite reference in payload: referenced feature or variation does not exist",
+			"PrerequisiteId",
+		))
 )
