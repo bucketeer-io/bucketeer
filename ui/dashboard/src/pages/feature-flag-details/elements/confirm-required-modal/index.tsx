@@ -12,7 +12,7 @@ import {
 import { useTranslation } from 'i18n';
 import { isNil } from 'lodash';
 import { Feature, FeatureRuleStrategy } from '@types';
-import { cn } from 'utils/style';
+import { capitalize, cn } from 'utils/style';
 import { IconInfo, IconToastWarning } from '@icons';
 import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
 import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
@@ -255,8 +255,8 @@ const ConfirmationRequiredModal = ({
                     count: segmentRuleDeletedChanges.length,
                     tailTitle:
                       segmentRuleDeletedChanges.length > 1
-                        ? t('common:rules')
-                        : t('common:rule')
+                        ? capitalize(t('common:rules'))
+                        : capitalize(t('common:rule'))
                   }}
                 />
               </p>
