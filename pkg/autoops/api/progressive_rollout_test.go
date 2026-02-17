@@ -531,7 +531,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
 					ControlVariationId: "vid-1",
 					TargetVariationId:  "vid-2",
-					Schedules:   invalidWeightSchedules,
+					Schedules:          invalidWeightSchedules,
 				},
 			},
 			expectedErr: statusProgressiveRolloutScheduleInvalidWeight.Err(),
