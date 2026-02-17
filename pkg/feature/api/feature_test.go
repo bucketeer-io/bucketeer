@@ -2872,7 +2872,11 @@ func TestUpdateFeature(t *testing.T) {
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				// Conflict detection runs after update (Phase 4)
+				// Same-flag conflict detection runs after update
+				s.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage).EXPECT().ListScheduledFlagChanges(
+					gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
+				// Cross-flag conflict detection
 				s.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage).EXPECT().ListScheduledFlagChanges(
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)

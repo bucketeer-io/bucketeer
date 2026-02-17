@@ -845,3 +845,272 @@ func TestConflictDetector_DetectConflictsOnFlagChange(t *testing.T) {
 		})
 	}
 }
+
+func TestDetectConflictsOnFlagChange_AutoRecovery(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc           string
+		flag           *featureproto.Feature
+		schedule       *featureproto.ScheduledFlagChange
+		expectUpdate   bool
+		expectedStatus featureproto.ScheduledFlagChangeStatus
+		expectedCount  int
+	}{
+		{
+			desc: "CONFLICT recovers to PENDING when variation re-added",
+			flag: &featureproto.Feature{
+				Id:      "feature-1",
+				Version: 5,
+				Variations: []*featureproto.Variation{
+					{Id: "var-1", Value: "true"},
+					{Id: "var-2", Value: "false"},
+				},
+			},
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:                    "sfc-conflict",
+				FeatureId:             "feature-1",
+				EnvironmentId:         "env-1",
+				Status:                featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+				FlagVersionAtCreation: 2,
+				Payload: &featureproto.ScheduledChangePayload{
+					VariationChanges: []*featureproto.VariationChange{
+						{
+							ChangeType: featureproto.ChangeType_UPDATE,
+							Variation:  &featureproto.Variation{Id: "var-2", Value: "updated"},
+						},
+					},
+				},
+			},
+			expectUpdate:   true,
+			expectedStatus: featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			expectedCount:  1,
+		},
+		{
+			desc: "CONFLICT stays when reference still invalid",
+			flag: &featureproto.Feature{
+				Id:      "feature-1",
+				Version: 5,
+				Variations: []*featureproto.Variation{
+					{Id: "var-1", Value: "true"},
+				},
+			},
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:                    "sfc-conflict",
+				FeatureId:             "feature-1",
+				EnvironmentId:         "env-1",
+				Status:                featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+				FlagVersionAtCreation: 2,
+				Payload: &featureproto.ScheduledChangePayload{
+					VariationChanges: []*featureproto.VariationChange{
+						{
+							ChangeType: featureproto.ChangeType_UPDATE,
+							Variation:  &featureproto.Variation{Id: "var-deleted", Value: "nope"},
+						},
+					},
+				},
+			},
+			expectUpdate:  false,
+			expectedCount: 0,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			storage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+			detector := NewConflictDetector(storage)
+
+			storage.EXPECT().ListScheduledFlagChanges(
+				gomock.Any(), gomock.Any(),
+			).Return(
+				[]*featureproto.ScheduledFlagChange{p.schedule},
+				1, int64(1), nil,
+			)
+
+			if p.expectUpdate {
+				storage.EXPECT().UpdateScheduledFlagChange(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(
+					func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+						assert.Equal(t, p.expectedStatus, sfc.Status)
+						if p.expectedStatus == featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING {
+							assert.Nil(t, sfc.Conflicts)
+						}
+						return nil
+					},
+				)
+			}
+
+			count, err := detector.DetectConflictsOnFlagChange(
+				context.Background(), p.flag, "env-1",
+			)
+			require.NoError(t, err)
+			assert.Equal(t, p.expectedCount, count)
+		})
+	}
+}
+
+func TestDetectCrossFlagConflicts(t *testing.T) {
+	t.Parallel()
+
+	flagAFeature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:         "flag-a",
+			Variations: []*featureproto.Variation{{Id: "var-a1"}},
+		},
+	}
+
+	patterns := []struct {
+		desc           string
+		schedule       *featureproto.ScheduledFlagChange
+		flagBVars      []*featureproto.Variation
+		expectUpdate   bool
+		expectedStatus featureproto.ScheduledFlagChangeStatus
+		expectedCount  int
+	}{
+		{
+			desc: "PENDING marked CONFLICT when prereq variation deleted",
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:            "sfc-1",
+				FeatureId:     "flag-a",
+				EnvironmentId: "env-1",
+				Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+				Payload: &featureproto.ScheduledChangePayload{
+					PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+						{
+							ChangeType: featureproto.ChangeType_CREATE,
+							Prerequisite: &featureproto.Prerequisite{
+								FeatureId:   "flag-b",
+								VariationId: "var-beta-deleted",
+							},
+						},
+					},
+				},
+			},
+			flagBVars:      []*featureproto.Variation{{Id: "var-beta-active"}},
+			expectUpdate:   true,
+			expectedStatus: featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+			expectedCount:  1,
+		},
+		{
+			desc: "PENDING stays when prereq variation still exists",
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:            "sfc-1",
+				FeatureId:     "flag-a",
+				EnvironmentId: "env-1",
+				Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+				Payload: &featureproto.ScheduledChangePayload{
+					PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+						{
+							ChangeType: featureproto.ChangeType_CREATE,
+							Prerequisite: &featureproto.Prerequisite{
+								FeatureId:   "flag-b",
+								VariationId: "var-beta",
+							},
+						},
+					},
+				},
+			},
+			flagBVars:     []*featureproto.Variation{{Id: "var-beta"}},
+			expectUpdate:  false,
+			expectedCount: 0,
+		},
+		{
+			desc: "CONFLICT auto-recovers when prereq variation re-added",
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:            "sfc-1",
+				FeatureId:     "flag-a",
+				EnvironmentId: "env-1",
+				Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+				Payload: &featureproto.ScheduledChangePayload{
+					PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+						{
+							ChangeType: featureproto.ChangeType_CREATE,
+							Prerequisite: &featureproto.Prerequisite{
+								FeatureId:   "flag-b",
+								VariationId: "var-beta",
+							},
+						},
+					},
+				},
+			},
+			flagBVars:      []*featureproto.Variation{{Id: "var-beta"}},
+			expectUpdate:   true,
+			expectedStatus: featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			expectedCount:  1,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+			featureStorage := mock.NewMockFeatureStorage(ctrl)
+			detector := NewConflictDetectorWithFeatureStorage(
+				sfcStorage, featureStorage,
+			)
+
+			sfcStorage.EXPECT().ListScheduledFlagChanges(
+				gomock.Any(), gomock.Any(),
+			).Return(
+				[]*featureproto.ScheduledFlagChange{p.schedule},
+				1, int64(1), nil,
+			)
+
+			featureStorage.EXPECT().GetFeature(
+				gomock.Any(), "flag-a", "env-1",
+			).Return(flagAFeature, nil)
+
+			featureStorage.EXPECT().GetFeature(
+				gomock.Any(), "flag-b", "env-1",
+			).Return(&domain.Feature{
+				Feature: &featureproto.Feature{
+					Id:         "flag-b",
+					Variations: p.flagBVars,
+				},
+			}, nil)
+
+			if p.expectUpdate {
+				sfcStorage.EXPECT().UpdateScheduledFlagChange(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(
+					func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+						assert.Equal(t, p.expectedStatus, sfc.Status)
+						if p.expectedStatus == featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING {
+							assert.Nil(t, sfc.Conflicts)
+						} else {
+							assert.NotEmpty(t, sfc.Conflicts)
+						}
+						return nil
+					},
+				)
+			}
+
+			count, err := detector.DetectCrossFlagConflicts(
+				context.Background(), "flag-b", "env-1",
+			)
+			require.NoError(t, err)
+			assert.Equal(t, p.expectedCount, count)
+		})
+	}
+}
+
+func TestDetectCrossFlagConflicts_NilFeatureStorage(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+	detector := NewConflictDetector(sfcStorage) // No feature storage
+
+	count, err := detector.DetectCrossFlagConflicts(
+		context.Background(), "flag-b", "env-1",
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 0, count)
+}

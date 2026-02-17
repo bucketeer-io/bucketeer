@@ -80,7 +80,7 @@ func TestCreateScheduledFlagChange_ValidationErrors(t *testing.T) {
 			req: &featureproto.CreateScheduledFlagChangeRequest{
 				EnvironmentId: "ns0",
 				FeatureId:     "feature-id",
-				ScheduledAt:   time.Now().Add(time.Minute).Unix(), // 1 minute from now, less than 5 minutes
+				ScheduledAt:   time.Now().Add(30 * time.Second).Unix(), // 30s from now, less than 1 minute
 				Payload:       &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
 			},
 			expectedErr: statusScheduledTimeTooSoon.Err(),
@@ -368,18 +368,18 @@ func TestValidateScheduledTime(t *testing.T) {
 		expectError bool
 	}{
 		{
-			desc:        "too soon - 1 minute from now",
+			desc:        "too soon - 30 seconds from now",
+			scheduledAt: now + 30,
+			expectError: true,
+		},
+		{
+			desc:        "valid - exactly 1 minute from now",
 			scheduledAt: now + 60,
-			expectError: true,
+			expectError: false,
 		},
 		{
-			desc:        "too soon - 4 minutes from now",
-			scheduledAt: now + 4*60,
-			expectError: true,
-		},
-		{
-			desc:        "valid - 6 minutes from now",
-			scheduledAt: now + 6*60,
+			desc:        "valid - 2 minutes from now",
+			scheduledAt: now + 2*60,
 			expectError: false,
 		},
 		{
@@ -451,6 +451,406 @@ func TestCountChanges(t *testing.T) {
 				ScheduledFlagChange: &featureproto.ScheduledFlagChange{Payload: p.payload},
 			}
 			assert.Equal(t, p.expectedCount, sfc.CountChanges())
+		})
+	}
+}
+
+func TestValidateScheduleGap(t *testing.T) {
+	t.Parallel()
+
+	baseTime := time.Now().Add(2 * time.Hour).Unix()
+	gapSec := int64(minScheduleGapBetweenMinutes * 60) // 300s = 5 min
+
+	existing := []*featureproto.ScheduledFlagChange{
+		{
+			Id:          "sfc-1",
+			ScheduledAt: baseTime,
+		},
+		{
+			Id:          "sfc-2",
+			ScheduledAt: baseTime + 10*60, // +10 min
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		scheduledAt int64
+		excludeID   string
+		expectedErr error
+	}{
+		{
+			desc:        "exactly at existing schedule",
+			scheduledAt: baseTime,
+			expectedErr: statusScheduledTimeTooClose.Err(),
+		},
+		{
+			desc:        "1 minute after existing schedule",
+			scheduledAt: baseTime + 60,
+			expectedErr: statusScheduledTimeTooClose.Err(),
+		},
+		{
+			desc:        "4 minutes after existing schedule",
+			scheduledAt: baseTime + 4*60,
+			expectedErr: statusScheduledTimeTooClose.Err(),
+		},
+		{
+			desc:        "exactly 5 minutes after existing schedule",
+			scheduledAt: baseTime + gapSec,
+			expectedErr: nil,
+		},
+		{
+			desc:        "6 minutes after existing (but within 5min of sfc-2)",
+			scheduledAt: baseTime + 6*60,
+			expectedErr: statusScheduledTimeTooClose.Err(),
+		},
+		{
+			desc:        "between the two with enough gap from both",
+			scheduledAt: baseTime + gapSec, // 5 min after sfc-1, 5 min before sfc-2
+			expectedErr: nil,
+		},
+		{
+			desc:        "well after all existing schedules",
+			scheduledAt: baseTime + 20*60,
+			expectedErr: nil,
+		},
+		{
+			desc:        "too close but excluded (updating same schedule)",
+			scheduledAt: baseTime + 60,
+			excludeID:   "sfc-1",
+			expectedErr: nil, // sfc-1 is excluded; 1min+60s from sfc-2 at +10min = ~9min gap, OK
+		},
+		{
+			desc:        "no existing schedules",
+			scheduledAt: baseTime,
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			input := existing
+			if p.desc == "no existing schedules" {
+				input = nil
+			}
+			err := validateScheduleGap(p.scheduledAt, input, p.excludeID)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+
+	scheduledAt := time.Now().Add(2 * time.Hour).Unix()
+
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "feature-id",
+			Name:    "Test Feature",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{Id: "var-1", Value: "true", Name: "V1"},
+				{Id: "var-2", Value: "false", Name: "V2"},
+			},
+		},
+	}
+
+	// Existing schedule at scheduledAt + 2 minutes (within the 5-min gap)
+	existingSchedule := &featureproto.ScheduledFlagChange{
+		Id:          "sfc-existing",
+		FeatureId:   "feature-id",
+		ScheduledAt: scheduledAt + 2*60,
+		Status:      featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+	}
+
+	mysqlClient.EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(
+		func(
+			ctx context.Context,
+			f func(context.Context, mysql.Transaction) error,
+		) error {
+			return f(ctx, nil)
+		},
+	)
+	featureStorage.EXPECT().GetFeature(
+		gomock.Any(), "feature-id", "ns0",
+	).Return(feature, nil)
+	// listPendingSchedulesForFeature returns one schedule too close
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(
+		gomock.Any(), gomock.Any(),
+	).Return(
+		[]*featureproto.ScheduledFlagChange{existingSchedule},
+		1, int64(1), nil,
+	)
+
+	ctx := createContextWithToken()
+	req := &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		FeatureId:     "feature-id",
+		ScheduledAt:   scheduledAt,
+		Timezone:      "UTC",
+		Payload: &featureproto.ScheduledChangePayload{
+			Enabled: wrapperspb.Bool(true),
+		},
+		Comment: "Too close to existing schedule",
+	}
+
+	_, err := service.CreateScheduledFlagChange(ctx, req)
+	assert.Equal(t, statusScheduledTimeTooClose.Err(), err)
+}
+
+func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
+	t.Parallel()
+
+	flagA := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "flag-a",
+			Name:    "Flag A",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{Id: "var-a1", Value: "true", Name: "A-True"},
+				{Id: "var-a2", Value: "false", Name: "A-False"},
+			},
+		},
+	}
+	flagBNoDeps := &featureproto.Feature{
+		Id:      "flag-b",
+		Name:    "Flag B",
+		Version: 1,
+		Variations: []*featureproto.Variation{
+			{Id: "var-b1", Value: "true", Name: "B-True"},
+			{Id: "var-b2", Value: "false", Name: "B-False"},
+		},
+	}
+	flagBDependsOnA := &featureproto.Feature{
+		Id:      "flag-b",
+		Name:    "Flag B",
+		Version: 1,
+		Variations: []*featureproto.Variation{
+			{Id: "var-b1", Value: "true", Name: "B-True"},
+			{Id: "var-b2", Value: "false", Name: "B-False"},
+		},
+		Prerequisites: []*featureproto.Prerequisite{
+			{FeatureId: "flag-a", VariationId: "var-a1"},
+		},
+	}
+	flagC := &featureproto.Feature{
+		Id:      "flag-c",
+		Name:    "Flag C",
+		Version: 1,
+		Variations: []*featureproto.Variation{
+			{Id: "var-c1", Value: "true", Name: "C-True"},
+			{Id: "var-c2", Value: "false", Name: "C-False"},
+		},
+		Prerequisites: []*featureproto.Prerequisite{
+			{FeatureId: "flag-b", VariationId: "var-b1"},
+		},
+	}
+
+	patterns := []struct {
+		desc              string
+		flagB             *featureproto.Feature
+		prerequisiteFlag  string
+		prerequisiteVarID string
+		setupMocks        func(*mock.MockFeatureStorage, *mock.MockScheduledFlagChangeStorage, *publishermock.MockPublisher)
+		expectedErr       error
+	}{
+		{
+			desc:              "cycle detected: Flag A -> Flag B -> Flag A",
+			flagB:             flagBDependsOnA,
+			prerequisiteFlag:  "flag-b",
+			prerequisiteVarID: "var-b1",
+			setupMocks: func(
+				fs *mock.MockFeatureStorage,
+				ss *mock.MockScheduledFlagChangeStorage,
+				_ *publishermock.MockPublisher,
+			) {
+				// GetFeature for flag-a (inside transaction)
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-a", "ns0",
+				).Return(flagA, nil)
+				// Prerequisite validation: GetFeature for flag-b
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-b", "ns0",
+				).Return(
+					&domain.Feature{Feature: flagBDependsOnA}, nil,
+				)
+				// Circular check: ListFeatures
+				fs.EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					[]*featureproto.Feature{
+						flagA.Feature, flagBDependsOnA,
+					},
+					0, int64(0), nil,
+				)
+				// Validation fails → count/conflict/create never called
+			},
+			expectedErr: statusCircularPrerequisiteDetected.Err(),
+		},
+		{
+			desc:              "no cycle: Flag A -> Flag B (B has no deps)",
+			flagB:             flagBNoDeps,
+			prerequisiteFlag:  "flag-b",
+			prerequisiteVarID: "var-b1",
+			setupMocks: func(
+				fs *mock.MockFeatureStorage,
+				ss *mock.MockScheduledFlagChangeStorage,
+				dp *publishermock.MockPublisher,
+			) {
+				// GetFeature for flag-a
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-a", "ns0",
+				).Return(flagA, nil)
+				// Prerequisite validation: GetFeature for flag-b
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-b", "ns0",
+				).Return(
+					&domain.Feature{Feature: flagBNoDeps}, nil,
+				)
+				// Circular check: ListFeatures
+				fs.EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					[]*featureproto.Feature{
+						flagA.Feature, flagBNoDeps,
+					},
+					0, int64(0), nil,
+				)
+				// Count pending schedules
+				ss.EXPECT().ListScheduledFlagChanges(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					[]*featureproto.ScheduledFlagChange{},
+					0, int64(0), nil,
+				)
+				// Conflict detection
+				ss.EXPECT().ListScheduledFlagChanges(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					[]*featureproto.ScheduledFlagChange{},
+					0, int64(0), nil,
+				)
+				// Create + publish
+				ss.EXPECT().CreateScheduledFlagChange(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				dp.EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:              "transitive cycle detected: Flag A -> Flag C -> Flag B -> Flag A",
+			flagB:             flagC,
+			prerequisiteFlag:  "flag-c",
+			prerequisiteVarID: "var-c1",
+			setupMocks: func(
+				fs *mock.MockFeatureStorage,
+				ss *mock.MockScheduledFlagChangeStorage,
+				_ *publishermock.MockPublisher,
+			) {
+				// GetFeature for flag-a (inside transaction)
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-a", "ns0",
+				).Return(flagA, nil)
+				// Prerequisite validation: GetFeature for flag-c
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-c", "ns0",
+				).Return(
+					&domain.Feature{Feature: flagC}, nil,
+				)
+				// Circular check: ListFeatures (returns all flags in environment)
+				fs.EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					[]*featureproto.Feature{
+						flagA.Feature, flagBDependsOnA, flagC,
+					},
+					0, int64(0), nil,
+				)
+				// Validation fails → count/conflict/create never called
+			},
+			expectedErr: statusCircularPrerequisiteDetected.Err(),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			service := createFeatureServiceWithGetAccountByEnvironmentMock(
+				ctrl,
+				accountproto.AccountV2_Role_Organization_MEMBER,
+				accountproto.AccountV2_Role_Environment_EDITOR,
+			)
+
+			mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+			featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+			scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+			domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
+
+			mysqlClient.EXPECT().RunInTransactionV2(
+				gomock.Any(), gomock.Any(),
+			).DoAndReturn(
+				func(
+					ctx context.Context,
+					f func(context.Context, mysql.Transaction) error,
+				) error {
+					return f(ctx, nil)
+				},
+			)
+			p.setupMocks(featureStorage, scheduledStorage, domainPublisher)
+
+			ctx := createContextWithToken()
+			req := &featureproto.CreateScheduledFlagChangeRequest{
+				EnvironmentId: "ns0",
+				FeatureId:     "flag-a",
+				ScheduledAt:   time.Now().Add(time.Hour).Unix(),
+				Timezone:      "UTC",
+				Payload: &featureproto.ScheduledChangePayload{
+					PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+						{
+							ChangeType: featureproto.ChangeType_CREATE,
+							Prerequisite: &featureproto.Prerequisite{
+								FeatureId:   p.prerequisiteFlag,
+								VariationId: p.prerequisiteVarID,
+							},
+						},
+					},
+				},
+				Comment: "prerequisite cycle test",
+			}
+
+			resp, err := service.CreateScheduledFlagChange(ctx, req)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, resp.ScheduledFlagChange)
+				assert.Equal(t, "flag-a", resp.ScheduledFlagChange.FeatureId)
+			}
 		})
 	}
 }

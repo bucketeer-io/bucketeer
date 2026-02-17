@@ -32,26 +32,27 @@ var (
 )
 
 type batchService struct {
-	experimentStatusUpdater   jobs.Job
-	experimentRunningWatcher  jobs.Job
-	featureStaleWatcher       jobs.Job
-	mauCountWatcher           jobs.Job
-	datetimeWatcher           jobs.Job
-	countWatcher              jobs.Job
-	progressiveRolloutWatcher jobs.Job
-	redisCounterDeleter       jobs.Job
-	experimentCalculator      jobs.Job
-	mauSummarizer             jobs.Job
-	mauPartitionDeleter       jobs.Job
-	mauPartitionCreator       jobs.Job
-	featureFlagCacher         jobs.Job
-	segmentUserCacher         jobs.Job
-	apiKeyCacher              jobs.Job
-	experimentCacher          jobs.Job
-	autoOpsRulesCacher        jobs.Job
-	tagDeleter                jobs.Job
-	featureAutoArchiver       jobs.Job
-	logger                    *zap.Logger
+	experimentStatusUpdater     jobs.Job
+	experimentRunningWatcher    jobs.Job
+	featureStaleWatcher         jobs.Job
+	mauCountWatcher             jobs.Job
+	datetimeWatcher             jobs.Job
+	countWatcher                jobs.Job
+	progressiveRolloutWatcher   jobs.Job
+	redisCounterDeleter         jobs.Job
+	experimentCalculator        jobs.Job
+	mauSummarizer               jobs.Job
+	mauPartitionDeleter         jobs.Job
+	mauPartitionCreator         jobs.Job
+	featureFlagCacher           jobs.Job
+	segmentUserCacher           jobs.Job
+	apiKeyCacher                jobs.Job
+	experimentCacher            jobs.Job
+	autoOpsRulesCacher          jobs.Job
+	tagDeleter                  jobs.Job
+	featureAutoArchiver         jobs.Job
+	scheduledFlagChangeExecutor jobs.Job
+	logger                      *zap.Logger
 }
 
 func NewBatchService(
@@ -62,30 +63,31 @@ func NewBatchService(
 	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
 	featureFlagCacher, segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher, tagDeleter,
-	featureAutoArchiver jobs.Job,
+	featureAutoArchiver, scheduledFlagChangeExecutor jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
-		experimentStatusUpdater:   experimentStatusUpdater,
-		experimentRunningWatcher:  experimentRunningWatcher,
-		featureStaleWatcher:       featureStaleWatcher,
-		mauCountWatcher:           mauCountWatcher,
-		datetimeWatcher:           datetimeWatcher,
-		countWatcher:              eventCountWatcher,
-		progressiveRolloutWatcher: progressiveRolloutWatcher,
-		redisCounterDeleter:       redisCounterDeleter,
-		experimentCalculator:      experimentCalculator,
-		mauSummarizer:             mauSummarizer,
-		mauPartitionDeleter:       mauPartitionDeleter,
-		mauPartitionCreator:       mauPartitionCreator,
-		featureFlagCacher:         featureFlagCacher,
-		segmentUserCacher:         segmentUserCacher,
-		apiKeyCacher:              apiKeyCacher,
-		experimentCacher:          experimentCacher,
-		autoOpsRulesCacher:        autoOpsRulesCacher,
-		tagDeleter:                tagDeleter,
-		featureAutoArchiver:       featureAutoArchiver,
-		logger:                    logger.Named("batch-service"),
+		experimentStatusUpdater:     experimentStatusUpdater,
+		experimentRunningWatcher:    experimentRunningWatcher,
+		featureStaleWatcher:         featureStaleWatcher,
+		mauCountWatcher:             mauCountWatcher,
+		datetimeWatcher:             datetimeWatcher,
+		countWatcher:                eventCountWatcher,
+		progressiveRolloutWatcher:   progressiveRolloutWatcher,
+		redisCounterDeleter:         redisCounterDeleter,
+		experimentCalculator:        experimentCalculator,
+		mauSummarizer:               mauSummarizer,
+		mauPartitionDeleter:         mauPartitionDeleter,
+		mauPartitionCreator:         mauPartitionCreator,
+		featureFlagCacher:           featureFlagCacher,
+		segmentUserCacher:           segmentUserCacher,
+		apiKeyCacher:                apiKeyCacher,
+		experimentCacher:            experimentCacher,
+		autoOpsRulesCacher:          autoOpsRulesCacher,
+		tagDeleter:                  tagDeleter,
+		featureAutoArchiver:         featureAutoArchiver,
+		scheduledFlagChangeExecutor: scheduledFlagChangeExecutor,
+		logger:                      logger.Named("batch-service"),
 	}
 }
 
@@ -131,6 +133,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.tagDeleter.Run(ctx)
 	case batch.BatchJob_FeatureAutoArchiver:
 		err = s.featureAutoArchiver.Run(ctx)
+	case batch.BatchJob_ScheduledFlagChangeExecutor:
+		err = s.scheduledFlagChangeExecutor.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromIncomingContext(ctx).AddFields(

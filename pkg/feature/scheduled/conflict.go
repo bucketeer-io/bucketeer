@@ -39,12 +39,25 @@ import (
 //   - Flag version mismatch alone. A version bump (e.g., description change) doesn't
 //     necessarily affect a schedule's validity. Only actual stale references matter.
 type ConflictDetector struct {
-	storage v2fs.ScheduledFlagChangeStorage
+	storage        v2fs.ScheduledFlagChangeStorage
+	featureStorage v2fs.FeatureStorage
 }
 
 // NewConflictDetector creates a new ConflictDetector.
 func NewConflictDetector(storage v2fs.ScheduledFlagChangeStorage) *ConflictDetector {
 	return &ConflictDetector{storage: storage}
+}
+
+// NewConflictDetectorWithFeatureStorage creates a ConflictDetector with feature storage
+// for cross-flag conflict detection (e.g., prerequisite validation across flags).
+func NewConflictDetectorWithFeatureStorage(
+	storage v2fs.ScheduledFlagChangeStorage,
+	featureStorage v2fs.FeatureStorage,
+) *ConflictDetector {
+	return &ConflictDetector{
+		storage:        storage,
+		featureStorage: featureStorage,
+	}
 }
 
 // DetectConflictsOnCreate checks for conflicts when creating or updating a schedule.
@@ -61,7 +74,7 @@ func (d *ConflictDetector) DetectConflictsOnCreate(
 ) ([]*proto.ScheduledChangeConflict, error) {
 	var conflicts []*proto.ScheduledChangeConflict
 
-	pending, err := d.listPendingSchedules(ctx, flag.Id, environmentID)
+	pending, err := d.listPendingAndConflictSchedules(ctx, flag.Id, environmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,46 +112,240 @@ func (d *ConflictDetector) DetectConflictsOnCreate(
 }
 
 // DetectConflictsOnFlagChange is called when the flag is directly modified.
-// It checks each pending schedule to see if the flag change caused any of its
+// It checks each pending/conflict schedule to see if the flag change caused any of its
 // references to become stale (e.g., a variation it references was deleted).
 // Only marks a schedule as CONFLICT if there are actual invalid references,
 // not merely because the flag version changed.
-// Returns the number of schedules marked as CONFLICT.
+//
+// Auto-recovery: If a previously CONFLICT schedule now has all valid references
+// (e.g., a deleted variation was re-added), it is restored to PENDING.
+//
+// Returns the number of schedules whose status changed (newly marked CONFLICT + recovered).
 func (d *ConflictDetector) DetectConflictsOnFlagChange(
 	ctx context.Context,
 	flag *proto.Feature,
 	environmentID string,
 ) (int, error) {
-	pending, err := d.listPendingSchedules(ctx, flag.Id, environmentID)
+	pending, err := d.listPendingAndConflictSchedules(ctx, flag.Id, environmentID)
 	if err != nil {
 		return 0, err
 	}
 
-	markedCount := 0
+	changedCount := 0
 	now := time.Now().Unix()
 	for _, schedule := range pending {
-		// Only check schedules created before this flag version -- they may have stale refs
-		if schedule.FlagVersionAtCreation >= flag.Version {
+		isPending := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+		isConflict := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+
+		// For PENDING schedules: only check if created before this flag version
+		if isPending && schedule.FlagVersionAtCreation >= flag.Version {
 			continue
 		}
 
 		// Check if any references in the schedule's payload are now invalid
 		invalidRefs := validatePayloadReferences(flag, schedule.Payload, now)
-		if len(invalidRefs) == 0 {
-			continue // No stale references, this schedule is still valid
-		}
 
-		sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
-		sfcDomain.MarkConflict(invalidRefs)
-		if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
-			return markedCount, err
+		if len(invalidRefs) > 0 && isPending {
+			// PENDING → CONFLICT: references are now invalid
+			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain.MarkConflict(invalidRefs)
+			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+				return changedCount, err
+			}
+			changedCount++
+		} else if len(invalidRefs) == 0 && isConflict {
+			// CONFLICT → PENDING (auto-recovery): all references are now valid again
+			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain.RestoreToPending()
+			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+				return changedCount, err
+			}
+			changedCount++
 		}
-		markedCount++
 	}
-	return markedCount, nil
+	return changedCount, nil
 }
 
-func (d *ConflictDetector) listPendingSchedules(
+// DetectCrossFlagConflicts is called after a flag is updated to check schedules for OTHER flags
+// in the same environment. This catches cross-flag prerequisite conflicts:
+// e.g., Flag A schedules a prerequisite referencing Flag B's variation, and that variation
+// is deleted from Flag B.
+//
+// It also handles auto-recovery: if a previously CONFLICT schedule on another flag now has
+// all valid references, it is restored to PENDING.
+//
+// This method requires featureStorage to be set (via NewConflictDetectorWithFeatureStorage).
+// It is best-effort: errors are returned but the caller should not fail the UpdateFeature request.
+func (d *ConflictDetector) DetectCrossFlagConflicts(
+	ctx context.Context,
+	updatedFlagID string,
+	environmentID string,
+) (int, error) {
+	if d.featureStorage == nil {
+		return 0, nil
+	}
+
+	// List all pending/conflict schedules in the environment for OTHER flags
+	schedules, err := d.listCrossFlagSchedules(ctx, updatedFlagID, environmentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list cross-flag schedules: %w", err)
+	}
+
+	if len(schedules) == 0 {
+		return 0, nil
+	}
+
+	changedCount := 0
+	now := time.Now().Unix()
+
+	// Cache flags we've already fetched to avoid repeated DB lookups
+	flagCache := make(map[string]*proto.Feature)
+
+	for _, schedule := range schedules {
+		// Only process schedules that have prerequisite changes referencing other flags
+		if !hasPrerequisiteChanges(schedule.Payload) {
+			// For non-prerequisite schedules on other flags, same-flag check already covers them
+			// via their own flag's DetectConflictsOnFlagChange call.
+			// But for CONFLICT recovery, we should still check.
+			if schedule.Status != proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT {
+				continue
+			}
+		}
+
+		// Get the schedule's own flag (the flag this schedule will modify)
+		scheduleFlagID := schedule.FeatureId
+		flag, ok := flagCache[scheduleFlagID]
+		if !ok {
+			flagDomain, err := d.featureStorage.GetFeature(ctx, scheduleFlagID, environmentID)
+			if err != nil {
+				continue // Skip if we can't get the flag
+			}
+			flag = flagDomain.Feature
+			flagCache[scheduleFlagID] = flag
+		}
+
+		// Validate same-flag references
+		invalidRefs := validatePayloadReferences(flag, schedule.Payload, now)
+
+		// Validate cross-flag prerequisite references
+		prereqConflicts := d.validatePrerequisiteReferences(ctx, schedule.Payload, environmentID, now)
+		invalidRefs = append(invalidRefs, prereqConflicts...)
+
+		isPending := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+		isConflict := schedule.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT
+
+		if len(invalidRefs) > 0 && isPending {
+			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain.MarkConflict(invalidRefs)
+			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+				continue
+			}
+			changedCount++
+		} else if len(invalidRefs) == 0 && isConflict {
+			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain.RestoreToPending()
+			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+				continue
+			}
+			changedCount++
+		}
+	}
+
+	return changedCount, nil
+}
+
+// validatePrerequisiteReferences checks if prerequisite changes in the payload
+// reference flags and variations that still exist.
+func (d *ConflictDetector) validatePrerequisiteReferences(
+	ctx context.Context,
+	payload *proto.ScheduledChangePayload,
+	environmentID string,
+	now int64,
+) []*proto.ScheduledChangeConflict {
+	if payload == nil || d.featureStorage == nil {
+		return nil
+	}
+
+	var conflicts []*proto.ScheduledChangeConflict
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc == nil || pc.Prerequisite == nil {
+			continue
+		}
+		if pc.ChangeType != proto.ChangeType_CREATE && pc.ChangeType != proto.ChangeType_UPDATE {
+			continue
+		}
+
+		prereqFeature, err := d.featureStorage.GetFeature(ctx, pc.Prerequisite.FeatureId, environmentID)
+		if err != nil {
+			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+				Type:             proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+				Description:      fmt.Sprintf("Prerequisite flag %s not found", pc.Prerequisite.FeatureId),
+				ConflictingField: "prerequisites",
+				DetectedAt:       now,
+			})
+			continue
+		}
+
+		if pc.Prerequisite.VariationId != "" &&
+			!featuredomain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
+			conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+				Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+				Description: fmt.Sprintf(
+					"Prerequisite flag %s no longer has variation %s",
+					pc.Prerequisite.FeatureId, pc.Prerequisite.VariationId,
+				),
+				ConflictingField: "prerequisites",
+				DetectedAt:       now,
+			})
+		}
+	}
+	return conflicts
+}
+
+// hasPrerequisiteChanges returns true if the payload has any prerequisite CREATE/UPDATE changes.
+func hasPrerequisiteChanges(payload *proto.ScheduledChangePayload) bool {
+	if payload == nil {
+		return false
+	}
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc != nil && (pc.ChangeType == proto.ChangeType_CREATE || pc.ChangeType == proto.ChangeType_UPDATE) {
+			return true
+		}
+	}
+	return false
+}
+
+// listCrossFlagSchedules lists pending/conflict schedules in the environment
+// for flags OTHER than the specified flag ID.
+func (d *ConflictDetector) listCrossFlagSchedules(
+	ctx context.Context,
+	excludeFeatureID, environmentID string,
+) ([]*proto.ScheduledFlagChange, error) {
+	filters := []*mysql.FilterV2{
+		{Column: "environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
+		{Column: "feature_id", Operator: mysql.OperatorNotEqual, Value: excludeFeatureID},
+	}
+	inFilters := []*mysql.InFilter{
+		{
+			Column: "status",
+			Values: []interface{}{
+				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING),
+				int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
+			},
+		},
+	}
+	options := &mysql.ListOptions{
+		Filters:   filters,
+		InFilters: inFilters,
+		Orders:    []*mysql.Order{mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc)},
+		Limit:     mysql.QueryNoLimit,
+		Offset:    mysql.QueryNoOffset,
+	}
+	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, options)
+	return sfcs, err
+}
+
+func (d *ConflictDetector) listPendingAndConflictSchedules(
 	ctx context.Context,
 	featureID, environmentID string,
 ) ([]*proto.ScheduledFlagChange, error) {
