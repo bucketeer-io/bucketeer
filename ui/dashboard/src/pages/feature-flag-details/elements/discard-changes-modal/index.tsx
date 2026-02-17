@@ -3,7 +3,7 @@ import { Trans } from 'react-i18next';
 import { IconRemoveOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { isNil } from 'lodash';
-import { capitalize, cn } from 'utils/style';
+import { cn } from 'utils/style';
 import { IconArrowUpDown, IconPlus, IconSwitchUpdate } from '@icons';
 import {
   DiscardChangesStateData,
@@ -197,7 +197,7 @@ const RuleHeader = ({
               <Trans
                 i18nKey={formNotify}
                 values={{
-                  action: t(capitalize(labelType?.toLowerCase())),
+                  action: t(labelType?.toLowerCase()),
                   value: changeType === 'value' ? valueLabel : ''
                 }}
                 components={{ b: <strong /> }}
