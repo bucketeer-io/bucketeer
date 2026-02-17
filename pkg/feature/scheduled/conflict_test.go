@@ -390,6 +390,64 @@ func TestValidatePayloadReferences(t *testing.T) {
 			},
 			expectedLen: 0,
 		},
+		{
+			desc: "payload with only ResetSamplingSeed: no references to validate",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				ResetSamplingSeed: true,
+			},
+			expectedLen: 0,
+		},
+		{
+			desc: "multiple targets: one valid, one invalid",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				TargetChanges: []*featureproto.TargetChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Target:     &featureproto.Target{Variation: "var-1", Users: []string{"user-1"}},
+					},
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Target:     &featureproto.Target{Variation: "var-gone", Users: []string{"user-2"}},
+					},
+				},
+			},
+			expectedLen: 1,
+			checkField:  "targets",
+		},
+		{
+			desc: "rollout strategy: one of many variations deleted",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				DefaultStrategy: &featureproto.Strategy{
+					Type: featureproto.Strategy_ROLLOUT,
+					RolloutStrategy: &featureproto.RolloutStrategy{
+						Variations: []*featureproto.RolloutStrategy_Variation{
+							{Variation: "var-1", Weight: 30000},
+							{Variation: "var-2", Weight: 30000},
+							{Variation: "var-deleted", Weight: 40000},
+						},
+					},
+				},
+			},
+			expectedLen: 1,
+			checkField:  "default_strategy",
+		},
+		{
+			desc: "multiple invalid references in same payload",
+			flag: defaultFlag,
+			payload: &featureproto.ScheduledChangePayload{
+				VariationChanges: []*featureproto.VariationChange{
+					{ChangeType: featureproto.ChangeType_DELETE, Variation: &featureproto.Variation{Id: "var-gone-1"}},
+				},
+				RuleChanges: []*featureproto.RuleChange{
+					{ChangeType: featureproto.ChangeType_UPDATE, Rule: &featureproto.Rule{Id: "rule-gone"}},
+				},
+				OffVariation: wrapperspb.String("var-gone-2"),
+			},
+			expectedLen: 3,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
