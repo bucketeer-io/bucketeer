@@ -354,6 +354,12 @@ onDemandProcessors:
         user: ""
         password: ""
         database: ""
+      postgres:
+        host: ""
+        port: 0
+        user: ""
+        password: ""
+        database: ""
       bigquery:
         project: ""
         dataset: ""
