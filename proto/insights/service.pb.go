@@ -420,7 +420,7 @@ type InsightsTimeSeries struct {
 	SourceId      client.SourceId      `protobuf:"varint,2,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
 	ApiId         client.ApiId         `protobuf:"varint,3,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
 	Data          []*InsightsDataPoint `protobuf:"bytes,4,rep,name=data,proto3" json:"data"`                                                                                             // Sorted by timestamp ascending
-	Labels        map[string]string    `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Additional labels (e.g., evaluation_type, error_type)
+	Labels        map[string]string    `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // e.g. evaluation_type=diff
 }
 
 func (x *InsightsTimeSeries) Reset() {
