@@ -175,7 +175,18 @@ func (d *ConflictDetector) DetectConflictsOnFlagChange(
 			}
 			changedCount++
 		} else if len(invalidRefs) == 0 && isConflict {
-			// CONFLICT → PENDING (auto-recovery): all references are now valid again
+			// Same-flag refs are valid, but the schedule may have been
+			// marked CONFLICT due to a cross-flag prerequisite issue.
+			// Re-validate prerequisites before restoring to PENDING.
+			if hasPrerequisiteChanges(schedule.Payload) &&
+				d.featureStorage != nil {
+				prereqConflicts := d.validatePrerequisiteReferences(
+					ctx, schedule.Payload, environmentID, now,
+				)
+				if len(prereqConflicts) > 0 {
+					continue
+				}
+			}
 			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
 			sfcDomain.RestoreToPending()
 			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {

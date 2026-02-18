@@ -852,6 +852,7 @@ func TestDetectConflictsOnFlagChange_AutoRecovery(t *testing.T) {
 		desc           string
 		flag           *featureproto.Feature
 		schedule       *featureproto.ScheduledFlagChange
+		setupFeatureFS func(*gomock.Controller) *mock.MockFeatureStorage
 		expectUpdate   bool
 		expectedStatus featureproto.ScheduledFlagChangeStatus
 		expectedCount  int
@@ -912,6 +913,51 @@ func TestDetectConflictsOnFlagChange_AutoRecovery(t *testing.T) {
 			expectUpdate:  false,
 			expectedCount: 0,
 		},
+		{
+			desc: "CONFLICT stays when same-flag refs valid but cross-flag prereq still broken",
+			flag: &featureproto.Feature{
+				Id:      "feature-1",
+				Version: 5,
+				Variations: []*featureproto.Variation{
+					{Id: "var-1", Value: "true"},
+				},
+			},
+			schedule: &featureproto.ScheduledFlagChange{
+				Id:                    "sfc-conflict",
+				FeatureId:             "feature-1",
+				EnvironmentId:         "env-1",
+				Status:                featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+				FlagVersionAtCreation: 2,
+				Payload: &featureproto.ScheduledChangePayload{
+					PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+						{
+							ChangeType: featureproto.ChangeType_CREATE,
+							Prerequisite: &featureproto.Prerequisite{
+								FeatureId:   "flag-b",
+								VariationId: "var-beta-deleted",
+							},
+						},
+					},
+				},
+			},
+			setupFeatureFS: func(ctrl *gomock.Controller) *mock.MockFeatureStorage {
+				fs := mock.NewMockFeatureStorage(ctrl)
+				// flag-b exists but var-beta-deleted does not
+				fs.EXPECT().GetFeature(
+					gomock.Any(), "flag-b", "env-1",
+				).Return(&domain.Feature{
+					Feature: &featureproto.Feature{
+						Id: "flag-b",
+						Variations: []*featureproto.Variation{
+							{Id: "var-beta-active"},
+						},
+					},
+				}, nil)
+				return fs
+			},
+			expectUpdate:  false,
+			expectedCount: 0,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -920,7 +966,16 @@ func TestDetectConflictsOnFlagChange_AutoRecovery(t *testing.T) {
 			defer ctrl.Finish()
 
 			storage := mock.NewMockScheduledFlagChangeStorage(ctrl)
-			detector := NewConflictDetector(storage)
+
+			var detector *ConflictDetector
+			if p.setupFeatureFS != nil {
+				fs := p.setupFeatureFS(ctrl)
+				detector = NewConflictDetectorWithFeatureStorage(
+					storage, fs, nil,
+				)
+			} else {
+				detector = NewConflictDetector(storage)
+			}
 
 			storage.EXPECT().ListScheduledFlagChanges(
 				gomock.Any(), gomock.Any(),
