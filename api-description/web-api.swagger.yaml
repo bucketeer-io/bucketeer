@@ -13543,7 +13543,7 @@ definitions:
         type: object
         additionalProperties:
           type: string
-        title: Additional labels (e.g., evaluation_type, error_type)
+        title: e.g. evaluation_type=diff
   insightsMonthlySummaryDataPoint:
     type: object
     properties:
