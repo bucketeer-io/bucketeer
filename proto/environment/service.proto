@@ -25,7 +25,6 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "proto/environment/environment.proto";
 import "proto/environment/project.proto";
 import "proto/environment/organization.proto";
-import "proto/environment/command.proto";
 
 import "proto/auth/token.proto";
 import "proto/auth/service.proto";
@@ -69,12 +68,7 @@ message ListEnvironmentsV2Response {
 }
 
 message CreateEnvironmentV2Request {
-  CreateEnvironmentV2Command command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateEnvironmentV2Command
   string name = 2 [(google.api.field_behavior) = REQUIRED];
   string url_code = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;
@@ -88,24 +82,10 @@ message CreateEnvironmentV2Response {
 
 message UpdateEnvironmentV2Request {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  RenameEnvironmentV2Command rename_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeDescriptionEnvironmentV2Command change_description_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeRequireCommentCommand change_require_comment_command = 4 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // RenameEnvironmentV2Command rename_command
+  reserved 3;  // ChangeDescriptionEnvironmentV2Command
+               // change_description_command
+  reserved 4;  // ChangeRequireCommentCommand change_require_comment_command
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
   google.protobuf.BoolValue require_comment = 7;
@@ -120,14 +100,14 @@ message UpdateEnvironmentV2Response {}
 
 message ArchiveEnvironmentV2Request {
   string id = 1;
-  ArchiveEnvironmentV2Command command = 2;
+  reserved 2;  // ArchiveEnvironmentV2Command
 }
 
 message ArchiveEnvironmentV2Response {}
 
 message UnarchiveEnvironmentV2Request {
   string id = 1;
-  UnarchiveEnvironmentV2Command command = 2;
+  reserved 2;  // UnarchiveEnvironmentV2Command
 }
 
 message UnarchiveEnvironmentV2Response {}
@@ -173,12 +153,7 @@ message ListProjectsResponse {
 }
 
 message CreateProjectRequest {
-  CreateProjectCommand command = 1 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 1;  // CreateProjectCommand
   string organization_id = 2 [(google.api.field_behavior) = REQUIRED];
   string name = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;
@@ -189,26 +164,10 @@ message CreateProjectResponse {
   Project project = 1;
 }
 
-message CreateTrialProjectRequest {
-  CreateTrialProjectCommand command = 1;
-}
-
-message CreateTrialProjectResponse {}
-
 message UpdateProjectRequest {
   string id = 1 [(google.api.field_behavior) = REQUIRED];
-  ChangeDescriptionProjectCommand change_description_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  RenameProjectCommand rename_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // ChangeDescriptionProjectCommand change_description_command
+  reserved 3;  // RenameProjectCommand rename_command
   string organization_id = 4 [
     deprecated = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -223,21 +182,21 @@ message UpdateProjectResponse {}
 
 message EnableProjectRequest {
   string id = 1;
-  EnableProjectCommand command = 2;
+  reserved 2;  // EnableProjectCommand
 }
 
 message EnableProjectResponse {}
 
 message DisableProjectRequest {
   string id = 1;
-  DisableProjectCommand command = 2;
+  reserved 2;  // DisableProjectCommand
 }
 
 message DisableProjectResponse {}
 
 message ConvertTrialProjectRequest {
   string id = 1;
-  ConvertTrialProjectCommand command = 2;
+  reserved 2;  // ConvertTrialProjectCommand
 }
 
 message ConvertTrialProjectResponse {}
@@ -282,7 +241,7 @@ message ListOrganizationsResponse {
 }
 
 message CreateOrganizationRequest {
-  CreateOrganizationCommand command = 1 [deprecated = true];
+  reserved 1;  // CreateOrganizationCommand
   string name = 2 [(google.api.field_behavior) = REQUIRED];
   string url_code = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;  // optional
@@ -297,24 +256,9 @@ message CreateOrganizationResponse {
 
 message UpdateOrganizationRequest {
   string id = 1;
-  ChangeNameOrganizationCommand rename_command = 2 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeDescriptionOrganizationCommand change_description_command = 3 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
+  reserved 2;  // ChangeNameOrganizationCommand
+  reserved 3;  // ChangeDescriptionOrganizationCommand
+  reserved 4;  // ChangeOwnerEmailOrganizationCommand
   google.protobuf.StringValue name = 5;
   google.protobuf.StringValue description = 6;
   google.protobuf.StringValue owner_email = 7;
@@ -324,35 +268,35 @@ message UpdateOrganizationResponse {}
 
 message EnableOrganizationRequest {
   string id = 1;
-  EnableOrganizationCommand command = 2;
+  reserved 2;  // EnableOrganizationCommand
 }
 
 message EnableOrganizationResponse {}
 
 message DisableOrganizationRequest {
   string id = 1;
-  DisableOrganizationCommand command = 2;
+  reserved 2;  // DisableOrganizationCommand
 }
 
 message DisableOrganizationResponse {}
 
 message ArchiveOrganizationRequest {
   string id = 1;
-  ArchiveOrganizationCommand command = 2;
+  reserved 2;  // ArchiveOrganizationCommand
 }
 
 message ArchiveOrganizationResponse {}
 
 message UnarchiveOrganizationRequest {
   string id = 1;
-  UnarchiveOrganizationCommand command = 2;
+  reserved 2;  // UnarchiveOrganizationCommand
 }
 
 message UnarchiveOrganizationResponse {}
 
 message ConvertTrialOrganizationRequest {
   string id = 1;
-  ConvertTrialOrganizationCommand command = 2;
+  reserved 2;  // ConvertTrialOrganizationCommand
 }
 
 message ConvertTrialOrganizationResponse {}
@@ -789,52 +733,6 @@ service EnvironmentService {
       description: "Create a project. To call this API, you need an `SYSTEM_ADMIN` role.",
       tags: "Project",
       operation_id: "web.v1.environment.create_project",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "403"
-        value: {
-          description: "Request does not have permission to access the resource."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 7, "message": "not authorized", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc CreateTrialProject(CreateTrialProjectRequest)
-      returns (CreateTrialProjectResponse) {
-    option (google.api.http) = {
-      post: "/v1/environment/create_trial_project"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Create Trial",
-      description: "Create a trial project. To call this API, you need an `SYSTEM_ADMIN` role.",
-      tags: "Project",
-      operation_id: "web.v1.environment.create_trial_project",
       responses: {
         key: "400"
         value: {

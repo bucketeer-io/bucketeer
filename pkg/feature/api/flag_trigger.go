@@ -21,14 +21,12 @@ import (
 	"fmt"
 	"strconv"
 
+	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -61,13 +59,9 @@ func (s *FeatureService) CreateFlagTrigger(
 		return nil, err
 	}
 
-	if request.CreateFlagTriggerCommand == nil {
-		return s.createFlagTriggerNoCommand(ctx, request, editor)
-	}
-
-	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand); err != nil {
+	if err := validateCreateFlagTriggerRequest(request); err != nil {
 		s.logger.Error(
-			"Invalid argument",
+			"Error validating create flag trigger request",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", request.EnvironmentId),
@@ -77,79 +71,10 @@ func (s *FeatureService) CreateFlagTrigger(
 	}
 	flagTrigger, err := domain.NewFlagTrigger(
 		request.EnvironmentId,
-		request.CreateFlagTriggerCommand.FeatureId,
-		request.CreateFlagTriggerCommand.Type,
-		request.CreateFlagTriggerCommand.Action,
-		request.CreateFlagTriggerCommand.Description,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create flag trigger",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			flagTrigger,
-			s.domainPublisher,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, request.CreateFlagTriggerCommand); err != nil {
-			s.logger.Error(
-				"Failed to create flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		if err := s.flagTriggerStorage.CreateFlagTrigger(contextWithTx, flagTrigger); err != nil {
-			s.logger.Error(
-				"Failed to create flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
-	flagTrigger.Token = ""
-	return &featureproto.CreateFlagTriggerResponse{
-		FlagTrigger: flagTrigger.FlagTrigger,
-		Url:         triggerURL,
-	}, nil
-}
-
-func (s *FeatureService) createFlagTriggerNoCommand(
-	ctx context.Context,
-	req *featureproto.CreateFlagTriggerRequest,
-	editor *eventproto.Editor,
-) (*featureproto.CreateFlagTriggerResponse, error) {
-	if err := validateCreateFlagTriggerNoCommand(req); err != nil {
-		s.logger.Error(
-			"Error validating create flag trigger request",
-			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	flagTrigger, err := domain.NewFlagTrigger(
-		req.EnvironmentId,
-		req.FeatureId,
-		req.Type,
-		req.Action,
-		req.Description,
+		request.FeatureId,
+		request.Type,
+		request.Action,
+		request.Description,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -179,7 +104,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 				UpdatedAt:     flagTrigger.UpdatedAt,
 				EnvironmentId: flagTrigger.EnvironmentId,
 			},
-			req.EnvironmentId,
+			request.EnvironmentId,
 			flagTrigger,
 			nil,
 		)
@@ -191,7 +116,7 @@ func (s *FeatureService) createFlagTriggerNoCommand(
 				"Failed to create flag trigger",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -229,74 +154,9 @@ func (s *FeatureService) UpdateFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
-	if request.ChangeFlagTriggerDescriptionCommand == nil {
-		return s.updateFlagTriggerNoCommand(ctx, request, editor)
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
-			contextWithTx,
-			request.Id,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			flagTrigger,
-			s.domainPublisher,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, request.ChangeFlagTriggerDescriptionCommand); err != nil {
-			s.logger.Error(
-				"Failed to update flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		if err := s.flagTriggerStorage.UpdateFlagTrigger(
-			contextWithTx,
-			flagTrigger,
-		); err != nil {
-			s.logger.Error(
-				"Failed to update flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
-			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			return nil, statusTriggerNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &featureproto.UpdateFlagTriggerResponse{}, nil
-}
-
-func (s *FeatureService) updateFlagTriggerNoCommand(
-	ctx context.Context,
-	request *featureproto.UpdateFlagTriggerRequest,
-	editor *eventproto.Editor,
-) (*featureproto.UpdateFlagTriggerResponse, error) {
 	var event *eventproto.Event
 	var resetURL string
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
 			request.Id,
@@ -363,231 +223,6 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 
 	return &featureproto.UpdateFlagTriggerResponse{
 		Url: resetURL,
-	}, nil
-}
-
-func (s *FeatureService) EnableFlagTrigger(
-	ctx context.Context,
-	request *featureproto.EnableFlagTriggerRequest,
-) (*featureproto.EnableFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateEnableFlagTriggerCommand(request.EnableFlagTriggerCommand); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
-			contextWithTx,
-			request.Id,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			flagTrigger,
-			s.domainPublisher,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, request.EnableFlagTriggerCommand); err != nil {
-			s.logger.Error(
-				"Failed to enable flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		if err := s.flagTriggerStorage.UpdateFlagTrigger(
-			contextWithTx,
-			flagTrigger,
-		); err != nil {
-			s.logger.Error(
-				"Failed to enable flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
-			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			return nil, statusTriggerNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &featureproto.EnableFlagTriggerResponse{}, nil
-}
-
-func (s *FeatureService) DisableFlagTrigger(
-	ctx context.Context,
-	request *featureproto.DisableFlagTriggerRequest,
-) (*featureproto.DisableFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateDisableFlagTriggerCommand(request.DisableFlagTriggerCommand); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
-			contextWithTx,
-			request.Id,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			flagTrigger,
-			s.domainPublisher,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, request.DisableFlagTriggerCommand); err != nil {
-			s.logger.Error(
-				"Failed to enable flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		if err := s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, flagTrigger); err != nil {
-			s.logger.Error(
-				"Failed to disable flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", request.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
-			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			return nil, statusTriggerNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return &featureproto.DisableFlagTriggerResponse{}, nil
-}
-
-func (s *FeatureService) ResetFlagTrigger(
-	ctx context.Context,
-	request *featureproto.ResetFlagTriggerRequest,
-) (*featureproto.ResetFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateResetFlagTriggerCommand(request.ResetFlagTriggerCommand); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	trigger, err := s.flagTriggerStorage.GetFlagTrigger(ctx, request.Id, request.EnvironmentId)
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
-			return nil, statusTriggerNotFound.Err()
-		}
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			trigger,
-			s.domainPublisher,
-			request.EnvironmentId,
-		)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, request.ResetFlagTriggerCommand); err != nil {
-			s.logger.Error(
-				"Failed to reset flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		err = s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, trigger)
-		if err != nil {
-			s.logger.Error(
-				"Failed to reset flag trigger",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
-			return nil, statusTriggerNotFound.Err()
-		}
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	triggerURL := s.generateTriggerURL(ctx, trigger.Token, false)
-	trigger.Token = ""
-	return &featureproto.ResetFlagTriggerResponse{
-		FlagTrigger: trigger.FlagTrigger,
-		Url:         triggerURL,
 	}, nil
 }
 
@@ -844,7 +479,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
 		// check if feature is already enabled
 		if !feature.GetEnabled() {
-			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId())
+			err := s.updateEnableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), true)
 			if err != nil {
 				return nil, statusTriggerEnableFailed.Err()
 			}
@@ -852,7 +487,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
 		// check if feature is already disabled
 		if feature.GetEnabled() {
-			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId())
+			err := s.updateEnableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), false)
 			if err != nil {
 				return nil, statusTriggerDisableFailed.Err()
 			}
@@ -936,53 +571,71 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	return nil
 }
 
-func (s *FeatureService) enableFeature(
+func (s *FeatureService) updateEnableFeature(
 	ctx context.Context,
 	featureId, environmentId string,
+	enabled bool,
 ) error {
-	if err := s.updateFeature(
-		ctx,
-		&featureproto.EnableFeatureCommand{},
-		featureId,
-		environmentId,
-		"",
-		webhookEditor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to enable feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
+	var event *eventproto.Event
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		feature, err := s.featureStorage.GetFeature(contextWithTx, featureId, environmentId)
+		if err != nil {
+			return err
 		}
+
+		if enabled {
+			err = feature.Enable()
+		} else {
+			err = feature.Disable()
+		}
+		if err != nil {
+			return err
+		}
+		prev := &domain.Feature{}
+		if err := copier.Copy(prev, feature); err != nil {
+			return err
+		}
+		eventType := eventproto.Event_FEATURE_DISABLED
+		var eventData pb.Message = &eventproto.FeatureDisabledEvent{Id: featureId}
+		if enabled {
+			eventType = eventproto.Event_FEATURE_ENABLED
+			eventData = &eventproto.FeatureEnabledEvent{Id: featureId}
+		}
+		event, err = domainevent.NewEvent(
+			webhookEditor,
+			eventproto.Event_FEATURE,
+			featureId,
+			eventType,
+			eventData,
+			environmentId,
+			feature.Feature,
+			prev,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create event",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
+		return s.featureStorage.UpdateFeature(contextWithTx, feature, environmentId)
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to update feature enabled state",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+			)...,
+		)
 		return err
 	}
-	return nil
-}
-
-func (s *FeatureService) disableFeature(
-	ctx context.Context,
-	featureId, environmentId string,
-) error {
-	if err := s.updateFeature(
-		ctx,
-		&featureproto.DisableFeatureCommand{},
-		featureId,
-		environmentId,
-		"",
-		webhookEditor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to disable feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-		}
+	err = s.domainPublisher.Publish(ctx, event)
+	if err != nil {
+		s.logger.Error(
+			"Failed to publish event",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+		)
 		return err
 	}
 	return nil

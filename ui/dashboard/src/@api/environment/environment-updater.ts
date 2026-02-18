@@ -7,6 +7,9 @@ export interface EnvironmentUpdateParams {
   description?: string;
   requireComment?: boolean;
   archived?: boolean;
+  autoArchiveEnabled?: boolean;
+  autoArchiveUnusedDays?: number;
+  autoArchiveCheckCodeRefs?: boolean;
 }
 
 export const environmentUpdater = async (
