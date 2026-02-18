@@ -7,7 +7,7 @@
     "ChangeMaintainer": "メンテナーを「{{maintainer}}」に変更",
     "ArchiveFlag": "フラグをアーカイブ",
     "UnarchiveFlag": "フラグのアーカイブを解除",
-    "ResetSamplingSeed": "サンプリングシードをリセット",
+    "ResetSamplingSeed": "ランダムサンプリングをリセット",
     "AddTag": "タグを追加: {{tag}}",
     "RemoveTag": "タグを削除: {{tag}}",
     "AddVariation": "バリエーションを追加: {{name}} ({{value}})",
