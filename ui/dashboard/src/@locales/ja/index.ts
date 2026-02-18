@@ -3,6 +3,7 @@ import backend from './backend.json';
 import common from './common.json';
 import form from './form.json';
 import message from './message.json';
+import scheduledChanges from './scheduled-changes.json';
 import table from './table.json';
 
 const jaResources = {
@@ -11,6 +12,7 @@ const jaResources = {
   form,
   table,
   message,
-  backend
+  backend,
+  'scheduled-changes': scheduledChanges
 };
 export default jaResources;

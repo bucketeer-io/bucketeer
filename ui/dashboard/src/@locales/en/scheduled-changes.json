@@ -1,0 +1,29 @@
+{
+  "ScheduledChange": {
+    "EnableFlag": "Enable flag",
+    "DisableFlag": "Disable flag",
+    "RenameFlag": "Rename flag to \"{{name}}\"",
+    "UpdateDescription": "Update flag description",
+    "ChangeMaintainer": "Change maintainer to \"{{maintainer}}\"",
+    "ArchiveFlag": "Archive flag",
+    "UnarchiveFlag": "Unarchive flag",
+    "ResetSamplingSeed": "Reset sampling seed",
+    "AddTag": "Add tag: {{tag}}",
+    "RemoveTag": "Remove tag: {{tag}}",
+    "AddVariation": "Add variation: {{name}} ({{value}})",
+    "UpdateVariation": "Update variation: {{name}}",
+    "ChangeVariationValue": "Change variation \"{{name}}\": {{oldValue}} → {{newValue}}",
+    "RenameVariation": "Rename variation: {{oldName}} → {{newName}}",
+    "DeleteVariation": "Delete variation: {{name}}",
+    "ChangeOffVariation": "Change OFF variation to \"{{name}}\"",
+    "AddRule": "Add rule: {{description}}",
+    "UpdateRule": "Update rule: {{description}}",
+    "DeleteRule": "Delete rule: {{description}}",
+    "TargetUsers": "Target {{count}} user(s) to variation \"{{variationName}}\"",
+    "RemoveTargeting": "Remove individual targeting for variation \"{{variationName}}\"",
+    "AddPrerequisite": "Add prerequisite: {{featureId}}",
+    "UpdatePrerequisite": "Update prerequisite: {{featureId}}",
+    "RemovePrerequisite": "Remove prerequisite: {{featureId}}",
+    "ChangeDefaultStrategy": "Change default rule: {{description}}"
+  }
+}
