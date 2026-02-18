@@ -1,0 +1,29 @@
+{
+  "ScheduledChange": {
+    "EnableFlag": "フラグを有効化",
+    "DisableFlag": "フラグを無効化",
+    "RenameFlag": "フラグ名を「{{name}}」に変更",
+    "UpdateDescription": "フラグの説明を更新",
+    "ChangeMaintainer": "メンテナーを「{{maintainer}}」に変更",
+    "ArchiveFlag": "フラグをアーカイブ",
+    "UnarchiveFlag": "フラグのアーカイブを解除",
+    "ResetSamplingSeed": "サンプリングシードをリセット",
+    "AddTag": "タグを追加: {{tag}}",
+    "RemoveTag": "タグを削除: {{tag}}",
+    "AddVariation": "バリエーションを追加: {{name}} ({{value}})",
+    "UpdateVariation": "バリエーションを更新: {{name}}",
+    "ChangeVariationValue": "バリエーション「{{name}}」の値を変更: {{oldValue}} → {{newValue}}",
+    "RenameVariation": "バリエーション名を変更: {{oldName}} → {{newName}}",
+    "DeleteVariation": "バリエーションを削除: {{name}}",
+    "ChangeOffVariation": "OFFバリエーションを「{{name}}」に変更",
+    "AddRule": "ルールを追加: {{description}}",
+    "UpdateRule": "ルールを更新: {{description}}",
+    "DeleteRule": "ルールを削除: {{description}}",
+    "TargetUsers": "{{count}}人のユーザーをバリエーション「{{variationName}}」にターゲット",
+    "RemoveTargeting": "バリエーション「{{variationName}}」の個別ターゲティングを削除",
+    "AddPrerequisite": "前提条件を追加: {{featureId}}",
+    "UpdatePrerequisite": "前提条件を更新: {{featureId}}",
+    "RemovePrerequisite": "前提条件を削除: {{featureId}}",
+    "ChangeDefaultStrategy": "デフォルトルールを変更: {{description}}"
+  }
+}
