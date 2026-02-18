@@ -178,6 +178,7 @@ type DataWarehouseConfig struct {
 	Timezone  string                      `yaml:"timezone"`
 	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
 	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
+	Postgres  DataWarehousePostgresConfig `yaml:"postgres"`
 }
 
 type DataWarehouseBigQueryConfig struct {
@@ -193,6 +194,14 @@ type DataWarehouseMySQLConfig struct {
 	User              string `yaml:"user"`
 	Password          string `yaml:"password"`
 	Database          string `yaml:"database"`
+}
+
+type DataWarehousePostgresConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Database string `yaml:"database"`
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -345,7 +354,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("localhost:9001").String(),
 		dataWarehouseType: cmd.Flag(
 			"data-warehouse-type",
-			"Data warehouse type (bigquery, mysql).",
+			"Data warehouse type (bigquery, mysql, postgres).",
 		).Default("bigquery").String(),
 		dataWarehouseConfigPath: cmd.Flag(
 			"data-warehouse-config-path",
@@ -1280,6 +1289,13 @@ func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *e
 			Project:  config.BigQuery.Project,
 			Dataset:  config.BigQuery.Dataset,
 			Location: config.BigQuery.Location,
+		},
+		Postgres: eventcounterapi.DataWarehousePostgresConfig{
+			Host:     config.Postgres.Host,
+			Port:     config.Postgres.Port,
+			User:     config.Postgres.User,
+			Password: config.Postgres.Password,
+			Database: config.Postgres.Database,
 		},
 	}
 }

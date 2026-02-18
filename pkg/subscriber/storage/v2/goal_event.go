@@ -17,12 +17,7 @@ package v2
 
 import (
 	"context"
-	"database/sql"
 	_ "embed"
-	"fmt"
-	"strings"
-
-	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
 var (
@@ -52,86 +47,4 @@ type GoalEventParams struct {
 	FeatureVersion int32
 	VariationID    string
 	Reason         string
-}
-
-type mysqlGoalEventStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewMysqlGoalEventStorage(qe mysql.QueryExecer) GoalEventStorageV2 {
-	return &mysqlGoalEventStorage{qe: qe}
-}
-
-func (s *mysqlGoalEventStorage) CreateGoalEvents(
-	ctx context.Context,
-	events []GoalEventParams,
-) error {
-	// Process in batches to avoid exceeding max SQL parameter limits
-	for i := 0; i < len(events); i += goalBatchSize {
-		j := i + goalBatchSize
-		if j > len(events) {
-			j = len(events)
-		}
-		if err := s.createGoalEventsBatch(ctx, events[i:j]); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *mysqlGoalEventStorage) createGoalEventsBatch(
-	ctx context.Context,
-	events []GoalEventParams,
-) error {
-	var query strings.Builder
-	query.WriteString(goalEventSql)
-
-	args := make([]interface{}, 0, len(events)*13) // 13 fields per event
-
-	for i, event := range events {
-		if i > 0 {
-			query.WriteString(",")
-		}
-		query.WriteString("(?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-
-		// Validate required fields
-		if event.ID == "" || event.EnvironmentID == "" || event.GoalID == "" || event.UserID == "" {
-			return fmt.Errorf("missing required fields: id=%s, envId=%s, goalId=%s, userId=%s",
-				event.ID, event.EnvironmentID, event.GoalID, event.UserID)
-		}
-
-		// Handle potentially null fields
-		userData := sql.NullString{String: event.UserData, Valid: event.UserData != ""}
-		tag := sql.NullString{String: event.Tag, Valid: event.Tag != ""}
-		sourceID := sql.NullString{String: event.SourceID, Valid: event.SourceID != ""}
-		featureID := sql.NullString{String: event.FeatureID, Valid: event.FeatureID != ""}
-		variationID := sql.NullString{String: event.VariationID, Valid: event.VariationID != ""}
-		reason := sql.NullString{String: event.Reason, Valid: event.Reason != ""}
-
-		// Convert timestamp from microseconds to seconds
-		timestampSeconds := event.Timestamp / 1000000
-
-		args = append(
-			args,
-			event.ID,
-			event.EnvironmentID,
-			timestampSeconds,
-			event.GoalID,
-			event.Value,
-			event.UserID,
-			userData,
-			tag,
-			sourceID,
-			featureID,
-			event.FeatureVersion,
-			variationID,
-			reason,
-		)
-	}
-
-	_, err := s.qe.ExecContext(ctx, query.String(), args...)
-	if err != nil {
-		return fmt.Errorf("failed to execute batch insert: %w", err)
-	}
-	return err
 }

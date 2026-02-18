@@ -3,6 +3,8 @@ secrets:
     file: ./secrets/mysql_password.txt
   mysql_root_password:
     file: ./secrets/mysql_root_password.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
 
 services:
   mysql:
@@ -28,6 +30,29 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bucketeer", "-pbucketeer"]
       timeout: 20s
       retries: 10
+    networks:
+      - bucketeer
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-18}
+    container_name: bucketeer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bucketeer
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: bucketeer
+    secrets:
+      - postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "export PGPASSWORD=`cat /run/secrets/postgres_password` && pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - bucketeer
 
@@ -434,6 +459,8 @@ services:
 
 volumes:
   mysql_data:
+    driver: local
+  postgres_data:
     driver: local
   redis_data:
     driver: local

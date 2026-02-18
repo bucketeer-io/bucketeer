@@ -235,6 +235,19 @@ create-mysql-event-tables:
 		--no-profile \
 		--no-gcp-trace-enabled
 
+.PHONY: create-postgres-event-tables
+create-postgres-event-tables:
+	@echo "Creating Postgres event tables for data warehouse..."
+	go run ./hack/create-postgres-event-tables create \
+		--postgres-host=${POSTGRES_HOST} \
+		--postgres-port=${POSTGRES_PORT} \
+		--postgres-user=${POSTGRES_USER} \
+		--postgres-pass=${POSTGRES_PASS} \
+		--postgres-db-name=${POSTGRES_DB_NAME} \
+		--no-profile \
+		--no-gcp-trace-enabled \
+		--log-level=debug
+
 .PHONY: generate-service-token
 generate-service-token:
 	go run ./hack/generate-service-token generate \
@@ -431,20 +444,25 @@ endif
 		--no-profile \
 		--no-gcp-trace-enabled
 
+POSTGRES_ENABLED ?= false
 setup-localenv:
 	kubectl config use-context minikube
 	@echo "Ensuring localenv chart is up to date..."
-	helm list | grep -q localenv && helm upgrade localenv manifests/localenv || helm install localenv manifests/localenv
+	helm list | grep -q localenv && helm upgrade localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED) || helm install localenv manifests/localenv --set postgresql.enabled=$(POSTGRES_ENABLED)
 	@echo "Force restarting infrastructure pods to start fresh..."
 	kubectl delete pod -l app.kubernetes.io/name=bq --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=pubsub --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault --ignore-not-found=true
 	kubectl delete pod -l app.kubernetes.io/name=vault-agent-injector --ignore-not-found=true
+	kubectl delete pod -l app.kubernetes.io/name=postgresql --ignore-not-found=true
 	@echo "Waiting for infrastructure pods to be ready..."
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=bq --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=pubsub --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault --timeout=300s
 	kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault-agent-injector --timeout=300s
+	if [ "$(POSTGRES_ENABLED)" = "true" ]; then
+		kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql --timeout=300s
+	fi
 	@echo "Pods are ready"
 	@echo "Setting up data warehouse tables..."
 	make create-bigquery-emulator-tables
@@ -549,10 +567,13 @@ docker-compose-setup:
 		echo "Creating docker-compose/secrets directory..."; \
 		mkdir -p docker-compose/secrets; \
 		echo "Generating MySQL secret files..."; \
+		echo "Generating PostgreSQL secret files..."; \
 		echo "root" > docker-compose/secrets/mysql_root_password.txt; \
 		echo "bucketeer" > docker-compose/secrets/mysql_password.txt; \
+		echo "bucketeer" > docker-compose/secrets/postgres_password.txt; \
 		chmod 600 docker-compose/secrets/*.txt; \
 		echo "MySQL secrets created"; \
+		echo "PostgresQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
 	fi
@@ -621,13 +642,14 @@ docker-compose-clean:
 
 .PHONY: docker-compose-regenerate-secrets
 docker-compose-regenerate-secrets:
-	@echo "Regenerating MySQL secrets..."
+	@echo "Regenerating MySQL and Postgres secrets..."
 	@rm -rf docker-compose/secrets
 	@mkdir -p docker-compose/secrets
 	@echo "root" > docker-compose/secrets/mysql_root_password.txt
 	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
+	@echo "bucketeer" > docker-compose/secrets/postgres_password.txt
 	@chmod 600 docker-compose/secrets/*.txt
-	@echo "MySQL secrets regenerated"
+	@echo "MySQL and Postgres secrets regenerated"
 
 .PHONY: docker-compose-delete-data
 docker-compose-delete-data:
@@ -648,6 +670,16 @@ docker-compose-create-mysql-event-tables:
 	MYSQL_PORT=3306 \
 	MYSQL_DB_NAME=bucketeer \
 	make -C ./ create-mysql-event-tables
+
+.PHONY: docker-compose-create-postgres-event-tables
+docker-compose-create-postgres-event-tables:
+	@echo "Creating Postgres event tables for Docker Compose data warehouse..."
+	POSTGRES_USER=bucketeer \
+	POSTGRES_PASS=bucketeer \
+	POSTGRES_HOST=localhost \
+	POSTGRES_PORT=5432 \
+	POSTGRES_DB_NAME=bucketeer \
+	make -C ./ create-postgres-event-tables
 
 .PHONY: docker-compose-delete-mysql-data-warehouse-data
 docker-compose-delete-mysql-data-warehouse-data:

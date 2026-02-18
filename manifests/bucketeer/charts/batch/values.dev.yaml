@@ -263,8 +263,7 @@ onDemandProcessors:
         project: ""  # Will be set by template
         dataset: ""  # Will be set by template
         location: ""  # Will be set by template
-      postgresql:
-        useMainConnection: false  # Will be set by template
+      postgres:
         host: ""  # Will be set by template
         port: 0  # Will be set by template
         user: ""  # Will be set by template
@@ -295,8 +294,7 @@ onDemandProcessors:
         project: ""  # Will be set by template
         dataset: ""  # Will be set by template
         location: ""  # Will be set by template
-      postgresql:
-        useMainConnection: false  # Will be set by template
+      postgres:
         host: ""  # Will be set by template
         port: 0  # Will be set by template
         user: ""  # Will be set by template

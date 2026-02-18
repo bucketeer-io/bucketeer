@@ -6,8 +6,8 @@ global:
   # Global data warehouse configuration for development
   dataWarehouse:
     # Data warehouse type configuration
-    # Supported types: bigquery, mysql
-    type: mysql # Options: bigquery, mysql
+    # Supported types: bigquery, mysql, postgres
+    type: mysql # Options: bigquery, mysql, postgres
     batchSize: 1000
     timezone: "UTC"
 
@@ -22,6 +22,14 @@ global:
       useMainConnection: true
       host: "localenv-mysql-headless.default.svc.cluster.local"
       port: 3306
+      user: "bucketeer"
+      password: "bucketeer"
+      database: "bucketeer"
+
+    # Postgres configuration (used when type: postgres)
+    postgres:
+      host: "localenv-postgresql-headless.default.svc.cluster.local"
+      port: 5432
       user: "bucketeer"
       password: "bucketeer"
       database: "bucketeer"
@@ -601,6 +609,12 @@ subscriber:
           user: ""
           password: ""
           database: ""
+        postgres:
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
         bigquery:
           project: ""
           dataset: ""
@@ -622,6 +636,12 @@ subscriber:
         timezone: ""
         mysql:
           useMainConnection: false
+          host: ""
+          port: 0
+          user: ""
+          password: ""
+          database: ""
+        postgres:
           host: ""
           port: 0
           user: ""

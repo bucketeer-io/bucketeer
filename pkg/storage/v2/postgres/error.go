@@ -22,6 +22,8 @@ import (
 
 var (
 	ErrDuplicateEntry = errors.New("postgres: duplicate entry")
+	ErrNoRows         = errors.New("postgres: no rows")
+	ErrTxDone         = errors.New("postgres: tx done")
 )
 
 const uniqueViolation pq.ErrorCode = "23505"

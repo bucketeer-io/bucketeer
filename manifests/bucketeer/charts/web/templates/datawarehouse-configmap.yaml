@@ -40,4 +40,21 @@ data:
       {{- end }}
       {{- end }}
     {{- end }}
- 
+    {{- if eq .Values.global.dataWarehouse.type "postgres" }}
+    postgres:
+      {{- if .Values.global.dataWarehouse.postgres.host }}
+      host: {{ .Values.global.dataWarehouse.postgres.host | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.port }}
+      port: {{ .Values.global.dataWarehouse.postgres.port }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.database }}
+      database: {{ .Values.global.dataWarehouse.postgres.database | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.user }}
+      user: {{ .Values.global.dataWarehouse.postgres.user | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgres.password }}
+      password: {{ .Values.global.dataWarehouse.postgres.password | quote }}
+      {{- end }}
+    {{- end }}

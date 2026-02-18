@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage"
 	storagev2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
@@ -54,6 +55,7 @@ type evalEvtWriter struct {
 type EvalEventWriterOption struct {
 	DataWarehouseType string
 	MySQLClient       mysql.Client
+	PostgresClient    postgres.Client
 	BatchSize         int
 }
 
@@ -88,7 +90,20 @@ func NewEvalEventWriter(
 			location:         location,
 			logger:           l,
 		}, nil
+	case "postgres":
+		if option.PostgresClient == nil {
+			return nil, errors.New("postgres client is required when using Postgres storage")
+		}
 
+		evalStorage := storagev2.NewPostgresEvaluationEventStorage(option.PostgresClient)
+
+		return &evalEvtWriter{
+			writer:           storage.NewPostgresEvalEventWriter(evalStorage),
+			experimentClient: exClient,
+			cache:            cache,
+			location:         location,
+			logger:           l,
+		}, nil
 	case "bigquery":
 		// Fall through to BigQuery implementation below
 	default:
