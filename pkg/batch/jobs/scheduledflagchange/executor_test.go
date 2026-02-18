@@ -161,6 +161,59 @@ func TestExecuteDueSchedules_FailedExecution(t *testing.T) {
 	assert.Equal(t, 1, failed)
 }
 
+func TestExecuteOne_UnlockUsesDetachedContext(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStorage := sfcmock.NewMockScheduledFlagChangeStorage(ctrl)
+	mockClient := featureclientmock.NewMockClient(ctrl)
+
+	executor := &scheduledFlagChangeExecutor{
+		sfcStorage:    mockStorage,
+		featureClient: mockClient,
+		opts: &jobs.Options{
+			Timeout: 50 * time.Second,
+			Logger:  zap.NewNop(),
+		},
+		logger: zap.NewNop(),
+	}
+
+	schedule := &featureproto.ScheduledFlagChange{
+		Id:            "sfc-1",
+		FeatureId:     "feature-1",
+		EnvironmentId: "env-1",
+	}
+
+	// Parent context is already cancelled before executeOne runs
+	cancelledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	mockStorage.EXPECT().
+		TryLock(gomock.Any(), "sfc-1", executorLockID).
+		Return(true, nil)
+
+	// Verify Unlock receives a non-cancelled context.
+	// If the code used the parent ctx, Err() would be non-nil.
+	mockStorage.EXPECT().
+		Unlock(gomock.Any(), "sfc-1", executorLockID).
+		DoAndReturn(func(
+			ctx context.Context, _ string, _ string,
+		) error {
+			assert.NoError(t, ctx.Err(),
+				"Unlock should receive a live context, "+
+					"not the cancelled parent",
+			)
+			return nil
+		})
+
+	mockClient.EXPECT().
+		ExecuteScheduledFlagChange(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("context cancelled"))
+
+	_ = executor.executeOne(cancelledCtx, schedule)
+}
+
 func TestExecuteOne_LockAlreadyHeld(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)

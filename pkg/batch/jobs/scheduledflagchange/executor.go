@@ -167,7 +167,17 @@ func (e *scheduledFlagChangeExecutor) executeOne(
 		return nil
 	}
 	defer func() {
-		if unlockErr := e.sfcStorage.Unlock(ctx, schedule.Id, executorLockID); unlockErr != nil {
+		// Use a detached context so the unlock succeeds even if the
+		// parent ctx is cancelled (e.g., Run() timeout). Without this,
+		// a cancelled context would leave the row lock orphaned until
+		// it expires (LockExpiration = 5 min).
+		unlockCtx, unlockCancel := context.WithTimeout(
+			context.Background(), 5*time.Second,
+		)
+		defer unlockCancel()
+		if unlockErr := e.sfcStorage.Unlock(
+			unlockCtx, schedule.Id, executorLockID,
+		); unlockErr != nil {
 			e.logger.Error("Failed to release lock",
 				zap.String("id", schedule.Id),
 				zap.Error(unlockErr),
