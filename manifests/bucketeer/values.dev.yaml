@@ -328,6 +328,9 @@ batch-server:
       - name: tag-deleter
         jobId: TagDeleter
         schedule: "* * * * *"
+      - name: scheduled-flag-change-executor
+        jobId: ScheduledFlagChangeExecutor
+        schedule: "* * * * *"
 
 subscriber:
   env:

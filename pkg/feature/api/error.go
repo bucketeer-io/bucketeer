@@ -158,7 +158,13 @@ var (
 	statusScheduledTimeTooSoon = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
-			"scheduled time must be at least 5 minutes in the future",
+			"scheduled time must be at least 1 minute in the future",
+			"ScheduledAt",
+		))
+	statusScheduledTimeTooClose = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"scheduled time must be at least 5 minutes apart from other schedules for this flag",
 			"ScheduledAt",
 		))
 	statusScheduledTimeTooFar = api.NewGRPCStatus(
@@ -203,6 +209,12 @@ var (
 		pkgErr.NewErrorInvalidArgNotMatchFormat(
 			pkgErr.FeaturePackageName,
 			"invalid prerequisite reference in payload: referenced feature or variation does not exist",
+			"PrerequisiteId",
+		))
+	statusCircularPrerequisiteDetected = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(
+			pkgErr.FeaturePackageName,
+			"scheduling this prerequisite change would create a circular dependency",
 			"PrerequisiteId",
 		))
 )

@@ -109,6 +109,9 @@ cronjob:
     - name: feature-auto-archiver
       jobId: FeatureAutoArchiver
       schedule: "0 2 * * *"
+    - name: scheduled-flag-change-executor
+      jobId: ScheduledFlagChangeExecutor
+      schedule: "* * * * *"
 
 subscribers:
   # This is the processor's name. It must match the same name defined in the

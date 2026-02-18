@@ -30,8 +30,14 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/v2/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+)
+
+const (
+	executorRetryTimes    = 18
+	executorRetryInterval = 10 * time.Second
 )
 
 func TestCreateScheduledFlagChange(t *testing.T) {
@@ -198,14 +204,18 @@ func TestListScheduledFlagChanges(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	// Create multiple scheduled flag changes
-	createResp1 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(true),
-	})
+	// Create multiple scheduled flag changes (spaced 10 minutes apart)
+	createResp1 := createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
 	time.Sleep(1 * time.Second) // Ensure different created_at times
-	createResp2 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(false),
-	})
+	createResp2 := createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(false)},
+		time.Now().Add(1*time.Hour+10*time.Minute).Unix(),
+	)
 
 	// List scheduled flag changes
 	listReq := &featureproto.ListScheduledFlagChangesRequest{
@@ -278,13 +288,17 @@ func TestGetScheduledFlagChangeSummary(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	// Create scheduled flag changes
-	createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(true),
-	})
-	createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(false),
-	})
+	// Create scheduled flag changes (spaced 10 minutes apart)
+	createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(false)},
+		time.Now().Add(1*time.Hour+10*time.Minute).Unix(),
+	)
 
 	// Get summary
 	summaryReq := &featureproto.GetScheduledFlagChangeSummaryRequest{
@@ -398,13 +412,17 @@ func TestArchiveFeatureCancelsPendingScheduledChanges(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	// Create multiple pending scheduled flag changes
-	createResp1 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(true),
-	})
-	createResp2 := createScheduledFlagChange(t, client, featureID, &featureproto.ScheduledChangePayload{
-		Enabled: wrapperspb.Bool(false),
-	})
+	// Create multiple pending scheduled flag changes (spaced 10 minutes apart)
+	createResp1 := createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	createResp2 := createScheduledFlagChangeAt(
+		t, client, featureID,
+		&featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(false)},
+		time.Now().Add(1*time.Hour+10*time.Minute).Unix(),
+	)
 
 	// Verify they are pending
 	getResp1 := getScheduledFlagChange(t, client, createResp1.ScheduledFlagChange.Id)
@@ -745,6 +763,422 @@ func TestScheduledFlagChangeConflict_NoConflictOnUnrelatedFlagUpdate(t *testing.
 		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
 		getAfter.ScheduledFlagChange.Status,
 		"Schedule should still be PENDING after unrelated flag update",
+	)
+}
+
+// TestScheduledFlagChangeExecutor_ExecutesDueSchedule verifies that the
+// batch executor picks up a due schedule and executes it, changing the
+// flag state and marking the schedule as EXECUTED.
+func TestScheduledFlagChangeExecutor_ExecutesDueSchedule(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create a feature (starts disabled by default)
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+	feature := getFeature(t, featureID, client)
+	require.False(t, feature.Enabled, "Feature should start disabled")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	// Schedule 65 seconds from now (just over the 1-minute minimum)
+	scheduledAt := time.Now().Add(65 * time.Second).Unix()
+	req := &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     featureID,
+		ScheduledAt:   scheduledAt,
+		Timezone:      "UTC",
+		Payload: &featureproto.ScheduledChangePayload{
+			Enabled: wrapperspb.Bool(true),
+		},
+		Comment: "e2e test - executor should enable this flag",
+	}
+	createResp, err := client.CreateScheduledFlagChange(ctx, req)
+	require.NoError(t, err)
+	scheduleID := createResp.ScheduledFlagChange.Id
+
+	// Execute the batch job directly
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+
+	// Wait for the scheduled time to pass, then execute
+	time.Sleep(70 * time.Second)
+	executeBatchJob(
+		t, batchClient,
+		btproto.BatchJob_ScheduledFlagChangeExecutor,
+	)
+
+	// Poll until the schedule is executed
+	var executed bool
+	for i := 0; i < executorRetryTimes; i++ {
+		time.Sleep(executorRetryInterval)
+
+		sfc := getScheduledFlagChange(t, client, scheduleID)
+		if sfc.ScheduledFlagChange.Status ==
+			featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED {
+			executed = true
+			assert.NotZero(t, sfc.ScheduledFlagChange.ExecutedAt)
+			break
+		}
+		t.Logf(
+			"Retry %d: schedule status=%s",
+			i+1, sfc.ScheduledFlagChange.Status,
+		)
+	}
+	assert.True(t, executed,
+		"Schedule should be marked EXECUTED after batch job runs")
+
+	// Verify the flag is now enabled
+	updatedFeature := getFeature(t, featureID, client)
+	assert.True(t, updatedFeature.Enabled,
+		"Feature should be enabled after scheduled change executed")
+}
+
+// TestScheduledFlagChange_CrossFlagPrerequisiteConflict verifies that
+// when Flag B's variation is deleted, a pending schedule on Flag A that
+// references Flag B via prerequisite is marked as CONFLICT.
+func TestScheduledFlagChange_CrossFlagPrerequisiteConflict(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create Flag A
+	flagAID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagAID))
+
+	// Create Flag B
+	flagBID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagBID))
+	flagB := getFeature(t, flagBID, client)
+	require.GreaterOrEqual(t, len(flagB.Variations), 3)
+	// Use Variation C (index 2) as the prerequisite target
+	prereqVar := flagB.Variations[2]
+
+	// Schedule: Flag A adds prerequisite on Flag B (variation C)
+	schedResp := createScheduledFlagChangeAt(t, client, flagAID,
+		&featureproto.ScheduledChangePayload{
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   flagBID,
+						VariationId: prereqVar.Id,
+					},
+				},
+			},
+		},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	scheduleID := schedResp.ScheduledFlagChange.Id
+	require.NotEmpty(t, scheduleID)
+
+	// Verify schedule is PENDING
+	getResp := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getResp.ScheduledFlagChange.Status,
+	)
+
+	// Now delete variation C from Flag B
+	updateResp, err := client.UpdateFeature(ctx,
+		&featureproto.UpdateFeatureRequest{
+			Id:            flagBID,
+			EnvironmentId: *environmentID,
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation:  &featureproto.Variation{Id: prereqVar.Id},
+				},
+			},
+			Comment: "e2e - delete variation to trigger cross-flag conflict",
+		})
+	require.NoError(t, err)
+	t.Logf(
+		"UpdateFeature conflicts detected: %v, count: %d",
+		updateResp.ScheduleConflictsDetected, updateResp.ConflictCount,
+	)
+
+	// Verify the schedule on Flag A is now CONFLICT
+	getAfter := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getAfter.ScheduledFlagChange.Status,
+		"Schedule on Flag A should be CONFLICT "+
+			"after deleting the prerequisite variation from Flag B",
+	)
+	require.NotEmpty(t, getAfter.ScheduledFlagChange.Conflicts)
+	foundInvalidRef := false
+	for _, c := range getAfter.ScheduledFlagChange.Conflicts {
+		if c.Type == featureproto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE {
+			foundInvalidRef = true
+			t.Logf("Cross-flag conflict: %s", c.Description)
+		}
+	}
+	assert.True(t, foundInvalidRef,
+		"Expected INVALID_REFERENCE conflict for cross-flag prerequisite")
+}
+
+// TestScheduledFlagChange_CircularPrerequisiteRejected verifies that
+// creating a scheduled prerequisite change that would create a cycle
+// (Flag A → Flag B → Flag A) is rejected at creation time.
+func TestScheduledFlagChange_CircularPrerequisiteRejected(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create Flag A and Flag B
+	flagAID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagAID))
+	flagA := getFeature(t, flagAID, client)
+
+	flagBID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagBID))
+	flagB := getFeature(t, flagBID, client)
+
+	// First: make Flag B depend on Flag A (via direct update)
+	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            flagBID,
+		EnvironmentId: *environmentID,
+		PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Prerequisite: &featureproto.Prerequisite{
+					FeatureId:   flagAID,
+					VariationId: flagA.Variations[0].Id,
+				},
+			},
+		},
+		Comment: "e2e - Flag B depends on Flag A",
+	})
+	require.NoError(t, err)
+
+	// Now try to schedule: Flag A → add prerequisite on Flag B
+	// This would create a cycle: Flag A → Flag B → Flag A
+	_, err = client.CreateScheduledFlagChange(ctx,
+		&featureproto.CreateScheduledFlagChangeRequest{
+			EnvironmentId: *environmentID,
+			FeatureId:     flagAID,
+			ScheduledAt:   time.Now().Add(1 * time.Hour).Unix(),
+			Timezone:      "UTC",
+			Payload: &featureproto.ScheduledChangePayload{
+				PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Prerequisite: &featureproto.Prerequisite{
+							FeatureId:   flagBID,
+							VariationId: flagB.Variations[0].Id,
+						},
+					},
+				},
+			},
+			Comment: "e2e - should fail with circular prerequisite",
+		})
+	require.Error(t, err, "Expected error for circular prerequisite")
+
+	st, ok := status.FromError(err)
+	require.True(t, ok)
+	assert.Equal(t, codes.InvalidArgument, st.Code(),
+		"Circular prerequisite should return InvalidArgument")
+	t.Logf("Circular prerequisite error: %s", st.Message())
+}
+
+// TestScheduledFlagChange_CrossFlagAutoRecovery verifies that when a prerequisite
+// variation on Flag B is deleted (causing Flag A's schedule to become CONFLICT),
+// re-adding the variation causes the schedule to auto-recover to PENDING.
+func TestScheduledFlagChange_CrossFlagAutoRecovery(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create Flag A and Flag B
+	flagAID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagAID))
+
+	flagBID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagBID))
+	flagB := getFeature(t, flagBID, client)
+	require.GreaterOrEqual(t, len(flagB.Variations), 3)
+	// Use Variation C (index 2) as the prerequisite target
+	prereqVar := flagB.Variations[2]
+
+	// Create schedule on Flag A: add prerequisite to Flag B's variation C
+	schedResp := createScheduledFlagChangeAt(t, client, flagAID,
+		&featureproto.ScheduledChangePayload{
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   flagBID,
+						VariationId: prereqVar.Id,
+					},
+				},
+			},
+		},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	scheduleID := schedResp.ScheduledFlagChange.Id
+	require.NotEmpty(t, scheduleID)
+
+	// Step 1: Verify schedule is initially PENDING
+	getInitial := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getInitial.ScheduledFlagChange.Status,
+		"Schedule should initially be PENDING",
+	)
+
+	// Step 2: Delete variation C from Flag B → schedule becomes CONFLICT
+	_, err := client.UpdateFeature(ctx,
+		&featureproto.UpdateFeatureRequest{
+			Id:            flagBID,
+			EnvironmentId: *environmentID,
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation:  &featureproto.Variation{Id: prereqVar.Id},
+				},
+			},
+			Comment: "e2e - delete variation to trigger cross-flag conflict",
+		})
+	require.NoError(t, err)
+
+	getConflict := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getConflict.ScheduledFlagChange.Status,
+		"Schedule on Flag A should be CONFLICT after Flag B variation deleted",
+	)
+	require.NotEmpty(t, getConflict.ScheduledFlagChange.Conflicts,
+		"Schedule should have conflict entries",
+	)
+
+	// Step 3: Re-add variation C to Flag B with the same ID → schedule auto-recovers
+	_, err = client.UpdateFeature(ctx,
+		&featureproto.UpdateFeatureRequest{
+			Id:            flagBID,
+			EnvironmentId: *environmentID,
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Variation: &featureproto.Variation{
+						Id:    prereqVar.Id,
+						Value: prereqVar.Value,
+						Name:  prereqVar.Name,
+					},
+				},
+			},
+			Comment: "e2e - re-add variation to trigger cross-flag auto-recovery",
+		})
+	require.NoError(t, err)
+
+	// Step 4: Verify schedule auto-recovered to PENDING
+	getRecovered := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getRecovered.ScheduledFlagChange.Status,
+		"Schedule should auto-recover to PENDING after Flag B variation re-added",
+	)
+	assert.Empty(t, getRecovered.ScheduledFlagChange.Conflicts,
+		"Conflicts should be cleared after cross-flag auto-recovery",
+	)
+
+	t.Logf("Cross-flag auto-recovery successful: schedule %s recovered from CONFLICT to PENDING", scheduleID)
+}
+
+// TestScheduledFlagChange_AutoRecovery verifies that a schedule
+// in CONFLICT status is automatically restored to PENDING when the
+// previously deleted variation is re-added.
+func TestScheduledFlagChange_AutoRecovery(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// Create a feature
+	featureID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(featureID))
+	feature := getFeature(t, featureID, client)
+	require.GreaterOrEqual(t, len(feature.Variations), 4)
+	varToDelete := feature.Variations[2] // Variation C
+
+	// Create a schedule that updates variation C
+	schedResp := createScheduledFlagChangeAt(t, client, featureID,
+		&featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    varToDelete.Id,
+						Value: "scheduled-value",
+						Name:  varToDelete.Name,
+					},
+				},
+			},
+		},
+		time.Now().Add(1*time.Hour).Unix(),
+	)
+	scheduleID := schedResp.ScheduledFlagChange.Id
+
+	// Step 1: Delete variation C → schedule becomes CONFLICT
+	_, err := client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*featureproto.VariationChange{
+			{
+				ChangeType: featureproto.ChangeType_DELETE,
+				Variation:  &featureproto.Variation{Id: varToDelete.Id},
+			},
+		},
+		Comment: "e2e - delete variation to cause conflict",
+	})
+	require.NoError(t, err)
+
+	getConflict := getScheduledFlagChange(t, client, scheduleID)
+	require.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getConflict.ScheduledFlagChange.Status,
+		"Schedule should be CONFLICT after variation deletion",
+	)
+
+	// Step 2: Re-add variation C with the same ID → schedule recovers
+	_, err = client.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		VariationChanges: []*featureproto.VariationChange{
+			{
+				ChangeType: featureproto.ChangeType_CREATE,
+				Variation: &featureproto.Variation{
+					Id:    varToDelete.Id,
+					Value: varToDelete.Value,
+					Name:  varToDelete.Name,
+				},
+			},
+		},
+		Comment: "e2e - re-add variation to trigger auto-recovery",
+	})
+	require.NoError(t, err)
+
+	getRecovered := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getRecovered.ScheduledFlagChange.Status,
+		"Schedule should auto-recover to PENDING after variation re-added",
+	)
+	assert.Empty(t, getRecovered.ScheduledFlagChange.Conflicts,
+		"Conflicts should be cleared after auto-recovery",
 	)
 }
 

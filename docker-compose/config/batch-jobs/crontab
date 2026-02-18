@@ -53,4 +53,7 @@
 * * * * * /usr/local/bin/run-batch-job.sh AutoOpsRulesCacher
 
 # Tag Deleter - every minute (dev override)
-* * * * * /usr/local/bin/run-batch-job.sh TagDeleter 
+* * * * * /usr/local/bin/run-batch-job.sh TagDeleter
+
+# Scheduled Flag Change Executor - every minute
+* * * * * /usr/local/bin/run-batch-job.sh ScheduledFlagChangeExecutor

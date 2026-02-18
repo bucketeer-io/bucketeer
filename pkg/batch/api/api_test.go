@@ -37,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/rediscounter"
+	scheduledflagchange "github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs/scheduledflagchange"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
@@ -843,6 +844,12 @@ func newBatchService(t *testing.T,
 			mysqlMockClient,
 			featureMockClient,
 			jobs.WithTimeout(10*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		scheduledflagchange.NewScheduledFlagChangeExecutor(
+			mysqlMockClient,
+			featureMockClient,
+			jobs.WithTimeout(50*time.Second),
 			jobs.WithLogger(logger),
 		),
 		logger,

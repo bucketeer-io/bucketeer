@@ -941,7 +941,11 @@ func (s *FeatureService) UpdateFeature(
 	// As a final safety net, the executor validates all references before
 	// executing any schedule.
 	conflictCount := int32(0)
-	conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
+	conflictDetector := scheduled.NewConflictDetectorWithFeatureStorage(
+		s.scheduledFlagChangeStorage, s.featureStorage, s.logger,
+	)
+
+	// Same-flag conflict detection (includes auto-recovery)
 	if count, err := conflictDetector.DetectConflictsOnFlagChange(ctx, updatedpb, req.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to detect conflicts on flag change",
@@ -954,6 +958,23 @@ func (s *FeatureService) UpdateFeature(
 		// Don't fail the update, conflict detection is best-effort
 	} else {
 		conflictCount = int32(count)
+	}
+
+	// Cross-flag conflict detection (prerequisite references)
+	// When a flag is updated, schedules on OTHER flags that reference this flag
+	// via prerequisites may become invalid (e.g., referenced variation deleted).
+	if crossCount, err := conflictDetector.DetectCrossFlagConflicts(ctx, req.Id, req.EnvironmentId); err != nil {
+		s.logger.Error(
+			"Failed to detect cross-flag conflicts",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		// Don't fail the update, cross-flag conflict detection is best-effort
+	} else {
+		conflictCount += int32(crossCount)
 	}
 
 	s.updateFeatureFlagCache(ctx)

@@ -115,6 +115,15 @@ func (s *ScheduledFlagChange) MarkConflict(conflicts []*proto.ScheduledChangeCon
 	s.UpdatedAt = time.Now().Unix()
 }
 
+// RestoreToPending restores a CONFLICT schedule back to PENDING status.
+// This is used for auto-recovery when previously invalid references become valid again
+// (e.g., a deleted variation is re-added to the flag).
+func (s *ScheduledFlagChange) RestoreToPending() {
+	s.Status = proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
+	s.Conflicts = nil
+	s.UpdatedAt = time.Now().Unix()
+}
+
 // IsPending returns true if the status is PENDING
 func (s *ScheduledFlagChange) IsPending() bool {
 	return s.Status == proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING

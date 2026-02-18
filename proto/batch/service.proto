@@ -38,6 +38,7 @@ enum BatchJob {
   ExperimentCacher = 17;
   TagDeleter = 18;
   FeatureAutoArchiver = 19;
+  ScheduledFlagChangeExecutor = 20;
 }
 
 message BatchJobRequest {

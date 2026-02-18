@@ -78,15 +78,15 @@ func (s *FeatureService) CreateScheduledFlagChange(
 			return err
 		}
 
-		// Check max schedules per flag limit
-		pendingCount, err := s.countPendingSchedulesForFeature(
+		// Check max schedules per flag limit and minimum gap
+		pendingSchedules, err := s.listPendingSchedulesForFeature(
 			ctxWithTx,
 			req.FeatureId,
 			req.EnvironmentId,
 		)
 		if err != nil {
 			s.logger.Error(
-				"Failed to count pending schedules",
+				"Failed to list pending schedules",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("featureId", req.FeatureId),
@@ -95,8 +95,13 @@ func (s *FeatureService) CreateScheduledFlagChange(
 			)
 			return statusInternal.Err()
 		}
-		if pendingCount >= maxSchedulesPerFlag {
+		if len(pendingSchedules) >= maxSchedulesPerFlag {
 			return statusExceededMaxSchedulesPerFlag.Err()
+		}
+		if err := validateScheduleGap(
+			req.ScheduledAt, pendingSchedules, "",
+		); err != nil {
+			return err
 		}
 
 		// Create the scheduled flag change
@@ -313,11 +318,26 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 
 		// Update schedule time if provided
 		if req.ScheduledAt != nil {
+			// Check gap with other schedules
+			pendingSchedules, listErr := s.listPendingSchedulesForFeature(
+				ctxWithTx, sfc.FeatureId, req.EnvironmentId,
+			)
+			if listErr != nil {
+				return statusInternal.Err()
+			}
+			if gapErr := validateScheduleGap(
+				req.ScheduledAt.Value, pendingSchedules, req.Id,
+			); gapErr != nil {
+				return gapErr
+			}
+
 			timezone := ""
 			if req.Timezone != nil {
 				timezone = req.Timezone.Value
 			}
-			sfc.UpdateSchedule(req.ScheduledAt.Value, timezone, editor.Email)
+			sfc.UpdateSchedule(
+				req.ScheduledAt.Value, timezone, editor.Email,
+			)
 		}
 
 		// Update payload if provided
@@ -924,11 +944,13 @@ func (s *FeatureService) validateScheduledChangePayload(
 	}
 
 	// Validate prerequisite references: the referenced flag and variation must exist
+	hasPrerequisiteCreates := false
 	for _, pc := range payload.PrerequisiteChanges {
 		if pc.Prerequisite == nil {
 			return statusInvalidPrerequisiteReference.Err()
 		}
 		if pc.ChangeType == ftproto.ChangeType_CREATE || pc.ChangeType == ftproto.ChangeType_UPDATE {
+			hasPrerequisiteCreates = true
 			if pc.Prerequisite.FeatureId == "" || pc.Prerequisite.VariationId == "" {
 				return statusInvalidPrerequisiteReference.Err()
 			}
@@ -939,6 +961,14 @@ func (s *FeatureService) validateScheduledChangePayload(
 			if !domain.VariationExists(prereqFeature.Feature, pc.Prerequisite.VariationId) {
 				return statusInvalidPrerequisiteReference.Err()
 			}
+		}
+	}
+
+	// Circular prerequisite detection: simulate the prerequisite additions and check for cycles.
+	// This catches circular dependencies at schedule creation time rather than at execution time.
+	if hasPrerequisiteCreates {
+		if err := s.checkCircularPrerequisites(ctx, feature, payload, environmentID); err != nil {
+			return err
 		}
 	}
 
@@ -968,10 +998,10 @@ func (s *FeatureService) validateScheduledChangePayload(
 	return nil
 }
 
-func (s *FeatureService) countPendingSchedulesForFeature(
+func (s *FeatureService) listPendingSchedulesForFeature(
 	ctx context.Context,
 	featureID, environmentID string,
-) (int, error) {
+) ([]*ftproto.ScheduledFlagChange, error) {
 	filters := []*mysql.FilterV2{
 		{
 			Column:   "environment_id",
@@ -1002,11 +1032,38 @@ func (s *FeatureService) countPendingSchedulesForFeature(
 		Offset:    mysql.QueryNoOffset,
 	}
 
-	_, _, totalCount, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(ctx, options)
+	sfcs, _, _, err := s.scheduledFlagChangeStorage.ListScheduledFlagChanges(
+		ctx, options,
+	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return int(totalCount), nil
+	return sfcs, nil
+}
+
+// validateScheduleGap checks that the new schedule is at least
+// minScheduleGapBetweenMinutes apart from all existing pending
+// schedules for the same flag. excludeID is used when updating
+// to skip the schedule being updated.
+func validateScheduleGap(
+	newScheduledAt int64,
+	existing []*ftproto.ScheduledFlagChange,
+	excludeID string,
+) error {
+	gapSeconds := int64(minScheduleGapBetweenMinutes * 60)
+	for _, sfc := range existing {
+		if sfc.Id == excludeID {
+			continue
+		}
+		diff := newScheduledAt - sfc.ScheduledAt
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff < gapSeconds {
+			return statusScheduledTimeTooClose.Err()
+		}
+	}
+	return nil
 }
 
 func convertPayloadToUpdateRequest(
@@ -1200,6 +1257,82 @@ func (s *FeatureService) publishScheduledFlagChangeCancelledEvent(
 		return err
 	}
 	return s.domainPublisher.Publish(ctx, event)
+}
+
+// checkCircularPrerequisites simulates the scheduled prerequisite changes on the feature
+// and validates that no circular dependency is created.
+// This runs ValidateFeatureDependencies with the simulated state.
+func (s *FeatureService) checkCircularPrerequisites(
+	ctx context.Context,
+	feature *ftproto.Feature,
+	payload *ftproto.ScheduledChangePayload,
+	environmentID string,
+) error {
+	// Get non-archived, non-deleted features in the environment for dependency validation.
+	// Archived features are excluded because all pending schedules are cancelled on archive,
+	// so they can't participate in prerequisite cycles.
+	filters := []*mysql.FilterV2{
+		{Column: "feature.deleted", Operator: mysql.OperatorEqual, Value: false},
+		{Column: "feature.archived", Operator: mysql.OperatorEqual, Value: false},
+		{Column: "feature.environment_id", Operator: mysql.OperatorEqual, Value: environmentID},
+	}
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, &mysql.ListOptions{
+		Filters: filters,
+		Limit:   mysql.QueryNoLimit,
+		Offset:  mysql.QueryNoOffset,
+	})
+	if err != nil {
+		return nil // Best-effort: don't fail if we can't list features
+	}
+
+	// Build a simulated version of the feature with prerequisite changes applied
+	simulatedPrereqs := make([]*ftproto.Prerequisite, len(feature.Prerequisites))
+	copy(simulatedPrereqs, feature.Prerequisites)
+
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc.Prerequisite == nil {
+			continue
+		}
+		switch pc.ChangeType {
+		case ftproto.ChangeType_CREATE:
+			simulatedPrereqs = append(simulatedPrereqs, pc.Prerequisite)
+		case ftproto.ChangeType_UPDATE:
+			for i, p := range simulatedPrereqs {
+				if p.FeatureId == pc.Prerequisite.FeatureId {
+					simulatedPrereqs[i] = pc.Prerequisite
+					break
+				}
+			}
+		case ftproto.ChangeType_DELETE:
+			for i, p := range simulatedPrereqs {
+				if p.FeatureId == pc.Prerequisite.FeatureId {
+					simulatedPrereqs = append(simulatedPrereqs[:i], simulatedPrereqs[i+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+	// Build the feature list with the simulated prerequisites.
+	// No need to filter archived/deleted here — the query already excludes them.
+	tgts := make([]*ftproto.Feature, 0, len(features))
+	for _, f := range features {
+		if f.Id == feature.Id {
+			// Replace with a copy that has the simulated prerequisites.
+			// Only Id and Prerequisites are needed for cycle detection.
+			tgts = append(tgts, &ftproto.Feature{
+				Id:            f.Id,
+				Prerequisites: simulatedPrereqs,
+			})
+		} else {
+			tgts = append(tgts, f)
+		}
+	}
+
+	if err := domain.ValidateFeatureDependencies(tgts); err != nil {
+		return statusCircularPrerequisiteDetected.Err()
+	}
+	return nil
 }
 
 // changeSummariesToStrings converts structured ChangeSummary objects to simple strings for events
