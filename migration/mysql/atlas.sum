@@ -1,4 +1,4 @@
-h1:Wz/LINi7Pzr6DGlXRKuKfnzix2O+IiLyqv7d1FMkDdc=
+h1:D87mVgOF00DM0WYydULOQCukinqlvpQ0H+ltBwsqdp0=
 20240626022133_initialization.sql h1:reSmqMhqnsrdIdPU2ezv/PXSL0COlRFX4gQA4U3/wMo=
 20240708065726_update_audit_log_table.sql h1:fi8Xxw4WfSlHDyvq2Ni/8JUiZW8z/0qWWyWm6jFdUy8=
 20240815043128_update_auto_ops_rule_table.sql h1:IKSW9W/XO6SWAYl5WPLJSg6KdsfcZ3rfQhIrf7aOnYc=
@@ -39,3 +39,5 @@ h1:Wz/LINi7Pzr6DGlXRKuKfnzix2O+IiLyqv7d1FMkDdc=
 20260123090000_create_scheduled_feature_change_table.sql h1:L+WpMph3uwR+ZPvkgwipJ2pa/TPGKjeDHjq+TGZJCVU=
 20260225024619_drop_mau_and_mau_summary_table.sql h1:/wk2jcD9ZEMhrxmwqQJdCofLRsNIHd1KHxtyKDuH81c=
 20260225053542_create_monthly_summary.sql h1:25DQLI4UJmPuZt1jwRQlTdfI1MzOQ3KJ2Rc0Mntn79g=
+20260226100000_add_account_password_table.sql h1:UhLoqAC9Sm6kuCUMsFlZ4DxtndH/MjJkh4d55LMemRQ=
+20260226100200_add_domain_auth_policy_table.sql h1:XTrpSXkvSiX8dxYnkPLlSU8dNYZNQQOsyfyKTMmDiTU=
