@@ -14174,263 +14174,6 @@
       }
     },
     {
-      "protopath": "environment:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreateEnvironmentV2Command",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "project_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "require_comment",
-                "type": "bool"
-              }
-            ]
-          },
-          {
-            "name": "RenameEnvironmentV2Command",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionEnvironmentV2Command",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ArchiveEnvironmentV2Command"
-          },
-          {
-            "name": "UnarchiveEnvironmentV2Command"
-          },
-          {
-            "name": "CreateProjectCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "url_code",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "CreateTrialProjectCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "owner_email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "RenameProjectCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionProjectCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "EnableProjectCommand"
-          },
-          {
-            "name": "DisableProjectCommand"
-          },
-          {
-            "name": "ConvertTrialProjectCommand"
-          },
-          {
-            "name": "CreateOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "is_trial",
-                "type": "bool"
-              },
-              {
-                "id": 5,
-                "name": "is_system_admin",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "owner_email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeNameOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeOwnerEmailOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "owner_email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeRequireCommentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "require_comment",
-                "type": "bool"
-              }
-            ]
-          },
-          {
-            "name": "EnableOrganizationCommand"
-          },
-          {
-            "name": "DisableOrganizationCommand"
-          },
-          {
-            "name": "ArchiveOrganizationCommand"
-          },
-          {
-            "name": "UnarchiveOrganizationCommand"
-          },
-          {
-            "name": "ConvertTrialOrganizationCommand"
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/environment/organization.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.environment"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/v2/proto/environment"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "environment:/:environment.proto",
       "def": {
         "messages": [
@@ -14989,26 +14732,6 @@
             "name": "CreateEnvironmentV2Request",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateEnvironmentV2Command",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 2,
                 "name": "name",
                 "type": "string",
@@ -15051,6 +14774,9 @@
                 "name": "require_comment",
                 "type": "bool"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -15074,66 +14800,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "rename_command",
-                "type": "RenameEnvironmentV2Command",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionEnvironmentV2Command",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "change_require_comment_command",
-                "type": "ChangeRequireCommentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -15172,6 +14838,11 @@
                 "name": "auto_archive_check_code_refs",
                 "type": "google.protobuf.BoolValue"
               }
+            ],
+            "reserved_ids": [
+              2,
+              3,
+              4
             ]
           },
           {
@@ -15184,12 +14855,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ArchiveEnvironmentV2Command"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15202,12 +14871,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "UnarchiveEnvironmentV2Command"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15304,26 +14971,6 @@
             "name": "CreateProjectRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateProjectCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 2,
                 "name": "organization_id",
                 "type": "string",
@@ -15361,6 +15008,9 @@
                   }
                 ]
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -15374,19 +15024,6 @@
             ]
           },
           {
-            "name": "CreateTrialProjectRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateTrialProjectCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateTrialProjectResponse"
-          },
-          {
             "name": "UpdateProjectRequest",
             "fields": [
               {
@@ -15397,46 +15034,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionProjectCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "rename_command",
-                "type": "RenameProjectCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
                   }
                 ]
               },
@@ -15470,6 +15067,10 @@
                 "name": "description",
                 "type": "google.protobuf.StringValue"
               }
+            ],
+            "reserved_ids": [
+              2,
+              3
             ]
           },
           {
@@ -15482,12 +15083,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "EnableProjectCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15500,12 +15099,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DisableProjectCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15518,12 +15115,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ConvertTrialProjectCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15614,17 +15209,6 @@
             "name": "CreateOrganizationRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "command",
-                "type": "CreateOrganizationCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 2,
                 "name": "name",
                 "type": "string",
@@ -15666,6 +15250,9 @@
                 "name": "owner_email",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -15687,66 +15274,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "rename_command",
-                "type": "ChangeNameOrganizationCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionOrganizationCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "change_owner_email_command",
-                "type": "ChangeOwnerEmailOrganizationCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "id": 5,
                 "name": "name",
                 "type": "google.protobuf.StringValue"
@@ -15761,6 +15288,11 @@
                 "name": "owner_email",
                 "type": "google.protobuf.StringValue"
               }
+            ],
+            "reserved_ids": [
+              2,
+              3,
+              4
             ]
           },
           {
@@ -15773,12 +15305,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "EnableOrganizationCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15791,12 +15321,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DisableOrganizationCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15809,12 +15337,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ArchiveOrganizationCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15827,12 +15353,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "UnarchiveOrganizationCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -15845,12 +15369,10 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ConvertTrialOrganizationCommand"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -17454,182 +16976,6 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.environment.create_project"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "403"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request does not have permission to access the resource."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "CreateTrialProject",
-                "in_type": "CreateTrialProjectRequest",
-                "out_type": "CreateTrialProjectResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "post",
-                        "value": "/v1/environment/create_trial_project"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Create Trial"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Create a trial project. To call this API, you need an `SYSTEM_ADMIN` role."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Project"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.environment.create_trial_project"
                       },
                       {
                         "name": "responses",
@@ -20553,9 +19899,6 @@
           },
           {
             "path": "proto/environment/organization.proto"
-          },
-          {
-            "path": "proto/environment/command.proto"
           },
           {
             "path": "proto/auth/token.proto"
@@ -33508,6 +32851,26 @@
             ]
           },
           {
+            "name": "ChangeSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "message_key",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "values",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
             "name": "ScheduledChangeConflict",
             "fields": [
               {
@@ -33629,7 +32992,7 @@
               {
                 "id": 18,
                 "name": "change_summaries",
-                "type": "string",
+                "type": "ChangeSummary",
                 "is_repeated": true
               }
             ]
@@ -34548,6 +33911,16 @@
                 "id": 1,
                 "name": "feature",
                 "type": "Feature"
+              },
+              {
+                "id": 2,
+                "name": "schedule_conflicts_detected",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "conflict_count",
+                "type": "int32"
               }
             ]
           },
