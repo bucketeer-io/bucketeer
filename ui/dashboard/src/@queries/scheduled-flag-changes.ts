@@ -1,7 +1,15 @@
 import {
-  scheduledFlagChangesFetcher,
-  ScheduledFlagChangesFetcherParams
-} from '@api/features/scheduled-flag-changes-fetch';
+  scheduledFlagChangeCreator,
+  ScheduledFlagChangeCreatorParams
+} from '@api/features/scheduled-flag-change-creator';
+import {
+  scheduledFlagChangeDelete,
+  ScheduledFlagChangeDeleteParams
+} from '@api/features/scheduled-flag-change-delete';
+import {
+  scheduledFlagChangeExecutor,
+  ScheduledFlagChangeExecuteParams
+} from '@api/features/scheduled-flag-change-executor';
 import {
   scheduledFlagChangeGet,
   ScheduledFlagChangeGetParams
@@ -11,21 +19,13 @@ import {
   ScheduledFlagChangeSummaryParams
 } from '@api/features/scheduled-flag-change-summary';
 import {
-  scheduledFlagChangeCreator,
-  ScheduledFlagChangeCreatorParams
-} from '@api/features/scheduled-flag-change-creator';
-import {
   scheduledFlagChangeUpdater,
   ScheduledFlagChangeUpdaterParams
 } from '@api/features/scheduled-flag-change-updater';
 import {
-  scheduledFlagChangeDelete,
-  ScheduledFlagChangeDeleteParams
-} from '@api/features/scheduled-flag-change-delete';
-import {
-  scheduledFlagChangeExecutor,
-  ScheduledFlagChangeExecuteParams
-} from '@api/features/scheduled-flag-change-executor';
+  scheduledFlagChangesFetcher,
+  ScheduledFlagChangesFetcherParams
+} from '@api/features/scheduled-flag-changes-fetch';
 import {
   QueryClient,
   useMutation,
@@ -125,11 +125,16 @@ export const invalidateScheduledFlagChangeSummary = (
   });
 };
 
-const invalidateAllScheduledFlagChangeQueries = (
-  queryClient: QueryClient
-) => {
+export const invalidateScheduledFlagChange = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({
+    queryKey: [SCHEDULED_FLAG_CHANGE_QUERY_KEY]
+  });
+};
+
+const invalidateAllScheduledFlagChangeQueries = (queryClient: QueryClient) => {
   invalidateScheduledFlagChanges(queryClient);
   invalidateScheduledFlagChangeSummary(queryClient);
+  invalidateScheduledFlagChange(queryClient);
 };
 
 export const useCreateScheduledFlagChange = () => {

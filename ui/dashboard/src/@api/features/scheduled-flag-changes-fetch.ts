@@ -7,7 +7,10 @@ import type {
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 
-export type ScheduledFlagChangesOrderBy = 'DEFAULT' | 'SCHEDULED_AT' | 'CREATED_AT';
+export type ScheduledFlagChangesOrderBy =
+  | 'DEFAULT'
+  | 'SCHEDULED_AT'
+  | 'CREATED_AT';
 export type ScheduledFlagChangesOrderDirection = 'ASC' | 'DESC';
 
 export interface ScheduledFlagChangesFetcherParams {

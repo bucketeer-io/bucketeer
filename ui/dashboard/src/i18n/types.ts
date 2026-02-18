@@ -9,4 +9,5 @@ export type Namespace =
   | 'form'
   | 'table'
   | 'message'
-  | 'backend';
+  | 'backend'
+  | 'scheduled-changes';

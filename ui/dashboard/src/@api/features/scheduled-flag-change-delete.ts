@@ -10,9 +10,9 @@ export interface ScheduledFlagChangeDeleteParams {
 
 export const scheduledFlagChangeDelete = async (
   params?: ScheduledFlagChangeDeleteParams
-) => {
+): Promise<void> => {
   const requestParams = stringifyParams(pickBy(params, v => isNotEmpty(v)));
   return axiosClient
-    .delete(`/v1/scheduled_flag_change?${requestParams}`)
-    .then(response => response.data);
+    .delete<void>(`/v1/scheduled_flag_change?${requestParams}`)
+    .then(() => {});
 };
