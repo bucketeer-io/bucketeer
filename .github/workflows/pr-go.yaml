@@ -108,12 +108,19 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go-grpc
         run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
-      - name:  Check proto format
-        uses: jidicula/clang-format-action@6cd220de46c89139a0365edae93eee8eb30ca8fe # v4.16.0
-        with:
-          clang-format-version: '14'
-          check-path: 'proto'
-          exclude-regex: 'external' # googleapis proto files
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format-14
+      - name: Check proto format
+        run: |
+          cd proto
+          failed=0
+          for f in $(find . -name '*.proto' -not -path './external/*'); do
+            if ! clang-format-14 --dry-run --Werror --style=file --fallback-style=llvm "$f"; then
+              echo "Failed: $f"
+              failed=1
+            fi
+          done
+          exit $failed
       - name: Check proto lock
         run: make proto-lock-check
 

@@ -318,6 +318,15 @@ var (
 			Name:      "sdk_api_error_total",
 			Help:      "Total number of sdk errors",
 		}, []string{"project_id", "environment_id", "tag", "error_type", "api", "sdk_version", "source_id"})
+	// evaluationEventErrorReasonCounter counts evaluation events where the user received
+	// the default value due to an error (e.g., flag not found, cache miss).
+	evaluationEventErrorReasonCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_evaluation_event_error_reason_total",
+			Help:      "Total number of evaluation events with error reasons (user received default value)",
+		}, []string{"project_id", "environment_id", "tag", "reason_type", "sdk_version", "source_id"})
 )
 
 func registerMetrics(r metrics.Registerer) {
@@ -336,6 +345,7 @@ func registerMetrics(r metrics.Registerer) {
 			sdkLatencyHistogram,
 			sdkSizeHistogram,
 			sdkErrorCounter,
+			evaluationEventErrorReasonCounter,
 			handledSecondsHistogram,
 			evaluationsCounterV2,
 			apiErrorCounter,

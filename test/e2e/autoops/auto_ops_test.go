@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	gwapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/v2/pkg/api/client"
@@ -933,12 +934,7 @@ func newWebhookName(t *testing.T) string {
 
 func createFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID)
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
 		t.Fatal(err)
 	}
 	enableFeature(t, featureID, client)
@@ -946,12 +942,7 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 
 func createDisabledFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
 	t.Helper()
-	cmd := newCreateFeatureCommand(featureID)
-	createReq := &featureproto.CreateFeatureRequest{
-		Command:       cmd,
-		EnvironmentId: *environmentID,
-	}
-	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+	if _, err := client.CreateFeature(ctx, newCreateFeatureReq(featureID)); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -990,8 +981,8 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 	return featureClient
 }
 
-func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureCommand {
-	return &featureproto.CreateFeatureCommand{
+func newCreateFeatureReq(featureID string) *featureproto.CreateFeatureRequest {
+	return &featureproto.CreateFeatureRequest{
 		Id:          featureID,
 		Name:        "e2e-test-gateway-feature-name",
 		Description: "e2e-test-gateway-feature-description",
@@ -1014,19 +1005,20 @@ func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureComman
 		},
 		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+		EnvironmentId:            *environmentID,
 	}
 }
 
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
-	enableReq := &featureproto.EnableFeatureRequest{
+	enableReq := &featureproto.UpdateFeatureRequest{
 		Id:            featureID,
-		Command:       &featureproto.EnableFeatureCommand{},
+		Enabled:       wrapperspb.Bool(true),
 		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
+	if _, err := client.UpdateFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
 	}
 }

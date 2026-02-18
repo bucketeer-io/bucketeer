@@ -82,10 +82,10 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 			zap.Error(err),
 			zap.String("environmentId", environmentID),
 		)
-		recordListFeatures(scopeSingle, environmentID, codeFail, time.Since(startTime).Seconds())
+		recordListFeatures(cacherTypeFeatureFlag, scopeSingle, environmentID, codeFail, time.Since(startTime).Seconds())
 		return err
 	}
-	recordListFeatures(scopeSingle, environmentID, codeSuccess, time.Since(startTime).Seconds())
+	recordListFeatures(cacherTypeFeatureFlag, scopeSingle, environmentID, codeSuccess, time.Since(startTime).Seconds())
 
 	filtered := c.removeOldFeatures(features)
 	fts := &ftproto.Features{
@@ -93,12 +93,6 @@ func (c *featureFlagCacher) RefreshEnvironmentCache(ctx context.Context, environ
 		Features: filtered,
 	}
 	c.putCache(fts, environmentID, len(filtered))
-
-	c.logger.Info("Successfully updated feature flag cache",
-		zap.String("environmentId", environmentID),
-		zap.Int("featureCount", len(filtered)),
-		zap.String("featuresId", fts.Id),
-	)
 
 	return nil
 }
@@ -111,11 +105,11 @@ func (c *featureFlagCacher) RefreshAllEnvironmentCaches(ctx context.Context) err
 	if err != nil {
 		c.logger.Error("Failed to list all environment features")
 		// Use scopeBatch with environmentIDAll for batch operations covering all environments
-		recordListFeatures(scopeBatch, environmentIDAll, codeFail, time.Since(startTime).Seconds())
+		recordListFeatures(cacherTypeFeatureFlag, scopeBatch, environmentIDAll, codeFail, time.Since(startTime).Seconds())
 		return err
 	}
 	// Use scopeBatch with environmentIDAll for batch operations covering all environments
-	recordListFeatures(scopeBatch, environmentIDAll, codeSuccess, time.Since(startTime).Seconds())
+	recordListFeatures(cacherTypeFeatureFlag, scopeBatch, environmentIDAll, codeSuccess, time.Since(startTime).Seconds())
 
 	for _, envFt := range envFts {
 		filtered := c.removeOldFeatures(envFt.Features)
@@ -166,9 +160,9 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 
 	// Record metrics based on overall success/failure
 	if hasError {
-		recordCachePut(environmentID, codeFail)
+		recordCachePut(cacherTypeFeatureFlag, environmentID, codeFail)
 	} else {
-		recordCachePut(environmentID, codeSuccess)
-		recordFeaturesUpdated(environmentID, featureCount)
+		recordCachePut(cacherTypeFeatureFlag, environmentID, codeSuccess)
+		recordFeaturesUpdated(cacherTypeFeatureFlag, environmentID, featureCount)
 	}
 }

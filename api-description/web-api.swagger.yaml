@@ -2992,64 +2992,6 @@ paths:
             $ref: '#/definitions/environmentCreateProjectRequest'
       tags:
         - Project
-  /v1/environment/create_trial_project:
-    post:
-      summary: Create Trial
-      description: Create a trial project. To call this API, you need an `SYSTEM_ADMIN` role.
-      operationId: web.v1.environment.create_trial_project
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/environmentCreateTrialProjectResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentCreateTrialProjectRequest'
-      tags:
-        - Project
   /v1/environment/disable_organization:
     post:
       summary: Disable
@@ -8840,13 +8782,6 @@ definitions:
     properties:
       status:
         $ref: '#/definitions/experimentExperimentStatus'
-  UpdateFeatureTargetingRequestFrom:
-    type: string
-    enum:
-      - UNKNOWN
-      - USER
-      - OPS
-    default: UNKNOWN
   UserData:
     type: object
     properties:
@@ -10592,78 +10527,32 @@ definitions:
       newVersion:
         type: integer
         format: int32
-  environmentArchiveEnvironmentV2Command:
-    type: object
   environmentArchiveEnvironmentV2Request:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentArchiveEnvironmentV2Command'
   environmentArchiveEnvironmentV2Response:
-    type: object
-  environmentArchiveOrganizationCommand:
     type: object
   environmentArchiveOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentArchiveOrganizationCommand'
   environmentArchiveOrganizationResponse:
-    type: object
-  environmentChangeDescriptionEnvironmentV2Command:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeDescriptionOrganizationCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeDescriptionProjectCommand:
-    type: object
-    properties:
-      description:
-        type: string
-  environmentChangeNameOrganizationCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentChangeOwnerEmailOrganizationCommand:
-    type: object
-    properties:
-      ownerEmail:
-        type: string
-  environmentChangeRequireCommentCommand:
-    type: object
-    properties:
-      requireComment:
-        type: boolean
-  environmentConvertTrialOrganizationCommand:
     type: object
   environmentConvertTrialOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentConvertTrialOrganizationCommand'
   environmentConvertTrialOrganizationResponse:
-    type: object
-  environmentConvertTrialProjectCommand:
     type: object
   environmentConvertTrialProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentConvertTrialProjectCommand'
   environmentConvertTrialProjectResponse:
     type: object
   environmentCreateDemoOrganizationRequest:
@@ -10683,26 +10572,9 @@ definitions:
     properties:
       organization:
         $ref: '#/definitions/bucketeerenvironmentOrganization'
-  environmentCreateEnvironmentV2Command:
-    type: object
-    properties:
-      name:
-        type: string
-      urlCode:
-        type: string
-      description:
-        type: string
-        title: optional
-      projectId:
-        type: string
-      requireComment:
-        type: boolean
   environmentCreateEnvironmentV2Request:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateEnvironmentV2Command'
-        description: deprecated
       name:
         type: string
       urlCode:
@@ -10722,28 +10594,9 @@ definitions:
     properties:
       environment:
         $ref: '#/definitions/environmentEnvironmentV2'
-  environmentCreateOrganizationCommand:
-    type: object
-    properties:
-      name:
-        type: string
-      urlCode:
-        type: string
-      description:
-        type: string
-        title: optional
-      isTrial:
-        type: boolean
-      isSystemAdmin:
-        type: boolean
-      ownerEmail:
-        type: string
-    title: Deprecated
   environmentCreateOrganizationRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateOrganizationCommand'
       name:
         type: string
       urlCode:
@@ -10765,24 +10618,9 @@ definitions:
     properties:
       Organization:
         $ref: '#/definitions/bucketeerenvironmentOrganization'
-  environmentCreateProjectCommand:
-    type: object
-    properties:
-      organizationId:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-        title: optional
-      urlCode:
-        type: string
   environmentCreateProjectRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/environmentCreateProjectCommand'
-        description: deprecated
       organizationId:
         type: string
       name:
@@ -10800,26 +10638,6 @@ definitions:
     properties:
       project:
         $ref: '#/definitions/environmentProject'
-  environmentCreateTrialProjectCommand:
-    type: object
-    properties:
-      id:
-        type: string
-      email:
-        type: string
-      name:
-        type: string
-      urlCode:
-        type: string
-      ownerEmail:
-        type: string
-  environmentCreateTrialProjectRequest:
-    type: object
-    properties:
-      command:
-        $ref: '#/definitions/environmentCreateTrialProjectCommand'
-  environmentCreateTrialProjectResponse:
-    type: object
   environmentDemoCreationToken:
     type: object
     properties:
@@ -10830,48 +10648,32 @@ definitions:
       expiry:
         type: string
         format: int64
-  environmentDisableOrganizationCommand:
-    type: object
   environmentDisableOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentDisableOrganizationCommand'
   environmentDisableOrganizationResponse:
-    type: object
-  environmentDisableProjectCommand:
     type: object
   environmentDisableProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentDisableProjectCommand'
   environmentDisableProjectResponse:
-    type: object
-  environmentEnableOrganizationCommand:
     type: object
   environmentEnableOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentEnableOrganizationCommand'
   environmentEnableOrganizationResponse:
-    type: object
-  environmentEnableProjectCommand:
     type: object
   environmentEnableProjectRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentEnableProjectCommand'
   environmentEnableProjectResponse:
     type: object
   environmentEnvironmentV2:
@@ -11098,36 +10900,18 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
-  environmentRenameEnvironmentV2Command:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentRenameProjectCommand:
-    type: object
-    properties:
-      name:
-        type: string
-  environmentUnarchiveEnvironmentV2Command:
-    type: object
   environmentUnarchiveEnvironmentV2Request:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentUnarchiveEnvironmentV2Command'
   environmentUnarchiveEnvironmentV2Response:
-    type: object
-  environmentUnarchiveOrganizationCommand:
     type: object
   environmentUnarchiveOrganizationRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/environmentUnarchiveOrganizationCommand'
   environmentUnarchiveOrganizationResponse:
     type: object
   environmentUpdateEnvironmentV2Request:
@@ -11135,15 +10919,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/environmentRenameEnvironmentV2Command'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionEnvironmentV2Command'
-        description: deprecated
-      changeRequireCommentCommand:
-        $ref: '#/definitions/environmentChangeRequireCommentCommand'
-        description: deprecated
       name:
         type: string
       description:
@@ -11169,15 +10944,6 @@ definitions:
     properties:
       id:
         type: string
-      renameCommand:
-        $ref: '#/definitions/environmentChangeNameOrganizationCommand'
-        description: deprecated
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionOrganizationCommand'
-        description: deprecated
-      changeOwnerEmailCommand:
-        $ref: '#/definitions/environmentChangeOwnerEmailOrganizationCommand'
-        description: deprecated
       name:
         type: string
       description:
@@ -11191,12 +10957,6 @@ definitions:
     properties:
       id:
         type: string
-      changeDescriptionCommand:
-        $ref: '#/definitions/environmentChangeDescriptionProjectCommand'
-        description: deprecated
-      renameCommand:
-        $ref: '#/definitions/environmentRenameProjectCommand'
-        description: deprecated
       organizationId:
         type: string
         description: deprecated
@@ -11772,15 +11532,6 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/experimentGoal'
-  featureAddTagCommand:
-    type: object
-    properties:
-      tag:
-        type: string
-  featureArchiveFeatureCommand:
-    type: object
-  featureArchiveFeatureResponse:
-    type: object
   featureAudience:
     type: object
     properties:
@@ -11825,11 +11576,23 @@ definitions:
         $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersResponse:
     type: object
-  featureChangeDescriptionCommand:
+  featureChangeSummary:
     type: object
     properties:
-      description:
+      messageKey:
         type: string
+        title: Semantic key for translation lookup (e.g., "ScheduledChange.EnableFlag")
+      values:
+        type: object
+        additionalProperties:
+          type: string
+        title: Key-value pairs for interpolation in the translated message
+    title: |-
+      ChangeSummary represents a single change in a human-readable, translatable
+      format. The frontend uses message_key to look up the translation and
+      interpolates values. Example: message_key="ScheduledChange.AddVariation",
+      values={"name": "Premium", "value": "true"} Frontend translation: "Add
+      variation: {{name}} ({{value}})" -> "Add variation: Premium (true)"
   featureClauseOperator:
     type: string
     enum:
@@ -11849,63 +11612,20 @@ definitions:
       - NOT_EQUALS
     default: EQUALS
     description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
-  featureCloneFeatureCommand:
-    type: object
-    properties:
-      environmentId:
-        type: string
   featureCloneFeatureRequest:
     type: object
     properties:
       id:
         type: string
-      command:
-        $ref: '#/definitions/featureCloneFeatureCommand'
-        description: deprecated, use targetEnvironmentId instead
       environmentId:
         type: string
       targetEnvironmentId:
         type: string
   featureCloneFeatureResponse:
     type: object
-  featureCommand:
-    type: object
-    properties:
-      command:
-        $ref: '#/definitions/protobufAny'
-  featureCreateFeatureCommand:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-        title: This is an optional field
-      variations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
-      tags:
-        type: array
-        items:
-          type: string
-      defaultOnVariationIndex:
-        type: integer
-        format: int32
-      defaultOffVariationIndex:
-        type: integer
-        format: int32
-      variationType:
-        $ref: '#/definitions/FeatureVariationType'
   featureCreateFeatureRequest:
     type: object
     properties:
-      command:
-        $ref: '#/definitions/featureCreateFeatureCommand'
-        description: deprecated
       environmentId:
         type: string
       id:
@@ -12050,8 +11770,6 @@ definitions:
         type: array
         items:
           type: string
-  featureDeleteFeatureCommand:
-    type: object
   featureDeleteFeatureResponse:
     type: object
   featureDeleteFlagTriggerResponse:
@@ -12059,14 +11777,6 @@ definitions:
   featureDeleteScheduledFlagChangeResponse:
     type: object
   featureDeleteSegmentResponse:
-    type: object
-  featureDisableFeatureCommand:
-    type: object
-  featureDisableFeatureResponse:
-    type: object
-  featureEnableFeatureCommand:
-    type: object
-  featureEnableFeatureResponse:
     type: object
   featureEvaluateFeaturesResponse:
     type: object
@@ -12473,16 +12183,6 @@ definitions:
       - ERROR_EXCEPTION
       - ERROR_CACHE_NOT_FOUND
     default: TARGET
-  featureRemoveTagCommand:
-    type: object
-    properties:
-      tag:
-        type: string
-  featureRenameFeatureCommand:
-    type: object
-    properties:
-      name:
-        type: string
   featureRolloutStrategy:
     type: object
     properties:
@@ -12661,8 +12361,9 @@ definitions:
       changeSummaries:
         type: array
         items:
-          type: string
-        title: Human-readable summaries
+          type: object
+          $ref: '#/definitions/featureChangeSummary'
+        title: i18n-ready change summaries
     title: ScheduledFlagChange represents a scheduled change to a feature flag
   featureScheduledFlagChangeStatus:
     type: string
@@ -12801,12 +12502,6 @@ definitions:
         $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
-  featureUnarchiveFeatureCommand:
-    type: object
-  featureUnarchiveFeatureResponse:
-    type: object
-  featureUpdateFeatureDetailsResponse:
-    type: object
   featureUpdateFeatureRequest:
     type: object
     properties:
@@ -12869,10 +12564,13 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
-  featureUpdateFeatureTargetingResponse:
-    type: object
-  featureUpdateFeatureVariationsResponse:
-    type: object
+      scheduleConflictsDetected:
+        type: boolean
+        title: True if any pending schedules were marked as conflicted
+      conflictCount:
+        type: integer
+        format: int32
+        title: Number of schedules marked as conflicted
   featureUpdateFlagTriggerRequest:
     type: object
     properties:

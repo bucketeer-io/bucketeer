@@ -39,7 +39,7 @@ func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, client, cmd)
 	addTag(t, tag, featureID, client)
 	enableFeature(t, featureID, client)
@@ -71,7 +71,7 @@ func TestGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
+	cmd := newCreateFeatureReq(featureID)
 	createFeature(t, client, cmd)
 	addTag(t, tag, featureID, client)
 	// Update feature flag cache
@@ -208,8 +208,8 @@ func TestHTTPBooleanStringHandling(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	addTag(t, tag, featureID, client)
 	enableFeature(t, featureID, client)
 	// Update feature flag cache

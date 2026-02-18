@@ -707,17 +707,6 @@ func (s *grpcGatewayService) GetEvaluation(
 	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
 	if err != nil {
 		s.logger.Error(
-			"Failed to evaluate",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", envAPIKey.Environment.Id),
-			)...,
-		)
-		apiErrorCounter.WithLabelValues(envAPIKey.Environment.Id, req.SourceId.String(), methodGetEvaluation).Inc()
-		return nil, err
-	}
-	if err != nil {
-		s.logger.Error(
 			"Failed to evaluate features",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -1473,6 +1462,20 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			evaluationMessages = append(evaluationMessages, event)
+			// Report evaluation events with error reasons for monitoring.
+			if evValidator, ok := validator.(*eventEvaluationValidator); ok &&
+				evValidator.lastUnmarshaledEvent != nil &&
+				isEvaluationEventErrorReason(evValidator.lastUnmarshaledEvent.Reason) {
+				ev := evValidator.lastUnmarshaledEvent
+				evaluationEventErrorReasonCounter.WithLabelValues(
+					envAPIKey.ProjectId,
+					envAPIKey.Environment.UrlCode,
+					ev.Tag,
+					ev.Reason.Type.String(),
+					ev.SdkVersion,
+					ev.SourceId.String(),
+				).Inc()
+			}
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {

@@ -29,19 +29,16 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	autoopsdomain "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
-	v2ao "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	btproto "github.com/bucketeer-io/bucketeer/v2/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -808,91 +805,7 @@ func (s *FeatureService) CreateFeature(
 	if err != nil {
 		return nil, err
 	}
-	if req.Command == nil {
-		return s.createFeatureNoCommand(ctx, req, editor)
-	}
-	if err = validateCreateFeatureRequest(req.Command); err != nil {
-		return nil, err
-	}
-	feature, err := domain.NewFeature(
-		req.Command.Id,
-		req.Command.Name,
-		req.Command.Description,
-		req.Command.VariationType,
-		req.Command.Variations,
-		req.Command.Tags,
-		int(req.Command.DefaultOnVariationIndex.Value),
-		int(req.Command.DefaultOffVariationIndex.Value),
-		editor.Email,
-	)
-	if err != nil {
-		return nil, err
-	}
-	var handler = command.NewEmptyFeatureCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.upsertTags(contextWithTx, req.Command.Tags, req.EnvironmentId); err != nil {
-			return err
-		}
-
-		if err := s.featureStorage.CreateFeature(contextWithTx, feature, req.EnvironmentId); err != nil {
-			s.logger.Error(
-				"Failed to store feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, "")
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			s.logger.Error(
-				"Failed to create feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to create feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	s.updateFeatureFlagCache(ctx)
-	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
-}
-
-func (s *FeatureService) createFeatureNoCommand(
-	ctx context.Context,
-	req *featureproto.CreateFeatureRequest,
-	editor *eventproto.Editor,
-) (*featureproto.CreateFeatureResponse, error) {
-	err := validateCreateFeatureRequestNoCommand(req)
+	err = validateCreateFeatureRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,173 +913,9 @@ func (s *FeatureService) UpdateFeature(
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		filters := []*mysql.FilterV2{
-			{
-				Column:   "feature.deleted",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			},
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    req.EnvironmentId,
-			},
-		}
-		options := &mysql.ListOptions{
-			Filters:     filters,
-			JSONFilters: nil,
-			Orders:      nil,
-			NullFilters: nil,
-			InFilters:   nil,
-			SearchQuery: nil,
-			Limit:       mysql.QueryNoLimit,
-			Offset:      mysql.QueryNoOffset,
-		}
-		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
-		if err != nil {
-			s.logger.Error(
-				"Failed to list features",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		var feature *domain.Feature
-		for _, f := range features {
-			if f.Id == req.Id {
-				feature = &domain.Feature{Feature: f}
-				break
-			}
-		}
-		if feature == nil {
-			err := statusFeatureNotFound.Err()
-			s.logger.Error(
-				"Failed to find feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-
-		// Clean up any orphaned variation references BEFORE validation
-		// This fixes data corruption from the historical variation deletion bug
-		cleanupResult := feature.CleanupOrphanedVariationReferences()
-		if cleanupResult.Changed {
-			s.logger.Warn(
-				"Cleaned up orphaned variation references in feature during update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
-					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
-					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
-					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
-					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
-				)...,
-			)
-		}
-
-		// Ensure all variations are present in rollout strategies BEFORE validation
-		// This fixes data corruption from the historical AddVariation bug
-		migrationResult := feature.EnsureVariationsInStrategies()
-		if migrationResult.Changed {
-			s.logger.Warn(
-				"Added missing variations to rollout strategies in feature during update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("addedToRules", migrationResult.AddedToRules),
-					zap.Int("addedToDefault", migrationResult.AddedToDefault),
-					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
-				)...,
-			)
-		}
-
-		// Check if this is an archive request and if other features depend on this one.
-		// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
-		if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
-			if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
-				return statusInvalidArchive.Err()
-			}
-		}
-
-		updated, err := feature.Update(
-			req.Name,
-			req.Description,
-			req.Tags,
-			req.Enabled,
-			req.Archived,
-			req.DefaultStrategy,
-			req.OffVariation,
-			req.ResetSamplingSeed,
-			req.PrerequisiteChanges,
-			req.TargetChanges,
-			req.RuleChanges,
-			req.VariationChanges,
-			req.TagChanges,
-			req.Maintainer,
-		)
-		if err != nil {
-			return err
-		}
-		if err := s.upsertTags(ctxWithTx, updated.Tags, req.EnvironmentId); err != nil {
-			return err
-		}
-		// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
-		// Exclude all the archived and deleted flags from the list.
-		tgts := []*featureproto.Feature{}
-		for _, f := range features {
-			if f.Id == updated.Id {
-				f = updated.Feature
-			}
-			if f.Archived || f.Deleted {
-				continue
-			}
-			tgts = append(tgts, f)
-		}
-		if err := domain.ValidateFeatureDependencies(tgts); err != nil {
-			return err
-		}
-		// Validate that variations being deleted are not used in other features
-		if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
-			return err
-		}
-		updatedpb = updated.Feature
-		event, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_FEATURE,
-			feature.Id,
-			eventproto.Event_FEATURE_UPDATED,
-			&eventproto.FeatureUpdatedEvent{
-				Id: req.Id,
-			},
-			req.EnvironmentId,
-			updated.Feature,
-			feature.Feature,
-			// check require comment.
-			domainevent.WithComment(req.Comment),
-			domainevent.WithNewVersion(updated.Version),
-		)
-		if err != nil {
-			return err
-		}
-		err = s.featureStorage.UpdateFeature(ctxWithTx, updated, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
+		var err error
+		event, updatedpb, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, req)
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -1181,150 +930,233 @@ func (s *FeatureService) UpdateFeature(
 		)
 		return nil, statusInternal.Err()
 	}
-	s.updateFeatureFlagCache(ctx)
-	return &featureproto.UpdateFeatureResponse{
-		Feature: updatedpb,
-	}, nil
-}
 
-func (s *FeatureService) UpdateFeatureDetails(
-	ctx context.Context,
-	req *featureproto.UpdateFeatureDetailsRequest,
-) (*featureproto.UpdateFeatureDetailsResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if req.Id == "" {
-		return nil, statusMissingID.Err()
-	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	var handler = command.NewEmptyFeatureCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.Id, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
-		if err != nil {
-			return err
-		}
-		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
-		if err != nil {
-			s.logger.Error(
-				"Failed to increment feature version",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		if req.RenameFeatureCommand != nil {
-			err = handler.Handle(ctx, req.RenameFeatureCommand)
-			if err != nil {
-				s.logger.Error(
-					"Failed to rename feature",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		if req.ChangeDescriptionCommand != nil {
-			err = handler.Handle(ctx, req.ChangeDescriptionCommand)
-			if err != nil {
-				s.logger.Error(
-					"Failed to change feature description",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		if req.AddTagCommands != nil {
-			for i := range req.AddTagCommands {
-				err = handler.Handle(ctx, req.AddTagCommands[i])
-				if err != nil {
-					s.logger.Error(
-						"Failed to add tag to feature",
-						log.FieldsFromIncomingContext(ctx).AddFields(
-							zap.Error(err),
-							zap.String("environmentId", req.EnvironmentId),
-						)...,
-					)
-					return err
-				}
-			}
-			tags := []string{}
-			for _, c := range req.AddTagCommands {
-				tags = append(tags, c.Tag)
-			}
-			if err := s.upsertTags(ctxWithTx, tags, req.EnvironmentId); err != nil {
-				return err
-			}
-		}
-		if req.RemoveTagCommands != nil {
-			for i := range req.RemoveTagCommands {
-				err = handler.Handle(ctx, req.RemoveTagCommands[i])
-				if err != nil {
-					s.logger.Error(
-						"Failed to remove tag from feature",
-						log.FieldsFromIncomingContext(ctx).AddFields(
-							zap.Error(err),
-							zap.String("environmentId", req.EnvironmentId),
-						)...,
-					)
-					return err
-				}
-			}
-		}
-		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
+	// Detect conflicts in pending scheduled changes after flag update.
+	//
+	// NOTE: This runs OUTSIDE the UpdateFeature transaction intentionally.
+	// Running outside means conflict detection sees all committed data at query time,
+	// including changes from any concurrent requests that committed between the flag
+	// update and the detection. Running inside the transaction would operate on a
+	// pre-commit snapshot and miss concurrent modifications.
+	// As a final safety net, the executor validates all references before
+	// executing any schedule.
+	conflictCount := int32(0)
+	conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
+	if count, err := conflictDetector.DetectConflictsOnFlagChange(ctx, updatedpb, req.EnvironmentId); err != nil {
 		s.logger.Error(
-			"Failed to publish events",
+			"Failed to detect conflicts on flag change",
 			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
+				zap.Error(err),
+				zap.String("featureId", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, statusInternal.Err()
+		// Don't fail the update, conflict detection is best-effort
+	} else {
+		conflictCount = int32(count)
 	}
+
 	s.updateFeatureFlagCache(ctx)
-	return &featureproto.UpdateFeatureDetailsResponse{}, nil
+	return &featureproto.UpdateFeatureResponse{
+		Feature:                   updatedpb,
+		ScheduleConflictsDetected: conflictCount > 0,
+		ConflictCount:             conflictCount,
+	}, nil
+}
+
+// updateFeatureWithinTransaction performs the update logic within an existing transaction context.
+// This helper is used by both UpdateFeature (which creates its own transaction) and
+// ExecuteScheduledFlagChange (which calls this from within its transaction to avoid nested transactions).
+func (s *FeatureService) updateFeatureWithinTransaction(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	req *featureproto.UpdateFeatureRequest,
+) (*eventproto.Event, *featureproto.Feature, error) {
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
+	}
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		JSONFilters: nil,
+		Orders:      nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		SearchQuery: nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	}
+	features, _, _, err := s.featureStorage.ListFeatures(ctx, options)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	var feature *domain.Feature
+	for _, f := range features {
+		if f.Id == req.Id {
+			feature = &domain.Feature{Feature: f}
+			break
+		}
+	}
+	if feature == nil {
+		err := statusFeatureNotFound.Err()
+		s.logger.Error(
+			"Failed to find feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+
+	// Clean up any orphaned variation references BEFORE validation
+	// This fixes data corruption from the historical variation deletion bug
+	cleanupResult := feature.CleanupOrphanedVariationReferences()
+	if cleanupResult.Changed {
+		s.logger.Warn(
+			"Cleaned up orphaned variation references in feature during update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
+				zap.Int("orphanedRules", cleanupResult.OrphanedRules),
+				zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
+				zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
+				zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
+			)...,
+		)
+	}
+
+	// Ensure all variations are present in rollout strategies BEFORE validation
+	// This fixes data corruption from the historical AddVariation bug
+	migrationResult := feature.EnsureVariationsInStrategies()
+	if migrationResult.Changed {
+		s.logger.Warn(
+			"Added missing variations to rollout strategies in feature during update",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("featureId", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Int("addedToRules", migrationResult.AddedToRules),
+				zap.Int("addedToDefault", migrationResult.AddedToDefault),
+				zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
+			)...,
+		)
+	}
+
+	// Check if this is an archive request and if other features depend on this one.
+	// This check mirrors the validation in ArchiveFeature to ensure consistent behavior.
+	if req.Archived != nil && req.Archived.GetValue() && !feature.Archived {
+		if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{feature.Feature}, features) {
+			return nil, nil, statusInvalidArchive.Err()
+		}
+
+		// Cancel all pending scheduled changes before archiving the flag
+		if err := s.cancelPendingScheduledFlagChanges(
+			ctx,
+			feature.Id,
+			req.EnvironmentId,
+			editor.Email,
+			domain.CancelReasonFlagArchived,
+		); err != nil {
+			s.logger.Error(
+				"Failed to cancel pending scheduled changes during archive",
+				log.FieldsFromIncomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", feature.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			// Don't fail the archive operation, just log the error
+		}
+	}
+
+	updated, err := feature.Update(
+		req.Name,
+		req.Description,
+		req.Tags,
+		req.Enabled,
+		req.Archived,
+		req.DefaultStrategy,
+		req.OffVariation,
+		req.ResetSamplingSeed,
+		req.PrerequisiteChanges,
+		req.TargetChanges,
+		req.RuleChanges,
+		req.VariationChanges,
+		req.TagChanges,
+		req.Maintainer,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := s.upsertTags(ctx, updated.Tags, req.EnvironmentId); err != nil {
+		return nil, nil, err
+	}
+	// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
+	// Exclude all the archived and deleted flags from the list.
+	tgts := []*featureproto.Feature{}
+	for _, f := range features {
+		if f.Id == updated.Id {
+			f = updated.Feature
+		}
+		if f.Archived || f.Deleted {
+			continue
+		}
+		tgts = append(tgts, f)
+	}
+	if err := domain.ValidateFeatureDependencies(tgts); err != nil {
+		return nil, nil, err
+	}
+	// Validate that variations being deleted are not used in other features
+	if err := validateVariationDeletion(req.VariationChanges, features, req.Id); err != nil {
+		return nil, nil, err
+	}
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_FEATURE,
+		feature.Id,
+		eventproto.Event_FEATURE_UPDATED,
+		&eventproto.FeatureUpdatedEvent{
+			Id: req.Id,
+		},
+		req.EnvironmentId,
+		updated.Feature,
+		feature.Feature,
+		// check require comment.
+		domainevent.WithComment(req.Comment),
+		domainevent.WithNewVersion(updated.Version),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to update feature",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, nil, err
+	}
+	return event, updated.Feature, nil
 }
 
 func (s *FeatureService) existsRunningExperiment(
@@ -1356,279 +1188,6 @@ func containsRunningExperiment(experiments []*experimentproto.Experiment) bool {
 	return false
 }
 
-func (s *FeatureService) existsRunningProgressiveRollout(
-	ctx context.Context,
-	featureID, environmentId string,
-) (bool, error) {
-	progressiveRollouts, err := s.listProgressiveRollouts(ctx, featureID, environmentId)
-	if err != nil {
-		s.logger.Error(
-			"Failed to list progressiveRollouts",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-			)...,
-		)
-		return false, err
-	}
-	return containsRunningProgressiveRollout(progressiveRollouts), nil
-}
-
-func containsRunningProgressiveRollout(progressiveRollouts []*autoopsproto.ProgressiveRollout) bool {
-	for _, p := range progressiveRollouts {
-		dp := &autoopsdomain.ProgressiveRollout{
-			ProgressiveRollout: p,
-		}
-		if !dp.IsFinished() {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *FeatureService) listProgressiveRollouts(
-	ctx context.Context,
-	featureID, environmentId string,
-) ([]*autoopsproto.ProgressiveRollout, error) {
-	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
-	cursor := ""
-	for {
-		resp, err := s.autoOpsClient.ListProgressiveRollouts(
-			ctx,
-			&autoopsproto.ListProgressiveRolloutsRequest{
-				EnvironmentId: environmentId,
-				PageSize:      listRequestSize,
-				Cursor:        cursor,
-				FeatureIds:    []string{featureID},
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		progressiveRollouts = append(progressiveRollouts, resp.ProgressiveRollouts...)
-		size := len(progressiveRollouts)
-		if size == 0 || size < listRequestSize {
-			return progressiveRollouts, nil
-		}
-		cursor = resp.Cursor
-	}
-}
-
-// FIXME: remove this API after the new console is released
-// Deprecated
-func (s *FeatureService) EnableFeature(
-	ctx context.Context,
-	req *featureproto.EnableFeatureRequest,
-) (*featureproto.EnableFeatureResponse, error) {
-	if err := validateEnableFeatureRequest(req); err != nil {
-		return nil, err
-	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	if err := s.updateFeature(
-		ctx,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-		req.Comment,
-		editor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to enable feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &featureproto.EnableFeatureResponse{}, nil
-}
-
-// FIXME: remove this API after the new console is released
-// Deprecated
-func (s *FeatureService) DisableFeature(
-	ctx context.Context,
-	req *featureproto.DisableFeatureRequest,
-) (*featureproto.DisableFeatureResponse, error) {
-	if err := validateDisableFeatureRequest(req); err != nil {
-		return nil, err
-	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	if err := s.updateFeature(
-		ctx,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-		req.Comment,
-		editor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to disable feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &featureproto.DisableFeatureResponse{}, nil
-}
-
-func (s *FeatureService) ArchiveFeature(
-	ctx context.Context,
-	req *featureproto.ArchiveFeatureRequest,
-) (*featureproto.ArchiveFeatureResponse, error) {
-	if err := validateArchiveFeatureRequest(req); err != nil {
-		return nil, err
-	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "archived",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "deleted",
-			Operator: mysql.OperatorEqual,
-			Value:    false,
-		},
-		{
-			Column:   "feature.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		JSONFilters: nil,
-		Orders:      nil,
-		NullFilters: nil,
-		InFilters:   nil,
-		Limit:       mysql.QueryNoLimit,
-		Offset:      mysql.QueryNoOffset,
-	}
-	features, _, _, err := featureStorage.ListFeatures(ctx, options)
-	if err != nil {
-		s.logger.Error(
-			"Failed to list feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
-	var tgtF *domain.Feature
-	for _, f := range features {
-		if f.Id == req.Id {
-			tgtF = &domain.Feature{Feature: f}
-			break
-		}
-	}
-	if tgtF == nil {
-		s.logger.Error(
-			"Feature not found",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusFeatureNotFound.Err()
-	}
-	if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgtF.Feature}, features) {
-		return nil, statusInvalidArchive.Err()
-	}
-
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	if err := s.updateFeature(
-		ctx,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-		req.Comment,
-		editor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to archive feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &featureproto.ArchiveFeatureResponse{}, nil
-}
-
-func (s *FeatureService) UnarchiveFeature(
-	ctx context.Context,
-	req *featureproto.UnarchiveFeatureRequest,
-) (*featureproto.UnarchiveFeatureResponse, error) {
-	if err := validateUnarchiveFeatureRequest(req); err != nil {
-		return nil, err
-	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	if err := s.updateFeature(
-		ctx,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-		req.Comment,
-		editor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to unarchive feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &featureproto.UnarchiveFeatureResponse{}, nil
-}
-
 func (s *FeatureService) DeleteFeature(
 	ctx context.Context,
 	req *featureproto.DeleteFeatureRequest,
@@ -1645,50 +1204,16 @@ func (s *FeatureService) DeleteFeature(
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(
-		ctx,
-		req.Command,
-		req.Id,
-		req.EnvironmentId,
-		req.Comment,
-		editor,
-	); err != nil {
-		if status.Code(err) == codes.Internal {
-			s.logger.Error(
-				"Failed to delete feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-		}
-		return nil, err
-	}
-	return &featureproto.DeleteFeatureResponse{}, nil
-}
-
-func (s *FeatureService) updateFeature(
-	ctx context.Context,
-	cmd command.Command,
-	id, environmentId, comment string,
-	editor *eventproto.Editor,
-) error {
-	if id == "" {
-		return statusMissingID.Err()
-	}
-	if cmd == nil {
-		return statusMissingCommand.Err()
-	}
-	var handler = command.NewEmptyFeatureCommandHandler()
-
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		feature, err := s.featureStorage.GetFeature(contextWithTx, id, environmentId)
+	var eventPb *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentId", environmentId),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1701,8 +1226,8 @@ func (s *FeatureService) updateFeature(
 			s.logger.Warn(
 				"Cleaned up orphaned variation references in feature during details update",
 				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", id),
-					zap.String("environmentId", environmentId),
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
 					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
 					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
@@ -1719,8 +1244,8 @@ func (s *FeatureService) updateFeature(
 			s.logger.Warn(
 				"Added missing variations to rollout strategies in feature during details update",
 				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", id),
-					zap.String("environmentId", environmentId),
+					zap.String("featureId", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.Int("addedToRules", migrationResult.AddedToRules),
 					zap.Int("addedToDefault", migrationResult.AddedToDefault),
 					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
@@ -1728,44 +1253,42 @@ func (s *FeatureService) updateFeature(
 			)
 		}
 
-		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentId, comment)
-		if err != nil {
-			return err
-		}
-		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
+		err = feature.Delete()
 		if err != nil {
 			s.logger.Error(
-				"Failed to increment feature version",
+				"Failed to delete feature",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentId", environmentId),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
 		}
-		// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
-		switch cmd.(type) {
-		case *featureproto.DisableFeatureCommand:
-			if err := s.stopProgressiveRollout(contextWithTx, environmentId, feature.Id); err != nil {
-				return err
-			}
-		}
-		if err := handler.Handle(ctx, cmd); err != nil {
-			s.logger.Error(
-				"Failed to handle command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
+		eventPb, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_DELETED,
+			&eventproto.FeatureDeletedEvent{
+				Id: req.Id,
+			},
+			req.EnvironmentId,
+			nil,
+			feature.Feature,
+			// check require comment.
+			domainevent.WithComment(req.Comment),
+			domainevent.WithNewVersion(feature.Version),
+		)
+		if err != nil {
 			return err
 		}
-		if err := s.featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
+
+		if err := s.featureStorage.UpdateFeature(contextWithTx, feature, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromIncomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentId", environmentId),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1773,20 +1296,23 @@ func (s *FeatureService) updateFeature(
 		return nil
 	})
 	if err != nil {
-		return s.convUpdateFeatureError(err)
+		return nil, s.convUpdateFeatureError(err)
 	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
+	err = s.domainPublisher.Publish(ctx, eventPb)
+	if err != nil {
 		s.logger.Error(
 			"Failed to publish events",
 			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", environmentId),
+				zap.Any("errors", err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("event", eventPb),
 			)...,
 		)
-		return statusInternal.Err()
+		return nil, api.NewGRPCStatus(err).Err()
 	}
+
 	s.updateFeatureFlagCache(ctx)
-	return nil
+	return &featureproto.DeleteFeatureResponse{}, nil
 }
 
 func (s *FeatureService) convUpdateFeatureError(err error) error {
@@ -1800,437 +1326,12 @@ func (s *FeatureService) convUpdateFeatureError(err error) error {
 	}
 }
 
-func (s *FeatureService) UpdateFeatureVariations(
-	ctx context.Context,
-	req *featureproto.UpdateFeatureVariationsRequest,
-) (*featureproto.UpdateFeatureVariationsResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if req.Id == "" {
-		return nil, statusMissingID.Err()
-	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	commands := make([]command.Command, 0, len(req.Commands))
-	for _, c := range req.Commands {
-		cmd, err := command.UnmarshalCommand(c)
-		if err != nil {
-			s.logger.Error(
-				"Failed to unmarshal command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil, err
-		}
-		commands = append(commands, cmd)
-	}
-	handler := command.NewEmptyFeatureCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		filters := []*mysql.FilterV2{
-			{
-				Column:   "deleted",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			},
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    req.EnvironmentId,
-			},
-		}
-		options := &mysql.ListOptions{
-			Filters:     filters,
-			JSONFilters: nil,
-			Orders:      nil,
-			NullFilters: nil,
-			InFilters:   nil,
-			Limit:       mysql.QueryNoLimit,
-			Offset:      mysql.QueryNoOffset,
-		}
-		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
-		if err != nil {
-			s.logger.Error(
-				"Failed to list feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		f, err := findFeature(features, req.Id)
-		if err != nil {
-			s.logger.Error(
-				"Failed to find feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		feature := &domain.Feature{Feature: f}
-		for _, cmd := range commands {
-			if err := s.validateFeatureVariationsCommand(
-				ctx,
-				features,
-				req.EnvironmentId,
-				f,
-				cmd,
-			); err != nil {
-				s.logger.Error(
-					"Invalid argument",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
-		if err != nil {
-			return err
-		}
-		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
-		if err != nil {
-			s.logger.Error(
-				"Failed to increment feature version",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		for _, cmd := range commands {
-			err = handler.Handle(ctx, cmd)
-			if err != nil {
-				// TODO: make this error log more specific.
-				s.logger.Error(
-					"Failed to handle command",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	s.updateFeatureFlagCache(ctx)
-	return &featureproto.UpdateFeatureVariationsResponse{}, nil
-}
-
 func (s *FeatureService) publishDomainEvents(ctx context.Context, events []*eventproto.Event) map[string]error {
 	messages := make([]publisher.Message, 0, len(events))
 	for _, event := range events {
 		messages = append(messages, event)
 	}
 	return s.domainPublisher.PublishMulti(ctx, messages)
-}
-
-func (s *FeatureService) UpdateFeatureTargeting(
-	ctx context.Context,
-	req *featureproto.UpdateFeatureTargetingRequest,
-) (*featureproto.UpdateFeatureTargetingResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateUpdateFeatureTargetingRequest(req); err != nil {
-		return nil, err
-	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
-		return nil, err
-	}
-	commands := make([]command.Command, 0, len(req.Commands))
-	for _, c := range req.Commands {
-		cmd, err := command.UnmarshalCommand(c)
-		if err != nil {
-			s.logger.Error(
-				"Failed to unmarshal command",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return nil, err
-		}
-		commands = append(commands, cmd)
-	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId); err != nil {
-		return nil, err
-	}
-	// TODO: clean this up.
-	// Problem: Changes in the UI should be atomic meaning either all or no changes will be made.
-	// This means a transaction spanning all changes is needed.
-	// Also:
-	// Normally each command should be usable alone (load the feature from the repository change it and save it).
-	// Also here because many commands are run sequentially they all expect the same version of the feature.
-	handler := command.NewEmptyFeatureCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		filters := []*mysql.FilterV2{
-			{
-				Column:   "feature.deleted",
-				Operator: mysql.OperatorEqual,
-				Value:    false,
-			},
-			{
-				Column:   "feature.environment_id",
-				Operator: mysql.OperatorEqual,
-				Value:    req.EnvironmentId,
-			},
-		}
-		options := &mysql.ListOptions{
-			Filters:     filters,
-			JSONFilters: nil,
-			Orders:      nil,
-			NullFilters: nil,
-			InFilters:   nil,
-			Limit:       mysql.QueryNoLimit,
-			Offset:      mysql.QueryNoOffset,
-		}
-		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
-		if err != nil {
-			s.logger.Error(
-				"Failed to list feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		f, err := findFeature(features, req.Id)
-		if err != nil {
-			s.logger.Error(
-				"Failed to find feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		for _, cmd := range commands {
-			if err := s.validateFeatureTargetingCommand(
-				ctx,
-				req.From,
-				req.EnvironmentId,
-				features,
-				f,
-				cmd,
-			); err != nil {
-				s.logger.Error(
-					"Invalid argument",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		feature := &domain.Feature{Feature: f}
-
-		// Clean up any orphaned variation references BEFORE validation
-		// This fixes data corruption from the historical variation deletion bug
-		cleanupResult := feature.CleanupOrphanedVariationReferences()
-		if cleanupResult.Changed {
-			s.logger.Warn(
-				"Cleaned up orphaned variation references in feature during targeting update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("orphanedTargets", cleanupResult.OrphanedTargets),
-					zap.Int("orphanedRules", cleanupResult.OrphanedRules),
-					zap.Int("orphanedDefault", cleanupResult.OrphanedDefault),
-					zap.Bool("orphanedOffVar", cleanupResult.OrphanedOffVar),
-					zap.Strings("orphanedVariationIDs", cleanupResult.OrphanedVariationIDs),
-				)...,
-			)
-		}
-
-		// Ensure all variations are present in rollout strategies BEFORE validation
-		// This fixes data corruption from the historical AddVariation bug
-		migrationResult := feature.EnsureVariationsInStrategies()
-		if migrationResult.Changed {
-			s.logger.Warn(
-				"Added missing variations to rollout strategies in feature during targeting update",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.String("featureId", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.Int("addedToRules", migrationResult.AddedToRules),
-					zap.Int("addedToDefault", migrationResult.AddedToDefault),
-					zap.Strings("processedVariationIDs", migrationResult.AddedVariationIDs),
-				)...,
-			)
-		}
-
-		handler, err = command.NewFeatureCommandHandler(
-			editor,
-			feature,
-			req.EnvironmentId,
-			req.Comment,
-		)
-		if err != nil {
-			return err
-		}
-		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
-		if err != nil {
-			s.logger.Error(
-				"Failed to increment feature version",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		for _, cmd := range commands {
-			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
-			switch cmd.(type) {
-			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctxWithTx, req.EnvironmentId, feature.Id); err != nil {
-					return err
-				}
-			}
-			err = handler.Handle(ctx, cmd)
-			if err != nil {
-				// TODO: same as above. Make it more specific.
-				s.logger.Error(
-					"Failed to handle command",
-					log.FieldsFromIncomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				return err
-			}
-		}
-		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	s.updateFeatureFlagCache(ctx)
-	return &featureproto.UpdateFeatureTargetingResponse{}, nil
-}
-
-func (s *FeatureService) stopProgressiveRollout(
-	ctx context.Context,
-	EnvironmentId, featureID string) error {
-	storage := v2ao.NewProgressiveRolloutStorage(s.mysqlClient)
-	ids := convToInterfaceSlice([]string{featureID})
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    EnvironmentId,
-		},
-	}
-	inFilters := []*mysql.InFilter{
-		{
-			Column: "feature_id",
-			Values: ids,
-		},
-	}
-	listOptions := &mysql.ListOptions{
-		Filters:     filters,
-		Orders:      nil,
-		InFilters:   inFilters,
-		NullFilters: nil,
-		JSONFilters: nil,
-		SearchQuery: nil,
-		Limit:       0,
-		Offset:      0,
-	}
-
-	list, _, _, err := storage.ListProgressiveRollouts(ctx, listOptions)
-	if err != nil {
-		return err
-	}
-	for _, rollout := range list {
-		r := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: rollout}
-		if r.IsWaiting() || r.IsRunning() {
-			if err := r.Stop(autoopsproto.ProgressiveRollout_USER); err != nil {
-				return err
-			}
-			if err := storage.UpdateProgressiveRollout(ctx, r, EnvironmentId); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func convToInterfaceSlice(
-	slice []string,
-) []interface{} {
-	result := make([]interface{}, 0, len(slice))
-	for _, element := range slice {
-		result = append(result, element)
-	}
-	return result
 }
 
 func findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
@@ -2671,100 +1772,6 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
-	if req.Command == nil {
-		return s.cloneFeatureNoCommand(ctx, req)
-	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.Command.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateCloneFeatureRequest(req); err != nil {
-		return nil, err
-	}
-	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFeatureNotFound) {
-			return nil, statusFeatureNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to get feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	domainFeature := &domain.Feature{
-		Feature: f.Feature,
-	}
-	feature, err := domainFeature.Clone(editor.Email)
-	if err != nil {
-		return nil, err
-	}
-	handler := command.NewEmptyFeatureCommandHandler()
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.featureStorage.CreateFeature(ctxWithTx, feature, req.Command.EnvironmentId); err != nil {
-			s.logger.Error(
-				"Failed to store feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.Command.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.Command.EnvironmentId, "")
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			s.logger.Error(
-				"Failed to clone feature",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.Command.EnvironmentId),
-				)...,
-			)
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
-			return nil, statusAlreadyExists.Err()
-		}
-		s.logger.Error(
-			"Failed to clone feature",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.Command.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.Command.EnvironmentId),
-			)...,
-		)
-		return nil, statusInternal.Err()
-	}
-	s.updateFeatureFlagCache(ctx)
-	return &featureproto.CloneFeatureResponse{}, nil
-}
-
-func (s *FeatureService) cloneFeatureNoCommand(
-	ctx context.Context,
-	req *featureproto.CloneFeatureRequest,
-) (*featureproto.CloneFeatureResponse, error) {
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.TargetEnvironmentId,
@@ -2772,7 +1779,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 	if err != nil {
 		return nil, err
 	}
-	err = validateCloneFeatureRequestNoCommand(req)
+	err = validateCloneFeatureRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -2858,7 +1865,7 @@ func (s *FeatureService) cloneFeatureNoCommand(
 			"Failed to clone feature",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", req.Command.EnvironmentId),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()

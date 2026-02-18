@@ -21,12 +21,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
-	"github.com/bucketeer-io/bucketeer/v2/test/util"
 )
 
 const (
@@ -140,13 +138,11 @@ func TestGetUsedSegment(t *testing.T) {
 	client := newFeatureClient(t)
 	segment := createSegment(ctx, t, client)
 	featureID := newFeatureID(t)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
+	req := newCreateFeatureReq(featureID)
+	createFeature(t, client, req)
 	feature := getFeature(t, featureID, client)
 	rule := newFixedStrategyRuleWithSegment(feature.Variations[0].Id, segment.Id)
-	addCmd, err := util.MarshalCommand(&featureproto.AddRuleCommand{Rule: rule})
-	require.NoError(t, err)
-	updateFeatureTargeting(t, client, addCmd, featureID)
+	addRule(t, featureID, rule, client)
 	feature = getFeature(t, featureID, client)
 	actual := getSegment(ctx, t, client, segment.Id)
 	if !proto.Equal(feature, actual.Features[0]) {

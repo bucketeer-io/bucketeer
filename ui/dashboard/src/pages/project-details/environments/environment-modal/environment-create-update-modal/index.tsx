@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import {
@@ -25,16 +25,19 @@ import * as yup from 'yup';
 import { Environment } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import { IconInfo } from '@icons';
+import AudienceSelect from 'pages/feature-flag-details/targeting/segment-rule/audience-select';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import InfoMessage from 'components/info-message';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
+import Switch from 'components/switch';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -53,6 +56,9 @@ export interface EnvironmentCreateUpdateForm {
   urlCode: string;
   description?: string;
   requireComment: boolean;
+  autoArchiveEnabled: boolean;
+  autoArchiveUnusedDays?: number;
+  autoArchiveCheckCodeRefs: boolean;
 }
 
 const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
@@ -69,8 +75,28 @@ const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
       ),
     description: yup.string(),
     projectId: yup.string().required(requiredMessage),
-    requireComment: yup.boolean().required(requiredMessage)
+    requireComment: yup.boolean().required(requiredMessage),
+    autoArchiveEnabled: yup.boolean().required(),
+    autoArchiveUnusedDays: yup.number().when('autoArchiveEnabled', {
+      is: true,
+      then: schema => schema.min(1).required(requiredMessage),
+      otherwise: schema => schema.nullable()
+    }),
+    autoArchiveCheckCodeRefs: yup.boolean().required()
   });
+
+const PRESET_DAYS = [7, 14, 30] as const;
+
+const isPresetDays = (days: number | undefined): boolean => {
+  return (
+    days !== undefined && (PRESET_DAYS as readonly number[]).includes(days)
+  );
+};
+
+interface DaysOption {
+  label: string;
+  value: number | 'custom';
+}
 
 const EnvironmentCreateUpdateModal = ({
   organizationId,
@@ -89,9 +115,22 @@ const EnvironmentCreateUpdateModal = ({
     consoleAccount!
   );
 
-  const disabled = useMemo(
-    () => !envEditable || !isOrganizationAdmin,
-    [envEditable, isOrganizationAdmin]
+  const disabled = !envEditable || !isOrganizationAdmin;
+
+  const [customDaysOverride, setCustomDaysOverride] = useState<boolean | null>(
+    null
+  );
+  const inputDaysRef = useRef<HTMLInputElement>(null);
+
+  const daysOptions: DaysOption[] = useMemo(
+    () => [
+      ...PRESET_DAYS.map(days => ({
+        label: t(`form:auto-archive-days-${days}`),
+        value: days as number
+      })),
+      { label: t('form:custom'), value: 'custom' as const }
+    ],
+    [t]
   );
 
   const { data: collection, isLoading: isLoadingProject } =
@@ -111,12 +150,13 @@ const EnvironmentCreateUpdateModal = ({
       enabled: !!environmentId
     });
 
-  const environmentDetail = useMemo(
-    () => envCollections?.environment,
-    [envCollections]
-  );
-
+  const environmentDetail = envCollections?.environment;
   const project = collection?.project;
+
+  const isCustomDays =
+    customDaysOverride ??
+    (environmentDetail?.autoArchiveUnusedDays !== undefined &&
+      !isPresetDays(environmentDetail.autoArchiveUnusedDays));
 
   const form = useForm({
     resolver: yupResolver(useFormSchema(formSchema)),
@@ -125,7 +165,11 @@ const EnvironmentCreateUpdateModal = ({
       description: environmentDetail?.description,
       requireComment: environmentDetail?.requireComment || false,
       projectId: projectId || '',
-      urlCode: environmentDetail?.urlCode || ''
+      urlCode: environmentDetail?.urlCode || '',
+      autoArchiveEnabled: environmentDetail?.autoArchiveEnabled || false,
+      autoArchiveUnusedDays: environmentDetail?.autoArchiveUnusedDays ?? 7,
+      autoArchiveCheckCodeRefs:
+        environmentDetail?.autoArchiveCheckCodeRefs || false
     },
     mode: 'onChange'
   });
@@ -143,7 +187,10 @@ const EnvironmentCreateUpdateModal = ({
             id: environmentDetail!.id,
             name: values.name,
             description: values.description,
-            requireComment: values.requireComment
+            requireComment: values.requireComment,
+            autoArchiveEnabled: values.autoArchiveEnabled,
+            autoArchiveUnusedDays: values.autoArchiveUnusedDays,
+            autoArchiveCheckCodeRefs: values.autoArchiveCheckCodeRefs
           });
         } else {
           resp = await environmentCreator({
@@ -171,6 +218,23 @@ const EnvironmentCreateUpdateModal = ({
     },
     [environmentDetail, currentEnvironment]
   );
+
+  const handleSelectDays = useCallback(
+    (value: string | number) => {
+      if (value === 'custom') {
+        setCustomDaysOverride(true);
+        setTimeout(() => inputDaysRef.current?.focus(), 100);
+        return;
+      }
+      setCustomDaysOverride(false);
+      form.setValue('autoArchiveUnusedDays', value as number, {
+        shouldDirty: true,
+        shouldValidate: true
+      });
+    },
+    [form]
+  );
+
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <SlideModal
@@ -314,6 +378,161 @@ const EnvironmentCreateUpdateModal = ({
                   </Form.Item>
                 )}
               />
+
+              <Divider className="my-5" />
+              <h3 className="typo-head-bold-small text-gray-900 mb-4">
+                {t('form:flag-lifecycle')}
+              </h3>
+
+              <Form.Field
+                control={form.control}
+                name="autoArchiveEnabled"
+                render={({ field }) => (
+                  <Form.Item className="mb-4">
+                    <div className="flex items-center gap-x-3">
+                      <Form.Control>
+                        <Switch
+                          disabled={disabled}
+                          checked={field.value}
+                          onCheckedChange={checked => field.onChange(checked)}
+                        />
+                      </Form.Control>
+                      <Form.Label className="relative w-fit cursor-pointer mb-0">
+                        {t('form:auto-archive-enable')}
+                        <Tooltip
+                          align="start"
+                          alignOffset={-76}
+                          trigger={
+                            <div className="flex-center absolute top-0 -right-6">
+                              <Icon
+                                icon={IconInfo}
+                                size={'sm'}
+                                color="gray-500"
+                              />
+                            </div>
+                          }
+                          content={t('form:auto-archive-enable-tooltip')}
+                          className="!z-[100] max-w-[400px]"
+                        />
+                      </Form.Label>
+                    </div>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
+              {form.watch('autoArchiveEnabled') && (
+                <>
+                  <InfoMessage
+                    title={t('form:auto-archive-policy-info')}
+                    typeOfIcon="info"
+                    isToggleable={false}
+                    className="mb-4"
+                  />
+
+                  <Form.Field
+                    control={form.control}
+                    name="autoArchiveUnusedDays"
+                    render={({ field }) => (
+                      <Form.Item className="mb-4">
+                        <Form.Label required>
+                          {t('form:auto-archive-no-evaluations')}
+                        </Form.Label>
+                        <Form.Control>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {daysOptions.map(item => (
+                              <AudienceSelect
+                                key={item.value}
+                                label={item.label}
+                                value={item.value}
+                                disabled={disabled}
+                                isActive={
+                                  item.value === 'custom'
+                                    ? isCustomDays
+                                    : !isCustomDays &&
+                                      field.value === item.value
+                                }
+                                onSelect={handleSelectDays}
+                              />
+                            ))}
+                            {isCustomDays && (
+                              <InputGroup
+                                addon={t('common:days')}
+                                addonSlot="right"
+                                className="w-32"
+                              >
+                                <Input
+                                  ref={inputDaysRef}
+                                  type="number"
+                                  min={1}
+                                  disabled={disabled}
+                                  placeholder={t(
+                                    'form:auto-archive-unused-days-placeholder'
+                                  )}
+                                  value={field.value ?? ''}
+                                  onChange={value => {
+                                    const numValue = parseInt(value, 10);
+                                    field.onChange(
+                                      value && !Number.isNaN(numValue)
+                                        ? numValue
+                                        : undefined
+                                    );
+                                  }}
+                                />
+                              </InputGroup>
+                            )}
+                          </div>
+                        </Form.Control>
+                        <Form.Message />
+                      </Form.Item>
+                    )}
+                  />
+
+                  <Form.Field
+                    control={form.control}
+                    name="autoArchiveCheckCodeRefs"
+                    render={({ field }) => (
+                      <Form.Item className="mb-4">
+                        <div className="flex items-center gap-x-3">
+                          <Form.Control>
+                            <Checkbox
+                              disabled={disabled}
+                              onCheckedChange={checked =>
+                                field.onChange(checked)
+                              }
+                              checked={field.value}
+                            />
+                          </Form.Control>
+                          <Form.Label className="relative w-fit cursor-pointer mb-0">
+                            {t('form:auto-archive-check-code-refs')}
+                            <Tooltip
+                              align="start"
+                              alignOffset={-76}
+                              trigger={
+                                <div className="flex-center absolute top-0 -right-6">
+                                  <Icon
+                                    icon={IconInfo}
+                                    size={'sm'}
+                                    color="gray-500"
+                                  />
+                                </div>
+                              }
+                              content={t(
+                                'form:auto-archive-check-code-refs-tooltip'
+                              )}
+                              className="!z-[100] max-w-[400px]"
+                            />
+                          </Form.Label>
+                        </div>
+                        <Form.Message />
+                      </Form.Item>
+                    )}
+                  />
+                </>
+              )}
+
+              {/* Spacer for fixed ButtonBar */}
+              <div className="h-20" />
 
               <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
                 <ButtonBar
