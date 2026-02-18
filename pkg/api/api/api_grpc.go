@@ -769,7 +769,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
+		environmentId, envAPIKey.Environment.UrlCode, methodGetFeatureFlags, req.SourceId.String()).Inc()
 
 	if err := s.validateGetFeatureFlagsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetFeatureFlags request",
@@ -936,7 +936,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	}()
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
-		environmentId, envAPIKey.Environment.UrlCode, methodGetEvaluations, req.SourceId.String()).Inc()
+		environmentId, envAPIKey.Environment.UrlCode, methodGetSegmentUsers, req.SourceId.String()).Inc()
 
 	if err := s.validateGetSegmentUsersRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetSegmentUsers request",
