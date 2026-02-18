@@ -138,10 +138,15 @@ const Strategy = ({
       100
     );
     if (value === 'equally') {
-      const equallyVariations = variations.map(item => ({
+      const count = variations.length;
+      const base = Math.floor((100 / count) * 100) / 100;
+      const remainder = Math.round((100 - base * count) * 100);
+
+      const equallyVariations = variations.map((item, index) => ({
         ...item,
-        weight: 100 / variations.length
+        weight: index < remainder ? base + 0.01 : base
       }));
+
       setValue(`${rootName}.${strategyName}.variations`, equallyVariations, {
         shouldDirty: true,
         shouldValidate: true

@@ -475,11 +475,14 @@ export const isEquallyVariations = (
   variations: StrategySchema['rolloutStrategy']['variations'] = []
 ): boolean => {
   if (variations.length === 0) return false;
-  const expectedWeight = 100 / variations.length;
+  const count = variations.length;
+  const base = Math.floor((100 / count) * 100) / 100;
+  const remainder = Math.round((100 - base * count) * 100);
 
-  return variations.every(
-    item => Math.abs(item.weight - expectedWeight) < 0.0001
-  );
+  return variations.every((item, index) => {
+    const expected = index < remainder ? base + 0.01 : base;
+    return Math.abs(item.weight - expected) < 0.0001;
+  });
 };
 
 const getPrerequisiteDiscardChangeData = (
@@ -700,7 +703,7 @@ export const getClauseLabel = (
     getClauseType(clause.operator) === RuleClauseType.COMPARE;
 
   const operatorText = isUserSegment
-    ? t('is-included-in')
+    ? t('form:is-included-in')
     : isFeatureFlag
       ? '='
       : operatorOptions.find(opt => opt.value === operator)?.label || operator;
@@ -1094,12 +1097,12 @@ const diffStrategy = (
       preStrategy.rolloutStrategy?.variations || []
     );
 
-    if (
-      !isEqual(
-        preStrategy.rolloutStrategy?.audience,
-        currentStrategy.rolloutStrategy?.audience
-      )
-    ) {
+    const preAudience =
+      !preStrategy.fixedStrategy && !preStrategy?.rolloutStrategy?.audience
+        ? { percentage: 100, defaultVariation: '' }
+        : preStrategy.rolloutStrategy?.audience;
+
+    if (!isEqual(preAudience, currentStrategy.rolloutStrategy?.audience)) {
       changes.push({
         label: '',
         audienceExcluded,
