@@ -232,8 +232,10 @@ Two primary endpoints:
 - **Authentication**: Reuse existing `token.Verifier` for all AI Chat endpoints
 - **Authorization**: Require minimum Viewer role via `checkEnvironmentRole`
 - **Rate Limiting**: Per-user, per-environment, and per-organization limits to prevent abuse
-- **Input Sanitization**: Sanitize all user inputs before sending to LLM
-- **Prompt Injection**: System prompt includes explicit boundaries and restrictions
+- **Input Sanitization**: Maximum input length limits and basic sanitization (e.g., HTML tag removal) before sending to LLM
+- **Prompt Injection Prevention**:
+  - System prompt explicitly defines boundaries (e.g., refuses role changes or data extraction attempts by user input)
+  - User input is wrapped with delimiters (e.g., `<user_input>` tags) to clearly separate it from system instructions
 - **Error Handling**: Internal errors logged but not exposed to clients
 
 ## Cost Considerations
