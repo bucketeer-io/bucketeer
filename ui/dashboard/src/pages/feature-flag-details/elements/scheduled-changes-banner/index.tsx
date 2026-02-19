@@ -11,9 +11,17 @@ import {
   ScheduledFlagChangeStatuses
 } from '@types';
 import { cn } from 'utils/style';
-import { IconCalendar, IconChecked, IconChevronDown, IconClose, IconInfoFilled } from '@icons';
+import {
+  IconCalendar,
+  IconChecked,
+  IconChevronDown,
+  IconClose,
+  IconInfo,
+  IconInfoFilled
+} from '@icons';
 import Icon from 'components/icon';
 import { Popover, PopoverOption, PopoverValue } from 'components/popover';
+import ScheduledChangesPanel from '../scheduled-changes-panel';
 import ApplyNowDialog from './apply-now-dialog';
 import CancelScheduleDialog from './cancel-schedule-dialog';
 import EditScheduleDialog from './edit-schedule-dialog';
@@ -33,7 +41,11 @@ const BANNER_STATUSES = [
   ScheduledFlagChangeStatuses.CONFLICT
 ];
 
-type ScheduleAction = 'APPLY_NOW' | 'EDIT_SCHEDULE' | 'CANCEL_SCHEDULE';
+type ScheduleAction =
+  | 'SEE_DETAILS'
+  | 'APPLY_NOW'
+  | 'EDIT_SCHEDULE'
+  | 'CANCEL_SCHEDULE';
 
 interface ScheduledChangesBannerProps {
   featureId: string;
@@ -57,6 +69,11 @@ const ScheduleActionsMenu = ({
   const { t } = useTranslation(['form']);
 
   const options: PopoverOption<PopoverValue>[] = [
+    {
+      label: t('feature-flags.see-details'),
+      icon: IconInfo,
+      value: 'SEE_DETAILS'
+    },
     {
       label: t('feature-flags.apply-now'),
       icon: IconChecked,
@@ -84,9 +101,7 @@ const ScheduleActionsMenu = ({
           <IconMoreHorizOutlined style={{ fontSize: 20 }} />
         </span>
       }
-      onClick={value =>
-        onAction(value as ScheduleAction, schedule)
-      }
+      onClick={value => onAction(value as ScheduleAction, schedule)}
     />
   );
 };
@@ -101,8 +116,7 @@ const ScheduleItemSummary = ({
   const { t } = useTranslation(['form']);
 
   const changeCount = schedule.changeSummaries?.length ?? 0;
-  const categoryKey =
-    CATEGORY_I18N_KEY[schedule.category] || 'mixed-changes';
+  const categoryKey = CATEGORY_I18N_KEY[schedule.category] || 'mixed-changes';
 
   return (
     <li className="flex items-center justify-between w-full typo-para-small text-gray-700 gap-x-2">
@@ -130,8 +144,9 @@ const ScheduledChangesBanner = ({
 }: ScheduledChangesBannerProps) => {
   const { t } = useTranslation(['common', 'form']);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [activeDialog, setActiveDialog] = useState<{
-    type: ScheduleAction;
+    type: Exclude<ScheduleAction, 'SEE_DETAILS'>;
     schedule: ScheduledFlagChange;
   } | null>(null);
 
@@ -165,6 +180,10 @@ const ScheduledChangesBanner = ({
     action: ScheduleAction,
     schedule: ScheduledFlagChange
   ) => {
+    if (action === 'SEE_DETAILS') {
+      setIsPanelOpen(true);
+      return;
+    }
     setActiveDialog({ type: action, schedule });
   };
 
@@ -180,11 +199,7 @@ const ScheduledChangesBanner = ({
             className="flex items-center justify-between w-full gap-x-4 cursor-pointer"
           >
             <div className="flex items-center gap-x-2 min-w-0">
-              <Icon
-                icon={IconInfoFilled}
-                size="xxs"
-                color="accent-blue-500"
-              />
+              <Icon icon={IconInfoFilled} size="xxs" color="accent-blue-500" />
               <p className="typo-para-small leading-[14px] text-accent-blue-500">
                 {t('form:feature-flags.scheduled-changes-count', {
                   count: pendingCount
@@ -204,11 +219,7 @@ const ScheduledChangesBanner = ({
         ) : (
           <div className="flex items-center justify-between gap-x-4">
             <div className="flex items-center gap-x-2 min-w-0">
-              <Icon
-                icon={IconInfoFilled}
-                size="xxs"
-                color="accent-blue-500"
-              />
+              <Icon icon={IconInfoFilled} size="xxs" color="accent-blue-500" />
               <p className="typo-para-small leading-[14px] text-accent-blue-500">
                 {t('form:feature-flags.scheduled-changes-single', {
                   datetime: nextScheduledAt
@@ -218,7 +229,7 @@ const ScheduledChangesBanner = ({
               </p>
             </div>
             {firstSchedule && (
-              <div className="flex items-center gap-x-2 flex-shrink-0">
+              <div className="flex items-center flex-shrink-0">
                 <ScheduleActionsMenu
                   schedule={firstSchedule}
                   onAction={handleAction}
@@ -228,7 +239,7 @@ const ScheduledChangesBanner = ({
           </div>
         )}
 
-        {isExpanded && schedules.length > 0 && (
+        {hasMultiple && isExpanded && schedules.length > 0 && (
           <ul className="flex flex-col gap-y-2 pl-6 pt-3 w-full max-w-full">
             {schedules.map(schedule => (
               <ScheduleItemSummary
@@ -240,6 +251,15 @@ const ScheduledChangesBanner = ({
           </ul>
         )}
       </div>
+
+      {isPanelOpen && (
+        <ScheduledChangesPanel
+          featureId={featureId}
+          environmentId={environmentId}
+          isOpen={isPanelOpen}
+          onClose={() => setIsPanelOpen(false)}
+        />
+      )}
 
       {activeDialog?.type === 'EDIT_SCHEDULE' && (
         <EditScheduleDialog

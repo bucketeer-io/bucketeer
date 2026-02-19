@@ -146,8 +146,7 @@ const GeneralInfoForm = ({
           const values = getValues();
           const { flagId, comment, tags, ...rest } = values;
 
-          const isScheduleUpdate =
-            scheduleType === SCHEDULE_TYPE_SCHEDULE;
+          const isScheduleUpdate = scheduleType === SCHEDULE_TYPE_SCHEDULE;
 
           if (isScheduleUpdate) {
             const payload: ScheduledChangePayload = {};
@@ -173,10 +172,9 @@ const GeneralInfoForm = ({
             });
             if (resp) {
               notify({
-                message: t(
-                  'form:feature-flags.schedule-configured',
-                  { name: feature.name }
-                )
+                message: t('form:feature-flags.schedule-configured', {
+                  name: feature.name
+                })
               });
               form.reset({
                 ...values,
@@ -245,7 +243,7 @@ const GeneralInfoForm = ({
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <FormProvider {...form}>
-      <Form onSubmit={form.handleSubmit(onSubmit)}>
+      <Form onSubmit={form.handleSubmit(() => onSubmit())}>
         <Card>
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
             <p className="typo-head-bold-small text-gray-800">
@@ -391,7 +389,7 @@ const GeneralInfoForm = ({
           <SaveWithCommentModal
             isOpen={isOpenSaveModal}
             isRequired={currentEnvironment.requireComment}
-            isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && isDirty}
+            isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED}
             onClose={() => {
               onCloseSaveModal();
               resetField('comment');

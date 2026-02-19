@@ -8,21 +8,26 @@ import { useQueryExperiments } from '@queries/experiments';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
+import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import {
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_FEATURES
 } from 'constants/routing';
-import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
-import { Feature, FeatureVariation, ScheduledChangePayload, VariationChange } from '@types';
-import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
+import {
+  Feature,
+  FeatureVariation,
+  ScheduledChangePayload,
+  VariationChange
+} from '@types';
 import { IconInfoFilled } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -165,10 +170,9 @@ const Variation = ({ feature, editable }: VariationProps) => {
             });
             if (resp) {
               notify({
-                message: t(
-                  'form:feature-flags.schedule-configured',
-                  { name: feature.name }
-                )
+                message: t('form:feature-flags.schedule-configured', {
+                  name: feature.name
+                })
               });
               onCloseConfirmDialog();
             }
@@ -281,7 +285,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
         <ConfirmationRequiredModal
           feature={feature}
           isOpen={openConfirmDialog}
-          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && isDirty}
+          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED}
           onClose={onCloseConfirmDialog}
           onSubmit={additionalValues =>
             form.handleSubmit(() => onSubmit(additionalValues))()

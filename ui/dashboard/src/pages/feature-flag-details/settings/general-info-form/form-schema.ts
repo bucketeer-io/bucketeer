@@ -15,8 +15,7 @@ export const generalInfoFormSchema = ({
     comment: yup.string(),
     scheduleType: yup.string(),
     scheduleAt: yup.string().test('validate', function (value, context) {
-      const scheduleType =
-        context.from && context.from[0].value.scheduleType;
+      const scheduleType = context.from && context.from[0].value.scheduleType;
       if (scheduleType === SCHEDULE_TYPE_SCHEDULE) {
         if (!value)
           return context.createError({

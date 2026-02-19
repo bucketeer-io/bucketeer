@@ -1,6 +1,7 @@
-import { useExecuteScheduledFlagChange } from '@queries/scheduled-flag-changes';
+import { Trans } from 'react-i18next';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
+import { useExecuteScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -25,11 +26,7 @@ interface ApplyNowDialogProps {
   onClose: () => void;
 }
 
-const ApplyNowDialog = ({
-  schedule,
-  isOpen,
-  onClose
-}: ApplyNowDialogProps) => {
+const ApplyNowDialog = ({ schedule, isOpen, onClose }: ApplyNowDialogProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
@@ -60,19 +57,18 @@ const ApplyNowDialog = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full items-center px-5 py-8 gap-y-4">
-        <p className="typo-para-medium text-gray-600 text-center">
-          {t('form:feature-flags.apply-now-confirm', {
-            datetime: formatScheduledDate(schedule.scheduledAt)
-          })}
+        <p className="typo-para-big text-gray-700 text-center">
+          <Trans
+            i18nKey="form:feature-flags.apply-now-confirm"
+            values={{ datetime: formatScheduledDate(schedule.scheduledAt) }}
+            components={{ bold: <strong /> }}
+          />
         </p>
       </div>
 
       <ButtonBar
         secondaryButton={
-          <Button
-            loading={executeMutation.isPending}
-            onClick={handleConfirm}
-          >
+          <Button loading={executeMutation.isPending} onClick={handleConfirm}>
             {t('confirm')}
           </Button>
         }

@@ -14,7 +14,6 @@ interface Props {
   feature: Feature;
   features: Feature[];
   prerequisites: PrerequisiteSchema[];
-  hasPrerequisiteFlags: Feature[];
   isDisableAddPrerequisite: boolean;
   onRemovePrerequisite: (index: number) => void;
   onAddPrerequisite: () => void;
@@ -24,7 +23,6 @@ const PrerequisiteRule = ({
   feature,
   features,
   prerequisites,
-  hasPrerequisiteFlags,
   isDisableAddPrerequisite,
   onRemovePrerequisite,
   onAddPrerequisite

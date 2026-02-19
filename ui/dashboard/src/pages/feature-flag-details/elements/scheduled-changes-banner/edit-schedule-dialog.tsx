@@ -76,9 +76,7 @@ const EditScheduleDialog = ({
                       0
                     );
                   }
-                  setScheduleAt(
-                    String(Math.floor(date.getTime() / 1000))
-                  );
+                  setScheduleAt(String(Math.floor(date.getTime() / 1000)));
                 }
               }}
             />
@@ -96,14 +94,10 @@ const EditScheduleDialog = ({
               className="w-[124px]"
               onChange={date => {
                 if (date) {
-                  setScheduleAt(
-                    String(Math.floor(date.getTime() / 1000))
-                  );
+                  setScheduleAt(String(Math.floor(date.getTime() / 1000)));
                 }
               }}
-              icon={
-                <Icon icon={IconWatch} className="flex-center" />
-              }
+              icon={<Icon icon={IconWatch} className="flex-center" />}
             />
           </div>
         </div>
@@ -111,10 +105,7 @@ const EditScheduleDialog = ({
 
       <ButtonBar
         secondaryButton={
-          <Button
-            loading={updateMutation.isPending}
-            onClick={handleSave}
-          >
+          <Button loading={updateMutation.isPending} onClick={handleSave}>
             {t('submit')}
           </Button>
         }

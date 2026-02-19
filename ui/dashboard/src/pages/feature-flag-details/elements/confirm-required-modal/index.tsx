@@ -116,9 +116,7 @@ const ConfirmationRequiredModal = ({
                 name="comment"
                 render={({ field }) => (
                   <Form.Item className="py-0">
-                    <Form.Label
-                      required={isRequireComment && !isShowSchedule}
-                    >
+                    <Form.Label required={isRequireComment && !isShowSchedule}>
                       {t('form:comment-for-update')}
                     </Form.Label>
                     <Form.Control>
@@ -242,9 +240,7 @@ const ConfirmationRequiredModal = ({
                                         }
                                         field.onChange(
                                           String(
-                                            Math.floor(
-                                              date.getTime() / 1000
-                                            )
+                                            Math.floor(date.getTime() / 1000)
                                           )
                                         );
                                       }
@@ -265,9 +261,7 @@ const ConfirmationRequiredModal = ({
                                       if (date) {
                                         field.onChange(
                                           String(
-                                            Math.floor(
-                                              date.getTime() / 1000
-                                            )
+                                            Math.floor(date.getTime() / 1000)
                                           )
                                         );
                                       }
@@ -301,9 +295,7 @@ const ConfirmationRequiredModal = ({
                         <Checkbox
                           ref={field.ref}
                           checked={field.value}
-                          onCheckedChange={checked =>
-                            field.onChange(checked)
-                          }
+                          onCheckedChange={checked => field.onChange(checked)}
                           title={t('form:reset-sampling')}
                         />
                       </Form.Control>
@@ -312,11 +304,7 @@ const ConfirmationRequiredModal = ({
                         content={t('form:reset-sampling-tooltip')}
                         trigger={
                           <div className="flex-center size-fit">
-                            <Icon
-                              icon={IconInfo}
-                              size="xs"
-                              color="gray-500"
-                            />
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
                           </div>
                         }
                         className="max-w-[400px]"

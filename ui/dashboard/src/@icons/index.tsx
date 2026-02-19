@@ -56,6 +56,7 @@ import IconThreeLines from './customized-icons/three-lines.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
+import IconToastWarningDynamic from './customized-icons/toast-warning-dynamic.svg?react';
 import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
@@ -133,6 +134,7 @@ export {
   IconToastInfo,
   IconToastSuccess,
   IconToastWarning,
+  IconToastWarningDynamic,
   IconClose,
   IconSorting,
   IconSortingUp,

@@ -1,7 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { useTranslation } from 'i18n';
-import { cn } from 'utils/style';
 import { IconInfo, IconWatch } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -37,8 +35,7 @@ const SaveWithCommentModal = ({
     control,
     formState: { isValid, isSubmitting },
     handleSubmit,
-    watch,
-    setValue
+    watch
   } = useFormContext();
 
   const scheduleType = watch('scheduleType');
@@ -173,9 +170,7 @@ const SaveWithCommentModal = ({
                                     );
                                   }
                                   field.onChange(
-                                    String(
-                                      Math.floor(date.getTime() / 1000)
-                                    )
+                                    String(Math.floor(date.getTime() / 1000))
                                   );
                                 }
                               }}
@@ -194,9 +189,7 @@ const SaveWithCommentModal = ({
                               onChange={date => {
                                 if (date) {
                                   field.onChange(
-                                    String(
-                                      Math.floor(date.getTime() / 1000)
-                                    )
+                                    String(Math.floor(date.getTime() / 1000))
                                   );
                                 }
                               }}
@@ -226,10 +219,7 @@ const SaveWithCommentModal = ({
             disabled={!isValid}
             loading={isSubmitting}
             onClick={handleSubmit(() =>
-              onSubmit(
-                watch('scheduleType'),
-                watch('scheduleAt')
-              )
+              onSubmit(watch('scheduleType'), watch('scheduleAt'))
             )}
           >
             {t(`submit`)}

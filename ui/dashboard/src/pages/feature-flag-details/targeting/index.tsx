@@ -9,6 +9,7 @@ import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { useToast, useToggleOpen } from 'hooks';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
@@ -28,7 +29,6 @@ import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
-import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { SCHEDULE_TYPE_SCHEDULE } from '../elements/confirm-required-modal/form-schema';
 import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import AddRule from './add-rule';
@@ -138,16 +138,6 @@ const TargetingPage = ({
     item.prerequisites.find(p => p.featureId === feature.id)
   );
 
-  const hasTargetingChanges = useMemo(() => {
-    const relevantDirtyKeys = Object.keys(dirtyFields).filter(
-      key =>
-        !['requireComment', 'comment', 'scheduleType', 'scheduleAt'].includes(
-          key
-        )
-    );
-    return relevantDirtyKeys.length > 0;
-  }, [dirtyFields]);
-
   const isDisableAddPrerequisite = useMemo(() => {
     if (!features?.length) return true;
     const filterFeatures = activeFeatures.filter(f => f.id !== feature.id);
@@ -235,11 +225,7 @@ const TargetingPage = ({
         offVariation
       } = values;
 
-      const {
-        rules,
-        targets,
-        prerequisites: featurePrerequisites
-      } = feature;
+      const { rules, targets, prerequisites: featurePrerequisites } = feature;
 
       const payload: ScheduledChangePayload = {};
 
@@ -311,8 +297,7 @@ const TargetingPage = ({
             prerequisites: featurePrerequisites
           } = feature;
 
-          const isScheduleUpdate =
-            scheduleType === SCHEDULE_TYPE_SCHEDULE;
+          const isScheduleUpdate = scheduleType === SCHEDULE_TYPE_SCHEDULE;
 
           if (isScheduleUpdate) {
             const payload = buildSchedulePayload(values, resetSampling);
@@ -325,10 +310,9 @@ const TargetingPage = ({
             });
             if (resp) {
               notify({
-                message: t(
-                  'form:feature-flags.schedule-configured',
-                  { name: feature.name }
-                )
+                message: t('form:feature-flags.schedule-configured', {
+                  name: feature.name
+                })
               });
               reset(handleCreateDefaultValues(feature));
               onCloseConfirmModal();
@@ -363,9 +347,7 @@ const TargetingPage = ({
               invalidateFeatures(queryClient);
               invalidateUserSegments(queryClient);
               reset(
-                handleCreateDefaultValues(
-                  (resp as FeatureResponse)?.feature
-                )
+                handleCreateDefaultValues((resp as FeatureResponse)?.feature)
               );
               onCloseConfirmModal();
             }
@@ -428,7 +410,6 @@ const TargetingPage = ({
                     features={activeFeatures}
                     feature={feature}
                     prerequisites={prerequisites}
-                    hasPrerequisiteFlags={hasPrerequisiteFlags}
                     onRemovePrerequisite={prerequisiteRemove}
                     onAddPrerequisite={() =>
                       onAddRule(RuleCategory.PREREQUISITE)
@@ -527,7 +508,7 @@ const TargetingPage = ({
         <ConfirmationRequiredModal
           feature={feature}
           isOpen={isOpenConfirmModal}
-          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && hasTargetingChanges}
+          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()
