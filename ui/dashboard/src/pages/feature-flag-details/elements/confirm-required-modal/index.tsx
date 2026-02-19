@@ -10,8 +10,7 @@ import {
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { cn } from 'utils/style';
-import { IconInfo, IconToastWarning } from '@icons';
+import { IconInfo, IconToastWarning, IconWatch } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -21,9 +20,12 @@ import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
-import ToastMessage from 'components/toast';
 import { Tooltip } from 'components/tooltip';
-import { formSchema } from './form-schema';
+import {
+  formSchema,
+  SCHEDULE_TYPE_SCHEDULE,
+  SCHEDULE_TYPE_UPDATE_NOW
+} from './form-schema';
 
 export type ConfirmationRequiredModalProps = {
   feature: Feature;
@@ -31,7 +33,7 @@ export type ConfirmationRequiredModalProps = {
   isShowScheduleSelect?: boolean;
   isShowRolloutWarning?: boolean;
   onClose: () => void;
-  onSubmit: (args: { comment?: string; scheduleAt?: string }) => Promise<void>;
+  onSubmit: (values: ConfirmRequiredValues) => Promise<void>;
 };
 
 export interface ConfirmRequiredValues {
@@ -75,7 +77,7 @@ const ConfirmationRequiredModal = ({
       comment: '',
       resetSampling: false,
       requireComment: currentEnvironment.requireComment,
-      scheduleType: feature.enabled ? 'DISABLE' : 'ENABLE',
+      scheduleType: SCHEDULE_TYPE_UPDATE_NOW,
       scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000))
     },
     mode: 'onChange'
@@ -88,7 +90,7 @@ const ConfirmationRequiredModal = ({
     setValue
   } = form;
   const isRequireComment = watch('requireComment');
-  const isShowSchedule = watch('scheduleType') === 'SCHEDULE';
+  const isShowSchedule = watch('scheduleType') === SCHEDULE_TYPE_SCHEDULE;
 
   const handleOnSubmit = async (values: ConfirmRequiredValues) => {
     await onSubmit(values);
@@ -109,68 +111,29 @@ const ConfirmationRequiredModal = ({
             </div>
 
             <div className="flex flex-col w-full px-5 pb-5">
-              {!isShowSchedule && (
-                <>
-                  <Form.Field
-                    control={control}
-                    name="comment"
-                    render={({ field }) => (
-                      <Form.Item className="py-0">
-                        <Form.Label required={isRequireComment}>
-                          {t('form:comment-for-update')}
-                        </Form.Label>
-                        <Form.Control>
-                          <TextArea
-                            placeholder={`${t('form:placeholder-comment')}`}
-                            rows={3}
-                            {...field}
-                            onChange={value => {
-                              field.onChange(value);
-                            }}
-                            name="comment"
-                          />
-                        </Form.Control>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
-                  <Form.Field
-                    control={control}
-                    name="resetSampling"
-                    render={({ field }) => (
-                      <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                        <div className="flex items-center gap-x-2">
-                          <Form.Control>
-                            <Checkbox
-                              ref={field.ref}
-                              checked={field.value}
-                              onCheckedChange={checked =>
-                                field.onChange(checked)
-                              }
-                              title={t('form:reset-sampling')}
-                            />
-                          </Form.Control>
-                          <Tooltip
-                            align="start"
-                            content={t('form:reset-sampling-tooltip')}
-                            trigger={
-                              <div className="flex-center size-fit">
-                                <Icon
-                                  icon={IconInfo}
-                                  size="xs"
-                                  color="gray-500"
-                                />
-                              </div>
-                            }
-                            className="max-w-[400px]"
-                          />
-                        </div>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
-                </>
-              )}
+              <Form.Field
+                control={control}
+                name="comment"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Label required={isRequireComment && !isShowSchedule}>
+                      {t('form:comment-for-update')}
+                    </Form.Label>
+                    <Form.Control>
+                      <TextArea
+                        placeholder={`${t('form:placeholder-comment')}`}
+                        rows={3}
+                        {...field}
+                        onChange={value => {
+                          field.onChange(value);
+                        }}
+                        name="comment"
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
 
               {isShowScheduleSelect && (
                 <>
@@ -178,27 +141,24 @@ const ConfirmationRequiredModal = ({
                     control={form.control}
                     name="scheduleType"
                     render={({ field }) => (
-                      <Form.Item
-                        className={cn(
-                          'flex flex-col w-full py-0 gap-y-4 mt-5',
-                          {
-                            'mt-0': isShowSchedule
-                          }
-                        )}
-                      >
+                      <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
                         <Form.Control>
                           <RadioGroup
                             defaultValue={field.value}
                             className="flex flex-col w-full gap-y-4"
                             onValueChange={value => {
                               field.onChange(value);
-                              setValue('requireComment', value !== 'SCHEDULE');
+                              setValue(
+                                'requireComment',
+                                value !== SCHEDULE_TYPE_SCHEDULE &&
+                                  currentEnvironment.requireComment
+                              );
                             }}
                           >
                             <div className="flex items-center gap-x-2">
                               <RadioGroupItem
                                 id="active_now"
-                                value={feature.enabled ? 'DISABLE' : 'ENABLE'}
+                                value={SCHEDULE_TYPE_UPDATE_NOW}
                               />
                               <label
                                 htmlFor="active_now"
@@ -209,13 +169,35 @@ const ConfirmationRequiredModal = ({
                             </div>
 
                             <div className="flex items-center gap-x-2">
-                              <RadioGroupItem id="schedule" value="SCHEDULE" />
+                              <RadioGroupItem
+                                id="schedule"
+                                value={SCHEDULE_TYPE_SCHEDULE}
+                              />
                               <label
                                 htmlFor="schedule"
                                 className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
                               >
-                                {t('form:feature-flags.schedule')}
+                                {t('form:feature-flags.schedule-the-updates')}
                               </label>
+                              <span className="px-2 py-1.5 rounded-[3px] bg-accent-blue-50 text-accent-blue-500 typo-para-small leading-[14px] whitespace-nowrap uppercase">
+                                New
+                              </span>
+                              <Tooltip
+                                align="start"
+                                content={t(
+                                  'form:feature-flags.schedule-the-updates-tooltip'
+                                )}
+                                trigger={
+                                  <div className="flex-center size-fit">
+                                    <Icon
+                                      icon={IconInfo}
+                                      size="xs"
+                                      color="gray-500"
+                                    />
+                                  </div>
+                                }
+                                className="max-w-[400px]"
+                              />
                             </div>
                           </RadioGroup>
                         </Form.Control>
@@ -223,46 +205,116 @@ const ConfirmationRequiredModal = ({
                       </Form.Item>
                     )}
                   />
-                  {form.watch('scheduleType') === 'SCHEDULE' && (
-                    <div className="flex flex-col w-full gap-y-5 mt-5">
-                      <ToastMessage
-                        toastType="info-message"
-                        messageType="info"
-                        message={t('form:feature-flags.schedule-info')}
-                      />
-                      <Form.Field
-                        control={form.control}
-                        name="scheduleAt"
-                        render={({ field }) => (
-                          <Form.Item className="py-0">
-                            <Form.Label required>
-                              {t('form:feature-flags:start-at')}
-                            </Form.Label>
+                  {isShowSchedule && (
+                    <Form.Field
+                      control={form.control}
+                      name="scheduleAt"
+                      render={({ field }) => {
+                        const scheduleDate = field.value
+                          ? new Date(+field.value * 1000)
+                          : null;
+
+                        return (
+                          <Form.Item className="py-0 mt-5">
                             <Form.Control>
-                              <ReactDatePicker
-                                minDate={new Date()}
-                                selected={
-                                  field.value
-                                    ? new Date(+field.value * 1000)
-                                    : null
-                                }
-                                onChange={date => {
-                                  if (date) {
-                                    field.onChange(
-                                      String(date?.getTime() / 1000)
-                                    );
-                                  }
-                                }}
-                              />
+                              <div className="flex gap-x-4">
+                                <div>
+                                  <Form.Label required>
+                                    {t('form:feature-flags.update-date')}
+                                  </Form.Label>
+                                  <ReactDatePicker
+                                    dateFormat="yyyy/MM/dd"
+                                    minDate={new Date()}
+                                    selected={scheduleDate}
+                                    showTimeSelect={false}
+                                    className="w-[186px]"
+                                    onChange={date => {
+                                      if (date) {
+                                        if (scheduleDate) {
+                                          date.setHours(
+                                            scheduleDate.getHours(),
+                                            scheduleDate.getMinutes(),
+                                            0,
+                                            0
+                                          );
+                                        }
+                                        field.onChange(
+                                          String(
+                                            Math.floor(date.getTime() / 1000)
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Form.Label required>
+                                    {t('form:feature-flags.update-time')}
+                                  </Form.Label>
+                                  <ReactDatePicker
+                                    dateFormat="HH:mm"
+                                    timeFormat="HH:mm"
+                                    selected={scheduleDate}
+                                    showTimeSelectOnly={true}
+                                    className="w-[124px]"
+                                    onChange={date => {
+                                      if (date) {
+                                        field.onChange(
+                                          String(
+                                            Math.floor(date.getTime() / 1000)
+                                          )
+                                        );
+                                      }
+                                    }}
+                                    icon={
+                                      <Icon
+                                        icon={IconWatch}
+                                        className="flex-center"
+                                      />
+                                    }
+                                  />
+                                </div>
+                              </div>
                             </Form.Control>
                             <Form.Message />
                           </Form.Item>
-                        )}
-                      />
-                    </div>
+                        );
+                      }}
+                    />
                   )}
                 </>
               )}
+
+              <Form.Field
+                control={control}
+                name="resetSampling"
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
+                    <div className="flex items-center gap-x-2">
+                      <Form.Control>
+                        <Checkbox
+                          ref={field.ref}
+                          checked={field.value}
+                          onCheckedChange={checked => field.onChange(checked)}
+                          title={t('form:reset-sampling')}
+                        />
+                      </Form.Control>
+                      <Tooltip
+                        align="start"
+                        content={t('form:reset-sampling-tooltip')}
+                        trigger={
+                          <div className="flex-center size-fit">
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
+                          </div>
+                        }
+                        className="max-w-[400px]"
+                      />
+                    </div>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
               {isShowRolloutWarning && hasRolloutRunning && (
                 <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 typo-para-small">
                   <Icon icon={IconToastWarning} />

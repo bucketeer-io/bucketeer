@@ -56,6 +56,7 @@ import IconThreeLines from './customized-icons/three-lines.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
+import IconToastWarningDynamic from './customized-icons/toast-warning-dynamic.svg?react';
 import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
@@ -80,6 +81,7 @@ import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
 import IconActiveFlags from './special-icons/active-flags.svg?react';
+import IconCalendarCancel from './special-icons/calendar-cancel.svg?react';
 import IconDelete from './special-icons/delete.svg?react';
 import IconExperiment from './special-icons/experiment.svg?react';
 import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
@@ -132,6 +134,7 @@ export {
   IconToastInfo,
   IconToastSuccess,
   IconToastWarning,
+  IconToastWarningDynamic,
   IconClose,
   IconSorting,
   IconSortingUp,
@@ -193,6 +196,7 @@ export {
   IconFCM,
   IconNoData,
   IconLogoutConfirm,
+  IconCalendarCancel,
   IconDelete,
   IconExperiment,
   IconOperation,

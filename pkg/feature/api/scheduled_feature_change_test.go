@@ -75,12 +75,12 @@ func TestCreateScheduledFlagChange_ValidationErrors(t *testing.T) {
 			expectedErr: statusMissingPayload.Err(),
 		},
 		{
-			desc:  "scheduled time too soon",
+			desc:  "scheduled time in the past",
 			setup: func(s *FeatureService) {},
 			req: &featureproto.CreateScheduledFlagChangeRequest{
 				EnvironmentId: "ns0",
 				FeatureId:     "feature-id",
-				ScheduledAt:   time.Now().Add(30 * time.Second).Unix(), // 30s from now, less than 1 minute
+				ScheduledAt:   time.Now().Add(-10 * time.Second).Unix(),
 				Payload:       &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
 			},
 			expectedErr: statusScheduledTimeTooSoon.Err(),
@@ -368,9 +368,19 @@ func TestValidateScheduledTime(t *testing.T) {
 		expectError bool
 	}{
 		{
-			desc:        "too soon - 30 seconds from now",
-			scheduledAt: now + 30,
+			desc:        "too soon - in the past",
+			scheduledAt: now - 10,
 			expectError: true,
+		},
+		{
+			desc:        "too soon - exactly now",
+			scheduledAt: now,
+			expectError: true,
+		},
+		{
+			desc:        "valid - 30 seconds from now",
+			scheduledAt: now + 30,
+			expectError: false,
 		},
 		{
 			desc:        "valid - exactly 1 minute from now",
