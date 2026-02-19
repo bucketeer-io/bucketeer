@@ -890,10 +890,9 @@ func (s *FeatureService) validateCreateScheduledFlagChangeRequest(req *ftproto.C
 
 func validateScheduledTime(scheduledAt int64) error {
 	now := time.Now().Unix()
-	minTime := now + int64(minScheduleTimeMinutes*60)
 	maxTime := now + int64(maxScheduleTimeDays*24*60*60)
 
-	if scheduledAt < minTime {
+	if scheduledAt <= now {
 		return statusScheduledTimeTooSoon.Err()
 	}
 	if scheduledAt > maxTime {

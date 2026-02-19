@@ -7,15 +7,17 @@ import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { invalidateHistories } from '@queries/histories';
+import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
-import { Feature, TagChange } from '@types';
+import { Feature, ScheduledChangePayload, TagChange } from '@types';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { DropdownOption } from 'components/dropdown';
@@ -28,6 +30,10 @@ import Card from 'elements/card';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import SelectMenu from 'elements/select-menu';
+import {
+  SCHEDULE_TYPE_SCHEDULE,
+  SCHEDULE_TYPE_UPDATE_NOW
+} from '../../elements/confirm-required-modal/form-schema';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 
@@ -46,6 +52,7 @@ const GeneralInfoForm = ({
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
+  const createScheduleMutation = useCreateScheduledFlagChange();
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
@@ -74,7 +81,9 @@ const GeneralInfoForm = ({
       flagId: feature.id,
       description: feature.description,
       tags: feature.tags,
-      comment: ''
+      comment: '',
+      scheduleType: SCHEDULE_TYPE_UPDATE_NOW,
+      scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000))
     },
     mode: 'onChange'
   });
@@ -130,46 +139,98 @@ const GeneralInfoForm = ({
     [feature]
   );
 
-  const onSubmit = useCallback(async () => {
-    if (!disabled) {
-      try {
-        const values = getValues();
-        const { flagId, comment, tags, ...rest } = values;
-        if (currentEnvironment.requireComment && !comment)
-          return setError('comment', {
-            message: t('message:required-field')
-          });
+  const onSubmit = useCallback(
+    async (scheduleType?: string, scheduleAt?: string) => {
+      if (!disabled) {
+        try {
+          const values = getValues();
+          const { flagId, comment, tags, ...rest } = values;
 
-        const resp = await featureUpdater({
-          id: flagId,
-          environmentId: currentEnvironment.id,
-          comment,
-          ...handleCheckTags(tags),
-          ...rest
-        });
+          const isScheduleUpdate =
+            scheduleType === SCHEDULE_TYPE_SCHEDULE;
 
-        if (resp) {
-          notify({
-            message: t('message:collection-action-success', {
-              collection: t('common:source-type.feature-flag'),
-              action: t('common:updated')
-            })
-          });
-          form.reset({
-            ...values,
-            comment: ''
-          });
-          invalidateFeature(queryClient);
-          invalidateFeatures(queryClient);
-          invalidateTags(queryClient);
-          invalidateHistories(queryClient);
-          onCloseSaveModal();
+          if (isScheduleUpdate) {
+            const payload: ScheduledChangePayload = {};
+            if (rest.name !== feature.name) {
+              payload.name = rest.name;
+            }
+            if (rest.description !== feature.description) {
+              payload.description = rest.description;
+            }
+            if (rest.maintainer !== feature.maintainer) {
+              payload.maintainer = rest.maintainer;
+            }
+            const { tagChanges } = handleCheckTags(tags);
+            if (tagChanges.length > 0) {
+              payload.tagChanges = tagChanges;
+            }
+            const resp = await createScheduleMutation.mutateAsync({
+              environmentId: currentEnvironment.id,
+              featureId: flagId,
+              scheduledAt: scheduleAt as string,
+              payload,
+              comment
+            });
+            if (resp) {
+              notify({
+                message: t(
+                  'form:feature-flags.schedule-configured',
+                  { name: feature.name }
+                )
+              });
+              form.reset({
+                ...values,
+                comment: '',
+                scheduleType: SCHEDULE_TYPE_UPDATE_NOW,
+                scheduleAt: String(
+                  Math.floor((new Date().getTime() + 3600000) / 1000)
+                )
+              });
+              onCloseSaveModal();
+            }
+          } else {
+            if (currentEnvironment.requireComment && !comment)
+              return setError('comment', {
+                message: t('message:required-field')
+              });
+
+            const resp = await featureUpdater({
+              id: flagId,
+              environmentId: currentEnvironment.id,
+              comment,
+              ...handleCheckTags(tags),
+              ...rest
+            });
+
+            if (resp) {
+              notify({
+                message: t('message:collection-action-success', {
+                  collection: t('common:source-type.feature-flag'),
+                  action: t('common:updated')
+                })
+              });
+              form.reset({
+                ...values,
+                comment: '',
+                scheduleType: SCHEDULE_TYPE_UPDATE_NOW,
+                scheduleAt: String(
+                  Math.floor((new Date().getTime() + 3600000) / 1000)
+                )
+              });
+              invalidateFeature(queryClient);
+              invalidateFeatures(queryClient);
+              invalidateTags(queryClient);
+              invalidateHistories(queryClient);
+              onCloseSaveModal();
+            }
+          }
+        } catch (error) {
+          errorNotify(error);
         }
-      } catch (error) {
-        errorNotify(error);
       }
-    }
-  }, [currentEnvironment, feature, disabled]);
+    },
+    [currentEnvironment, feature, disabled]
+  );
 
   useEffect(() => {
     if (tags.length) {
@@ -330,6 +391,7 @@ const GeneralInfoForm = ({
           <SaveWithCommentModal
             isOpen={isOpenSaveModal}
             isRequired={currentEnvironment.requireComment}
+            isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && isDirty}
             onClose={() => {
               onCloseSaveModal();
               resetField('comment');

@@ -15,12 +15,14 @@ import {
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_FEATURES
 } from 'constants/routing';
+import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { useToast, useToggleOpen } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import isEqual from 'lodash/isEqual';
-import { Feature, FeatureVariation, VariationChange } from '@types';
+import { Feature, FeatureVariation, ScheduledChangePayload, VariationChange } from '@types';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { IconInfoFilled } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -29,6 +31,8 @@ import { CardNote } from 'elements/overview-card';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
+import { SCHEDULE_TYPE_SCHEDULE } from '../elements/confirm-required-modal/form-schema';
+import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import { variationsFormSchema } from './form-schema';
 import SubmitBar from './submit-bar';
 import VariationsSection from './variations-section';
@@ -48,6 +52,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
   const [openConfirmDialog, onOpenConfirmDialog, onCloseConfirmDialog] =
     useToggleOpen(false);
 
+  const createScheduleMutation = useCreateScheduledFlagChange();
   const { notify, errorNotify } = useToast();
 
   const { data: rolloutCollection } = useQueryRollouts({
@@ -134,27 +139,59 @@ const Variation = ({ feature, editable }: VariationProps) => {
       if (editable) {
         try {
           const { variations, offVariation } = form.getValues();
-          const { comment, resetSampling } = additionalValues || {};
+          const { comment, resetSampling, scheduleType, scheduleAt } =
+            additionalValues || {};
 
-          const resp = await featureUpdater({
-            id: feature.id,
-            environmentId: currentEnvironment.id,
-            comment,
-            resetSamplingSeed: resetSampling,
-            offVariation,
-            ...handleCheckVariations(variations)
-          });
-          if (resp) {
-            notify({
-              message: t('message:collection-action-success', {
-                collection: t('source-type.feature-flag'),
-                action: t('updated')
-              })
+          const isScheduleUpdate = scheduleType === SCHEDULE_TYPE_SCHEDULE;
+
+          if (isScheduleUpdate) {
+            const { variationChanges } = handleCheckVariations(variations);
+            const payload: ScheduledChangePayload = {};
+            if (variationChanges.length > 0) {
+              payload.variationChanges = variationChanges;
+            }
+            if (offVariation !== feature.offVariation) {
+              payload.offVariation = offVariation;
+            }
+            if (resetSampling) {
+              payload.resetSamplingSeed = true;
+            }
+            const resp = await createScheduleMutation.mutateAsync({
+              environmentId: currentEnvironment.id,
+              featureId: feature.id,
+              scheduledAt: scheduleAt as string,
+              payload,
+              comment
             });
-
-            invalidateFeature(queryClient);
-            invalidateFeatures(queryClient);
-            onCloseConfirmDialog();
+            if (resp) {
+              notify({
+                message: t(
+                  'form:feature-flags.schedule-configured',
+                  { name: feature.name }
+                )
+              });
+              onCloseConfirmDialog();
+            }
+          } else {
+            const resp = await featureUpdater({
+              id: feature.id,
+              environmentId: currentEnvironment.id,
+              comment,
+              resetSamplingSeed: resetSampling,
+              offVariation,
+              ...handleCheckVariations(variations)
+            });
+            if (resp) {
+              notify({
+                message: t('message:collection-action-success', {
+                  collection: t('source-type.feature-flag'),
+                  action: t('updated')
+                })
+              });
+              invalidateFeature(queryClient);
+              invalidateFeatures(queryClient);
+              onCloseConfirmDialog();
+            }
           }
         } catch (error) {
           errorNotify(error);
@@ -176,6 +213,12 @@ const Variation = ({ feature, editable }: VariationProps) => {
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(() => onSubmit())}>
           <div className="flex flex-col w-full gap-y-6">
+            {SCHEDULED_FLAG_CHANGES_ENABLED && (
+              <ScheduledChangesBanner
+                featureId={feature.id}
+                environmentId={currentEnvironment.id}
+              />
+            )}
             <div className="flex flex-col gap-2">
               <SubmitBar
                 editable={editable}
@@ -238,6 +281,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
         <ConfirmationRequiredModal
           feature={feature}
           isOpen={openConfirmDialog}
+          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && isDirty}
           onClose={onCloseConfirmDialog}
           onSubmit={additionalValues =>
             form.handleSubmit(() => onSubmit(additionalValues))()

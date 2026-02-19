@@ -31,7 +31,6 @@ const (
 	// Scheduled flag change limits
 	maxSchedulesPerFlag          = 50
 	maxChangesPerSchedule        = 50
-	minScheduleTimeMinutes       = 1
 	minScheduleGapBetweenMinutes = 5
 	maxScheduleTimeDays          = 365
 )

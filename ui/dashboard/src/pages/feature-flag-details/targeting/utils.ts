@@ -17,6 +17,7 @@ import {
   StrategyType,
   TargetChange
 } from '@types';
+import { SCHEDULE_TYPE_UPDATE_NOW } from '../elements/confirm-required-modal/form-schema';
 import {
   DefaultRuleSchema,
   RuleSchema,
@@ -182,7 +183,7 @@ export const handleCreateDefaultValues = (feature: Feature) => {
     comment: '',
     requireComment: false,
     resetSampling: false,
-    scheduleType: enabled ? 'DISABLE' : 'ENABLE',
+    scheduleType: SCHEDULE_TYPE_UPDATE_NOW,
     scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000)),
     offVariation
   } as TargetingSchema;

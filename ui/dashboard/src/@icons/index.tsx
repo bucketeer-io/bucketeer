@@ -80,6 +80,7 @@ import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
 import IconActiveFlags from './special-icons/active-flags.svg?react';
+import IconCalendarCancel from './special-icons/calendar-cancel.svg?react';
 import IconDelete from './special-icons/delete.svg?react';
 import IconExperiment from './special-icons/experiment.svg?react';
 import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
@@ -193,6 +194,7 @@ export {
   IconFCM,
   IconNoData,
   IconLogoutConfirm,
+  IconCalendarCancel,
   IconDelete,
   IconExperiment,
   IconOperation,

@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
-import { autoOpsCreator } from '@api/auto-ops';
 import { FeatureResponse, featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
+import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
 import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -14,7 +14,7 @@ import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import cloneDeep from 'lodash/cloneDeep';
 import { v4 as uuid } from 'uuid';
-import { Evaluation, Feature } from '@types';
+import { Evaluation, Feature, ScheduledChangePayload } from '@types';
 import { IconDebugger } from '@icons';
 import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
@@ -28,6 +28,9 @@ import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
+import { SCHEDULE_TYPE_SCHEDULE } from '../elements/confirm-required-modal/form-schema';
+import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
@@ -39,6 +42,7 @@ import FlagSwitch from './flag-switch';
 import { formSchema, TargetingSchema } from './form-schema';
 import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
+import PrerequisiteBanner from './prerequisite-rule/prerequisite-banner';
 import TargetSegmentRule from './segment-rule';
 import { PrerequisiteSchema, RuleCategory } from './types';
 import {
@@ -128,18 +132,21 @@ const TargetingPage = ({
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
 
+  const createScheduleMutation = useCreateScheduledFlagChange();
+
   const hasPrerequisiteFlags = activeFeatures.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
   );
 
-  const isShowUpdateSchedule =
-    dirtyFields?.enabled &&
-    Object.keys(dirtyFields).filter(
+  const hasTargetingChanges = useMemo(() => {
+    const relevantDirtyKeys = Object.keys(dirtyFields).filter(
       key =>
         !['requireComment', 'comment', 'scheduleType', 'scheduleAt'].includes(
           key
         )
-    ).length <= 1;
+    );
+    return relevantDirtyKeys.length > 0;
+  }, [dirtyFields]);
 
   const isDisableAddPrerequisite = useMemo(() => {
     if (!features?.length) return true;
@@ -214,6 +221,70 @@ const TargetingPage = ({
     [segmentRulesWatch]
   );
 
+  const buildSchedulePayload = useCallback(
+    (
+      values: TargetingSchema,
+      resetSampling?: boolean
+    ): ScheduledChangePayload => {
+      const {
+        enabled,
+        individualRules,
+        segmentRules,
+        prerequisites,
+        defaultRule,
+        offVariation
+      } = values;
+
+      const {
+        rules,
+        targets,
+        prerequisites: featurePrerequisites
+      } = feature;
+
+      const payload: ScheduledChangePayload = {};
+
+      if (dirtyFields.enabled) {
+        payload.enabled = enabled;
+      }
+
+      const ruleChanges = handleCheckSegmentRules(rules, segmentRules);
+      if (ruleChanges.length > 0) {
+        payload.ruleChanges = ruleChanges;
+      }
+
+      const targetChanges = handleCheckIndividualRules(
+        targets,
+        individualRules
+      );
+      if (targetChanges.length > 0) {
+        payload.targetChanges = targetChanges;
+      }
+
+      const prerequisiteChanges = handleCheckPrerequisites(
+        featurePrerequisites,
+        prerequisites
+      );
+      if (prerequisiteChanges.length > 0) {
+        payload.prerequisiteChanges = prerequisiteChanges;
+      }
+
+      if (dirtyFields.defaultRule) {
+        payload.defaultStrategy = handleGetDefaultRuleStrategy(defaultRule);
+      }
+
+      if (dirtyFields.offVariation) {
+        payload.offVariation = offVariation;
+      }
+
+      if (resetSampling) {
+        payload.resetSamplingSeed = true;
+      }
+
+      return payload;
+    },
+    [feature, dirtyFields]
+  );
+
   const onSubmit = useCallback(
     async (
       values: TargetingSchema,
@@ -239,27 +310,34 @@ const TargetingPage = ({
             targets,
             prerequisites: featurePrerequisites
           } = feature;
-          let resp;
+
           const isScheduleUpdate =
-            isShowUpdateSchedule &&
-            !['ENABLE', 'DISABLE'].includes(scheduleType as string);
+            scheduleType === SCHEDULE_TYPE_SCHEDULE;
+
           if (isScheduleUpdate) {
-            resp = await autoOpsCreator({
+            const payload = buildSchedulePayload(values, resetSampling);
+            const resp = await createScheduleMutation.mutateAsync({
               environmentId: currentEnvironment.id,
               featureId: feature.id,
-              opsType: 'SCHEDULE',
-              datetimeClauses: [
-                {
-                  actionType: enabled ? 'ENABLE' : 'DISABLE',
-                  time: scheduleAt as string
-                }
-              ]
+              scheduledAt: scheduleAt as string,
+              payload,
+              comment
             });
+            if (resp) {
+              notify({
+                message: t(
+                  'form:feature-flags.schedule-configured',
+                  { name: feature.name }
+                )
+              });
+              reset(handleCreateDefaultValues(feature));
+              onCloseConfirmModal();
+            }
           } else {
-            resp = await featureUpdater({
+            const resp = await featureUpdater({
               id,
               environmentId: currentEnvironment.id,
-              enabled: isScheduleUpdate ? false : enabled,
+              enabled,
               defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
               ruleChanges: handleCheckSegmentRules(rules, segmentRules),
               targetChanges: handleCheckIndividualRules(
@@ -274,30 +352,30 @@ const TargetingPage = ({
               resetSamplingSeed: resetSampling,
               offVariation
             });
-          }
-          if (resp) {
-            notify({
-              message: t('message:collection-action-success', {
-                collection: t('source-type.feature-flag'),
-                action: t('updated')
-              })
-            });
-            invalidateFeature(queryClient);
-            invalidateFeatures(queryClient);
-            invalidateUserSegments(queryClient);
-            reset(
-              handleCreateDefaultValues(
-                isScheduleUpdate ? feature : (resp as FeatureResponse)?.feature
-              )
-            );
-            onCloseConfirmModal();
+            if (resp) {
+              notify({
+                message: t('message:collection-action-success', {
+                  collection: t('source-type.feature-flag'),
+                  action: t('updated')
+                })
+              });
+              invalidateFeature(queryClient);
+              invalidateFeatures(queryClient);
+              invalidateUserSegments(queryClient);
+              reset(
+                handleCreateDefaultValues(
+                  (resp as FeatureResponse)?.feature
+                )
+              );
+              onCloseConfirmModal();
+            }
           }
         } catch (error) {
           errorNotify(error);
         }
       }
     },
-    [feature, currentEnvironment, isShowUpdateSchedule, editable]
+    [feature, currentEnvironment, editable, buildSchedulePayload]
   );
 
   return (
@@ -307,6 +385,22 @@ const TargetingPage = ({
           onSubmit={form.handleSubmit(values => onSubmit(values))}
           className="flex flex-col w-full items-center"
         >
+          {(SCHEDULED_FLAG_CHANGES_ENABLED ||
+            hasPrerequisiteFlags?.length > 0) && (
+            <div className="flex flex-col w-full gap-y-4 mb-2">
+              {SCHEDULED_FLAG_CHANGES_ENABLED && (
+                <ScheduledChangesBanner
+                  featureId={feature.id}
+                  environmentId={currentEnvironment.id}
+                />
+              )}
+              {hasPrerequisiteFlags?.length > 0 && (
+                <PrerequisiteBanner
+                  hasPrerequisiteFlags={hasPrerequisiteFlags}
+                />
+              )}
+            </div>
+          )}
           <AudienceTraffic />
           <TargetingDivider />
           <FlagSwitch
@@ -433,7 +527,7 @@ const TargetingPage = ({
         <ConfirmationRequiredModal
           feature={feature}
           isOpen={isOpenConfirmModal}
-          isShowScheduleSelect={isShowUpdateSchedule}
+          isShowScheduleSelect={SCHEDULED_FLAG_CHANGES_ENABLED && hasTargetingChanges}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()

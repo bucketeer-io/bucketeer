@@ -7,7 +7,6 @@ import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { PrerequisiteSchema } from '../types';
 import ConditionForm from './condition';
-import PrerequisiteBanner from './prerequisite-banner';
 
 export * from './dependent-flag-warning';
 
@@ -34,9 +33,6 @@ const PrerequisiteRule = ({
 
   return (
     <div className="flex flex-col gap-y-6 w-full">
-      {hasPrerequisiteFlags?.length > 0 && (
-        <PrerequisiteBanner hasPrerequisiteFlags={hasPrerequisiteFlags} />
-      )}
       {prerequisites.length > 0 && (
         <div className="flex flex-col w-full gap-y-6">
           <Card>
