@@ -154,10 +154,10 @@ const ConditionForm = forwardRef(
                   <Form.Control>
                     <Dropdown
                       options={variationOptions}
-                      value={field.value}
+                      value={currentVariationId}
                       labelCustom={
                         variationOptions?.find(
-                          item => field.value === item.value
+                          item => currentVariationId === item.value
                         )?.label || variationOptions?.[0]?.label
                       }
                       onChange={field.onChange}
