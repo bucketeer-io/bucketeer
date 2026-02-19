@@ -181,6 +181,7 @@
     "category-variations": "バリエーション",
     "category-settings": "設定",
     "category-mixed": "複合",
+    "schedule-requires-change": "スケジュールする前に、少なくとも1つの変更を行ってください。",
     "conflict-warning": "競合が発生しているため、この変更は適用されません。",
     "failed-warning": "この変更の実行に失敗しました。",
     "see-details": "詳細を見る",

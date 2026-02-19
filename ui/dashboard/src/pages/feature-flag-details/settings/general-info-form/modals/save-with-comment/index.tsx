@@ -218,8 +218,8 @@ const SaveWithCommentModal = ({
           <Button
             disabled={!isValid}
             loading={isSubmitting}
-            onClick={handleSubmit(() =>
-              onSubmit(watch('scheduleType'), watch('scheduleAt'))
+            onClick={handleSubmit(values =>
+              onSubmit(values.scheduleType, values.scheduleAt)
             )}
           >
             {t(`submit`)}

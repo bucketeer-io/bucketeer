@@ -181,6 +181,7 @@
     "category-variations": "Variations",
     "category-settings": "Settings",
     "category-mixed": "Mixed",
+    "schedule-requires-change": "Please make at least one change before scheduling.",
     "conflict-warning": "This change will not be applied due to a conflict.",
     "failed-warning": "This change failed to execute.",
     "see-details": "See details",

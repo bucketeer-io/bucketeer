@@ -163,6 +163,10 @@ const GeneralInfoForm = ({
             if (tagChanges.length > 0) {
               payload.tagChanges = tagChanges;
             }
+            if (Object.keys(payload).length === 0) {
+              errorNotify(t('form:feature-flags.schedule-requires-change'));
+              return;
+            }
             const resp = await createScheduleMutation.mutateAsync({
               environmentId: currentEnvironment.id,
               featureId: flagId,
@@ -243,7 +247,14 @@ const GeneralInfoForm = ({
   useUnsavedLeavePage({ isShow: isDirty && !isSubmitting });
   return (
     <FormProvider {...form}>
-      <Form onSubmit={form.handleSubmit(() => onSubmit())}>
+      <Form
+        onSubmit={form.handleSubmit(values =>
+          onSubmit(
+            (values as GeneralInfoFormType).scheduleType,
+            (values as GeneralInfoFormType).scheduleAt
+          )
+        )}
+      >
         <Card>
           <div className="flex lg:items-center justify-between flex-col lg:flex-row">
             <p className="typo-head-bold-small text-gray-800">

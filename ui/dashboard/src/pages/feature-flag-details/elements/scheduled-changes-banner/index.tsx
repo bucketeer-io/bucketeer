@@ -25,16 +25,7 @@ import ScheduledChangesPanel from '../scheduled-changes-panel';
 import ApplyNowDialog from './apply-now-dialog';
 import CancelScheduleDialog from './cancel-schedule-dialog';
 import EditScheduleDialog from './edit-schedule-dialog';
-
-const formatScheduledDate = (timestamp: string | number): string => {
-  const date = new Date(Number(timestamp) * 1000);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}/${month}/${day} ${hours}:${minutes}`;
-};
+import { formatScheduledDate } from './utils';
 
 const BANNER_STATUSES = [
   ScheduledFlagChangeStatuses.PENDING,
@@ -156,7 +147,9 @@ const ScheduledChangesBanner = ({
   });
 
   const pendingCount = summaryData?.summary?.pendingCount ?? 0;
-  const hasMultiple = pendingCount > 1;
+  const conflictCount = summaryData?.summary?.conflictCount ?? 0;
+  const totalActiveCount = pendingCount + conflictCount;
+  const hasMultiple = totalActiveCount > 1;
 
   const { data: listData } = useQueryScheduledFlagChanges({
     params: {
@@ -167,10 +160,10 @@ const ScheduledChangesBanner = ({
       orderDirection: 'ASC',
       pageSize: 10
     },
-    enabled: !!featureId && !!environmentId && pendingCount > 0
+    enabled: !!featureId && !!environmentId && totalActiveCount > 0
   });
 
-  if (pendingCount === 0) return null;
+  if (totalActiveCount === 0) return null;
 
   const schedules = listData?.scheduledFlagChanges ?? [];
   const nextScheduledAt = summaryData?.summary?.nextScheduledAt;
@@ -202,7 +195,7 @@ const ScheduledChangesBanner = ({
               <Icon icon={IconInfoFilled} size="xxs" color="accent-blue-500" />
               <p className="typo-para-small leading-[14px] text-accent-blue-500">
                 {t('form:feature-flags.scheduled-changes-count', {
-                  count: pendingCount
+                  count: totalActiveCount
                 })}
               </p>
             </div>
