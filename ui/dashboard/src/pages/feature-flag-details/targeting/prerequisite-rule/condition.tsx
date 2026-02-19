@@ -1,5 +1,5 @@
-import { forwardRef, Ref, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { forwardRef, Ref, useEffect, useMemo } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
@@ -31,15 +31,22 @@ const ConditionForm = forwardRef(
     const { t } = useTranslation(['form', 'common', 'table']);
 
     const methods = useFormContext();
-    const { control, watch } = methods;
+    const { control } = methods;
 
-    const prerequisitesWatch = [...watch('prerequisites')];
+    const prerequisitesWatch = useWatch({ control, name: 'prerequisites' });
 
     const commonName = useMemo(
       () => `prerequisites.${prerequisiteIndex}`,
       [prerequisiteIndex]
     );
-    const currentFeatureId = watch(`${commonName}.featureId`);
+    const currentFeatureId = useWatch({
+      control,
+      name: `${commonName}.featureId`
+    });
+    const currentVariationId = useWatch({
+      control,
+      name: `${commonName}.variationId`
+    });
     const currentFeature = useMemo(
       () => features.find(item => item.id === currentFeatureId),
       [currentFeatureId, features]
@@ -68,6 +75,20 @@ const ConditionForm = forwardRef(
         })),
       [currentFeature]
     );
+    useEffect(() => {
+      const firstVariationId = currentFeature?.variations?.[0]?.id;
+
+      const isCurrentValid = currentFeature?.variations?.some(
+        v => v.id === currentVariationId
+      );
+
+      if ((!currentVariationId || !isCurrentValid) && firstVariationId) {
+        methods.setValue(`${commonName}.variationId`, firstVariationId, {
+          shouldDirty: true,
+          shouldValidate: true
+        });
+      }
+    }, [currentFeatureId, currentFeature, methods.setValue, commonName]);
 
     return (
       <div ref={ref} className="flex items-center w-full gap-x-4">
@@ -133,7 +154,12 @@ const ConditionForm = forwardRef(
                   <Form.Control>
                     <Dropdown
                       options={variationOptions}
-                      value={field.value}
+                      value={currentVariationId}
+                      labelCustom={
+                        variationOptions?.find(
+                          item => currentVariationId === item.value
+                        )?.label || variationOptions?.[0]?.label
+                      }
                       onChange={field.onChange}
                       placeholder={t('experiments.select-variation')}
                       disabled={!variationOptions?.length}

@@ -1,3 +1,5 @@
+import { RuleClauseType } from 'pages/feature-flag-details/targeting/types';
+
 export enum FeatureRuleClauseOperator {
   EQUALS = 'EQUALS',
   NOT_EQUALS = 'NOT_EQUALS',
@@ -76,6 +78,7 @@ export interface FeatureRuleClause {
   attribute: string;
   operator: FeatureRuleClauseOperator;
   values: string[];
+  type: RuleClauseType;
 }
 
 export interface FeatureRule {

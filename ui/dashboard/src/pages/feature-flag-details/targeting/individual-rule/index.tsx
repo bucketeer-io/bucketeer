@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Trans } from 'react-i18next';
+import { IconUndoOutlined } from 'react-icons-material-design';
 import { MultiValue } from 'react-select';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -15,11 +16,13 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { TargetingSchema } from '../form-schema';
-import { IndividualRuleItem } from '../types';
+import { DiscardChangesType, IndividualRuleItem, RuleCategory } from '../types';
 import { getAlreadyTargetedVariation } from '../utils';
 
 interface Props {
   individualRules: IndividualRuleItem[];
+  handleDiscardChanges: (type: DiscardChangesType) => void;
+  handleCheckEdit?: (type: RuleCategory) => boolean;
 }
 
 export const UserMessage = ({ message }: { message: ReactNode }) => {
@@ -28,15 +31,22 @@ export const UserMessage = ({ message }: { message: ReactNode }) => {
   );
 };
 
-const IndividualRule = ({ individualRules }: Props) => {
+const IndividualRule = ({
+  individualRules,
+  handleDiscardChanges,
+  handleCheckEdit
+}: Props) => {
   const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const { notify } = useToast();
 
   const methods = useFormContext<TargetingSchema>();
 
-  const { control, watch } = methods;
-  const individualRulesWatch = watch('individualRules') as IndividualRuleItem[];
-
+  const { control } = methods;
+  const individualRulesWatch = useWatch({
+    control,
+    name: 'individualRules'
+  }) as IndividualRuleItem[];
+  const editIndividual = handleCheckEdit?.(RuleCategory.INDIVIDUAL);
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
     notify({
@@ -46,7 +56,7 @@ const IndividualRule = ({ individualRules }: Props) => {
 
   return (
     <Card>
-      <div>
+      <div className="w-full h-8 flex items-center justify-between">
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium leading-4 text-gray-700">
             {t('form:targeting.individual-target')}
@@ -63,108 +73,124 @@ const IndividualRule = ({ individualRules }: Props) => {
             className="max-w-[400px]"
           />
         </div>
+        {editIndividual && (
+          <div
+            className="flex-center h-8 w-8 px-2 rounded-md cursor-pointer group border border-gray-300 hover:border-gray-800"
+            onClick={() => handleDiscardChanges(DiscardChangesType.INDIVIDUAL)}
+          >
+            <Icon
+              icon={IconUndoOutlined}
+              size={'sm'}
+              className="flex-center text-gray-500 group-hover:text-gray-700"
+            />
+          </div>
+        )}
       </div>
-      {individualRules.map((item, index) => (
-        <div key={index} className="flex flex-col w-full gap-y-4">
-          <Form.Field
-            control={control}
-            name={`individualRules.${index}.users`}
-            render={({ field }) => {
-              return (
-                <Form.Item className="py-0">
-                  <Form.Label className="flex items-center gap-x-2 !mb-2">
-                    <p className="uppercase">{t('feature-flags.serve')}</p>
-                    <FlagVariationPolygon index={index} className="!z-0" />
-                    <p>{item?.name}</p>
-                  </Form.Label>
-                  <Form.Control>
-                    <div className="flex items-center w-full gap-x-2">
-                      <CreatableSelect
-                        value={field.value?.map((item: string) => ({
-                          label: item,
-                          value: item
-                        }))}
-                        placeholder={t('form:feature-flags.add-user-id')}
-                        onChange={(options: MultiValue<Option>) => {
-                          const newOption = options.find(o => o['__isNew__']);
-                          const alreadyTargetedVariation =
-                            getAlreadyTargetedVariation(
-                              individualRulesWatch,
-                              item.variationId,
-                              newOption?.label || ''
-                            );
-                          if (!alreadyTargetedVariation) {
-                            field.onChange(options.map(o => o.value));
-                          }
-                        }}
-                        className="w-full"
-                        formatCreateLabel={v => {
-                          const isAlreadyExisted = getAlreadyTargetedVariation(
-                            individualRulesWatch,
-                            item.variationId,
-                            v
-                          );
+      {individualRules.map((item, index) => {
+        const userWatch = individualRulesWatch[index]?.users ?? [];
+        return (
+          <div key={index} className="flex flex-col w-full gap-y-4">
+            <Form.Field
+              control={control}
+              name={`individualRules.${index}.users`}
+              render={({ field }) => {
+                return (
+                  <Form.Item className="py-0">
+                    <Form.Label className="flex items-center gap-x-2 !mb-2">
+                      <p className="uppercase">{t('feature-flags.serve')}</p>
+                      <FlagVariationPolygon index={index} className="!z-0" />
+                      <p>{item?.name}</p>
+                    </Form.Label>
+                    <Form.Control>
+                      <div className="flex items-center w-full gap-x-2">
+                        <CreatableSelect
+                          value={userWatch.map((item: string) => ({
+                            label: item,
+                            value: item
+                          }))}
+                          placeholder={t('form:feature-flags.add-user-id')}
+                          onChange={(options: MultiValue<Option>) => {
+                            const newOption = options.find(o => o['__isNew__']);
+                            const alreadyTargetedVariation =
+                              getAlreadyTargetedVariation(
+                                individualRulesWatch,
+                                item.variationId,
+                                newOption?.label || ''
+                              );
+                            if (!alreadyTargetedVariation) {
+                              field.onChange(options.map(o => o.value));
+                            }
+                          }}
+                          className="w-full"
+                          formatCreateLabel={v => {
+                            const isAlreadyExisted =
+                              getAlreadyTargetedVariation(
+                                individualRulesWatch,
+                                item.variationId,
+                                v
+                              );
 
-                          if (isAlreadyExisted) {
-                            const variationName = truncateBySide(
-                              isAlreadyExisted.name as string,
-                              50
-                            );
+                            if (isAlreadyExisted) {
+                              const variationName = truncateBySide(
+                                isAlreadyExisted.name as string,
+                                50
+                              );
+                              return (
+                                <UserMessage
+                                  message={
+                                    <Trans
+                                      i18nKey={
+                                        'form:feature-flags.value-already-targeted'
+                                      }
+                                      values={{
+                                        value: v,
+                                        targetedIn: variationName
+                                      }}
+                                    />
+                                  }
+                                />
+                              );
+                            }
                             return (
                               <UserMessage
-                                message={
-                                  <Trans
-                                    i18nKey={
-                                      'form:feature-flags.value-already-targeted'
-                                    }
-                                    values={{
-                                      value: v,
-                                      targetedIn: variationName
-                                    }}
-                                  />
-                                }
+                                message={t('form:feature-flags.add-user-id')}
                               />
                             );
+                          }}
+                          noOptionsMessage={({ inputValue }) => {
+                            return (
+                              <UserMessage
+                                message={t(
+                                  inputValue
+                                    ? `form:feature-flags.already-targeted`
+                                    : 'form:no-opts-type-to-create'
+                                )}
+                              />
+                            );
+                          }}
+                        />
+                        <Button
+                          disabled={!field.value?.length}
+                          variant={'secondary-2'}
+                          type="button"
+                          size={'icon'}
+                          tabIndex={-1}
+                          onClick={() =>
+                            handleCopyUserId(field.value?.join(', '))
                           }
-                          return (
-                            <UserMessage
-                              message={t('form:feature-flags.add-user-id')}
-                            />
-                          );
-                        }}
-                        noOptionsMessage={({ inputValue }) => {
-                          return (
-                            <UserMessage
-                              message={t(
-                                inputValue
-                                  ? `form:feature-flags.already-targeted`
-                                  : 'form:no-opts-type-to-create'
-                              )}
-                            />
-                          );
-                        }}
-                      />
-                      <Button
-                        disabled={!field.value?.length}
-                        variant={'secondary-2'}
-                        type="button"
-                        size={'icon'}
-                        tabIndex={-1}
-                        onClick={() =>
-                          handleCopyUserId(field.value?.join(', '))
-                        }
-                      >
-                        <Icon icon={IconCopy} />
-                      </Button>
-                    </div>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              );
-            }}
-          />
-        </div>
-      ))}
+                        >
+                          <Icon icon={IconCopy} />
+                        </Button>
+                      </div>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+          </div>
+        );
+      })}
     </Card>
   );
 };

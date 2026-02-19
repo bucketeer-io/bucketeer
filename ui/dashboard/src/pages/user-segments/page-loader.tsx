@@ -84,6 +84,13 @@ const PageLoader = () => {
     onError: error => errorNotify(error)
   });
 
+  const onHandleAddSegment = () => {
+    if (selectedSegment) {
+      setSelectedSegment(undefined);
+    }
+    onOpenAddModal();
+  };
+
   const onDeleteSegment = () => {
     if (selectedSegment && editable) {
       mutation.mutate(selectedSegment);
@@ -155,7 +162,7 @@ const PageLoader = () => {
       <PageContent
         editable={editable}
         segmentUploading={segmentUploading}
-        onAdd={onOpenAddModal}
+        onAdd={onHandleAddSegment}
         onActionHandler={onActionHandler}
       />
 
