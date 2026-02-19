@@ -1439,6 +1439,8 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 
+			// Record DAU from RegisterEvents as well because
+			// local evaluations do not include userId in GetEvaluation(s) requests.
 			go func(evt *eventproto.Event, envID string) {
 				evalEvent := &eventproto.EvaluationEvent{}
 				if err := evt.Event.UnmarshalTo(evalEvent); err != nil {
