@@ -384,11 +384,11 @@
     "current-variation-title": "現在のバリエーション配分",
     "percent-variation": "<comp/> <p>{{percent}}%</p>"
   },
-  "custom-rule-strategy-discard-desc": "ルールのバリエーションを{{action}} ",
+  "custom-rule-strategy-discard-desc": "バリエーションの配分を更新",
   "custom-rule-strategy-add-new-discard-desc": "ルール {{clauseLabel}} を追加して配信",
-  "custom-rule-audience-not-include-desc": "未割り当ての <b>{{percent}}%</b> には <b>{{variation}}</b> を配信します <variantElement/>",
-  "custom-rule-audience-include-desc": "残りの <b>{{percent}}%</b> には以下のバリエーションを配信します：<variantElement/>",
-  "custom-rule-default-audience-discard-desc": "デフォルトオーディエンスに設定します",
+  "custom-rule-audience-not-include-desc": "未割り当て <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-audience-include-desc": "割り当て済み <b>{{percent}}%</b> <variantElement/>",
+  "custom-rule-default-audience-discard-desc": "対象ユーザーのトラフィック配分を更新",
   "discard-unsaved-changes": "未保存の変更を破棄しますか？",
   "add_prerequisite-discard-desc": "前提条件を追加: {{flagName}}、<variantElement/>",
   "remove_prerequisite-discard-desc": "前提条件を削除: {{flagName}}、<variantElement/>",
@@ -401,7 +401,7 @@
   "add-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を追加します",
   "remove-custom-rule-clause-value-discard-desc": "値 <b>{{value}}</b> を削除します",
   "add-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を追加:",
-  "update-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分:",
+  "update-custom-rule-audience-discard-desc": "対象ユーザーのトラフィック配分を更新",
   "add-new-rule": "ルールを追加: <b>{{clauseLabel}} の場合、以下を配信します: </b> <variantElement/>",
   "delete-rule": "<b>{{clauseLabel}}の場合、以下を配信します: </b> <variantElement/>"
 }

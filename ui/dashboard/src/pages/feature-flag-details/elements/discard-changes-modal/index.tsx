@@ -169,12 +169,14 @@ const RuleHeader = ({
   if (isAddNew) return null;
   const isNewRule = changeType === 'new-rule';
   const isDeleteRule = changeType === 'deleted-rule';
-
+  const isShowIcon = ['value', 'clause'].includes(changeType || '');
   return (
     <div className="flex w-full gap-x-2">
-      <div className="mt-[3px]">
-        <ActionIcon labelType={labelType} />
-      </div>
+      {isShowIcon && (
+        <div className="mt-[3px]">
+          <ActionIcon labelType={labelType} />
+        </div>
+      )}
       <div className="typo-para-medium text-gray-700">
         {isNewRule || isDeleteRule ? (
           <div className="inline items-center">
@@ -221,9 +223,9 @@ const AudienceChange = ({
 }) => {
   const { t } = useTranslation(['common', 'form']);
   return (
-    <div className="pl-6 text-gray-700">
-      <div className="flex w-full gap-x-2 items-center pl-3">
-        <div className="inline">
+    <div className="text-gray-700">
+      <div className="flex w-full gap-x-2 items-center">
+        <div className="inline mt-2">
           <div className="inline">
             <Trans
               i18nKey={t('form:custom-rule-audience-not-include-desc')}
@@ -234,7 +236,7 @@ const AudienceChange = ({
               components={{
                 b: <strong />,
                 variantElement: (
-                  <div className="inline-flex items-center gap-x-1 ml-1">
+                  <div className="flex items-center gap-x-1 ml-2">
                     <div className="inline-flex flex-center size-fit">
                       {!isNil(audienceExcluded.variationIndex) && (
                         <FlagVariationPolygon
@@ -253,7 +255,7 @@ const AudienceChange = ({
         </div>
       </div>
       <div className="flex w-full gap-x-2 items-start">
-        <div className="inline pl-3">
+        <div className="inline mt-2">
           <div className="inline">
             <Trans
               i18nKey={t('form:custom-rule-audience-include-desc')}
@@ -263,11 +265,11 @@ const AudienceChange = ({
               components={{
                 b: <strong />,
                 variantElement: (
-                  <div className="pl-3">
+                  <div>
                     {audienceIncluded?.map((audience, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-x-1 ml-1"
+                        className="flex items-center gap-x-1 ml-2"
                       >
                         <div className="inline-flex flex-center size-fit">
                           {!isNil(audience.variationIndex) && (
@@ -296,17 +298,24 @@ const AudienceChange = ({
 
 const StrategyList = ({ variations }: { variations?: VariationPercent[] }) =>
   !!variations?.length && (
-    <div className="pl-3">
+    <div className="ml-2 grid grid-cols-[auto_max-content_1fr] items-center gap-x-2">
       {variations.map((v, index) => (
-        <div key={index} className="flex items-center gap-x-1 ml-1">
+        <div key={index} className="contents">
           <div className="flex-center size-fit">
             <FlagVariationPolygon index={v.variationIndex || 0} />
           </div>
-          <p className="max-w-[320px] h-full truncate">{v.variation}</p>
-          {!isNil(v.weight) && (
-            <p className="max-w-[180px] truncate text-gray-700">
-              <span>({v.weight?.toString()}%)</span>
-            </p>
+
+          <p className="truncate min-w-0 max-w-[350px]">{v.variation}</p>
+
+          {!isNil(v.weight) ? (
+            <div className="flex items-center">
+              <p className="text-left max-w-[100px] tabular-nums text-gray-700 truncate">
+                — {v.weight}
+              </p>
+              <p>%</p>
+            </div>
+          ) : (
+            <div />
           )}
         </div>
       ))}
