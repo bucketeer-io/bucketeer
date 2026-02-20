@@ -152,14 +152,32 @@ web:
       redirectUrls:
         - https://localhost:9000/auth/callback
         - https://localhost:9000/v3/auth/callback
+  
+    # Password authentication configuration for development
+    password:
+      enabled: true
+      policy:
+        minLength: 8
+        requireUppercase: true
+        requireLowercase: true
+        requireNumbers: true
+        requireSymbols: false
+      tokens:
+        resetTTL: "1h"
+        setupTTL: "24h"
+      urls:
+        resetPath: "/auth/reset-password"
+        setupPath: "/auth/setup-password"
+        tokenParam: "token"
+
     demoSignIn:
       enabled: true
-      email: demo@bucketeer.io
-      password: demo
-      organizationId: demo
-      organizationOwnerEmail: demo@bucketeer.io
-      projectId: demo
-      environmentId: demo
+      email: "demo@bucketeer.io"
+      password: "demo"
+      organizationId: "demo"
+      organizationOwnerEmail: "demo@bucketeer.io"
+      projectId: "demo"
+      environmentId: "demo"
       isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io

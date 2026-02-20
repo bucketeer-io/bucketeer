@@ -40,12 +40,16 @@ var (
 		"system_admin_organization")
 )
 
-func NewOrganization(name, urlCode, ownerEmail, description string, trial, systemAdmin bool) (*Organization, error) {
+func NewOrganization(
+	name, urlCode, ownerEmail, description string,
+	trial, systemAdmin bool,
+) (*Organization, error) {
 	now := time.Now().Unix()
 	uid, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
+
 	return &Organization{&proto.Organization{
 		Id:          uid.String(),
 		Name:        name,

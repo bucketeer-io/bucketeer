@@ -10,8 +10,27 @@
     "clientSecret": "",
     "redirectUrls": [
       "https://localhost/auth/callback",
-      "https://localhost/v3/auth/callback"
+      "https://web-gateway.bucketeer.io/auth/callback"
     ]
+  },
+  "password": {
+    "enabled": true,
+    "policy": {
+      "minLength": 8,
+      "requireUppercase": true,
+      "requireLowercase": true,
+      "requireNumbers": true,
+      "requireSymbols": false
+    },
+    "tokens": {
+      "resetTTL": "1h",
+      "setupTTL": "24h"
+    },
+    "urls": {
+      "resetPath": "/auth/reset-password",
+      "setupPath": "/auth/setup-password",
+      "tokenParam": "token"
+    }
   },
   "demoSignIn": {
     "enabled": true,

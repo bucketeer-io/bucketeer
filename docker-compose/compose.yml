@@ -160,6 +160,7 @@ services:
       - BUCKETEER_WEB_SERVICE_TOKEN=/usr/local/service-token/token
       - BUCKETEER_WEB_EMAIL_FILTER=
       - BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH=/usr/local/static/js
+
       # Internal gRPC client connections (routed through nginx gRPC proxy)
       - BUCKETEER_WEB_ACCOUNT_SERVICE=nginx:443
       - BUCKETEER_WEB_AUTH_SERVICE=nginx:443

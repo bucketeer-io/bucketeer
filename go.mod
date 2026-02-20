@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.59.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-resty/resty/v2 v2.17.1
@@ -43,6 +44,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.1
+	golang.org/x/crypto v0.47.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.34.0
 	golang.org/x/sync v0.19.0
@@ -136,7 +138,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect

@@ -38,6 +38,26 @@ const (
 	flagTriggerWebhookName     = "/bucketeer.feature.FeatureService/FlagTriggerWebhook"
 	exchangeDemoTokenName      = "/bucketeer.environment.EnvironmentService/ExchangeDemoToken"
 	createDemoOrganizationName = "/bucketeer.environment.EnvironmentService/CreateDemoOrganization"
+	initiatePasswordResetName  = "/bucketeer.auth.AuthService/InitiatePasswordReset"
+	resetPasswordName          = "/bucketeer.auth.AuthService/ResetPassword"
+	validatePasswordResetName  = "/bucketeer.auth.AuthService/ValidatePasswordResetToken"
+	initiatePasswordSetupName  = "/bucketeer.auth.AuthService/InitiatePasswordSetup"
+	setupPasswordName          = "/bucketeer.auth.AuthService/SetupPassword"
+	validatePasswordSetupName  = "/bucketeer.auth.AuthService/ValidatePasswordSetupToken"
+	// New login methods
+	signInPasswordName           = "/bucketeer.auth.AuthService/SignInPassword"
+	switchOrganizationName       = "/bucketeer.auth.AuthService/SwitchOrganization"
+	getAuthOptionsByEmailName    = "/bucketeer.auth.AuthService/GetAuthOptionsByEmail"
+	getGoogleOidcAuthURLName     = "/bucketeer.auth.AuthService/GetGoogleOidcAuthURL"
+	exchangeGoogleOidcTokenName  = "/bucketeer.auth.AuthService/ExchangeGoogleOidcToken"
+	getCompanyOidcAuthURLName    = "/bucketeer.auth.AuthService/GetCompanyOidcAuthURL"
+	exchangeCompanyOidcTokenName = "/bucketeer.auth.AuthService/ExchangeCompanyOidcToken"
+	getDemoSiteStatusName        = "/bucketeer.auth.AuthService/GetDemoSiteStatus"
+	// Old login methods (for backward compatibility)
+	signInName               = "/bucketeer.auth.AuthService/SignIn"
+	getAuthenticationURLName = "/bucketeer.auth.AuthService/GetAuthenticationURL"
+	exchangeTokenName        = "/bucketeer.auth.AuthService/ExchangeToken"
+	refreshTokenName         = "/bucketeer.auth.AuthService/RefreshToken"
 )
 
 type authFunc func(verifier token.Verifier, token string) (interface{}, error)
@@ -68,6 +88,26 @@ var (
 		healthServiceName,
 		flagTriggerWebhookName,
 		exchangeDemoTokenName,
+		initiatePasswordResetName,
+		resetPasswordName,
+		validatePasswordResetName,
+		initiatePasswordSetupName,
+		setupPasswordName,
+		validatePasswordSetupName,
+		// New login methods
+		signInPasswordName,
+		switchOrganizationName,
+		getAuthOptionsByEmailName,
+		getGoogleOidcAuthURLName,
+		exchangeGoogleOidcTokenName,
+		getCompanyOidcAuthURLName,
+		exchangeCompanyOidcTokenName,
+		getDemoSiteStatusName,
+		// Old login methods (for backward compatibility)
+		signInName,
+		getAuthenticationURLName,
+		exchangeTokenName,
+		refreshTokenName,
 	}
 )
 

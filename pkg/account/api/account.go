@@ -22,6 +22,8 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/command"
@@ -29,6 +31,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainauditlog "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/domain"
+	authstorage "github.com/bucketeer-io/bucketeer/v2/pkg/auth/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
@@ -36,6 +39,7 @@ import (
 	tagdomain "github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	teamdomain "github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	"github.com/bucketeer-io/bucketeer/v2/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -167,6 +171,10 @@ func (s *AccountService) CreateAccountV2(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+
+	// Initiate password setup for newly created account
+	s.initiatePasswordSetupForNewAccount(ctx, req.Email)
+
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -596,6 +604,13 @@ func (s *AccountService) DeleteAccountV2(
 		if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
 			return err
 		}
+		// Delete associated credentials if they exist
+		if err = s.credentialsStorage.DeleteCredentials(contextWithTx, account.Email); err != nil {
+			// Ignore error if credentials don't exist (e.g., SSO-only accounts)
+			if !errors.Is(err, authstorage.ErrCredentialsUnexpectedAffectedRows) {
+				return err
+			}
+		}
 		return s.accountStorage.DeleteAccountV2(contextWithTx, account)
 	})
 	if err != nil {
@@ -972,4 +987,31 @@ func (s *AccountService) newAccountV2ListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+// initiatePasswordSetupForNewAccount sends password setup email to newly created accounts
+func (s *AccountService) initiatePasswordSetupForNewAccount(ctx context.Context, email string) {
+	if s.authClient == nil {
+		s.logger.Debug("Auth client not available, skipping password setup", zap.String("email", email))
+		return
+	}
+
+	_, err := s.authClient.InitiatePasswordSetup(ctx, &authproto.InitiatePasswordSetupRequest{
+		Email: email,
+	})
+	if err != nil {
+		// Check if the error is because password already exists
+		if st, ok := status.FromError(err); ok && st.Code() == codes.AlreadyExists {
+			s.logger.Info("Password already exists for account, skipping setup", zap.String("email", email))
+			return
+		}
+
+		s.logger.Warn("Failed to initiate password setup for new account",
+			zap.Error(err),
+			zap.String("email", email),
+		)
+		// Don't fail account creation if password setup fails
+	} else {
+		s.logger.Info("Password setup initiated for new account", zap.String("email", email))
+	}
 }

@@ -113,6 +113,12 @@ PeriodOutOfRange: "期間は過去30日以内を選択してください"
 # Environment errors
 ProjectDisabled: "プロジェクトが無効化されています"
 
+# Password setup/reset messages
+PasswordSetupEmailSent: "このメールアドレスのアカウントが存在し、パスワード設定が必要な場合、セットアップリンクが送信されました。"
+PasswordResetEmailSent: "このメールアドレスのアカウントが存在し、パスワードが設定されている場合、リセットリンクが送信されました。"
+WelcomeEmailSent: "このメールアドレスのアカウントが存在する場合、コンソールへのアクセス方法を記載したウェルカムメールが送信されました。"
+PasswordsIdentical: "新しいパスワードは現在のパスワードと異なる必要があります"
+
 #############################
 # Domain Events
 #############################
