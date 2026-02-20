@@ -1,6 +1,6 @@
 global:
   image:
-    tag: v2.2.0 # x-release-please-version
+    tag: v2.3.0 # x-release-please-version
     imagePullSecrets: # Used by all services including migration
   # Global data warehouse configuration
   dataWarehouse:
@@ -84,7 +84,7 @@ global:
 migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
-    tag: v2.2.0 # x-release-please-version
+    tag: v2.3.0 # x-release-please-version
   # imagePullSecrets: []  # Optional: Override global.image.imagePullSecrets for migration only
 
   backoffLimit: 0
