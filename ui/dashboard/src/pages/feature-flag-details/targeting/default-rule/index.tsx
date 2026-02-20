@@ -39,7 +39,13 @@ const DefaultRule = ({
 
   const variationOptions: VariationOption[] = useMemo(() => {
     const variations = feature.variations.map((item, index) => ({
-      label: <VariationLabel label={item.name || item.value} index={index} />,
+      label: (
+        <VariationLabel
+          asChild={false}
+          label={item.name || item.value}
+          index={index}
+        />
+      ),
       value: item.id,
       type: StrategyType.FIXED,
       variationValue: item.value

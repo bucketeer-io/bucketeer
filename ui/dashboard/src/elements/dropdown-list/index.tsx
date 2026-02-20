@@ -1,8 +1,8 @@
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo, useRef } from 'react';
 import {
   FixedSizeList,
-  ListChildComponentProps,
-  FixedSizeListProps
+  FixedSizeListProps,
+  ListChildComponentProps
 } from 'react-window';
 import { cn } from 'utils/style';
 import {
@@ -10,6 +10,7 @@ import {
   DropdownOption,
   DropdownValue
 } from 'components/dropdown';
+import Spinner from 'components/spinner';
 
 interface RowWithDataProps {
   options: DropdownOption[];
@@ -22,13 +23,19 @@ interface RowWithDataProps {
   onSelectOption: (value: DropdownValue) => void;
 }
 
+const LOADING_ROW_HEIGHT = 50;
+
 const List = FixedSizeList as unknown as React.FC<FixedSizeListProps>;
 
 const RowWithData = ({
   index,
   style,
   data
-}: ListChildComponentProps<RowWithDataProps>) => {
+}: ListChildComponentProps<
+  RowWithDataProps & {
+    isLoadingMore?: boolean;
+  }
+>) => {
   const {
     options,
     isMultiselect,
@@ -37,8 +44,22 @@ const RowWithData = ({
     className,
     itemSelected,
     additionalElement,
-    onSelectOption
+    onSelectOption,
+    isLoadingMore
   } = data;
+
+  // Show loading indicator as the last row when loading more
+  if (isLoadingMore && index === options.length) {
+    return (
+      <div
+        style={style}
+        className="flex items-center justify-center p-2 border-t"
+      >
+        <Spinner />
+      </div>
+    );
+  }
+
   const currentItem = options[index];
 
   return (
@@ -71,6 +92,9 @@ interface DropdownListProps extends RowWithDataProps {
   width?: string | number;
   itemSize?: number;
   maxOptions?: number;
+  isHasMore?: boolean;
+  isLoadingMore?: boolean;
+  onHasMoreOptions?: () => void;
 }
 
 const DropdownList = ({
@@ -85,23 +109,54 @@ const DropdownList = ({
   selectedOptions,
   selectedFieldValue = 'value',
   className,
+  onHasMoreOptions,
+  isHasMore,
+  isLoadingMore,
   additionalElement,
   onSelectOption
 }: DropdownListProps) => {
+  const loadingRef = useRef(false);
+
   const maxHeightList = useMemo(
     () =>
       height || options.length > maxOptions
         ? maxHeight
         : options.length * itemSize,
-    [options, maxOptions, height, itemSize]
+    [options.length, maxOptions, height, itemSize, maxHeight]
+  );
+
+  const itemCount = useMemo(
+    () => options.length + (isLoadingMore ? 1 : 0),
+    [options.length, isLoadingMore]
+  );
+
+  const handleItemsRendered = useCallback(
+    ({ visibleStopIndex }: { visibleStopIndex: number }) => {
+      // Trigger load more when user scrolls near the end (within 3 items from bottom)
+      const threshold = 3;
+      const shouldLoadMore =
+        isHasMore &&
+        !isLoadingMore &&
+        !loadingRef.current &&
+        visibleStopIndex >= options.length - threshold;
+
+      if (shouldLoadMore && onHasMoreOptions) {
+        loadingRef.current = true;
+        onHasMoreOptions();
+        setTimeout(() => {
+          loadingRef.current = false;
+        }, 500);
+      }
+    },
+    [isHasMore, isLoadingMore, options.length, onHasMoreOptions]
   );
 
   return (
     <List
-      height={maxHeightList}
+      height={maxHeightList + (isLoadingMore ? LOADING_ROW_HEIGHT : 0)}
       width={width}
       itemSize={itemSize}
-      itemCount={options.length}
+      itemCount={itemCount}
       itemData={{
         options,
         className: cn(
@@ -113,11 +168,13 @@ const DropdownList = ({
         selectedOptions,
         selectedFieldValue,
         additionalElement,
-        onSelectOption
+        onSelectOption,
+        isLoadingMore
       }}
-      className={
+      onItemsRendered={handleItemsRendered}
+      className={cn(
         options?.length < maxOptions ? 'hidden-scroll' : 'small-scroll'
-      }
+      )}
     >
       {RowWithData}
     </List>

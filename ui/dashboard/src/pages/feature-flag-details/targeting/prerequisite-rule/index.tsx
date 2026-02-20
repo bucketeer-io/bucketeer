@@ -1,5 +1,5 @@
 import { useTranslation } from 'i18n';
-import { Feature } from '@types';
+import { Environment, Feature } from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
@@ -15,6 +15,7 @@ interface Props {
   features: Feature[];
   prerequisites: PrerequisiteSchema[];
   isDisableAddPrerequisite: boolean;
+  currentEnvironment: Environment;
   onRemovePrerequisite: (index: number) => void;
   onAddPrerequisite: () => void;
 }
@@ -24,6 +25,7 @@ const PrerequisiteRule = ({
   features,
   prerequisites,
   isDisableAddPrerequisite,
+  currentEnvironment,
   onRemovePrerequisite,
   onAddPrerequisite
 }: Props) => {
@@ -59,6 +61,7 @@ const PrerequisiteRule = ({
                 featureId={feature.id}
                 prerequisiteIndex={prerequisiteIndex}
                 type={prerequisiteIndex === 0 ? 'if' : 'and'}
+                currentEnvironment={currentEnvironment}
                 onDeleteCondition={() =>
                   onRemovePrerequisite(prerequisiteIndex)
                 }
