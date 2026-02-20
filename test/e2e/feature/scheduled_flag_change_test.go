@@ -766,6 +766,65 @@ func TestScheduledFlagChangeConflict_NoConflictOnUnrelatedFlagUpdate(t *testing.
 	)
 }
 
+// TestScheduledFlagChange_CrossFlagPrerequisite verifies that schedules can
+// reference other flags via prerequisites and validates the cross-flag dependency tracking.
+func TestScheduledFlagChange_CrossFlagPrerequisite(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+
+	// Create flag A (the dependent flag)
+	flagAID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagAID))
+
+	// Create flag B (the prerequisite flag)
+	flagBID := newFeatureID(t)
+	createFeature(t, client, newCreateFeatureReq(flagBID))
+
+	// Get flag B's variation IDs
+	flagB := getFeature(t, flagBID, client)
+	require.GreaterOrEqual(t, len(flagB.Variations), 1, "Flag B should have at least 1 variation")
+	prereqVariationID := flagB.Variations[0].Id
+
+	// Create a schedule on flag A that adds a prerequisite to flag B
+	// This tests the cross-flag dependency tracking we implemented
+	scheduleResp := createScheduledFlagChange(t, client, flagAID,
+		&featureproto.ScheduledChangePayload{
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   flagBID,
+						VariationId: prereqVariationID,
+					},
+				},
+			},
+		},
+	)
+	require.NotEmpty(t, scheduleResp.ScheduledFlagChange.Id)
+	scheduleID := scheduleResp.ScheduledFlagChange.Id
+
+	// Verify schedule is PENDING - this validates that:
+	// 1. Cross-flag schedules can be created
+	// 2. Prerequisite references are validated
+	// 3. Schedule is not marked as CONFLICT when all references are valid
+	getResp := getScheduledFlagChange(t, client, scheduleID)
+	assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		getResp.ScheduledFlagChange.Status,
+		"Schedule with valid cross-flag prerequisite should be PENDING")
+
+	// Verify the prerequisite is stored correctly
+	require.Len(t, getResp.ScheduledFlagChange.Payload.PrerequisiteChanges, 1,
+		"Schedule should have 1 prerequisite change")
+	prereq := getResp.ScheduledFlagChange.Payload.PrerequisiteChanges[0]
+	assert.Equal(t, flagBID, prereq.Prerequisite.FeatureId,
+		"Prerequisite should reference flag B")
+	assert.Equal(t, prereqVariationID, prereq.Prerequisite.VariationId,
+		"Prerequisite should reference the correct variation")
+
+	t.Logf("Successfully created and validated cross-flag schedule with prerequisite dependency")
+}
+
 // TestScheduledFlagChangeExecutor_ExecutesDueSchedule verifies that the
 // batch executor picks up a due schedule and executes it, changing the
 // flag state and marking the schedule as EXECUTED.

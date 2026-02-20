@@ -32,6 +32,11 @@ const (
 	// schedules evaluated per UpdateFeature call to bound the DB
 	// queries and processing time.
 	maxCrossFlagSchedulesToCheck = 100
+
+	// maxSchedulesToRecover limits the number of CONFLICT schedules
+	// to attempt recovery on per flag or environment to bound DB
+	// queries and processing time.
+	maxSchedulesToRecover = 100
 )
 
 // ConflictDetector detects conflicts between scheduled flag changes.
@@ -240,11 +245,13 @@ func (d *ConflictDetector) DetectCrossFlagConflicts(
 			// For non-prerequisite schedules on other flags, same-flag
 			// check already covers them via their own flag's
 			// DetectConflictsOnFlagChange call.
-			// But for CONFLICT recovery, we should still check.
-			if schedule.Status !=
-				proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT {
-				continue
-			}
+			continue
+		}
+
+		// Verify this schedule actually references the updated flag
+		// Only process schedules that have a dependency on the updated flag
+		if !scheduleReferencesFlag(schedule.Payload, updatedFlagID) {
+			continue
 		}
 
 		// Get the schedule's own flag
@@ -277,6 +284,12 @@ func (d *ConflictDetector) DetectCrossFlagConflicts(
 			ctx, schedule.Payload, environmentID, now,
 		)
 		invalidRefs = append(invalidRefs, prereqConflicts...)
+
+		// Validate cross-flag FEATURE_FLAG references in rule clauses
+		featureFlagConflicts := d.validateFeatureFlagReferences(
+			ctx, schedule.Payload, environmentID, now,
+		)
+		invalidRefs = append(invalidRefs, featureFlagConflicts...)
 
 		isPending := schedule.Status ==
 			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
@@ -379,6 +392,83 @@ func (d *ConflictDetector) validatePrerequisiteReferences(
 	return conflicts
 }
 
+// validateFeatureFlagReferences checks if FEATURE_FLAG clauses in rules
+// reference flags and variations that still exist.
+// The FEATURE_FLAG operator is used to create dependencies on other flags:
+// - clause.Attribute contains the referenced feature ID
+// - clause.Values contains the variation IDs of that flag
+func (d *ConflictDetector) validateFeatureFlagReferences(
+	ctx context.Context,
+	payload *proto.ScheduledChangePayload,
+	environmentID string,
+	now int64,
+) []*proto.ScheduledChangeConflict {
+	if payload == nil || d.featureStorage == nil {
+		return nil
+	}
+
+	var conflicts []*proto.ScheduledChangeConflict
+	for _, rc := range payload.RuleChanges {
+		if rc == nil || rc.Rule == nil {
+			continue
+		}
+		if rc.ChangeType != proto.ChangeType_CREATE && rc.ChangeType != proto.ChangeType_UPDATE {
+			continue
+		}
+
+		for _, clause := range rc.Rule.Clauses {
+			if clause == nil || clause.Operator != proto.Clause_FEATURE_FLAG {
+				continue
+			}
+
+			referencedFlagID := clause.Attribute
+			if referencedFlagID == "" {
+				continue
+			}
+
+			// Get the referenced feature
+			referencedFeature, err := d.featureStorage.GetFeature(
+				ctx, referencedFlagID, environmentID,
+			)
+			if err != nil {
+				d.logger.Warn(
+					"Failed to get referenced feature for FEATURE_FLAG clause",
+					zap.String("referencedFeatureId", referencedFlagID),
+					zap.String("ruleId", rc.Rule.Id),
+					zap.Error(err),
+				)
+				conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+					Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+					Description: fmt.Sprintf(
+						"Rule references flag %s which no longer exists",
+						referencedFlagID,
+					),
+					ConflictingField: "rules",
+					DetectedAt:       now,
+				})
+				continue
+			}
+
+			// Validate that all referenced variation IDs exist in the referenced flag
+			for _, variationID := range clause.Values {
+				if variationID != "" &&
+					!featuredomain.VariationExists(referencedFeature.Feature, variationID) {
+					conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+						Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+						Description: fmt.Sprintf(
+							"Rule references flag %s variation %s which no longer exists",
+							referencedFlagID, variationID,
+						),
+						ConflictingField: "rules",
+						DetectedAt:       now,
+					})
+				}
+			}
+		}
+	}
+	return conflicts
+}
+
 // hasPrerequisiteChanges returns true if the payload has any prerequisite CREATE/UPDATE changes.
 func hasPrerequisiteChanges(payload *proto.ScheduledChangePayload) bool {
 	if payload == nil {
@@ -389,6 +479,39 @@ func hasPrerequisiteChanges(payload *proto.ScheduledChangePayload) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// scheduleReferencesFlag checks if a schedule's payload references a specific flag ID.
+// This includes both prerequisites and flag-as-rule (FEATURE_FLAG operator in clauses).
+// This is used to determine if a cross-flag conflict check should be performed.
+func scheduleReferencesFlag(payload *proto.ScheduledChangePayload, targetFlagID string) bool {
+	if payload == nil {
+		return false
+	}
+
+	// Check if any prerequisite changes reference the target flag
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc != nil && pc.Prerequisite != nil &&
+			pc.Prerequisite.FeatureId == targetFlagID {
+			return true
+		}
+	}
+
+	// Check if any rule clauses reference the target flag via FEATURE_FLAG operator
+	// In this case, the clause's attribute field contains the referenced feature ID
+	for _, rc := range payload.RuleChanges {
+		if rc != nil && rc.Rule != nil {
+			for _, clause := range rc.Rule.Clauses {
+				if clause != nil &&
+					clause.Operator == proto.Clause_FEATURE_FLAG &&
+					clause.Attribute == targetFlagID {
+					return true
+				}
+			}
+		}
+	}
+
 	return false
 }
 
@@ -553,6 +676,8 @@ func findDeletedReferencesNeededByPayload(earlierPayload, newPayload *proto.Sche
 // validatePayloadReferences checks if the schedule's payload references
 // variations/rules that exist in the current flag state.
 // Returns INVALID_REFERENCE conflicts for any stale references.
+// validatePayloadReferences validates that all references in the payload (variations, rules, targets, etc.)
+// exist in the flag. Returns a list of conflicts if any references are invalid.
 func validatePayloadReferences(
 	flag *proto.Feature,
 	payload *proto.ScheduledChangePayload,
@@ -680,4 +805,255 @@ func validatePayloadReferences(
 	}
 
 	return conflicts
+}
+
+// attemptRecoveryForFlag attempts to auto-recover CONFLICT schedules for a specific flag.
+// It validates all references and restores schedules to PENDING if all references are valid.
+// Returns the number of schedules recovered.
+func (d *ConflictDetector) attemptRecoveryForFlag(
+	ctx context.Context,
+	featureID string,
+	environmentID string,
+) (int, error) {
+	if d.featureStorage == nil {
+		return 0, fmt.Errorf("feature storage not configured")
+	}
+
+	// List CONFLICT schedules for this specific flag
+	schedules, err := d.listConflictSchedulesByFlag(ctx, featureID, environmentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list conflict schedules: %w", err)
+	}
+
+	if len(schedules) == 0 {
+		return 0, nil
+	}
+
+	// Get the flag once
+	feature, err := d.featureStorage.GetFeature(ctx, featureID, environmentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get feature: %w", err)
+	}
+
+	return d.attemptRecoveryForSchedules(ctx, schedules, feature.Feature, environmentID)
+}
+
+// attemptRecoveryForEnvironment attempts to auto-recover ALL CONFLICT schedules in an environment.
+// Optionally excludes schedules for a specific flag (to avoid duplicate work).
+// Returns the number of schedules recovered.
+func (d *ConflictDetector) attemptRecoveryForEnvironment(
+	ctx context.Context,
+	environmentID string,
+	excludeFeatureID string,
+) (int, error) {
+	if d.featureStorage == nil {
+		return 0, fmt.Errorf("feature storage not configured")
+	}
+
+	// List all CONFLICT schedules in the environment
+	schedules, err := d.listConflictSchedulesInEnvironment(ctx, environmentID, excludeFeatureID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list conflict schedules: %w", err)
+	}
+
+	if len(schedules) == 0 {
+		return 0, nil
+	}
+
+	d.logger.Info(
+		"Attempting environment-wide conflict recovery",
+		zap.String("environmentId", environmentID),
+		zap.Int("scheduleCount", len(schedules)),
+	)
+
+	// Group schedules by feature ID to minimize feature fetches
+	schedulesByFeature := make(map[string][]*proto.ScheduledFlagChange)
+	for _, schedule := range schedules {
+		schedulesByFeature[schedule.FeatureId] = append(
+			schedulesByFeature[schedule.FeatureId],
+			schedule,
+		)
+	}
+
+	totalRecovered := 0
+	for featureID, featureSchedules := range schedulesByFeature {
+		// Get the feature
+		feature, err := d.featureStorage.GetFeature(ctx, featureID, environmentID)
+		if err != nil {
+			d.logger.Warn(
+				"Failed to get feature for recovery",
+				zap.String("featureId", featureID),
+				zap.Error(err),
+			)
+			continue
+		}
+
+		recovered, err := d.attemptRecoveryForSchedules(
+			ctx,
+			featureSchedules,
+			feature.Feature,
+			environmentID,
+		)
+		if err != nil {
+			d.logger.Error(
+				"Failed to recover schedules for feature",
+				zap.String("featureId", featureID),
+				zap.Error(err),
+			)
+			continue
+		}
+		totalRecovered += recovered
+	}
+
+	if totalRecovered > 0 {
+		d.logger.Info(
+			"Environment-wide conflict recovery completed",
+			zap.String("environmentId", environmentID),
+			zap.Int("recovered", totalRecovered),
+		)
+	}
+
+	return totalRecovered, nil
+}
+
+// attemptRecoveryForSchedules is the core recovery logic - validates and recovers schedules.
+// This is the shared implementation used by both specific flag and environment-wide recovery.
+func (d *ConflictDetector) attemptRecoveryForSchedules(
+	ctx context.Context,
+	schedules []*proto.ScheduledFlagChange,
+	flag *proto.Feature,
+	environmentID string,
+) (int, error) {
+	recoveredCount := 0
+	now := time.Now().Unix()
+
+	for _, schedule := range schedules {
+		// Validate same-flag references
+		invalidRefs := validatePayloadReferences(flag, schedule.Payload, now)
+
+		// Also validate cross-flag prerequisites if present
+		if len(invalidRefs) == 0 && hasPrerequisiteChanges(schedule.Payload) {
+			prereqConflicts := d.validatePrerequisiteReferences(
+				ctx,
+				schedule.Payload,
+				environmentID,
+				now,
+			)
+			invalidRefs = append(invalidRefs, prereqConflicts...)
+		}
+
+		// Also validate cross-flag FEATURE_FLAG references in rule clauses
+		if len(invalidRefs) == 0 {
+			featureFlagConflicts := d.validateFeatureFlagReferences(
+				ctx,
+				schedule.Payload,
+				environmentID,
+				now,
+			)
+			invalidRefs = append(invalidRefs, featureFlagConflicts...)
+		}
+
+		// If all references are valid, restore to PENDING
+		if len(invalidRefs) == 0 {
+			sfcDomain := &featuredomain.ScheduledFlagChange{ScheduledFlagChange: schedule}
+			sfcDomain.RestoreToPending()
+
+			if err := d.storage.UpdateScheduledFlagChange(ctx, sfcDomain); err != nil {
+				d.logger.Error(
+					"Failed to restore schedule to PENDING",
+					zap.String("scheduleId", schedule.Id),
+					zap.String("featureId", schedule.FeatureId),
+					zap.Error(err),
+				)
+				continue
+			}
+
+			d.logger.Info(
+				"Auto-recovered schedule from CONFLICT",
+				zap.String("scheduleId", schedule.Id),
+				zap.String("featureId", schedule.FeatureId),
+			)
+			recoveredCount++
+		}
+	}
+
+	return recoveredCount, nil
+}
+
+// listConflictSchedulesByFlag lists CONFLICT schedules for a specific flag.
+func (d *ConflictDetector) listConflictSchedulesByFlag(
+	ctx context.Context,
+	featureID string,
+	environmentID string,
+) ([]*proto.ScheduledFlagChange, error) {
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentID,
+		},
+		{
+			Column:   "feature_id",
+			Operator: mysql.OperatorEqual,
+			Value:    featureID,
+		},
+		{
+			Column:   "status",
+			Operator: mysql.OperatorEqual,
+			Value:    int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
+		},
+	}
+
+	options := &mysql.ListOptions{
+		Filters: filters,
+		Orders: []*mysql.Order{
+			mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc),
+		},
+		Limit:  maxSchedulesToRecover,
+		Offset: mysql.QueryNoOffset,
+	}
+
+	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, options)
+	return sfcs, err
+}
+
+// listConflictSchedulesInEnvironment lists all CONFLICT schedules in an environment.
+func (d *ConflictDetector) listConflictSchedulesInEnvironment(
+	ctx context.Context,
+	environmentID string,
+	excludeFeatureID string,
+) ([]*proto.ScheduledFlagChange, error) {
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentID,
+		},
+		{
+			Column:   "status",
+			Operator: mysql.OperatorEqual,
+			Value:    int32(proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT),
+		},
+	}
+
+	// Optionally exclude a specific flag (avoid duplicate work)
+	if excludeFeatureID != "" {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_id",
+			Operator: mysql.OperatorNotEqual,
+			Value:    excludeFeatureID,
+		})
+	}
+
+	options := &mysql.ListOptions{
+		Filters: filters,
+		Orders: []*mysql.Order{
+			mysql.NewOrder("scheduled_at", mysql.OrderDirectionAsc),
+		},
+		Limit:  maxSchedulesToRecover,
+		Offset: mysql.QueryNoOffset,
+	}
+
+	sfcs, _, _, err := d.storage.ListScheduledFlagChanges(ctx, options)
+	return sfcs, err
 }

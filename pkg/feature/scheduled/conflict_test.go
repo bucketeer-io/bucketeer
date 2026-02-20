@@ -16,6 +16,7 @@ package scheduled
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -1168,4 +1169,606 @@ func TestDetectCrossFlagConflicts_NilFeatureStorage(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count)
+}
+
+func TestAttemptRecoveryForFlag(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc              string
+		featureID         string
+		environmentID     string
+		flag              *featureproto.Feature
+		conflictSchedules []*featureproto.ScheduledFlagChange
+		expectedRecovered int
+		expectError       bool
+	}{
+		{
+			desc:          "successfully recovers CONFLICT schedule when references valid",
+			featureID:     "feature-1",
+			environmentID: "env-1",
+			flag: &featureproto.Feature{
+				Id:      "feature-1",
+				Version: 3,
+				Variations: []*featureproto.Variation{
+					{Id: "var-1", Value: "true"},
+					{Id: "var-2", Value: "false"},
+				},
+			},
+			conflictSchedules: []*featureproto.ScheduledFlagChange{
+				{
+					Id:        "sfc-1",
+					FeatureId: "feature-1",
+					Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+					Payload: &featureproto.ScheduledChangePayload{
+						VariationChanges: []*featureproto.VariationChange{
+							{
+								ChangeType: featureproto.ChangeType_UPDATE,
+								Variation:  &featureproto.Variation{Id: "var-2", Value: "updated"},
+							},
+						},
+					},
+				},
+			},
+			expectedRecovered: 1,
+			expectError:       false,
+		},
+		{
+			desc:          "no recovery when references still invalid",
+			featureID:     "feature-1",
+			environmentID: "env-1",
+			flag: &featureproto.Feature{
+				Id:      "feature-1",
+				Version: 3,
+				Variations: []*featureproto.Variation{
+					{Id: "var-1", Value: "true"},
+				},
+			},
+			conflictSchedules: []*featureproto.ScheduledFlagChange{
+				{
+					Id:        "sfc-1",
+					FeatureId: "feature-1",
+					Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+					Payload: &featureproto.ScheduledChangePayload{
+						VariationChanges: []*featureproto.VariationChange{
+							{
+								ChangeType: featureproto.ChangeType_UPDATE,
+								Variation:  &featureproto.Variation{Id: "var-deleted", Value: "nope"},
+							},
+						},
+					},
+				},
+			},
+			expectedRecovered: 0,
+			expectError:       false,
+		},
+		{
+			desc:              "no recovery when no conflict schedules",
+			featureID:         "feature-1",
+			environmentID:     "env-1",
+			conflictSchedules: []*featureproto.ScheduledFlagChange{},
+			expectedRecovered: 0,
+			expectError:       false,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+			featureStorage := mock.NewMockFeatureStorage(ctrl)
+			detector := NewConflictDetectorWithFeatureStorage(sfcStorage, featureStorage, nil)
+
+			// Mock listConflictSchedulesByFlag
+			sfcStorage.EXPECT().ListScheduledFlagChanges(
+				gomock.Any(), gomock.Any(),
+			).Return(p.conflictSchedules, len(p.conflictSchedules), int64(len(p.conflictSchedules)), nil)
+
+			if len(p.conflictSchedules) > 0 {
+				// Mock GetFeature
+				featureStorage.EXPECT().GetFeature(
+					gomock.Any(), p.featureID, p.environmentID,
+				).Return(&domain.Feature{Feature: p.flag}, nil)
+
+				// Mock UpdateScheduledFlagChange if recovery expected
+				if p.expectedRecovered > 0 {
+					sfcStorage.EXPECT().UpdateScheduledFlagChange(
+						gomock.Any(), gomock.Any(),
+					).Times(p.expectedRecovered).DoAndReturn(
+						func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+							assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, sfc.Status)
+							assert.Nil(t, sfc.Conflicts)
+							return nil
+						},
+					)
+				}
+			}
+
+			recovered, err := detector.attemptRecoveryForFlag(
+				context.Background(), p.featureID, p.environmentID,
+			)
+
+			if p.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, p.expectedRecovered, recovered)
+			}
+		})
+	}
+}
+
+func TestAttemptRecoveryForEnvironment(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc              string
+		environmentID     string
+		excludeFeatureID  string
+		conflictSchedules []*featureproto.ScheduledFlagChange
+		flagsMap          map[string]*featureproto.Feature
+		expectedRecovered int
+	}{
+		{
+			desc:             "recovers schedules from multiple flags",
+			environmentID:    "env-1",
+			excludeFeatureID: "",
+			conflictSchedules: []*featureproto.ScheduledFlagChange{
+				{
+					Id:        "sfc-1",
+					FeatureId: "feature-1",
+					Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+					Payload: &featureproto.ScheduledChangePayload{
+						VariationChanges: []*featureproto.VariationChange{
+							{
+								ChangeType: featureproto.ChangeType_UPDATE,
+								Variation:  &featureproto.Variation{Id: "var-1", Value: "updated"},
+							},
+						},
+					},
+				},
+				{
+					Id:        "sfc-2",
+					FeatureId: "feature-2",
+					Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+					Payload: &featureproto.ScheduledChangePayload{
+						VariationChanges: []*featureproto.VariationChange{
+							{
+								ChangeType: featureproto.ChangeType_UPDATE,
+								Variation:  &featureproto.Variation{Id: "var-a", Value: "updated"},
+							},
+						},
+					},
+				},
+			},
+			flagsMap: map[string]*featureproto.Feature{
+				"feature-1": {
+					Id:         "feature-1",
+					Version:    3,
+					Variations: []*featureproto.Variation{{Id: "var-1"}},
+				},
+				"feature-2": {
+					Id:         "feature-2",
+					Version:    2,
+					Variations: []*featureproto.Variation{{Id: "var-a"}},
+				},
+			},
+			expectedRecovered: 2,
+		},
+		{
+			desc:             "excludes specific flag",
+			environmentID:    "env-1",
+			excludeFeatureID: "feature-1",
+			conflictSchedules: []*featureproto.ScheduledFlagChange{
+				{
+					Id:        "sfc-2",
+					FeatureId: "feature-2",
+					Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+					Payload: &featureproto.ScheduledChangePayload{
+						VariationChanges: []*featureproto.VariationChange{
+							{
+								ChangeType: featureproto.ChangeType_UPDATE,
+								Variation:  &featureproto.Variation{Id: "var-a", Value: "updated"},
+							},
+						},
+					},
+				},
+			},
+			flagsMap: map[string]*featureproto.Feature{
+				"feature-2": {
+					Id:         "feature-2",
+					Version:    2,
+					Variations: []*featureproto.Variation{{Id: "var-a"}},
+				},
+			},
+			expectedRecovered: 1,
+		},
+		{
+			desc:              "no schedules to recover",
+			environmentID:     "env-1",
+			excludeFeatureID:  "",
+			conflictSchedules: []*featureproto.ScheduledFlagChange{},
+			expectedRecovered: 0,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+			featureStorage := mock.NewMockFeatureStorage(ctrl)
+			detector := NewConflictDetectorWithFeatureStorage(sfcStorage, featureStorage, nil)
+
+			// Mock listConflictSchedulesInEnvironment
+			sfcStorage.EXPECT().ListScheduledFlagChanges(
+				gomock.Any(), gomock.Any(),
+			).Return(p.conflictSchedules, len(p.conflictSchedules), int64(len(p.conflictSchedules)), nil)
+
+			// Mock GetFeature for each unique flag
+			for featureID, flag := range p.flagsMap {
+				featureStorage.EXPECT().GetFeature(
+					gomock.Any(), featureID, p.environmentID,
+				).Return(&domain.Feature{Feature: flag}, nil)
+			}
+
+			// Mock UpdateScheduledFlagChange for recoveries
+			if p.expectedRecovered > 0 {
+				sfcStorage.EXPECT().UpdateScheduledFlagChange(
+					gomock.Any(), gomock.Any(),
+				).Times(p.expectedRecovered).DoAndReturn(
+					func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+						assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, sfc.Status)
+						return nil
+					},
+				)
+			}
+
+			recovered, err := detector.attemptRecoveryForEnvironment(
+				context.Background(), p.environmentID, p.excludeFeatureID,
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, p.expectedRecovered, recovered)
+		})
+	}
+}
+
+func TestAttemptRecoveryForFlag_WithPrerequisites(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+	featureStorage := mock.NewMockFeatureStorage(ctrl)
+	detector := NewConflictDetectorWithFeatureStorage(sfcStorage, featureStorage, nil)
+
+	// Schedule with prerequisite that references another flag
+	schedule := &featureproto.ScheduledFlagChange{
+		Id:        "sfc-1",
+		FeatureId: "feature-a",
+		Status:    featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		Payload: &featureproto.ScheduledChangePayload{
+			PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+				{
+					ChangeType: featureproto.ChangeType_CREATE,
+					Prerequisite: &featureproto.Prerequisite{
+						FeatureId:   "feature-b",
+						VariationId: "var-beta",
+					},
+				},
+			},
+		},
+	}
+
+	flagA := &featureproto.Feature{
+		Id:         "feature-a",
+		Version:    2,
+		Variations: []*featureproto.Variation{{Id: "var-a"}},
+	}
+
+	flagB := &featureproto.Feature{
+		Id:         "feature-b",
+		Version:    1,
+		Variations: []*featureproto.Variation{{Id: "var-beta"}}, // Prerequisite variation now exists
+	}
+
+	// Mock list schedules
+	sfcStorage.EXPECT().ListScheduledFlagChanges(
+		gomock.Any(), gomock.Any(),
+	).Return([]*featureproto.ScheduledFlagChange{schedule}, 1, int64(1), nil)
+
+	// Mock get feature-a
+	featureStorage.EXPECT().GetFeature(
+		gomock.Any(), "feature-a", "env-1",
+	).Return(&domain.Feature{Feature: flagA}, nil)
+
+	// Mock get feature-b (for prerequisite validation)
+	featureStorage.EXPECT().GetFeature(
+		gomock.Any(), "feature-b", "env-1",
+	).Return(&domain.Feature{Feature: flagB}, nil)
+
+	// Mock update (should restore to PENDING since prerequisite is now valid)
+	sfcStorage.EXPECT().UpdateScheduledFlagChange(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(
+		func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+			assert.Equal(t, featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING, sfc.Status)
+			return nil
+		},
+	)
+
+	recovered, err := detector.attemptRecoveryForFlag(
+		context.Background(), "feature-a", "env-1",
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, recovered)
+}
+
+func TestAttemptRecoveryForFlag_NilFeatureStorage(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+	detector := NewConflictDetector(sfcStorage) // No feature storage
+
+	recovered, err := detector.attemptRecoveryForFlag(
+		context.Background(), "feature-1", "env-1",
+	)
+
+	require.Error(t, err)
+	assert.Equal(t, 0, recovered)
+	assert.Contains(t, err.Error(), "feature storage not configured")
+}
+
+func TestScheduleReferencesFlag_FeatureFlagClauses(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		payload      *featureproto.ScheduledChangePayload
+		targetFlagID string
+		expected     bool
+	}{
+		{
+			desc: "references flag via FEATURE_FLAG clause",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-b", // References flag-b
+									Values:    []string{"var-true"},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFlagID: "flag-b",
+			expected:     true,
+		},
+		{
+			desc: "does not reference flag (different flag in clause)",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-c", // References flag-c, not flag-b
+									Values:    []string{"var-true"},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFlagID: "flag-b",
+			expected:     false,
+		},
+		{
+			desc: "references flag via prerequisite AND FEATURE_FLAG clause",
+			payload: &featureproto.ScheduledChangePayload{
+				PrerequisiteChanges: []*featureproto.PrerequisiteChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Prerequisite: &featureproto.Prerequisite{
+							FeatureId:   "flag-b",
+							VariationId: "var-1",
+						},
+					},
+				},
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-b",
+									Values:    []string{"var-true"},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFlagID: "flag-b",
+			expected:     true,
+		},
+		{
+			desc: "no FEATURE_FLAG clauses",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_SEGMENT,
+									Attribute: "segment-1",
+									Values:    []string{"value"},
+								},
+							},
+						},
+					},
+				},
+			},
+			targetFlagID: "flag-b",
+			expected:     false,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			result := scheduleReferencesFlag(p.payload, p.targetFlagID)
+			assert.Equal(t, p.expected, result)
+		})
+	}
+}
+
+func TestValidateFeatureFlagReferences(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc              string
+		payload           *featureproto.ScheduledChangePayload
+		environmentID     string
+		referencedFlags   map[string]*featureproto.Feature
+		expectedConflicts int
+	}{
+		{
+			desc: "valid FEATURE_FLAG clause - flag and variation exist",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-b",
+									Values:    []string{"var-true"},
+								},
+							},
+						},
+					},
+				},
+			},
+			environmentID: "env-1",
+			referencedFlags: map[string]*featureproto.Feature{
+				"flag-b": {
+					Id:         "flag-b",
+					Variations: []*featureproto.Variation{{Id: "var-true"}},
+				},
+			},
+			expectedConflicts: 0,
+		},
+		{
+			desc: "invalid FEATURE_FLAG clause - referenced flag not found",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-deleted",
+									Values:    []string{"var-true"},
+								},
+							},
+						},
+					},
+				},
+			},
+			environmentID:     "env-1",
+			referencedFlags:   map[string]*featureproto.Feature{},
+			expectedConflicts: 1,
+		},
+		{
+			desc: "invalid FEATURE_FLAG clause - variation not found",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_CREATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Attribute: "flag-b",
+									Values:    []string{"var-deleted"},
+								},
+							},
+						},
+					},
+				},
+			},
+			environmentID: "env-1",
+			referencedFlags: map[string]*featureproto.Feature{
+				"flag-b": {
+					Id:         "flag-b",
+					Variations: []*featureproto.Variation{{Id: "var-true"}},
+				},
+			},
+			expectedConflicts: 1,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			sfcStorage := mock.NewMockScheduledFlagChangeStorage(ctrl)
+			featureStorage := mock.NewMockFeatureStorage(ctrl)
+			detector := NewConflictDetectorWithFeatureStorage(sfcStorage, featureStorage, nil)
+
+			// Mock GetFeature calls
+			for flagID, flag := range p.referencedFlags {
+				featureStorage.EXPECT().GetFeature(
+					gomock.Any(), flagID, p.environmentID,
+				).Return(&domain.Feature{Feature: flag}, nil)
+			}
+
+			// Mock GetFeature failures for missing flags
+			for _, rc := range p.payload.RuleChanges {
+				if rc != nil && rc.Rule != nil {
+					for _, clause := range rc.Rule.Clauses {
+						if clause != nil && clause.Operator == featureproto.Clause_FEATURE_FLAG {
+							if _, exists := p.referencedFlags[clause.Attribute]; !exists {
+								featureStorage.EXPECT().GetFeature(
+									gomock.Any(), clause.Attribute, p.environmentID,
+								).Return(nil, fmt.Errorf("not found"))
+							}
+						}
+					}
+				}
+			}
+
+			conflicts := detector.validateFeatureFlagReferences(
+				context.Background(), p.payload, p.environmentID, time.Now().Unix(),
+			)
+
+			assert.Equal(t, p.expectedConflicts, len(conflicts))
+		})
+	}
 }
