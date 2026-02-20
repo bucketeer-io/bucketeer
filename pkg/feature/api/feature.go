@@ -978,6 +978,7 @@ func (s *FeatureService) UpdateFeature(
 	}
 
 	s.updateFeatureFlagCache(ctx)
+
 	return &featureproto.UpdateFeatureResponse{
 		Feature:                   updatedpb,
 		ScheduleConflictsDetected: conflictCount > 0,

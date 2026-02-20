@@ -234,17 +234,10 @@ func (d *ConflictDetector) DetectCrossFlagConflicts(
 	flagCache := make(map[string]*proto.Feature)
 
 	for _, schedule := range schedules {
-		// Only process schedules that have prerequisite changes
-		// referencing other flags.
-		if !hasPrerequisiteChanges(schedule.Payload) {
-			// For non-prerequisite schedules on other flags, same-flag
-			// check already covers them via their own flag's
-			// DetectConflictsOnFlagChange call.
-			// But for CONFLICT recovery, we should still check.
-			if schedule.Status !=
-				proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT {
-				continue
-			}
+		// Only process schedules that reference the updated flag
+		// (via prerequisites or FEATURE_FLAG clauses in rules)
+		if !scheduleReferencesFlag(schedule.Payload, updatedFlagID) {
+			continue
 		}
 
 		// Get the schedule's own flag
@@ -277,6 +270,12 @@ func (d *ConflictDetector) DetectCrossFlagConflicts(
 			ctx, schedule.Payload, environmentID, now,
 		)
 		invalidRefs = append(invalidRefs, prereqConflicts...)
+
+		// Validate cross-flag FEATURE_FLAG references in rule clauses
+		featureFlagConflicts := d.validateFeatureFlagReferences(
+			ctx, schedule.Payload, environmentID, now,
+		)
+		invalidRefs = append(invalidRefs, featureFlagConflicts...)
 
 		isPending := schedule.Status ==
 			proto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING
@@ -379,6 +378,83 @@ func (d *ConflictDetector) validatePrerequisiteReferences(
 	return conflicts
 }
 
+// validateFeatureFlagReferences checks if FEATURE_FLAG clauses in rules
+// reference flags and variations that still exist.
+// The FEATURE_FLAG operator is used to create dependencies on other flags:
+// - clause.Attribute contains the referenced feature ID
+// - clause.Values contains the variation IDs of that flag
+func (d *ConflictDetector) validateFeatureFlagReferences(
+	ctx context.Context,
+	payload *proto.ScheduledChangePayload,
+	environmentID string,
+	now int64,
+) []*proto.ScheduledChangeConflict {
+	if payload == nil || d.featureStorage == nil {
+		return nil
+	}
+
+	var conflicts []*proto.ScheduledChangeConflict
+	for _, rc := range payload.RuleChanges {
+		if rc == nil || rc.Rule == nil {
+			continue
+		}
+		if rc.ChangeType != proto.ChangeType_CREATE && rc.ChangeType != proto.ChangeType_UPDATE {
+			continue
+		}
+
+		for _, clause := range rc.Rule.Clauses {
+			if clause == nil || clause.Operator != proto.Clause_FEATURE_FLAG {
+				continue
+			}
+
+			referencedFlagID := clause.Attribute
+			if referencedFlagID == "" {
+				continue
+			}
+
+			// Get the referenced feature
+			referencedFeature, err := d.featureStorage.GetFeature(
+				ctx, referencedFlagID, environmentID,
+			)
+			if err != nil {
+				d.logger.Warn(
+					"Failed to get referenced feature for FEATURE_FLAG clause",
+					zap.String("referencedFeatureId", referencedFlagID),
+					zap.String("ruleId", rc.Rule.Id),
+					zap.Error(err),
+				)
+				conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+					Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+					Description: fmt.Sprintf(
+						"Rule references flag %s which no longer exists",
+						referencedFlagID,
+					),
+					ConflictingField: "rules",
+					DetectedAt:       now,
+				})
+				continue
+			}
+
+			// Validate that all referenced variation IDs exist in the referenced flag
+			for _, variationID := range clause.Values {
+				if variationID != "" &&
+					!featuredomain.VariationExists(referencedFeature.Feature, variationID) {
+					conflicts = append(conflicts, &proto.ScheduledChangeConflict{
+						Type: proto.ScheduledChangeConflict_CONFLICT_TYPE_INVALID_REFERENCE,
+						Description: fmt.Sprintf(
+							"Rule references flag %s variation %s which no longer exists",
+							referencedFlagID, variationID,
+						),
+						ConflictingField: "rules",
+						DetectedAt:       now,
+					})
+				}
+			}
+		}
+	}
+	return conflicts
+}
+
 // hasPrerequisiteChanges returns true if the payload has any prerequisite CREATE/UPDATE changes.
 func hasPrerequisiteChanges(payload *proto.ScheduledChangePayload) bool {
 	if payload == nil {
@@ -389,6 +465,39 @@ func hasPrerequisiteChanges(payload *proto.ScheduledChangePayload) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// scheduleReferencesFlag checks if a schedule's payload references a specific flag ID.
+// This includes both prerequisites and flag-as-rule (FEATURE_FLAG operator in clauses).
+// This is used to determine if a cross-flag conflict check should be performed.
+func scheduleReferencesFlag(payload *proto.ScheduledChangePayload, targetFlagID string) bool {
+	if payload == nil {
+		return false
+	}
+
+	// Check if any prerequisite changes reference the target flag
+	for _, pc := range payload.PrerequisiteChanges {
+		if pc != nil && pc.Prerequisite != nil &&
+			pc.Prerequisite.FeatureId == targetFlagID {
+			return true
+		}
+	}
+
+	// Check if any rule clauses reference the target flag via FEATURE_FLAG operator
+	// In this case, the clause's attribute field contains the referenced feature ID
+	for _, rc := range payload.RuleChanges {
+		if rc != nil && rc.Rule != nil {
+			for _, clause := range rc.Rule.Clauses {
+				if clause != nil &&
+					clause.Operator == proto.Clause_FEATURE_FLAG &&
+					clause.Attribute == targetFlagID {
+					return true
+				}
+			}
+		}
+	}
+
 	return false
 }
 
@@ -550,9 +659,8 @@ func findDeletedReferencesNeededByPayload(earlierPayload, newPayload *proto.Sche
 	return refs
 }
 
-// validatePayloadReferences checks if the schedule's payload references
-// variations/rules that exist in the current flag state.
-// Returns INVALID_REFERENCE conflicts for any stale references.
+// validatePayloadReferences validates that all references in the payload (variations, rules, targets, etc.)
+// exist in the flag. Returns a list of conflicts if any references are invalid.
 func validatePayloadReferences(
 	flag *proto.Feature,
 	payload *proto.ScheduledChangePayload,
