@@ -1,5 +1,59 @@
 # Changelog
 
+## [2.3.0](https://github.com/bucketeer-io/bucketeer/compare/v2.2.0...v2.3.0) (2026-02-20)
+
+
+### Features
+
+* implement postgreSQL as data warehouse option ([#2300](https://github.com/bucketeer-io/bucketeer/issues/2300)) ([291212c](https://github.com/bucketeer-io/bucketeer/commit/291212ca9a4e1957a59ccb0b1959a3cf4c8ffec4))
+* remove command layer and redundant API in feature package ([#2393](https://github.com/bucketeer-io/bucketeer/issues/2393)) ([6b3e5cc](https://github.com/bucketeer-io/bucketeer/commit/6b3e5ccdadcd2e3db7479bcbf3a9adbb28e427c5))
+* **ui/dashboard:** add auto-archive settings to environment management ([#2318](https://github.com/bucketeer-io/bucketeer/issues/2318)) ([d62bceb](https://github.com/bucketeer-io/bucketeer/commit/d62bcebfdf7114fb15dc97263716d0b75bac4520))
+* **ui/dashboard:** improvement progress rollout ui/ux ([#2351](https://github.com/bucketeer-io/bucketeer/issues/2351)) ([e1c3eb6](https://github.com/bucketeer-io/bucketeer/commit/e1c3eb611d9919b9603ae7a497e6ed04f272b7b0))
+
+
+### Bug Fixes
+
+* add scheduled_feature_change to delete-e2e-data-mysql ([#2407](https://github.com/bucketeer-io/bucketeer/issues/2407)) ([c0100e1](https://github.com/bucketeer-io/bucketeer/commit/c0100e1a5e0f30d5be7bcaa92f0a29bac7f9bea9))
+* default value count not being incremented when using detailed error types ([#2398](https://github.com/bucketeer-io/bucketeer/issues/2398)) ([a03b249](https://github.com/bucketeer-io/bucketeer/commit/a03b2499df78e7c18a362f014d7f7f52132f3d7a))
+* **devcontainer:** make httpstan docker targets idempotent ([#2370](https://github.com/bucketeer-io/bucketeer/issues/2370)) ([eceb033](https://github.com/bucketeer-io/bucketeer/commit/eceb033d7e408e1d58ab24b3ad023c4560734145))
+* dropdown select date range ([#2394](https://github.com/bucketeer-io/bucketeer/issues/2394)) ([8b503fd](https://github.com/bucketeer-io/bucketeer/commit/8b503fd82fc8dffec5b27779e5ac36b90439cb58))
+* pipecd unable to run helm template, missing configuration ([#2410](https://github.com/bucketeer-io/bucketeer/issues/2410)) ([927331e](https://github.com/bucketeer-io/bucketeer/commit/927331e1f908dea3efe37c19fd9a88418ba76ca3))
+* progressive rollout watcher to skip stopped/finished rollouts ([#2382](https://github.com/bucketeer-io/bucketeer/issues/2382)) ([b1d05b9](https://github.com/bucketeer-io/bucketeer/commit/b1d05b9dabbb6bdab07c43b7a1cfac10195683e1))
+* resolve tar race condition vulnerability (CVE-2026-23950) ([#2365](https://github.com/bucketeer-io/bucketeer/issues/2365)) ([c07e57a](https://github.com/bucketeer-io/bucketeer/commit/c07e57a66da4e852e5ecea68775399243dbc388f))
+* scope cross-flag conflict detection to actual dependencies and add recovery helpers ([#2417](https://github.com/bucketeer-io/bucketeer/issues/2417)) ([75f7916](https://github.com/bucketeer-io/bucketeer/commit/75f7916d95ff67e15a575a7529f140c5bf6330f9))
+* segment e2e failed after switch to no command API ([#2363](https://github.com/bucketeer-io/bucketeer/issues/2363)) ([72146e4](https://github.com/bucketeer-io/bucketeer/commit/72146e4e2c7d46831b7a7cf0f77e2423fb0f6010))
+* **ui/dashboard:** fix auto-archive custom days value being reset on modal reopen ([#2396](https://github.com/bucketeer-io/bucketeer/issues/2396)) ([d5875e3](https://github.com/bucketeer-io/bucketeer/commit/d5875e31d414374646a7a1ea401f3d68fb8d38d2))
+* **ui:** resolve console warnings on targeting page ([#2372](https://github.com/bucketeer-io/bucketeer/issues/2372)) ([e96c651](https://github.com/bucketeer-io/bucketeer/commit/e96c6514cecd3a01b9c10b1b1081c154b52f8130))
+
+
+### Miscellaneous
+
+* add conflict detection for scheduled flag changes ([#2405](https://github.com/bucketeer-io/bucketeer/issues/2405)) ([dbac468](https://github.com/bucketeer-io/bucketeer/commit/dbac468631a12571a7f49500ac5957635a8a5952))
+* add debug logs for sdk internal errors ([#2379](https://github.com/bucketeer-io/bucketeer/issues/2379)) ([568abca](https://github.com/bucketeer-io/bucketeer/commit/568abca30b39bc167bc3484ee7d88066433696d5))
+* add scheduled flag change executor and cross-flag conflict detection ([#2406](https://github.com/bucketeer-io/bucketeer/issues/2406)) ([781184f](https://github.com/bucketeer-io/bucketeer/commit/781184fec40350ac7aa0df56fb945dd0e33f6e47))
+* add scheduled flag changes proto definitions and api stubs ([#2368](https://github.com/bucketeer-io/bucketeer/issues/2368)) ([1923f90](https://github.com/bucketeer-io/bucketeer/commit/1923f90ca56a533a6e1494f16d268096f1640ef6))
+* add scheduled flag changes ui ([#2414](https://github.com/bucketeer-io/bucketeer/issues/2414)) ([a3b7790](https://github.com/bucketeer-io/bucketeer/commit/a3b7790075d8bd0c3e78406b137b2cc9eca299e5))
+* add scope label to feature flag cacher metrics ([#2380](https://github.com/bucketeer-io/bucketeer/issues/2380)) ([8f38996](https://github.com/bucketeer-io/bucketeer/commit/8f389963e823eb22028f913e376b8603f377dfb5))
+* add storage layer for scheduled flag changes ([#2374](https://github.com/bucketeer-io/bucketeer/issues/2374)) ([c129d56](https://github.com/bucketeer-io/bucketeer/commit/c129d56fce9e616dea1c6455a5f935837a26ba4f))
+* double error check in get evaluation ([#2400](https://github.com/bucketeer-io/bucketeer/issues/2400)) ([e133a5c](https://github.com/bucketeer-io/bucketeer/commit/e133a5c6db8bd32ee3ff37c35457725b42cd289c))
+* **evaluation:** update typescript evaluation version to 0.0.7 ([#2359](https://github.com/bucketeer-io/bucketeer/issues/2359)) ([ab72a0e](https://github.com/bucketeer-io/bucketeer/commit/ab72a0e7cf346b4982d029eefaa1e5f737dc6ae0))
+* implement scheduled flag change API handlers ([#2375](https://github.com/bucketeer-io/bucketeer/issues/2375)) ([5f43fe9](https://github.com/bucketeer-io/bucketeer/commit/5f43fe9fef254a41dfaec1f73769ce3c540b3cff))
+* improve flag cache update delay when executing auto operations ([#2376](https://github.com/bucketeer-io/bucketeer/issues/2376)) ([b6713b7](https://github.com/bucketeer-io/bucketeer/commit/b6713b763505a04128216f3f6d96a8e0f78f06ae))
+* **ui:** add typeScript types, api hooks, and i18n for scheduled flag changes ([#2409](https://github.com/bucketeer-io/bucketeer/issues/2409)) ([1c125ad](https://github.com/bucketeer-io/bucketeer/commit/1c125ad76f217dff46a54894928aa1bf50d00482))
+* use updated_at for server sdk feature hash to match client sdk ([#2383](https://github.com/bucketeer-io/bucketeer/issues/2383)) ([62e9f60](https://github.com/bucketeer-io/bucketeer/commit/62e9f60542be2acf7661bcd2797a5175ecf1872e))
+
+
+### Build System
+
+* **deps:** bump axios from 1.12.0 to 1.13.5 in /ui/dashboard ([#2399](https://github.com/bucketeer-io/bucketeer/issues/2399)) ([2b3e389](https://github.com/bucketeer-io/bucketeer/commit/2b3e3891cc6d0bfeb51b175be3942632e2111f03))
+* **deps:** bump diff from 5.2.0 to 5.2.2 in /ui/dashboard ([#2361](https://github.com/bucketeer-io/bucketeer/issues/2361)) ([1aa6c17](https://github.com/bucketeer-io/bucketeer/commit/1aa6c17fce73d3916d049c3d787f9981fa9c9ccd))
+* **deps:** bump filippo.io/edwards25519 from 1.1.0 to 1.1.1 ([#2415](https://github.com/bucketeer-io/bucketeer/issues/2415)) ([d6134ce](https://github.com/bucketeer-io/bucketeer/commit/d6134ce6cc9e8040c181a3d6b3a8782e1f00a25c))
+* **deps:** bump filippo.io/edwards25519 in /hack/delete-e2e-data-mysql ([#2416](https://github.com/bucketeer-io/bucketeer/issues/2416)) ([3e1a048](https://github.com/bucketeer-io/bucketeer/commit/3e1a048f37f455f7d4e8de588389e2a9e91e170a))
+* **deps:** bump lodash from 4.17.21 to 4.17.23 in /ui/dashboard ([#2366](https://github.com/bucketeer-io/bucketeer/issues/2366)) ([7b61d86](https://github.com/bucketeer-io/bucketeer/commit/7b61d86ddc03160e1c3d0c7c7518dfbe0b7da6d0))
+* **deps:** bump lodash in /evaluation/typescript ([#2367](https://github.com/bucketeer-io/bucketeer/issues/2367)) ([c15769b](https://github.com/bucketeer-io/bucketeer/commit/c15769b142ff8ea2fc28e0f53c6d68c2c8b2665e))
+* **deps:** bump the dependencies group with 14 updates ([#2386](https://github.com/bucketeer-io/bucketeer/issues/2386)) ([e3593c6](https://github.com/bucketeer-io/bucketeer/commit/e3593c6242969a0cccfd0cf9c866824a53e6dab7))
+* **deps:** bump the dependencies group with 6 updates ([#2385](https://github.com/bucketeer-io/bucketeer/issues/2385)) ([44637bb](https://github.com/bucketeer-io/bucketeer/commit/44637bb51dbad27edc4ff188946bc5f5123b6c84))
+
 ## [2.2.0](https://github.com/bucketeer-io/bucketeer/compare/v2.1.1...v2.2.0) (2026-01-20)
 
 
