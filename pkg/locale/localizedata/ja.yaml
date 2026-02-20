@@ -102,9 +102,10 @@ WaitingOrRunningProgressiveRolloutExists: "開始予定、もしくは実行中�
 
 # Auto Ops errors
 AutoOpsInvalidScheduleSpans: "スケジュールされた時間の間隔は少なくとも5分以上必要です"
-AutoOpsInvalidVariationSize: "フィーチャーフラグのバリエーションの数が不正です"
+AutoOpsInsufficientVariations: "フィーチャーフラグには少なくとも2つのバリエーションが必要です"
 AutoOpsWaitingOrRunningExperimentExists: "開始予定、もしくは実行中のエクスペリメントが存在します。作成する場合はエクスペリメントを停止してください"
 AutoOpsProgressiveRolloutInProgress: "実行中のプログレッシブロールアウトがあります。更新する場合はプログレッシブロールアウトを停止もしくは、削除してください"
+AutoOpsProgressiveRolloutVariationsMustBeDifferent: "コントロールとターゲットのバリエーションは異なる必要があります"
 
 # Event Counter errors
 StartAtIsAfterEndAt: "開始時間は終了時間以前を指定してください"

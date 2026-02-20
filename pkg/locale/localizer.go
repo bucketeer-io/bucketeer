@@ -130,10 +130,11 @@ const (
 	DifferentVariationsSize                  = "DifferentVariationsSize"
 	WaitingOrRunningProgressiveRolloutExists = "WaitingOrRunningProgressiveRolloutExists"
 	// auto ops
-	AutoOpsInvalidScheduleSpans             = "AutoOpsInvalidScheduleSpans"
-	AutoOpsInvalidVariationSize             = "AutoOpsInvalidVariationSize"
-	AutoOpsWaitingOrRunningExperimentExists = "AutoOpsWaitingOrRunningExperimentExists"
-	AutoOpsProgressiveRolloutInProgress     = "AutoOpsProgressiveRolloutInProgress"
+	AutoOpsInvalidScheduleSpans                        = "AutoOpsInvalidScheduleSpans"
+	AutoOpsInsufficientVariations                      = "AutoOpsInsufficientVariations"
+	AutoOpsWaitingOrRunningExperimentExists            = "AutoOpsWaitingOrRunningExperimentExists"
+	AutoOpsProgressiveRolloutInProgress                = "AutoOpsProgressiveRolloutInProgress"
+	AutoOpsProgressiveRolloutVariationsMustBeDifferent = "AutoOpsProgressiveRolloutVariationsMustBeDifferent"
 )
 
 // domain events
