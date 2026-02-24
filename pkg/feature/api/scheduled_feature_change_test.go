@@ -167,6 +167,109 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 	assert.Equal(t, "ScheduledChange.EnableFlag", resp.ScheduledFlagChange.ChangeSummaries[0].MessageKey)
 }
 
+func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	mysqlClient := service.mysqlClient.(*mysqlmock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
+
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "feature-id",
+			Name:    "Test Feature",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{Id: "var-1", Name: "Variation 1", Value: "true"},
+			},
+		},
+	}
+
+	mysqlClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
+			return f(ctx, nil)
+		},
+	)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+
+	existingSchedule := &featureproto.ScheduledFlagChange{
+		Id:            "existing-schedule",
+		FeatureId:     "feature-id",
+		EnvironmentId: "ns0",
+		ScheduledAt:   time.Now().Add(30 * time.Minute).Unix(),
+		Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		Payload: &featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_DELETE,
+					Variation: &featureproto.Variation{
+						Id: "var-1",
+					},
+				},
+			},
+		},
+	}
+
+	// First call: count check. Second call: conflict detection.
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil).
+		Times(1)
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.ScheduledFlagChange{existingSchedule}, 1, int64(1), nil).
+		Times(1)
+
+	scheduledStorage.EXPECT().CreateScheduledFlagChange(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, sfc *domain.ScheduledFlagChange) error {
+			assert.Equal(
+				t,
+				featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+				sfc.Status,
+			)
+			require.NotEmpty(t, sfc.Conflicts)
+			return nil
+		})
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+
+	ctx := createContextWithToken()
+	req := &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		FeatureId:     "feature-id",
+		ScheduledAt:   time.Now().Add(2 * time.Hour).Unix(),
+		Timezone:      "UTC",
+		Payload: &featureproto.ScheduledChangePayload{
+			VariationChanges: []*featureproto.VariationChange{
+				{
+					ChangeType: featureproto.ChangeType_UPDATE,
+					Variation: &featureproto.Variation{
+						Id:    "var-1",
+						Name:  "Variation 1",
+						Value: "false",
+					},
+				},
+			},
+		},
+		Comment: "conflict schedule",
+	}
+
+	resp, err := service.CreateScheduledFlagChange(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		resp.ScheduledFlagChange.Status,
+	)
+	require.NotEmpty(t, resp.DetectedConflicts)
+}
+
 func TestGetScheduledFlagChange_Success(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
