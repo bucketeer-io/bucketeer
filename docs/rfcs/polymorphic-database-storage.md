@@ -213,62 +213,78 @@ INSERT INTO push (id, name, tags) VALUES ($1, $2, $3)
 
 ### Implementation Strategy
 
-#### Phase 1: Refactor Storage Layer
+#### Phase 1: Implement Storage Package and Query Builder
 
-For each storage package, create separate implementations for MySQL and PostgreSQL:
+Implement PostgreSQL query builder functions in `pkg/storage/v2/postgres/`:
 
 ```go
-// pkg/push/storage/v2/push.go - Interface definition
-package v2
+// pkg/storage/v2/postgres/query.go
+func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (string, []interface{})
+func ConstructCountQuery(baseQuery string, options *ListOptions) (string, []interface{})
+func ConstructWhereSQLString(wps []WherePart) (string, []interface{})
 
+// Already exists:
+func WritePlaceHolder(template string, start, count int) string
+```
+
+Also implement the unified `Client` interface in `pkg/storage/v2/`:
+
+```go
+// pkg/storage/v2/client.go - Already implemented
+type Client interface {
+    RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error
+    Close() error
+}
+
+// pkg/storage/v2/mysql_client.go - Already implemented
+func NewMySQLClient(mc mysql.Client) Client
+
+// pkg/storage/v2/postgres_client.go - Already implemented
+func NewPostgresClient(pc postgres.Client) Client
+```
+
+#### Phase 2: Create PostgreSQL Schema Migration
+
+Create PostgreSQL schema migrations for all tables to match the existing MySQL schema.
+
+#### Phase 3: Implement Storage Layer and Refactor API Layer
+
+For each storage package, create PostgreSQL implementations and update the API layer:
+
+**Storage Layer:**
+```go
+// pkg/push/storage/v2/push.go - Interface definition
 type PushStorage interface {
     CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
     UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
     GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
-    ListPushes(ctx context.Context, option *mysql.ListOptions) ([]*proto.Push, int, int64, error)
+    ListPushes(ctx context.Context, option *ListOptions) ([]*proto.Push, int, int64, error)
     DeletePush(ctx context.Context, id, environmentId string) error
 }
 
 // pkg/push/storage/v2/mysql_push.go - MySQL implementation (existing, rename from push.go)
-package v2
-
-type mysqlPushStorage struct {
-    qe mysql.QueryExecer
-}
-
-func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage {
-    return &mysqlPushStorage{qe: qe}
-}
+func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage
 
 // pkg/push/storage/v2/postgres_push.go - PostgreSQL implementation (new)
-package v2
-
-type postgresPushStorage struct {
-    qe postgres.QueryExecer
-}
-
-func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage {
-    return &postgresPushStorage{qe: qe}
-}
+func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
 ```
 
-#### Phase 2: Refactor API Layer
-
-Update API services to use `database.Client` interface:
+**API Layer:**
+Update API services to use `v2.Client` interface:
 
 ```go
 // pkg/push/api/api.go
 package api
 
 import (
-    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
+    storage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2"
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
     v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 )
 
 type PushService struct {
-    dbClient     database.Client   // Unified database client for transactions
+    dbClient     storage.Client    // Unified database client for transactions
     pushStorage  v2ps.PushStorage
     // ... other fields
 }
@@ -288,12 +304,12 @@ func NewPushService(
         opt(dopts)
     }
 
-    var dbClient database.Client
+    var dbClient storage.Client
     var pushStorage v2ps.PushStorage
 
     switch dopts.storageConfig.Type {
     case "mysql":
-        dbClient = database.NewMySQLClient(mysqlClient)
+        dbClient = storage.NewMySQLClient(mysqlClient)
         pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
     case "postgres":
         ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -307,10 +323,10 @@ func NewPushService(
             )
             return nil
         }
-        dbClient = database.NewPostgresClient(pgClient)
+        dbClient = storage.NewPostgresClient(pgClient)
         pushStorage = v2ps.NewPostgresPushStorage(pgClient)
     default:
-        dbClient = database.NewMySQLClient(mysqlClient)
+        dbClient = storage.NewMySQLClient(mysqlClient)
         pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
     }
 
@@ -399,8 +415,8 @@ Based on analysis, the following packages need refactoring:
 
 ## Implementation Timeline
 
-| Phase | Description                                          | Estimated Effort |
-|-------|------------------------------------------------------|------------------|
-| 1 | Refactor storage package and implement query builder | 1-2 weeks        |
-| 2 | Refactor API layer for each package                  | 4-5 weeks        |
-| 3 | Testing & documentation                              | 1 week           |
+| Phase | Description | Estimated Effort |
+|-------|-------------|------------------|
+| 1 | Implement storage package postgres and query builder | 1-2 weeks |
+| 2 | Create PostgreSQL schema migration | 1 week |
+| 3 | Implement storage layer for each package and refactor API layer | 4-5 weeks |
