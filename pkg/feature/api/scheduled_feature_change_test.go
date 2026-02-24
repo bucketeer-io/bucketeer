@@ -656,6 +656,57 @@ func TestExtractSummaryReferenceIDs(t *testing.T) {
 	}
 }
 
+func TestExtractSummaryReferenceIDs_NilRuleInUpdateOrDelete(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		changeType featureproto.ChangeType
+	}{
+		{
+			desc:       "update with nil rule",
+			changeType: featureproto.ChangeType_UPDATE,
+		},
+		{
+			desc:       "delete with nil rule",
+			changeType: featureproto.ChangeType_DELETE,
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			payload := &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: p.changeType,
+						Rule:       nil,
+					},
+				},
+			}
+			flag := &featureproto.Feature{
+				Rules: []*featureproto.Rule{
+					{
+						Id: "rule-1",
+						Clauses: []*featureproto.Clause{
+							{
+								Id:       "segment",
+								Operator: featureproto.Clause_SEGMENT,
+								Values:   []string{"seg-old"},
+							},
+						},
+					},
+				},
+			}
+
+			segmentIDs, featureIDs := extractSummaryReferenceIDs(payload, flag)
+			assert.Empty(t, segmentIDs)
+			assert.Empty(t, featureIDs)
+		})
+	}
+}
+
 func TestValidateScheduleGap(t *testing.T) {
 	t.Parallel()
 

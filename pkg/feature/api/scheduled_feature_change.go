@@ -1367,6 +1367,9 @@ func (s *FeatureService) buildChangeSummaryOptions(
 	payload *ftproto.ScheduledChangePayload,
 	flag *ftproto.Feature,
 ) *domain.ChangeSummaryOptions {
+	// Note: this function intentionally resolves names with direct lookups.
+	// It is used only for summary enrichment (best-effort), and current callers
+	// are bounded by request size/page size, so this trade-off keeps the logic simple.
 	segmentIDs, featureIDs := extractSummaryReferenceIDs(payload, flag)
 	if len(segmentIDs) == 0 && len(featureIDs) == 0 {
 		return nil
@@ -1394,8 +1397,8 @@ func (s *FeatureService) buildChangeSummaryOptions(
 			if err != nil || feature == nil || feature.Feature == nil {
 				continue
 			}
-			variationNames := make(map[string]string, len(feature.Feature.Variations))
-			for _, variation := range feature.Feature.Variations {
+			variationNames := make(map[string]string, len(feature.Variations))
+			for _, variation := range feature.Variations {
 				variationNames[variation.Id] = variation.Name
 			}
 			if len(variationNames) > 0 {
@@ -1445,7 +1448,7 @@ func extractSummaryReferenceIDs(
 				addClauseReferences(clause)
 			}
 		}
-		if flag == nil || rc == nil {
+		if flag == nil || rc == nil || rc.Rule == nil {
 			continue
 		}
 		if rc.ChangeType != ftproto.ChangeType_UPDATE && rc.ChangeType != ftproto.ChangeType_DELETE {
