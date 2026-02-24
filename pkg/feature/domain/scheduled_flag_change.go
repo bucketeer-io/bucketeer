@@ -201,37 +201,37 @@ func (s *ScheduledFlagChange) DetermineCategory() proto.ScheduledChangeCategory 
 // i18n message keys for change summaries
 // Frontend uses these keys to look up translations and interpolate values
 const (
-	MsgKeyEnableFlag            = "ScheduledChange.EnableFlag"
-	MsgKeyDisableFlag           = "ScheduledChange.DisableFlag"
-	MsgKeyRenameFlag            = "ScheduledChange.RenameFlag"
-	MsgKeyUpdateDescription     = "ScheduledChange.UpdateDescription"
-	MsgKeyChangeMaintainer      = "ScheduledChange.ChangeMaintainer"
-	MsgKeyArchiveFlag           = "ScheduledChange.ArchiveFlag"
-	MsgKeyUnarchiveFlag         = "ScheduledChange.UnarchiveFlag"
-	MsgKeyResetSamplingSeed     = "ScheduledChange.ResetSamplingSeed"
-	MsgKeyAddTag                = "ScheduledChange.AddTag"
-	MsgKeyRemoveTag             = "ScheduledChange.RemoveTag"
-	MsgKeyAddVariation          = "ScheduledChange.AddVariation"
-	MsgKeyUpdateVariation       = "ScheduledChange.UpdateVariation"
-	MsgKeyChangeVariationValue  = "ScheduledChange.ChangeVariationValue"
-	MsgKeyRenameVariation       = "ScheduledChange.RenameVariation"
-	MsgKeyDeleteVariation       = "ScheduledChange.DeleteVariation"
-	MsgKeyChangeOffVariation    = "ScheduledChange.ChangeOffVariation"
-	MsgKeyAddRule               = "ScheduledChange.AddRule"
-	MsgKeyUpdateRule            = "ScheduledChange.UpdateRule"
-	MsgKeyDeleteRule            = "ScheduledChange.DeleteRule"
-	MsgKeyAddClauseToRule       = "ScheduledChange.AddClauseToRule"
-	MsgKeyUpdateClauseInRule    = "ScheduledChange.UpdateClauseInRule"
-	MsgKeyRemoveClauseFromRule  = "ScheduledChange.RemoveClauseFromRule"
-	MsgKeyAddFeatureFlagClause  = "ScheduledChange.AddFeatureFlagClauseToRule"
-	MsgKeyUpdateFeatureFlagRule = "ScheduledChange.UpdateFeatureFlagClauseInRule"
-	MsgKeyRemoveFeatureFlagRule = "ScheduledChange.RemoveFeatureFlagClauseFromRule"
-	MsgKeyTargetUsers           = "ScheduledChange.TargetUsers"
-	MsgKeyRemoveTargeting       = "ScheduledChange.RemoveTargeting"
-	MsgKeyAddPrerequisite       = "ScheduledChange.AddPrerequisite"
-	MsgKeyUpdatePrerequisite    = "ScheduledChange.UpdatePrerequisite"
-	MsgKeyRemovePrerequisite    = "ScheduledChange.RemovePrerequisite"
-	MsgKeyChangeDefaultStrategy = "ScheduledChange.ChangeDefaultStrategy"
+	MsgKeyEnableFlag              = "ScheduledChange.EnableFlag"
+	MsgKeyDisableFlag             = "ScheduledChange.DisableFlag"
+	MsgKeyRenameFlag              = "ScheduledChange.RenameFlag"
+	MsgKeyUpdateDescription       = "ScheduledChange.UpdateDescription"
+	MsgKeyChangeMaintainer        = "ScheduledChange.ChangeMaintainer"
+	MsgKeyArchiveFlag             = "ScheduledChange.ArchiveFlag"
+	MsgKeyUnarchiveFlag           = "ScheduledChange.UnarchiveFlag"
+	MsgKeyResetSamplingSeed       = "ScheduledChange.ResetSamplingSeed"
+	MsgKeyAddTag                  = "ScheduledChange.AddTag"
+	MsgKeyRemoveTag               = "ScheduledChange.RemoveTag"
+	MsgKeyAddVariation            = "ScheduledChange.AddVariation"
+	MsgKeyUpdateVariation         = "ScheduledChange.UpdateVariation"
+	MsgKeyChangeVariationValue    = "ScheduledChange.ChangeVariationValue"
+	MsgKeyRenameVariation         = "ScheduledChange.RenameVariation"
+	MsgKeyDeleteVariation         = "ScheduledChange.DeleteVariation"
+	MsgKeyChangeOffVariation      = "ScheduledChange.ChangeOffVariation"
+	MsgKeyAddRule                 = "ScheduledChange.AddRule"
+	MsgKeyUpdateRule              = "ScheduledChange.UpdateRule"
+	MsgKeyDeleteRule              = "ScheduledChange.DeleteRule"
+	MsgKeyAddClauseToRule         = "ScheduledChange.AddClauseToRule"
+	MsgKeyUpdateClauseInRule      = "ScheduledChange.UpdateClauseInRule"
+	MsgKeyRemoveClauseFromRule    = "ScheduledChange.RemoveClauseFromRule"
+	MsgKeyAddFeatureFlagClause    = "ScheduledChange.AddFeatureFlagClauseToRule"
+	MsgKeyUpdateFeatureFlagClause = "ScheduledChange.UpdateFeatureFlagClauseInRule"
+	MsgKeyRemoveFeatureFlagClause = "ScheduledChange.RemoveFeatureFlagClauseFromRule"
+	MsgKeyTargetUsers             = "ScheduledChange.TargetUsers"
+	MsgKeyRemoveTargeting         = "ScheduledChange.RemoveTargeting"
+	MsgKeyAddPrerequisite         = "ScheduledChange.AddPrerequisite"
+	MsgKeyUpdatePrerequisite      = "ScheduledChange.UpdatePrerequisite"
+	MsgKeyRemovePrerequisite      = "ScheduledChange.RemovePrerequisite"
+	MsgKeyChangeDefaultStrategy   = "ScheduledChange.ChangeDefaultStrategy"
 )
 
 // Cancellation reasons - currently plain text, will be i18n-ready in future
@@ -591,7 +591,7 @@ func sfcBuildRuleClauseSummaries(
 		}
 		msgKey := MsgKeyUpdateClauseInRule
 		if sfcIsFeatureFlagClause(newClause) || sfcIsFeatureFlagClause(oldClause) {
-			msgKey = MsgKeyUpdateFeatureFlagRule
+			msgKey = MsgKeyUpdateFeatureFlagClause
 		}
 		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
 			"rule":      ruleLabel,
@@ -607,7 +607,7 @@ func sfcBuildRuleClauseSummaries(
 		}
 		msgKey := MsgKeyRemoveClauseFromRule
 		if sfcIsFeatureFlagClause(oldClause) {
-			msgKey = MsgKeyRemoveFeatureFlagRule
+			msgKey = MsgKeyRemoveFeatureFlagClause
 		}
 		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
 			"rule":   ruleLabel,

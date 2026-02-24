@@ -832,7 +832,7 @@ func TestGenerateChangeSummaries_RuleClauseLevelUpdates(t *testing.T) {
 				},
 			},
 			expectedKeys: []string{
-				MsgKeyUpdateFeatureFlagRule,
+				MsgKeyUpdateFeatureFlagClause,
 				MsgKeyAddFeatureFlagClause,
 			},
 			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
@@ -855,7 +855,7 @@ func TestGenerateChangeSummaries_RuleClauseLevelUpdates(t *testing.T) {
 					},
 				},
 			},
-			expectedKeys: []string{MsgKeyRemoveFeatureFlagRule},
+			expectedKeys: []string{MsgKeyRemoveFeatureFlagClause},
 		},
 		{
 			desc: "fallback to update rule when no clause delta",
