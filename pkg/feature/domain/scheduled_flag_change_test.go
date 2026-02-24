@@ -835,6 +835,12 @@ func TestGenerateChangeSummaries_RuleClauseLevelUpdates(t *testing.T) {
 				MsgKeyUpdateFeatureFlagRule,
 				MsgKeyAddFeatureFlagClause,
 			},
+			assertions: func(t *testing.T, summaries []*proto.ChangeSummary) {
+				assert.Contains(t, summaries[0].Values["oldClause"], "var-a")
+				assert.Contains(t, summaries[0].Values["newClause"], "var-b")
+				assert.NotContains(t, summaries[0].Values["oldClause"], "Enabled")
+				assert.NotContains(t, summaries[0].Values["newClause"], "Enabled")
+			},
 		},
 		{
 			desc: "remove feature flag clause",
@@ -901,4 +907,51 @@ func TestGenerateChangeSummaries_RuleClauseLevelUpdates(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGenerateChangeSummaries_RuleClauseUpdateWithoutClauseIDs(t *testing.T) {
+	t.Parallel()
+
+	baseFlag := &proto.Feature{
+		Rules: []*proto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Attribute: "email",
+						Operator:  proto.Clause_ENDS_WITH,
+						Values:    []string{"@example.com"},
+					},
+				},
+			},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Rule: &proto.Rule{
+							Id: "rule-1",
+							Clauses: []*proto.Clause{
+								{
+									Attribute: "email",
+									Operator:  proto.Clause_ENDS_WITH,
+									Values:    []string{"@new.example.com"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummaries(baseFlag)
+	require.Len(t, summaries, 1)
+	assert.Equal(t, MsgKeyUpdateClauseInRule, summaries[0].MessageKey)
+	assert.Contains(t, summaries[0].Values["oldClause"], "@example.com")
+	assert.Contains(t, summaries[0].Values["newClause"], "@new.example.com")
 }

@@ -637,11 +637,10 @@ func sfcClauseKey(clause *proto.Clause, index int) string {
 		return clause.Id
 	}
 	return fmt.Sprintf(
-		"idx-%d:%s:%d:%s",
+		"idx-%d:%s:%d",
 		index,
 		clause.Attribute,
 		int(clause.Operator),
-		strings.Join(clause.Values, "|"),
 	)
 }
 
@@ -680,8 +679,9 @@ func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature) string {
 		if len(clause.Values) == 0 {
 			return fmt.Sprintf("flag %s condition", clause.Attribute)
 		}
-		variationName := sfcGetVariationName(flag, clause.Values[0])
-		return fmt.Sprintf("flag %s serves \"%s\"", clause.Attribute, variationName)
+		// FEATURE_FLAG clause values are variation IDs from the referenced flag.
+		// We cannot resolve them reliably with the current flag's variations here.
+		return fmt.Sprintf("flag %s serves \"%s\"", clause.Attribute, strings.Join(clause.Values, ", "))
 	default:
 		if clause.Attribute == "segment" {
 			return fmt.Sprintf("segment match: %s", strings.Join(clause.Values, ", "))
