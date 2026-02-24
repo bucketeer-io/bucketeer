@@ -9,7 +9,7 @@ interface CardCollectionProps {
   emptyCollection?: ReactElement;
   data: Account[];
   filters: MembersFilters;
-  teams: Team[];
+  teams?: Team[];
   onActions: (item: Account, type: MemberActionsType) => void;
   setFilters: (values: Partial<MembersFilters>) => void;
 }
@@ -34,7 +34,7 @@ export const CardCollection = ({
               onActions={onActions}
               data={account}
               filters={filters}
-              teams={teams}
+              teams={teams || []}
               setFilters={setFilters}
             />
           ))

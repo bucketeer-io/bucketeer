@@ -148,7 +148,7 @@ const AuditLogItem = memo(
           >
             <div
               className={cn(
-                'flex items-center gap-x-1.5 w-fit max-w-full typo-para-medium font-normal text-gray-700 truncate cursor-default',
+                'inline lg:flex items-center gap-x-1.5 w-fit max-w-full typo-para-medium font-normal text-gray-700 truncate cursor-default',
                 {
                   'gap-x-0': isLanguageJapanese
                 }

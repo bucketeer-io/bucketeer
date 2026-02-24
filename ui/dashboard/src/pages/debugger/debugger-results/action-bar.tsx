@@ -41,11 +41,11 @@ const ActionBar = ({
   );
 
   return (
-    <div className="flex items-center w-full justify-between gap-x-4">
+    <div className="flex flex-wrap items-start sm:items-center w-full justify-between gap-4">
       <p className="typo-head-bold-small text-gray-800 whitespace-nowrap">
         {t('debugger-results')}
       </p>
-      <div className="flex items-center gap-x-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Dropdown
           labelCustom={
             <Trans
@@ -55,6 +55,7 @@ const ActionBar = ({
               }}
             />
           }
+          wrapTriggerStyle="w-fit sm:w-full"
           value={groupBy}
           options={groupByOptions}
           onChange={value => onChangeGroupBy(value as GroupByType)}

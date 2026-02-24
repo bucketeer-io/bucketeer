@@ -1,6 +1,8 @@
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
+import { useScreen } from 'hooks';
 import { Account } from '@types';
+import { CardCollection } from 'pages/members/collection-layout/card-collection';
 import { OrganizationMembersFilters } from 'pages/organization-details/types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
@@ -21,6 +23,7 @@ const CollectionLoader = ({
   onActions: (value: Account) => void;
 }) => {
   const columns = useColumns({ onActions });
+  const { fromMobileScreen } = useScreen();
   const {
     data: collection,
     isLoading,
@@ -56,13 +59,25 @@ const CollectionLoader = ({
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <TableListContent>
-      <DataTable
-        isLoading={isLoading}
-        data={accounts}
-        columns={columns}
-        onSortingChange={onSortingChangeHandler}
-        emptyCollection={emptyState}
-      />
+      {fromMobileScreen ? (
+        <DataTable
+          isLoading={isLoading}
+          data={accounts}
+          columns={columns}
+          onSortingChange={onSortingChangeHandler}
+          emptyCollection={emptyState}
+        />
+      ) : (
+        <CardCollection
+          isLoading={isLoading}
+          emptyCollection={emptyState}
+          data={accounts}
+          filters={filters}
+          setFilters={setFilters}
+          onActions={onActions}
+        />
+      )}
+
       {!isLoading && (
         <Pagination
           page={filters.page}

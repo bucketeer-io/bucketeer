@@ -63,9 +63,9 @@ const SubmitBar = ({
           {currentOption?.label}
         </p>
       </div>
-      <div className="flex w-full items-center gap-x-3">
+      <div className="flex w-full sm:w-fit items-center gap-x-3">
         <Button
-          className="hidden sm:block"
+          className="hidden sm:flex"
           type="button"
           variant="text"
           onClick={() =>
