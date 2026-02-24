@@ -955,3 +955,51 @@ func TestGenerateChangeSummaries_RuleClauseUpdateWithoutClauseIDs(t *testing.T) 
 	assert.Contains(t, summaries[0].Values["oldClause"], "@example.com")
 	assert.Contains(t, summaries[0].Values["newClause"], "@new.example.com")
 }
+
+func TestSfcIsSameClause_OrderInsensitiveValues(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc      string
+		oldClause *proto.Clause
+		newClause *proto.Clause
+		expected  bool
+	}{
+		{
+			desc: "same values different order",
+			oldClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "US"},
+			},
+			newClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"US", "JP"},
+			},
+			expected: true,
+		},
+		{
+			desc: "different values",
+			oldClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "US"},
+			},
+			newClause: &proto.Clause{
+				Attribute: "country",
+				Operator:  proto.Clause_IN,
+				Values:    []string{"JP", "CA"},
+			},
+			expected: false,
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, sfcIsSameClause(p.oldClause, p.newClause))
+		})
+	}
+}

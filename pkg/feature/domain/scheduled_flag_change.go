@@ -16,6 +16,7 @@ package domain
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -653,8 +654,12 @@ func sfcIsSameClause(oldClause, newClause *proto.Clause) bool {
 		len(oldClause.Values) != len(newClause.Values) {
 		return false
 	}
-	for i := range oldClause.Values {
-		if oldClause.Values[i] != newClause.Values[i] {
+	oldValues := append([]string(nil), oldClause.Values...)
+	newValues := append([]string(nil), newClause.Values...)
+	sort.Strings(oldValues)
+	sort.Strings(newValues)
+	for i := range oldValues {
+		if oldValues[i] != newValues[i] {
 			return false
 		}
 	}
