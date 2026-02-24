@@ -6,13 +6,13 @@ import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures, useQueryFeatures } from '@queries/features';
 import { useQueryRollouts } from '@queries/rollouts';
 import { useCreateScheduledFlagChange } from '@queries/scheduled-flag-changes';
-import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
-import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import {
   invalidateUserSegments,
   useQueryUserSegments
 } from '@queries/user-segments';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { SCHEDULED_FLAG_CHANGES_ENABLED } from 'configs';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast, useToggleOpen } from 'hooks';
 import useOptions from 'hooks/use-options';
@@ -20,8 +20,14 @@ import { useUnsavedLeavePage } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
 import { isEqual, isNil } from 'lodash';
 import cloneDeep from 'lodash/cloneDeep';
-import { Evaluation, Feature, FeatureRule, FeatureRuleStrategy, ScheduledChangePayload } from '@types';
 import { v4 as uuid } from 'uuid';
+import {
+  Evaluation,
+  Feature,
+  FeatureRule,
+  FeatureRuleStrategy,
+  ScheduledChangePayload
+} from '@types';
 import { isEmpty, isNotEmpty } from 'utils/data-type';
 import { checkFieldDirty } from 'utils/function';
 import { IconDebugger } from '@icons';
@@ -38,8 +44,8 @@ import ConfirmationRequiredModal, {
   ConfirmRequiredValues
 } from '../elements/confirm-required-modal';
 import { SCHEDULE_TYPE_SCHEDULE } from '../elements/confirm-required-modal/form-schema';
-import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import DiscardChangeModal from '../elements/discard-changes-modal';
+import ScheduledChangesBanner from '../elements/scheduled-changes-banner';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';

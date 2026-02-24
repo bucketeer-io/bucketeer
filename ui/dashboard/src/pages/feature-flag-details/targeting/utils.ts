@@ -21,8 +21,8 @@ import {
   TargetChange,
   UserSegment
 } from '@types';
-import { SCHEDULE_TYPE_UPDATE_NOW } from '../elements/confirm-required-modal/form-schema';
 import { formatLongDateTime } from 'utils/date-time';
+import { SCHEDULE_TYPE_UPDATE_NOW } from '../elements/confirm-required-modal/form-schema';
 import {
   DefaultRuleSchema,
   RuleSchema,

@@ -10,10 +10,10 @@ import {
   PAGE_PATH_FEATURES
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { IconInfo, IconToastWarning, IconWatch } from '@icons';
 import { isNil } from 'lodash';
 import { Feature, FeatureRuleStrategy } from '@types';
-import { capitalize} from 'utils/style';
+import { capitalize } from 'utils/style';
+import { IconInfo, IconToastWarning, IconWatch } from '@icons';
 import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
 import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
 import {
@@ -31,17 +31,17 @@ import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
-import {
-  formSchema,
-  SCHEDULE_TYPE_SCHEDULE,
-  SCHEDULE_TYPE_UPDATE_NOW
-} from './form-schema';
 import DiscardChangeItems from '../discard-change-items';
 import {
   CustomRuleDiscardItem,
   IndividualDiscardItem,
   PrerequisiteDiscardItem
 } from '../discard-changes-modal';
+import {
+  formSchema,
+  SCHEDULE_TYPE_SCHEDULE,
+  SCHEDULE_TYPE_UPDATE_NOW
+} from './form-schema';
 
 export type ConfirmationRequiredModalProps = {
   feature: Feature;
@@ -337,7 +337,9 @@ const ConfirmationRequiredModal = ({
                       name="comment"
                       render={({ field }) => (
                         <Form.Item className="py-0">
-                          <Form.Label required={isRequireComment && !isShowSchedule}>
+                          <Form.Label
+                            required={isRequireComment && !isShowSchedule}
+                          >
                             {t('form:comment-for-update')}
                           </Form.Label>
                           <Form.Control>
