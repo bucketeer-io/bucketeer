@@ -153,6 +153,9 @@ func (s *FeatureService) CreateScheduledFlagChange(
 			)
 			// Don't fail creation, conflicts are informational
 		}
+		if len(detectedConflicts) > 0 {
+			sfc.MarkConflict(detectedConflicts)
+		}
 
 		// Store the scheduled flag change
 		if err := s.scheduledFlagChangeStorage.CreateScheduledFlagChange(ctxWithTx, sfc); err != nil {

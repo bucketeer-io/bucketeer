@@ -617,6 +617,12 @@ func TestScheduledFlagChangeConflict_DependencyMissing(t *testing.T) {
 	scheduleBResp, err := client.CreateScheduledFlagChange(ctx, scheduleBReq)
 	require.NoError(t, err)
 	require.NotEmpty(t, scheduleBResp.ScheduledFlagChange.Id)
+	assert.Equal(
+		t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		scheduleBResp.ScheduledFlagChange.Status,
+		"Schedule should be stored as CONFLICT when create-time conflicts are detected",
+	)
 
 	// Verify DEPENDENCY_MISSING conflict is detected
 	require.NotEmpty(t, scheduleBResp.DetectedConflicts,
@@ -630,6 +636,14 @@ func TestScheduledFlagChangeConflict_DependencyMissing(t *testing.T) {
 		}
 	}
 	assert.True(t, foundDependencyMissing, "Expected at least one DEPENDENCY_MISSING conflict")
+
+	// Verify persisted status is CONFLICT
+	getResp := getScheduledFlagChange(t, client, scheduleBResp.ScheduledFlagChange.Id)
+	assert.Equal(
+		t,
+		featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CONFLICT,
+		getResp.ScheduledFlagChange.Status,
+	)
 }
 
 // TestScheduledFlagChangeConflict_InvalidReferenceOnFlagUpdate verifies that when

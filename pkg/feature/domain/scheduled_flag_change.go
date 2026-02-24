@@ -16,6 +16,7 @@ package domain
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -201,31 +202,37 @@ func (s *ScheduledFlagChange) DetermineCategory() proto.ScheduledChangeCategory 
 // i18n message keys for change summaries
 // Frontend uses these keys to look up translations and interpolate values
 const (
-	MsgKeyEnableFlag            = "ScheduledChange.EnableFlag"
-	MsgKeyDisableFlag           = "ScheduledChange.DisableFlag"
-	MsgKeyRenameFlag            = "ScheduledChange.RenameFlag"
-	MsgKeyUpdateDescription     = "ScheduledChange.UpdateDescription"
-	MsgKeyChangeMaintainer      = "ScheduledChange.ChangeMaintainer"
-	MsgKeyArchiveFlag           = "ScheduledChange.ArchiveFlag"
-	MsgKeyUnarchiveFlag         = "ScheduledChange.UnarchiveFlag"
-	MsgKeyResetSamplingSeed     = "ScheduledChange.ResetSamplingSeed"
-	MsgKeyAddTag                = "ScheduledChange.AddTag"
-	MsgKeyRemoveTag             = "ScheduledChange.RemoveTag"
-	MsgKeyAddVariation          = "ScheduledChange.AddVariation"
-	MsgKeyUpdateVariation       = "ScheduledChange.UpdateVariation"
-	MsgKeyChangeVariationValue  = "ScheduledChange.ChangeVariationValue"
-	MsgKeyRenameVariation       = "ScheduledChange.RenameVariation"
-	MsgKeyDeleteVariation       = "ScheduledChange.DeleteVariation"
-	MsgKeyChangeOffVariation    = "ScheduledChange.ChangeOffVariation"
-	MsgKeyAddRule               = "ScheduledChange.AddRule"
-	MsgKeyUpdateRule            = "ScheduledChange.UpdateRule"
-	MsgKeyDeleteRule            = "ScheduledChange.DeleteRule"
-	MsgKeyTargetUsers           = "ScheduledChange.TargetUsers"
-	MsgKeyRemoveTargeting       = "ScheduledChange.RemoveTargeting"
-	MsgKeyAddPrerequisite       = "ScheduledChange.AddPrerequisite"
-	MsgKeyUpdatePrerequisite    = "ScheduledChange.UpdatePrerequisite"
-	MsgKeyRemovePrerequisite    = "ScheduledChange.RemovePrerequisite"
-	MsgKeyChangeDefaultStrategy = "ScheduledChange.ChangeDefaultStrategy"
+	MsgKeyEnableFlag              = "ScheduledChange.EnableFlag"
+	MsgKeyDisableFlag             = "ScheduledChange.DisableFlag"
+	MsgKeyRenameFlag              = "ScheduledChange.RenameFlag"
+	MsgKeyUpdateDescription       = "ScheduledChange.UpdateDescription"
+	MsgKeyChangeMaintainer        = "ScheduledChange.ChangeMaintainer"
+	MsgKeyArchiveFlag             = "ScheduledChange.ArchiveFlag"
+	MsgKeyUnarchiveFlag           = "ScheduledChange.UnarchiveFlag"
+	MsgKeyResetSamplingSeed       = "ScheduledChange.ResetSamplingSeed"
+	MsgKeyAddTag                  = "ScheduledChange.AddTag"
+	MsgKeyRemoveTag               = "ScheduledChange.RemoveTag"
+	MsgKeyAddVariation            = "ScheduledChange.AddVariation"
+	MsgKeyUpdateVariation         = "ScheduledChange.UpdateVariation"
+	MsgKeyChangeVariationValue    = "ScheduledChange.ChangeVariationValue"
+	MsgKeyRenameVariation         = "ScheduledChange.RenameVariation"
+	MsgKeyDeleteVariation         = "ScheduledChange.DeleteVariation"
+	MsgKeyChangeOffVariation      = "ScheduledChange.ChangeOffVariation"
+	MsgKeyAddRule                 = "ScheduledChange.AddRule"
+	MsgKeyUpdateRule              = "ScheduledChange.UpdateRule"
+	MsgKeyDeleteRule              = "ScheduledChange.DeleteRule"
+	MsgKeyAddClauseToRule         = "ScheduledChange.AddClauseToRule"
+	MsgKeyUpdateClauseInRule      = "ScheduledChange.UpdateClauseInRule"
+	MsgKeyRemoveClauseFromRule    = "ScheduledChange.RemoveClauseFromRule"
+	MsgKeyAddFeatureFlagClause    = "ScheduledChange.AddFeatureFlagClauseToRule"
+	MsgKeyUpdateFeatureFlagClause = "ScheduledChange.UpdateFeatureFlagClauseInRule"
+	MsgKeyRemoveFeatureFlagClause = "ScheduledChange.RemoveFeatureFlagClauseFromRule"
+	MsgKeyTargetUsers             = "ScheduledChange.TargetUsers"
+	MsgKeyRemoveTargeting         = "ScheduledChange.RemoveTargeting"
+	MsgKeyAddPrerequisite         = "ScheduledChange.AddPrerequisite"
+	MsgKeyUpdatePrerequisite      = "ScheduledChange.UpdatePrerequisite"
+	MsgKeyRemovePrerequisite      = "ScheduledChange.RemovePrerequisite"
+	MsgKeyChangeDefaultStrategy   = "ScheduledChange.ChangeDefaultStrategy"
 )
 
 // Cancellation reasons - currently plain text, will be i18n-ready in future
@@ -383,9 +390,22 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 				"description": sfcDescribeRule(rc.Rule),
 			}))
 		case proto.ChangeType_UPDATE:
-			summaries = append(summaries, newChangeSummary(MsgKeyUpdateRule, map[string]string{
-				"description": sfcDescribeRule(rc.Rule),
-			}))
+			originalRule := sfcFindRule(flag, rc.Rule.Id)
+			if originalRule == nil {
+				summaries = append(summaries, newChangeSummary(MsgKeyUpdateRule, map[string]string{
+					"description": sfcDescribeRule(rc.Rule),
+				}))
+				continue
+			}
+
+			clauseSummaries := sfcBuildRuleClauseSummaries(originalRule, rc.Rule, flag)
+			if len(clauseSummaries) == 0 {
+				summaries = append(summaries, newChangeSummary(MsgKeyUpdateRule, map[string]string{
+					"description": sfcDescribeRule(rc.Rule),
+				}))
+				continue
+			}
+			summaries = append(summaries, clauseSummaries...)
 		case proto.ChangeType_DELETE:
 			originalRule := sfcFindRule(flag, rc.Rule.Id)
 			desc := rc.Rule.Id
@@ -534,6 +554,150 @@ func sfcDescribeRule(rule *proto.Rule) string {
 		return fmt.Sprintf("Segment match: %s", strings.Join(clause.Values, ", "))
 	}
 	return fmt.Sprintf("%s %s %s", clause.Attribute, clause.Operator.String(), strings.Join(clause.Values, ", "))
+}
+
+func sfcBuildRuleClauseSummaries(
+	originalRule *proto.Rule,
+	newRule *proto.Rule,
+	flag *proto.Feature,
+) []*proto.ChangeSummary {
+	ruleLabel := sfcRuleLabel(flag, newRule.Id)
+	var summaries []*proto.ChangeSummary
+
+	oldClauseByKey := make(map[string]*proto.Clause, len(originalRule.Clauses))
+	for i, clause := range originalRule.Clauses {
+		oldClauseByKey[sfcClauseKey(clause, i)] = clause
+	}
+	newClauseByKey := make(map[string]*proto.Clause, len(newRule.Clauses))
+	for i, clause := range newRule.Clauses {
+		newClauseByKey[sfcClauseKey(clause, i)] = clause
+	}
+
+	for i, newClause := range newRule.Clauses {
+		key := sfcClauseKey(newClause, i)
+		oldClause, exists := oldClauseByKey[key]
+		if !exists {
+			msgKey := MsgKeyAddClauseToRule
+			if sfcIsFeatureFlagClause(newClause) {
+				msgKey = MsgKeyAddFeatureFlagClause
+			}
+			summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
+				"rule":   ruleLabel,
+				"clause": sfcDescribeClause(newClause, flag),
+			}))
+			continue
+		}
+		if sfcIsSameClause(oldClause, newClause) {
+			continue
+		}
+		msgKey := MsgKeyUpdateClauseInRule
+		if sfcIsFeatureFlagClause(newClause) || sfcIsFeatureFlagClause(oldClause) {
+			msgKey = MsgKeyUpdateFeatureFlagClause
+		}
+		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
+			"rule":      ruleLabel,
+			"oldClause": sfcDescribeClause(oldClause, flag),
+			"newClause": sfcDescribeClause(newClause, flag),
+		}))
+	}
+
+	for i, oldClause := range originalRule.Clauses {
+		key := sfcClauseKey(oldClause, i)
+		if _, exists := newClauseByKey[key]; exists {
+			continue
+		}
+		msgKey := MsgKeyRemoveClauseFromRule
+		if sfcIsFeatureFlagClause(oldClause) {
+			msgKey = MsgKeyRemoveFeatureFlagClause
+		}
+		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
+			"rule":   ruleLabel,
+			"clause": sfcDescribeClause(oldClause, flag),
+		}))
+	}
+	return summaries
+}
+
+func sfcRuleLabel(flag *proto.Feature, ruleID string) string {
+	if flag == nil {
+		return "rule"
+	}
+	for i, rule := range flag.Rules {
+		if rule.Id == ruleID {
+			return fmt.Sprintf("rule #%d", i+1)
+		}
+	}
+	return "rule"
+}
+
+func sfcClauseKey(clause *proto.Clause, index int) string {
+	if clause == nil {
+		return fmt.Sprintf("idx-%d", index)
+	}
+	if clause.Id != "" {
+		return clause.Id
+	}
+	return fmt.Sprintf(
+		"idx-%d:%s:%d",
+		index,
+		clause.Attribute,
+		int(clause.Operator),
+	)
+}
+
+func sfcIsSameClause(oldClause, newClause *proto.Clause) bool {
+	if oldClause == nil || newClause == nil {
+		return oldClause == nil && newClause == nil
+	}
+	if oldClause.Attribute != newClause.Attribute ||
+		oldClause.Operator != newClause.Operator ||
+		len(oldClause.Values) != len(newClause.Values) {
+		return false
+	}
+	oldValues := append([]string(nil), oldClause.Values...)
+	newValues := append([]string(nil), newClause.Values...)
+	sort.Strings(oldValues)
+	sort.Strings(newValues)
+	for i := range oldValues {
+		if oldValues[i] != newValues[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func sfcIsFeatureFlagClause(clause *proto.Clause) bool {
+	return clause != nil && clause.Operator == proto.Clause_FEATURE_FLAG
+}
+
+func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature) string {
+	if clause == nil {
+		return "(empty clause)"
+	}
+	switch clause.Operator {
+	case proto.Clause_SEGMENT:
+		return fmt.Sprintf("segment match: %s", strings.Join(clause.Values, ", "))
+	case proto.Clause_FEATURE_FLAG:
+		if clause.Attribute == "" {
+			return "feature flag clause"
+		}
+		if len(clause.Values) == 0 {
+			return fmt.Sprintf("flag %s condition", clause.Attribute)
+		}
+		// FEATURE_FLAG clause values are variation IDs from the referenced flag.
+		// We cannot resolve them reliably with the current flag's variations here.
+		return fmt.Sprintf("flag %s serves \"%s\"", clause.Attribute, strings.Join(clause.Values, ", "))
+	default:
+		if clause.Attribute == "segment" {
+			return fmt.Sprintf("segment match: %s", strings.Join(clause.Values, ", "))
+		}
+		return fmt.Sprintf(
+			"%s %s %s",
+			clause.Attribute,
+			clause.Operator.String(),
+			strings.Join(clause.Values, ", "),
+		)
+	}
 }
 
 func sfcDescribeStrategy(strategy *proto.Strategy, flag *proto.Feature) string {

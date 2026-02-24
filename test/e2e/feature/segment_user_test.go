@@ -129,20 +129,12 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, uploadRes)
-	// Because the upload process is done in the background,
-	// we wait a bit so the test won't fail.
-	time.Sleep(20 * time.Second)
-	for i := 0; i < segmentUserRetryTimes; i++ {
-		downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
-		if err == nil {
-			assert.Equal(t, string(userIDs), string(downloadRes.Data))
-			break
-		}
-		if i == segmentUserRetryTimes-1 {
-			t.Fatalf("SegmentUsers cannot be downloaded.")
-		}
-		time.Sleep(5 * time.Second)
-	}
+	// Wait for the background upload to complete by verifying users exist
+	waitForSegmentUsers(ctx, t, client, segmentID, 3, &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)})
+	// Now download and verify the data
+	downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
+	assert.NoError(t, err)
+	assert.Equal(t, string(userIDs), string(downloadRes.Data))
 }
 
 func listSegmentUsers(ctx context.Context, t *testing.T, client featureclient.Client, segmentID string, state *wrappersproto.Int32Value) *featureproto.ListSegmentUsersResponse {
