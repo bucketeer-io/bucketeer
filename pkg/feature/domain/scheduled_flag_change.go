@@ -29,6 +29,13 @@ type ScheduledFlagChange struct {
 	*proto.ScheduledFlagChange
 }
 
+// ChangeSummaryOptions provides optional lookup maps for richer summary text.
+// When a lookup value is missing, summary generation falls back to IDs.
+type ChangeSummaryOptions struct {
+	SegmentNames            map[string]string
+	CrossFlagVariationNames map[string]map[string]string
+}
+
 // NewScheduledFlagChange creates a new ScheduledFlagChange domain object
 func NewScheduledFlagChange(
 	featureID string,
@@ -255,6 +262,15 @@ func newChangeSummary(messageKey string, values map[string]string) *proto.Change
 // The frontend uses these to render localized messages.
 // The flag parameter is optional and used to resolve variation/rule names.
 func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*proto.ChangeSummary {
+	return s.GenerateChangeSummariesWithOptions(flag, nil)
+}
+
+// GenerateChangeSummariesWithOptions creates i18n-ready summaries from the payload
+// with optional lookups for segment names and cross-flag variation names.
+func (s *ScheduledFlagChange) GenerateChangeSummariesWithOptions(
+	flag *proto.Feature,
+	options *ChangeSummaryOptions,
+) []*proto.ChangeSummary {
 	if s.Payload == nil {
 		return nil
 	}
@@ -387,21 +403,21 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 		switch rc.ChangeType {
 		case proto.ChangeType_CREATE:
 			summaries = append(summaries, newChangeSummary(MsgKeyAddRule, map[string]string{
-				"description": sfcDescribeRule(rc.Rule),
+				"description": sfcDescribeRule(rc.Rule, flag, options),
 			}))
 		case proto.ChangeType_UPDATE:
 			originalRule := sfcFindRule(flag, rc.Rule.Id)
 			if originalRule == nil {
 				summaries = append(summaries, newChangeSummary(MsgKeyUpdateRule, map[string]string{
-					"description": sfcDescribeRule(rc.Rule),
+					"description": sfcDescribeRule(rc.Rule, flag, options),
 				}))
 				continue
 			}
 
-			clauseSummaries := sfcBuildRuleClauseSummaries(originalRule, rc.Rule, flag)
+			clauseSummaries := sfcBuildRuleClauseSummaries(originalRule, rc.Rule, flag, options)
 			if len(clauseSummaries) == 0 {
 				summaries = append(summaries, newChangeSummary(MsgKeyUpdateRule, map[string]string{
-					"description": sfcDescribeRule(rc.Rule),
+					"description": sfcDescribeRule(rc.Rule, flag, options),
 				}))
 				continue
 			}
@@ -410,7 +426,7 @@ func (s *ScheduledFlagChange) GenerateChangeSummaries(flag *proto.Feature) []*pr
 			originalRule := sfcFindRule(flag, rc.Rule.Id)
 			desc := rc.Rule.Id
 			if originalRule != nil {
-				desc = sfcDescribeRule(originalRule)
+				desc = sfcDescribeRule(originalRule, flag, options)
 			}
 			summaries = append(summaries, newChangeSummary(MsgKeyDeleteRule, map[string]string{
 				"description": desc,
@@ -545,21 +561,18 @@ func sfcGetVariationName(flag *proto.Feature, variationID string) string {
 	return variationID
 }
 
-func sfcDescribeRule(rule *proto.Rule) string {
+func sfcDescribeRule(rule *proto.Rule, flag *proto.Feature, options *ChangeSummaryOptions) string {
 	if rule == nil || len(rule.Clauses) == 0 {
 		return "(no conditions)"
 	}
-	clause := rule.Clauses[0]
-	if clause.Attribute == "segment" {
-		return fmt.Sprintf("Segment match: %s", strings.Join(clause.Values, ", "))
-	}
-	return fmt.Sprintf("%s %s %s", clause.Attribute, clause.Operator.String(), strings.Join(clause.Values, ", "))
+	return sfcDescribeClause(rule.Clauses[0], flag, options)
 }
 
 func sfcBuildRuleClauseSummaries(
 	originalRule *proto.Rule,
 	newRule *proto.Rule,
 	flag *proto.Feature,
+	options *ChangeSummaryOptions,
 ) []*proto.ChangeSummary {
 	ruleLabel := sfcRuleLabel(flag, newRule.Id)
 	var summaries []*proto.ChangeSummary
@@ -583,7 +596,7 @@ func sfcBuildRuleClauseSummaries(
 			}
 			summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
 				"rule":   ruleLabel,
-				"clause": sfcDescribeClause(newClause, flag),
+				"clause": sfcDescribeClause(newClause, flag, options),
 			}))
 			continue
 		}
@@ -596,8 +609,8 @@ func sfcBuildRuleClauseSummaries(
 		}
 		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
 			"rule":      ruleLabel,
-			"oldClause": sfcDescribeClause(oldClause, flag),
-			"newClause": sfcDescribeClause(newClause, flag),
+			"oldClause": sfcDescribeClause(oldClause, flag, options),
+			"newClause": sfcDescribeClause(newClause, flag, options),
 		}))
 	}
 
@@ -612,7 +625,7 @@ func sfcBuildRuleClauseSummaries(
 		}
 		summaries = append(summaries, newChangeSummary(msgKey, map[string]string{
 			"rule":   ruleLabel,
-			"clause": sfcDescribeClause(oldClause, flag),
+			"clause": sfcDescribeClause(oldClause, flag, options),
 		}))
 	}
 	return summaries
@@ -670,13 +683,16 @@ func sfcIsFeatureFlagClause(clause *proto.Clause) bool {
 	return clause != nil && clause.Operator == proto.Clause_FEATURE_FLAG
 }
 
-func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature) string {
+func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature, options *ChangeSummaryOptions) string {
 	if clause == nil {
 		return "(empty clause)"
 	}
 	switch clause.Operator {
 	case proto.Clause_SEGMENT:
-		return fmt.Sprintf("segment match: %s", strings.Join(clause.Values, ", "))
+		return fmt.Sprintf(
+			"segment match: %s",
+			strings.Join(sfcResolveSegmentDisplayValues(clause.Values, options), ", "),
+		)
 	case proto.Clause_FEATURE_FLAG:
 		if clause.Attribute == "" {
 			return "feature flag clause"
@@ -684,12 +700,20 @@ func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature) string {
 		if len(clause.Values) == 0 {
 			return fmt.Sprintf("flag %s condition", clause.Attribute)
 		}
-		// FEATURE_FLAG clause values are variation IDs from the referenced flag.
-		// We cannot resolve them reliably with the current flag's variations here.
-		return fmt.Sprintf("flag %s serves \"%s\"", clause.Attribute, strings.Join(clause.Values, ", "))
+		resolvedValues := make([]string, 0, len(clause.Values))
+		for _, variationID := range clause.Values {
+			resolvedValues = append(
+				resolvedValues,
+				sfcResolveFeatureFlagVariationDisplayName(clause.Attribute, variationID, options),
+			)
+		}
+		return fmt.Sprintf("flag %s serves \"%s\"", clause.Attribute, strings.Join(resolvedValues, ", "))
 	default:
 		if clause.Attribute == "segment" {
-			return fmt.Sprintf("segment match: %s", strings.Join(clause.Values, ", "))
+			return fmt.Sprintf(
+				"segment match: %s",
+				strings.Join(sfcResolveSegmentDisplayValues(clause.Values, options), ", "),
+			)
 		}
 		return fmt.Sprintf(
 			"%s %s %s",
@@ -698,6 +722,39 @@ func sfcDescribeClause(clause *proto.Clause, flag *proto.Feature) string {
 			strings.Join(clause.Values, ", "),
 		)
 	}
+}
+
+func sfcResolveSegmentDisplayValues(values []string, options *ChangeSummaryOptions) []string {
+	resolved := make([]string, 0, len(values))
+	for _, segmentID := range values {
+		if options != nil && options.SegmentNames != nil {
+			if name, ok := options.SegmentNames[segmentID]; ok && name != "" {
+				resolved = append(resolved, name)
+				continue
+			}
+		}
+		resolved = append(resolved, segmentID)
+	}
+	return resolved
+}
+
+func sfcResolveFeatureFlagVariationDisplayName(
+	featureID string,
+	variationID string,
+	options *ChangeSummaryOptions,
+) string {
+	if options == nil || options.CrossFlagVariationNames == nil {
+		return variationID
+	}
+	variationNamesByID, ok := options.CrossFlagVariationNames[featureID]
+	if !ok {
+		return variationID
+	}
+	variationName, ok := variationNamesByID[variationID]
+	if !ok || variationName == "" || variationName == variationID {
+		return variationID
+	}
+	return fmt.Sprintf("%s (%s)", variationName, variationID)
 }
 
 func sfcDescribeStrategy(strategy *proto.Strategy, flag *proto.Feature) string {

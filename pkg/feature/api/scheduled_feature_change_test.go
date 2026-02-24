@@ -568,6 +568,145 @@ func TestCountChanges(t *testing.T) {
 	}
 }
 
+func TestExtractSummaryReferenceIDs(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc               string
+		payload            *featureproto.ScheduledChangePayload
+		flag               *featureproto.Feature
+		expectedSegmentIDs []string
+		expectedFeatureIDs []string
+	}{
+		{
+			desc: "collect from new and old clauses",
+			payload: &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: featureproto.ChangeType_UPDATE,
+						Rule: &featureproto.Rule{
+							Id: "rule-1",
+							Clauses: []*featureproto.Clause{
+								{
+									Id:        "segment",
+									Attribute: "segment",
+									Operator:  featureproto.Clause_SEGMENT,
+									Values:    []string{"seg-new"},
+								},
+								{
+									Id:        "feature-flag",
+									Attribute: "dependency-flag",
+									Operator:  featureproto.Clause_FEATURE_FLAG,
+									Values:    []string{"var-new"},
+								},
+							},
+						},
+					},
+				},
+			},
+			flag: &featureproto.Feature{
+				Rules: []*featureproto.Rule{
+					{
+						Id: "rule-1",
+						Clauses: []*featureproto.Clause{
+							{
+								Id:        "segment",
+								Attribute: "segment",
+								Operator:  featureproto.Clause_SEGMENT,
+								Values:    []string{"seg-old"},
+							},
+							{
+								Id:        "feature-flag",
+								Attribute: "legacy-dependency",
+								Operator:  featureproto.Clause_FEATURE_FLAG,
+								Values:    []string{"var-old"},
+							},
+						},
+					},
+				},
+			},
+			expectedSegmentIDs: []string{"seg-new", "seg-old"},
+			expectedFeatureIDs: []string{"dependency-flag", "legacy-dependency"},
+		},
+		{
+			desc:               "nil payload",
+			payload:            nil,
+			flag:               nil,
+			expectedSegmentIDs: nil,
+			expectedFeatureIDs: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			segmentIDs, featureIDs := extractSummaryReferenceIDs(p.payload, p.flag)
+			assert.Equal(t, len(p.expectedSegmentIDs), len(segmentIDs))
+			assert.Equal(t, len(p.expectedFeatureIDs), len(featureIDs))
+			for _, id := range p.expectedSegmentIDs {
+				_, ok := segmentIDs[id]
+				assert.True(t, ok, "missing segment id: %s", id)
+			}
+			for _, id := range p.expectedFeatureIDs {
+				_, ok := featureIDs[id]
+				assert.True(t, ok, "missing feature id: %s", id)
+			}
+		})
+	}
+}
+
+func TestExtractSummaryReferenceIDs_NilRuleInUpdateOrDelete(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		changeType featureproto.ChangeType
+	}{
+		{
+			desc:       "update with nil rule",
+			changeType: featureproto.ChangeType_UPDATE,
+		},
+		{
+			desc:       "delete with nil rule",
+			changeType: featureproto.ChangeType_DELETE,
+		},
+	}
+
+	for _, p := range patterns {
+		p := p
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			payload := &featureproto.ScheduledChangePayload{
+				RuleChanges: []*featureproto.RuleChange{
+					{
+						ChangeType: p.changeType,
+						Rule:       nil,
+					},
+				},
+			}
+			flag := &featureproto.Feature{
+				Rules: []*featureproto.Rule{
+					{
+						Id: "rule-1",
+						Clauses: []*featureproto.Clause{
+							{
+								Id:       "segment",
+								Operator: featureproto.Clause_SEGMENT,
+								Values:   []string{"seg-old"},
+							},
+						},
+					},
+				},
+			}
+
+			segmentIDs, featureIDs := extractSummaryReferenceIDs(payload, flag)
+			assert.Empty(t, segmentIDs)
+			assert.Empty(t, featureIDs)
+		})
+	}
+}
+
 func TestValidateScheduleGap(t *testing.T) {
 	t.Parallel()
 

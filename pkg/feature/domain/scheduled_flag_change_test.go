@@ -1003,3 +1003,82 @@ func TestSfcIsSameClause_OrderInsensitiveValues(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateChangeSummaries_WithResolutionOptions(t *testing.T) {
+	t.Parallel()
+
+	baseFlag := &proto.Feature{
+		Rules: []*proto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*proto.Clause{
+					{
+						Id:        "segment-clause",
+						Attribute: "segment",
+						Operator:  proto.Clause_SEGMENT,
+						Values:    []string{"seg-1"},
+					},
+					{
+						Id:        "feature-flag-clause",
+						Attribute: "ref-flag",
+						Operator:  proto.Clause_FEATURE_FLAG,
+						Values:    []string{"var-a"},
+					},
+				},
+			},
+		},
+	}
+
+	sfc := &ScheduledFlagChange{
+		ScheduledFlagChange: &proto.ScheduledFlagChange{
+			Payload: &proto.ScheduledChangePayload{
+				RuleChanges: []*proto.RuleChange{
+					{
+						ChangeType: proto.ChangeType_UPDATE,
+						Rule: &proto.Rule{
+							Id: "rule-1",
+							Clauses: []*proto.Clause{
+								{
+									Id:        "segment-clause",
+									Attribute: "segment",
+									Operator:  proto.Clause_SEGMENT,
+									Values:    []string{"seg-2"},
+								},
+								{
+									Id:        "feature-flag-clause",
+									Attribute: "ref-flag",
+									Operator:  proto.Clause_FEATURE_FLAG,
+									Values:    []string{"var-b"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	options := &ChangeSummaryOptions{
+		SegmentNames: map[string]string{
+			"seg-1": "Premium Users",
+			"seg-2": "Beta Users",
+		},
+		CrossFlagVariationNames: map[string]map[string]string{
+			"ref-flag": {
+				"var-a": "Control",
+				"var-b": "Enabled",
+			},
+		},
+	}
+
+	summaries := sfc.GenerateChangeSummariesWithOptions(baseFlag, options)
+	require.Len(t, summaries, 2)
+
+	assert.Equal(t, MsgKeyUpdateClauseInRule, summaries[0].MessageKey)
+	assert.Contains(t, summaries[0].Values["oldClause"], "Premium Users")
+	assert.Contains(t, summaries[0].Values["newClause"], "Beta Users")
+
+	assert.Equal(t, MsgKeyUpdateFeatureFlagClause, summaries[1].MessageKey)
+	assert.Contains(t, summaries[1].Values["oldClause"], "Control (var-a)")
+	assert.Contains(t, summaries[1].Values["newClause"], "Enabled (var-b)")
+}

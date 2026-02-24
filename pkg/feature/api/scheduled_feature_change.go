@@ -129,7 +129,13 @@ func (s *FeatureService) CreateScheduledFlagChange(
 
 		// Set derived fields
 		sfc.Category = sfc.DetermineCategory()
-		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
+		summaryOptions := s.buildChangeSummaryOptions(
+			ctxWithTx,
+			req.EnvironmentId,
+			sfc.Payload,
+			feature.Feature,
+		)
+		sfc.ChangeSummaries = sfc.GenerateChangeSummariesWithOptions(feature.Feature, summaryOptions)
 
 		// Detect conflicts with existing schedules (before we add this one)
 		conflictDetector := scheduled.NewConflictDetector(s.scheduledFlagChangeStorage)
@@ -244,7 +250,13 @@ func (s *FeatureService) GetScheduledFlagChange(
 			featureProto = feature.Feature
 		}
 		sfc.Category = sfc.DetermineCategory()
-		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(featureProto)
+		summaryOptions := s.buildChangeSummaryOptions(
+			ctx,
+			req.EnvironmentId,
+			sfc.Payload,
+			featureProto,
+		)
+		sfc.ChangeSummaries = sfc.GenerateChangeSummariesWithOptions(featureProto, summaryOptions)
 	}
 
 	return &ftproto.GetScheduledFlagChangeResponse{
@@ -369,7 +381,13 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 
 		// Update derived fields
 		sfc.Category = sfc.DetermineCategory()
-		sfc.ChangeSummaries = sfc.GenerateChangeSummaries(feature.Feature)
+		summaryOptions := s.buildChangeSummaryOptions(
+			ctxWithTx,
+			req.EnvironmentId,
+			sfc.Payload,
+			feature.Feature,
+		)
+		sfc.ChangeSummaries = sfc.GenerateChangeSummariesWithOptions(feature.Feature, summaryOptions)
 
 		if err := s.scheduledFlagChangeStorage.UpdateScheduledFlagChange(ctxWithTx, sfc); err != nil {
 			return err
@@ -655,7 +673,13 @@ func (s *FeatureService) ListScheduledFlagChanges(
 				featureProto = feature.Feature
 			}
 			sfc.Category = sfcDomain.DetermineCategory()
-			sfc.ChangeSummaries = sfcDomain.GenerateChangeSummaries(featureProto)
+			summaryOptions := s.buildChangeSummaryOptions(
+				ctx,
+				req.EnvironmentId,
+				sfcDomain.Payload,
+				featureProto,
+			)
+			sfc.ChangeSummaries = sfcDomain.GenerateChangeSummariesWithOptions(featureProto, summaryOptions)
 		}
 	}
 
@@ -1335,6 +1359,113 @@ func (s *FeatureService) checkCircularPrerequisites(
 		return statusCircularPrerequisiteDetected.Err()
 	}
 	return nil
+}
+
+func (s *FeatureService) buildChangeSummaryOptions(
+	ctx context.Context,
+	environmentID string,
+	payload *ftproto.ScheduledChangePayload,
+	flag *ftproto.Feature,
+) *domain.ChangeSummaryOptions {
+	// Note: this function intentionally resolves names with direct lookups.
+	// It is used only for summary enrichment (best-effort), and current callers
+	// are bounded by request size/page size, so this trade-off keeps the logic simple.
+	segmentIDs, featureIDs := extractSummaryReferenceIDs(payload, flag)
+	if len(segmentIDs) == 0 && len(featureIDs) == 0 {
+		return nil
+	}
+	options := &domain.ChangeSummaryOptions{}
+
+	if len(segmentIDs) > 0 {
+		segmentNames := make(map[string]string, len(segmentIDs))
+		for segmentID := range segmentIDs {
+			segment, _, err := s.segmentStorage.GetSegment(ctx, segmentID, environmentID)
+			if err != nil || segment == nil {
+				continue
+			}
+			segmentNames[segmentID] = segment.Name
+		}
+		if len(segmentNames) > 0 {
+			options.SegmentNames = segmentNames
+		}
+	}
+
+	if len(featureIDs) > 0 {
+		crossFlagVariationNames := make(map[string]map[string]string, len(featureIDs))
+		for featureID := range featureIDs {
+			feature, err := s.featureStorage.GetFeature(ctx, featureID, environmentID)
+			if err != nil || feature == nil || feature.Feature == nil {
+				continue
+			}
+			variationNames := make(map[string]string, len(feature.Variations))
+			for _, variation := range feature.Variations {
+				variationNames[variation.Id] = variation.Name
+			}
+			if len(variationNames) > 0 {
+				crossFlagVariationNames[featureID] = variationNames
+			}
+		}
+		if len(crossFlagVariationNames) > 0 {
+			options.CrossFlagVariationNames = crossFlagVariationNames
+		}
+	}
+
+	if options.SegmentNames == nil && options.CrossFlagVariationNames == nil {
+		return nil
+	}
+	return options
+}
+
+func extractSummaryReferenceIDs(
+	payload *ftproto.ScheduledChangePayload,
+	flag *ftproto.Feature,
+) (map[string]struct{}, map[string]struct{}) {
+	segmentIDs := make(map[string]struct{})
+	featureIDs := make(map[string]struct{})
+	if payload == nil {
+		return segmentIDs, featureIDs
+	}
+
+	addClauseReferences := func(clause *ftproto.Clause) {
+		if clause == nil {
+			return
+		}
+		if clause.Operator == ftproto.Clause_SEGMENT || clause.Attribute == "segment" {
+			for _, segmentID := range clause.Values {
+				if segmentID != "" {
+					segmentIDs[segmentID] = struct{}{}
+				}
+			}
+		}
+		if clause.Operator == ftproto.Clause_FEATURE_FLAG && clause.Attribute != "" {
+			featureIDs[clause.Attribute] = struct{}{}
+		}
+	}
+
+	for _, rc := range payload.RuleChanges {
+		if rc.Rule != nil {
+			for _, clause := range rc.Rule.Clauses {
+				addClauseReferences(clause)
+			}
+		}
+		if flag == nil || rc == nil || rc.Rule == nil {
+			continue
+		}
+		if rc.ChangeType != ftproto.ChangeType_UPDATE && rc.ChangeType != ftproto.ChangeType_DELETE {
+			continue
+		}
+		for _, rule := range flag.Rules {
+			if rule.Id != rc.Rule.Id {
+				continue
+			}
+			for _, clause := range rule.Clauses {
+				addClauseReferences(clause)
+			}
+			break
+		}
+	}
+
+	return segmentIDs, featureIDs
 }
 
 // changeSummariesToStrings converts structured ChangeSummary objects to simple strings for events
