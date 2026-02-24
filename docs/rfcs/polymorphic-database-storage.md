@@ -9,6 +9,7 @@ This RFC proposes implementing PostgreSQL as an alternative primary storage back
 Currently, Bucketeer services are tightly coupled to MySQL for primary storage:
 
 1. **API Layer Dependencies**: Services like `PushService` directly hold `mysql.Client` and use MySQL-specific types:
+
    ```go
    type PushService struct {
        mysqlClient      mysql.Client
@@ -18,6 +19,7 @@ Currently, Bucketeer services are tightly coupled to MySQL for primary storage:
    ```
 
 2. **Storage Layer Dependencies**: Storage implementations depend on MySQL-specific interfaces and types:
+
    ```go
    type pushStorage struct {
        qe mysql.QueryExecer  // MySQL-specific interface
@@ -67,7 +69,7 @@ We've successfully implemented PostgreSQL as an alternative for the data warehou
             │                   │                               │
             ▼                   ▼                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    pkg/storage/v2/database                      │
+│                    pkg/storage/v2/                              │
 │  (database.Client interface + MySQL/Postgres adapters)          │
 └─────────────────────────────────────────────────────────────────┘
             │                                   │
@@ -84,8 +86,8 @@ We've successfully implemented PostgreSQL as an alternative for the data warehou
 Create a `database.Client` interface that both MySQL and PostgreSQL clients implement:
 
 ```go
-// pkg/storage/v2/database/client.go
-package database
+// pkg/storage/v2/client.go
+package v2
 
 import "context"
 
@@ -97,12 +99,12 @@ type Client interface {
 ```
 
 ```go
-// pkg/storage/v2/database/mysql_client.go
-package database
+// pkg/storage/v2/mysql_client.go
+package v2
 
 import (
     "context"
-    
+
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 )
 
@@ -115,7 +117,9 @@ func NewMySQLClient(mc mysql.Client) Client {
 }
 
 func (c *mysqlClientAdapter) RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error {
-    // mysql transaction implementation
+    return c.mc.RunInTransactionV2(ctx, func(ctx context.Context, _ mysql.Transaction) error {
+        return f(ctx)
+    })
 }
 
 func (c *mysqlClientAdapter) Close() error {
@@ -124,12 +128,12 @@ func (c *mysqlClientAdapter) Close() error {
 ```
 
 ```go
-// pkg/storage/v2/database/postgres_client.go
-package database
+// pkg/storage/v2/postgres_client.go
+package v2
 
 import (
     "context"
-    
+
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
 )
 
@@ -142,7 +146,9 @@ func NewPostgresClient(pc postgres.Client) Client {
 }
 
 func (c *postgresClientAdapter) RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error {
-   // postgres transaction implementation
+    return c.pc.RunInTransactionV2(ctx, func(ctx context.Context, _ postgres.Transaction) error {
+        return f(ctx)
+    })
 }
 
 func (c *postgresClientAdapter) Close() error {
@@ -171,77 +177,66 @@ func NewMySQLPushStorage(qe mysql.QueryExecer) PushStorage
 func NewPostgresPushStorage(qe postgres.QueryExecer) PushStorage
 ```
 
-#### 2. SQL Query Helper Functions
+#### 3. Shared Filter Types and Query Builders
 
-Each database package provides its own query helper functions (no shared interface needed):
+**Shared types in `pkg/storage/v2/filter.go`** (pure data structs, no `SQLString()` methods):
 
-**MySQL** (existing in `pkg/storage/v2/mysql/query.go`):
+- `ListOptions`, `FilterV2`, `InFilter`, `NullFilter`, `JSONFilter`, `SearchQuery`, `OrFilter`, `Order`
+- Constants: `Operator`, `JSONFilterFunc`, `OrderDirection`
+
+**Database-specific wrappers** use composition pattern:
+
+- `pkg/storage/v2/mysql/filter.go`: Embeds v2 structs, adds `SQLString()` with `?` placeholders and MySQL JSON functions
+- `pkg/storage/v2/postgres/filter.go`: Embeds v2 structs, adds `SQLString()` with `$N` placeholders and PostgreSQL JSONB operators
+
+**Example:**
+
 ```go
-// Uses ? placeholders
-func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructCountQuery(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructWhereSQLString(wps []WherePart) (string, []interface{})
+// pkg/storage/v2/filter.go - pure data
+type FilterV2 struct {
+    Column   string
+    Operator Operator
+    Value    interface{}
+}
+
+// pkg/storage/v2/mysql/filter.go - wraps and adds SQLString()
+type FilterV2 struct {
+    v2.FilterV2
+}
+func (f *FilterV2) SQLString() (string, []interface{}) {
+    return fmt.Sprintf("%s %s ?", f.Column, f.Operator), []interface{}{f.Value}
+}
+
+// pkg/storage/v2/postgres/filter.go - wraps and adds SQLString() with index
+type FilterV2 struct {
+    v2.FilterV2
+    index *int
+}
+func (f *FilterV2) SQLString() (string, []interface{}) {
+    *f.index++
+    return fmt.Sprintf("%s %s $%d", f.Column, f.Operator, *f.index), []interface{}{f.Value}
+}
 ```
 
-**PostgreSQL** (to be implemented in `pkg/storage/v2/postgres/query.go`):
-```go
-// Uses $1, $2, $3... placeholders
-func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructCountQuery(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructWhereSQLString(wps []WherePart) (string, []interface{})
+**Output:**
 
-// Already exists:
-func WritePlaceHolder(template string, start, count int) string
-```
-
-**WritePlaceHolder Examples:**
-
-| Input | Output |
-|-------|--------|
-| `WritePlaceHolder("($%d, $%d)", 1, 2)` | `"($1, $2)"` |
-| `WritePlaceHolder("($%d, $%d, $%d)", 1, 3)` | `"($1, $2, $3)"` |
-| `WritePlaceHolder("($%d, $%d, $%d)", 4, 3)` | `"($4, $5, $6)"` |
-
-**Placeholder Syntax Difference:**
 ```sql
--- MySQL uses ? for all parameters
-INSERT INTO push (id, name, tags) VALUES (?, ?, ?)
+-- MySQL
+SELECT * FROM push WHERE name = ? AND JSON_CONTAINS(tags, ?)
 
--- PostgreSQL uses $1, $2, $3...
-INSERT INTO push (id, name, tags) VALUES ($1, $2, $3)
+-- PostgreSQL
+SELECT * FROM push WHERE name = $1 AND tags @> $2::jsonb
 ```
 
 ### Implementation Strategy
 
 #### Phase 1: Implement Storage Package and Query Builder
 
-Implement PostgreSQL query builder functions in `pkg/storage/v2/postgres/`:
-
-```go
-// pkg/storage/v2/postgres/query.go
-func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructCountQuery(baseQuery string, options *ListOptions) (string, []interface{})
-func ConstructWhereSQLString(wps []WherePart) (string, []interface{})
-
-// Already exists:
-func WritePlaceHolder(template string, start, count int) string
-```
-
-Also implement the unified `Client` interface in `pkg/storage/v2/`:
-
-```go
-// pkg/storage/v2/client.go - Already implemented
-type Client interface {
-    RunInTransactionV2(ctx context.Context, f func(ctx context.Context) error) error
-    Close() error
-}
-
-// pkg/storage/v2/mysql_client.go - Already implemented
-func NewMySQLClient(mc mysql.Client) Client
-
-// pkg/storage/v2/postgres_client.go - Already implemented
-func NewPostgresClient(pc postgres.Client) Client
-```
+1. Create shared filter types in `pkg/storage/v2/filter.go` (pure data structs)
+2. Create MySQL filter wrappers in `pkg/storage/v2/mysql/filter.go`
+3. Create PostgreSQL filter wrappers in `pkg/storage/v2/postgres/filter.go`
+4. Implement PostgreSQL query builder in `pkg/storage/v2/postgres/query.go`
+5. Unified Client interface (already implemented in `pkg/storage/v2/`)
 
 #### Phase 2: Create PostgreSQL Schema Migration
 
@@ -252,6 +247,7 @@ Create PostgreSQL schema migrations for all tables to match the existing MySQL s
 For each storage package, create PostgreSQL implementations and update the API layer:
 
 **Storage Layer:**
+
 ```go
 // pkg/push/storage/v2/push.go - Interface definition
 type PushStorage interface {
@@ -339,9 +335,9 @@ func NewPushService(
 
 func (s *PushService) CreatePush(ctx context.Context, req *pushproto.CreatePushRequest) (*pushproto.CreatePushResponse, error) {
     // ... validation ...
-    
+
     var event *eventproto.Event
-    
+
     // No if-else needed - just use dbClient
     err = s.dbClient.RunInTransactionV2(ctx, func(ctx context.Context) error {
         if err := s.pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
@@ -357,17 +353,17 @@ func (s *PushService) CreatePush(ctx context.Context, req *pushproto.CreatePushR
 ### SQL Compatibility Considerations
 
 #### Placeholder Syntax
+
 - MySQL: `?` for all parameters
-- PostgreSQL: `$1, $2, $3, ...` (use `WritePlaceHolder` function)
+- PostgreSQL: `$1, $2, $3, ...`
 
 #### JSON Operations
-Both MySQL and PostgreSQL support JSON, but with slightly different syntax:
-- MySQL: `JSON_EXTRACT()`, `JSON_SET()`
-- PostgreSQL: `->`, `->>`, `jsonb` operators
 
-For most cases, storing JSON as text and handling serialization in Go is sufficient.
+- MySQL: `JSON_CONTAINS()`
+- PostgreSQL: `@>` JSONB operator
 
 #### Auto-increment vs Serial
+
 - MySQL: `AUTO_INCREMENT`
 - PostgreSQL: `SERIAL` or `GENERATED ALWAYS AS IDENTITY`
 
@@ -403,20 +399,22 @@ Based on analysis, the following packages need refactoring:
 ## Trade-offs
 
 ### Advantages
+
 1. **Flexibility**: Users can choose their preferred database
 2. **Open Source Friendly**: PostgreSQL is fully open source
 3. **Cost Reduction**: No BigQuery dependency for analytics when using PostgreSQL with TimescaleDB
 4. **Simplified Operations**: Single database system for both OLTP and OLAP
 
 ### Disadvantages
+
 1. **Increased Complexity**: More code to maintain (two implementations)
 2. **Testing Overhead**: Need to test against both databases
 3. **SQL Differences**: Some queries may need database-specific versions
 
 ## Implementation Timeline
 
-| Phase | Description | Estimated Effort |
-|-------|-------------|------------------|
-| 1 | Implement storage package postgres and query builder | 1-2 weeks |
-| 2 | Create PostgreSQL schema migration | 1 week |
-| 3 | Implement storage layer for each package and refactor API layer | 4-5 weeks |
+| Phase | Description                                                     | Estimated Effort |
+| ----- | --------------------------------------------------------------- | ---------------- |
+| 1     | Implement storage package postgres and query builder            | 1-2 weeks        |
+| 2     | Create PostgreSQL schema migration                              | 1 week           |
+| 3     | Implement storage layer for each package and refactor API layer | 4-5 weeks        |
