@@ -27,7 +27,7 @@ const (
 
 	methodGetEvaluations  = "GetEvaluations"
 	methodGetEvaluation   = "GetEvaluation"
-	methodRegisterEvents  = "RegisterEvent"
+	methodRegisterEvents  = "RegisterEvents"
 	methodTrack           = "Track"
 	methodGetFeatureFlags = "GetFeatureFlags"
 	methodGetSegmentUsers = "GetSegmentUsers"
