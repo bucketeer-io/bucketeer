@@ -44,6 +44,7 @@ export interface RuleOrders {
 export interface DiscardChangesStateData {
   labelType: 'ADD' | 'UPDATE' | 'REMOVE' | 'REORDER';
   label: string;
+  clauseLabels?: string[]; // Array of individual clause labels for multi-line display
   groupLabel?: string[];
   featureId?: string;
   variationIndex: number;

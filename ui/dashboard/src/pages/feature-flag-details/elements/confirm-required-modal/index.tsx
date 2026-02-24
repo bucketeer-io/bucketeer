@@ -12,7 +12,6 @@ import {
 import { useTranslation } from 'i18n';
 import { isNil } from 'lodash';
 import { Feature, FeatureRuleStrategy } from '@types';
-import { capitalize } from 'utils/style';
 import { IconInfo, IconToastWarning, IconWatch } from '@icons';
 import { TargetingSchema } from 'pages/feature-flag-details/targeting/form-schema';
 import { DiscardChangesStateData } from 'pages/feature-flag-details/targeting/types';
@@ -135,7 +134,11 @@ const ConfirmationRequiredModal = ({
   }, [onSegmentRuleDeleted]);
 
   const segmentRulesChange = useMemo(() => {
-    const change: { rule: number; changes: DiscardChangesStateData[] }[] = [];
+    const change: {
+      rule: number;
+      changes: DiscardChangesStateData[];
+      action?: 'new-rule' | 'edit-rule';
+    }[] = [];
 
     if (!targetingRule) return [];
     for (let i = 0; i < targetingRule.segmentRules!.length; i++) {
@@ -143,9 +146,13 @@ const ConfirmationRequiredModal = ({
 
       const changes = onSegmentRuleChannge(i, false);
       if (changes.length > 0) {
+        // Detect action type from the first change item's changeType
+        const action =
+          changes[0]?.changeType === 'new-rule' ? 'new-rule' : 'edit-rule';
         change.push({
           rule: i + 1,
-          changes: changes
+          changes: changes,
+          action: action
         });
       }
     }
@@ -165,22 +172,57 @@ const ConfirmationRequiredModal = ({
     [targetingRule]
   );
 
-  const isShowChange = useMemo(() => {
-    const totalChanges =
-      (segmentRulesChange?.length ?? 0) +
-      (defaultRulesChange?.length ?? 0) +
-      (individualChange?.length ?? 0) +
-      (prerequisiteChanges?.length ?? 0) +
-      (segmentRuleDeletedChanges?.length ?? 0);
+  const changeBreakdown = useMemo(() => {
+    let adds = 0;
+    let updates = 0;
+    let deletes = 0;
 
-    return totalChanges;
+    // Count prerequisites
+    prerequisiteChanges?.forEach(item => {
+      if (item.labelType === 'ADD') adds++;
+      else if (item.labelType === 'UPDATE') updates++;
+      else if (item.labelType === 'REMOVE') deletes++;
+    });
+
+    // Count individual targets
+    individualChange?.forEach(item => {
+      if (item.labelType === 'ADD') adds++;
+      else if (item.labelType === 'REMOVE') deletes++;
+    });
+
+    // Count segment rule changes
+    segmentRulesChange?.forEach(({ changes, action }) => {
+      if (action === 'new-rule') {
+        adds++;
+      } else {
+        changes.forEach(change => {
+          if (change.labelType === 'ADD') adds++;
+          else if (change.labelType === 'UPDATE') updates++;
+          else if (change.labelType === 'REMOVE') deletes++;
+        });
+      }
+    });
+
+    // Count deleted rules
+    deletes += segmentRuleDeletedChanges?.length ?? 0;
+
+    // Count default rule changes
+    defaultRulesChange?.forEach(item => {
+      if (item.labelType === 'ADD') adds++;
+      else if (item.labelType === 'UPDATE') updates++;
+    });
+
+    const total = adds + updates + deletes;
+    return { adds, updates, deletes, total };
   }, [
-    segmentRulesChange?.length,
-    defaultRulesChange?.length,
-    individualChange?.length,
-    prerequisiteChanges?.length,
-    segmentRuleDeletedChanges?.length
+    segmentRulesChange,
+    defaultRulesChange,
+    individualChange,
+    prerequisiteChanges,
+    segmentRuleDeletedChanges
   ]);
+
+  const isShowChange = changeBreakdown.total;
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -231,11 +273,15 @@ const ConfirmationRequiredModal = ({
     return (
       <DiscardChangeItems title={t('common:custom-rule')}>
         <div className="flex flex-col gap-2 pl-4">
-          {segmentRulesChange.map(({ rule, changes }) => (
+          {segmentRulesChange.map(({ rule, changes, action }) => (
             <div key={rule}>
               <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700">
                 <Trans
-                  i18nKey="common:edit-rule"
+                  i18nKey={
+                    action === 'new-rule'
+                      ? 'common:add-rule'
+                      : 'common:edit-rule'
+                  }
                   values={{ rule }}
                   components={{
                     b: <strong />
@@ -250,23 +296,24 @@ const ConfirmationRequiredModal = ({
             </div>
           ))}
           {!!segmentRuleDeletedChanges.length && (
-            <div className="w-full">
-              <p className="typo-para-medium text-accent-red-500">
-                <Trans
-                  i18nKey="common:rule-deleted"
-                  values={{
-                    count: segmentRuleDeletedChanges.length,
-                    tailTitle:
-                      segmentRuleDeletedChanges.length > 1
-                        ? capitalize(t('common:rules'))
-                        : capitalize(t('common:rule'))
-                  }}
-                />
-              </p>
+            <>
               {segmentRuleDeletedChanges.map((item, index) => (
-                <CustomRuleDiscardItem key={index} {...item} />
+                <div key={index}>
+                  {item.ruleIndex && (
+                    <div className="flex pb-2 gap-1 items-center typo-para-medium leading-[1px] my-2 text-gray-700 text-accent-red-500">
+                      <Trans
+                        i18nKey="common:delete-rule"
+                        values={{ rule: item.ruleIndex }}
+                        components={{
+                          b: <strong />
+                        }}
+                      />
+                    </div>
+                  )}
+                  <CustomRuleDiscardItem {...item} />
+                </div>
               ))}
-            </div>
+            </>
           )}
         </div>
       </DiscardChangeItems>
@@ -295,18 +342,21 @@ const ConfirmationRequiredModal = ({
                   <div className="sticky top-0 z-20 bg-white typo-para-small text-gray-600 w-full px-5">
                     <p className="typo-para-medium leading-4 text-gray-700 pb-5">
                       <Trans
-                        i18nKey="common:change-count"
+                        i18nKey="common:change-count-breakdown"
                         values={{
                           count: isShowChange,
                           changeText,
-                          versionFeature
+                          versionFeature,
+                          adds: changeBreakdown.adds,
+                          updates: changeBreakdown.updates,
+                          deletes: changeBreakdown.deletes
                         }}
                         components={transComponents}
                       />
                     </p>
                   </div>
 
-                  <div className="w-full flex flex-col px-5 pb-5 gap-4 ">
+                  <div className="w-full flex flex-col px-5 pb-5 gap-6 ">
                     {renderDiscardSection({
                       title: t('form:feature-flags.prerequisites'),
                       items: prerequisiteChanges ? prerequisiteChanges : [],

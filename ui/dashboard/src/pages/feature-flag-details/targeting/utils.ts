@@ -1165,17 +1165,19 @@ export const handleCheckSegmentRulesDiscardChanges = (
             variationIndex: 0
           }
         : null;
+    const clauseLabels = getClauseLabelsFromRule(
+      currentRule,
+      features,
+      segmentUsers,
+      situationOptions,
+      operatorOptions,
+      t
+    );
     return {
       changes: [
         {
-          label: getClauseLabelsFromRule(
-            currentRule,
-            features,
-            segmentUsers,
-            situationOptions,
-            operatorOptions,
-            t
-          ).join(` ${t('common:and')} `),
+          label: clauseLabels.join(` <b>${t('common:and')}</b> `),
+          clauseLabels: clauseLabels, // Keep array for multi-line rendering
           variationPercent: variationPercents,
           changeType: 'new-rule',
           labelType: 'ADD',
@@ -1224,24 +1226,24 @@ export const handleCheckRuleDeleted = (
   t: TFunction
 ) => {
   let deletes: DiscardChangesStateData[] = [];
-  const deletedRules: FeatureRule[] = [];
-  oldRules.forEach(oldRule => {
+  const deletedRules: { rule: FeatureRule; index: number }[] = [];
+  oldRules.forEach((oldRule, index) => {
     const isExist = currentRules.find(
       currentRule => currentRule.id === oldRule.id
     );
     if (!isExist) {
-      deletedRules.push(oldRule);
+      deletedRules.push({ rule: oldRule, index: index + 1 });
     }
   });
-  deletes = deletedRules.map(deletedRule => {
-    const clauseLabels = getClauseLabelsFromRule(
+  deletes = deletedRules.map(({ rule: deletedRule, index: ruleIndex }) => {
+    const clauseLabelsArray = getClauseLabelsFromRule(
       deletedRule,
       features,
       segmentUsers,
       situationOptions,
       operatorOptions,
       t
-    ).join(` ${t('common:and')} `);
+    );
     const normalizedWeight = {
       ...deletedRule.strategy,
       rolloutStrategy: {
@@ -1256,11 +1258,13 @@ export const handleCheckRuleDeleted = (
       variationFeatures
     );
     return {
-      label: clauseLabels,
+      label: clauseLabelsArray.join(` <b>${t('common:and')}</b> `),
+      clauseLabels: clauseLabelsArray, // Keep array for multi-line rendering
       variationPercent: variationPercents,
       changeType: 'deleted-rule' as const,
       labelType: 'REMOVE' as const,
-      variationIndex: 0
+      variationIndex: 0,
+      ruleIndex: ruleIndex // Track which rule number was deleted
     };
   });
 

@@ -31,6 +31,7 @@ interface Props {
 interface RuleHeader extends Omit<DiscardChangesStateData, 'variationIndex'> {
   formNotify: string;
   variations?: VariationPercent[];
+  clauseLabels?: string[];
 }
 
 const notifyMap: Record<string, (action?: string) => string> = {
@@ -76,6 +77,7 @@ export const PrerequisiteDiscardItem = ({
   variationIndex,
   variation
 }: DiscardChangesStateData) => {
+  const isRemove = labelType === 'REMOVE';
   return (
     <div className="flex flex-col w-full pl-4 gap-1">
       <div className="flex w-full gap-x-2">
@@ -89,7 +91,7 @@ export const PrerequisiteDiscardItem = ({
               flagName: label
             }}
             components={{
-              b: <strong />,
+              b: <strong className={cn({ 'line-through': isRemove })} />,
               variantElement: (
                 <div className="inline-flex items-center gap-x-1">
                   <div className="flex-center size-fit">
@@ -113,13 +115,13 @@ export const IndividualDiscardItem = ({
   variation
 }: DiscardChangesStateData) => {
   const { t } = useTranslation(['common', 'form']);
+  const isRemove = labelType === 'REMOVE';
   const formatLabel = groupLabel?.map((item, index) => (
     <div className="inline-flex flex-wrap items-center" key={index}>
-      <AutoWrapText
-        text={item}
-        width={450}
-        sparate={index !== groupLabel.length - 1}
-      />
+      <span className={cn({ 'line-through': isRemove })}>
+        <AutoWrapText text={item} width={450} sparate={false} />
+      </span>
+      {index !== groupLabel.length - 1 && <span>,&nbsp;</span>}
     </div>
   ));
   return (
@@ -128,7 +130,7 @@ export const IndividualDiscardItem = ({
         <div className="flex items-start mt-1">
           <ActionIcon labelType={labelType} />
         </div>
-        <div className="inline-flex flex-wrap gap-1 typo-para-medium text-gray-700 ">
+        <div className="inline-flex flex-wrap gap-1 typo-para-medium text-gray-700">
           <Trans
             i18nKey={`form:${labelType.toLowerCase()}_individual-discard-desc`}
             values={{
@@ -163,13 +165,37 @@ const RuleHeader = ({
   changeType,
   formNotify,
   valueLabel,
-  variations
+  variations,
+  clauseLabels
 }: RuleHeader) => {
   const { t } = useTranslation(['common', 'form']);
   if (isAddNew) return null;
   const isNewRule = changeType === 'new-rule';
   const isDeleteRule = changeType === 'deleted-rule';
   const isShowIcon = ['value', 'clause'].includes(changeType || '');
+
+  // Multi-line format for new-rule and deleted-rule when clauseLabels is available
+  if ((isNewRule || isDeleteRule) && clauseLabels && clauseLabels.length > 0) {
+    return (
+      <div className="flex w-full gap-x-2 mb-3">
+        <div className="typo-para-medium text-gray-700 flex flex-col gap-1">
+          {clauseLabels.map((clauseLabel, index) => (
+            <div key={index} className={isDeleteRule ? 'line-through' : ''}>
+              <strong>{index === 0 ? t('common:if') : t('common:and')}</strong>{' '}
+              {clauseLabel}
+            </div>
+          ))}
+          {!isDeleteRule && (
+            <div className="mt-1">
+              {t('form:serve')}:
+              <StrategyList variations={variations} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full gap-x-2">
       {isShowIcon && (
@@ -205,7 +231,9 @@ const RuleHeader = ({
                 components={{ b: <strong /> }}
               />
             </div>
-            <strong>{label}</strong>
+            <strong className={cn({ 'line-through': labelType === 'REMOVE' })}>
+              {label}
+            </strong>
             <StrategyList variations={variations} />
           </div>
         )}
@@ -330,7 +358,8 @@ export const CustomRuleDiscardItem = ({
   variationPercent,
   audienceExcluded,
   audienceIncluded,
-  isAddNew
+  isAddNew,
+  clauseLabels
 }: DiscardChangesStateData) => {
   const { t } = useTranslation(['common', 'form']);
 
@@ -359,6 +388,7 @@ export const CustomRuleDiscardItem = ({
         formNotify={formNotify}
         valueLabel={valueLabel}
         variations={showVariationPercent ? variationPercent : []}
+        clauseLabels={clauseLabels}
       />
 
       {showAudience && (
