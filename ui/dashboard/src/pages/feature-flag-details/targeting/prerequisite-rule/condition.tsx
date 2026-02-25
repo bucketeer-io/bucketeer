@@ -157,18 +157,23 @@ const ConditionForm = forwardRef(
                 control={control}
                 name={`${commonName}.variationId`}
                 render={({ field }) => (
-                  <Form.Item className="flex min-w-0 flex-col flex-1 self-stretch py-0">
+                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
                     <Form.Label required>
                       {t('table:feature-flags.variation')}
                     </Form.Label>
                     <Form.Control>
                       <Dropdown
                         options={variationOptions}
-                        value={field.value}
+                        value={currentVariationId}
+                        labelCustom={
+                          variationOptions?.find(
+                            item => currentVariationId === item.value
+                          )?.label || variationOptions?.[0]?.label
+                        }
                         onChange={field.onChange}
                         placeholder={t('experiments.select-variation')}
                         disabled={!variationOptions?.length}
-                        className="w-full max-w-full"
+                        className="w-full"
                       />
                     </Form.Control>
                     <Form.Message />
@@ -176,33 +181,6 @@ const ConditionForm = forwardRef(
                 )}
               />
             </div>
-            <Form.Field
-              control={control}
-              name={`${commonName}.variationId`}
-              render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
-                  <Form.Label required>
-                    {t('table:feature-flags.variation')}
-                  </Form.Label>
-                  <Form.Control>
-                    <Dropdown
-                      options={variationOptions}
-                      value={currentVariationId}
-                      labelCustom={
-                        variationOptions?.find(
-                          item => currentVariationId === item.value
-                        )?.label || variationOptions?.[0]?.label
-                      }
-                      onChange={field.onChange}
-                      placeholder={t('experiments.select-variation')}
-                      disabled={!variationOptions?.length}
-                      className="w-full"
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
 
             <div className="flex items-center sm:items-end self-stretch">
               <Button
