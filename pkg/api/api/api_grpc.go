@@ -423,6 +423,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.Error(err),
 				zap.String("environmentId", envID),
 				zap.String("sourceId", srcID),
+				zap.String("userId", userID),
 			)
 		}
 	}()
@@ -650,14 +651,16 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 
+	userID := req.User.Id
 	go func() {
 		envID := envAPIKey.Environment.Id
 		srcID := req.SourceId.String()
-		if err := s.mauCache.RecordDAU(envID, srcID, req.User.Id, time.Now()); err != nil {
+		if err := s.mauCache.RecordDAU(envID, srcID, userID, time.Now()); err != nil {
 			s.logger.Warn("Failed to record DAU",
 				zap.Error(err),
 				zap.String("environmentId", envID),
 				zap.String("sourceId", srcID),
+				zap.String("userId", userID),
 			)
 		}
 	}()
@@ -1457,6 +1460,7 @@ func (s *grpcGatewayService) RegisterEvents(
 						zap.Error(err),
 						zap.String("environmentId", envID),
 						zap.String("sourceId", evalEvent.SourceId.String()),
+						zap.String("userId", evalEvent.UserId),
 					)
 				}
 			}(event, envAPIKey.Environment.Id)

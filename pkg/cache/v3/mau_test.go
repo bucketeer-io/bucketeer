@@ -52,73 +52,75 @@ func TestMAUCache_DAUKey(t *testing.T) {
 	}
 }
 
-func TestMAUCache_RecordDAU_Success(t *testing.T) {
+func TestMAUCache_RecordDAU(t *testing.T) {
 	t.Parallel()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	patterns := []struct {
+		desc        string
+		envID       string
+		sourceID    string
+		userID      string
+		date        time.Time
+		setup       func(*mock.MockMultiGetDeleteCountCache, *redismock.MockPipeClient)
+		expectedErr error
+	}{
+		{
+			desc:     "success",
+			envID:    "env-123",
+			sourceID: "ANDROID",
+			userID:   "user-456",
+			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+				mc.EXPECT().Pipeline(false).Return(mp)
+				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
+				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().Exec().Return(nil, nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:     "empty userID: skip recording",
+			envID:    "env-123",
+			sourceID: "ANDROID",
+			userID:   "",
+			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+				// No pipeline operations expected
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:     "pipeline error",
+			envID:    "env-123",
+			sourceID: "ANDROID",
+			userID:   "user-456",
+			date:     time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC),
+			setup: func(mc *mock.MockMultiGetDeleteCountCache, mp *redismock.MockPipeClient) {
+				mc.EXPECT().Pipeline(false).Return(mp)
+				mp.EXPECT().PFAdd("{env-123:ANDROID:au}:d:20260128", "user-456")
+				mp.EXPECT().Expire("{env-123:ANDROID:au}:d:20260128", dauTTL)
+				mp.EXPECT().Exec().Return(nil, errors.New("redis connection error"))
+			},
+			expectedErr: errors.New("failed to record DAU"),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
-	c := NewMAUCache(mockCache)
+			mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+			mockPipe := redismock.NewMockPipeClient(ctrl)
+			c := NewMAUCache(mockCache)
 
-	envID := "env-123"
-	sourceID := "ANDROID"
-	userID := "user-456"
-	date := time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC)
-	expectedKey := "{env-123:ANDROID:au}:d:20260128"
+			p.setup(mockCache, mockPipe)
 
-	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
-	mockPipe.EXPECT().PFAdd(expectedKey, userID)
-	mockPipe.EXPECT().Expire(expectedKey, dauTTL)
-	mockPipe.EXPECT().Exec().Return(nil, nil)
-
-	err := c.RecordDAU(envID, sourceID, userID, date)
-	assert.NoError(t, err)
-}
-
-func TestMAUCache_RecordDAU_EmptyUserID(t *testing.T) {
-	t.Parallel()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
-	c := NewMAUCache(mockCache)
-
-	envID := "env-123"
-	sourceID := "ANDROID"
-	userID := "" // HERE
-	date := time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC)
-
-	mockPipe.EXPECT().PFAdd(gomock.Any(), gomock.Any()).Times(0)
-
-	err := c.RecordDAU(envID, sourceID, userID, date)
-	assert.NoError(t, err)
-}
-
-func TestMAUCache_RecordDAU_PipelineError(t *testing.T) {
-	t.Parallel()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
-	mockPipe := redismock.NewMockPipeClient(ctrl)
-	c := NewMAUCache(mockCache)
-
-	envID := "env-123"
-	sourceID := "ANDROID"
-	userID := "user-456"
-	date := time.Date(2026, 1, 28, 15, 30, 0, 0, time.UTC)
-	expectedKey := "{env-123:ANDROID:au}:d:20260128"
-	expectedErr := errors.New("redis connection error")
-
-	mockCache.EXPECT().Pipeline(false).Return(mockPipe)
-	mockPipe.EXPECT().PFAdd(expectedKey, userID)
-	mockPipe.EXPECT().Expire(expectedKey, dauTTL)
-	mockPipe.EXPECT().Exec().Return(nil, expectedErr)
-
-	err := c.RecordDAU(envID, sourceID, userID, date)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to record DAU")
-	assert.Contains(t, err.Error(), "redis connection error")
+			err := c.RecordDAU(p.envID, p.sourceID, p.userID, p.date)
+			if p.expectedErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), p.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
