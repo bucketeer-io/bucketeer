@@ -69,7 +69,7 @@ We've successfully implemented PostgreSQL as an alternative for the data warehou
             │                   │                               │
             ▼                   ▼                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    pkg/storage/v2/                              │
+│                    pkg/storage/v2/database                      │
 │  (database.Client interface + MySQL/Postgres adapters)          │
 └─────────────────────────────────────────────────────────────────┘
             │                                   │
@@ -86,8 +86,8 @@ We've successfully implemented PostgreSQL as an alternative for the data warehou
 Create a `database.Client` interface that both MySQL and PostgreSQL clients implement:
 
 ```go
-// pkg/storage/v2/client.go
-package v2
+// pkg/storage/v2/database/client.go
+package database
 
 import "context"
 
@@ -99,8 +99,8 @@ type Client interface {
 ```
 
 ```go
-// pkg/storage/v2/mysql_client.go
-package v2
+// pkg/storage/v2/database/mysql_client.go
+package database
 
 import (
     "context"
@@ -112,7 +112,7 @@ type mysqlClientAdapter struct {
     mc mysql.Client
 }
 
-func NewMySQLClient(mc mysql.Client) Client {
+func NewMySQLStorageClient(mc mysql.Client) Client {
     return &mysqlClientAdapter{mc: mc}
 }
 
@@ -128,8 +128,8 @@ func (c *mysqlClientAdapter) Close() error {
 ```
 
 ```go
-// pkg/storage/v2/postgres_client.go
-package v2
+// pkg/storage/v2/database/postgres_client.go
+package database
 
 import (
     "context"
@@ -141,7 +141,7 @@ type postgresClientAdapter struct {
     pc postgres.Client
 }
 
-func NewPostgresClient(pc postgres.Client) Client {
+func NewPostgresStorageClient(pc postgres.Client) Client {
     return &postgresClientAdapter{pc: pc}
 }
 
@@ -236,7 +236,7 @@ SELECT * FROM push WHERE name = $1 AND tags @> $2::jsonb
 2. Create MySQL filter wrappers in `pkg/storage/v2/mysql/filter.go`
 3. Create PostgreSQL filter wrappers in `pkg/storage/v2/postgres/filter.go`
 4. Implement PostgreSQL query builder in `pkg/storage/v2/postgres/query.go`
-5. Unified Client interface (already implemented in `pkg/storage/v2/`)
+5. Unified Client interface
 
 #### Phase 2: Create PostgreSQL Schema Migration
 
@@ -273,14 +273,14 @@ Update API services to use `v2.Client` interface:
 package api
 
 import (
-    storage "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2"
+    "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
     "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres"
     v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 )
 
 type PushService struct {
-    dbClient     storage.Client    // Unified database client for transactions
+    dbClient     database.Client    // Unified database client for transactions
     pushStorage  v2ps.PushStorage
     // ... other fields
 }
@@ -300,12 +300,12 @@ func NewPushService(
         opt(dopts)
     }
 
-    var dbClient storage.Client
+    var dbClient database.Client
     var pushStorage v2ps.PushStorage
 
     switch dopts.storageConfig.Type {
     case "mysql":
-        dbClient = storage.NewMySQLClient(mysqlClient)
+        dbClient = database.NewMySQLStorageClient(mysqlClient)
         pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
     case "postgres":
         ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -319,10 +319,10 @@ func NewPushService(
             )
             return nil
         }
-        dbClient = storage.NewPostgresClient(pgClient)
+        dbClient = database.NewPostgresStorageClient(pgClient)
         pushStorage = v2ps.NewPostgresPushStorage(pgClient)
     default:
-        dbClient = storage.NewMySQLClient(mysqlClient)
+        dbClient = database.NewMySQLStorageClient(mysqlClient)
         pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
     }
 
