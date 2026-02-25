@@ -311,6 +311,198 @@ const useOptions = () => {
     [language]
   );
 
+  const organizationSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('projects'),
+        value: 'PROJECT_COUNT'
+      },
+      {
+        label: translation('environments'),
+        value: 'ENVIRONMENT_COUNT'
+      },
+      {
+        label: translation('users'),
+        value: 'USER_COUNT'
+      },
+      {
+        label: translation('created-at', 'table'),
+        value: 'CREATED_AT'
+      }
+    ],
+    [language]
+  );
+
+  const apiKeySortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('role'),
+        value: 'ROLE'
+      },
+      {
+        label: translation('environment'),
+        value: 'ENVIRONMENT'
+      },
+      {
+        label: translation('created-at', 'table'),
+        value: 'CREATED_AT'
+      },
+      {
+        label: translation('state'),
+        value: 'STATE'
+      }
+    ],
+    [language]
+  );
+
+  const experimentSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('goals-connected'),
+        value: 'GOALS_COUNT'
+      },
+      {
+        label: translation('time-start'),
+        value: 'START_AT'
+      },
+      {
+        label: translation('time-stop'),
+        value: 'STOP_AT'
+      },
+      {
+        label: translation('status'),
+        value: 'STATUS'
+      }
+    ],
+    [language]
+  );
+
+  const memberSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('email'),
+        value: 'EMAIL'
+      },
+      {
+        label: translation('role'),
+        value: 'ORGANIZATION_ROLE'
+      },
+      {
+        label: translation('last-seen'),
+        value: 'LAST_SEEN'
+      }
+    ],
+    [language]
+  );
+
+  const notificationSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('environment'),
+        value: 'ENVIRONMENT'
+      },
+      {
+        label: translation('created-at', 'table'),
+        value: 'CREATED_AT'
+      },
+      {
+        label: translation('state'),
+        value: 'STATE'
+      }
+    ],
+    [language]
+  );
+
+  const projectSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('maintainer'),
+        value: 'CREATOR_EMAIL'
+      },
+      {
+        label: translation('environments'),
+        value: 'ENVIRONMENT_COUNT'
+      },
+      {
+        label: translation('feature-flags'),
+        value: 'FEATURE_COUNT'
+      },
+      {
+        label: translation('created-at', 'table'),
+        value: 'CREATED_AT'
+      }
+    ],
+    [language]
+  );
+
+  const pushSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('environment'),
+        value: 'ENVIRONMENT'
+      },
+      {
+        label: translation('created-at', 'table'),
+        value: 'CREATED_AT'
+      },
+      {
+        label: translation('state'),
+        value: 'STATE'
+      }
+    ],
+    [language]
+  );
+
+  const userSegmentSortByOptions = useMemo(
+    () => [
+      {
+        label: translation('name'),
+        value: 'NAME'
+      },
+      {
+        label: translation('users'),
+        value: 'USERS'
+      },
+      {
+        label: translation('connections'),
+        value: 'CONNECTIONS'
+      },
+      {
+        label: translation('status'),
+        value: 'STATUS'
+      },
+      {
+        label: translation('updated-at', 'table'),
+        value: 'UPDATED_AT'
+      }
+    ],
+    [language]
+  );
+
   const flagSortDirectionOptions = useMemo(
     () => [
       {
@@ -531,6 +723,14 @@ const useOptions = () => {
     organizationRoles,
     flagSortByOptions,
     flagSortDirectionOptions,
+    organizationSortByOptions,
+    apiKeySortByOptions,
+    experimentSortByOptions,
+    memberSortByOptions,
+    notificationSortByOptions,
+    projectSortByOptions,
+    pushSortByOptions,
+    userSegmentSortByOptions,
     environmentRoleOptions,
     situationOptions,
     conditionerCompareOptions,

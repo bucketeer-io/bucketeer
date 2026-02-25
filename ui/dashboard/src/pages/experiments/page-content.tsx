@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Experiment, ExperimentCollection, ExperimentStatus } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
@@ -37,6 +39,8 @@ const PageContent = ({
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
+  const { experimentSortByOptions, flagSortDirectionOptions } = useOptions();
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ExperimentFilters> = searchOptions;
@@ -155,19 +159,29 @@ const PageContent = ({
         name="experiments-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            hidden={!disabled}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={disabled}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-experiment`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={experimentSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              hidden={!disabled}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={disabled}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-experiment`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

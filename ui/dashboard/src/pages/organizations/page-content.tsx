@@ -1,11 +1,13 @@
 import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Organization } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
@@ -24,6 +26,8 @@ const PageContent = ({
   onHandleActions: (item: Organization, type: OrganizationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
+  const { organizationSortByOptions, flagSortDirectionOptions } = useOptions();
 
   // NOTE: Need improve search options
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -72,10 +76,20 @@ const PageContent = ({
         name="organization-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-org`)}
-          </Button>
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={organizationSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+              <Icon icon={IconAddOutlined} size="sm" />
+              {t(`new-org`)}
+            </Button>
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

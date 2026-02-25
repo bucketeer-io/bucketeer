@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { hasEditable, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { usePartialState, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, Feature, FeatureCountByStatus } from '@types';
@@ -33,6 +34,7 @@ const PageContent = ({
   const location = useLocation();
   const { consoleAccount } = useAuth();
   const editable = hasEditable(consoleAccount!);
+  const { flagSortByOptions, flagSortDirectionOptions } = useOptions();
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
@@ -146,7 +148,12 @@ const PageContent = ({
         name="flag-list-search"
         action={
           <>
-            <SortBy filters={filters} setFilters={setFilters} />
+            <SortBy
+              filters={filters}
+              setFilters={setFilters}
+              sortByOptions={flagSortByOptions}
+              sortDirectionOptions={flagSortDirectionOptions}
+            />
             <DisabledButtonTooltip
               hidden={editable}
               trigger={

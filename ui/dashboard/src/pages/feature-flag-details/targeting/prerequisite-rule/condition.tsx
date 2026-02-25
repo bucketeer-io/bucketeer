@@ -95,7 +95,7 @@ const ConditionForm = forwardRef(
         ref={ref}
         className="flex items-start sm:items-center w-full gap-x-0 sm:gap-x-4"
       >
-        <div className="flex flex-col h-[170px] sm:h-full gap-2 items-center">
+        <div className="flex flex-col h-[210px] sm:h-full gap-2 items-center">
           <div
             className={cn(
               'flex-center w-[42px] h-[26px] rounded-[3px] typo-para-small leading-[14px]',
@@ -145,7 +145,7 @@ const ConditionForm = forwardRef(
                   </Form.Item>
                 )}
               />
-              <div className="flex-center size-fit px-3 py-1 sm:py-3.5 mt-0 md:mt-6 rounded bg-gray-100 typo-para-small sm:typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
+              <div className="flex-center size-fit px-3 py-3.5 mt-0 md:mt-6 rounded bg-gray-100 typo-para-small sm:typo-para-medium leading-5 text-gray-700 whitespace-nowrap">
                 <Trans
                   i18nKey={'form:feature-flags.receiving-state'}
                   values={{

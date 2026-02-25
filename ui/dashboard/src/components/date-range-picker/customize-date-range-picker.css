@@ -15,7 +15,7 @@
 }
 
 .range__weekDay {
-  @apply flex-center typo-para-tiny !h-6 sm:!w-10 !max-w-10 uppercase text-gray-500 last:w-9;
+  @apply flex-center typo-para-tiny !h-6 sm:!w-10 !max-w-14 sm:!max-w-10 uppercase text-gray-500 last:w-9;
 }
 
 .range__days {

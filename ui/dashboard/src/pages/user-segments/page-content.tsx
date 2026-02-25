@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { UserSegment } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -33,6 +35,8 @@ const PageContent = ({
   ) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
+  const { userSegmentSortByOptions, flagSortDirectionOptions } = useOptions();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const organizationIds = useMemo(
@@ -45,7 +49,7 @@ const PageContent = ({
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'CREATED_AT',
+    orderBy: 'NAME',
     orderDirection: 'DESC',
     ...searchFilters
   } as UserSegmentsFilters;
@@ -92,20 +96,30 @@ const PageContent = ({
         name="segment-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            align="end"
-            hidden={editable}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!editable}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-user-segment`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={userSegmentSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              align="end"
+              hidden={editable}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!editable}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-user-segment`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery as string}
         filterCount={

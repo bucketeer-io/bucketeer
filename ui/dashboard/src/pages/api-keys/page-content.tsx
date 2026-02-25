@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import isNil from 'lodash/isNil';
 import pickBy from 'lodash/pickBy';
 import { APIKey } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -27,7 +29,9 @@ const PageContent = ({
   onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const { apiKeySortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<APIKeysFilters> = searchOptions;
 
@@ -86,20 +90,30 @@ const PageContent = ({
         name="api-keys-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            type={!isOrganizationAdmin ? 'admin' : 'editor'}
-            hidden={envEditable && isOrganizationAdmin}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!envEditable || !isOrganizationAdmin}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-api-key`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={apiKeySortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              hidden={envEditable && isOrganizationAdmin}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!envEditable || !isOrganizationAdmin}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-api-key`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

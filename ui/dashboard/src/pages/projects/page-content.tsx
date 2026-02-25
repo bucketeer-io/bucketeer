@@ -2,12 +2,14 @@ import { useCallback, useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -26,6 +28,8 @@ const PageContent = ({
   onEdit: (v: Project) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
+  const { projectSortByOptions, flagSortDirectionOptions } = useOptions();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
@@ -80,20 +84,30 @@ const PageContent = ({
         placeholder={t('form:name-email-search-placeholder')}
         name="projects-list-search"
         action={
-          <DisabledButtonTooltip
-            hidden={envEditable && isOrganizationAdmin}
-            type={!isOrganizationAdmin ? 'admin' : 'editor'}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!envEditable || !isOrganizationAdmin}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`new-project`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={projectSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              hidden={envEditable && isOrganizationAdmin}
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!envEditable || !isOrganizationAdmin}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`new-project`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

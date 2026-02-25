@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuthAccess } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState, useScreen, useToggleOpen } from 'hooks';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { Account } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import SortBy from 'pages/feature-flags/sort-by';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
@@ -26,13 +28,15 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+  const { fromMobileScreen } = useScreen();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+  const { memberSortByOptions, flagSortDirectionOptions } = useOptions();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'CREATED_AT',
+    orderBy: 'EMAIL',
     orderDirection: 'DESC',
     ...searchFilters
   } as MembersFilters;
@@ -91,20 +95,30 @@ const PageContent = ({
         name="members-list-search"
         onOpenFilter={onOpenFilterModal}
         action={
-          <DisabledButtonTooltip
-            type={!isOrganizationAdmin ? 'admin' : 'editor'}
-            hidden={envEditable && isOrganizationAdmin}
-            trigger={
-              <Button
-                className="flex-1 lg:flex-none"
-                onClick={onAdd}
-                disabled={!envEditable || !isOrganizationAdmin}
-              >
-                <Icon icon={IconAddOutlined} size="sm" />
-                {t(`invite-member`)}
-              </Button>
-            }
-          />
+          <>
+            {!fromMobileScreen && (
+              <SortBy
+                filters={filters}
+                setFilters={setFilters}
+                sortByOptions={memberSortByOptions}
+                sortDirectionOptions={flagSortDirectionOptions}
+              />
+            )}
+            <DisabledButtonTooltip
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              hidden={envEditable && isOrganizationAdmin}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!envEditable || !isOrganizationAdmin}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`invite-member`)}
+                </Button>
+              }
+            />
+          </>
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

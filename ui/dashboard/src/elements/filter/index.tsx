@@ -82,7 +82,7 @@ const Filter = ({
           <Button
             variant="secondary"
             onClick={onOpenFilter}
-            className="text-gray-700 shadow-border-gray-400 flex-1 px-0 sm:px-4 lg:flex-none"
+            className="text-gray-700 shadow-border-gray-400 flex-1 px-2 sm:px-4 lg:flex-none"
           >
             <Icon icon={IconFilterListOutlined} size="sm" />
             {t('filter')}

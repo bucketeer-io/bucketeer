@@ -22,9 +22,9 @@ export const CardCollection = ({
   ) : (
     <div className="flex flex-col gap-3">
       {data.length
-        ? data.map(notification => (
+        ? data.map((notification, index) => (
             <NotificationCard
-              key={notification.id}
+              key={index}
               onActions={onActions}
               data={notification}
             />
