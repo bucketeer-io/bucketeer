@@ -222,79 +222,133 @@ func (f *FilterV2) SQLString() (string, []interface{}) {
 
 ##### Option B: Unified Package with Placeholder Replacement
 
-Use a single `database` package with shared interfaces and placeholder replacement:
+A single `database` package with one client implementation that internally handles database differences:
 
-1. **Shared interfaces** - Same `Client`, `QueryExecer`, `Queryer`, `Execer` for both databases
-2. **Two constructors** - `NewMySQLClient()` and `NewPostgresClient()` returning the same `Client` interface
-3. **Database-specific JSON filters** - `JSONMySQLFilter` and `JSONPgFilter` for different JSON syntax
-4. **Placeholder replacement** - Convert `?` to `$1, $2, ...` for PostgreSQL
+1. **Single client struct** with `dbType` field to track MySQL vs PostgreSQL
+2. **Automatic placeholder replacement** - `?` → `$1, $2, ...` for PostgreSQL at query execution time
+3. **Database-specific JSON filters** - `JSONFilter` (MySQL) and `JSONPgFilter` (PostgreSQL)
+4. **Unified error handling** - Converts both MySQL and PostgreSQL errors to common types
 
 **Structure:**
 
 ```
 pkg/storage/v2/database/
-├── client.go           # Shared interfaces (Client, QueryExecer, etc.)
-├── mysql.go            # NewMySQLClient() → Client
-├── postgres.go         # NewPostgresClient() → Client
-├── filter.go           # Shared filter types (FilterV2, InFilter, etc.)
-├── json_mysql.go       # JSONMySQLFilter with JSON_CONTAINS
-├── json_postgres.go    # JSONPgFilter with @> operator
-└── query.go            # Shared query builder with placeholder conversion
+├── client.go           # Single client with dbType field, NewClient/NewMySQLClient/NewPostgresClient
+├── transaction.go      # Transaction with dbType for error conversion
+├── query.go            # Filters, query builder, ReplacePlaceholders(), JSONPgFilter
+├── result.go           # Result, Row, Rows interfaces
+├── error.go            # Unified errors + MySQL/PostgreSQL error converters
+├── metrics.go          # Database metrics
+└── mock/               # Generated mocks
 ```
 
-**Shared interfaces:**
+**Single client with dbType:**
 
 ```go
 // pkg/storage/v2/database/client.go
 package database
 
-type Queryer interface {
-    QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error)
-    QueryRowContext(ctx context.Context, query string, args ...interface{}) Row
+type DBType string
+
+const (
+    DBTypeMySQL    DBType = "mysql"
+    DBTypePostgres DBType = "postgres"
+)
+
+type client struct {
+    db     *sql.DB
+    dbType DBType  // Determines placeholder replacement and error conversion
+    opts   *options
+    logger *zap.Logger
 }
 
-type Execer interface {
-    ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error)
+// NewClient creates a database client based on dbType
+func NewClient(
+    ctx context.Context,
+    dbType DBType,
+    dbUser, dbPass, dbHost string,
+    dbPort int,
+    dbName string,
+    opts ...Option,
+) (Client, error) {
+    // Creates MySQL or PostgreSQL connection based on dbType
 }
 
-type QueryExecer interface {
-    Queryer
-    Execer
+// Convenience functions
+func NewMySQLClient(ctx, user, pass, host string, port int, dbName string, opts ...Option) (Client, error) {
+    return NewClient(ctx, DBTypeMySQL, user, pass, host, port, dbName, opts...)
 }
 
-type Client interface {
-    QueryExecer
-    Close() error
-    RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
+func NewPostgresClient(ctx, user, pass, host string, port int, dbName string, opts ...Option) (Client, error) {
+    return NewClient(ctx, DBTypePostgres, user, pass, host, port, dbName, opts...)
 }
 ```
 
-**Two constructors:**
+**Automatic placeholder replacement in query methods:**
 
 ```go
-// pkg/storage/v2/database/mysql.go
-func NewMySQLClient(ctx context.Context, dbUser, dbPass, dbHost string, dbPort int, dbName string, opts ...Option) (Client, error)
+func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
+    // Replace ? with $1, $2, ... for PostgreSQL
+    if c.dbType == DBTypePostgres {
+        query = ReplacePlaceholders(query)
+    }
 
-// pkg/storage/v2/database/postgres.go
-func NewPostgresClient(ctx context.Context, dbUser, dbPass, dbHost string, dbPort int, dbName string, opts ...Option) (Client, error)
+    // Execute query...
+    err = c.convertError(err)  // Convert DB-specific errors
+    return &result{sret}, err
+}
+
+func (c *client) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
+    if c.dbType == DBTypePostgres {
+        query = ReplacePlaceholders(query)
+    }
+    // ...
+}
+
+func (c *client) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
+    if c.dbType == DBTypePostgres {
+        query = ReplacePlaceholders(query)
+    }
+    // ...
+}
+```
+
+**ReplacePlaceholders function:**
+
+```go
+// pkg/storage/v2/database/query.go
+
+// ReplacePlaceholders converts ? placeholders to $1, $2, $3... for PostgreSQL
+func ReplacePlaceholders(query string) string {
+    var result strings.Builder
+    paramIndex := 1
+    for i := 0; i < len(query); i++ {
+        if query[i] == '?' {
+            result.WriteString(fmt.Sprintf("$%d", paramIndex))
+            paramIndex++
+        } else {
+            result.WriteByte(query[i])
+        }
+    }
+    return result.String()
+}
 ```
 
 **Database-specific JSON filters:**
 
 ```go
-// pkg/storage/v2/database/json_mysql.go
-type JSONMySQLFilter struct {
+// JSONFilter - MySQL version using JSON_CONTAINS
+type JSONFilter struct {
     Column string
     Func   JSONFilterFunc
     Values []interface{}
 }
 
-func (f *JSONMySQLFilter) SQLString() (string, []interface{}) {
-    // Uses JSON_CONTAINS(column, ?)
+func (f *JSONFilter) SQLString() (string, []interface{}) {
     return fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column), []interface{}{formatJSON(f.Values)}
 }
 
-// pkg/storage/v2/database/json_postgres.go
+// JSONPgFilter - PostgreSQL version using @> operator
 type JSONPgFilter struct {
     Column string
     Func   JSONFilterFunc
@@ -302,66 +356,53 @@ type JSONPgFilter struct {
 }
 
 func (f *JSONPgFilter) SQLString() (string, []interface{}) {
-    // Uses column @> ?::jsonb (placeholder replaced later)
     return fmt.Sprintf("%s @> ?::jsonb", f.Column), []interface{}{formatJSON(f.Values)}
 }
 ```
 
-**Placeholder replacement for PostgreSQL:**
+**Unified error conversion:**
 
 ```go
-// pkg/storage/v2/database/query.go
+// pkg/storage/v2/database/error.go
+var (
+    ErrNoRows         = errors.New("database: no rows")
+    ErrTxDone         = errors.New("database: tx done")
+    ErrDuplicateEntry = errors.New("database: duplicate entry")
+)
 
-// ReplacePlaceholders converts ? placeholders to $1, $2, $3... for PostgreSQL
-func ReplacePlaceholders(query string) string {
-    index := 0
-    var result strings.Builder
-    for _, ch := range query {
-        if ch == '?' {
-            index++
-            result.WriteString(fmt.Sprintf("$%d", index))
-        } else {
-            result.WriteRune(ch)
-        }
+func (c *client) convertError(err error) error {
+    if c.dbType == DBTypePostgres {
+        return convertPostgresError(err)
     }
-    return result.String()
-}
-
-// Usage in PostgreSQL client:
-func (c *postgresClient) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
-    return c.db.QueryContext(ctx, ReplacePlaceholders(query), args...)
+    return convertMySQLError(err)
 }
 ```
 
 ##### Comparison
 
-| Aspect               | Option A (Wrapper Pattern)              | Option B (Unified Package)      |
-| -------------------- | --------------------------------------- | ------------------------------- |
-| Package structure    | Separate mysql/postgres/filter packages | Single database package         |
-| Filter types         | Wrapper types with embedding            | Shared types + DB-specific JSON |
-| Placeholder handling | Generated at filter level               | Replaced at query execution     |
-| Code duplication     | More (separate implementations)         | Less (shared code)              |
-| Complexity           | Higher (more abstraction)               | Lower (simpler)                 |
+| Aspect                  | Option A (Wrapper Pattern)                | Option B (Unified Package)           |
+| ----------------------- | ----------------------------------------- | ------------------------------------ |
+| Package structure       | Separate mysql/postgres/filter packages   | Single `database` package            |
+| Client type             | Adapter wrapping native clients           | Single client with `dbType` field    |
+| Filter types            | Wrapper types with embedding              | Shared types + `JSONPgFilter` for PG |
+| Placeholder handling    | Generated at filter level with `$N`       | Auto-replaced at query execution     |
+| Storage implementations | Separate MySQL/PostgreSQL implementations | Single implementation for both       |
+| Code duplication        | More (separate implementations)           | Less (shared code)                   |
+| Complexity              | Higher (more abstraction)                 | Lower (simpler)                      |
 
 **Output (both options):**
 
 ```sql
--- MySQL
+-- MySQL (uses ? placeholders natively)
 SELECT * FROM push WHERE name = ? AND JSON_CONTAINS(tags, ?)
 
--- PostgreSQL
+-- PostgreSQL (? auto-converted to $1, $2, ... at execution time)
 SELECT * FROM push WHERE name = $1 AND tags @> $2::jsonb
 ```
 
 ### Implementation Strategy
 
 #### Phase 1: Implement Storage Package and Query Builder
-
-1. Create shared filter types in `pkg/storage/v2/filter.go` (pure data structs)
-2. Create MySQL filter wrappers in `pkg/storage/v2/mysql/filter.go`
-3. Create PostgreSQL filter wrappers in `pkg/storage/v2/postgres/filter.go`
-4. Implement PostgreSQL query builder in `pkg/storage/v2/postgres/query.go`
-5. Unified Client interface
 
 #### Phase 2: Create PostgreSQL Schema Migration
 
@@ -499,13 +540,11 @@ func (s *server) createServices() {
 
     switch s.config.StorageType {
     case "mysql":
-        mysqlClient, _ := mysql.NewClient(ctx, ...)
-        dbClient = mysql.NewStorageClient(mysqlClient)
-        pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
+        dbClient, _ = database.NewMySQLClient(ctx, user, pass, host, port, dbName)
+        pushStorage = v2ps.NewMySQLPushStorage(dbClient)
     case "postgres":
-        pgClient, _ := postgres.NewClient(ctx, ...)
-        dbClient = postgres.NewStorageClient(pgClient)
-        pushStorage = v2ps.NewPostgresPushStorage(pgClient)
+        dbClient, _ = database.NewPostgresClient(ctx, user, pass, host, port, dbName)
+        pushStorage = v2ps.NewPostgresPushStorage(dbClient)
     }
 
     pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
@@ -519,14 +558,13 @@ func (s *server) createServices() {
 
     switch s.config.StorageType {
     case "mysql":
-        mysqlClient, _ := mysql.NewClient(ctx, ...)
-        dbClient = mysql.NewStorageClient(mysqlClient)
+        dbClient, _ = database.NewMySQLClient(ctx, user, pass, host, port, dbName)
     case "postgres":
-        pgClient, _ := postgres.NewClient(ctx, ...)
-        dbClient = postgres.NewStorageClient(pgClient)
+        dbClient, _ = database.NewPostgresClient(ctx, user, pass, host, port, dbName)
     }
 
     // Single storage implementation works with both databases
+    // All SQL uses ? placeholders - PostgreSQL client auto-converts to $1, $2, ...
     pushStorage := v2ps.NewPushStorage(dbClient)
 
     pushService := pushapi.NewPushService(dbClient, pushStorage, ...)
